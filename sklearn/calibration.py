@@ -227,11 +227,22 @@ class _CutoffClassifier(object):
                 euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
             )]
         elif self.method == 'max_tpr':
-            indices = np.where(1 - fpr >= self.min_val_tnr)
+            if not self.min_val_tnr or not isinstance(self.min_val_tnr, float)\
+                    or not self.min_val_tnr >= 0 or not self.min_val_tnr <= 1:
+                raise ValueError('max_tnr must be a number in [1, 0]. '
+                                 'Got %s instead' % repr(self.min_val_tnr))
+            indices = np.where(1 - fpr >= self.min_val_tnr)[0]
             self.threshold_ = thresholds[indices[np.argmax(tpr[indices])]]
         elif self.method == 'max_tnr':
-            indices = np.where(tpr >= self.min_val_tpr)
+            if not self.min_val_tpr or not isinstance(self.min_val_tpr, float)\
+                    or not self.min_val_tpr >= 0 or not self.min_val_tpr <= 1:
+                raise ValueError('max_tpr must be a number in [1, 0]. '
+                                 'Got %s instead' % repr(self.min_val_tnr))
+            indices = np.where(tpr >= self.min_val_tpr)[0]
             self.threshold_ = thresholds[indices[np.argmax(1 - fpr[indices])]]
+        else:
+            raise ValueError('method must be "roc" or "max_tpr" or "max_tnr.'
+                             'Got %s instead' % self.method)
         return self
 
 
