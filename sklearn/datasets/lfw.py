@@ -32,7 +32,6 @@ import numpy as np
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 from ..externals.joblib import Memory
-
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
@@ -136,18 +135,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
-
-    # Try to import imread and imresize from PIL. We do this here to prevent
-    # the whole sklearn.datasets module from depending on PIL.
-    try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread
-        from scipy.misc import imresize
-    except ImportError:
-        raise ImportError("The Python Imaging Library (PIL)"
-                          " is required to load data from jpeg files")
+    # Locally import _imread and _imresize to prevent the whole
+    # sklearn.datasets module from depending on PIL.
+    from ..externals.pilutil import _imread, _imresize
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
@@ -181,7 +171,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        img = imread(file_path)
+        img = _imread(file_path)
         if img.ndim is 0:
             raise RuntimeError("Failed to read the image file %s, "
                                "Please make sure that libjpeg is installed"
@@ -190,7 +180,7 @@ def _load_imgs(file_paths, slice_, color, resize):
         face = np.asarray(img[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
         if resize is not None:
-            face = imresize(face, resize)
+            face = _imresize(face, resize)
         if not color:
             # average the color channels to compute a gray levels
             # representation

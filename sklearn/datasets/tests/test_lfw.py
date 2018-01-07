@@ -14,14 +14,7 @@ import shutil
 import tempfile
 import numpy as np
 from sklearn.externals import six
-try:
-    try:
-        from scipy.misc import imsave
-    except ImportError:
-        from scipy.misc.pilutil import imsave
-except ImportError:
-    imsave = None
-
+from sklearn.externals.pilutil import _have_image, _imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
@@ -48,7 +41,7 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if imsave is None:
+    if not _have_image:
         raise SkipTest("PIL not installed.")
 
     if not os.path.exists(LFW_HOME):
@@ -70,7 +63,7 @@ def setup_module():
             file_path = os.path.join(folder_name, name + '_%04d.jpg' % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
             try:
-                imsave(file_path, uniface)
+                _imsave(file_path, uniface)
             except ImportError:
                 raise SkipTest("PIL not installed")
 
