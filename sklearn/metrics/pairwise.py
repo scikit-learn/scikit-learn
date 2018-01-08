@@ -265,7 +265,7 @@ def _argmin_min_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  metric_kwargs=None, batch_size=None):
+                                  batch_size=None, metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -316,13 +316,13 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    metric_kwargs : dict, optional
-        Keyword arguments to pass to specified metric function.
-
     batch_size : integer
         .. deprecated:: 0.20
             Deprecated for removal in 0.22.
             Use sklearn.set_config(working_memory=...) instead.
+
+    metric_kwargs : dict, optional
+        Keyword arguments to pass to specified metric function.
 
     Returns
     -------
@@ -1112,6 +1112,8 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
 
 
 def _check_chunk_size(reduced, chunk_size):
+    """Checks chunk is a sequence of expected size or a tuple of same
+    """
     is_tuple = isinstance(reduced, tuple)
     if not is_tuple:
         reduced = (reduced,)
