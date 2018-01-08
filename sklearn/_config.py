@@ -3,8 +3,10 @@
 import os
 from contextlib import contextmanager as contextmanager
 
-_ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
-_WORKING_MEMORY = int(os.environ.get('SKLEARN_WORKING_MEMORY', 64))
+_global_config = {
+    'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
+    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 64))
+}
 
 
 def get_config():
@@ -15,8 +17,7 @@ def get_config():
     config : dict
         Keys are parameter names that can be passed to :func:`set_config`.
     """
-    return {'assume_finite': _ASSUME_FINITE,
-            'working_memory': _WORKING_MEMORY}
+    return _global_config.copy()
 
 
 def set_config(assume_finite=None, working_memory=None):
@@ -36,11 +37,10 @@ def set_config(assume_finite=None, working_memory=None):
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 64.
     """
-    global _ASSUME_FINITE, _WORKING_MEMORY
     if assume_finite is not None:
-        _ASSUME_FINITE = assume_finite
+        _global_config['assume_finite'] = assume_finite
     if working_memory is not None:
-        _WORKING_MEMORY = working_memory
+        _global_config['working_memory'] = working_memory
 
 
 @contextmanager
