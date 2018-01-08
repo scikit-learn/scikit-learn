@@ -640,22 +640,19 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                    minlength=len(labels))[labels]
 
         if average == 'micro' or average == 'binary':
-            num = np.array([tp_sum.sum()])
-            den = np.array([true_sum.sum() + pred_sum.sum() - tp_sum.sum()])
+            tp_sum = np.array([tp_sum.sum()])
+            true_sum = np.array([true_sum.sum()])
+            pred_sum = np.array([pred_sum.sum()])
             weights = None
         elif average == 'macro':
-            num = tp_sum
-            den = true_sum + pred_sum - tp_sum
             weights = None
         elif average == 'weighted':
-            num = tp_sum
-            den = true_sum + pred_sum - tp_sum
             weights = true_sum
         else:
             raise ValueError("In multiclass classification average must be "
                              "one of ('micro', 'macro', 'weighted'), got "
                              "average=%s." % average)
-        score = num / den
+        score = tp_sum / (true_sum + pred_sum - tp_sum)
         return np.average(score, weights=weights)
 
 
