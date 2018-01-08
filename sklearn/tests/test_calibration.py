@@ -110,6 +110,36 @@ def test_cutoff_prefit():
         assert_raises(ValueError, clf_missing_info.fit, X_train, y_train)
 
 
+@ignore_warnings
+def test_cutoff_cv():
+    X, y = make_classification(n_samples=1000, n_features=6, random_state=42,
+                               n_classes=2)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        train_size=0.6,
+                                                        random_state=42)
+    lr = LogisticRegression().fit(X_train, y_train)
+    clf_roc = CutoffClassifier(LogisticRegression(), method='roc', cv=3).fit(
+        X_train, y_train
+    )
+
+    y_pred = lr.predict(X_test)
+    y_pred_roc = clf_roc.predict(X_test)
+
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    tn_roc, fp_roc, fn_roc, tp_roc = confusion_matrix(
+        y_test, y_pred_roc
+    ).ravel()
+
+    tpr = tp / (tp + fn)
+    tnr = tn / (tn + fp)
+
+    tpr_roc = tp_roc / (tp_roc + fn_roc)
+    tnr_roc = tn_roc / (tn_roc + fp_roc)
+
+    # check that the sum of tpr + tnr has improved
+    assert_greater(tpr_roc + tnr_roc, tpr + tnr)
+
 
 @ignore_warnings
 def test_calibration():
