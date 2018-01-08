@@ -1101,14 +1101,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        `coef_` is of shape (1, n_features) when the given problem
-        is binary.
+        `coef_` is of shape (1, n_features) when the given problem is binary.
+        In particular, when `multi_class='multinomial'`, `coef_` corresponds
+        to outcome 1 (True) and `-coef_` corresponds to outcome 0 (False).
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape(1,) when the problem is binary.
+        `intercept_` is of shape (1,) when the given problem is binary.
+        In particular, when `multi_class='multinomial'`, `intercept_`
+        corresponds to outcome 1 (True) and `-intercept_` corresponds to
+        outcome 0 (False).
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
@@ -1348,11 +1352,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             _multi_class = 'ovr'
         else:
             _multi_class = self.multi_class
-        calculate_ovr = self.coef_.shape[0] == 1 or _multi_class == "ovr"
-        if calculate_ovr:
+        if _multi_class == "ovr":
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
-            return softmax(self.decision_function(X), copy=False)
+            decision = self.decision_function(X)
+            if decision.ndim == 1:
+                # Workaround for multi_class="multinomial" and binary outcomes
+                # which requires softmax prediction with only a 1D decision.
+                decision_2d = np.c_[-decision, decision]
+            else:
+                decision_2d = decision
+            return softmax(decision_2d, copy=False)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.

@@ -401,7 +401,7 @@ def class_distribution(y, sample_weight=None):
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
     to make computing AUC or calibration meaningful.
