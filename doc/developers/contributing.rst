@@ -444,15 +444,17 @@ to the documentation, e.g.::
 
     pip install --editable ..
 
-To generate the full web site, including the example gallery (this might take a
-while)::
+To generate the full web site, including the example gallery::
 
     make html
 
-Or, if you'd rather quickly generate the documentation without the example
-gallery::
-
-    make html-noplot
+Generating the example gallery will run all our examples which takes a
+while. To save some time, you can use:
+    - ``make html-noplot``: this will generate the documentation without the
+      example gallery. This is useful when changing a docstring for example.
+    - ``PATTERN=your_regex_goes_here make html-pattern``: only the examples
+      matching ``your_regex_goes_here`` will be run. This is particularly
+      useful if you are modifying a few examples.
 
 That should create all the documentation in the ``_build/html/stable`` directory.
 
