@@ -986,7 +986,8 @@ def test_gamma_auto():
     X, y = [[0.0], [1.0]], [0, 1]
 
     msg = ("The default value of gamma will change from 'auto' to 'scale' in "
-           "version 0.22 to account better for unscaled features.")
+           "version 0.22 to account better for unscaled features. Set gamma "
+           "explicitly to 'auto' or 'scale' to avoid this warning.")
 
     assert_warns_message(DeprecationWarning, msg,
                          svm.SVC().fit, X, y)
