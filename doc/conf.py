@@ -294,7 +294,6 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 
 numpydoc_xref_param_type = True
 
-
 numpydoc_xref_aliases = {
     # python
     'sequence': ':term:`python:sequence`',
