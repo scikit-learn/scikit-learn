@@ -224,6 +224,11 @@ METRIC_UNDEFINED_BINARY = [
     "label_ranking_average_precision_score",
 ]
 
+# Those metrics don't support average=None for multiclass input
+NONE_AVERAGE_UNDEFINED_MULTICLASS = [
+    "jaccard_similarity_score"
+]
+
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
@@ -1142,9 +1147,14 @@ def test_no_averaging_labels():
                                [y_true_multilabel, y_pred_multilabel]]:
             if name not in MULTILABELS_METRICS and y_pred.ndim > 1:
                 continue
+            if name in NONE_AVERAGE_UNDEFINED_MULTICLASS and y_pred.ndim < 2:
+                continue
 
             metric = ALL_METRICS[name]
 
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
-            assert_array_equal(score_labels, score[inverse_labels])
+            if isinstance(score, np.ndarray):
+                assert_array_equal(score_labels, score[inverse_labels])
+            else:
+                assert_almost_equal(score_labels, score)
