@@ -178,8 +178,9 @@ def test_int_overflow_mutual_info_score():
                        np.repeat(3, 3271+204), np.repeat(4, 814+39),
                        np.repeat(5, 316+20)))
     y = np.concatenate((np.repeat(0, 52632), np.repeat(1, 2529),
-                       np.repeat(0, 14660), np.repeat(1, 793), np.repeat(0, 3271),
-                       np.repeat(1, 204), np.repeat(0, 814), np.repeat(1, 39),
+                       np.repeat(0, 14660), np.repeat(1, 793),
+                       np.repeat(0, 3271), np.repeat(1, 204),
+                       np.repeat(0, 814), np.repeat(1, 39),
                        np.repeat(0, 316), np.repeat(1, 20)))
 
     mutual_info_score(x.ravel(), y.ravel())
