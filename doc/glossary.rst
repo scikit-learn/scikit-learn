@@ -89,6 +89,13 @@ General Concepts
         :term:`feature_importances_`.
         Common attributes are listed :ref:`below <glossary_attributes>`.
 
+        A public attribute may have the same name as a constructor
+        :term:`parameter`, with a ``_`` appended.  This is used to store a
+        validated or estimated version of the user's input. For example,
+        :class:`decomposition.PCA` is constructed with an ``n_components``
+        parameter. From this, together with other parameters and the data,
+        PCA estimates the attribute ``n_components_``.
+
         Further private attributes used in prediction/transformation/etc. may
         also be set when fitting.  These begin with a single underscore and are
         not assured to be stable for public access.
