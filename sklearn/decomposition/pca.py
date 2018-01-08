@@ -376,8 +376,9 @@ class PCA(_BasePCA):
             raise TypeError('PCA does not support sparse input. See '
                             'TruncatedSVD for a possible alternative.')
 
-        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
-                        copy=self.copy)
+        X = check_array(X, dtype=[np.float64, np.float32,
+                                  np.complex128, np.complex64],
+                        ensure_2d=True, copy=self.copy)
 
         # Handle n_components==None
         if self.n_components is None:
@@ -404,6 +405,8 @@ class PCA(_BasePCA):
         if svd_solver == 'full':
             return self._fit_full(X, n_components)
         elif svd_solver in ['arpack', 'randomized']:
+            if np.iscomplexobj:
+                raise TypeError("Complex PCA input: Use svd_solver='full'")
             return self._fit_truncated(X, n_components, svd_solver)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
