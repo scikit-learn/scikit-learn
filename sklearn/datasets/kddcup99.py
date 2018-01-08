@@ -234,8 +234,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, random_state=None,
-                          percent10=True):
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
