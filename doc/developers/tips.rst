@@ -27,7 +27,7 @@ We use CircleCI to build the HTML documentation for every pull request. To
 access that documentation, instructions are provided in the :ref:`documentation
 section of the contributor guide <contribute_documentation>`. To save you a few
 clicks, we provide a `userscript
-<https://raw.githubusercontent.com/scikit-learn/scikit-learn/master/build_tools/circle/add_button_for_pr_circleci_doc.user.js>`_
+<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`_
 that adds a button to every PR. After installing the userscript, navigate to
 any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
 appear in the top-right area.
@@ -37,7 +37,7 @@ Folding and unfolding outdated diffs on pull requests
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
 changed in the mean while. This `userscript
-<https://raw.githubusercontent.com/scikit-learn/scikit-learn/master/build_tools/travis/github_outdated_diff.user.js>`_
+<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`_
 provides a shortcut (Control-Alt-P at the time of writing but look at the code
 to be sure) to unfold all such hidden discussions at once, so you can catch up.
 
