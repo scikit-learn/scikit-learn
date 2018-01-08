@@ -288,7 +288,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     X : array-like, dtype=float, size=[n_samples, n_features]
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
-    kernel_type : index of ['linear', 'rbf', 'poly', 'sigmoid', 'precomputed']
+    kernel_type : index of ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
         Type of kernel.
     degree : int
         Degree of the polynomial kernel.
@@ -363,7 +363,7 @@ def predict_proba(
     Parameters
     ----------
     X : array-like, dtype=float
-    kernel_type : index of ['linear', 'rbf', 'poly', 'sigmoid', 'precomputed']
+    kernel_type : index of ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
     Returns
     -------
