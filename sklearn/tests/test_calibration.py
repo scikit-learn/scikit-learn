@@ -36,49 +36,49 @@ def test_cutoff_prefit():
                                                         random_state=42)
     lr = LogisticRegression().fit(X_train, y_train)
 
-    clf = CutoffClassifier(lr, method='roc', cv='prefit').fit(
+    clf_roc = CutoffClassifier(lr, method='roc', cv='prefit').fit(
         X_test[:calibration_samples], y_train[:calibration_samples]
     )
 
     y_pred = lr.predict(X_test[calibration_samples:])
-    y_pred_clf = clf.predict(X_test[calibration_samples:])
+    y_pred_roc = clf_roc.predict(X_test[calibration_samples:])
 
     tn, fp, fn, tp = confusion_matrix(
         y_test[calibration_samples:], y_pred).ravel()
-    tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
-        y_test[calibration_samples:], y_pred_clf).ravel()
+    tn_roc, fp_roc, fn_roc, tp_roc = confusion_matrix(
+        y_test[calibration_samples:], y_pred_roc).ravel()
 
     tpr = tp / (tp + fn)
     tnr = tn / (tn + fp)
 
-    tpr_clf_roc = tp_clf / (tp_clf + fn_clf)
-    tnr_clf_roc = tn_clf / (tn_clf + fp_clf)
+    tpr_roc = tp_roc / (tp_roc + fn_roc)
+    tnr_roc = tn_roc / (tn_roc + fp_roc)
 
     # check that the sum of tpr + tnr has improved
-    assert_greater(tpr_clf_roc + tnr_clf_roc, tpr + tnr)
+    assert_greater(tpr_roc + tnr_roc, tpr + tnr)
 
-    clf = CutoffClassifier(
+    clf_max_tpr = CutoffClassifier(
         lr, method='max_tpr', cv='prefit', min_val_tnr=0.3
     ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
 
-    y_pred_clf = clf.predict(X_test[calibration_samples:])
+    y_pred_max_tpr = clf_max_tpr.predict(X_test[calibration_samples:])
 
-    tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
-        y_test[calibration_samples:], y_pred_clf).ravel()
+    tn_max_tpr, fp_max_tpr, fn_max_tpr, tp_max_tpr = confusion_matrix(
+        y_test[calibration_samples:], y_pred_max_tpr).ravel()
 
-    tpr_clf_max_tpr = tp_clf / (tp_clf + fn_clf)
-    tnr_clf_max_tpr = tn_clf / (tn_clf + fp_clf)
+    tpr_max_tpr = tp_max_tpr / (tp_max_tpr + fn_max_tpr)
+    tnr_max_tpr = tn_max_tpr / (tn_max_tpr + fp_max_tpr)
 
     # check that the tpr increases with tnr >= min_val_tnr
-    assert_greater(tpr_clf_max_tpr, tpr)
-    assert_greater(tpr_clf_max_tpr, tpr_clf_roc)
-    assert_greater_equal(tnr_clf_max_tpr, 0.3)
+    assert_greater(tpr_max_tpr, tpr)
+    assert_greater(tpr_max_tpr, tpr_roc)
+    assert_greater_equal(tnr_max_tpr, 0.3)
 
-    clf = CutoffClassifier(
+    clf_max_tnr = CutoffClassifier(
         lr, method='max_tnr', cv='prefit', min_val_tpr=0.3
     ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
 
-    y_pred_clf = clf.predict(X_test[calibration_samples:])
+    y_pred_clf = clf_max_tnr.predict(X_test[calibration_samples:])
 
     tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
         y_test[calibration_samples:], y_pred_clf).ravel()
@@ -88,8 +88,26 @@ def test_cutoff_prefit():
 
     # check that the tnr increases with tpr >= min_val_tpr
     assert_greater(tnr_clf_max_tnr, tnr)
-    assert_greater(tnr_clf_max_tnr, tnr_clf_roc)
+    assert_greater(tnr_clf_max_tnr, tnr_roc)
     assert_greater_equal(tpr_clf_max_tnr, 0.3)
+
+    # check error cases
+    clf_non_base_estimator = CutoffClassifier([])
+    assert_raises(AttributeError, clf_non_base_estimator.fit, X_train, y_train)
+
+    X_non_binary, y_non_binary = make_classification(
+        n_samples=20, n_features=6, random_state=42, n_classes=4,
+        n_informative=4
+    )
+    assert_raises(ValueError, clf_roc.fit, X_non_binary, y_non_binary)
+
+    clf_foo = CutoffClassifier(lr, method='foo')
+    assert_raises(ValueError, clf_foo.fit, X_train, y_train)
+
+    for method in ['max_tpr', 'max_tnr']:
+        clf_missing_info = CutoffClassifier(lr, method=method)
+        assert_raises(ValueError, clf_missing_info.fit, X_train, y_train)
+
 
 
 @ignore_warnings
