@@ -1067,7 +1067,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             a matrix of term/token counts
         """
         if not sp.issparse(X):
-            X = sp.csc_matrix(X)
+            X = sp.csc_matrix(X, dtype=X.dtype)
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
@@ -1078,7 +1078,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            idf = np.log(float(n_samples) / df) + 1.0
+            idf = np.log(float(n_samples) / df).astype(X.dtype) + 1.0
             self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 

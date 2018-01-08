@@ -995,3 +995,13 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
+
+
+def test_tfidf_dtype():
+    from sklearn.feature_extraction.text import TfidfTransformer
+    import scipy.sparse
+
+    X = scipy.sparse.random(5, 5, dtype=np.float32, random_state=42)
+    X_idf = TfidfTransformer().fit_transform(X)
+    print(X.dtype, X_idf.dtype)
+    # TODO: write a test
