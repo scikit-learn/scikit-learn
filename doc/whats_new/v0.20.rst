@@ -144,6 +144,10 @@ Metrics
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
   ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- :func:`metrics.classification_report` now reports all applicable averages on
+  the given data, including micro, macro and weighted average as well as samples
+  average for multilabel data. :issue:`4558` by :user:`Alexander Pacha <apacha>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
