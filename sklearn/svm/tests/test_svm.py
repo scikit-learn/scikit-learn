@@ -505,27 +505,42 @@ def test_bad_input():
 
 
 def test_unicode_kernel():
-    # Test that a unicode kernel name does not cause a TypeError on clf.fit
+    # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
         # Test unicode (same as str on python3)
-        clf = svm.SVC(kernel=unicode('linear'))
+        clf = svm.SVC(kernel=unicode('linear'), probability=True)
         clf.fit(X, Y)
+        clf.predict(T)
+        clf.predict_proba(T)
+        clf.decision_function(T)
 
         # Test ascii bytes (str is bytes in python2)
-        clf = svm.SVC(kernel=str('linear'))
+        clf = svm.SVC(kernel=str('linear'), probability=True)
         clf.fit(X, Y)
+        clf.predict(T)
+        clf.predict_proba(T)
+        clf.decision_function(T)
     else:
         # Test unicode (str is unicode in python3)
-        clf = svm.SVC(kernel=str('linear'))
+        clf = svm.SVC(kernel=str('linear'), probability=True)
         clf.fit(X, Y)
+        clf.predict(T)
+        clf.predict_proba(T)
+        clf.decision_function(T)
 
         # Test ascii bytes (same as str on python2)
-        clf = svm.SVC(kernel=bytes('linear', 'ascii'))
+        clf = svm.SVC(kernel=bytes('linear', 'ascii'), probability=True)
         clf.fit(X, Y)
+        clf.predict(T)
+        clf.predict_proba(T)
+        clf.decision_function(T)
 
     # Test default behavior on both versions
-    clf = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='linear', probability=True)
     clf.fit(X, Y)
+    clf.predict(T)
+    clf.predict_proba(T)
+    clf.decision_function(T)
 
 
 def test_sparse_precomputed():
