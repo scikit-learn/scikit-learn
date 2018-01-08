@@ -26,6 +26,7 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
+@ignore_warnings
 def test_cutoff_prefit():
     calibration_samples = 200
     X, y = make_classification(n_samples=1000, n_features=6, random_state=42,
