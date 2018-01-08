@@ -146,7 +146,7 @@ Metrics
 
 - :func:`metrics.classification_report` now reports all applicable averages on
   the given data, including micro, macro and weighted average as well as samples
-  average for multilabel data. :issue:`4558` by :user:`Alexander Pacha <apacha>`.
+  average for multilabel data. :issue:`4558` by :user:`Alexander Pacha <apacha>`. 
 
 Linear, kernelized and related models
 
