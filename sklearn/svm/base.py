@@ -181,10 +181,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self._gamma = 1.0
         elif self.gamma == 'auto' or self.gamma == 'auto_deprecated':
             if self.gamma == 'auto_deprecated':
-                warnings.warn("The default gamma parameter value 'auto', "
-                              "calculated as 1 / n_features, will change to "
-                              "'scale' calculated as "
-                              "1 / (n_features * X.std()) in version 0.22.",
+                warnings.warn("The default value of gamma will change from "
+                              "'auto' to 'scale' in version 0.22 to account "
+                              "better for unscaled features.",
                               DeprecationWarning)
             self._gamma = 1.0 / X.shape[1]
         else:
