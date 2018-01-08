@@ -144,8 +144,9 @@ cdef class DistanceMetric:
     ============  ==================  ========================================
     identifier    class name          distance function
     ------------  ------------------  ----------------------------------------
-    "haversine"   HaversineDistance   2 arcsin(sqrt(sin^2(0.5*dx)
-                                             + cos(x1)cos(x2)sin^2(0.5*dy)))
+    "haversine"   HaversineDistance   ``2 arcsin(sqrt(sin^2(0.5*dx)``
+                                      ``+ cos(x1)cos(x2)sin^2(0.5*dy)))``
+    "my distance" MyDistancee         ``x + y``
     ============  ==================  ========================================
 
 

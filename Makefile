@@ -4,7 +4,7 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-PYTEST ?= pytest
+PYTEST ?= py.test
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
