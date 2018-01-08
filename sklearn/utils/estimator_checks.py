@@ -226,6 +226,7 @@ def _yield_all_checks(name, estimator):
         for check in _yield_clustering_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
+    yield check_methods_subset_invariance
     if name != 'GaussianProcess':  # FIXME
         # XXX GaussianProcess deprecated in 0.20
         yield check_fit2d_1sample
@@ -641,6 +642,41 @@ def check_fit2d_predict1d(name, estimator_orig):
         if hasattr(estimator, method):
             assert_raise_message(ValueError, "Reshape your data",
                                  getattr(estimator, method), X[0])
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_methods_subset_invariance(name, estimator_orig):
+    # check that method gives invariant results if applied
+    # one by one or all a the same time.
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    X = pairwise_estimator_convert_X(X, estimator_orig)
+    y = X[:, 0].astype(np.int)
+    estimator = clone(estimator_orig)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    estimator.fit(X, y)
+
+    for method in ["predict", "transform", "decision_function",
+                   "score_samples", "predict_proba"]:
+        if hasattr(estimator, method):
+            func = getattr(estimator, method)
+            res_all = func(X)
+            res_one = [func(X[i].reshape(1, X.shape[1]))
+                       for i in range(X.shape[0])]
+            # func can output tuple (e.g. score_samples)
+            if type(res_all) == tuple:
+                res_all = res_all[0]
+                res_one = list(map(lambda x: x[0], res_one))
+
+            assert_allclose(np.ravel(res_all),
+                            np.ravel(res_one), atol=1e-8)
 
 
 @ignore_warnings
