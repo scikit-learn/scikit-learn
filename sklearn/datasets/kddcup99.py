@@ -234,8 +234,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, random_state=None,
-                          percent10=True):
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -248,13 +247,6 @@ def _fetch_brute_kddcup99(data_home=None,
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
