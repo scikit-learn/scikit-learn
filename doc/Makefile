@@ -54,7 +54,7 @@ html-pattern:
 	rm -rf $(BUILDDIR)/html/_images
 	#rm -rf _build/doctrees/
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable\
-		-D sphinx_gallery_conf.filename_pattern=$(PATTERN)
+		-D sphinx_gallery_conf.filename_pattern="$(PATTERN)"
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 

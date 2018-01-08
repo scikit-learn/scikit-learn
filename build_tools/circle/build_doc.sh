@@ -61,8 +61,8 @@ get_build_type() {
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
-        pattern=$(echo $changed_examples | paste -sd '|')
-        echo $pattern
+        pattern=$(echo "$changed_examples" | paste -sd '|')
+        echo "$pattern"
         return
     fi
     echo QUICK BUILD: no examples/ filename modified in $git_range:
