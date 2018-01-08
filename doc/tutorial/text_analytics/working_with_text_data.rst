@@ -251,7 +251,7 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf-idf
 
 
 Both **tf** and **tf–idf** can be computed as follows::

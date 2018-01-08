@@ -676,7 +676,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     See also
     --------
-    pairwise_distances : pairwise distances.
+    pairwise_distances : Computes the distance between every pair of samples
     """
 
     if metric in PAIRED_DISTANCES:
@@ -1316,6 +1316,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     pairwise_distances_chunked : performs the same calculation as this funtion,
         but returns a generator of chunks of the distance matrix, in order to
         limit memory usage.
+    paired_distances : Computes the distances between corresponding
+                       elements of two arrays
     """
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):

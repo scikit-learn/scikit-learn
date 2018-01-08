@@ -17,13 +17,16 @@ as GitHub gists; to install them, click on the "Raw" button on the gist page.
 .. _TamperMonkey: https://tampermonkey.net
 .. _GreaseMonkey: http://www.greasespot.net
 
+
+.. _viewing_rendered_html_documentation:
+
 Viewing the rendered HTML documentation for a pull request
 ----------------------------------------------------------
 
 We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, we provide a redirect as described in the
+access that documentation, instructions are provided in the
 :ref:`documentation section of the contributor guide
-<contribute_documentation>`. Instead of typing the address by hand, we provide a
+<contribute_documentation>`. To save you a few clicks, we provide a
 `userscript <https://gist.github.com/lesteve/470170f288884ec052bcf4bc4ffe958a>`_
 that adds a button to every PR. After installing the userscript, navigate to any
 GitHub PR; a new button labeled "See CircleCI doc for this PR" should appear in
