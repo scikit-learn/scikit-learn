@@ -2217,7 +2217,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(np.percentile(col, references))
+            self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2262,7 +2262,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    np.percentile(column_data, references))
+                    np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2334,6 +2334,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             #  for inverse transform, match a uniform PDF
             X_col = output_distribution.cdf(X_col)
         # find index for lower and higher bounds
+        # FIXME: NaN will raise a RuntimeWarning in the following
+        # comparison. Comparison with NaN will return False which is also the
+        # behavior that we want.
         lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
                             lower_bound_x)
         upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
@@ -2369,10 +2372,25 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X_col
 
+    @staticmethod
+    def _assert_finite_or_nan(X):
+        """Check that X contain finite or NaN values."""
+        X = np.asanyarray(X)
+        # First try an O(n) time, O(1) space solution for the common case that
+        # everything is finite; fall back to O(n) space np.isfinite to prevent
+        # false positives from overflow in sum method.
+        if (X.dtype.char in np.typecodes['AllFloat']
+                and not np.isfinite(X[~np.isnan(X)].sum())
+                and not np.isfinite(X[~np.isnan(X)]).all()):
+            raise ValueError("Input contains infinity"
+                             " or a value too large for %r." % X.dtype)
+
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
         X = check_array(X, accept_sparse='csc', copy=self.copy,
-                        dtype=[np.float64, np.float32])
+                        dtype=[np.float64, np.float32], force_all_finite=False)
+        # we accept nan values but not infinite values.
+        self._assert_finite_or_nan(X.data if sparse.issparse(X) else X)
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
         if (not accept_sparse_negative and not self.ignore_implicit_zeros and

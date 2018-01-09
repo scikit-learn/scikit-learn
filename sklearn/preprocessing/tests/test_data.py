@@ -944,6 +944,28 @@ def test_quantile_transform_check_error():
                          transformer.transform, 10)
 
 
+def test_quantile_transform_nan():
+    X = np.array([[0, 1],
+                  [0, 0],
+                  [np.nan, 2],
+                  [0, np.nan],
+                  [0, 1]])
+    X_sparse = sparse.csc_matrix(X)
+
+    transformer = QuantileTransformer(n_quantiles=5)
+    X_expected = np.array([[0, 0.5],
+                           [0, 0],
+                           [np.nan, 1],
+                           [0, np.nan],
+                           [0, 0.5]])
+
+    X_trans = transformer.fit_transform(X)
+    assert_almost_equal(X_expected, X_trans)
+
+    X_trans = transformer.fit_transform(X_sparse)
+    assert_almost_equal(X_expected, X_trans.A)
+
+
 def test_quantile_transform_sparse_ignore_zeros():
     X = np.array([[0, 1],
                   [0, 0],
