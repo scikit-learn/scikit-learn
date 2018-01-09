@@ -314,7 +314,8 @@ Limiting Working Memory
 Some calculations when implemented using standard numpy vectorized
 operations involve using a large amount of temporary memory.
 As well as potentially exhausting system memory, memory management
-can overwhelm computation time.  Where computations can be performed
+can overwhelm computation time, or at least, using more memory provides
+negligible speed benefit.  Where computations can be performed
 in fixed-memory chunks, we attempt to do so, and allow the user to
 hint at the maximum size of this working memory (defaulting to 64 MiB)
 using :func:`sklearn.set_config` or :func:`config_context`.
