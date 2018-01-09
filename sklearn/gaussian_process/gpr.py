@@ -63,7 +63,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must have the signature::
 
             def optimizer(obj_func, initial_theta, bounds):
-                # * 'obj_func' is the objective function to be maximized, which
+                # * 'obj_func' is the objective function to be minimized, which
                 #   takes the hyperparameters theta as parameter and an
                 #   optional flag eval_gradient, which determines if the
                 #   gradient is returned additionally to the function value
@@ -245,6 +245,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         K[np.diag_indices_from(K)] += self.alpha
         try:
             self.L_ = cholesky(K, lower=True)  # Line 2
+            # self.L_ changed, self._K_inv needs to be recomputed
+            self._K_inv = None
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
                         "positive definite matrix. Try gradually "
@@ -320,13 +322,18 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             elif return_std:
-                # compute inverse K_inv of K based on its Cholesky
-                # decomposition L and its inverse L_inv
-                L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
-                K_inv = L_inv.dot(L_inv.T)
+                # cache result of K_inv computation
+                if self._K_inv is None:
+                    # compute inverse K_inv of K based on its Cholesky
+                    # decomposition L and its inverse L_inv
+                    L_inv = solve_triangular(self.L_.T,
+                                             np.eye(self.L_.shape[0]))
+                    self._K_inv = L_inv.dot(L_inv.T)
+
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
+                y_var -= np.einsum("ij,ij->i",
+                                   np.dot(K_trans, self._K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.

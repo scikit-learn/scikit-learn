@@ -190,7 +190,7 @@ def max_merge(IntFloatDict a, IntFloatDict b,
         The IntFloatDicts to merge
     mask : ndarray array of dtype integer and of dimension 1
         a mask for keys to ignore: if not mask[key] the corresponding key
-        is skipped in the output dictionnary
+        is skipped in the output dictionary
     n_a, n_b : float
         n_a and n_b are weights for a and b for the merge strategy.
         They are not used in the case of a max merge.
@@ -246,7 +246,7 @@ def average_merge(IntFloatDict a, IntFloatDict b,
         The IntFloatDicts to merge
     mask : ndarray array of dtype integer and of dimension 1
         a mask for keys to ignore: if not mask[key] the corresponding key
-        is skipped in the output dictionnary
+        is skipped in the output dictionary
     n_a, n_b : float
         n_a and n_b are weights for a and b for the merge strategy.
         They are used for a weighted mean.

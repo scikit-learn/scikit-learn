@@ -27,7 +27,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import with_setup
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -85,33 +84,42 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
-@with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
-    res = load_files(LOAD_FILES_ROOT)
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)
-    assert_equal(res.DESCR, None)
-    assert_equal(res.data, [b("Hello World!\n")])
+    try:
+        setup_load_files()
+        res = load_files(LOAD_FILES_ROOT)
+        assert_equal(len(res.filenames), 1)
+        assert_equal(len(res.target_names), 2)
+        assert_equal(res.DESCR, None)
+        assert_equal(res.data, [b("Hello World!\n")])
+    finally:
+        teardown_load_files()
 
 
-@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_w_categories_desc_and_encoding():
-    category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
-    res = load_files(LOAD_FILES_ROOT, description="test",
-                     categories=category, encoding="utf-8")
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 1)
-    assert_equal(res.DESCR, "test")
-    assert_equal(res.data, [u("Hello World!\n")])
+    try:
+        setup_load_files()
+        category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
+        res = load_files(LOAD_FILES_ROOT, description="test",
+                         categories=category, encoding="utf-8")
+        assert_equal(len(res.filenames), 1)
+        assert_equal(len(res.target_names), 1)
+        assert_equal(res.DESCR, "test")
+        assert_equal(res.data, [u("Hello World!\n")])
+    finally:
+        teardown_load_files()
 
 
-@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_wo_load_content():
-    res = load_files(LOAD_FILES_ROOT, load_content=False)
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)
-    assert_equal(res.DESCR, None)
-    assert_equal(res.get('data'), None)
+    try:
+        setup_load_files()
+        res = load_files(LOAD_FILES_ROOT, load_content=False)
+        assert_equal(len(res.filenames), 1)
+        assert_equal(len(res.target_names), 2)
+        assert_equal(res.DESCR, None)
+        assert_equal(res.get('data'), None)
+    finally:
+        teardown_load_files()
 
 
 def test_load_sample_images():
@@ -189,6 +197,8 @@ def test_load_linnerud():
     assert_equal(res.target.shape, (20, 3))
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.data_filename))
+    assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
     X_y_tuple = load_linnerud(return_X_y=True)
@@ -204,6 +214,7 @@ def test_load_iris():
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
@@ -234,6 +245,7 @@ def test_load_breast_cancer():
     assert_equal(res.target.size, 569)
     assert_equal(res.target_names.size, 2)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_breast_cancer(return_X_y=True)
@@ -249,6 +261,7 @@ def test_load_boston():
     assert_equal(res.target.size, 506)
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_boston(return_X_y=True)

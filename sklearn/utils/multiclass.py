@@ -243,6 +243,10 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
+    sparseseries = (y.__class__.__name__ == 'SparseSeries')
+    if sparseseries:
+        raise ValueError("y cannot be class 'SparseSeries'.")
+
     if is_multilabel(y):
         return 'multilabel-indicator'
 
@@ -397,7 +401,7 @@ def class_distribution(y, sample_weight=None):
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
     to make computing AUC or calibration meaningful.

@@ -110,8 +110,8 @@ class FitFailedWarning(RuntimeWarning):
     >>> from sklearn.exceptions import FitFailedWarning
     >>> import warnings
     >>> warnings.simplefilter('always', FitFailedWarning)
-    >>> gs = GridSearchCV(LinearSVC(), {'C': [-1, -2]}, error_score=0)
-    >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8], [8, 9]], [0, 0, 0, 1, 1]
+    >>> gs = GridSearchCV(LinearSVC(), {'C': [-1, -2]}, error_score=0, cv=2)
+    >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8]], [0, 0, 1, 1]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
     ...         gs.fit(X, y)   # This will raise a ValueError since C is < 0

@@ -37,24 +37,26 @@ if [[ "$DISTRIB" == "conda" ]]; then
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
 
-    # Configure the conda environment and put it in the path using the
-    # provided versions
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-            mkl cython=$CYTHON_VERSION \
-            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
-            
-    else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-            nomkl cython=$CYTHON_VERSION \
-            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
-    fi
-    source activate testenv
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
+                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+                cython=$CYTHON_VERSION"
 
-    # Install nose-timer via pip
-    pip install nose-timer
+    if [[ "$INSTALL_MKL" == "true" ]]; then
+        TO_INSTALL="$TO_INSTALL mkl"
+    else
+        TO_INSTALL="$TO_INSTALL nomkl"
+    fi
+
+    if [[ -n "$PANDAS_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
+    fi
+
+    if [[ -n "$PYAMG_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
+    fi
+
+    conda create -n testenv --yes $TO_INSTALL
+    source activate testenv
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -65,7 +67,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer cython
+    pip install pytest pytest-cov cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
@@ -77,8 +79,8 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy
-    pip install nose nose-timer cython
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+    pip install pytest pytest-cov
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -89,8 +91,8 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     pip install sphinx numpydoc  # numpydoc requires sphinx
 fi
 
-if [[ "$SKIP_TESTS" == "true" ]]; then
-    echo "No need to build scikit-learn when not running the tests"
+if [[ "$SKIP_TESTS" == "true" && "$CHECK_PYTEST_SOFT_DEPENDENCY" != "true" ]]; then
+    echo "No need to build scikit-learn"
 else
     # Build scikit-learn in the install.sh script to collapse the verbose
     # build output in the travis output when it succeeds.
@@ -111,8 +113,5 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    # flake8 version is temporarily set to 2.5.1 because the next
-    # version available on conda (3.3.0) has a bug that checks non
-    # python files and cause non meaningful flake8 errors
-    conda install --yes flake8=2.5.1
+    conda install flake8 -y
 fi

@@ -142,9 +142,13 @@ def test_check_array():
     # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
-    # ensure_2d=True
+    # ensure_2d=True with 1d array
     assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
                          check_array, [0, 1, 2], ensure_2d=True)
+    # ensure_2d=True with scalar array
+    assert_raise_message(ValueError,
+                         'Expected 2D array, got scalar array instead',
+                         check_array, 10, ensure_2d=True)
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
     assert_raises(ValueError, check_array, X_ndim)
@@ -435,6 +439,45 @@ def test_check_array_min_samples_and_features_messages():
     X_checked, y_checked = check_X_y(X, y, allow_nd=True)
     assert_array_equal(X, X_checked)
     assert_array_equal(y, y_checked)
+
+
+def test_check_array_complex_data_error():
+    X = np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # list of lists
+    X = [[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # tuple of tuples
+    X = ((1 + 2j, 3 + 4j, 5 + 7j), (2 + 3j, 4 + 5j, 6 + 7j))
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # list of np arrays
+    X = [np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j])]
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # tuple of np arrays
+    X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j]))
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # dataframe
+    X = MockDataFrame(
+        np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]))
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # sparse matrix
+    X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
 
 
 def test_has_fit_parameter():

@@ -19,14 +19,16 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
@@ -187,7 +189,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = clone(pipe)
+    pipe2 = assert_no_warnings(clone, pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
@@ -288,7 +290,7 @@ def test_pipeline_raise_set_params_error():
                  'with `estimator.get_params().keys()`.')
 
     assert_raise_message(ValueError,
-                         error_msg % ('fake', 'Pipeline'),
+                         error_msg % ('fake', pipe),
                          pipe.set_params,
                          fake='nope')
 
@@ -420,6 +422,10 @@ def test_feature_union():
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
+
+    # Test clone
+    fs2 = assert_no_warnings(clone, fs)
+    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
 
     # test setting parameters
     fs.set_params(select__k=2)
@@ -857,6 +863,16 @@ def test_step_name_validation():
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
             assert_raise_message(ValueError, message, est.fit_transform,
                                  [[1]], [1])
+
+
+def test_set_params_nested_pipeline():
+    estimator = Pipeline([
+        ('a', Pipeline([
+            ('b', DummyRegressor())
+        ]))
+    ])
+    estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
+    estimator.set_params(a__steps=[('b', LogisticRegression())], a__b__C=5)
 
 
 def test_pipeline_wrong_memory():
