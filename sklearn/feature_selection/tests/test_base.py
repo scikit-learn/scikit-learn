@@ -49,7 +49,7 @@ def ScoreFunction(X, y, **kwargs):
 
     score_func_ret = spearmanr(X, y, **kwargs)
 
-    if isinstance(score_func_ret, (list, tuple)):
+    if isinstance(score_func_ret, tuple):
         score, p_val = score_func_ret
     else:
         score = score_func_ret

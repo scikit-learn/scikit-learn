@@ -168,7 +168,7 @@ def featurewise_scorer(score_func, **kwargs):
         for i in six.moves.range(X.shape[1]):
             score_func_ret = score_func(X[:, i], y, **kwargs)
 
-            if isinstance(score_func_ret, (list, tuple)):
+            if isinstance(score_func_ret, tuple):
                 score, p_val = score_func_ret
                 p_vals.append(p_val)
             else:
