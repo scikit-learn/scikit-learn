@@ -1200,9 +1200,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         A contiguous slice of distance matrix, optionally processed by
         ``reduce_func``.
 
-    Example
+    Examples
     -------
-
     Without reduce_func:
 
     >>> X = np.random.RandomState(0).rand(5, 3)
@@ -1238,9 +1237,6 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh = next(pairwise_distances_chunked(X, reduce_func=reduce_func))
     >>> neigh
     [array([0, 3]), array([0, 1]), array([2]), array([0, 3]), array([4])]
-
-    case where we want to get the indices and average
-    distance of the neighborhood for each point in X, but the radius
     """
     n_samples_X = _num_samples(X)
     if metric == 'precomputed':
