@@ -1233,7 +1233,6 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     assert_array_equal(prediction, np.ones(10), err_msg=error_predict)
 
 
-
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(name, classifier_orig):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)

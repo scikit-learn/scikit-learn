@@ -294,8 +294,8 @@ def test_check_estimator():
            "after sample_weight trimming.")
     assert_raises_regex(AssertionError, msg,
                         check_estimator, OneClassSampleErrorClassifier)
-    msg =  ("Unexpected prediction results, "
-            "should only output remaining class.")
+    msg = ("Unexpected prediction results, "
+           "should only output remaining class.")
     assert_raises_regex(AssertionError, msg,
                         check_estimator, OneClassSampleErrorClassifierPredict)
     # doesn't error on actual estimator
