@@ -1237,6 +1237,15 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh = next(pairwise_distances_chunked(X, reduce_func=reduce_func))
     >>> neigh
     [array([0, 3]), array([0, 1]), array([2]), array([0, 3]), array([4])]
+
+    Force row-by-row generation by reducing ``working_memory``:
+
+    >>> gen = pairwise_distances_chunked(X, reduce_func=reduce_func,
+    ...                                  working_memory=0)
+    >>> next(gen)
+    [array([0, 3])]
+    >>> next(gen)
+    [array([0, 1])]
     """
     n_samples_X = _num_samples(X)
     if metric == 'precomputed':
