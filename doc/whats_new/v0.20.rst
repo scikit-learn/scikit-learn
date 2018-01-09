@@ -72,6 +72,8 @@ Preprocessing
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
   :user:`Maniteja Nandana <maniteja123>`.
 
+- :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
+  :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation
 
