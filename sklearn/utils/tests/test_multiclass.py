@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.multiclass import unique_labels
@@ -28,6 +29,7 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import _ovr_decision_function
 
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
@@ -381,3 +383,47 @@ def test_safe_split_with_precomputed_kernel():
     K_test, y_test2 = _safe_split(clfp, K, y, test, train)
     assert_array_almost_equal(K_test, np.dot(X_test, X_train.T))
     assert_array_almost_equal(y_test, y_test2)
+
+
+def test_ovr_decision_function():
+    # test properties for ovr decision function
+
+    predictions = np.array([[0, 0, 1],
+                            [0, 1, 0],
+                            [0, 1, 1],
+                            [0, 1, 1]])
+
+    confidences = np.array([[1., 1., 5.],
+                            [1., 2., -3.],
+                            [-5., 2., 5.],
+                            [-0.5, 0.2, 0.5]])
+
+    n_classes = 3
+
+    dec_values = _ovr_decision_function(predictions, confidences, n_classes)
+
+    # check that the decision values are within 0.5 range of the votes
+    votes = np.array([[2, 0, 1],
+                      [1, 1, 1],
+                      [1, 0, 2],
+                      [1, 0, 2]])
+
+    assert_allclose(votes, dec_values, atol=0.5)
+
+    # check that the prediction are what we expect
+    # highest vote or highest confidence if there is a tie
+    # for the second sample we have a tie (should be one by 1)
+    expected_prediction = np.array([0, 1, 2, 2])
+    assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
+
+    # as confidence is higher on the 3rd sample for the
+    # two last classifier, dec value should also be higher
+    # for the third class
+    assert_true(dec_values[2, 2] > dec_values[3, 2])
+
+    # assert subset invariance.
+    dec_values_one = [_ovr_decision_function(np.array([predictions[i]]),
+                                             np.array([confidences[i]]),
+                                             n_classes) for i in range(4)]
+
+    assert_allclose(dec_values, dec_values_one, atol=1e-6)
