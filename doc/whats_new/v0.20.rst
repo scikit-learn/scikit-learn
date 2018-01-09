@@ -142,7 +142,8 @@ Model evaluation and meta-estimators
 - Added optional parameter ``verbose`` in :class:`pipeline.Pipeline` and
   :class:`pipeline.FeatureUnion` and corresponding ``make_`` helpers for
   showing progress and timing of each step. :issue:`9668` by :user:`Baze
-  Petrushev <petrushev>` and :user:`Karan Desai <karandesai-96>`.
+  Petrushev <petrushev>`, :user:`Karan Desai <karandesai-96>` and `Joel
+  Nothman`_.
 
 Metrics
 

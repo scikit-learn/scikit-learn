@@ -5,9 +5,11 @@ Test the pipeline module.
 from tempfile import mkdtemp
 import shutil
 import time
+import re
 
 import numpy as np
 from scipy import sparse
+import pytest
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
@@ -986,85 +988,39 @@ def test_make_pipeline_memory():
 
     shutil.rmtree(cachedir)
 
-def check_pipeline_verbosity_fit_predict(pipe_method):
-    # Test that the verbosity of pipeline is proper
-    from sklearn.externals.six.moves import cStringIO as StringIO
-    import sys
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    pipe_method(X=None, y=None, clf__should_succeed=True)
-    verbose_output = sys.stdout
-    sys.stdout = old_stdout
 
-    # check output
-    verbose_output.seek(0)
-    lines = verbose_output.readlines()
-    assert_true('(step 1 of 2) transf' in lines[0])
-    assert_true('(step 2 of 2) clf' in lines[1])
-    assert_true('Total time elapsed' in lines[2])
-    for line in lines:
-        assert line.startswith('[Pipeline]')
+@pytest.mark.parametrize(['est', 'pattern'], [
+    (Pipeline([('transf', Transf()), ('clf', FitParamT())]),
+     r'''\[Pipeline\].*\(step 1 of 2\) Fitting transf.* elapsed=.*\n'''
+     r'''\[Pipeline\].*\(step 2 of 2\) Fitting clf.* elapsed=.*\n$'''),
+    (Pipeline([('transf', Transf()), ('clf', None)]),
+     r'''\[Pipeline\].*\(step 1 of 1\) Fitting transf.* elapsed=.*\n$'''),
+    (Pipeline([('transf', None), ('mult', Mult())]),
+     r'''\[Pipeline\].*\(step 1 of 1\) Fitting mult.* elapsed=.*\n$'''),
+    (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
+     r'''\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* elapsed=.*\n'''
+     r'''\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* elapsed=.*\n$'''),
+    (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+     r'''\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* elapsed=.*\n$'''),
+])
+@pytest.mark.parametrize('method', ['fit', 'fit_transform', 'fit_predict'])
+def test_verbose(est, method, pattern, capsys):
+    try:
+        func = getattr(est, method)
+    except AttributeError:
+        return
+    # XXX: getattr(Pipeline(...), 'fit_transform') is always True
+    if (method == 'fit_transform' and hasattr(est, 'steps') and
+            type(est.steps[-1][1]).__name__ == 'FitParamT'):
+        return
 
-def test_pipeline_fit_verbosity():
-    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())], verbose=True)
-    yield check_pipeline_verbosity_fit_predict, pipe.fit
-    yield check_pipeline_verbosity_fit_predict, pipe.fit_predict
+    X = [[1, 2, 3], [4, 5, 6]]
+    y = [[7], [8]]
 
+    est.set_params(verbose=False)
+    func(X, y)
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
 
-def check_pipeline_verbosity_fit_transform(pipe_method, last_was_none=False):
-    # Test that the verbosity of pipeline is proper
-    from sklearn.externals.six.moves import cStringIO as StringIO
-    import sys
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    pipe_method(X=[[1, 2, 3], [4, 5, 6]], y=[[7], [8]])
-    verbose_output = sys.stdout
-    sys.stdout = old_stdout
-
-    # check output
-    verbose_output.seek(0)
-    lines = verbose_output.readlines()
-    assert_true('(step 1 of 2) mult1' in lines[0])
-    assert_true(lines[0].startswith('[Pipeline]'))
-    if last_was_none:
-        assert_true('Step mult2 is NoneType' in lines[1])
-    else:
-        assert_true('(step 2 of 2) mult2' in lines[1])
-    assert_true('Total time elapsed' in lines[2])
-
-
-def test_pipeline_verbosity_fit_transform():
-    pipe = Pipeline([('mult1', Mult(mult=1)), ('mult2', Mult(mult=2))],
-                    verbose=True)
-    yield check_pipeline_verbosity_fit_transform, pipe.fit_transform
-    pipe = Pipeline([('mult1', Mult(mult=1)), ('mult2', None)],
-                    verbose=True)
-    yield check_pipeline_verbosity_fit_transform, pipe.fit_transform, True
-
-
-def check_feature_union_verbosity(feature_union_method):
-    # Test that the verbosity of feature union is proper
-    from sklearn.externals.six.moves import cStringIO as StringIO
-    import sys
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    feature_union_method(X=[[1, 2, 3], [4, 5, 6]], y=[[7], [8]])
-    verbose_output = sys.stdout
-    sys.stdout = old_stdout
-
-    # check output
-    verbose_output.seek(0)
-    lines = verbose_output.readlines()
-    assert_true('(step 1 of 2) mult1' in lines[0])
-    assert_true('(step 2 of 2) mult2' in lines[1])
-    assert_true('Total time elapsed' in lines[2])
-    assert_true(lines[0].startswith('[FeatureUnion]'))
-    assert_true(lines[1].startswith('[FeatureUnion]'))
-    assert_true(lines[2].startswith('[FeatureUnion]'))
-
-
-def test_feature_union_verbosity():
-    union = FeatureUnion([('mult1', Mult(mult=1)), ('mult2', Mult(mult=2))],
-                         verbose=True)
-    yield check_feature_union_verbosity, union.fit
-    yield check_feature_union_verbosity, union.fit_transform
+    est.set_params(verbose=True)
+    func(X, y)
+    assert re.match(pattern, capsys.readouterr().out)

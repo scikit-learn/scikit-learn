@@ -22,8 +22,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import (indexable, check_random_state, safe_indexing,
-                    message_with_time)
+from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
 from .utils.multiclass import type_of_target
@@ -1701,7 +1700,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 2:
         msg += ", score=%f" % test_score
     if verbose > 1:
-        print(message_with_time('CV', msg, scoring_time))
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_score] if return_train_score else []
     ret.extend([test_score, _num_samples(X_test), scoring_time])

@@ -2,6 +2,8 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections import Sequence
+from contextlib import contextmanager
+import time as _time
 
 import numpy as np
 from scipy.sparse import issparse
@@ -508,21 +510,46 @@ def indices_to_mask(indices, mask_length):
     return mask
 
 
-def message_with_time(source, message, time_):
+def message_with_time(source, message, time):
     """Create one line message for logging purposes
 
     Parameters
     ----------
-    source: str
+    source : str
         String indicating the source or the reference of the message
 
-    message: str
+    message : str
         Short message
 
-    time_: int
+    time : int
         Time in seconds
     """
     start_message = '[%s]' % (source,)
-    end_message = "%s, total=%s" % (message, logger.short_format_time(time_))
+    end_message = "%s, elapsed=%s" % (message, logger.short_format_time(time))
     dots_len = (68 - len(start_message) - len(end_message))
     return ("%s %s %s" % (start_message, dots_len * '.', end_message))
+
+
+@contextmanager
+def log_elapsed(source, message):
+    """Log elapsed time to stdout when the context is exited
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str or None
+        Short message. If None, nothing will be printed
+
+    Returns
+    -------
+    context_manager
+        Prints elapsed time upon exit if verbose
+    """
+    if message is None:
+        yield
+    else:
+        start = _time.time()
+        yield
+        print(message_with_time(source, message, _time.time() - start))
