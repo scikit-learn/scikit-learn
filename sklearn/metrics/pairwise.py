@@ -1199,6 +1199,48 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     D_chunk : array or sparse matrix
         A contiguous slice of distance matrix, optionally processed by
         ``reduce_func``.
+
+    Example
+    -------
+
+    Without reduce_func:
+
+    >>> X = np.random.RandomState(0).rand(5, 3)
+    >>> D_chunk = next(pairwise_distances_chunked(X))
+    >>> D_chunk  # doctest: +ELLIPSIS
+    array([[ 0.  ...,  0.29...,  0.41...,  0.19...,  0.57...],
+           [ 0.29...,  0.  ...,  0.57...,  0.41...,  0.76...],
+           [ 0.41...,  0.57...,  0.  ...,  0.44...,  0.90...],
+           [ 0.19...,  0.41...,  0.44...,  0.  ...,  0.51...],
+           [ 0.57...,  0.76...,  0.90...,  0.51...,  0.  ...]])
+
+    Retrieve all neighbors and average distance within radius r:
+
+    >>> r = .2
+    >>> def reduce_func(D_chunk, start):
+    ...     neigh = [np.flatnonzero(d < r) for d in D_chunk]
+    ...     avg_dist = np.ma.masked_array(D_chunk, D_chunk < r).mean(axis=1)
+    ...     return neigh, avg_dist
+    >>> gen = pairwise_distances_chunked(X, reduce_func=reduce_func)
+    >>> neigh, avg_dist = next(gen)
+    >>> neigh
+    [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
+    >>> avg_dist.data  # doctest: +ELLIPSIS
+    array([ 0.427...,  0.513...,  0.586...,  0.459... ,  0.687...])
+
+    Where r is defined per sample, we need to make use of ``start``:
+
+    >>> r = [.2, .4, .4, .3, .1]
+    >>> def reduce_func(D_chunk, start):
+    ...     neigh = [np.flatnonzero(d < r[i])
+    ...              for i, d in enumerate(D_chunk, start)]
+    ...     return neigh
+    >>> neigh = next(pairwise_distances_chunked(X, reduce_func=reduce_func))
+    >>> neigh
+    [array([0, 3]), array([0, 1]), array([2]), array([0, 3]), array([4])]
+
+    case where we want to get the indices and average
+    distance of the neighborhood for each point in X, but the radius
     """
     n_samples_X = _num_samples(X)
     if metric == 'precomputed':
