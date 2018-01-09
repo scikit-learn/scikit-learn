@@ -182,6 +182,40 @@ class OneClassSampleErrorClassifier(BaseBadClassifier):
         return np.ones(X.shape[0])
 
 
+class OneClassSampleErrorClassifierPredict(BaseBadClassifier):
+
+    def __init__(self, flag=False):
+        self.flag = flag
+
+    def fit(self, X, y, sample_weight=None):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+
+        cls, y = np.unique(y, return_inverse=True)
+        nb_cls = cls.shape[0]
+        if nb_cls < 2:
+            raise ValueError("normal class error")
+
+        # find the number of class after trimming
+        if sample_weight is not None:
+            nb_cls = cls.shape[0]
+            if len(sample_weight) > 0:
+                nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
+            if nb_cls < 2:
+                self.flag = True
+
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        if self.flag:
+            return np.zeros(X.shape[0])
+        return np.ones(X.shape[0])
+
+
 def assert_raises_with_message_in_print(estimator, msg):
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
@@ -254,10 +288,16 @@ def test_check_estimator():
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     assert_raises_with_message_in_print(NoSparseClassifier, msg)
     # check that one label fit with classifier
-    msg = "Classifier can't train when only one class is present"
+    msg = "Classifier can't train when only one class is present."
     assert_raises_with_message_in_print(OneClassErrorClassifier, msg)
-    assert_raises_with_message_in_print(OneClassSampleErrorClassifier, msg)
-
+    msg = ("Classifier can't train when only one class is present "
+           "after sample_weight trimming.")
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, OneClassSampleErrorClassifier)
+    msg =  ("Unexpected prediction results, "
+            "should only output remaining class.")
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, OneClassSampleErrorClassifierPredict)
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
     check_estimator(AdaBoostClassifier())

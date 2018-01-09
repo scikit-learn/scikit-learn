@@ -604,7 +604,7 @@ class BaseDiscreteNB(BaseNB):
             Y *= check_array(sample_weight).T
 
         # find the number of class after trimming used for complementNB
-        self.nb_trim_classes_ = np.sum(np.sum(Y, axis=0) > 0)
+        self._n_trim_classes_ = np.sum(np.sum(Y, axis=0) > 0)
 
         class_prior = self.class_prior
 
@@ -838,7 +838,7 @@ class ComplementNB(BaseDiscreteNB):
 
         X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
-        if len(self.classes_) == 1 or self.nb_trim_classes_ == 1:
+        if self._n_trim_classes_ == 1:
             jll += self.class_log_prior_
         return jll
 

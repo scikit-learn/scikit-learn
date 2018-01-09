@@ -504,13 +504,13 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         cls, y = np.unique(y_, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         # find the number of class after trimming
-        nb_cls = cls.shape[0]
+        n_classes = cls.shape[0]
         if sample_weight.shape[0] > 0:
-            nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
-        if nb_cls < 2:
+            n_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_classes < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                " class" % nb_cls)
+                " class" % n_classes)
 
         self.classes_ = cls
 

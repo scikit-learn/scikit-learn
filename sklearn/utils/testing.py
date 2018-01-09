@@ -113,6 +113,10 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 
+assert_regex_matches = _dummy.assertRegex
+# same as the previous regexp is deprecated in Python 3.4
+assert_regexp_matches = assert_regex_matches
+
 
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.

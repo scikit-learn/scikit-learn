@@ -230,17 +230,17 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                          dtype=np.float64, order="C")
         check_classification_targets(y)
         self.classes_ = np.unique(y)
-        nb_cls = self.classes_.shape[0]
+        n_classes = self.classes_.shape[0]
 
         # check nb_class after trimming with sample weight
         if sample_weight is not None:
             _, y_int = np.unique(y, return_inverse=True)
-            nb_cls = np.count_nonzero(np.bincount(y_int, sample_weight))
+            n_classes = np.count_nonzero(np.bincount(y_int, sample_weight))
 
-        if nb_cls < 2:
+        if n_classes < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                " class" % nb_cls)
+                " class" % n_classes)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
