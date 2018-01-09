@@ -689,21 +689,17 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
+    new_sum = X.sum(axis=0)
 
     new_sample_count = X.shape[0]
     updated_sample_count = last_sample_count + new_sample_count
-
-    if not np.isfinite(X).all():
-        new_sum = np.nanmean(X, axis=0) * new_sample_count
-    else:
-        new_sum = X.sum(axis=0)
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
 
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
+        new_unnormalized_variance = X.var(axis=0) * new_sample_count
         if last_sample_count == 0:  # Avoid division by 0
             updated_unnormalized_variance = new_unnormalized_variance
         else:
