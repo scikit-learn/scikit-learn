@@ -142,9 +142,9 @@ def featurewise_scorer(score_func, **kwargs):
     Notes
     -----
     This wrapper function wraps around scoring functions like `spearmanr`,
-    `pearsonr` etc. from the scipy.stats module and makes it usable for
+    `pearsonr` etc. from the `scipy.stats` module and makes it usable for
     feature selection algorithms like `SelectKBest`. Also, this wrapper
-    function takes the absolute value of the scores returned i.e. a score of
+    function returns the absolute value of the scores i.e. a score of
     +1 is same as -1.
 
     Example

@@ -114,6 +114,32 @@ samples for accurate estimation.
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_f_test_vs_mi.py`
 
+Wrapper for using SciPy score functions
+---------------------------------------
+
+The score functions in `scipy.stats` work on feature vectors whereas we need
+scoring functions that work on a matrix. This makes it difficult for us to use
+feature selection algorithms like :class:`SelectKBest` with score functions
+from `scipy.stats`.
+:func:`featurewise_scorer` is a wrapper function which wraps around scoring
+functions like `spearmanr`, `pearsonr` etc. from the `scipy.stats` module and
+makes it usable for feature selection algorithms like :class:`SelectKBest`,
+:class:`SelectPercentile` etc.
+
+The following example illustrates it's usage:
+
+  >>> from sklearn.feature_selection import featurewise_scorer, SelectKBest
+  >>> from scipy.stats import spearmanr
+  >>> from sklearn.datasets import make_classification
+  >>> X, y = make_classification(random_state=0)
+  >>> skb = SelectKBest(featurewise_scorer(spearmanr, axis=0), k=10)
+  >>> skb.fit(X, y) #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  SelectKBest(k=10, score_func=...)
+  >>> new_X = skb.transform(X)
+
+This wrapper function returns the absolute value of the scores i.e. a score of
++1 is same as -1.
+
 .. _rfe:
 
 Recursive feature elimination
