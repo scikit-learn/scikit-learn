@@ -939,7 +939,6 @@ def test_multilabel_hamming_loss():
     assert_warns(DeprecationWarning, hamming_loss, y1, y2, classes=[0, 1])
 
 
-@ignore_warnings
 def test_jaccard_similarity_score():
     y_true = np.array([0, 0])
     y_pred = np.array([0, 0])
