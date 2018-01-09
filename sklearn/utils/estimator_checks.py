@@ -677,13 +677,13 @@ def check_methods_subset_invariance(name, estimator_orig):
                 res_all = res_all[0]
                 res_one = list(map(lambda x: x[0], res_one))
             # TODO remove cases when corrected
-            if [name, method] in [['SVC', 'decision_function'],
-                                  ['SparsePCA', 'transform'],
-                                  ['MiniBatchSparsePCA', 'transform'],
-                                  ['BernoulliRBM', 'score_samples']]:
+            if (name, method) in [('SVC', 'decision_function'),
+                                  ('SparsePCA', 'transform'),
+                                  ('MiniBatchSparsePCA', 'transform'),
+                                  ('BernoulliRBM', 'score_samples')]:
                 raise SkipTest(msg)
             assert_allclose(np.ravel(res_all), np.ravel(res_one),
-                            atol=1e-8, err_msg=msg)
+                            atol=1e-7, err_msg=msg)
 
 
 @ignore_warnings
