@@ -37,9 +37,9 @@ def _check_predict_proba(clf, X, y):
     for k in range(n_outputs):
         assert_equal(proba[k].shape[0], n_samples)
         assert_equal(proba[k].shape[1], len(np.unique(y[:, k])))
-        assert_array_equal(proba[k].sum(axis=1), np.ones(len(X)))
+        assert_array_almost_equal(proba[k].sum(axis=1), np.ones(len(X)))
         # We know that we can have division by zero
-        assert_array_equal(np.log(proba[k]), log_proba[k])
+        assert_array_almost_equal(np.log(proba[k]), log_proba[k])
 
 
 def _check_behavior_2d(clf):
@@ -77,10 +77,10 @@ def _check_behavior_2d_for_constant(clf):
 
 def _check_equality_regressor(statistic, y_learn, y_pred_learn,
                               y_test, y_pred_test):
-    assert_array_equal(np.tile(statistic, (y_learn.shape[0], 1)),
-                       y_pred_learn)
-    assert_array_equal(np.tile(statistic, (y_test.shape[0], 1)),
-                       y_pred_test)
+    assert_array_almost_equal(np.tile(statistic, (y_learn.shape[0], 1)),
+                              y_pred_learn)
+    assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)),
+                              y_pred_test)
 
 
 def test_most_frequent_and_prior_strategy():
@@ -94,11 +94,11 @@ def test_most_frequent_and_prior_strategy():
         _check_predict_proba(clf, X, y)
 
         if strategy == "prior":
-            assert_array_equal(clf.predict_proba([X[0]]),
-                               clf.class_prior_.reshape((1, -1)))
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
+                                      clf.class_prior_.reshape((1, -1)))
         else:
-            assert_array_equal(clf.predict_proba([X[0]]),
-                               clf.class_prior_.reshape((1, -1)) > 0.5)
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
+                                      clf.class_prior_.reshape((1, -1)) > 0.5)
 
 
 def test_most_frequent_and_prior_strategy_multioutput():
@@ -599,21 +599,24 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
 
 
-def test_dummy_classifier_on_nan_value():
-    X = [[np.NaN]]
-    y = [1]
-    y_expected = [1]
-    clf = DummyClassifier()
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
+def test_dummy_regressor_on_3D_array():
+    X = np.array([[['foo']], [['bar']], [['baz']]])
+    y = np.array([2, 2, 2])
+    y_expected = np.array([2, 2, 2])
+    cls = DummyRegressor()
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
     assert_array_equal(y_pred, y_expected)
 
 
-def test_dummy_regressor_on_nan_value():
-    X = [[np.NaN]]
-    y = [1]
-    y_expected = [1]
-    clf = DummyRegressor()
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
+def test_dummy_classifier_on_3D_array():
+    X = np.array([[['foo']], [['bar']], [['baz']]])
+    y = [2, 2, 2]
+    y_expected = [2, 2, 2]
+    y_proba_expected = [[1], [1], [1]]
+    cls = DummyClassifier()
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
+    y_pred_proba = cls.predict_proba(X)
     assert_array_equal(y_pred, y_expected)
+    assert_array_equal(y_pred_proba, y_proba_expected)

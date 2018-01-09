@@ -158,6 +158,8 @@ class Isomap(BaseEstimator, TransformerMixin):
             numpy array, precomputed tree, or NearestNeighbors
             object.
 
+        y: Ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -173,6 +175,8 @@ class Isomap(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix, BallTree, KDTree}
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y: Ignored
 
         Returns
         -------

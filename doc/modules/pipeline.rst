@@ -14,7 +14,7 @@ Pipeline: chaining estimators
 :class:`Pipeline` can be used to chain multiple estimators
 into one. This is useful as there is often a fixed sequence
 of steps in processing the data, for example feature selection, normalization
-and classification. :class:`Pipeline` serves two purposes here:
+and classification. :class:`Pipeline` serves multiple purposes here:
 
 Convenience and encapsulation
     You only have to call ``fit`` and ``predict`` once on your
@@ -164,7 +164,7 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transfomers**
+.. warning:: **Side effect of caching transformers**
 
    Using a :class:`Pipeline` without cache enabled, it is possible to
    inspect the original instance such as::

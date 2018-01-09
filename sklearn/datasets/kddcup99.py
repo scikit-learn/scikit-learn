@@ -140,7 +140,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         Whether to shuffle dataset.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
+        Random state for shuffling the dataset. If subset='SA', this random
+        state is also used to randomly select the small proportion of abnormal
+        samples.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -175,7 +177,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99 = _fetch_brute_kddcup99(data_home=data_home, shuffle=shuffle,
+    kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
                                      percent10=percent10,
                                      download_if_missing=download_if_missing)
 
@@ -225,12 +227,14 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         if subset == 'SF':
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
 
+    if shuffle:
+        data, target = shuffle_method(data, target, random_state=random_state)
+
     return Bunch(data=data, target=target)
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, random_state=None,
-                          shuffle=False, percent10=True):
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -243,16 +247,6 @@ def _fetch_brute_kddcup99(data_home=None,
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    shuffle : bool, default=False
-        Whether to shuffle dataset.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
@@ -371,9 +365,6 @@ def _fetch_brute_kddcup99(data_home=None,
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-
-    if shuffle:
-        X, y = shuffle_method(X, y, random_state=random_state)
 
     return Bunch(data=X, target=y, DESCR=__doc__)
 

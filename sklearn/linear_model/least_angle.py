@@ -98,12 +98,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0.
-        When using this option together with method 'lasso' the model
+        This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
-        for small values of alpha (neither will they when using method 'lar'
-        ..). Only coefficients up to the smallest alpha value
-        (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by the
-        stepwise Lars-Lasso algorithm are typically in congruence with the
+        for small values of alpha. Only coefficients up to the smallest alpha
+        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
+        the stepwise Lars-Lasso algorithm are typically in congruence with the
         solution of the coordinate descent lasso_path function.
 
     Returns
@@ -145,6 +144,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
+    if method == 'lar' and positive:
+        warnings.warn('positive option is broken for Least'
+                      ' Angle Regression (LAR). Use method="lasso".'
+                      ' This option will be removed in version 0.22.',
+                      DeprecationWarning)
 
     n_features = X.shape[1]
     n_samples = y.size
@@ -414,8 +418,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 alphas[-add_features:] = 0
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
-            alpha = alphas[n_iter, np.newaxis]
-            prev_alpha = alphas[n_iter - 1, np.newaxis]
         else:
             # mimic the effect of incrementing n_iter on the array references
             prev_coef = coef
@@ -546,6 +548,10 @@ class Lars(LinearModel, RegressorMixin):
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
+
+        .. deprecated:: 0.20
+        
+            The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
     ----------
@@ -826,6 +832,7 @@ class LassoLars(Lars):
     Lasso
     LassoCV
     LassoLarsCV
+    LassoLarsIC
     sklearn.decomposition.sparse_encode
 
     """
@@ -1034,6 +1041,8 @@ class LarsCV(Lars):
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
+        .. deprecated:: 0.20
+            The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
     ----------
