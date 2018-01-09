@@ -101,6 +101,29 @@ def test_lr_liblinear_warning():
                          lr.fit, iris.data, target)
 
 
+def test_logistic_regression_warnings():
+    # Test logistic regression with the iris dataset
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    clf_solver_warning = LogisticRegression(C=len(iris.data),
+                                            multi_class='ovr')
+    clf_multi_class_warning = LogisticRegression(C=len(iris.data),
+                                                 solver='lbfgs')
+    clf_no_warnings = LogisticRegression(C=len(iris.data), solver='lbfgs',
+                                         multi_class='multinomial')
+
+    solver_warning_msg = "Auto solver will be changed to 'lbfgs' in 0.22"
+    multi_class_warning_msg = "Default multi_class will be changed " \
+                              "to 'multinomial' in 0.22"
+
+    assert_warns_message(FutureWarning, solver_warning_msg,
+                         clf_solver_warning.fit, iris.data, target)
+    assert_warns_message(FutureWarning, multi_class_warning_msg,
+                         clf_multi_class_warning.fit, iris.data, target)
+    assert_no_warnings(clf_no_warnings.fit, iris.data, target)
+
+
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
