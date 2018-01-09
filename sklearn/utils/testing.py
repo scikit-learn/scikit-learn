@@ -930,16 +930,19 @@ def _check_matching_docstrings(doc_list, type_dict, type_name, object_name,
 
             if name in type_dict:
                 u_dict = type_dict[name]
-                msg1 = (type_name + " " + name + " of " + object_name +
-                        " has inconsistent type definition.")
-                msg2 = (type_name + " " + name + " of " + object_name +
-                        " has inconsistent description.")
+                msg1 = (type_name + " '" + name + "' of '" + object_name +
+                        "' has inconsistent type definition with that of '" +
+                        u_dict['object'] + "'.")
+                msg2 = (type_name + " '" + name + "' of '" + object_name +
+                        "' has inconsistent description with that of '" +
+                        u_dict['object'] + "'.")
 
                 assert u_dict['type_definition'] == type_definition, msg1
                 assert u_dict['description'] == description, msg2
             else:
                 add_dict = {'type_definition': type_definition,
-                            'description': description}
+                            'description': description,
+                            'object': object_name}
                 type_dict[name] = add_dict
 
     return type_dict
@@ -966,19 +969,22 @@ def assert_consistent_docs(objects,
         List of Parameters to be included. True, for including all parameters.
 
     exclude_params : list or None (default)
-        List of Parameters to be excluded. Set only if include_params is True.
+        List of Parameters to be excluded. Set only if ``include_params`` is
+        True.
 
     include_attribs : list, False or True (default)
         List of Attributes to be included. True, for including all attributes.
 
     exclude_attribs : list or None (default)
-        List of Attributes to be excluded. Set only if include_attribs is True.
+        List of Attributes to be excluded. Set only if ``include_attribs`` is
+        True.
 
     include_returns : list, False or True (default)
         List of Returns to be included. True, for including all returns.
 
     exclude_returns : list or None (default)
-        List of Returns to be excluded. Set only if include_returns is True.
+        List of Returns to be excluded. Set only if ``include_returns`` is
+        True.
 
     Notes
     -----
@@ -1005,6 +1011,16 @@ def assert_consistent_docs(objects,
     AssertionError: Parameter y_true of mean_squared_error has inconsistency.
 
     """
+    if isinstance(exclude_params, list) and include_params is not True:
+        raise TypeError("exclude_params can be set only if include_params is"
+                        " True.")
+    if isinstance(exclude_attribs, list) and include_attribs is not True:
+        raise TypeError("exclude_attribs can be set only if include_attribs is"
+                        " True.")
+    if isinstance(exclude_returns, list) and include_returns is not True:
+        raise TypeError("exclude_returns can be set only if include_returns is"
+                        " True.")
+
     from numpydoc import docscrape
 
     # Dictionary of all different Parameters/Attributes/Returns found

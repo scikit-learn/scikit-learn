@@ -572,7 +572,7 @@ def func_doc3(y_true, y_pred, sample_weight):
 
 @if_numpydoc
 def test_assert_consistent_docs():
-    # Test for consistent parameters
+    # Test with dummy functions
     assert_consistent_docs([func_doc1, func_doc2, func_doc3],
                            include_params=['y_true', 'y_pred'],
                            include_returns=False)
@@ -580,49 +580,29 @@ def test_assert_consistent_docs():
                            exclude_params=['sample_weight'],
                            include_returns=False)
 
-    # Test for returns
-    assert_consistent_docs([func_doc1, func_doc2], include_params=False)
-    assert_consistent_docs([func_doc1, func_doc2],
-                           exclude_params=['y_pred', 'y_true',
-                                           'sample_weight'])
+    # Using NumpyDocString object
+    from numpydoc import docscrape
 
-    # Test for inconsistent parameter 'sample_weight'
-    assert_raises(AssertionError, assert_consistent_docs,
-                  [func_doc1, func_doc2], include_params=['sample_weight'],
-                  include_returns=False)
-    assert_raises(AssertionError, assert_consistent_docs,
-                  [func_doc1, func_doc3], include_params=['sample_weight'],
-                  include_returns=False)
+    doc = docscrape.NumpyDocString(inspect.getdoc(precision_score))
+    assert_consistent_docs([precision_recall_fscore_support, f1_score, doc],
+                           include_returns=False,
+                           exclude_params=['labels', 'average', 'beta'],
+                           include_attribs=False)
 
-    # Test for inconsistent return 'recall'
-    assert_raises(AssertionError, assert_consistent_docs,
+    doc1 = docscrape.NumpyDocString(inspect.getdoc(func_doc1))
+    doc2 = docscrape.NumpyDocString(inspect.getdoc(func_doc2))
+    doc3 = docscrape.NumpyDocString(inspect.getdoc(func_doc3))
+
+    # Test for incorrect usage
+    assert_raises(TypeError, assert_consistent_docs,
                   [func_doc1, func_doc3], include_params=False,
-                  include_returns=['recall'])
-    assert_raises(AssertionError, assert_consistent_docs,
-                  [func_doc1, func_doc3], include_params=False,
-                  exclude_returns=['fbeta_score', 'precision'])
+                  exclude_params=['y_true'])
 
     # Test with actual classification metrics
     assert_consistent_docs([precision_recall_fscore_support, precision_score,
                             recall_score, f1_score, fbeta_score],
                            include_returns=False,
                            exclude_params=['labels', 'average', 'beta'])
-
-    # Consider a classification and a regression metric
-    assert_raises(AssertionError, assert_consistent_docs,
-                  [mean_absolute_error, precision_score],
-                  include_returns=False, include_params=True,
-                  include_attribs=False)
-
-    # Using NumpyDocString object
-    from numpydoc import docscrape
-
-    doc = docscrape.NumpyDocString(inspect.getdoc(precision_score))
-    assert_consistent_docs([precision_recall_fscore_support, recall_score,
-                            f1_score, fbeta_score, doc],
-                           include_returns=False,
-                           exclude_params=['labels', 'average', 'beta'],
-                           include_attribs=False)
 
     # Testing invalid object type
     assert_raises(TypeError, assert_consistent_docs,
