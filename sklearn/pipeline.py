@@ -63,7 +63,8 @@ class Pipeline(_BaseComposition):
         transformers is advantageous when fitting is time consuming.
 
     verbose : boolean, optional
-        Verbosity mode.
+        Verbosity mode.  When enabled, the time elapsed while fitting each step
+        will be printed as it is completed.
 
     Attributes
     ----------
@@ -565,8 +566,8 @@ def make_pipeline(*steps, **kwargs):
         transformers is advantageous when fitting is time consuming.
 
     verbose : boolean, default=False
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+        Verbosity mode.  When enabled, the time elapsed while fitting each
+        transformer will be printed as it is completed.
 
     Examples
     --------
