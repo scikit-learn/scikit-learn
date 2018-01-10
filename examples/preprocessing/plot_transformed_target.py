@@ -40,22 +40,13 @@ from sklearn.metrics import median_absolute_error, r2_score
 # non-negative and (ii) applying an exponential function to obtain non-linear
 # targets which cannot be fitted using a simple linear model.
 #
-# Therefore, a logarithmic and an exponential function will be used to
-# transform the targets before training a linear regression model and using it
-# for prediction.
-
-
-def log_transform(x):
-    return np.log(x + 1)
-
-
-def exp_transform(x):
-    return np.exp(x) - 1
-
+# Therefore, a logarithmic (`np.log1p`) and an exponential function
+# (`np.expm1`) will be used to transform the targets before training a linear
+# regression model and using it for prediction.
 
 X, y = make_regression(n_samples=10000, noise=100, random_state=0)
 y = np.exp((y + abs(y.min())) / 200)
-y_trans = log_transform(y)
+y_trans = np.log1p(y)
 
 ###############################################################################
 # The following illustrate the probability density functions of the target
@@ -84,7 +75,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # non-linearity, the model trained will not be precise during the
 # prediction. Subsequently, a logarithmic function is used to linearize the
 # targets, allowing better prediction even with a similar linear model as
-# reported by the median absolute error (MAE).
+# reported by the median absolute error (MAE). The `numpy` functions `expm1`
+# and `log1p` are used to provide greater precision for small values.
 
 f, (ax0, ax1) = plt.subplots(1, 2, sharey=True)
 
@@ -103,8 +95,8 @@ ax0.set_xlim([0, 2000])
 ax0.set_ylim([0, 2000])
 
 regr_trans = TransformedTargetRegressor(regressor=RidgeCV(),
-                                        func=log_transform,
-                                        inverse_func=exp_transform)
+                                        func=np.log1p,
+                                        inverse_func=np.expm1)
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 
