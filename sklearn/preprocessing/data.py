@@ -24,7 +24,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import _argmax
+from ..utils.fixes import _argmax, _parse_version
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -2217,7 +2217,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(np.nanpercentile(col, references))
+            self.quantiles_.append(self._percentile_func(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2262,7 +2262,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    np.nanpercentile(column_data, references))
+                    self._percentile_func(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2334,13 +2334,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             #  for inverse transform, match a uniform PDF
             X_col = output_distribution.cdf(X_col)
         # find index for lower and higher bounds
-        # FIXME: NaN will raise a RuntimeWarning in the following
-        # comparison. Comparison with NaN will return False which is also the
-        # behavior that we want.
-        lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
-                            lower_bound_x)
-        upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
-                            upper_bound_x)
+        # comparison with NaN will raise a warning which we make silent
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
+                                lower_bound_x)
+            upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
+                                upper_bound_x)
 
         if not inverse:
             # Interpolate in one direction and in the other and take the
@@ -2348,7 +2348,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             # and hence repeated quantiles
             #
             # If we don't do this, only one extreme of the duplicated is
-            # used (the upper when we do assending, and the
+            # used (the upper when we do ascending, and the
             # lower for descending). We take the mean of these two
             X_col = .5 * (np.interp(X_col, quantiles, self.references_)
                           - np.interp(-X_col, -quantiles[::-1],
@@ -2360,7 +2360,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X_col[lower_bounds_idx] = lower_bound_y
         # for forward transform, match the output PDF
         if not inverse:
-            X_col = output_distribution.ppf(X_col)
+            # comparison with NaN will raise a warning which we make silent
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                X_col = output_distribution.ppf(X_col)
             # find the value to clip the data to avoid mapping to
             # infinity. Clip such that the inverse transform will be
             # consistent
@@ -2372,8 +2375,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X_col
 
-    @staticmethod
-    def _assert_finite_or_nan(X):
+    def _assert_finite_or_nan(self, X):
         """Check that X contain finite or NaN values."""
         X = np.asanyarray(X)
         # First try an O(n) time, O(1) space solution for the common case that
@@ -2384,6 +2386,17 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 and not np.isfinite(X[~np.isnan(X)]).all()):
             raise ValueError("Input contains infinity"
                              " or a value too large for %r." % X.dtype)
+        if np.any(np.isnan(X)):
+            np_version = _parse_version(np.__version__)
+            if np_version >= (1, 9):
+                self._percentile_func = np.nanpercentile
+            else:
+                raise NotImplementedError(
+                    'QuantileTransformer does not handle NaN value with'
+                    ' NumPy {}. Please upgrade NumPy to 1.9.'.format(
+                        np_version))
+        else:
+            self._percentile_func = np.percentile
 
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
@@ -2393,10 +2406,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self._assert_finite_or_nan(X.data if sparse.issparse(X) else X)
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
-        if (not accept_sparse_negative and not self.ignore_implicit_zeros and
-                (sparse.issparse(X) and np.any(X.data < 0))):
-            raise ValueError('QuantileTransformer only accepts non-negative'
-                             ' sparse matrices.')
+        # comparison with NaN will raise a warning which we make silent
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            if (not accept_sparse_negative and not self.ignore_implicit_zeros
+                    and (sparse.issparse(X) and np.any(X.data < 0))):
+                raise ValueError('QuantileTransformer only accepts'
+                                 ' non-negative sparse matrices.')
 
         # check the output PDF
         if self.output_distribution not in ('normal', 'uniform'):
