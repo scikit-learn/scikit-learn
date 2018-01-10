@@ -881,7 +881,7 @@ def test_quantile_transform_iris():
     assert_array_almost_equal(X_sparse.A, X_sparse_tran_inv.A)
 
 
-def test_quantile_transform_check_error(mocker):
+def test_quantile_transform_check_error():
     X = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                       [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                       [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
@@ -944,16 +944,15 @@ def test_quantile_transform_check_error(mocker):
                          transformer.transform, 10)
 
     # check that an error is raised when NumPy is < 1.9
-    mocker.patch('sklearn.preprocessing.data.LooseVersion',
-                 return_value=LooseVersion('1.8.2'))
-    X_nan = np.array([[0, 1],
-                      [0, 0],
-                      [np.nan, np.nan],
-                      [0, 2],
-                      [0, 1]])
-    transformer = QuantileTransformer()
-    assert_raises_regex(NotImplementedError, "Please upgrade to NumPy",
-                        transformer.fit_transform, X_nan)
+    if LooseVersion(np.__version__) < LooseVersion('1.9'):
+        X_nan = np.array([[0, 1],
+                          [0, 0],
+                          [np.nan, np.nan],
+                          [0, 2],
+                          [0, 1]])
+        transformer = QuantileTransformer()
+        assert_raises_regex(NotImplementedError, "Please upgrade to NumPy",
+                            transformer.fit_transform, X_nan)
 
 
 def test_quantile_transform_nan():
