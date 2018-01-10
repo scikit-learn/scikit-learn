@@ -75,8 +75,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # non-linearity, the model trained will not be precise during the
 # prediction. Subsequently, a logarithmic function is used to linearize the
 # targets, allowing better prediction even with a similar linear model as
-# reported by the median absolute error (MAE). The `numpy` functions `expm1`
-# and `log1p` are used to provide greater precision for small values.
+# reported by the median absolute error (MAE).
 
 f, (ax0, ax1) = plt.subplots(1, 2, sharey=True)
 
