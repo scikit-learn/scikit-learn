@@ -100,7 +100,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
 
     Parameters
     ----------
-    precisions : array-like,
+    precisions : array-like
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
         'diag' : shape of (n_components, n_features)
@@ -343,7 +343,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
 
     Parameters
     ----------
-    matrix_chol : array-like,
+    matrix_chol : array-like
         Cholesky decompositions of the matrices.
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
@@ -387,7 +387,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
     means : array-like, shape (n_components, n_features)
 
-    precisions_chol : array-like,
+    precisions_chol : array-like
         Cholesky decompositions of the precision matrices.
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)

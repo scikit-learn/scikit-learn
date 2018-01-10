@@ -987,7 +987,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -1412,7 +1411,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1493,7 +1492,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init_ : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
@@ -1870,7 +1869,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1945,7 +1944,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init_ : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
