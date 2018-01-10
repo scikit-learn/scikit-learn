@@ -601,10 +601,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
-    outer = pi.take(nzx) * pj.take(nzy)
-    # Checks for overflow. Casts to int64 in case of overflow
-    if np.any(outer < 0):
-        outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
+    outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
