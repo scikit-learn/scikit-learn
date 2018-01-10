@@ -13,6 +13,7 @@ from itertools import chain, combinations
 import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -24,7 +25,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import _argmax, _parse_version
+from ..utils.fixes import _argmax
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -2387,14 +2388,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             raise ValueError("Input contains infinity"
                              " or a value too large for %r." % X.dtype)
         if np.any(np.isnan(X)):
-            np_version = _parse_version(np.__version__)
-            if np_version >= (1, 9):
+            if LooseVersion(np.__version__) >= '1.9':
                 self._percentile_func = np.nanpercentile
             else:
                 raise NotImplementedError(
                     'QuantileTransformer does not handle NaN value with'
-                    ' NumPy {}. Please upgrade NumPy to 1.9.'.format(
-                        np_version))
+                    ' NumPy {}. Please upgrade to NumPy 1.9. or higher'.format(
+                        np.__version__))
         else:
             self._percentile_func = np.percentile
 
