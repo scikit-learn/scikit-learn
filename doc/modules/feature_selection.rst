@@ -117,16 +117,18 @@ samples for accurate estimation.
 Wrapper for using SciPy score functions
 ---------------------------------------
 
-The score functions in `scipy.stats` work on feature vectors whereas we need
-scoring functions that work on a matrix. This makes it difficult for us to use
-feature selection algorithms like :class:`SelectKBest` with score functions
-from `scipy.stats`.
+The score functions in `scipy.stats` work on feature vectors i.e. comparing
+each column in the input samples ``X`` with the target vector ``y``. Whereas,
+here we need scoring functions that work on the input samples ``X`` as a whole
+matrix, comparing it to the target vector ``y``. This makes it difficult for
+us to use feature selection algorithms like :class:`SelectKBest` with score
+functions from `scipy.stats`.
 :func:`featurewise_scorer` is a wrapper function which wraps around scoring
 functions like `spearmanr`, `pearsonr` etc. from the `scipy.stats` module and
 makes it usable for feature selection algorithms like :class:`SelectKBest`,
 :class:`SelectPercentile` etc.
 
-The following example illustrates it's usage:
+The following example illustrates its usage:
 
   >>> from sklearn.feature_selection import featurewise_scorer, SelectKBest
   >>> from scipy.stats import spearmanr
@@ -137,8 +139,9 @@ The following example illustrates it's usage:
   SelectKBest(k=10, score_func=...)
   >>> new_X = skb.transform(X)
 
-This wrapper function returns the absolute value of the scores i.e. a score of
-+1 is same as -1.
+This wrapper function returns the absolute value of the scores by default
+i.e. a score of +1 is same as -1. For unchanged score values set
+``absolute_score=False``.
 
 .. _rfe:
 

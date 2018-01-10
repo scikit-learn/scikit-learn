@@ -122,7 +122,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         return Xt
 
 
-def featurewise_scorer(score_func, **kwargs):
+def featurewise_scorer(score_func, absolute_score=True, **kwargs):
     """ A wrapper function around score functions.
 
     Parameters
@@ -131,6 +131,8 @@ def featurewise_scorer(score_func, **kwargs):
         Function taking arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores. This function is also
         allowed to take other parameters as input.
+    absolute_score : bool
+        If True (default), the absolute value of the scores are returned.
 
     Returns
     -------
@@ -144,8 +146,8 @@ def featurewise_scorer(score_func, **kwargs):
     This wrapper function wraps around scoring functions like `spearmanr`,
     `pearsonr` etc. from the `scipy.stats` module and makes it usable for
     feature selection algorithms like `SelectKBest`. Also, this wrapper
-    function returns the absolute value of the scores i.e. a score of
-    +1 is same as -1.
+    function returns the absolute value of the scores by default i.e. a score
+    of +1 is same as -1. For unchanged score values set `absolute_score=False`.
 
     Example
     -------
@@ -173,7 +175,10 @@ def featurewise_scorer(score_func, **kwargs):
                 p_vals.append(p_val)
             else:
                 score = score_func_ret
-            scores.append(abs(score))
+
+            if absolute_score:
+                score = abs(score)
+            scores.append(score)
 
         scores = np.asarray(scores)
         if len(p_vals) > 0:
