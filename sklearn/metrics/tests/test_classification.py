@@ -1049,10 +1049,8 @@ def test_multiclass_jaccard_similarity_score():
                                                  labels=['ant', 'bird'],
                                                  sample_weight=weight),
                         6. / 11)
-    msg = ("In multiclass classification average must be one of "
-           "('micro', 'macro', 'weighted'), got average=None.")
-    assert_raise_message(ValueError, msg, jaccard_similarity_score, y_true,
-                         y_pred)
+    assert_array_equal(jaccard_similarity_score(y_true, y_pred),
+                       np.array([2. / 3,  1. / 3,  2. / 5]))
     y_true = np.array([1, 0, 1, 1, 0])
     y_pred = np.array([1, 0, 1, 1, 1])
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,

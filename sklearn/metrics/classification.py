@@ -482,6 +482,13 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     0.4722...
+    >>> jaccard_similarity_score(y_true, y_pred)
+    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
+    array([ 0.66...,  0. ,  0.5  ])
+    >>> jaccard_similarity_score(y_true, y_pred,
+    ... labels=['ant', 'cat', 'bird'])
+    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
+    array([ 0.66...,  0.5 ,  0.  ])
     """
 
     average_options = (None, 'micro', 'macro', 'weighted', 'samples',
@@ -546,61 +553,44 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 raise ValueError('All labels must be in [0, n, labels). '
                                  'Got %d < 0' % np.min(labels))
 
-        # wait for response on 'prf-bug' PR, since I'm less than 90% sure
         if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
         with np.errstate(divide='ignore', invalid='ignore'):
 
-            if average == 'samples':
-                pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-                pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                              axis=1)
-                score = pred_and_true / pred_or_true
-                score[pred_or_true == 0.0] == 1.0
-                return _weighted_sum(score, sample_weight, normalize=True)
-            elif average == 'none-samples':
-                pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-                pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                              axis=1)
-                score = pred_and_true / pred_or_true
-                score[pred_or_true == 0.0] == 1.0
-                return _weighted_sum(score, sample_weight, normalize=False)
+            if average == 'samples' or average == 'none-samples':
+                sum_axis = 1
+                class_weight = sample_weight
+                weights = None
             elif average == 'micro':
-                pred_or_true = count_nonzero(y_true + y_pred, axis=1,
-                                             sample_weight=sample_weight)
-                pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                              axis=1,
-                                              sample_weight=sample_weight)
-                if np.sum(pred_or_true):
-                    score = np.sum(pred_and_true) / np.sum(pred_or_true)
-                else:
-                    score = 1.
-                return score
+                sum_axis = 1
+                class_weight = None
+                weights = sample_weight
             elif average == 'macro':
-                pred_or_true = count_nonzero(y_true + y_pred, axis=0,
-                                             sample_weight=sample_weight)
-                pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                              axis=0,
-                                              sample_weight=sample_weight)
-                score = pred_and_true / pred_or_true
-                score[pred_or_true == 0.0] == 1.0
-                n_features = y_true.shape[1]
-                return np.sum(score) / n_features
-            else:
-                # average = 'weighted'
-                pred_or_true = count_nonzero(y_true + y_pred, axis=0,
-                                             sample_weight=sample_weight)
-                pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                              axis=0,
-                                              sample_weight=sample_weight)
-                score = pred_and_true / pred_or_true
-                score[pred_or_true == 0.0] == 1.0
-                weights = y_true.toarray().sum(axis=0)
-                score = _weighted_sum(score, sample_weight=weights,
-                                      normalize=True)
-                return score
+                sum_axis = 0
+                class_weight = None
+                weights = sample_weight
+            elif average == 'weighted':
+                sum_axis = 0
+                class_weight = y_true.toarray().sum(axis=0)
+                weights = sample_weight
+
+            pred_or_true = count_nonzero(y_true + y_pred, axis=sum_axis,
+                                         sample_weight=weights)
+            pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                          axis=sum_axis,
+                                          sample_weight=weights)
+            if average == 'micro':
+                pred_or_true = np.array([pred_or_true.sum()])
+                pred_and_true = np.array([pred_and_true.sum()])
+
+            score = pred_and_true / pred_or_true
+            score[pred_or_true == 0.0] == 1.0
+
+            if average != 'none-samples':
+                score = np.average(score, weights=class_weight)
+            return score
     elif average == 'samples':
         raise ValueError("Sample-based jaccard similarity score is "
                          "not meaningful outside multilabel "
@@ -648,12 +638,12 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             weights = None
         elif average == 'weighted':
             weights = true_sum
-        else:
-            raise ValueError("In multiclass classification average must be "
-                             "one of ('micro', 'macro', 'weighted'), got "
-                             "average=%s." % average)
+
         score = tp_sum / (true_sum + pred_sum - tp_sum)
-        return np.average(score, weights=weights)
+
+        if average is not None:
+            score = np.average(score, weights=weights)
+        return score
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
