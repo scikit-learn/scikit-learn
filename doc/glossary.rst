@@ -151,9 +151,8 @@ General Concepts
 
     callable
         A function, class or an object which implements the ``__call__``
-        method; anything that returns True when the argument of
-        `https://docs.python.org/3/library/functions.html#callable
-        <callable()>`_.
+        method; anything that returns True when the argument of `callable()
+        <https://docs.python.org/3/library/functions.html#callable>`_.
 
     categorical feature
         A categorical or nominal :term:`feature` is one that has a
