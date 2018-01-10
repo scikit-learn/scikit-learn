@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import warnings
 
-import scipy
+from scipy.sparse import random
 
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
@@ -1004,13 +1004,13 @@ def test_tfidf_dtype():
     # and defaults to np.float64
 
     # create made up data with np.float32 as dtype
-    X_float32 = scipy.sparse.random(10, 20000, dtype=np.float32,
-                                    random_state=42)
+    X_float32 = random(10, 20000, dtype=np.float32,
+                       random_state=42)
     X_idf_float32 = TfidfTransformer().fit_transform(X_float32)
     # check if the required data types match
     assert_equal(X_float32.dtype, X_idf_float32.dtype)
 
     # another case with string
     test = TfidfVectorizer(dtype=np.float32)
-    X_idf_str= test.fit_transform(["I love DotA2"])
+    X_idf_str = test.fit_transform(["I love DotA2"])
     assert_equal(np.float32, X_idf_str.dtype)

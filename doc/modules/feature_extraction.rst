@@ -463,12 +463,12 @@ content of the documents::
       with 9 stored elements in Compressed Sparse ... format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
-  array([[ 0.81940995,  0.        ,  0.57320793],
+  array([[ 0.83205029,  0.        ,  0.5547002 ],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
-         [ 0.47330339,  0.88089948,  0.        ],
-         [ 0.58149261,  0.        ,  0.81355169]])
+         [ 0.6       ,  0.8       ,  0.        ],
+         [ 0.6       ,  0.        ,  0.8       ]])
 
 Each row is normalized to have unit Euclidean norm:
 
@@ -523,19 +523,19 @@ And the L2-normalized tf-idf changes to
 
   >>> transformer = TfidfTransformer()
   >>> transformer.fit_transform(counts).toarray()
-  array([[ 0.85151335,  0.        ,  0.52433293],
+  array([[ 0.9486833 ,  0.        ,  0.31622777],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
-         [ 0.55422893,  0.83236428,  0.        ],
-         [ 0.63035731,  0.        ,  0.77630514]])
+         [ 0.6       ,  0.8       ,  0.        ],
+         [ 0.83205029,  0.        ,  0.5547002 ]])
 
 The weights of each
 feature computed by the ``fit`` method call are stored in a model
 attribute::
 
   >>> transformer.idf_                       # doctest: +ELLIPSIS
-  array([ 1. ...,  2.25...,  1.84...])
+  array([ 1.,  2.,  1.])
 
 
 

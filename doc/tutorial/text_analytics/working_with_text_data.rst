@@ -339,9 +339,9 @@ Evaluating the predictive accuracy of the model is equally easy::
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.834...
+  0.846...
 
-I.e., we achieved 83.4% accuracy. Let's see if we can do better with a
+I.e., we achieved 84.6% accuracy. Let's see if we can do better with a
 linear :ref:`support vector machine (SVM) <svm>`,
 which is widely regarded as one of
 the best text classification algorithms (although it's also a bit slower
@@ -371,18 +371,18 @@ analysis of the results::
                           precision    recall  f1-score   support
   <BLANKLINE>
              alt.atheism       0.95      0.81      0.87       319
-           comp.graphics       0.88      0.97      0.92       389
-                 sci.med       0.94      0.90      0.92       396
+           comp.graphics       0.87      0.98      0.92       389
+                 sci.med       0.95      0.89      0.92       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
              avg / total       0.92      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[258,  11,  15,  35],
-         [  4, 379,   3,   3],
-         [  5,  33, 355,   3],
-         [  5,  10,   4, 379]])
+  array([[258,  12,  14,  35],
+         [  2, 380,   3,   4],
+         [  6,  34, 354,   2],
+         [  6,  11,   3, 378]])
 
 
 As expected the confusion matrix shows that posts from the newsgroups
@@ -453,7 +453,7 @@ The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
   >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
-  0.900...
+  0.905...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
