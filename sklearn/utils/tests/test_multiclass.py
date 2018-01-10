@@ -416,9 +416,8 @@ def test_ovr_decision_function():
     expected_prediction = np.array([0, 1, 2, 2])
     assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
 
-    # as confidence is higher on the 3rd sample for the
-    # two last classifier, dec value should also be higher
-    # for the third class
+    # third and fourth sample have the same vote but third sample
+    # have higher confidence, this should reflect on the decision values
     assert_true(dec_values[2, 2] > dec_values[3, 2])
 
     # assert subset invariance.
