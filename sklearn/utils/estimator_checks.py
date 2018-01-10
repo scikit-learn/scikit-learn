@@ -1201,12 +1201,14 @@ def check_classifiers_one_label(name, classifier_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_classifiers_one_label_sample_weights(name, classifier_orig):
-    # check that classifiers accepting sample_weight fit fine or
-    # throws an ValueError if the problem is reduce to one class.
-    error_fit = ("Classifier can't train when only one class is present "
-                 "after sample_weight trimming.")
-    error_predict = ("Unexpected prediction results, "
-                     "should only output remaining class.")
+    # check that classifiers accepting sample_weight fit or
+    # throws an ValueError with explicit message if
+    # the problem is reduce to one class.
+    error_fit = ("{name} failed when fitted on one label after sample_weight "
+                 "trimming. Error message is not explicit, it should have "
+                 "class.").format(name=name)
+    error_predict = ("{name} prediction results should only output the "
+                     "remaining class.").format(name=name)
     classifier = clone(classifier_orig)
     rnd = np.random.RandomState(0)
     # X should be square for test on SVC with precomputed kernel.
@@ -1219,9 +1221,13 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     try:
         classifier.fit(X_train, y, sample_weight=sample_weight)
     except ValueError as e:
+        # ValueError can be thrown but should be explicit
         assert_regex_matches(repr(e), r"\bclass(es)?\b", msg=error_fit)
         return
     except TypeError as e:
+        # TypeError can be thrown if sample_weight is not supported
+        assert_regex_matches(repr(e), r"\bsample_weight\b",
+                             msg="sample_weight not supported")
         return
     except Exception as exc:
         raise

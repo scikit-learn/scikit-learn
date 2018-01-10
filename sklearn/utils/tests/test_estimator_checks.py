@@ -290,12 +290,17 @@ def test_check_estimator():
     # check that one label fit with classifier
     msg = "Classifier can't train when only one class is present."
     assert_raises_with_message_in_print(OneClassErrorClassifier, msg)
-    msg = ("Classifier can't train when only one class is present "
-           "after sample_weight trimming.")
+    # check one label fit error sample weight
+    name = OneClassSampleErrorClassifier.__name__
+    msg = ("{name} failed when fitted on one label after sample_weight "
+           "trimming. Error message is not explicit, it should have "
+           "class.").format(name=name)
     assert_raises_regex(AssertionError, msg,
                         check_estimator, OneClassSampleErrorClassifier)
-    msg = ("Unexpected prediction results, "
-           "should only output remaining class.")
+    # check one label prediction error sample weight
+    name = OneClassSampleErrorClassifierPredict.__name__
+    msg = ("{name} prediction results should only output the "
+           "remaining class.").format(name=name)
     assert_raises_regex(AssertionError, msg,
                         check_estimator, OneClassSampleErrorClassifierPredict)
     # doesn't error on actual estimator
