@@ -42,8 +42,8 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
-from sklearn.model_selection._validation import _check_is_permutation, \
-    _fit_and_score
+from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _fit_and_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -1442,10 +1442,10 @@ def test_fit_and_score():
     # since we're using FailingClassfier, our error will be the following
     error_message = "ValueError: Failing classifier failed as required"
     # the warning message we're expecting to see
-    warning_message = "Estimator fit failed. The score on this train-test" \
-                      " partition for these parameters will be set to %f. " \
-                      "Details: \n%s" % (fit_and_score_kwargs['error_score'],
-                                         error_message)
+    warning_message = ("Estimator fit failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                         error_message))
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
