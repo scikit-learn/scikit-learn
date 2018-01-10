@@ -21,7 +21,6 @@ from ..externals.six import string_types
 from .validation import check_array
 
 
-
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
         return np.unique(np.asarray(y))
@@ -437,6 +436,6 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     # the votes without switching any decision made based on a difference
     # of 1 vote.
     eps = np.finfo(sum_of_confidences.dtype).eps
-    sigmoid_confidences = ((np.exp(sum_of_confidences/10) - 1) /
-                           ((2+eps)*(np.exp(sum_of_confidences/10) + 1)))
-    return votes + sigmoid_confidences
+    transformed_confidences = (sum_of_confidences /
+                               ((2 + eps) * (np.abs(sum_of_confidences) + 1)))
+    return votes + transformed_confidences
