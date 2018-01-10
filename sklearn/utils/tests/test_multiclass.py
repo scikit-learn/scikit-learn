@@ -412,7 +412,7 @@ def test_ovr_decision_function():
 
     # check that the prediction are what we expect
     # highest vote or highest confidence if there is a tie
-    # for the second sample we have a tie (should be one by 1)
+    # for the second sample we have a tie (should be won by 1)
     expected_prediction = np.array([0, 1, 2, 2])
     assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
 
@@ -424,6 +424,6 @@ def test_ovr_decision_function():
     # assert subset invariance.
     dec_values_one = [_ovr_decision_function(np.array([predictions[i]]),
                                              np.array([confidences[i]]),
-                                             n_classes) for i in range(4)]
+                                             n_classes)[0] for i in range(4)]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
