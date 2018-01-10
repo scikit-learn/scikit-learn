@@ -322,3 +322,7 @@ Changes to estimator checks
 - Allow :func:`estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- Add test :func:`estimator_checks.check_methods_subset_invariance` to check
+  that estimators methods are invariant if applied to a data subset.
+  :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
