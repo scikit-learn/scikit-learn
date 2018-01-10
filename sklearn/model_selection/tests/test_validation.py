@@ -1413,10 +1413,9 @@ class RFWithDecisionFunction(RandomForestClassifier):
     # to test the cross_val_predict function's handling of this case.
     def decision_function(self, X):
         probs = self.predict_proba(X)
-        if isinstance(probs, list):
-            probs = [p[:, -1] if p.shape[1] == 2 else p for p in probs]
-        elif probs.shape[1] == 2:
-            probs = probs[:, -1]
+        msg = "This helper should only be used on multioutput-multiclass tasks"
+        assert isinstance(probs, list), msg
+        probs = [p[:, -1] if p.shape[1] == 2 else p for p in probs]
         return probs
 
 
