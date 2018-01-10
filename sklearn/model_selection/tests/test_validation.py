@@ -1261,7 +1261,7 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def check_cross_val_predict_with_method_binary(est, X, y, method):
+def check_cross_val_predict_binary(est, X, y, method):
     """Helper for tests of cross_val_predict with binary classification"""
     cv = KFold(n_splits=3, shuffle=False)
 
@@ -1281,7 +1281,7 @@ def check_cross_val_predict_with_method_binary(est, X, y, method):
                            expected_predictions)
 
 
-def check_cross_val_predict_with_method_multiclass(est, X, y, method):
+def check_cross_val_predict_multiclass(est, X, y, method):
     """Helper for tests of cross_val_predict with multiclass classification"""
     cv = KFold(n_splits=3, shuffle=False)
 
@@ -1306,7 +1306,7 @@ def check_cross_val_predict_with_method_multiclass(est, X, y, method):
                            expected_predictions)
 
 
-def check_cross_val_predict_with_method_multilabel(est, X, y, method):
+def check_cross_val_predict_multilabel(est, X, y, method):
     """Check the output of cross_val_predict for 2D targets using
     Estimators which provide a predictions as a list with one
     element per class.
@@ -1348,16 +1348,9 @@ def check_cross_val_predict_with_method_multilabel(est, X, y, method):
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
         cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
-        assert_array_equal_maybe_list(cv_predict_output, expected_preds)
-
-
-def assert_array_equal_maybe_list(x, y):
-    # If x and y are lists of arrays, compare arrays individually.
-    if isinstance(x, list):
-        for i in range(len(x)):
-            assert_array_equal(x[i], y[i])
-    else:
-        assert_array_equal(x, y)
+        assert_equal(len(cv_predict_output), len(expected_preds))
+        for i in range(len(cv_predict_output)):
+            assert_array_equal(cv_predict_output[i], expected_preds[i])
 
 
 def test_cross_val_predict_with_method_binary():
@@ -1366,7 +1359,7 @@ def test_cross_val_predict_with_method_binary():
     X, y = make_classification(n_classes=2, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         est = LogisticRegression()
-        check_cross_val_predict_with_method_binary(est, X, y, method)
+        check_cross_val_predict_binary(est, X, y, method)
 
 
 def test_cross_val_predict_with_method_multiclass():
@@ -1375,7 +1368,7 @@ def test_cross_val_predict_with_method_multiclass():
     X, y = shuffle(X, y, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         est = LogisticRegression()
-        check_cross_val_predict_with_method_multiclass(est, X, y, method)
+        check_cross_val_predict_multiclass(est, X, y, method)
 
 
 def test_cross_val_predict_method_checking():
@@ -1386,7 +1379,7 @@ def test_cross_val_predict_method_checking():
     X, y = shuffle(X, y, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         est = SGDClassifier(loss='log', random_state=2)
-        check_cross_val_predict_with_method_multiclass(est, X, y, method)
+        check_cross_val_predict_multiclass(est, X, y, method)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
@@ -1397,7 +1390,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
                        {'C': [0.1, 1]},
                        cv=2)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        check_cross_val_predict_with_method_multiclass(est, X, y, method)
+        check_cross_val_predict_multiclass(est, X, y, method)
 
 
 def test_cross_val_predict_with_method_multilabel_ovr():
@@ -1411,7 +1404,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
                                           random_state=42)
     est = OneVsRestClassifier(LogisticRegression(random_state=0))
     for method in ['predict_proba', 'decision_function']:
-        check_cross_val_predict_with_method_binary(est, X, y, method=method)
+        check_cross_val_predict_binary(est, X, y, method=method)
 
 
 class RFWithDecisionFunction(RandomForestClassifier):
@@ -1441,8 +1434,7 @@ def test_cross_val_predict_with_method_multilabel_rf():
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter('ignore')
-            check_cross_val_predict_with_method_multilabel(
-                est, X, y, method=method)
+            check_cross_val_predict_multilabel(est, X, y, method=method)
 
 
 def test_cross_val_predict_with_method_rare_class():
@@ -1456,7 +1448,7 @@ def test_cross_val_predict_with_method_rare_class():
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
             warnings.simplefilter('ignore')
-            check_cross_val_predict_with_method_multiclass(est, X, y, method)
+            check_cross_val_predict_multiclass(est, X, y, method)
 
 
 def test_cross_val_predict_with_method_multilabel_rf_rare_class():
@@ -1473,8 +1465,7 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter('ignore')
-            check_cross_val_predict_with_method_multilabel(
-                est, X, y, method=method)
+            check_cross_val_predict_multilabel(est, X, y, method=method)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
