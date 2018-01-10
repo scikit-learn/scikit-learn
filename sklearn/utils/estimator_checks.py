@@ -1206,7 +1206,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # the problem is reduce to one class.
     error_fit = ("{name} failed when fitted on one label after sample_weight "
                  "trimming. Error message is not explicit, it should have "
-                 "class.").format(name=name)
+                 "'class'.").format(name=name)
     error_predict = ("{name} prediction results should only output the "
                      "remaining class.").format(name=name)
     classifier = clone(classifier_orig)
@@ -1226,8 +1226,10 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         return
     except TypeError as e:
         # TypeError can be thrown if sample_weight is not supported
-        assert_regex_matches(repr(e), r"\bsample_weight\b",
-                             msg="sample_weight not supported")
+        try:
+            assert_regex_matches(repr(e), r"\bsample_weight\b")
+        except AssertionError as e2:
+            raise e
         return
     except Exception as exc:
         raise

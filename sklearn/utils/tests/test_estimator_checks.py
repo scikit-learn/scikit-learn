@@ -294,7 +294,7 @@ def test_check_estimator():
     name = OneClassSampleErrorClassifier.__name__
     msg = ("{name} failed when fitted on one label after sample_weight "
            "trimming. Error message is not explicit, it should have "
-           "class.").format(name=name)
+           "'class'.").format(name=name)
     assert_raises_regex(AssertionError, msg,
                         check_estimator, OneClassSampleErrorClassifier)
     # check one label prediction error sample weight
