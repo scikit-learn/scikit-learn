@@ -212,8 +212,9 @@ def load_data(module_path, data_file_name):
 
     Parameters
     ----------
-    data_file_name : String. Name of csv file to be loaded from
-    module_path/data/data_file_name. For example 'wine_data.csv'.
+    data_file_name : String
+        Name of csv file to be loaded from
+        module_path/data/data_file_name. For example 'wine_data.csv'.
 
     Returns
     -------

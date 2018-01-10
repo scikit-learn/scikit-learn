@@ -326,7 +326,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -589,7 +590,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
 
         # Reset internal state before fitting
@@ -613,7 +615,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
@@ -828,7 +831,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES)
@@ -2279,7 +2283,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns self
         """
         if self.n_quantiles <= 0:
             raise ValueError("Invalid value for 'n_quantiles': %d. "
@@ -2678,7 +2681,6 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = self._check_input(X, check_positive=True, check_method=True)
 

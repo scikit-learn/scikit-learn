@@ -104,7 +104,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant", "prior"):
@@ -386,7 +385,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
