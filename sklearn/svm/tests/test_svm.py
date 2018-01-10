@@ -508,7 +508,7 @@ def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
         # Test unicode (same as str on python3)
-        clf = svm.SVC(kernel=unicode('linear'), probability=True)
+        clf = svm.SVC(kernel=u'linear', probability=True)
         clf.fit(X, Y)
         clf.predict(T)
         clf.predict_proba(T)
@@ -538,6 +538,7 @@ def test_unicode_kernel():
     clf.predict(T)
     clf.predict_proba(T)
     clf.decision_function(T)
+
 
 def test_sparse_precomputed():
     clf = svm.SVC(kernel='precomputed')
