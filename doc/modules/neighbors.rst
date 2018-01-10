@@ -624,6 +624,7 @@ instance by calling :func:`make_lmnn_pipeline`:
 The plot shows decision boundaries for nearest neighbor classification and
 large margin nearest neighbor classification.
 
+.. _lmnn_dim_reduction:
 
 Dimensionality reduction
 ------------------------
@@ -631,7 +632,7 @@ Dimensionality reduction
 :class:`LargeMarginNearestNeighbor` can be used to perform supervised
 dimensionality reduction. The input data are projected onto a linear subspace
 consisting of the directions which minimize the LMNN objective. The desired
-dimensionality can be set using the parameter ``n_features_out``.
+dimensionality can be set using the parameter ``n_components``.
 For instance, the following shows a comparison of dimensionality reduction
 with Principal Component Analysis (:class:`sklearn.decomposition.PCA`),
 Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
@@ -661,7 +662,7 @@ Mathematical formulation
 ------------------------
 
 LMNN learns a linear transformation matrix :math:`L` of
-size ``(n_features_out, n_features)``. The objective function consists of
+size ``(n_components, n_features)``. The objective function consists of
 two competing terms, the pull loss that pulls target neighbors closer to
 their reference sample and the push loss that pushes impostors away:
 

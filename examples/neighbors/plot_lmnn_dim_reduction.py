@@ -66,7 +66,7 @@ pca = PCA(n_components=2, random_state=random_state)
 lda = LinearDiscriminantAnalysis(n_components=2)
 
 # Reduce dimension to 2 with LargeMarginNearestNeighbor
-lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, n_features_out=2,
+lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, n_components=2,
                                   max_iter=20, verbose=1,
                                   random_state=random_state)
 
