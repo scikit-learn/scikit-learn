@@ -203,7 +203,7 @@ def test_precision_recall_f_extra_labels():
     p, r, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  average='samples',
                                                  labels=[0, 1])
-    assert_almost_equal(np.array([p, r, f]), np.array([3. / 4, 1., 5. / 6]))
+    assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
 
 @ignore_warnings
