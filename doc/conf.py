@@ -236,6 +236,7 @@ intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org/', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
 }
 
 sphinx_gallery_conf = {
@@ -281,6 +282,7 @@ issues_user_uri = 'https://github.com/{user}'
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
+    app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
 
 

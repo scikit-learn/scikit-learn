@@ -359,7 +359,7 @@ following rules before submitting:
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
    `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published>`_.
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -752,6 +752,8 @@ when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
 
+.. _contributing_deprecation:
+
 Deprecation
 -----------
 
@@ -893,6 +895,7 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+.. _api_overview:
 
 APIs of scikit-learn objects
 ============================
@@ -901,6 +904,9 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object must implement.
+
+Elements of the scikit-learn API are described more definitively in the
+:ref:`glossary`.
 
 Different objects
 -----------------
@@ -1260,7 +1266,9 @@ is implemented using the ``_estimator_type`` attribute, which takes a string val
 It should be ``"classifier"`` for classifiers and ``"regressor"`` for
 regressors and ``"clusterer"`` for clustering methods, to work as expected.
 Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
-will set the attribute automatically.
+will set the attribute automatically.  When a meta-estimator needs to distinguish
+among estimator types, instead of checking ``_estimator_type`` directly, helpers
+like :func:`base.is_classifier` should be used.
 
 Working notes
 -------------
