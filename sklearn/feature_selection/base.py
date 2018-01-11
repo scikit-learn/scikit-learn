@@ -132,7 +132,8 @@ def featurewise_scorer(score_func, absolute_score=True, **kwargs):
         (scores, pvalues) or a single array with scores. This function is also
         allowed to take other parameters as input.
     absolute_score : bool
-        If True (default), the absolute value of the scores are returned.
+        If True (default), the absolute value of the scores are returned,
+        which is useful when using correlation coefficients.
 
     Returns
     -------
