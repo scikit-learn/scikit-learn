@@ -477,7 +477,7 @@ def test_multi_ovo_auc_toydata():
         ovo_unweighted_score)
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
-    # Each term is weighted by the posterior for the positive label.
+    # Each term is weighted by the prevalence for the positive label.
     pair_scores = [average_score_01, average_score_02, average_score_12]
     prevalence = [0.75, 0.75, 0.50]
     ovo_weighted_score = np.average(pair_scores, weights=prevalence)
