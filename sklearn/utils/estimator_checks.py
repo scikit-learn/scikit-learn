@@ -690,8 +690,8 @@ def check_methods_subset_invariance(name, estimator_orig):
             raise SkipTest(msg)
 
         if hasattr(estimator, method):
-            result_full, result_by_batch = _apply_func(getattr(estimator,
-                                                               method), X)
+            result_full, result_by_batch = _apply_func(
+                getattr(estimator, method), X)
             assert_allclose(result_full, result_by_batch,
                             atol=1e-7, err_msg=msg)
 
