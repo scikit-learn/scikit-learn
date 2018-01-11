@@ -1445,7 +1445,7 @@ def test_fit_and_score():
     warning_message = ("Estimator fit failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
                        "Details: \n%s" % (fit_and_score_kwargs['error_score'],
-                                         error_message))
+                                          error_message))
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
