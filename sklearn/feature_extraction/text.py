@@ -1078,6 +1078,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
+            # astype will fallback to np.float64 if X.dtype is int
             idf = np.log(float(n_samples) / df).astype(X.dtype) + 1.0
             self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')

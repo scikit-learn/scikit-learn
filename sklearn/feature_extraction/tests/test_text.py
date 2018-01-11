@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 import warnings
 
-from scipy.sparse import random
+import pytest
+from scipy.sparse import rand
 
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
@@ -999,18 +1000,24 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.transform, "hello world!")
 
 
-def test_tfidf_dtype():
-    # TfidfTransformer used to ignore the data type of the input
-    # and defaults to np.float64
-
-    # create made up data with np.float32 as dtype
-    X_float32 = random(10, 20000, dtype=np.float32,
-                       random_state=42)
-    X_idf_float32 = TfidfTransformer().fit_transform(X_float32)
+@pytest.mark.parametrize("dtype", [
+    np.float32,
+    np.float64
+])
+def test_tfidf_preserved_type(dtype):
+    # create made up data with parameterized dtype
+    X = rand(10, 20000, dtype=dtype, random_state=42)
+    X_trans = TfidfTransformer().fit_transform(X)
     # check if the required data types match
-    assert_equal(X_float32.dtype, X_idf_float32.dtype)
+    assert X.dtype == X_trans.dtype
 
     # another case with string
-    test = TfidfVectorizer(dtype=np.float32)
+    test = TfidfVectorizer(dtype=dtype)
     X_idf_str = test.fit_transform(["I love DotA2"])
-    assert_equal(np.float32, X_idf_str.dtype)
+    assert dtype == X_idf_str.dtype
+
+
+def test_tfidf_fallback():
+    X = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+    X_idf = TfidfTransformer().fit_transform(X)
+    assert X_idf.dtype.type == np.float64
