@@ -1369,7 +1369,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                     columns.append(out_col)
                 else:
                     columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
-            XP = sparse.hstack(columns, dtype=X.dtype)
+            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
         else:
             XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
             for i, comb in enumerate(combinations):
