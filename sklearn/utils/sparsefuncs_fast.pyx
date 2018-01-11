@@ -94,6 +94,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     cdef np.ndarray[floating, ndim=1] means
     # variances[j] contains the variance of feature j
     cdef np.ndarray[floating, ndim=1] variances
+    # n_samples_array[j] contains the number of values of feature j
+    cdef np.ndarray[floating, ndim=1] n_samples_array
 
     if floating is float:
         dtype = np.float32
@@ -102,26 +104,32 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     means = np.zeros(n_features, dtype=dtype)
     variances = np.zeros_like(means, dtype=dtype)
+    n_samples_array = np.zeros(n_features, dtype=dtype)
 
     # counts[j] contains the number of samples where feature j is non-zero
     cdef np.ndarray[int, ndim=1] counts = np.zeros(n_features,
                                                    dtype=np.int32)
 
     for i in xrange(non_zero):
+        if X_data[i] == np.nan:
+            continue
         col_ind = X_indices[i]
         means[col_ind] += X_data[i]
+        n_samples_array[col_ind] += 1.
 
-    means /= n_samples
+    means /= n_samples_array
 
     for i in xrange(non_zero):
+        if X_data[i] == np.nan:
+            continue
         col_ind = X_indices[i]
         diff = X_data[i] - means[col_ind]
         variances[col_ind] += diff * diff
         counts[col_ind] += 1
 
     for i in xrange(n_features):
-        variances[i] += (n_samples - counts[i]) * means[i] ** 2
-        variances[i] /= n_samples
+        variances[i] += (n_samples_array[i] - counts[i]) * means[i] ** 2
+        variances[i] /= n_samples_array[i]
 
     return means, variances
 
@@ -155,7 +163,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                              np.ndarray[int, ndim=1] X_indptr):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
-    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_samples = 0
     cdef unsigned int n_features = shape[1]
 
     cdef unsigned int i
@@ -169,6 +177,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     cdef np.ndarray[floating, ndim=1] means
     # variances[j] contains the variance of feature j
     cdef np.ndarray[floating, ndim=1] variances
+
     if floating is float:
         dtype = np.float32
     else:
@@ -184,7 +193,10 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         counts = endptr - startptr
 
         for j in xrange(startptr, endptr):
+            if X_data[j] == np.nan:
+                continue
             means[i] += X_data[j]
+            n_samples += 1
         means[i] /= n_samples
 
         for j in xrange(startptr, endptr):
