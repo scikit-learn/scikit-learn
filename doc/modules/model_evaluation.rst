@@ -682,8 +682,8 @@ score is equal to the classification accuracy.
   0.33...
   >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
   0.5
-  >>> jaccard_similarity_score(y_true, y_pred)
-  array([ 1.,  0.,  0.,  1. ])
+  >>> jaccard_similarity_score(y_true, y_pred, average=None)
+  array([ 1.,  0.,  0.,  1.])
 
 In the multilabel case with binary label indicators: ::
 

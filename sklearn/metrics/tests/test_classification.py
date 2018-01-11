@@ -1049,7 +1049,9 @@ def test_multiclass_jaccard_similarity_score():
     multi_labels_list = [['ant', 'bird'], ['ant', 'cat'], ['cat', 'bird'],
                          ['ant'], ['bird'], ['cat'], None]
     bin_labels_list = [[0, 1], [0, 2], [2, 1], [0], [1], [2], None]
-    for average in ('macro', 'weighted', 'micro'):
+
+    # other than average='samples'/'none-samples', test everything else here
+    for average in ('macro', 'weighted', 'micro', None):
         for m_label, b_label in zip(multi_labels_list, bin_labels_list):
             assert_almost_equal(multi_jaccard_similarity_score(average=average,
                                                                labels=m_label),
