@@ -158,7 +158,8 @@ def average_precision_score(y_true, y_score, average="macro",
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : string, {None, 'micro', 'macro', 'samples', 'weighted'},
+              default 'macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -238,7 +239,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         The multiclass case expects shape = [n_samples, n_classes]
         where the scores correspond to probability estimates.
 
-    multiclass : string, ['ovr' (default), 'ovo']
+    multiclass : string, 'ovr' or 'ovo', default 'ovr'
         Note: multiclass ROC AUC currently only handles the 'macro' and
         'weighted' averages.
 
@@ -249,7 +250,8 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : string, {None, 'micro', 'macro', 'samples', 'weighted'},
+              default 'macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
