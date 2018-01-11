@@ -123,7 +123,7 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
         try:
             if profile_memory:
                 args = (est, X_fit, y_fit, fit_params)
-                mem = memory_usage((est_arg_handler, args), interval=.0001)
+                mem = memory_usage((est_arg_handler, args), interval=.01)
                 model_memory.append(mem[-1]-mem[0])
                 peak_memory.append(np.max(mem))
             else:
@@ -158,14 +158,5 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
 
 
 def est_arg_handler(estimator, X, y=None, fit_params=None):
-    if y is None:
-        if fit_params is None:
-            estimator.fit(X)
-        else:
-            estimator.fit(X, **fit_params)
-    else:
-        if fit_params is None:
-            estimator.fit(X, y)
-        else:
-            estimator.fit(X, y, **fit_params)
+    estimator.fit(X, y, **(fit_params))
     return
