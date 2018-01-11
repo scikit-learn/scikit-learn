@@ -125,6 +125,11 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+Preprocessing
+
+- :class:`preprocessing.PolynomialFeatures` now supports sparse input.
+  :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
