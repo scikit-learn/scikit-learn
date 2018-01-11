@@ -12,14 +12,16 @@ from ..utils.validation import (check_is_fitted, FLOAT_DTYPES)
 
 
 __all__ = [
-    'Smoother',
+    'RectangularSmoother',
 ]
 
-class Smoother(BaseEstimator, TransformerMixin):
 
-    _modes = ["rect"]
+class RectangularSmoother(BaseEstimator, TransformerMixin):
 
-    def __init__(self, mode="rect", size=3):
+    _modes = [ 'mirror', 'constant', 'nearest', 'wrap', 'interp']
+    # TODO: implements interp
+
+    def __init__(self, size=3, mode='constant', cval=0.0):
         if mode not in self._modes:
             raise ValueError("Given mode is not supported.")
 
@@ -28,6 +30,8 @@ class Smoother(BaseEstimator, TransformerMixin):
 
         self._mode = mode
         self._size = size
+        self._whisker = int((self._size - 1) / 2)
+        self._cval = cval
 
     def _reset(self):
         if hasattr(self, '_mode'):
@@ -55,23 +59,41 @@ class Smoother(BaseEstimator, TransformerMixin):
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
-        wiskersLen = int((self._size - 1) / 2)
-        sampleSize = X.shape[0]
+        array_filler_up, array_filler_down = self._populate_filler((self._whisker, X.shape[1]))
 
-        if self._mode == "rect":
-            for row in range(wiskersLen, sampleSize-wiskersLen):
-                #print("row: " + str(row) + " \t ")
-                #print(X[row, :])
-                average = self._sizeSum(X, row - wiskersLen, row + wiskersLen + 1) / self._size
-                # print("from line " + str(row-wiskersLen) + "to line" + str(row+wiskersLen+1))
-                # print(average)
-                X[row, :] = average
+        supported_input = np.concatenate((array_filler_up, X, array_filler_down), axis=0)
 
-                return X
+        result = np.zeros(X.shape)
+        result[0, :] = self.sum_lines(0, self._size, )
+        for row in range(1, X.shape[0]):
+            result[row, :] = result[row - 1, :] - supported_input[row - 1, :] + supported_input[row + self._size - 1, :]
+        result = np.divide(result, self._size)
+        return result
 
-    def _sizeSum(self, X, start, end):
-        featureNumber = X.shape[1]
-        result = np.zeros(featureNumber)
+    @staticmethod
+    def sum_lines(X, start, end):
+        result = np.zeros(X.shape[1])
         for row in X[start:end, :]:
             result += row
         return result
+
+    def _populate_filler(self, num, X):
+        filler_up = np.zeros((num, X.shape[1]))
+        filler_down = np.zeros((num, X.shape[1]))
+
+        if self._mode == 'mirror':
+            return filler_up, filler_down
+
+        if self._mode == 'constant':
+            filler_up[:, :] = self._cval
+            filler_down[:, :] = self._cval
+            return filler_up, filler_down
+
+        if self._mode == 'nearest':
+            filler_up[:, :] = X[0, :]
+            filler_down[:, :] = X[-1, :]
+            return filler_up, filler_down
+
+        if self._mode == 'wrap':
+            return filler_up, filler_down
+
