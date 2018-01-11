@@ -10,6 +10,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 import struct
+import re
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -1226,9 +1227,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         return
     except TypeError as e:
         # TypeError can be thrown if sample_weight is not supported
-        try:
-            assert_regex_matches(repr(e), r"\bsample_weight\b")
-        except AssertionError as e2:
+        if not re.search(r"\bsample_weight\b", repr(e)):
             raise e
         return
     except Exception as exc:
