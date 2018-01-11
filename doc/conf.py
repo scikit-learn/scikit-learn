@@ -75,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u('scikit-learn')
-copyright = u('2007 - 2017, scikit-learn developers (BSD License)')
+copyright = u('2007 - 2018, scikit-learn developers (BSD License)')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
