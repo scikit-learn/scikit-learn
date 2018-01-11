@@ -1,3 +1,5 @@
+# coding: utf-8
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -34,6 +36,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 from .label import LabelEncoder
+from .imputation import _get_mask
 
 
 BOUNDS_THRESHOLD = 1e-7
@@ -2150,6 +2153,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array).
 
+    missing_values : int or "NaN", optional, (default="NaN)
+        The placeholder for the missing values. All occurrences of
+        missing_values will be preserved. For missing values encoded as np.nan,
+        use the string value “NaN”.
+
+        .. versionadded: 0.20
+
     Attributes
     ----------
     quantiles_ : ndarray, shape (n_quantiles, n_features)
@@ -2187,13 +2197,14 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
-                 random_state=None, copy=True):
+                 random_state=None, copy=True, missing_values='NaN'):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
         self.ignore_implicit_zeros = ignore_implicit_zeros
         self.subsample = subsample
         self.random_state = random_state
         self.copy = copy
+        self.missing_values = missing_values
 
     def _dense_fit(self, X, random_state):
         """Compute percentiles for dense matrices.
@@ -2305,8 +2316,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.references_ = np.linspace(0, 1, self.n_quantiles,
                                        endpoint=True)
         if sparse.issparse(X):
+            X.data[self._mask_missing_values] = np.nan
             self._sparse_fit(X, rng)
         else:
+            X[self._mask_missing_values] = np.nan
             self._dense_fit(X, rng)
 
         return self
@@ -2387,7 +2400,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 and not np.isfinite(X[~np.isnan(X)]).all()):
             raise ValueError("Input contains infinity"
                              " or a value too large for %r." % X.dtype)
-        if np.any(np.isnan(X)):
+        if np.count_nonzero(self._mask_missing_values):
             if LooseVersion(np.__version__) >= '1.9':
                 self._percentile_func = np.nanpercentile
             else:
@@ -2400,6 +2413,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
+        if sparse.issparse(X):
+            self._mask_missing_values = _get_mask(X.data, self.missing_values)
+        else:
+            self._mask_missing_values = _get_mask(X, self.missing_values)
         X = check_array(X, accept_sparse='csc', copy=self.copy,
                         dtype=[np.float64, np.float32], force_all_finite=False)
         # we accept nan values but not infinite values.
@@ -2451,17 +2468,21 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """
 
         if sparse.issparse(X):
+            X.data[self._mask_missing_values] = np.nan
             for feature_idx in range(X.shape[1]):
                 column_slice = slice(X.indptr[feature_idx],
                                      X.indptr[feature_idx + 1])
                 X.data[column_slice] = self._transform_col(
                     X.data[column_slice], self.quantiles_[:, feature_idx],
                     inverse)
+            X.data[self._mask_missing_values] = self.missing_values
         else:
+            X[self._mask_missing_values] = np.nan
             for feature_idx in range(X.shape[1]):
                 X[:, feature_idx] = self._transform_col(
                     X[:, feature_idx], self.quantiles_[:, feature_idx],
                     inverse)
+            X[self._mask_missing_values] = self.missing_values
 
         return X
 

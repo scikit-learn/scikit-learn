@@ -11,6 +11,7 @@ import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
 from distutils.version import LooseVersion
+import pytest
 
 from sklearn.utils import gen_batches
 
@@ -955,7 +956,11 @@ def test_quantile_transform_check_error():
                             transformer.fit_transform, X_nan)
 
 
-def test_quantile_transform_nan():
+@pytest.mark.parametrize(
+    "missing_values, dtype",
+    [(np.nan, np.float64),
+     (100, np.int64)])
+def test_quantile_transform_missing_values(missing_values, dtype):
     # skip if numpy < 1.9
     if LooseVersion(np.__version__) < LooseVersion('1.9'):
         raise SkipTest(
@@ -963,16 +968,17 @@ def test_quantile_transform_nan():
 
     X = np.array([[0, 1],
                   [0, 0],
-                  [np.nan, 2],
-                  [0, np.nan],
-                  [0, 1]])
+                  [missing_values, 2],
+                  [0, missing_values],
+                  [0, 1]], dtype=dtype)
     X_sparse = sparse.csc_matrix(X)
 
-    transformer = QuantileTransformer(n_quantiles=5)
+    transformer = QuantileTransformer(n_quantiles=5,
+                                      missing_values=missing_values)
     X_expected = np.array([[0, 0.5],
                            [0, 0],
-                           [np.nan, 1],
-                           [0, np.nan],
+                           [missing_values, 1],
+                           [0, missing_values],
                            [0, 0.5]])
 
     X_trans = transformer.fit_transform(X)
