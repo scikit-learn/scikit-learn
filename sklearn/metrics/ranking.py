@@ -330,6 +330,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                              " one of {1}.".format(
                                  multiclass, multiclass_options))
         if sample_weight is not None:
+            # TODO: check if only in ovo case, if yes, do not raise when ovr
             raise ValueError("Parameter 'sample_weight' is not supported"
                              " for multiclass one-vs-one ROC AUC."
                              " 'sample_weight' must be None in this case.")
