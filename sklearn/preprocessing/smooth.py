@@ -18,8 +18,7 @@ __all__ = [
 
 class RectangularSmoother(BaseEstimator, TransformerMixin):
 
-    _modes = [ 'mirror', 'constant', 'nearest', 'wrap', 'interp']
-    # TODO: implements interp
+    _modes = [ 'mirror', 'constant', 'nearest', 'wrap']
 
     def __init__(self, size=3, mode='constant', cval=0.0):
         if mode not in self._modes:
@@ -37,34 +36,29 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         if hasattr(self, '_mode'):
             del self._mode
             del self._size
+            del self._whisker
+            del self._cval
 
     def fit(self, X, y=None):
-        self._reset()
-        return self.partial_fit(X, y)
-
-    def partial_fit(self, X, y=None):
         if sparse.issparse(X):
             raise TypeError("Smoother does no support sparse input. ")
 
         X = check_array(X, copy=self.copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        # considering a matrix n_samples * n_features
-        # the smoothing is applied to every feature
-
         return self
+
 
     def transform(self, X):
         check_is_fitted(self, 'scale_')
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
-        array_filler_up, array_filler_down = self._populate_filler((self._whisker, X.shape[1]))
+        array_filler_up, array_filler_down = self._populate_fillers(X)
 
         supported_input = np.concatenate((array_filler_up, X, array_filler_down), axis=0)
 
         result = np.zeros(X.shape)
-        result[0, :] = self.sum_lines(0, self._size, )
+        result[0, :] = self.sum_lines(supported_input, 0, self._size)
         for row in range(1, X.shape[0]):
             result[row, :] = result[row - 1, :] - supported_input[row - 1, :] + supported_input[row + self._size - 1, :]
         result = np.divide(result, self._size)
@@ -77,11 +71,18 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
             result += row
         return result
 
-    def _populate_filler(self, num, X):
-        filler_up = np.zeros((num, X.shape[1]))
-        filler_down = np.zeros((num, X.shape[1]))
+    def _populate_fillers(self, X):
+
+        if X.shape[0] < self._whisker:
+            raise TypeError("Too few sample with respect to the chosen window size")
+
+        filler_up = np.zeros((self._whisker, X.shape[1]))
+        filler_down = np.zeros((self._whisker, X.shape[1]))
 
         if self._mode == 'mirror':
+            for i in range(0, self._whisker):
+                filler_up[i, :] = X[self._whisker - i, :]
+                filler_down[i, :] = X[- 2 - i, :]
             return filler_up, filler_down
 
         if self._mode == 'constant':
@@ -95,5 +96,7 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
             return filler_up, filler_down
 
         if self._mode == 'wrap':
+            filler_up[:, :] = X[-self._whisker:, :]
+            filler_down[:, :] = X[:self._whisker, :]
             return filler_up, filler_down
 
