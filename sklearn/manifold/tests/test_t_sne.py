@@ -107,13 +107,10 @@ def test_gradient_descent_stops():
 def test_binary_search():
     # Test if the binary search finds Gaussians with desired perplexity.
     random_state = check_random_state(0)
-    distances = random_state.randn(50, 2).astype(np.float32)
-    # Distances shouldn't be negative
-    distances = np.abs(distances.dot(distances.T))
-    np.fill_diagonal(distances, 0.0)
+    data = random_state.randn(50, 5)
+    distances = pairwise_distances(data).astype(np.float32)
     desired_perplexity = 25.0
-    P = _binary_search_perplexity(distances, None, desired_perplexity,
-                                  verbose=0)
+    P = _binary_search_perplexity(distances, desired_perplexity, verbose=0)
     P = np.maximum(P, np.finfo(np.double).eps)
     mean_perplexity = np.mean([np.exp(-np.sum(P[i] * np.log(P[i])))
                                for i in range(P.shape[0])])
@@ -127,32 +124,34 @@ def test_binary_search_neighbors():
     n_samples = 500
     desired_perplexity = 25.0
     random_state = check_random_state(0)
-    distances = random_state.randn(n_samples, 2).astype(np.float32)
-    # Distances shouldn't be negative
-    distances = np.abs(distances.dot(distances.T))
-    np.fill_diagonal(distances, 0.0)
-    P1 = _binary_search_perplexity(distances, None, desired_perplexity,
-                                   verbose=0)
+    data = random_state.randn(n_samples, 2).astype(np.float32)
+    distances = pairwise_distances(data)
+    P1 = _binary_search_perplexity(distances, desired_perplexity, verbose=0)
 
     # Test that when we use all the neighbors the results are identical
-    k = n_samples
-    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64)
-    distances_nn = np.array([distances[k, neighbors_nn[k]]
-                            for k in range(n_samples)])
-    P2 = _binary_search_perplexity(distances_nn, neighbors_nn,
-                                   desired_perplexity, verbose=0)
-    P_nn = np.array([P1[k, neighbors_nn[k]] for k in range(n_samples)])
-    assert_array_almost_equal(P_nn, P2, decimal=4)
+    n_neighbors = n_samples - 1
+    nn = NearestNeighbors().fit(data)
+    distance_graph = nn.kneighbors_graph(n_neighbors=n_neighbors,
+                                         mode='distance')
+    distances_nn = distance_graph.data.astype(np.float32)
+    distances_nn = distances_nn.reshape(n_samples, n_neighbors)
+    P2 = _binary_search_perplexity(distances_nn, desired_perplexity, verbose=0)
 
-    # Test that the highest P_ij are the same when few neighbors are used
-    for k in np.linspace(80, n_samples, 5):
+    indptr = distance_graph.indptr
+    P_1nn = np.array([P1[k, distance_graph.indices[indptr[k]:indptr[k+1]]]
+                     for k in range(n_samples)])
+    assert_array_almost_equal(P_1nn, P2, decimal=4)
+
+    # Test that the highest P_ij are the same when fewer neighbors are used
+    for k in np.linspace(150, n_samples - 1, 5):
         k = int(k)
-        topn = k * 10  # check the top 10 *k entries out of k * k entries
-        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
-        distances_nn = np.array([distances[k, neighbors_nn[k]]
-                                for k in range(n_samples)])
-        P2k = _binary_search_perplexity(distances_nn, neighbors_nn,
-                                        desired_perplexity, verbose=0)
+        topn = k * 10  # check the top 10 * k entries out of k * k entries
+        distance_graph = nn.kneighbors_graph(n_neighbors=k, mode='distance')
+        distances_nn = distance_graph.data.astype(np.float32)
+        distances_nn = distances_nn.reshape(n_samples, k)
+        P2k = _binary_search_perplexity(distances_nn, desired_perplexity,
+                                        verbose=0)
+        assert_array_almost_equal(P_1nn, P2, decimal=2)
         idx = np.argsort(P1.ravel())[::-1]
         P1top = P1.ravel()[idx][:topn]
         idx = np.argsort(P2k.ravel())[::-1]
@@ -164,19 +163,19 @@ def test_binary_perplexity_stability():
     # Binary perplexity search should be stable.
     # The binary_search_perplexity had a bug wherein the P array
     # was uninitialized, leading to sporadically failing tests.
-    k = 10
+    n_neighbors = 10
     n_samples = 100
     random_state = check_random_state(0)
-    distances = random_state.randn(n_samples, 2).astype(np.float32)
-    # Distances shouldn't be negative
-    distances = np.abs(distances.dot(distances.T))
-    np.fill_diagonal(distances, 0.0)
+    data = random_state.randn(n_samples, 5)
+    nn = NearestNeighbors().fit(data)
+    distance_graph = nn.kneighbors_graph(n_neighbors=n_neighbors,
+                                         mode='distance')
+    distances = distance_graph.data.astype(np.float32)
+    distances = distances.reshape(n_samples, n_neighbors)
     last_P = None
-    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
     for _ in range(100):
-        P = _binary_search_perplexity(distances.copy(), neighbors_nn.copy(),
-                                      3, verbose=0)
-        P1 = _joint_probabilities_nn(distances, neighbors_nn, 3, verbose=0)
+        P = _binary_search_perplexity(distances.copy(), 3, verbose=0)
+        P1 = _joint_probabilities_nn(distance_graph, n_neighbors, 3, verbose=0)
         # Convert the sparse matrix to a dense one for testing
         P1 = P1.toarray()
         if last_P is None:
@@ -593,25 +592,18 @@ def test_barnes_hut_angle():
         degrees_of_freedom = float(n_components - 1.0)
 
         random_state = check_random_state(0)
-        distances = random_state.randn(n_samples, n_features)
-        distances = distances.astype(np.float32)
-        distances = abs(distances.dot(distances.T))
-        np.fill_diagonal(distances, 0.0)
+        data = random_state.randn(n_samples, n_features)
+        distances = pairwise_distances(data)
         params = random_state.randn(n_samples, n_components)
         P = _joint_probabilities(distances, perplexity, verbose=0)
         kl_exact, grad_exact = _kl_divergence(params, P, degrees_of_freedom,
                                               n_samples, n_components)
 
-        k = n_samples - 1
-        bt = BallTree(distances)
-        distances_nn, neighbors_nn = bt.query(distances, k=k + 1)
-        neighbors_nn = neighbors_nn[:, 1:]
-        distances_nn = np.array([distances[i, neighbors_nn[i]]
-                                 for i in range(n_samples)])
-        assert np.all(distances[0, neighbors_nn[0]] == distances_nn[0]),\
-            abs(distances[0, neighbors_nn[0]] - distances_nn[0])
-        P_bh = _joint_probabilities_nn(distances_nn, neighbors_nn,
-                                       perplexity, verbose=0)
+        n_neighbors = n_samples - 1
+        distances_csr = NearestNeighbors().fit(data).kneighbors_graph(
+            n_neighbors=n_neighbors, mode='distance')
+        P_bh = _joint_probabilities_nn(distances_csr, n_neighbors, perplexity,
+                                       verbose=0)
         kl_bh, grad_bh = _kl_divergence_bh(params, P_bh, degrees_of_freedom,
                                            n_samples, n_components,
                                            angle=angle, skip_num_points=0,

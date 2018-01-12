@@ -55,14 +55,15 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
     # the desired perplexity
     distances = distances.astype(np.float32, copy=False)
     conditional_P = _utils._binary_search_perplexity(
-        distances, None, desired_perplexity, verbose)
+        distances, desired_perplexity, verbose)
     P = conditional_P + conditional_P.T
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
     return P
 
 
-def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
+def _joint_probabilities_nn(distances, n_neighbors, desired_perplexity,
+                            verbose):
     """Compute joint probabilities p_ij from distances using just nearest
     neighbors.
 
@@ -72,11 +73,9 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : array, shape (n_samples, k)
-        Distances of samples to its k nearest neighbors.
-
-    neighbors : array, shape (n_samples, k)
-        Indices of the k nearest-neighbors for each samples.
+    distances : CSR sparse matrix, shape (n_samples, n_samples)
+        Distances of samples to its n_neighbors nearest neighbors. All other
+        distances are left to zero (and are not materialized in memory).
 
     desired_perplexity : float
         Desired perplexity of the joint probability distributions.
@@ -92,17 +91,17 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
     t0 = time()
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
-    n_samples, k = neighbors.shape
-    distances = distances.astype(np.float32, copy=False)
-    neighbors = neighbors.astype(np.int64, copy=False)
+    n_samples = distances.shape[0]
+    distances_data = distances.data.astype(np.float32, copy=False)
+    distances_data = distances_data.reshape(n_samples, n_neighbors)
     conditional_P = _utils._binary_search_perplexity(
-        distances, neighbors, desired_perplexity, verbose)
+        distances_data, desired_perplexity, verbose)
     assert np.all(np.isfinite(conditional_P)), \
         "All probabilities should be finite"
 
     # Symmetrize the joint probability distribution using sparse operations
-    P = csr_matrix((conditional_P.ravel(), neighbors.ravel(),
-                    range(0, n_samples * k + 1, k)),
+    P = csr_matrix((conditional_P.ravel(), distances.indices,
+                    distances.indptr),
                    shape=(n_samples, n_samples))
     P = P + P.T
 
@@ -705,17 +704,18 @@ class TSNE(BaseEstimator):
                                     "or then equal to one")
 
         else:
-            # Cpmpute the number of nearest neighbors to find.
+            # Compute the number of nearest neighbors to find.
             # LvdM uses 3 * perplexity as the number of neighbors.
             # In the event that we have very small # of points
             # set the neighbors to n - 1.
-            k = min(n_samples - 1, int(3. * self.perplexity + 1))
+            n_neighbors = min(n_samples - 1, int(3. * self.perplexity + 1))
 
             if self.verbose:
-                print("[t-SNE] Computing {} nearest neighbors...".format(k))
+                print("[t-SNE] Computing {} nearest neighbors..."
+                      .format(n_neighbors))
 
             # Find the nearest neighbors for every point
-            knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
+            knn = NearestNeighbors(algorithm='auto', n_neighbors=n_neighbors,
                                    metric=self.metric)
             t0 = time()
             knn.fit(X)
@@ -725,8 +725,8 @@ class TSNE(BaseEstimator):
                     n_samples, duration))
 
             t0 = time()
-            distances_nn, neighbors_nn = knn.kneighbors(
-                None, n_neighbors=k)
+            distances_nn = knn.kneighbors_graph(
+                n_neighbors=n_neighbors, mode='distance')
             duration = time() - t0
             if self.verbose:
                 print("[t-SNE] Computed neighbors for {} samples in {:.3f}s..."
@@ -741,10 +741,10 @@ class TSNE(BaseEstimator):
                 # the method was derived using the euclidean method as in the
                 # input space. Not sure of the implication of using a different
                 # metric.
-                distances_nn **= 2
+                distances_nn.data **= 2
 
             # compute the joint probability distribution for the input space
-            P = _joint_probabilities_nn(distances_nn, neighbors_nn,
+            P = _joint_probabilities_nn(distances_nn, n_neighbors,
                                         self.perplexity, self.verbose)
 
         if isinstance(self.init, np.ndarray):
