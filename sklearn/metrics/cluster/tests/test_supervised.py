@@ -174,14 +174,11 @@ def test_expected_mutual_info_overflow():
 
 def test_int_overflow_mutual_info_score():
     # Test overflow in mutual_info_classif
-    x = np.concatenate((np.repeat(1, 52632 + 2529), np.repeat(2, 14660+793),
-                       np.repeat(3, 3271+204), np.repeat(4, 814+39),
-                       np.repeat(5, 316+20)))
-    y = np.concatenate((np.repeat(0, 52632), np.repeat(1, 2529),
-                       np.repeat(0, 14660), np.repeat(1, 793),
-                       np.repeat(0, 3271), np.repeat(1, 204),
-                       np.repeat(0, 814), np.repeat(1, 39),
-                       np.repeat(0, 316), np.repeat(1, 20)))
+    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] * (3271 +
+                 204) + [4] * (814 + 39) + [5] * (316 + 20))
+    y = np.array([0] * 52632 + [1] * 2529 + [0] * 14660 + [1] * 793 +
+                 [0] * 3271 + [1] * 204 + [0] *814 + [1] * 39 + [0] * 316 +
+                 [1] * 20)
 
     mutual_info_score(x.ravel(), y.ravel())
 
