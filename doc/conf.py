@@ -307,3 +307,5 @@ numpydoc_xref_aliases = {
     'array-like': ':term:`numpy:array_like`',
     'array_like': ':term:`numpy:array_like`',
 }
+
+numpydoc_xref_ignore = {'object', 'default', 'optional'}
