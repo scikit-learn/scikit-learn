@@ -1,9 +1,12 @@
 """Unsupervised nearest neighbors learner"""
+import warnings
 
 from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import RadiusNeighborsMixin
 from .base import UnsupervisedMixin
+from ..base import TransformerMixin
+from ..utils.validation import check_is_fitted, check_array
 
 
 class NearestNeighbors(NeighborsBase, KNeighborsMixin,
@@ -122,3 +125,129 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
               metric_params=metric_params, n_jobs=n_jobs, **kwargs)
+
+
+class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
+                                  RadiusNeighborsMixin,
+                                  UnsupervisedMixin,
+                                  TransformerMixin):
+    """TODO
+
+    Parameters
+    ----------
+    mode : {'distance', 'connectivity'}, optional (default = 'distance')
+        Type of returned matrix: 'connectivity' will return the connectivity
+        matrix with ones and zeros, and 'distance' will return the distances
+        between neighbors according to the given metric.
+
+    n_neighbors : int, optional (default = None)
+        Number of neighbors to use for :meth:`kneighbors` queries.
+        Must be None if radius is not None.
+
+    radius : float, optional (default = None)
+        Range of parameter space to use for :meth:`radius_neighbors`
+        queries. Must be None if n_neighbors is not None.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
+    leaf_size : int, optional (default = 30)
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+
+    metric : string or callable, default 'minkowski'
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    p : integer, optional (default = 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
+
+    Examples
+    --------
+      >>> import numpy as np
+      >>> from sklearn.neighbors import NearestNeighborsTransformer
+      >>> # TODO
+    """
+    def __init__(self, mode='distance', n_neighbors=None,
+                 radius=None, algorithm='auto', leaf_size=30,
+                 metric='minkowski', p=2, metric_params=None, n_jobs=1):
+        super(NearestNeighborsTransformer, self).__init__(
+            n_neighbors=n_neighbors, radius=radius, algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params, n_jobs=n_jobs)
+        self.mode = mode
+
+    def transform(self, X):
+        """Computes the (weighted) graph of Neighbors for points in X
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples_transform, n_features]
+            Sample data
+
+        Returns
+        -------
+        Xt : CSR sparse matrix, shape = [n_samples_fit, n_samples_transform]
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+        """
+        check_is_fitted(self, '_fit_X')
+        check_array(X, accept_sparse='csr')
+        if self.radius is None and self.n_neighbors is None:
+            warnings.warn("Please specify either radius or n_neighbors. "
+                          "Default to n_neighbors = 5.", UserWarning)
+            n_neighbors = 5
+        else:
+            n_neighbors = self.n_neighbors
+
+        if self.radius is not None and self.n_neighbors is not None:
+            raise ValueError(
+                "Please do not specify both radius and n_neighbors.")
+
+        if self.radius is not None:
+            return self.radius_neighbors_graph(X, self.radius, self.mode)
+        if n_neighbors is not None:
+            return self.kneighbors_graph(X, n_neighbors, self.mode)

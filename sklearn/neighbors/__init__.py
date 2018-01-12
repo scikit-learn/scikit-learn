@@ -7,7 +7,7 @@ from .ball_tree import BallTree
 from .kd_tree import KDTree
 from .dist_metrics import DistanceMetric
 from .graph import kneighbors_graph, radius_neighbors_graph
-from .unsupervised import NearestNeighbors
+from .unsupervised import NearestNeighbors, NearestNeighborsTransformer
 from .classification import KNeighborsClassifier, RadiusNeighborsClassifier
 from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
@@ -22,6 +22,7 @@ __all__ = ['BallTree',
            'KNeighborsRegressor',
            'NearestCentroid',
            'NearestNeighbors',
+           'NearestNeighborsTransformer',
            'RadiusNeighborsClassifier',
            'RadiusNeighborsRegressor',
            'kneighbors_graph',

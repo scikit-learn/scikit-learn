@@ -650,10 +650,16 @@ def _apply_func(func, X):
     n_features = X.shape[1]
     result_by_batch = [func(batch.reshape(1, n_features))
                        for batch in X]
+
     # func can output tuple (e.g. score_samples)
     if type(result_full) == tuple:
         result_full = result_full[0]
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
+
+    # func can output scipy sparse matrices
+    if sparse.issparse(result_full):
+        result_full = result_full.toarray()
+        result_by_batch = [res.toarray() for res in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
 

@@ -134,11 +134,13 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
-    embed_precomp = se_precomp.fit_transform(rbf_kernel(S, gamma=gamma))
-    embed_rbf = se_rbf.fit_transform(S)
-    assert_array_almost_equal(
-        se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05))
+    for X in [S, sparse.csr_matrix(S)]:
+        embed_precomp = se_precomp.fit_transform(rbf_kernel(X, gamma=gamma))
+        embed_rbf = se_rbf.fit_transform(X)
+        assert_array_almost_equal(
+            se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
+        assert_true(
+            _check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05))
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -153,13 +155,14 @@ def test_spectral_embedding_callable_affinity(seed=36):
     se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
-    embed_rbf = se_rbf.fit_transform(S)
-    embed_callable = se_callable.fit_transform(S)
-    assert_array_almost_equal(
-        se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
-    assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05))
+    for X in [S, sparse.csr_matrix(S)]:
+        embed_rbf = se_rbf.fit_transform(X)
+        embed_callable = se_callable.fit_transform(X)
+        assert_array_almost_equal(
+            se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
+        assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
+        assert_true(
+            _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05))
 
 
 def test_spectral_embedding_amg_solver(seed=36):

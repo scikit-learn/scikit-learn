@@ -478,12 +478,12 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
-            X : array-like, shape (n_samples, n_samples),
+            X : {array-like, sparse matrix}, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
 
@@ -495,7 +495,8 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = check_array(X, ensure_min_samples=2, estimator=self)
+        X = check_array(X, accept_sparse='csr', ensure_min_samples=2,
+                        estimator=self)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, six.string_types):
@@ -520,12 +521,12 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
-            X : array-like, shape (n_samples, n_samples),
+            X : {array-like, sparse matrix}, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
 
