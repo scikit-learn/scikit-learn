@@ -299,6 +299,38 @@ else:
 
 if np_version < (1, 9):
     def nanpercentile(a, q):
-        return np.percentile(np.compress(~np.isnan(a), a))
+        """
+        Compute the qth percentile of the data along the specified axis,
+        while ignoring nan values.
+
+        Returns the qth percentile(s) of the array elements.
+
+        Parameters
+        ----------
+        a : array_like
+            Input array or object that can be converted to an array.
+        q : float in range of [0,100] (or sequence of floats)
+            Percentile to compute, which must be between 0 and 100
+            inclusive.
+
+        Returns
+        -------
+        percentile : scalar or ndarray
+            If `q` is a single percentile and `axis=None`, then the result
+            is a scalar. If multiple percentiles are given, first axis of
+            the result corresponds to the percentiles. The other axes are
+            the axes that remain after the reduction of `a`. If the input
+            contains integers or floats smaller than ``float64``, the output
+            data-type is ``float64``. Otherwise, the output data-type is the
+            same as that of the input. If `out` is specified, that array is
+            returned instead.
+
+        """
+        q = np.asarray(q)
+        data = np.compress(~np.isnan(a), a)
+        if data.size:
+            return np.percentile(data, q)
+        else:
+            return np.array([np.nan] * q.size)
 else:
     from numpy import nanpercentile
