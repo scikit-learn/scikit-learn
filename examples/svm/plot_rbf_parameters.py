@@ -188,4 +188,5 @@ plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
 plot_gridsearch_results(grid.cv_results_, title="Validation accuracy",
                         cmap=plt.cm.hot,
                         norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
+plt.tight_layout()
 plt.show()
