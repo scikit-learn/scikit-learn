@@ -326,11 +326,11 @@ if np_version < (1, 9):
             returned instead.
 
         """
-        q = np.asarray(q)
         data = np.compress(~np.isnan(a), a)
         if data.size:
             return np.percentile(data, q)
         else:
-            return np.array([np.nan] * q.size)
+            size_q = 1 if np.isscalar(q) else len(q)
+            return np.array([np.nan] * size_q)
 else:
     from numpy import nanpercentile
