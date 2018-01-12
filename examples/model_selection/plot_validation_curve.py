@@ -71,5 +71,6 @@ gs = GridSearchCV(SVC(),
                   cv=10, scoring="accuracy")
 
 gs.fit(X, y)
-plot_gridsearch_results(gs.cv_results_)
+plot_gridsearch_results(gs.cv_results_, fmt='{:.1e}')
+plt.tight_layout()
 plt.show()
