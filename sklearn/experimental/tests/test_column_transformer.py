@@ -89,11 +89,7 @@ def test_column_transformer():
 
 
 def test_column_transformer_dataframe():
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("pandas is not installed: skipping ColumnTransformer "
-                       "tests for DataFrames.")
+    pd = pytest.importorskip('pandas')
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
@@ -429,7 +425,7 @@ def test_column_transformer_passthrough():
     assert_array_equal(ct.fit_transform(X_array), X_res_both[:, ::-1])
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
 
-    # passthrough='remainder' -> passthrough all none selected columns
+    # passthrough='remainder' -> passthrough all unselected columns
     ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough='remainder')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
@@ -469,11 +465,7 @@ def test_column_transformer_passthrough_key(key):
                                  ['second'], slice('second', None),
                                  slice('second', 'second')])
 def test_column_transformer_passthrough_key_pandas(key):
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("pandas is not installed: skipping ColumnTransformer "
-                       "tests for DataFrames.")
+    pd = pytest.importorskip('pandas')
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
