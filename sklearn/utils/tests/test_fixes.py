@@ -6,6 +6,7 @@
 import pickle
 
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
@@ -30,7 +31,12 @@ def test_masked_array_obj_dtype_pickleable():
         assert_array_equal(marr.mask, marr_pickled.mask)
 
 
-def test_nanpercentile():
-    X = np.array([0, 1, 2, np.nan])
-    percentile = nanpercentile(X, [0, 50, 100])
-    assert_allclose(percentile, X[~np.isnan(X)])
+@pytest.mark.parametrize(
+    "a, q, expected_percentile",
+    [(np.array([1, 2, 3, np.nan]), [0, 50, 100], np.array([1., 2., 3.])),
+     (np.array([1, 2, 3, np.nan]), 50, 2.),
+     (np.array([np.nan, np.nan]), [0, 50], np.array([np.nan, np.nan]))]
+)
+def test_nanpercentile(a, q, expected_percentile):
+    percentile = nanpercentile(a, q)
+    assert_allclose(percentile, expected_percentile)
