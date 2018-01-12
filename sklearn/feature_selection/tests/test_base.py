@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 from sklearn.datasets import make_classification
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import featurewise_scorer, SelectorMixin
-from sklearn.feature_selection import SelectKBest, SelectPercentile
+from sklearn.feature_selection import SelectKBest
 from sklearn.utils import check_array
 from sklearn.utils.testing import assert_raises, assert_equal
 
@@ -121,32 +121,32 @@ def test_get_support():
 def test_featurewise_scorer():
     X, y = make_classification(random_state=0)
 
-    # spearmanr from scipy.stats
+    # spearmanr from scipy.stats with SelectKBest
     skb = SelectKBest(featurewise_scorer(spearmanr, axis=0), k=10)
     skb.fit(X, y)
     new_X = skb.transform(X)
-
-    # Using custom score function
-    skb2 = SelectKBest(featurewise_scorer(lambda *args, **kwargs:
-                                          spearmanr(*args, **kwargs)[0],
-                                          axis=0), k=10)
-    skb2.fit(X, y)
-    new_X2 = skb2.transform(X)
-
-    # Check if the feature selectors behave as expected
     assert_equal(new_X.shape[1], 10)
-    assert_equal(new_X2.shape[1], 10)
+
+    # Using custom score function returning only scores
+    score1 = featurewise_scorer(lambda *args, **kwargs:
+                                spearmanr(*args, **kwargs)[0], axis=0)(X, y)
+    score2, pval = featurewise_scorer(spearmanr, axis=0)(X, y)
+    assert_array_equal(score1, score2)
+
+    # Test keyword argument absolute_score
+    score_integer, pval = featurewise_scorer(spearmanr, absolute_score=False,
+                                             axis=0)(X, y)
+    assert_array_equal(abs(score_integer), score2)
 
 
 def test_featurewise_scorer_list_input():
     # Test featurewise_scorer for input X and y as lists.
     X, y = make_classification(random_state=0)
+    score_arr, pval_arr = featurewise_scorer(spearmanr, axis=0)(X, y)
+
     X = X.tolist()  # convert X from array to list
     y = y.tolist()  # convert y from array to list
+    score_list, pval_list = featurewise_scorer(spearmanr, axis=0)(X, y)
 
-    sp = SelectPercentile(featurewise_scorer(spearmanr), percentile=50)
-    sp.fit(X, y)
-    new_X = sp.transform(X)
-
-    # Check if the feature selectors behave as expected
-    assert_equal(new_X.shape[1], 10)
+    assert_array_equal(score_arr, score_list)
+    assert_array_equal(pval_arr, pval_list)

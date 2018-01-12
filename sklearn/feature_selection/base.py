@@ -128,19 +128,23 @@ def featurewise_scorer(score_func, absolute_score=True, **kwargs):
     Parameters
     ----------
     score_func : callable
-        Function taking arrays X and y, and returning a pair of arrays
-        (scores, pvalues) or a single array with scores. This function is also
-        allowed to take other parameters as input.
+        Function taking two 1-d arrays (feature vector and target vector) and
+        returning a pair of values (score, p-value) or just a score.
     absolute_score : bool
         If True (default), the absolute value of the scores are returned,
         which is useful when using correlation coefficients.
+    kwargs : keyword arguments
+        Keyword arguments(comma separated) passed to the score function
+        `score_func`.
 
     Returns
     -------
     scores : array-like, shape (n_features,)
         Score values returned by the scoring function.
     p_vals : array-like, shape (n_features,)
-        The set of p-values returned by the scoring function.
+        The set of p-values returned by the scoring function. However, it is
+        dependent on the score function `score_func` whether it returns
+        p-values or just scores.
 
     Notes
     -----
