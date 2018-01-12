@@ -127,7 +127,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         ------

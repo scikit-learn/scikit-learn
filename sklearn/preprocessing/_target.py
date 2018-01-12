@@ -155,7 +155,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         y = check_array(y, accept_sparse=False, force_all_finite=True,
                         ensure_2d=False, dtype='numeric')

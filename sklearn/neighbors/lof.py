@@ -166,7 +166,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if not (0. < self.contamination <= .5):
             raise ValueError("contamination must be in (0, 0.5]")

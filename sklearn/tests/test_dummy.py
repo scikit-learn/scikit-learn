@@ -599,21 +599,24 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
 
 
-def test_dummy_classifier_on_nan_value():
-    X = [[np.NaN]]
-    y = [1]
-    y_expected = [1]
-    clf = DummyClassifier()
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
+def test_dummy_regressor_on_3D_array():
+    X = np.array([[['foo']], [['bar']], [['baz']]])
+    y = np.array([2, 2, 2])
+    y_expected = np.array([2, 2, 2])
+    cls = DummyRegressor()
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
     assert_array_equal(y_pred, y_expected)
 
 
-def test_dummy_regressor_on_nan_value():
-    X = [[np.NaN]]
-    y = [1]
-    y_expected = [1]
-    clf = DummyRegressor()
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
+def test_dummy_classifier_on_3D_array():
+    X = np.array([[['foo']], [['bar']], [['baz']]])
+    y = [2, 2, 2]
+    y_expected = [2, 2, 2]
+    y_proba_expected = [[1], [1], [1]]
+    cls = DummyClassifier()
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
+    y_pred_proba = cls.predict_proba(X)
     assert_array_equal(y_pred, y_expected)
+    assert_array_equal(y_pred_proba, y_proba_expected)
