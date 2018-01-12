@@ -54,8 +54,6 @@ plt.show()
 # The same plot can also be generated using a combination of GridSearchCV and
 # plotting module of scikit-learn.
 
-print(__doc__)
-
 import matplotlib.pyplot as plt
 import numpy as np
 
