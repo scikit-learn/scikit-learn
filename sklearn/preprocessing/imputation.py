@@ -404,13 +404,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import MissingIndicator
     >>> import numpy as np
     >>> X1 = np.array([
-    ...       ["NaN",  1,  3],
-    ...       [ 4,  0, "NaN"],
+    ...       [np.nan,  1,  3],
+    ...       [ 4,  0, np.nan],
     ...       [ 8,  1,  0]
     ... ])
     >>> X2 = np.array([
-    ...       [ 5, 1, "NaN"],
-    ...       ["NaN",  2,  3],
+    ...       [ 5, 1, np.nan],
+    ...       [np.nan,  2,  3],
     ...       [ 2,  4,  0]
     ... ])
     >>> indicator = MissingIndicator()
@@ -425,7 +425,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    feat_with_missing_  : array of shape(n_missing_features,)
+    features_  : array of shape(n_missing_features,)
         The features with missing values.
 
     n_features_ : int
@@ -455,17 +455,17 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         self._validate_params()
 
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
+        X = check_array(X, accept_sparse=('csc', 'csr'),
                         force_all_finite=False)
         self.n_features_ = X.shape[1]
 
         if isinstance(self.features, six.string_types):
             if self.features == "auto":
-                _, self.feat_with_missing_ = self._get_missing_features_info(X)
+                _, self.features_ = self._get_missing_features_info(X)
             else:  # self.features == "all"
-                self.feat_with_missing_ = np.arange(self.n_features_)
+                self.features_ = np.arange(self.n_features_)
         else:
-            self.feat_with_missing_ = self.features
+            self.features_ = self.features
 
         return self
 
@@ -483,29 +483,29 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
              The missing indicator for input data
 
         """
-        check_is_fitted(self, "feat_with_missing_", "n_features_")
+        check_is_fitted(self, "features_", "n_features_")
 
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
+        X = check_array(X, accept_sparse=('csc', 'csr'),
                         force_all_finite=False)
         if X.shape[1] != self.n_features_:
             raise ValueError("X has a different number of features "
                              "than during fitting.")
 
-        imputer_mask, feat_with_missing = self._get_missing_features_info(X)
+        imputer_mask, features_ = self._get_missing_features_info(X)
 
         if isinstance(self.features, six.string_types):
             if self.features == "auto":
-                features = np.setdiff1d(feat_with_missing,
-                                        self.feat_with_missing_)
+                features = np.setdiff1d(features_,
+                                        self.features_)
                 if self.error_on_new and features.size > 0:
-                    raise Exception("The features %s have missing values "
-                                    "in transform but have no missing values "
-                                    "in fit" % features)
+                    raise ValueError("The features %s have missing values "
+                                     "in transform but have no missing values "
+                                     "in fit" % features)
 
         if not (isinstance(self.features, six.string_types) and
-                self.features == "all") and len(self.feat_with_missing_) != 0:
+                self.features == "all") and len(self.features_) != 0:
             # no need to slice when all features have missing values
-            imputer_mask = imputer_mask[:, self.feat_with_missing_]
+            imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
 
