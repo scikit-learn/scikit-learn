@@ -291,3 +291,22 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+
+numpydoc_xref_param_type = True
+
+numpydoc_xref_aliases = {
+    # python
+    'sequence': ':term:`python:sequence`',
+    'iterable': ':term:`python:iterable`',
+    'string': 'str',
+    # numpy
+    'array': 'numpy.ndarray',
+    'dtype': 'numpy.dtype',
+    'ndarray': 'numpy.ndarray',
+    'matrix': 'numpy.matrix',
+    'array-like': ':term:`numpy:array_like`',
+    'array_like': ':term:`numpy:array_like`',
+}
+
+numpydoc_xref_ignore = {'object', 'default', 'optional'}
