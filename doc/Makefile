@@ -6,11 +6,16 @@ SPHINXOPTS    =
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
+ifneq ($(EXAMPLES_PATTERN),)
+    EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
+endif
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+    $(EXAMPLES_PATTERN_OPTS) .
+
 
 .PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng
 
@@ -47,16 +52,6 @@ html-noplot:
 	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable."
-
-html-pattern:
-	# These two lines make the build a bit more lengthy, and the
-	# the embedding of images more robust
-	rm -rf $(BUILDDIR)/html/_images
-	#rm -rf _build/doctrees/
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable\
-		-D sphinx_gallery_conf.filename_pattern="$(PATTERN)"
-	@echo
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml

@@ -452,7 +452,7 @@ Generating the example gallery will run all our examples which takes a
 while. To save some time, you can use:
     - ``make html-noplot``: this will generate the documentation without the
       example gallery. This is useful when changing a docstring for example.
-    - ``PATTERN=your_regex_goes_here make html-pattern``: only the examples
+    - ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
       matching ``your_regex_goes_here`` will be run. This is particularly
       useful if you are modifying a few examples.
 

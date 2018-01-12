@@ -62,6 +62,7 @@ get_build_type() {
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
         pattern=$(echo "$changed_examples" | paste -sd '|')
+        # pattern for examples to run is the last of output
         echo "$pattern"
         return
     fi
@@ -86,7 +87,7 @@ elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output
     pattern=$(echo "$build_type" | tail -n 1)
-    make_args="html-pattern PATTERN=$pattern"
+    make_args="html EXAMPLES_PATTERN=$pattern"
 else
     make_args=html
 fi
