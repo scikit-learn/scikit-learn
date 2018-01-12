@@ -504,7 +504,7 @@ def test_multi_ovr_auc_toydata():
         result_unweighted)
 
     # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
-    # on the same input
+    # on the same input (Provost & Domingos, 2001)
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovr", average="weighted"),
@@ -601,13 +601,6 @@ def test_binary_clf_curve():
     assert_raise_message(ValueError, msg, precision_recall_curve,
                          y_true, y_pred)
 
-def test_binary_clf_curve():
-    rng = check_random_state(404)
-    y_true = rng.randint(0, 3, size=10)
-    y_pred = rng.rand(10)
-    msg = "multiclass format is not supported"
-    assert_raise_message(ValueError, msg, precision_recall_curve,
-                         y_true, y_pred)
 
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
