@@ -431,13 +431,14 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         ``'none-samples'``:
             Calculate metrics for each instance, (only meaningful for
             multilabel classification). This differs from 'samples' to return
-            array of class-wise jaccard index, instead of normalzing the array.
+            an array of sample-wise jaccard index, instead of normalizing the
+            array.
 
-    normalize : None, bool, optional (defaul=True)
-        If ``False``, return the sum of the Jaccard similarity coefficient
-        over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient. This is only to be specified in case
-        `average='samples'`.
+    normalize : bool, optional (default=True)
+        If ``False``, return an array of Jaccard similarity coefficient for
+        each samples over the sample set. Otherwise, return the average of
+        Jaccard similarity coefficient. 'normalize' is only to be specified in
+        case `average='samples'`.
 
         .. versionchanged: 0.20
            'normalize' is deprecated and will be removed in 0.22, instead of
@@ -591,11 +592,12 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 pred_and_true = np.array([pred_and_true.sum()])
 
             score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] == 1.0
+            score[pred_or_true == 0.0] = 1.0
 
             if average is not None:
                 if average == 'none-samples':
-                    score = np.sum(score)
+                    if class_weight is not None:
+                        score = score * class_weight
                 else:
                     score = np.average(score, weights=class_weight)
             return score

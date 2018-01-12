@@ -1015,9 +1015,9 @@ def test_multilabel_jaccard_similarity_score():
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='samples',
                                                  sample_weight=[1, 2]), 5. / 9)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+    assert_array_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='none-samples'),
-                        35. / 30)
+                       np.array([2. / 3, 1. / 2]))
     assert_array_equal(jaccard_similarity_score(y_true, y_pred, average=None),
                        np.array([1. / 2, 1., 1. / 2]))
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
