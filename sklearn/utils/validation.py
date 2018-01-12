@@ -31,7 +31,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
-def _assert_all_finite(X):
+def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
     if _get_config()['assume_finite']:
         return
@@ -39,20 +39,27 @@ def _assert_all_finite(X):
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method.
-    if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
-            and not np.isfinite(X).all()):
+    if (not allow_nan and X.dtype.char in np.typecodes['AllFloat']
+            and not np.isfinite(X.sum()) and not np.isfinite(X).all()):
         raise ValueError("Input contains NaN, infinity"
+                         " or a value too large for %r." % X.dtype)
+    elif (allow_nan and X.dtype.char in np.typecodes['AllFloat']
+          and not np.isfinite(X[~np.isnan(X)].sum())
+          and not np.isfinite(X[~np.isnan(X)]).all()):
+        raise ValueError("Input contains infinity"
                          " or a value too large for %r." % X.dtype)
 
 
-def assert_all_finite(X):
+def assert_all_finite(X, allow_nan=False):
     """Throw a ValueError if X contains NaN or infinity.
 
     Parameters
     ----------
     X : array or sparse matrix
+
+    allow_nan : bool
     """
-    _assert_all_finite(X.data if sp.issparse(X) else X)
+    _assert_all_finite(X.data if sp.issparse(X) else X, allow_nan)
 
 
 def as_float_array(X, copy=True, force_all_finite=True):
@@ -256,6 +263,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
+    FIXME
     force_all_finite : boolean
         Whether to raise an error on np.inf and np.nan in X.
 
@@ -304,7 +312,10 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
             warnings.warn("Can't check %s sparse matrix for nan or inf."
                           % spmatrix.format)
         else:
-            _assert_all_finite(spmatrix.data)
+            if force_all_finite == 'allow-nan':
+                _assert_all_finite(spmatrix.data, allow_nan=True)
+            else:
+                _assert_all_finite(spmatrix.data)
     return spmatrix
 
 
@@ -359,8 +370,17 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean (default=True)
-        Whether to raise an error on np.inf and np.nan in X.
+    force_all_finite : boolean or str {'allow-nan'}, (default=True)
+        Whether to raise an error on np.inf and np.nan in X. The possibilities
+        are:
+
+        - True: Force all values of X to be finite.
+        - False: accept both np.inf and np.nan in X.
+        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+          infinite.
+
+        .. versionadded:: 0.20
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
         Whether to raise a value error if X is not 2d.
@@ -425,6 +445,15 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             # list of accepted types.
             dtype = dtype[0]
 
+    if (isinstance(force_all_finite, six.string_types)
+            and not force_all_finite == 'allow-nan'):
+        raise ValueError('When force_all_finite is a string, it should be '
+                         'equal to "allow-nan". Got {} instead.'.formtat(
+                             force_all_finite))
+    elif not isinstance(force_all_finite, bool):
+        raise ValueError('force_all_finite should be a bool or a string. Got '
+                         '{!r} instead'.format(force_all_finite))
+
     if estimator is not None:
         if isinstance(estimator, six.string_types):
             estimator_name = estimator
@@ -482,7 +511,9 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
-        if force_all_finite:
+        if force_all_finite == 'allow-nan':
+            _assert_all_finite(array, allow_nan=True)
+        elif force_all_finite:
             _assert_all_finite(array)
 
     shape_repr = _shape_repr(array.shape)
