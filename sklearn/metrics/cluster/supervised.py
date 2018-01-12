@@ -596,8 +596,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
                          type(contingency))
 
     contingency_sum = contingency.sum()
-    pi = np.ravel(contingency.sum(axis=1), dtype=np.int64)
-    pj = np.ravel(contingency.sum(axis=0), dtype=np.int64)
+    pi = np.ravel(contingency.sum(axis=1, dtype=np.int64))
+    pj = np.ravel(contingency.sum(axis=0, dtype=np.int64))
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
