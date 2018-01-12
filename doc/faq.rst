@@ -336,7 +336,7 @@ Why do categorical variables need preprocessing in scikit-learn, compared to oth
 
 Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices of
 a single dtype. These are efficient to process, but do not directly represent
-categorical variables at present. See the :class:preprocessing.CategoricalEncoder
+categorical variables at present. See the :class:`preprocessing.CategoricalEncoder`
 for a tool to encode categorical variables, say within a pandas.DataFrame, as
 numeric data.
 
@@ -350,7 +350,7 @@ do not directly handle them.
 
 Since sklearn has been developed over the years on such building blocks,
 not only would implicit conversion need a new categorical dtype being added
-(a decision external to scikit-learn), but an extensive work would also be
+(a decision external to scikit-learn), but extensive work would also be
 needed since manipulating heterogeneous data is handled by NumPy for example
 with a different construct (recarrays) whose adoption by scikit-learn would be
 really challenging.
