@@ -1012,8 +1012,8 @@ def test_tfidf_preserved_type(dtype):
     assert X.dtype == X_trans.dtype
 
     # another case with string
-    test = TfidfVectorizer(dtype=dtype)
-    X_idf_str = test.fit_transform(["I love DotA2"])
+    vectorizer = TfidfVectorizer(dtype=dtype)
+    X_idf_str = vectorizer.fit_transform(["I love DotA2"])
     assert dtype == X_idf_str.dtype
 
 
