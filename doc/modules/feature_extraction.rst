@@ -523,19 +523,19 @@ And the L2-normalized tf-idf changes to
 
   >>> transformer = TfidfTransformer()
   >>> transformer.fit_transform(counts).toarray()
-  array([[ 0.87087416,  0.        ,  0.49150604],
+  array([[ 0.85151335,  0.        ,  0.52433293],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
-         [ 0.58149261,  0.81355169,  0.        ],
-         [ 0.66312327,  0.        ,  0.7485102 ]])
+         [ 0.55422893,  0.83236428,  0.        ],
+         [ 0.63035731,  0.        ,  0.77630514]])
 
 The weights of each
 feature computed by the ``fit`` method call are stored in a model
 attribute::
 
   >>> transformer.idf_                       # doctest: +ELLIPSIS
-  array([ 1.        ,  2.09861229,  1.69314718])
+  array([ 1. ...,  2.25...,  1.84...])
 
 
 
