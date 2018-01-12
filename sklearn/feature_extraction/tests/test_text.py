@@ -1018,6 +1018,8 @@ def test_tfidf_preserved_type(dtype):
 
 
 def test_tfidf_fallback():
+    # TFIDFTransformer should fallback to
+    # np.float64 if np.int* is passed
     X = np.array([1, 2, 3, 4, 5], dtype=np.int32)
     X_idf = TfidfTransformer().fit_transform(X)
     assert X_idf.dtype.type == np.float64

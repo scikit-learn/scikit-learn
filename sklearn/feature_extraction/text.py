@@ -29,7 +29,7 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
@@ -1068,6 +1068,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         """
         if not sp.issparse(X):
             X = sp.csc_matrix(X)
+
+        # force convert to np.float*
+        X = check_array(X, accept_sparse='csc', warn_on_dtype=True,
+                        dtype=FLOAT_DTYPES)
+
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
@@ -1078,8 +1083,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            # astype will fallback to np.float64 if X.dtype is int
-            idf = np.log(float(n_samples) / df).astype(X.dtype) + 1.0
+            # astype will fallback to np.float64 if X.dtype is np.int*
+            idf = np.log(n_samples / df).astype(X.dtype) + 1.0
             self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 

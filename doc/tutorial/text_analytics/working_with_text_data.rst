@@ -359,7 +359,7 @@ classifier object into our pipeline::
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.912...
+  0.915...
 
 ``scikit-learn`` further provides utilities for more detailed performance
 analysis of the results::
@@ -370,19 +370,19 @@ analysis of the results::
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.95      0.81      0.87       319
-           comp.graphics       0.87      0.98      0.92       389
-                 sci.med       0.95      0.89      0.92       396
-  soc.religion.christian       0.90      0.95      0.93       398
+             alt.atheism       0.95      0.82      0.88       319
+           comp.graphics       0.88      0.98      0.92       389
+                 sci.med       0.94      0.90      0.92       396
+  soc.religion.christian       0.91      0.94      0.92       398
   <BLANKLINE>
-             avg / total       0.92      0.91      0.91      1502
+             avg / total       0.92      0.92      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[258,  12,  14,  35],
-         [  2, 380,   3,   4],
-         [  6,  34, 354,   2],
-         [  6,  11,   3, 378]])
+  array([[260,  10,  14,  35],
+         [  3, 381,   3,   2],
+         [  4,  32, 358,   2],
+         [  6,  12,   4, 376]])
 
 
 As expected the confusion matrix shows that posts from the newsgroups
@@ -453,7 +453,7 @@ The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
   >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
-  0.905...
+  0.907...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
