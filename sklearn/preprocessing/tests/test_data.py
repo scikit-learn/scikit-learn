@@ -944,28 +944,12 @@ def test_quantile_transform_check_error():
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
 
-    # check that an error is raised when NumPy is < 1.9
-    if LooseVersion(np.__version__) < LooseVersion('1.9'):
-        X_nan = np.array([[0, 1],
-                          [0, 0],
-                          [np.nan, np.nan],
-                          [0, 2],
-                          [0, 1]])
-        transformer = QuantileTransformer()
-        assert_raises_regex(NotImplementedError, "Please upgrade to NumPy",
-                            transformer.fit_transform, X_nan)
-
 
 @pytest.mark.parametrize(
     "missing_values, dtype",
     [(np.nan, np.float64),
      (100, np.int64)])
 def test_quantile_transform_missing_values(missing_values, dtype):
-    # skip if numpy < 1.9
-    if LooseVersion(np.__version__) < LooseVersion('1.9'):
-        raise SkipTest(
-            'NumPy < 1.9 do not implement nanpercentile. Skipping test.')
-
     X = np.array([[0, 1],
                   [0, 0],
                   [missing_values, 2],

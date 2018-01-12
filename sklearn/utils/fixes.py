@@ -295,3 +295,10 @@ if np_version < (1, 12):
                                  self._fill_value)
 else:
     from numpy.ma import MaskedArray    # noqa
+
+
+if np_version < (1, 9):
+    def nanpercentile(a, q):
+        return np.percentile(np.compress(~np.isnan(a), a))
+else:
+    from numpy import nanpercentile

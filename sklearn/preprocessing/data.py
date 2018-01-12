@@ -15,7 +15,6 @@ from itertools import chain, combinations
 import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -27,7 +26,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import _argmax
+from ..utils.fixes import _argmax, nanpercentile
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -36,8 +35,6 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 from .label import LabelEncoder
-from .imputation import _get_mask
-
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -2206,6 +2203,17 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.missing_values = missing_values
 
+    @staticmethod
+    def _nanpercentile_force_finite(a, q):
+        """Force the output of nanpercentile to be finite."""
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            percentile = nanpercentile(a, q)
+            if np.allclose(percentile, np.nan, equal_nan=True):
+                return np.zeros(q.size)
+            else:
+                return percentile
+
     def _dense_fit(self, X, random_state):
         """Compute percentiles for dense matrices.
 
@@ -2229,7 +2237,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(self._percentile_func(col, references))
+            self.quantiles_.append(
+                self._nanpercentile_force_finite(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2274,8 +2283,28 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    self._percentile_func(column_data, references))
+                    self._nanpercentile_force_finite(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
+
+    @staticmethod
+    def _get_mask(X, value_to_mask):
+        """Compute a boolean mask corresponding to the missing value in a
+        dense array and the data of a sparse matrix."""
+        if sparse.issparse(X):
+            data = X.data
+        else:
+            data = X
+        return np.isclose(data, value_to_mask, equal_nan=True)
+
+    @staticmethod
+    def _apply_mask(X, mask, value):
+        """Apply a value to the masked value to a dense array or the data of
+        a sparse matrix."""
+        if sparse.issparse(X):
+            X.data[mask] = value
+        else:
+            X[mask] = value
+        return X
 
     def fit(self, X, y=None):
         """Compute the quantiles used for transforming.
@@ -2309,17 +2338,23 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              " and {} samples.".format(self.n_quantiles,
                                                        self.subsample))
 
+        if self.missing_values == "NaN":
+            self.missing_values_ = np.nan
+        else:
+            self.missing_values_ = self.missing_values
+
         X = self._check_inputs(X)
+        mask_missing_values = self._get_mask(X, self.missing_values_)
+        X = self._apply_mask(X, mask_missing_values, np.nan)
+
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles,
                                        endpoint=True)
         if sparse.issparse(X):
-            X.data[self._mask_missing_values] = np.nan
             self._sparse_fit(X, rng)
         else:
-            X[self._mask_missing_values] = np.nan
             self._dense_fit(X, rng)
 
         return self
@@ -2400,25 +2435,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 and not np.isfinite(X[~np.isnan(X)]).all()):
             raise ValueError("Input contains infinity"
                              " or a value too large for %r." % X.dtype)
-        if np.count_nonzero(self._mask_missing_values):
-            if LooseVersion(np.__version__) >= '1.9':
-                self._percentile_func = np.nanpercentile
-            else:
-                raise NotImplementedError(
-                    'QuantileTransformer does not handle NaN value with'
-                    ' NumPy {}. Please upgrade to NumPy 1.9. or higher'.format(
-                        np.__version__))
-        else:
-            self._percentile_func = np.percentile
 
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
-        if sparse.issparse(X):
-            self._mask_missing_values = _get_mask(X.data, self.missing_values)
-        else:
-            self._mask_missing_values = _get_mask(X, self.missing_values)
         X = check_array(X, accept_sparse='csc', copy=self.copy,
                         dtype=[np.float64, np.float32], force_all_finite=False)
+        # FIXME: the following blocks should be removed once #10455 is
+        # addressed.
         # we accept nan values but not infinite values.
         self._assert_finite_or_nan(X.data if sparse.issparse(X) else X)
         # we only accept positive sparse matrix when ignore_implicit_zeros is
@@ -2467,24 +2490,23 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             Projected data
         """
 
+        mask_missing_values = self._get_mask(X, self.missing_values_)
+        X = self._apply_mask(X, mask_missing_values, np.nan)
+
         if sparse.issparse(X):
-            X.data[self._mask_missing_values] = np.nan
             for feature_idx in range(X.shape[1]):
                 column_slice = slice(X.indptr[feature_idx],
                                      X.indptr[feature_idx + 1])
                 X.data[column_slice] = self._transform_col(
                     X.data[column_slice], self.quantiles_[:, feature_idx],
                     inverse)
-            X.data[self._mask_missing_values] = self.missing_values
         else:
-            X[self._mask_missing_values] = np.nan
             for feature_idx in range(X.shape[1]):
                 X[:, feature_idx] = self._transform_col(
                     X[:, feature_idx], self.quantiles_[:, feature_idx],
                     inverse)
-            X[self._mask_missing_values] = self.missing_values
 
-        return X
+        return self._apply_mask(X, mask_missing_values, self.missing_values_)
 
     def transform(self, X):
         """Feature-wise transformation of the data.
