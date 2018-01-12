@@ -77,8 +77,17 @@ def as_float_array(X, copy=True, force_all_finite=True):
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
 
-    force_all_finite : boolean (default=True)
-        Whether to raise an error on np.inf and np.nan in X.
+    force_all_finite : boolean or str {'allow-nan'}, (default=True)
+        Whether to raise an error on np.inf and np.nan in X. The possibilities
+        are:
+
+        - True: Force all values of X to be finite.
+        - False: accept both np.inf and np.nan in X.
+        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+          infinite.
+
+        .. versionadded:: 0.20
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     Returns
     -------
@@ -263,9 +272,17 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    FIXME
-    force_all_finite : boolean
-        Whether to raise an error on np.inf and np.nan in X.
+    force_all_finite : boolean or str {'allow-nan'}, (default=True)
+        Whether to raise an error on np.inf and np.nan in X. The possibilities
+        are:
+
+        - True: Force all values of X to be finite.
+        - False: accept both np.inf and np.nan in X.
+        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+          infinite.
+
+        .. versionadded:: 0.20
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     Returns
     -------
@@ -445,11 +462,11 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             # list of accepted types.
             dtype = dtype[0]
 
-    if (isinstance(force_all_finite, six.string_types)
-            and not force_all_finite == 'allow-nan'):
-        raise ValueError('When force_all_finite is a string, it should be '
-                         'equal to "allow-nan". Got {} instead.'.formtat(
-                             force_all_finite))
+    if isinstance(force_all_finite, six.string_types):
+        if force_all_finite != 'allow-nan':
+            raise ValueError('When force_all_finite is a string, it should be '
+                             'equal to "allow-nan". Got "{}" instead.'.format(
+                                 force_all_finite))
     elif not isinstance(force_all_finite, bool):
         raise ValueError('force_all_finite should be a bool or a string. Got '
                          '{!r} instead'.format(force_all_finite))
@@ -586,9 +603,18 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean (default=True)
+    force_all_finite : boolean or str {'allow-nan'}, (default=True)
         Whether to raise an error on np.inf and np.nan in X. This parameter
         does not influence whether y can have np.inf or np.nan values.
+        The possibilities are:
+
+        - True: Force all values of X to be finite.
+        - False: accept both np.inf and np.nan in X.
+        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
+          infinite.
+
+        .. versionadded:: 0.20
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
         Whether to make X at least 2d.
