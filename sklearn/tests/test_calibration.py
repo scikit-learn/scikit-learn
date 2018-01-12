@@ -1,5 +1,5 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#          Prokopios Gryllos <gryllosprokopis@gmail.com>
+#          Prokopios Gryllos <sprokopis.gryllos@sentiance.com>
 # License: BSD 3 clause
 
 from __future__ import division
