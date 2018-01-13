@@ -943,7 +943,7 @@ def test_jaccard_similarity_score():
     y_true = np.array([0, 0])
     y_pred = np.array([0, 0])
     assert_equal(jaccard_similarity_score(y_true, y_pred, average='binary',
-                                          pos_label=-1), 0.)
+                                          pos_label=-1), 1.)
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
@@ -1005,31 +1005,24 @@ def test_multilabel_jaccard_similarity_score():
     # average='samples' (default)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 12)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                sample_weight=np.array([0.1, 0.9])), 31. / 60)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='samples',
                                                  labels=[0, 2]), 1. / 2)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='samples',
                                                  labels=[1, 2]), 1. / 2)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='samples',
-                                                 sample_weight=[1, 2]), 5. / 9)
+    # average='none-samples'
     assert_array_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='none-samples'),
                        np.array([2. / 3, 1. / 2]))
+    # average=None
     assert_array_equal(jaccard_similarity_score(y_true, y_pred, average=None),
                        np.array([1. / 2, 1., 1. / 2]))
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 sample_weight=[1, 2]), 4. / 7)
+
     y_true = np.array([[0, 1, 1], [1, 0, 1]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='macro'), 5. / 6)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro',
-                                                 sample_weight=[1, 2]), 8. / 9)
+    # average='weighted'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='weighted'), 7. / 8)
 
@@ -1057,14 +1050,6 @@ def test_multiclass_jaccard_similarity_score():
                                                                labels=m_label),
                                 bin_jaccard_similarity_score(average=average,
                                                              labels=b_label))
-    weight = np.array([1, 2, 1, 1, 2, 1, 2, 3])
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 labels=['ant', 'bird'],
-                                                 sample_weight=weight),
-                        6. / 11)
-    assert_array_equal(jaccard_similarity_score(y_true, y_pred, average=None),
-                       np.array([2. / 3,  1. / 3,  2. / 5]))
 
 
 def test_average_binary_jaccard_similarity_score():
