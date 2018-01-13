@@ -578,6 +578,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 sum_axis = 0
                 class_weight = y_true.toarray().sum(axis=0)
                 weights = sample_weight
+                if class_weight.sum() == 0:
+                    return 0
             else:
                 sum_axis = 0
                 weights = sample_weight
@@ -620,7 +622,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         tp = y_true == y_pred
         tp_bins = y_true[tp]
         if sample_weight is not None:
-            sample_weight = sample_weight[indices]
+            sample_weight = np.array(sample_weight)[indices]
             tp_bins_weights = np.asarray(sample_weight)[tp]
         else:
             tp_bins_weights = None
@@ -648,6 +650,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             weights = None
         elif average == 'weighted':
             weights = true_sum
+            if weights.sum() == 0:
+                return 0
 
         score = tp_sum / (true_sum + pred_sum - tp_sum)
 
