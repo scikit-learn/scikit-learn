@@ -511,21 +511,37 @@ def test_unicode_kernel():
         clf = svm.SVC(kernel=u'linear', probability=True)
         clf.fit(X, Y)
         clf.predict_proba(T)
+        svm.libsvm.cross_validation(iris.data,
+                                    iris.target.astype(np.float64), 5,
+                                    kernel=u'linear',
+                                    random_seed=0)
 
         # Test ascii bytes (str is bytes in python2)
         clf = svm.SVC(kernel=str('linear'), probability=True)
         clf.fit(X, Y)
         clf.predict_proba(T)
+        svm.libsvm.cross_validation(iris.data,
+                                    iris.target.astype(np.float64), 5,
+                                    kernel=str('linear'),
+                                    random_seed=0)
     else:
         # Test unicode (str is unicode in python3)
         clf = svm.SVC(kernel=str('linear'), probability=True)
         clf.fit(X, Y)
         clf.predict_proba(T)
+        svm.libsvm.cross_validation(iris.data,
+                                    iris.target.astype(np.float64), 5,
+                                    kernel=str('linear'),
+                                    random_seed=0)
 
     # Test default behavior on both versions
     clf = svm.SVC(kernel='linear', probability=True)
     clf.fit(X, Y)
     clf.predict_proba(T)
+    svm.libsvm.cross_validation(iris.data,
+                                iris.target.astype(np.float64), 5,
+                                kernel='linear',
+                                random_seed=0)
 
 
 def test_sparse_precomputed():

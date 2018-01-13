@@ -462,7 +462,7 @@ def decision_function(
 def cross_validation(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int n_fold, svm_type=0, str kernel='rbf', int degree=3,
+    int n_fold, svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
