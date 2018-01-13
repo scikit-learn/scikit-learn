@@ -70,7 +70,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-ACCEPT_NAN = ['QuantileTransformer']
+ALLOW_NAN = ['QuantileTransformer']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -972,7 +972,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     error_string_transform = ("Estimator doesn't check for NaN and inf in"
                               " transform.")
     for X_train in [X_train_nan, X_train_inf]:
-        if np.any(np.isnan(X_train)) and name in ACCEPT_NAN:
+        if np.any(np.isnan(X_train)) and name in ALLOW_NAN:
             continue
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
