@@ -11,6 +11,7 @@ from ..utils import check_array, check_random_state
 from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
+from ..model_selection import GridSearchCV
 
 
 VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',
@@ -86,9 +87,12 @@ class KernelDensity(BaseEstimator):
         # we're using clone() in the GenerativeBayes classifier,
         # so we can't do this kind of logic in __init__
         self._choose_algorithm(self.algorithm, self.metric)
-
-        if bandwidth <= 0:
+        
+        if bandwidth in ['scott','silvermann']:
+            pass
+        elif bandwidth <= 0:
             raise ValueError("bandwidth must be positive")
+            
         if kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(kernel))
 
@@ -123,6 +127,11 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
+        
+        if self.bandwidth == 'scott':
+            self.bandwidth = 3.5*X.std()/len(X)**0.3333
+        elif self.bandwidth == 'silvermann':
+            self.bandwidth = 1.05922*X.std()/len(X)**0.2
 
         kwargs = self.metric_params
         if kwargs is None:
@@ -217,3 +226,5 @@ class KernelDensity(BaseEstimator):
             correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
                           * self.bandwidth / np.sqrt(s_sq))
             return data[i] + X * correction[:, np.newaxis]
+
+    
