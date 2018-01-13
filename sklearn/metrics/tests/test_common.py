@@ -151,13 +151,14 @@ CLASSIFICATION_METRICS = {
     "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
-    "samples_jaccard_similarity_score":
-    partial(jaccard_similarity_score, average="samples"),
 
     "cohen_kappa_score": cohen_kappa_score,
 
     "none-samples_jaccard_similarity_score":
-    partial(jaccard_similarity_score, average='none-samples')
+    partial(jaccard_similarity_score, average='none-samples'),
+
+    "binary_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average="binary")
 }
 
 THRESHOLDED_METRICS = {
@@ -211,8 +212,9 @@ METRIC_UNDEFINED_BINARY = [
     "samples_precision_score",
     "samples_recall_score",
     "coverage_error",
-    "samples_jaccard_similarity_score",
+    "jaccard_similarity_score",
     "none-samples_jaccard_similarity_score",
+    "unnormalized_jaccard_similarity_score",
 
     "average_precision_score",
     "weighted_average_precision_score",
@@ -235,8 +237,10 @@ METRIC_UNDEFINED_MULTICLASS = [
     "macro_roc_auc",
     "samples_roc_auc",
 
-    "samples_jaccard_similarity_score",
+    "jaccard_similarity_score",
     "none-samples_jaccard_similarity_score",
+    "unnormalized_jaccard_similarity_score",
+    "binary_jaccard_similarity_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -253,7 +257,7 @@ METRIC_UNDEFINED_BINARY_MULTICLASS = set(METRIC_UNDEFINED_BINARY).union(
 # Metrics with an "average" argument
 METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
-    "jaccard_similarity_score"
+    "binary_jaccard_similarity_score"
 ]
 
 # Threshold-based metrics with an "average" argument
@@ -303,6 +307,11 @@ METRICS_WITH_LABELS = [
     "macro_precision_score", "macro_recall_score",
     "macro_jaccard_similarity_score",
 
+    "none-samples_jaccard_similarity_score",
+    "unnormalized_jaccard_similarity_score",
+
+    "binary_jaccard_similarity_score",
+
     "cohen_kappa_score",
 ]
 
@@ -310,7 +319,6 @@ METRICS_WITH_LABELS = [
 METRICS_WITH_NORMALIZE_OPTION = [
     "accuracy_score",
     "jaccard_similarity_score",
-    "samples_jaccard_similarity_score",
     "zero_one_loss",
 ]
 
@@ -333,7 +341,8 @@ THRESHOLDED_MULTILABEL_METRICS = [
 MULTILABELS_METRICS = [
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
+    "jaccard_similarity_score", "none-samples_jaccard_similarity_score",
+    "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
@@ -350,8 +359,6 @@ MULTILABELS_METRICS = [
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
-    "samples_jaccard_similarity_score",
-    "none-samples_jaccard_similarity_score"
 ]
 
 # Regression metrics with "multioutput-continuous" format support
@@ -365,7 +372,8 @@ MULTIOUTPUT_METRICS = [
 SYMMETRIC_METRICS = [
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
+    "jaccard_similarity_score", "none-samples_jaccard_similarity_score",
+    "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "micro_jaccard_similarity_score", "macro_jaccard_similarity_score",
@@ -375,6 +383,8 @@ SYMMETRIC_METRICS = [
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+
+    "binary_jaccard_similarity_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error",
@@ -393,7 +403,7 @@ NOT_SYMMETRIC_METRICS = [
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score",
+    "weighted_precision_score", "weighted_jaccard_similarity_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
@@ -418,6 +428,9 @@ def test_symmetry():
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
 
+    y_true_bin = random_state.randint(0, 2, size=(20, 25))
+    y_pred_bin = random_state.randint(0, 2, size=(20, 25))
+
     # We shouldn't forget any metrics
     assert_equal(set(SYMMETRIC_METRICS).union(
         NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
@@ -431,9 +444,15 @@ def test_symmetry():
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_pred, y_true),
-                            err_msg="%s is not symmetric" % name)
+        if (name in METRIC_UNDEFINED_BINARY and
+                name in METRIC_UNDEFINED_BINARY):
+            assert_almost_equal(metric(y_true_bin, y_pred_bin),
+                                metric(y_pred_bin, y_true_bin),
+                                err_msg="%s is not symmetric" % name)
+        else:
+            assert_almost_equal(metric(y_true, y_pred),
+                                metric(y_pred, y_true),
+                                err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
@@ -799,6 +818,8 @@ def test_normalize_option_binary_classification(n_samples=20):
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
 
     for name in METRICS_WITH_NORMALIZE_OPTION:
+        if name in METRIC_UNDEFINED_BINARY:
+            continue
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
@@ -815,6 +836,8 @@ def test_normalize_option_multiclass_classification():
     n_samples = y_true.shape[0]
 
     for name in METRICS_WITH_NORMALIZE_OPTION:
+        if name in METRIC_UNDEFINED_MULTICLASS:
+            continue
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
@@ -850,8 +873,10 @@ def test_normalize_option_multilabel_classification():
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                            / n_samples, measure,
+        unnormalize_measure = metrics(y_true, y_pred, normalize=False)
+        if isinstance(unnormalize_measure, np.ndarray):
+            unnormalize_measure = np.sum(unnormalize_measure)
+        assert_almost_equal(unnormalize_measure / n_samples, measure,
                             err_msg="Failed with %s" % name)
 
 
@@ -991,19 +1016,25 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
-    assert_not_equal(
-        unweighted_score, weighted_score,
-        msg="Unweighted and weighted scores are unexpectedly "
-            "equal (%f) for %s" % (weighted_score, name))
+    if isinstance(weighted_score, np.ndarray):
+        assert(not np.allclose(weighted_score, unweighted_score))
+    else:
+        assert_not_equal(
+            unweighted_score, weighted_score,
+            msg="Unweighted and weighted scores are unexpectedly "
+                "equal (%r) for %s" % (weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
                                  sample_weight=sample_weight.tolist())
-    assert_almost_equal(
-        weighted_score, weighted_score_list,
-        err_msg=("Weighted scores for array and list "
-                 "sample_weight input are not equal (%f != %f) for %s") % (
-                     weighted_score, weighted_score_list, name))
+    if isinstance(weighted_score, np.ndarray):
+        assert(np.allclose(weighted_score, weighted_score_list))
+    else:
+        assert_almost_equal(
+            weighted_score, weighted_score_list,
+            err_msg=("Weighted scores for array and list "
+                     "sample_weight input are not equal (%f != %f) for %s") % (
+                         weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(

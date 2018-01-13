@@ -511,7 +511,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         if y_type == 'binary':
             if pos_label not in present_labels:
                 if len(present_labels) < 2:
-                    return 0.
+                    return 1.
                 else:
                     raise ValueError("pos_label=%r is not a valid label: "
                                     "%r" % (pos_label, present_labels))
