@@ -21,10 +21,12 @@ from ..neighbors import NearestNeighbors, KNeighborsClassifier
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.extmath import _euclidean_distances_without_checks
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y
 from ..externals.six import integer_types, string_types
+from ..exceptions import ConvergenceWarning
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
@@ -144,7 +146,26 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     opt_result_ : scipy.optimize.OptimizeResult (optional)
         A dictionary of information representing the optimization result.
-        This is stored only if ``store_opt_result`` is True.
+        This is stored only if ``store_opt_result`` is True. It contains the
+        following attributes:
+
+        x : ndarray
+            The solution of the optimization.
+        success : bool
+            Whether or not the optimizer exited successfully.
+        status : int
+            Termination status of the optimizer.
+        message : str
+            Description of the cause of the termination.
+        fun, jac : ndarray
+            Values of objective function and its Jacobian.
+        hess_inv : scipy.sparse.linalg.LinearOperator
+            the product of a vector with the approximate inverse of the
+            Hessian of the objective function..
+        nfev : int
+            Number of evaluations of the objective function..
+        nit : int
+            Number of iterations performed by the optimizer.
 
     Examples
     --------
@@ -293,8 +314,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Stop timer
         t_train = time.time() - t_train
         if self.verbose:
-            print('[{}] Training took {:8.2f}s.'.format(
-                self.__class__.__name__, t_train))
+            cls_name = self.__class__.__name__
+
+            # Warn the user if the algorithm did not converge
+            if not opt_result.success:
+                warn('[{}] LMNN did not converge: {}'.format(
+                    cls_name, opt_result.message),
+                     ConvergenceWarning)
+
+            print('[{}] Training took {:8.2f}s.'.format(cls_name, t_train))
 
         # Optionally store information returned by the optimizer
         if self.store_opt_result:
@@ -953,8 +981,9 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     # X_b squared norm stays constant, so pre-compute it to get a speed-up
     X_b_norm_squared = row_norms(X_b, squared=True)[np.newaxis, :]
     for chunk in gen_batches(n_samples_a, block_n_rows):
-        # sklearn.metrics.pairwise.euclidean_distances function would add an
-        # extra ~8% time of computation due to input validation on every chunk
+        # The function `sklearn.metrics.pairwise.euclidean_distances` would
+        # add an extra ~8% time of computation due to input validation on
+        # every chunk and another ~8% due to clipping of negative values.
         distances_ab = _euclidean_distances_without_checks(
             X_a[chunk], X_b, squared=True, Y_norm_squared=X_b_norm_squared,
             clip=False)
@@ -969,7 +998,6 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
 
             if return_distance:
                 # We only need to do clipping if we return the distances.
-                # This adds another ~8% time of computation
                 distances_chunk = distances_ab.ravel()[ind]
                 # Clip only the indexed (unique) distances
                 np.maximum(distances_chunk, 0, out=distances_chunk)
@@ -1049,75 +1077,6 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
 # Some helper functions #
 #########################
 
-def _euclidean_distances_without_checks(X, Y=None, Y_norm_squared=None,
-                                        squared=False, X_norm_squared=None,
-                                        clip=True):
-    """sklearn.pairwise.euclidean_distances without checks with optional clip.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples_1, n_features)
-
-    Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
-
-    Y_norm_squared : array-like, shape (n_samples_2, ), optional
-        Pre-computed dot-products of vectors in Y (e.g.,
-        ``(Y**2).sum(axis=1)``)
-
-    squared : boolean, optional
-        Return squared Euclidean distances.
-
-    X_norm_squared : array-like, shape = [n_samples_1], optional
-        Pre-computed dot-products of vectors in X (e.g.,
-        ``(X**2).sum(axis=1)``)
-
-    clip : bool, optional (default=True)
-        Whether to explicitly enforce computed distances to be non-negative.
-        Some algorithms, such as LMNN, compare distances to strictly positive
-        values (distances to farthest target neighbors + margin) only to make
-        a binary decision (if a sample is an impostor or not). In such cases,
-        it does not matter if the distance is zero or negative, since it is
-        definitely smaller than a strictly positive value.
-
-    Returns
-    -------
-    distances : array, shape (n_samples_1, n_samples_2)
-
-    """
-
-    if Y is None:
-        Y = X
-
-    if X_norm_squared is not None:
-        XX = X_norm_squared
-        if XX.shape == (1, X.shape[0]):
-            XX = XX.T
-    else:
-        XX = row_norms(X, squared=True)[:, np.newaxis]
-
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
-    elif Y_norm_squared is not None:
-        YY = np.atleast_2d(Y_norm_squared)
-    else:
-        YY = row_norms(Y, squared=True)[np.newaxis, :]
-
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-
-    if clip:
-        np.maximum(distances, 0, out=distances)
-
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
-
-    return distances if squared else np.sqrt(distances, out=distances)
-
-
 def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
     """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
 
@@ -1153,10 +1112,7 @@ def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
     for chunk in gen_batches(n_pairs, batch_size):
         distances[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
 
-    if not squared:
-        np.sqrt(distances, distances)
-
-    return distances
+    return distances if squared else np.sqrt(distances, out=distances)
 
 
 def _sum_weighted_outer_differences(X, weights):

@@ -22,6 +22,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.model_selection import train_test_split
 from sklearn.utils.extmath import row_norms
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.exceptions import ConvergenceWarning
 
 
 rng = np.random.RandomState(0)
@@ -168,55 +169,6 @@ def test_params_validation():
                          LMNN(n_neighbors=1).fit, X, y)
 
 
-def test_same_lmnn_parallel():
-    X, y = datasets.make_classification(n_samples=30, n_features=5,
-                                        n_redundant=0, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3)
-    lmnn.fit(X_train, y_train)
-    components = lmnn.components_
-
-    lmnn.set_params(n_jobs=3)
-    lmnn.fit(X_train, y_train)
-    components_parallel = lmnn.components_
-
-    assert_array_almost_equal(components, components_parallel)
-
-
-def test_init_transformation_validation():
-    X = np.arange(12).reshape(4, 3)
-    y = [1, 1, 2, 2]
-
-    # Fail if transformation input dimension does not match inputs dimensions
-    init = np.array([[1, 2], [3, 4]])
-    assert_raise_message(ValueError,
-                         'The input dimensionality ({}) of the given '
-                         'linear transformation `init` must match the '
-                         'dimensionality of the given inputs `X` ({}).'
-                         .format(init.shape[1], X.shape[1]),
-                         LargeMarginNearestNeighbor(init=init,
-                                                    n_neighbors=1).fit,
-                         X, y)
-
-    # Fail if transformation output dimension is larger than
-    # transformation input dimension
-    init = np.random.rand(4, 3)
-    # len(init) > len(init[0])
-    assert_raise_message(ValueError,
-                         'The output dimensionality ({}) of the given '
-                         'linear transformation `init` cannot be '
-                         'greater than its input dimensionality ({}).'
-                         .format(init.shape[0], init.shape[1]),
-                         LargeMarginNearestNeighbor(init=init,
-                                                    n_neighbors=1).fit,
-                         X, y)
-
-    # Pass otherwise
-    init = np.arange(9).reshape(3, 3)
-    LargeMarginNearestNeighbor(init=init, n_neighbors=1).fit(X, y)
-
-
 def test_n_neighbors():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
@@ -266,7 +218,7 @@ def test_init_transformation():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    # Start learning from scratch
+    # Initialize with identity
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init='identity')
     lmnn.fit(X_train, y_train)
 
@@ -274,9 +226,7 @@ def test_init_transformation():
     lmnn_pca = LargeMarginNearestNeighbor(n_neighbors=3, init='pca')
     lmnn_pca.fit(X_train, y_train)
 
-    # Not always True
-    # assert_true(lmnn_pca.n_iter_ <= lmnn.n_iter_)
-
+    # Initialize with a transformation given by the user
     init = np.random.rand(X.shape[1], X.shape[1])
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
     lmnn.fit(X_train, y_train)
@@ -315,57 +265,28 @@ def test_init_transformation():
                          lmnn.fit, X_train, y_train)
 
 
-def test_max_impostors():
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
-                                      impostor_store='list')
-    lmnn.fit(iris_data, iris_target)
+def test_warm_start_validation():
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_classes=4, n_redundant=0,
+                                        n_informative=5, random_state=0)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
-                                      impostor_store='sparse')
-    lmnn.fit(iris_data, iris_target)
+    lmnn = LargeMarginNearestNeighbor(warm_start=True, max_iter=5)
+    lmnn.fit(X, y)
 
-
-def test_neighbors_params():
-    from scipy.spatial.distance import hamming
-
-    params = {'algorithm': 'brute', 'metric': hamming}
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, neighbors_params=params)
-    lmnn.fit(iris_data, iris_target)
-    components_hamming = lmnn.components_
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3)
-    lmnn.fit(iris_data, iris_target)
-    components_euclidean = lmnn.components_
-
-    assert_false(np.allclose(components_hamming, components_euclidean))
+    X_less_features, y = \
+        datasets.make_classification(n_samples=30, n_features=4, n_classes=4,
+                                     n_redundant=0, n_informative=4,
+                                     random_state=0)
+    assert_raise_message(ValueError,
+                         'The new inputs dimensionality ({}) does not '
+                         'match the input dimensionality of the '
+                         'previously learned transformation ({}).'
+                         .format(X_less_features.shape[1],
+                                 lmnn.components_.shape[1]),
+                         lmnn.fit, X_less_features, y)
 
 
-def test_impostor_store():
-    X = iris_data
-    y = iris_target
-    n_samples, n_features = X.shape
-    train_test_boundary = int(n_samples * 0.8)
-    train = np.arange(0, train_test_boundary)
-    test = np.arange(train_test_boundary, n_samples)
-    X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
-
-    k = 3
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, impostor_store='list')
-    lmnn.fit(X_train, y_train)
-    knn = KNeighborsClassifier(n_neighbors=k)
-    knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
-    acc_sparse = knn.score(lmnn.transform(X_test), y_test)
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, impostor_store='sparse')
-    lmnn.fit(X_train, y_train)
-    knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
-    acc_dense = knn.score(lmnn.transform(X_test), y_test)
-
-    err_msg = 'Toggling `impostor_store` results in different accuracy.'
-    assert_equal(acc_dense, acc_sparse, msg=err_msg)
-
-
-def test_warm_start():
+def test_warm_start_effectiveness():
     # A 1-iteration second fit on same data should give almost same result
     # with warm starting, and quite different result without warm starting.
 
@@ -404,25 +325,88 @@ def test_warm_start():
                 "warm-started transformer after one iteration.")
 
 
-def test_warm_start_diff_inputs():
-    X, y = datasets.make_classification(n_samples=30, n_features=5,
-                                        n_classes=4, n_redundant=0,
-                                        n_informative=5, random_state=0)
+def test_max_impostors():
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
+                                      impostor_store='list')
+    lmnn.fit(iris_data, iris_target)
 
-    lmnn = LargeMarginNearestNeighbor(warm_start=True, max_iter=5)
-    lmnn.fit(X, y)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
+                                      impostor_store='sparse')
+    lmnn.fit(iris_data, iris_target)
 
-    X_less_features, y = \
-        datasets.make_classification(n_samples=30, n_features=4, n_classes=4,
-                                     n_redundant=0, n_informative=4,
-                                     random_state=0)
+
+def test_neighbors_params():
+    from scipy.spatial.distance import hamming
+
+    params = {'algorithm': 'brute', 'metric': hamming}
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, neighbors_params=params)
+    lmnn.fit(iris_data, iris_target)
+    components_hamming = lmnn.components_
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3)
+    lmnn.fit(iris_data, iris_target)
+    components_euclidean = lmnn.components_
+
+    assert_false(np.allclose(components_hamming, components_euclidean))
+
+
+def test_impostor_store():
+    k = 3
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k,
+                                      init='identity', impostor_store='list')
+    lmnn.fit(iris_data, iris_target)
+    components_list = lmnn.components_
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k,
+                                      init='identity', impostor_store='sparse')
+    lmnn.fit(iris_data, iris_target)
+    components_sparse = lmnn.components_
+
+    assert_array_almost_equal(components_list, components_sparse,
+                              err_msg='Toggling `impostor_store` results in '
+                                      'a different solution.')
+
+
+def test_callback():
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback='my_cb')
     assert_raise_message(ValueError,
-                         'The new inputs dimensionality ({}) does not '
-                         'match the input dimensionality of the '
-                         'previously learned transformation ({}).'
-                         .format(X_less_features.shape[1],
-                                 lmnn.components_.shape[1]),
-                         lmnn.fit, X_less_features, y)
+                         '`callback` is not callable.',
+                         lmnn.fit, iris_data, iris_target)
+
+    max_iter = 10
+
+    def my_cb(transformation, n_iter):
+        rem_iter = max_iter - n_iter
+        print('{} iterations remaining...'.format(rem_iter))
+
+    # assert that my_cb is called
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback=my_cb,
+                                      max_iter=max_iter, verbose=1)
+    try:
+        lmnn.fit(iris_data, iris_target)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # check output
+    assert('{} iterations remaining...'.format(max_iter-1) in out)
+
+
+def test_store_opt_result():
+    X = iris_data
+    y = iris_target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5,
+                                      store_opt_result=True)
+    lmnn.fit(X_train, y_train)
+    transformation = lmnn.opt_result_.x
+    assert_equal(transformation.size, X.shape[1]**2)
 
 
 def test_verbose():
@@ -494,6 +478,22 @@ def test_random_state():
     assert_false(np.allclose(transformation_2, transformation_3))
 
 
+def test_same_lmnn_parallel():
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3)
+    lmnn.fit(X_train, y_train)
+    components = lmnn.components_
+
+    lmnn.set_params(n_jobs=3)
+    lmnn.fit(X_train, y_train)
+    components_parallel = lmnn.components_
+
+    assert_array_almost_equal(components, components_parallel)
+
+
 def test_singleton_class():
     X = iris_data
     y = iris_target
@@ -524,55 +524,13 @@ def test_singleton_class():
                          lmnn.fit, X_tr, y_tr)
 
 
-def test_callback():
+def test_convergence_warning():
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback='my_cb')
-    assert_raise_message(ValueError,
-                         '`callback` is not callable.',
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=2, verbose=1)
+    cls_name = lmnn.__class__.__name__
+    assert_warns_message(ConvergenceWarning,
+                         '[{}] LMNN did not converge'.format(cls_name),
                          lmnn.fit, iris_data, iris_target)
-
-    max_iter = 10
-
-    def my_cb(transformation, n_iter):
-        rem_iter = max_iter - n_iter
-        print('{} iterations remaining...'.format(rem_iter))
-
-    # assert that my_cb is called
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback=my_cb,
-                                      max_iter=max_iter, verbose=1)
-    try:
-        lmnn.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
-    # check output
-    assert('{} iterations remaining...'.format(max_iter-1) in out)
-
-
-def test_terminate_early():
-    X = iris_data
-    y = iris_target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5)
-    lmnn.fit(X_train, y_train)
-
-
-def test_store_opt_result():
-    X = iris_data
-    y = iris_target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5,
-                                      store_opt_result=True)
-    lmnn.fit(X_train, y_train)
-    transformation = lmnn.opt_result_.x
-    assert_equal(transformation.size, X.shape[1]**2)
 
 
 def test_paired_distances_blockwise():
