@@ -114,9 +114,10 @@ def test_logistic_regression_warnings():
     clf_no_warnings = LogisticRegression(C=len(iris.data), solver='lbfgs',
                                          multi_class='multinomial')
 
-    solver_warning_msg = "Auto solver will be changed to 'lbfgs' in 0.22"
-    multi_class_warning_msg = "Default multi_class will be changed " \
-                              "to 'multinomial' in 0.22"
+    solver_warning_msg = "Default solver will be changed from 'liblinear' " \
+                         "to auto solver in 0.22"
+    multi_class_warning_msg = "Default multi_class will be changed from" \
+                              " 'ovr' to 'multinomial' in 0.22"
 
     assert_warns_message(FutureWarning, solver_warning_msg,
                          clf_solver_warning.fit, iris.data, target)
