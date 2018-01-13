@@ -950,26 +950,32 @@ def test_quantile_transform_check_error():
     [(np.nan, np.float64),
      (100, np.int64)])
 def test_quantile_transform_missing_values(missing_values, dtype):
-    X = np.array([[0, 1],
-                  [0, 0],
-                  [missing_values, 2],
-                  [0, missing_values],
-                  [0, 1]], dtype=dtype)
-    X_sparse = sparse.csc_matrix(X)
+    X_some_missing = np.array([[0, 1],
+                               [0, 0],
+                               [missing_values, 2],
+                               [0, missing_values],
+                               [0, 1]], dtype=dtype)
+    X_all_missing = np.array([[missing_values, missing_values],
+                              [missing_values, missing_values]], dtype=dtype)
+    X_expected_some_missing = np.array([[0, 0.5],
+                                        [0, 0],
+                                        [missing_values, 1],
+                                        [0, missing_values],
+                                        [0, 0.5]])
+    X_expected_all_missing = X_all_missing.copy()
 
-    transformer = QuantileTransformer(n_quantiles=5,
-                                      missing_values=missing_values)
-    X_expected = np.array([[0, 0.5],
-                           [0, 0],
-                           [missing_values, 1],
-                           [0, missing_values],
-                           [0, 0.5]])
+    for X, X_expected in zip([X_some_missing, X_all_missing],
+                             [X_expected_some_missing,
+                              X_expected_all_missing]):
+        transformer = QuantileTransformer(n_quantiles=5,
+                                          missing_values=missing_values)
 
-    X_trans = transformer.fit_transform(X)
-    assert_almost_equal(X_expected, X_trans)
+        X_trans = transformer.fit_transform(X)
+        assert_almost_equal(X_expected, X_trans)
 
-    X_trans = transformer.fit_transform(X_sparse)
-    assert_almost_equal(X_expected, X_trans.A)
+        X_sparse = sparse.csc_matrix(X)
+        X_trans = transformer.fit_transform(X_sparse)
+        assert_almost_equal(X_expected, X_trans.A)
 
 
 def test_quantile_transform_sparse_ignore_zeros():

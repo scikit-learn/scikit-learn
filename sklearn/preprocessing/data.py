@@ -2210,7 +2210,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             warnings.filterwarnings('ignore')
             percentile = nanpercentile(a, q)
             if np.all(np.isclose(percentile, np.nan, equal_nan=True)):
-                return np.zeros(q.size)
+                return np.zeros(len(q))
             else:
                 return percentile
 
