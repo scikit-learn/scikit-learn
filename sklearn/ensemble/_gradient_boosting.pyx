@@ -376,7 +376,7 @@ def _random_sample_mask(np.npy_intp n_total_samples,
      n_total_in_bag : int
          The number of elements in the sample mask which are set to 1.
 
-     random_state : np.RandomState
+     random_state : RandomState
          A numpy ``RandomState`` object.
 
      Returns
