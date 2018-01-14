@@ -29,8 +29,13 @@ class KernelDensity(BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float
-        The bandwidth of the kernel.
+    bandwidth : float | string
+        The bandwidth of the kernel. 
+        If bandwidth is a float it defines the bandwidth of the kernel.
+        If bandwidth is a string either the method is implemented,
+        valid options are: ['scott'|'silvermann'|'cv'].
+        `scott` and `silvermann`, method which assumes a normal distribution
+        `cv` cross validation, which may be slower, but may yeild better results
 
     algorithm : string
         The tree algorithm to use.  Valid options are
@@ -88,11 +93,12 @@ class KernelDensity(BaseEstimator):
         # so we can't do this kind of logic in __init__
         self._choose_algorithm(self.algorithm, self.metric)
         
-        if bandwidth in ['scott','silvermann']:
-            pass
+        if bandwidth in ['scott', 'silvermann','cv']:
+            self.bandwidth_ = bandwidth
+            
         elif bandwidth <= 0:
             raise ValueError("bandwidth must be positive")
-            
+
         if kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(kernel))
 
@@ -127,11 +133,55 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
+
+        print(X.shape)
         
-        if self.bandwidth == 'scott':
-            self.bandwidth = 3.5*X.std()/len(X)**0.3333
-        elif self.bandwidth == 'silvermann':
-            self.bandwidth = 1.05922*X.std()/len(X)**0.2
+        if self.bandwidth_ == 'scott':
+            self.bandwidth =  X.shape[0]**(-1./(X.shape[1]+4)) #3.49083 * X.std() / len(X)**(1/3)
+        elif self.bandwidth_ == 'silvermann':
+            self.bandwidth = (X.shape[0] * (X.shape[1] + 2) / 4.)**(-1. / (X.shape[1] + 4))# 1.05922*X.std()/len(X)**0.2
+        elif self.bandwidth_ = 'cv':
+             steps = 10
+            lower = 0.01*X.std()
+            upper = 0.5*X.std()
+            current_best = -10000000
+            for _ in range(5):
+                bandwidth_range = np.linspace(lower, upper, steps)
+                grid = GridSearchCV(KernelDensity(kernel = self.kernel,
+                                                algorithm = self.algorithm,
+                                                metric = self.metric,
+                                                atol = self.atol,
+                                                rtol = self.rtol,
+                                                breadth_first = self.breadth_first,
+                                                leaf_size = self.leaf_size,
+                                                metric_params = self.metric_params),
+                                    {'bandwidth': bandwidth_range},
+                                    cv=20,
+                                    return_train_score=False,
+                                    n_jobs = -1,
+                                    )
+                grid.fit(X)
+                if abs(current_best -grid.best_score_ ) > 0.001:
+                    current_best = grid.best_score_
+                else: 
+                    break
+
+                second_best_index = list(grid.cv_results_['rank_test_score']).index(2)
+
+                if (grid.best_index_ == 0) or (grid.best_index_ == steps):
+                    #edge case
+                    print('edge case')
+                    diff = (lower - upper)/steps
+                    lower = grid.best_index_ - diff
+                    upper = grid.best_index_ + diff
+                else:
+                    upper = bandwidth_range[second_best_index]
+                    lower = bandwidth_range[grid.best_index_]
+
+                    if upper < lower:
+                        upper, lower = lower, upper
+
+            self.bandwidth = grid.best_params_['bandwidth']
 
         kwargs = self.metric_params
         if kwargs is None:
