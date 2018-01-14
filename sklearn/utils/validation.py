@@ -464,12 +464,11 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
 
     if isinstance(force_all_finite, six.string_types):
         if force_all_finite != 'allow-nan':
-            raise ValueError('When force_all_finite is a string, it should be '
-                             'equal to "allow-nan". Got "{}" instead.'.format(
-                                 force_all_finite))
+            raise ValueError('force_all_finite should be a bool or "allow-nan"'
+                             '. Got {!r} instead'.format(force_all_finite))
     elif not isinstance(force_all_finite, bool):
-        raise ValueError('force_all_finite should be a bool or a string. Got '
-                         '{!r} instead'.format(force_all_finite))
+        raise ValueError('force_all_finite should be a bool or "allow-nan". '
+                         'Got {!r} instead'.format(force_all_finite))
 
     if estimator is not None:
         if isinstance(estimator, six.string_types):

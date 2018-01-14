@@ -146,55 +146,39 @@ def test_ordering():
 
 
 @pytest.mark.parametrize(
-    "X_inf, accept_sparse",
-    [(np.arange(4).reshape(2, 2).astype(np.float), False),
-     (sp.rand(2, 2).tocsr(), True)]
+    "value, force_all_finite",
+    [(np.inf, False), (np.nan, 'allow-nan'), (np.nan, False)]
 )
-def test_check_array_inf_error(X_inf, accept_sparse):
-    X_inf[0, 0] = np.inf
-    with pytest.raises(ValueError):
-        check_array(X_inf, force_all_finite=True, accept_sparse=accept_sparse)
-    with pytest.raises(ValueError):
-        check_array(X_inf, force_all_finite='allow-nan',
-                    accept_sparse=accept_sparse)
+@pytest.mark.parametrize(
+    "retype",
+    [np.asarray, sp.csr_matrix]
+)
+def test_check_array_valid(value, force_all_finite, retype):
+    X = retype(np.arange(4).reshape(2, 2).astype(np.float))
+    X[0, 0] = value
+    X_checked = check_array(X, force_all_finite=force_all_finite,
+                            accept_sparse=True)
+    assert_allclose_dense_sparse(X, X_checked)
 
 
 @pytest.mark.parametrize(
-    "X_nan, accept_sparse",
-    [(np.arange(4).reshape(2, 2).astype(np.float), False),
-     (sp.rand(2, 2).tocsr(), True)]
+    "value, force_all_finite, match_msg",
+    [(np.inf, True, 'Input contains NaN, infinity'),
+     (np.inf, 'allow-nan', 'Input contains infinity'),
+     (np.nan, True, 'Input contains NaN, infinity'),
+     (np.nan, 'allow-inf', 'force_all_finite should be a bool or "allow-nan"'),
+     (np.nan, 1, 'force_all_finite should be a bool or "allow-nan"')]
 )
-def test_check_array_nan_error(X_nan, accept_sparse):
-    X_nan[0, 0] = np.nan
-    with pytest.raises(ValueError):
-        check_array(X_nan, force_all_finite=True, accept_sparse=accept_sparse)
-
-
 @pytest.mark.parametrize(
-    "X_inf, accept_sparse",
-    [(np.arange(4).reshape(2, 2).astype(np.float), False),
-     (sp.rand(2, 2).tocsr(), True)]
+    "retype",
+    [np.asarray, sp.csr_matrix]
 )
-def test_check_array_inf(X_inf, accept_sparse):
-    X_inf[0, 0] = np.inf
-    X_checked = check_array(X_inf, force_all_finite=False,
-                            accept_sparse=accept_sparse)
-    assert_allclose_dense_sparse(X_checked, X_inf)
-
-
-@pytest.mark.parametrize(
-    "X_nan, accept_sparse",
-    [(np.arange(4).reshape(2, 2).astype(np.float), False),
-     (sp.rand(2, 2).tocsr(), True)]
-)
-def test_check_array_nan(X_nan, accept_sparse):
-    X_nan[0, 0] = np.nan
-    X_checked = check_array(X_nan, force_all_finite=False,
-                            accept_sparse=accept_sparse)
-    assert_allclose_dense_sparse(X_nan, X_checked)
-    X_checked = check_array(X_nan, force_all_finite='allow-nan',
-                            accept_sparse=accept_sparse)
-    assert_allclose_dense_sparse(X_nan, X_checked)
+def test_check_array_invalid(value, force_all_finite, match_msg, retype):
+    X = retype(np.arange(4).reshape(2, 2).astype(np.float))
+    X[0, 0] = value
+    with pytest.raises(ValueError, message=match_msg):
+        check_array(X, force_all_finite=force_all_finite,
+                    accept_sparse=True)
 
 
 @ignore_warnings
