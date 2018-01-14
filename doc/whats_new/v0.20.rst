@@ -279,6 +279,10 @@ Metrics
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
+- Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
+  :func:`mutual_info_score`.
+  :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
