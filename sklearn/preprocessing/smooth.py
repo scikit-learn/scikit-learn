@@ -18,85 +18,89 @@ __all__ = [
 
 class RectangularSmoother(BaseEstimator, TransformerMixin):
 
-    _modes = [ 'mirror', 'constant', 'nearest', 'wrap']
+    _modes = ['mirror', 'constant', 'nearest', 'wrap', 'interp']
 
     def __init__(self, size=3, mode='constant', cval=0.0):
         if mode not in self._modes:
             raise ValueError("Given mode is not supported.")
 
-        if size%2 == 0:
+        if size % 2 == 0:
             raise ValueError("Size must be odd.")
 
-        self._mode = mode
-        self._size = size
-        self._whisker = int((self._size - 1) / 2)
-        self._cval = cval
+        self.mode = mode
+        self.size = size
+        self.cval = cval
 
     def _reset(self):
         if hasattr(self, '_mode'):
-            del self._mode
-            del self._size
+            del self.mode
+            del self.size
             del self._whisker
-            del self._cval
+            del self.cval
 
-    def fit(self, X, y=None):
-        if sparse.issparse(X):
+    def fit(self, x, y=None):
+        if sparse.issparse(x):
             raise TypeError("Smoother does no support sparse input. ")
 
-        X = check_array(X, copy=self.copy, warn_on_dtype=True,
+        x = check_array(x, copy=True, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
+
+        self._whisker = int((self.size - 1) / 2)
+
         return self
 
+    def transform(self, x):
+        check_is_fitted(self, '_whisker')
 
-    def transform(self, X):
-        check_is_fitted(self, 'scale_')
+        x = check_array(x, copy=True, dtype=FLOAT_DTYPES)
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        array_filler_up, array_filler_down = self._populate_fillers(x)
 
-        array_filler_up, array_filler_down = self._populate_fillers(X)
+        supported_input = np.concatenate((array_filler_up, x, array_filler_down), axis=0)
+        result = np.zeros(x.shape)
 
-        supported_input = np.concatenate((array_filler_up, X, array_filler_down), axis=0)
+        if self.mode == 'interp':
+            supported_input = x
+            result = np.zeros((x.shape[0] - self._whisker, x.shape[1]))
 
-        result = np.zeros(X.shape)
-        result[0, :] = self.sum_lines(supported_input, 0, self._size)
-        for row in range(1, X.shape[0]):
-            result[row, :] = result[row - 1, :] - supported_input[row - 1, :] + supported_input[row + self._size - 1, :]
-        result = np.divide(result, self._size)
+        result[0, :] = self.sum_lines(supported_input, 0, self.size)
+        for row in range(1, result.shape[0]):
+            result[row, :] = result[row - 1, :] - supported_input[row - 1, :] + supported_input[row + self.size - 1, :]
+        result = np.divide(result, self.size)
         return result
 
     @staticmethod
-    def sum_lines(X, start, end):
-        result = np.zeros(X.shape[1])
-        for row in X[start:end, :]:
+    def sum_lines(x, start, end):
+        result = np.zeros(x.shape[1])
+        for row in x[start:end, :]:
             result += row
         return result
 
-    def _populate_fillers(self, X):
+    def _populate_fillers(self, x):
 
-        if X.shape[0] < self._whisker:
+        if x.shape[0] < self._whisker:
             raise TypeError("Too few sample with respect to the chosen window size")
 
-        filler_up = np.zeros((self._whisker, X.shape[1]))
-        filler_down = np.zeros((self._whisker, X.shape[1]))
+        filler_up = np.zeros((self._whisker, x.shape[1]))
+        filler_down = np.zeros((self._whisker, x.shape[1]))
 
-        if self._mode == 'mirror':
+        if self.mode == 'mirror':
             for i in range(0, self._whisker):
-                filler_up[i, :] = X[self._whisker - i, :]
-                filler_down[i, :] = X[- 2 - i, :]
+                filler_up[i, :] = x[self._whisker - i, :]
+                filler_down[i, :] = x[- 2 - i, :]
             return filler_up, filler_down
 
-        if self._mode == 'constant':
-            filler_up[:, :] = self._cval
-            filler_down[:, :] = self._cval
+        if self.mode == 'constant':
+            filler_up[:, :] = self.cval
+            filler_down[:, :] = self.cval
             return filler_up, filler_down
 
-        if self._mode == 'nearest':
-            filler_up[:, :] = X[0, :]
-            filler_down[:, :] = X[-1, :]
+        if self.mode == 'nearest':
+            filler_up[:, :] = x[0, :]
+            filler_down[:, :] = x[-1, :]
             return filler_up, filler_down
 
-        if self._mode == 'wrap':
-            filler_up[:, :] = X[-self._whisker:, :]
-            filler_down[:, :] = X[:self._whisker, :]
+        if self.mode == 'wrap':
+            filler_up[:, :] = x[-self._whisker:, :]
+            filler_down[:, :] = x[:self._whisker, :]
             return filler_up, filler_down
-
