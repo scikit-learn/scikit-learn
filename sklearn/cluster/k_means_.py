@@ -395,7 +395,7 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          precompute_distances=True):
     if sp.issparse(X):
         raise ValueError("algorithm='elkan' not supported for sparse input X")
-    X = check_array(X, order='C')
+    X = check_array(X, order="C")
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
