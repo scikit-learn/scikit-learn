@@ -170,15 +170,14 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
-    Warning: The data will be converted to C ordering, which might cause a
-    memory copy if the given data is in fortran order.
-
     Read more in the :ref:`User Guide <k_means>`.
 
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
-        The observations to cluster.
+        The observations to cluster. It must be noted that, the data will
+        be converted to C ordering, which will cause a memory copy if the
+        given data is in fortran order.
 
     n_clusters : int
         The number of clusters to form as well as the number of
@@ -719,9 +718,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Read more in the :ref:`User Guide <k_means>`.
 
-    Warning: The data will be converted to C ordering, which might cause a
-    memory copy if the given data is in fortran order.
-
     Parameters
     ----------
 
@@ -893,7 +889,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster.
+            Training instances to cluster. It must be noted that, the data
+            will be converted to C ordering, which will cause a memory copy
+            if the given data is in fortran order.
 
         y : Ignored
 
@@ -1233,9 +1231,6 @@ class MiniBatchKMeans(KMeans):
 
     Read more in the :ref:`User Guide <mini_batch_kmeans>`.
 
-    Warning: The data will be converted to C ordering, which might cause a
-    memory copy if the given data is in fortran order.
-
     Parameters
     ----------
 
@@ -1362,7 +1357,9 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster.
+            Training instances to cluster. It must be noted that, the data
+            will be converted to C ordering, which will cause a memory copy
+            if the given data is in fortran order.
 
         y : Ignored
 
