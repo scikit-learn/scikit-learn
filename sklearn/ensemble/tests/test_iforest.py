@@ -243,7 +243,11 @@ def test_score_samples():
                        clf2.score_samples([[2., 2.]]))
 
 
-def test_threshold_deprecation():
+def test_deprecation():
+    assert_warns_message(DeprecationWarning,
+                         'default contamination parameter 0.1 will change '
+                         'in 0.22 to "auto"',
+                         IsolationForest, )
     X = [[0.0], [1.0]]
     clf = IsolationForest().fit(X)
     assert_warns_message(DeprecationWarning,

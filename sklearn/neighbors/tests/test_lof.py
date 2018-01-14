@@ -141,3 +141,11 @@ def test_contamination():
     X = [[1, 1], [1, 0]]
     clf = neighbors.LocalOutlierFactor(contamination=0.6)
     assert_raises(ValueError, clf.fit, X)
+
+
+def test_deprecation():
+    assert_warns_message(DeprecationWarning,
+                         'default contamination parameter 0.1 will change '
+                         'in 0.22 to "auto"',
+                         neighbors.LocalOutlierFactor, )
+

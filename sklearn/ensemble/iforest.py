@@ -63,7 +63,7 @@ class IsolationForest(BaseBagging):
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
-    contamination : float in (0., 0.5), optional (default="auto")
+    contamination : float in (0., 0.5), optional (default=0.1)
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Used when fitting to define the threshold
         on the decision function. If 'auto', the decision function threshold is
@@ -127,7 +127,7 @@ class IsolationForest(BaseBagging):
     def __init__(self,
                  n_estimators=100,
                  max_samples="auto",
-                 contamination="auto",
+                 contamination="legacy",
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=1,
@@ -147,6 +147,13 @@ class IsolationForest(BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+        if contamination == "legacy":
+            warnings.warn('default contamination parameter 0.1 will change '
+                          'in 0.22 to "auto". This will change the predict '
+                          'method behavior.',
+                          DeprecationWarning)
+            contamination = 0.1
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):

@@ -24,8 +24,6 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
-- :class:`ensemble.IsolationForest` (API change)
-- :class:`neighbors.LocalOutlierFactor` (API change)
   
 Details are listed in the changelog below.
 
@@ -307,8 +305,8 @@ Outlier Detection models
   :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
   to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
   positive) ``decision_function`` values. By default, ``contamination`` is
-  now set to "auto", thus using method-specific score offsets: this can change the
-  behavior of predict methods.
+  kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to "auto",
+  thus using method-specific score offsets.
   In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.

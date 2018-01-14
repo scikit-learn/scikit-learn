@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-from warnings import warn
+import warnings
 from scipy.stats import scoreatpercentile
 
 from .base import NeighborsBase
@@ -92,7 +92,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    contamination : float in (0., 0.5), optional (default="auto")
+    contamination : float in (0., 0.5), optional (default=0.1)
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. When fitting this is used to define the
         threshold on the decision function. If "auto", the decision function
@@ -135,13 +135,19 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     """
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
-                 contamination="auto", n_jobs=1):
+                 contamination="legacy", n_jobs=1):
         super(LocalOutlierFactor, self).__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
               metric_params=metric_params, n_jobs=n_jobs)
 
+        if contamination == "legacy":
+            warnings.warn('default contamination parameter 0.1 will change '
+                          'in 0.22 to "auto". This will change the predict '
+                          'method behavior.',
+                          DeprecationWarning)
+            contamination = 0.1
         self.contamination = contamination
 
     def fit_predict(self, X, y=None):
@@ -187,7 +193,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         n_samples = self._fit_X.shape[0]
         if self.n_neighbors > n_samples:
-            warn("n_neighbors (%s) is greater than the "
+            warnings.warn("n_neighbors (%s) is greater than the "
                  "total number of samples (%s). n_neighbors "
                  "will be set to (n_samples - 1) for estimation."
                  % (self.n_neighbors, n_samples))
