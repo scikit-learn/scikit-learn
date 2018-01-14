@@ -366,7 +366,7 @@ class KNeighborsMixin(object):
                                      "precomputed matrix to get {} "
                                      "nearest neighbors".format(n_neighbors))
                 if dist.diagonal().min() < 0 or dist.diagonal().max() > 0 or \
-                    not (dist != dist.transpose()).nnz == 0:
+                        not (dist != dist.transpose()).nnz == 0:
                     raise ValueError("Not a valid distance matrix. A distance "
                                      "matrix should be symmetric having "
                                      "non-negative values with all zeros in "
@@ -381,7 +381,8 @@ class KNeighborsMixin(object):
                         dist.indices[row][sort][:n_neighbors]
                 if query_is_train:
                     # this is done to add self as nearest neighbor
-                    neigh_ind = np.concatenate((sample_range, neigh_ind), axis=1)
+                    neigh_ind = np.concatenate((sample_range, neigh_ind),
+                                               axis=1)
                     neigh_ind = neigh_ind[:, :-1]
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)

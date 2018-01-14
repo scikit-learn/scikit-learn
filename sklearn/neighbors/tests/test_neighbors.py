@@ -182,9 +182,11 @@ def test_precomputed_sparse():
 
     # Tests consistency of csr matrix with zeros replaced by large values
     neigh = neighbors.NearestNeighbors(n_neighbors=2, metric="precomputed")
-    dist = np.array([[0., 1., 0., 3.], [1., 0., 3., 0.], [0., 3., 0., 1.], [3., 0., 1., 0.]])
+    dist = np.array([[0., 1., 0., 3.], [1., 0., 3., 0.], [0., 3., 0., 1.],
+                     [3., 0., 1., 0.]])
     dist_csr = csr_matrix(dist)
-    dist_orig = np.array([[0., 1., 100., 3.], [1., 0., 3., 100.], [100., 3., 0., 1.], [3., 100., 1., 0.]])
+    dist_orig = np.array([[0., 1., 100., 3.], [1., 0., 3., 100.],
+                         [100., 3., 0., 1.], [3., 100., 1., 0.]])
     neigh.fit(dist_orig)
     k_neighbors = neigh.kneighbors(None, n_neighbors=1)
     neigh.fit(dist_csr)

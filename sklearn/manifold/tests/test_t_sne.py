@@ -5,7 +5,6 @@ import scipy.sparse as sp
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors import kneighbors_graph
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
