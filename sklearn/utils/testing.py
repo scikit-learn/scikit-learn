@@ -1011,15 +1011,11 @@ def assert_consistent_docs(objects,
     AssertionError: Parameter y_true of mean_squared_error has inconsistency.
 
     """
-    if isinstance(exclude_params, list) and include_params is not True:
-        raise TypeError("exclude_params can be set only if include_params is"
-                        " True.")
-    if isinstance(exclude_attribs, list) and include_attribs is not True:
-        raise TypeError("exclude_attribs can be set only if include_attribs is"
-                        " True.")
-    if isinstance(exclude_returns, list) and include_returns is not True:
-        raise TypeError("exclude_returns can be set only if include_returns is"
-                        " True.")
+    if ((isinstance(exclude_params, list) and include_params is not True) or
+       (isinstance(exclude_attribs, list) and include_attribs is not True) or
+       (isinstance(exclude_returns, list) and include_returns is not True)):
+        raise TypeError("exclude_ argument can be set only if include_"
+                        "argument is True.")
 
     from numpydoc import docscrape
 
@@ -1033,7 +1029,7 @@ def assert_consistent_docs(objects,
             doc = u
             name = 'NumpyDocString'
         elif (inspect.isdatadescriptor(u) or inspect.isfunction(u) or
-                inspect.isclass(u)):
+              inspect.isclass(u)):
             doc = docscrape.NumpyDocString(inspect.getdoc(u))
             name = u.__name__
         else:

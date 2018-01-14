@@ -28,9 +28,8 @@ from sklearn.utils.testing import (
 from sklearn.utils.testing import if_numpydoc, SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.metrics import (f1_score, fbeta_score, mean_absolute_error,
-                             precision_score, precision_recall_fscore_support,
-                             recall_score)
+from sklearn.metrics import (f1_score, fbeta_score, precision_score,
+                             precision_recall_fscore_support, recall_score)
 
 
 def test_assert_less():
@@ -518,6 +517,7 @@ def func_doc1(y_true, y_pred, sample_weight):
         F-beta score of the positive class in binary classification.
 
     precision : float or array of float, shape = [n_unique_labels]
+        Precision values.
 
     recall : float or array of float, shape = [n_unique_labels]
 
@@ -543,28 +543,8 @@ def func_doc2(y_true, y_pred, sample_weight):
     fbeta_score : float or array of float, shape = [n_unique_labels]
         F-beta score of the positive class in binary classification.
 
-    """
-    pass
-
-
-def func_doc3(y_true, y_pred, sample_weight):
-    """Dummy function for docstring testing.
-
-    Parameters
-    ----------
-    y_true : 1d array-like
-        Ground truth (correct) target values.
-
-    y_pred : 1d array-like
-        Estimated targets as returned by a classifier.
-
-    sample_weight : array-like of shape = [n_samples]
-        Sample weights.
-
-    Returns
-    -------
-    recall : float or array of float, shape = [n_unique_labels]
-        Recall value(s).
+    precision : float or array of float
+        Precision values.
 
     """
     pass
@@ -573,39 +553,36 @@ def func_doc3(y_true, y_pred, sample_weight):
 @if_numpydoc
 def test_assert_consistent_docs():
     # Test with dummy functions
-    assert_consistent_docs([func_doc1, func_doc2, func_doc3],
+    assert_consistent_docs([func_doc1, func_doc2],
                            include_params=['y_true', 'y_pred'],
                            include_returns=False)
-    assert_consistent_docs([func_doc1, func_doc2, func_doc3],
+    assert_consistent_docs([func_doc1, func_doc2],
                            exclude_params=['sample_weight'],
                            include_returns=False)
 
     # Using NumpyDocString object
     from numpydoc import docscrape
 
-    doc = docscrape.NumpyDocString(inspect.getdoc(precision_score))
-    assert_consistent_docs([precision_recall_fscore_support, f1_score, doc],
-                           include_returns=False,
-                           exclude_params=['labels', 'average', 'beta'],
-                           include_attribs=False)
-
     doc1 = docscrape.NumpyDocString(inspect.getdoc(func_doc1))
     doc2 = docscrape.NumpyDocString(inspect.getdoc(func_doc2))
-    doc3 = docscrape.NumpyDocString(inspect.getdoc(func_doc3))
+
+    assert_raises(AssertionError, assert_consistent_docs, [doc1, doc2],
+                  include_params=['sample_weight'], include_returns=False)
+    assert_raises(AssertionError, assert_consistent_docs, [doc1, doc2],
+                  include_returns=['precision'], include_params=False)
 
     # Test for incorrect usage
+    assert_raises(TypeError, assert_consistent_docs, [doc1, doc2],
+                  include_params=False, exclude_params=['y_true'])
+
+    # Testing invalid object type
     assert_raises(TypeError, assert_consistent_docs,
-                  [func_doc1, func_doc3], include_params=False,
-                  exclude_params=['y_true'])
+                  ["precision_recall_fscore_support", doc1, doc2],
+                  include_returns=True, include_params=True,
+                  include_attribs=True)
 
     # Test with actual classification metrics
     assert_consistent_docs([precision_recall_fscore_support, precision_score,
                             recall_score, f1_score, fbeta_score],
                            include_returns=False,
                            exclude_params=['labels', 'average', 'beta'])
-
-    # Testing invalid object type
-    assert_raises(TypeError, assert_consistent_docs,
-                  ["precision_recall_fscore_support", precision_score,
-                   recall_score, f1_score, fbeta_score], include_returns=True,
-                  include_params=True, include_attribs=True)
