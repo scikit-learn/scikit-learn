@@ -317,7 +317,7 @@ As well as potentially exhausting system memory, memory management
 can overwhelm computation time, or at least, using more memory provides
 negligible speed benefit.  Where computations can be performed
 in fixed-memory chunks, we attempt to do so, and allow the user to
-hint at the maximum size of this working memory (defaulting to 64 MiB)
+hint at the maximum size of this working memory (defaulting to 1GB)
 using :func:`sklearn.set_config` or :func:`config_context`.
 The following suggests to limit temporary working memory to 128 MiB::
 

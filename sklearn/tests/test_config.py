@@ -3,7 +3,8 @@ from sklearn.utils.testing import assert_equal, assert_raises
 
 
 def test_config_context():
-    assert_equal(get_config(), {'assume_finite': False, 'working_memory': 64})
+    assert_equal(get_config(),
+                 {'assume_finite': False, 'working_memory': 1024})
 
     # Not using as a context manager affects nothing
     config_context(assume_finite=True)
@@ -11,7 +12,7 @@ def test_config_context():
 
     with config_context(assume_finite=True):
         assert_equal(get_config(), {'assume_finite': True,
-                                    'working_memory': 64})
+                                    'working_memory': 1024})
     assert_equal(get_config()['assume_finite'], False)
 
     with config_context(assume_finite=True):
@@ -36,7 +37,7 @@ def test_config_context():
         assert_equal(get_config()['assume_finite'], True)
 
     assert_equal(get_config(), {'assume_finite': False,
-                                'working_memory': 64})
+                                'working_memory': 1024})
 
     # No positional arguments
     assert_raises(TypeError, config_context, True)

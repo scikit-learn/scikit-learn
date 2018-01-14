@@ -5,7 +5,7 @@ from contextlib import contextmanager as contextmanager
 
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
-    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 64))
+    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024))
 }
 
 
@@ -35,7 +35,7 @@ def set_config(assume_finite=None, working_memory=None):
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
-        performed in chunks. Global default: 64.
+        performed in chunks. Global default: 1024.
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -59,7 +59,7 @@ def config_context(**new_config):
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
-        performed in chunks. Global default: 64.
+        performed in chunks. Global default: 1024.
 
     Notes
     -----
