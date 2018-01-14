@@ -170,6 +170,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
+    Warning: The data will be converted to C ordering, which might cause a
+    memory copy if the given data is in fortran order.
+
     Read more in the :ref:`User Guide <k_means>`.
 
     Parameters
@@ -299,7 +302,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     # Validate init array
     if hasattr(init, '__array__'):
-        init = check_array(init, dtype=X.dtype.type, copy=True)
+        init = check_array(init, dtype=X.dtype.type, copy=True, order='C')
         _validate_center_shape(X, n_clusters, init)
 
         if n_init != 1:
@@ -393,7 +396,7 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          precompute_distances=True):
     if sp.issparse(X):
         raise ValueError("algorithm='elkan' not supported for sparse input X")
-    X = check_array(X, order="C")
+    X = check_array(X, order='C')
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
@@ -716,6 +719,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Read more in the :ref:`User Guide <k_means>`.
 
+    Warning: The data will be converted to C ordering, which might cause a
+    memory copy if the given data is in fortran order.
+
     Parameters
     ----------
 
@@ -862,14 +868,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                        order='C')
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 X.shape[0], self.n_clusters))
         return X
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
+                        order='C')
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -1225,6 +1233,9 @@ class MiniBatchKMeans(KMeans):
 
     Read more in the :ref:`User Guide <mini_batch_kmeans>`.
 
+    Warning: The data will be converted to C ordering, which might cause a
+    memory copy if the given data is in fortran order.
+
     Parameters
     ----------
 
@@ -1522,7 +1533,7 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr")
+        X = check_array(X, accept_sparse="csr", order='C')
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
