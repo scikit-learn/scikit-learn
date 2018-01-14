@@ -7,10 +7,12 @@ from __future__ import division
 
 import warnings
 import re
+
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
 from distutils.version import LooseVersion
+import pytest
 
 from sklearn.utils import gen_batches
 
@@ -153,6 +155,28 @@ def test_polynomial_feature_names():
         [u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
+
+
+@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
+                         [(1, True, False, int),
+                          (2, True, False, int),
+                          (2, True, False, np.float32),
+                          (2, True, False, np.float64),
+                          (3, False, False, np.float64),
+                          (3, False, True, np.float64)])
+def test_polynomial_features_sparse_X(deg, include_bias, interaction_only,
+                                      dtype):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_sparse = sparse.csr_matrix(X)
+
+    est = PolynomialFeatures(deg, include_bias=include_bias)
+    Xt_sparse = est.fit_transform(X_sparse.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype))
+
+    assert isinstance(Xt_sparse, sparse.csc_matrix)
+    assert Xt_sparse.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
 
 
 def test_standard_scaler_1d():

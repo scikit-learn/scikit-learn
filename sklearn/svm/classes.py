@@ -208,7 +208,6 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
-            Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
@@ -393,7 +392,6 @@ class LinearSVR(LinearModel, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
@@ -1133,7 +1131,6 @@ class OneClassSVM(BaseLibSVM):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         -----
