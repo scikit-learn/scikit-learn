@@ -13,6 +13,7 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 
+from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
 )
@@ -180,7 +181,7 @@ def test_int_overflow_mutual_info_score():
                  [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
                  [1] * 20)
 
-    mutual_info_score(x.ravel(), y.ravel())
+    assert_all_finite(mutual_info_score(x.ravel(), y.ravel()))
 
 
 def test_entropy():
