@@ -128,8 +128,9 @@ Classifiers and regressors
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
-  :func:`k_means` are now optimized using row-major ordering for data
-  copying :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
+  :func:`cluster.k_means` are now optimized using row-major ordering for data
+  copying.
+  :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
 Preprocessing
 
