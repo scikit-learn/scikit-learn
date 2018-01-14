@@ -365,6 +365,12 @@ class KNeighborsMixin(object):
                     raise ValueError("Not enough neighbors in sparse "
                                      "precomputed matrix to get {} "
                                      "nearest neighbors".format(n_neighbors))
+                if dist.diagonal().min() < 0 or dist.diagonal().max() > 0 or \
+                    not (dist != dist.transpose()).nnz == 0:
+                    raise ValueError("Not a valid distance matrix. A distance "
+                                     "matrix should be symmetric having "
+                                     "non-negative values with all zeros in "
+                                     "leading diagonal  ")
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors),
                                      dtype=np.int)
                 for i in range(0, dist.shape[0]):

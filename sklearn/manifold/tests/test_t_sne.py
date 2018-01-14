@@ -817,22 +817,12 @@ def test_tsne_with_different_distance_metrics():
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
-def test_tsne_with_different_csr_distance_metrics():
-    """Make sure that TSNE works for different csr distance metrics"""
-    random_state = check_random_state(0)
-    n_components_original = 3
-    n_components_embedding = 2
-    X = random_state.randn(50, n_components_original).astype(np.float32)
-    X_csr = sp.csr_matrix(X)
-    metrics = ['manhattan', 'cosine']
-    dist_funcs = [manhattan_distances, cosine_distances]
-    for metric, dist_func in zip(metrics, dist_funcs):
-        X_transformed_tsne = TSNE(
-            metric=metric, n_components=n_components_embedding,
-            random_state=0).fit_transform(X)
-        D = dist_func(X)
-        D_csr = kneighbors_graph(X, 5, mode='distance')
-        X_transformed_tsne_precomputed = TSNE(
-            metric='precomputed', n_components=n_components_embedding,
-            random_state=0).fit_transform(dist_func(X_csr))
-        assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+def test_tsne_with_csr_distance_metrics():
+    """Make sure that TSNE works identically for sparse and dense matrix"""
+    dist = np.zeros((3, 3))
+    dist_csr = sp.csr_matrix(dist)
+    tsne = TSNE(metric="precomputed")
+    X_transformed_dense = tsne.fit_transform(dist)
+    X_transformed_sparse = tsne.fit_transform(dist_csr)
+
+    assert_array_equal(X_transformed_sparse, X_transformed_dense)

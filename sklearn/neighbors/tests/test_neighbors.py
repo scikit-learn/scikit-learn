@@ -171,6 +171,7 @@ def test_precomputed_sparse():
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
     neigh.fit(dist_csr)
     neigh.kneighbors(None, n_neighbors=1)
+    neigh.kneighbors(np.array([[0., 0., 0.]]), n_neighbors=1)
 
     dist = np.array([[0., 2., 0.], [2., 0., 3.], [0., 3., 0.]])
     dist_csr = csr_matrix(dist)
@@ -189,6 +190,15 @@ def test_precomputed_sparse():
     neigh.fit(dist_csr)
     k_neighbors_csr = neigh.kneighbors(None, n_neighbors=1)
     assert_array_equal(k_neighbors, k_neighbors_csr)
+
+    # Checks error with inconsistent distance matrix
+    dist = np.array([[5., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
+    dist_csr = csr_matrix(dist)
+    neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
+    neigh.fit(dist_csr)
+    assert_raises_regex(ValueError, "Not a valid distance"
+                        " .*non-negative values.*", neigh.kneighbors,
+                        None, n_neighbors=1)
 
 
 def test_precomputed_cross_validation():
