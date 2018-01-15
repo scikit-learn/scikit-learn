@@ -301,7 +301,11 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     # Validate init array
     if hasattr(init, '__array__'):
-        init = check_array(init, dtype=X.dtype.type, copy=True, order='C')
+        if algorithm == "full":
+            order = "C"
+        else:
+            order = None
+        init = check_array(init, dtype=X.dtype.type, copy=True, order=order)
         _validate_center_shape(X, n_clusters, init)
 
         if n_init != 1:
@@ -864,16 +868,24 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
+        if self.algorithm == "full":
+            order = "C"
+        else:
+            order = None
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C')
+                        order=order)
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 X.shape[0], self.n_clusters))
         return X
 
     def _check_test_data(self, X):
+        if self.algorithm == "full":
+            order = "C"
+        else:
+            order = None
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                        order='C')
+                        order=order)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -1365,7 +1377,7 @@ class MiniBatchKMeans(KMeans):
 
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X, accept_sparse="csr", order='C',
+        X = check_array(X, accept_sparse="csr",
                         dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
@@ -1530,7 +1542,7 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr", order='C')
+        X = check_array(X, accept_sparse="csr")
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
