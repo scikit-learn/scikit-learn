@@ -88,6 +88,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     threshold_ : float
         Decision threshold for the positive class. Determines the output of
         predict
+
+    References
+    ----------
+    .. [1] Receiver-operating characteristic (ROC) plots: a fundamental
+           evaluation tool in clinical medicine, MH Zweig, G Campbell -
+           Clinical chemistry, 1993
+
     """
     def __init__(self, base_estimator, method='roc', pos_label=1, cv=3,
                  min_val_tnr=None, min_val_tpr=None):
