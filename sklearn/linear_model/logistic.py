@@ -1200,7 +1200,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
-            Returns self.
         """
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
@@ -1606,7 +1605,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
