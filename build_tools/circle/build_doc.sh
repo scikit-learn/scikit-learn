@@ -62,7 +62,7 @@ get_build_type() {
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
         pattern=$(echo "$changed_examples" | paste -sd '|')
-        # pattern for examples to run is the last of output
+        # pattern for examples to run is the last line of output
         echo "$pattern"
         return
     fi
