@@ -212,20 +212,21 @@ def load_data(module_path, data_file_name):
 
     Parameters
     ----------
-    data_file_name : String. Name of csv file to be loaded from
-    module_path/data/data_file_name. For example 'wine_data.csv'.
+    data_file_name : string
+        Name of csv file to be loaded from
+        module_path/data/data_file_name. For example 'wine_data.csv'.
 
     Returns
     -------
-    data : Numpy Array
+    data : Numpy array
         A 2D array with each row representing one sample and each column
         representing the features of a given sample.
 
-    target : Numpy Array
+    target : Numpy array
         A 1D array holding target variables for all the samples in `data.
         For example target[0] is the target varible for data[0].
 
-    target_names : Numpy Array
+    target_names : Numpy array
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
