@@ -650,6 +650,10 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     sparse_output : boolean (default: False),
         Set to true if output binary array is desired in CSR sparse format
 
+    ignore_unseen : boolean (default: True),
+        Transform unseen class as 0. When set to false, KeyValueError will be
+        raised when transforming classes that are not in fit
+
     Attributes
     ----------
     classes_ : array of labels
@@ -677,9 +681,10 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.OneHotEncoder : encode categorical integer features
         using a one-hot aka one-of-K scheme.
     """
-    def __init__(self, classes=None, sparse_output=False):
+    def __init__(self, classes=None, sparse_output=False, ignore_unseen=True):
         self.classes = classes
         self.sparse_output = sparse_output
+        self.ignore_unseen = ignore_unseen
 
     def fit(self, y):
         """Fit the label sets binarizer, storing `classes_`
@@ -787,9 +792,14 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
+
         for labels in y:
+            if self.ignore_unseen:
+                labels = [label for label in labels if label in class_mapping]
+
             indices.extend(set(class_mapping[label] for label in labels))
             indptr.append(len(indices))
+
         data = np.ones(len(indices), dtype=int)
 
         return sp.csr_matrix((data, indices, indptr),
