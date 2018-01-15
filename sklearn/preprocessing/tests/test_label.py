@@ -291,6 +291,12 @@ def test_multilabel_binarizer_empty_sample():
 
 def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
+    y = [[1, 3], [1, 2, 3], [3]]
+
+    assert_array_equal(mlb.fit(y).transform([[1], [4], [2]]), np.array([[1, 0, 0], [0, 0, 0], [0, 0, 1]]))
+    assert_array_equal(mlb.fit(y).transform([[1], [1, 4], [1, 2, 3]]), np.array([[1, 0, 0], [1, 0, 0], [1, 1, 1]]))
+
+    mlb = MultiLabelBinarizer(ignore_unseen=False)
     y = [[1, 2]]
     assert_raises(KeyError, mlb.fit(y).transform, [[0]])
 
