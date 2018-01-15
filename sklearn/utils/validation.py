@@ -42,7 +42,7 @@ def _assert_all_finite(X, allow_nan=False):
     if allow_nan:
         if (X.dtype.char in np.typecodes['AllFloat']
                 and not np.isfinite(X.sum())
-                and not np.isinf(X).any()):
+                and np.isinf(X).any()):
             raise ValueError("Input contains infinity"
                              " or a value too large for %r." % X.dtype)
     else:
