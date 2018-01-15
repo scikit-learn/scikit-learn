@@ -543,8 +543,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'lbfgs' and
-        'newton-cg' solvers.
+        the entire probability distribution. Does not work for 'liblinear'
+        solver.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -864,8 +864,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for
-        liblinear solver.
+        the entire probability distribution. Does not work for 'liblinear'
+        solver.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -1071,7 +1071,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Does not work for liblinear
+        the entire probability distribution. Does not work for 'liblinear'
         solver.
 
         .. versionadded:: 0.18
@@ -1200,7 +1200,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.solver == 'default':
             _solver = 'liblinear'
@@ -1516,8 +1515,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'newton-cg',
-        'sag', 'saga' and 'lbfgs' solver.
+        the entire probability distribution. Does not work for 'liblinear'
+        solver.
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
@@ -1622,7 +1621,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
