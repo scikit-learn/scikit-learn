@@ -39,10 +39,9 @@ def _assert_all_finite(X, allow_nan=False):
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method.
-    is_float = X.dtype.char in np.typecodes['AllFloat']
     if np.isfinite(X.sum()):
         pass
-    elif is_float:
+    elif X.dtype.char in np.typecodes['AllFloat']:
         msg_err = "Input contains {} or value too large for {!r}"
         cond_err, type_err = ((np.isinf(X).any(), 'infinity') if allow_nan
                               else (not np.isfinite(X).all(), 'NaN, infinity'))
