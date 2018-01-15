@@ -102,6 +102,33 @@ def test_transform():
     assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
 
 
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining NearestNeighborsTransformer and Isomap with
+    # neighbors_algorithm='precomputed'
+    algorithm = 'auto'
+    n_neighbors = 10
+
+    X, _ = datasets.make_blobs(random_state=0)
+    X2, _ = datasets.make_blobs(random_state=1)
+
+    # compare the chained version and the compact version
+    est_chain = pipeline.make_pipeline(
+        neighbors.NearestNeighborsTransformer(
+            n_neighbors=n_neighbors, algorithm=algorithm, mode='distance',
+            include_self=False),
+        manifold.Isomap(neighbors_algorithm='precomputed'))
+    est_compact = manifold.Isomap(n_neighbors=n_neighbors,
+                                  neighbors_algorithm=algorithm)
+
+    Xt_chain = est_chain.fit_transform(X)
+    Xt_compact = est_compact.fit_transform(X)
+    assert_array_almost_equal(Xt_chain, Xt_compact)
+
+    Xt_chain = est_chain.transform(X2)
+    Xt_compact = est_compact.transform(X2)
+    assert_array_almost_equal(Xt_chain, Xt_compact)
+
+
 def test_pipeline():
     # check that Isomap works fine as a transformer in a Pipeline
     # only checks that no error is raised.

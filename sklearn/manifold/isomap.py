@@ -6,7 +6,7 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import check_array
+from ..utils.validation import check_array, check_is_fitted
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -54,9 +54,13 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         'D' : Dijkstra's algorithm.
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree'| \
+            'precomputed']
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
+        If "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
@@ -100,20 +104,26 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        X = check_array(X)
-        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                      algorithm=self.neighbors_algorithm,
-                                      n_jobs=self.n_jobs)
-        self.nbrs_.fit(X)
-        self.training_data_ = self.nbrs_._fit_X
+
+        if self.neighbors_algorithm == 'precomputed':
+            kng = check_array(X, accept_sparse=['csr'])
+            self.training_data_ = None
+            self.nbrs_ = None
+        else:
+            X = check_array(X)
+            self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                          algorithm=self.neighbors_algorithm,
+                                          n_jobs=self.n_jobs)
+            self.nbrs_.fit(X)
+            self.training_data_ = self.nbrs_._fit_X
+            kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
+                                   mode='distance', n_jobs=self.n_jobs)
+
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
-
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               mode='distance', n_jobs=self.n_jobs)
 
         self.dist_matrix_ = graph_shortest_path(kng,
                                                 method=self.path_method,
@@ -197,23 +207,40 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples_transform, n_features)
+            If neighbors_algorithm='precomputed', X is assumed to be a
+            distance matrix of shape (n_samples_transform, n_samples_fit).
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples_transform, n_components)
         """
-        X = check_array(X)
-        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        check_is_fitted(self, 'embedding_')
 
-        # Create the graph of shortest distances from X to self.training_data_
-        # via the nearest neighbors of X.
+        # Create the graph of shortest distances from X to
+        # self.training_data_ via the nearest neighbors of X.
         # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
-        G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
-        for i in range(X.shape[0]):
-            G_X[i] = np.min(self.dist_matrix_[indices[i]] +
-                            distances[i][:, None], 0)
+        if self.neighbors_algorithm == 'precomputed':
+            distances_nn = check_array(X, accept_sparse=['csr'])
+
+            G_X = np.zeros(distances_nn.shape)
+            for i in range(distances_nn.shape[0]):
+                i_start = distances_nn.indptr[i]
+                i_stop = distances_nn.indptr[i + 1]
+                indices = distances_nn.indices[i_start:i_stop]
+                distances = distances_nn.data[i_start:i_stop]
+                G_X[i] = np.min(self.dist_matrix_[indices] +
+                                distances[:, None], 0)
+
+        else:
+            X = check_array(X)
+            distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+
+            G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
+            for i in range(X.shape[0]):
+                G_X[i] = np.min(self.dist_matrix_[indices[i]] +
+                                distances[i][:, None], 0)
 
         G_X **= 2
         G_X *= -0.5

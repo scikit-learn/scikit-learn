@@ -3,8 +3,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.neighbors import BallTree
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, NearestNeighborsTransformer
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -32,6 +31,7 @@ from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import cosine_distances
+from sklearn.pipeline import make_pipeline
 
 
 x = np.linspace(0, 1, 10)
@@ -138,9 +138,9 @@ def test_binary_search_neighbors():
     P2 = _binary_search_perplexity(distances_nn, desired_perplexity, verbose=0)
 
     indptr = distance_graph.indptr
-    P_1nn = np.array([P1[k, distance_graph.indices[indptr[k]:indptr[k+1]]]
+    P1_nn = np.array([P1[k, distance_graph.indices[indptr[k]:indptr[k + 1]]]
                      for k in range(n_samples)])
-    assert_array_almost_equal(P_1nn, P2, decimal=4)
+    assert_array_almost_equal(P1_nn, P2, decimal=4)
 
     # Test that the highest P_ij are the same when fewer neighbors are used
     for k in np.linspace(150, n_samples - 1, 5):
@@ -151,12 +151,39 @@ def test_binary_search_neighbors():
         distances_nn = distances_nn.reshape(n_samples, k)
         P2k = _binary_search_perplexity(distances_nn, desired_perplexity,
                                         verbose=0)
-        assert_array_almost_equal(P_1nn, P2, decimal=2)
+        assert_array_almost_equal(P1_nn, P2, decimal=2)
         idx = np.argsort(P1.ravel())[::-1]
         P1top = P1.ravel()[idx][:topn]
         idx = np.argsort(P2k.ravel())[::-1]
         P2top = P2k.ravel()[idx][:topn]
         assert_array_almost_equal(P1top, P2top, decimal=2)
+
+
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining NearestNeighborsTransformer and TSNE
+    n_iter = 250
+    perplexity = 5
+    n_neighbors = int(3. * perplexity + 1)
+
+    rng = check_random_state(0)
+    X = rng.randn(20, 2)
+
+    # XXX: This test currently fail for euclidean metric since it's not squared
+    for metric in ['minkowski']:
+
+        # compare the chained version and the compact version
+        est_chain = make_pipeline(
+            NearestNeighborsTransformer(
+                n_neighbors=n_neighbors, mode='distance', metric=metric,
+                include_self=False),
+            TSNE(metric='precomputed', perplexity=perplexity,
+                 method="barnes_hut", random_state=42, n_iter=n_iter))
+        est_compact = TSNE(metric=metric, perplexity=perplexity, n_iter=n_iter,
+                           method="barnes_hut", random_state=42)
+
+        Xt_chain = est_chain.fit_transform(X)
+        Xt_compact = est_compact.fit_transform(X)
+        assert_array_equal(Xt_chain, Xt_compact)
 
 
 def test_binary_perplexity_stability():
@@ -173,9 +200,12 @@ def test_binary_perplexity_stability():
     distances = distance_graph.data.astype(np.float32)
     distances = distances.reshape(n_samples, n_neighbors)
     last_P = None
+    desired_perplexity = 3
     for _ in range(100):
-        P = _binary_search_perplexity(distances.copy(), 3, verbose=0)
-        P1 = _joint_probabilities_nn(distance_graph, n_neighbors, 3, verbose=0)
+        P = _binary_search_perplexity(distances.copy(), desired_perplexity,
+                                      verbose=0)
+        P1 = _joint_probabilities_nn(distance_graph, desired_perplexity,
+                                     verbose=0)
         # Convert the sparse matrix to a dense one for testing
         P1 = P1.toarray()
         if last_P is None:
@@ -266,15 +296,16 @@ def test_optimization_minimizes_kl_divergence():
 
 def test_fit_csr_matrix():
     # X can be a sparse matrix.
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
+    random_state = check_random_state(1)
+    X = random_state.randn(40, 2)
+    X[(np.random.randint(0, 40, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                random_state=0, method='exact')
-    X_embedded = tsne.fit_transform(X_csr)
-    assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0,
-                        decimal=1)
+    for method in ['exact', 'barnes_hut']:
+        tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
+                    random_state=0, method=method)
+        X_embedded = tsne.fit_transform(X_csr)
+        assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1),
+                            1.0, decimal=1)
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
@@ -554,17 +585,6 @@ def test_reduction_to_one_component():
     assert(np.all(np.isfinite(X_embedded)))
 
 
-def test_no_sparse_on_barnes_hut():
-    # No sparse matrices allowed on Barnes-Hut.
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
-    X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_iter=199, method='barnes_hut')
-    assert_raises_regexp(TypeError, "A sparse matrix was.*",
-                         tsne.fit_transform, X_csr)
-
-
 def test_64bit():
     # Ensure 64bit arrays are handled correctly.
     random_state = check_random_state(0)
@@ -602,8 +622,7 @@ def test_barnes_hut_angle():
         n_neighbors = n_samples - 1
         distances_csr = NearestNeighbors().fit(data).kneighbors_graph(
             n_neighbors=n_neighbors, mode='distance')
-        P_bh = _joint_probabilities_nn(distances_csr, n_neighbors, perplexity,
-                                       verbose=0)
+        P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
         kl_bh, grad_bh = _kl_divergence_bh(params, P_bh, degrees_of_freedom,
                                            n_samples, n_components,
                                            angle=angle, skip_num_points=0,

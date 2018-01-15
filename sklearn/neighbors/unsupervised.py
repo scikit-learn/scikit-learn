@@ -128,17 +128,23 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
 
 class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
-                                  RadiusNeighborsMixin,
-                                  UnsupervisedMixin,
+                                  RadiusNeighborsMixin, UnsupervisedMixin,
                                   TransformerMixin):
-    """TODO
+    """Transform X into a (weighted) graph of nearest neighbors
+
+    The transformed data is a sparse graph as return by kneighbors_graph or
+    radius_neighbors_graph.
 
     Parameters
     ----------
-    mode : {'distance', 'connectivity'}, optional (default = 'distance')
+    mode : {'distance', 'connectivity'}, optional (default = 'connectivity')
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
+
+    include_self : bool, default=True.
+        Whether or not to mark each sample as the first nearest neighbor to
+        itself.
 
     n_neighbors : int, optional (default = None)
         Number of neighbors to use for :meth:`kneighbors` queries.
@@ -208,18 +214,22 @@ class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     Examples
     --------
-      >>> import numpy as np
-      >>> from sklearn.neighbors import NearestNeighborsTransformer
-      >>> # TODO
+    >>> from sklearn.cluster import DBSCAN
+    >>> from sklearn.neighbors import NearestNeighborsTransformer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> estimator = make_pipeline(
+    ...     NearestNeighborsTransformer(radius=42.0, mode='distances'),
+    ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='distance', n_neighbors=None,
-                 radius=None, algorithm='auto', leaf_size=30,
+    def __init__(self, mode='connectivity', include_self=True,
+                 n_neighbors=None, radius=None, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None, n_jobs=1):
         super(NearestNeighborsTransformer, self).__init__(
             n_neighbors=n_neighbors, radius=radius, algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
+        self.include_self = include_self
 
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X
@@ -246,6 +256,10 @@ class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         if self.radius is not None and self.n_neighbors is not None:
             raise ValueError(
                 "Please do not specify both radius and n_neighbors.")
+
+        # If we don't include each sample as its own neighbors
+        if not self.include_self and X is self._fit_X:
+            X = None
 
         if self.radius is not None:
             return self.radius_neighbors_graph(X, self.radius, self.mode)

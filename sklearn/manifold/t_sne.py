@@ -62,8 +62,7 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
     return P
 
 
-def _joint_probabilities_nn(distances, n_neighbors, desired_perplexity,
-                            verbose):
+def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     """Compute joint probabilities p_ij from distances using just nearest
     neighbors.
 
@@ -91,9 +90,10 @@ def _joint_probabilities_nn(distances, n_neighbors, desired_perplexity,
     t0 = time()
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
+    distances.sort_indices()
     n_samples = distances.shape[0]
     distances_data = distances.data.astype(np.float32, copy=False)
-    distances_data = distances_data.reshape(n_samples, n_neighbors)
+    distances_data = distances_data.reshape(n_samples, -1)
     conditional_P = _utils._binary_search_perplexity(
         distances_data, desired_perplexity, verbose)
     assert np.all(np.isfinite(conditional_P)), \
@@ -644,19 +644,12 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if np.any(X < 0):
+            if X.min() < 0:
                 raise ValueError("All distances should be positive, the "
                                  "precomputed distances given as X is not "
                                  "correct")
-        if self.method == 'barnes_hut' and sp.issparse(X):
-            raise TypeError('A sparse matrix was passed, but dense '
-                            'data is required for method="barnes_hut". Use '
-                            'X.toarray() to convert to a dense numpy array if '
-                            'the array is small enough for it to fit in '
-                            'memory. Otherwise consider dimensionality '
-                            'reduction techniques (e.g. TruncatedSVD)')
         if self.method == 'barnes_hut':
-            X = check_array(X, ensure_min_samples=2,
+            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
                             dtype=[np.float32, np.float64])
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
@@ -710,30 +703,43 @@ class TSNE(BaseEstimator):
             # set the neighbors to n - 1.
             n_neighbors = min(n_samples - 1, int(3. * self.perplexity + 1))
 
-            if self.verbose:
-                print("[t-SNE] Computing {} nearest neighbors..."
-                      .format(n_neighbors))
+            if self.metric == "precomputed" and sp.issparse(X):
+                distances_nn = X
 
-            # Find the nearest neighbors for every point
-            knn = NearestNeighbors(algorithm='auto', n_neighbors=n_neighbors,
-                                   metric=self.metric)
-            t0 = time()
-            knn.fit(X)
-            duration = time() - t0
-            if self.verbose:
-                print("[t-SNE] Indexed {} samples in {:.3f}s...".format(
-                    n_samples, duration))
+                n_neighbors_precomputed = distances_nn.nnz // n_samples
+                if n_neighbors_precomputed < n_neighbors:
+                    raise ValueError(
+                        "Precomputed distance matrix contains only %d "
+                        "neighbors, but %d are required. Decrease perplexity, "
+                        "or increase the number of precomputed distances."
+                        % (n_neighbors_precomputed, n_neighbors))
 
-            t0 = time()
-            distances_nn = knn.kneighbors_graph(
-                n_neighbors=n_neighbors, mode='distance')
-            duration = time() - t0
-            if self.verbose:
-                print("[t-SNE] Computed neighbors for {} samples in {:.3f}s..."
-                      .format(n_samples, duration))
+            else:
+                if self.verbose:
+                    print("[t-SNE] Computing {} nearest neighbors..."
+                          .format(n_neighbors))
 
-            # Free the memory used by the ball_tree
-            del knn
+                # Find the nearest neighbors for every point
+                knn = NearestNeighbors(algorithm='auto',
+                                       n_neighbors=n_neighbors,
+                                       metric=self.metric)
+                t0 = time()
+                knn.fit(X)
+                duration = time() - t0
+                if self.verbose:
+                    print("[t-SNE] Indexed {} samples in {:.3f}s...".format(
+                        n_samples, duration))
+
+                t0 = time()
+                distances_nn = knn.kneighbors_graph(
+                    n_neighbors=n_neighbors, mode='distance')
+                duration = time() - t0
+                if self.verbose:
+                    print("[t-SNE] Computed neighbors for {} samples "
+                          "in {:.3f}s...".format(n_samples, duration))
+
+                # Free the memory used by the ball_tree
+                del knn
 
             if self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
@@ -744,8 +750,8 @@ class TSNE(BaseEstimator):
                 distances_nn.data **= 2
 
             # compute the joint probability distribution for the input space
-            P = _joint_probabilities_nn(distances_nn, n_neighbors,
-                                        self.perplexity, self.verbose)
+            P = _joint_probabilities_nn(distances_nn, self.perplexity,
+                                        self.verbose)
 
         if isinstance(self.init, np.ndarray):
             X_embedded = self.init

@@ -1,7 +1,7 @@
 import numpy as np
 
 from sklearn.pipeline import make_pipeline
-from sklearn.cluster import DBSCAN, SpectralClustering
+from sklearn.cluster import SpectralClustering
 from sklearn.manifold import SpectralEmbedding
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors.unsupervised import NearestNeighborsTransformer
@@ -61,12 +61,6 @@ def test_transformer_shape():
 def test_transformer_pipeline():
     # smoke test using NearestNeighborsTransformer in a pipeline
     X = np.random.randn(100, 10)
-    make_pipeline(
-        NearestNeighborsTransformer(n_neighbors=5, mode='distance'),
-        DBSCAN(metric='precomputed')).fit(X)
-    make_pipeline(
-        NearestNeighborsTransformer(radius=0.9, mode='distance'),
-        DBSCAN(metric='precomputed')).fit(X)
 
     for klass in (SpectralEmbedding, SpectralClustering):
         make_pipeline(
