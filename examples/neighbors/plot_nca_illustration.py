@@ -35,9 +35,9 @@ plt.figure()
 ax = plt.gca()
 
 # Draw the graph nodes
-ax.scatter(X[:, 0], X[:, 1], s=300, c=y, cmap='tab10', alpha=0.4)
 for i in range(X.shape[0]):
     ax.text(X[i, 0], X[i, 1], str(i), va='center', ha='center')
+    ax.scatter(X[i, 0], X[i, 1], s=300, c=cm.Set1(y[i]), alpha=0.4)
 
 
 def p_i(X, i):
@@ -63,7 +63,7 @@ def relate_point(X, i, ax):
         thickness = p_i(X, i)
         if i != j:
             line = ([pt_i[0], pt_j[0]], [pt_i[1], pt_j[1]])
-            ax.plot(*line, c=cm.tab10(y[j]),
+            ax.plot(*line, c=cm.Set1(y[j]),
                     linewidth=5*thickness[j])
 
 
@@ -87,14 +87,13 @@ ax2 = plt.gca()
 # Get the embedding and find the new nearest neighbors
 X_embedded = nca.transform(X)
 
-ax2.scatter(X_embedded[:, 0], X_embedded[:, 1], s=300, c=y, cmap='tab10',
-            alpha=0.4)
-
 relate_point(X_embedded, i, ax2)
 
 for i in range(len(X)):
     ax2.text(X_embedded[i, 0], X_embedded[i, 1], str(i),
              va='center', ha='center')
+    ax2.scatter(X_embedded[i, 0], X_embedded[i, 1], s=300, c=cm.Set1(y[i]),
+                alpha=0.4)
 
 # Make axes equal so that boundaries are displayed correctly as circles
 ax2.set_title("NCA embedding")
