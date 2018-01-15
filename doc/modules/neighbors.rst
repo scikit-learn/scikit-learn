@@ -653,13 +653,13 @@ each method. Each data sample belongs to one of 10 classes.
 Mathematical formulation
 ------------------------
 
-The goal of NCA is to learn an optimal linear transformation matrix :math:`L^*`
-of size ``(n_features_out, n_features)``, which maximises in average the
-probability :math:`p_i` of sample :math:`i` being correctly classified, i.e.:
+The goal of NCA is to learn an optimal linear transformation matrix of size
+``(n_features_out, n_features)``, which maximises in average the probability
+:math:`p_i` of sample :math:`i` being correctly classified, i.e.:
 
 .. math::
 
-  L^*= \max\limits_{L} \sum\limits_{i=0}^{N - 1} p_{i}
+  \underset{L}{\arg\max} \sum\limits_{i=0}^{N - 1} p_{i}
 
 with :math:`N` = ``n_samples`` and :math:`p_i` the probability of sample
 :math:`i` being correctly classified according to a stochastic nearest
@@ -700,7 +700,7 @@ optimisation method, it currently uses scipy's l-bfgs-b with a full gradient
 computation at each iteration, to avoid to tune the learning rate and provide
 stable learning.
 
-See the examples below and the docstring of
+See the examples below and the doc  string of
 :meth:`NeighborhoodComponentsAnalysis.fit` for further information.
 
 Complexity
