@@ -35,8 +35,8 @@ def get_results(dataset):
 
     # Estimate the score on the entire dataset, with no missing values
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-    full_score = cross_val_score(estimator, X_full, y_full,
-                                 scoring='neg_mean_squared_error').mean()
+    full_scores = cross_val_score(estimator, X_full, y_full,
+                                  scoring='neg_mean_squared_error')
 
     # Add missing values in 75% of the lines
     missing_rate = 0.75
@@ -48,12 +48,14 @@ def get_results(dataset):
     rng.shuffle(missing_samples)
     missing_features = rng.randint(0, n_features, n_missing_samples)
 
-    # Estimate the score without the lines containing missing values
-    X_filtered = X_full[~missing_samples, :]
-    y_filtered = y_full[~missing_samples]
+    # Estimate the score after replacing missing values by 0
+    X_missing = X_full.copy()
+    X_missing[np.where(missing_samples)[0], missing_features] = 0
+    y_missing = y_full.copy()
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-    subset_score = cross_val_score(estimator, X_filtered, y_filtered,
-                                   scoring='neg_mean_squared_error').mean()
+    zero_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                         scoring='neg_mean_squared_error'
+                                         )
 
     # Estimate the score after imputation (mean strategy) of the missing values
     X_missing = X_full.copy()
@@ -64,54 +66,67 @@ def get_results(dataset):
                                               axis=0)),
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
-    mean_impute_score = cross_val_score(estimator, X_missing, y_missing,
-                                        scoring='neg_mean_squared_error'
-                                        ).mean()
+    mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                         scoring='neg_mean_squared_error'
+                                         )
 
     # Estimate the score after imputation (MICE strategy) of the missing values
     estimator = Pipeline([("imputer", MICEImputer(missing_values=0,
                                                   random_state=0)),
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
-    mice_impute_score = cross_val_score(estimator, X_missing, y_missing,
-                                        scoring='neg_mean_squared_error'
-                                        ).mean()
+    mice_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                         scoring='neg_mean_squared_error'
+                                         )
 
-    return full_score, subset_score, mean_impute_score, mice_impute_score
+    return ((full_scores.mean(), full_scores.std()),
+            (zero_impute_scores.mean(), zero_impute_scores.std()),
+            (mean_impute_scores.mean(), mean_impute_scores.std()),
+            (mice_impute_scores.mean(), mice_impute_scores.std()))
 
 
-mses_diabetes = np.array(get_results(load_diabetes())) * -1
-mses_boston = np.array(get_results(load_boston())) * -1
+results_diabetes = np.array(get_results(load_diabetes()))
+mses_diabetes = results_diabetes[:, 0] * -1
+stds_diabetes = results_diabetes[:, 1]
 
-plt.figure(figsize=(12, 6))
-xval = np.arange(len(mses_diabetes))
-labels = {0: ('MSE with entire dataset', 'r'),
-          1: ('MSE excluding samples containing missing values', 'g'),
-          2: ('MSE after mean imputation of the missing values', 'b'),
-          3: ('MSE after MICE imputation of the missing values', 'orange')}
+results_boston = np.array(get_results(load_boston()))
+mses_boston = results_boston[:, 0] * -1
+stds_boston = results_boston[:, 1]
+
+n_bars = len(mses_diabetes)
+xval = np.arange(n_bars)
+
+x_labels = ['Full data',
+            'Zero imputation',
+            'Mean Imputation',
+            'MICE Imputation']
+colors = ['r', 'g', 'b', 'orange']
 
 # plot diabetes results
+plt.figure(figsize=(12, 6))
 ax1 = plt.subplot(121)
-for j in range(len(xval)):
-    label, color = labels[xval[j]]
-    ax1.bar(xval[j], mses_diabetes[j], width=0.8, color=color, alpha=0.6,
-            align='center', label=label)
-ax1.legend(loc='upper left')
-ax1.set_ylabel('Mean Squared Error')
+for j in xval:
+    ax1.barh(j, mses_diabetes[j], xerr=stds_diabetes[j],
+             color=colors[j], alpha=0.6, align='center')
+
 ax1.set_title('Feature Selection Techniques with Diabetes Data')
-ax1.set_ylim(bottom=np.min(mses_diabetes) * 0.9,
-             top=np.max(mses_diabetes) * 1.15)
+ax1.set_xlim(left=np.min(mses_diabetes) * 0.9,
+             right=np.max(mses_diabetes) * 1.1)
+ax1.set_yticks(xval)
+ax1.set_xlabel('MSE')
+ax1.invert_yaxis()
+ax1.set_yticklabels(x_labels)
 
 # plot boston results
 ax2 = plt.subplot(122)
-for j in range(len(xval)):
-    label, color = labels[xval[j]]
-    ax2.bar(xval[j], mses_boston[j], width=0.8, color=color, alpha=0.6,
-            align='center', label=label)
-ax2.legend(loc='upper left')
-ax2.set_ylabel('Mean Squared Error')
+for j in xval:
+    ax2.barh(j, mses_boston[j], xerr=stds_boston[j],
+             color=colors[j], alpha=0.6, align='center')
+
 ax2.set_title('Feature Selection Techniques with Boston Data')
-ax2.set_ylim(bottom=np.min(mses_boston) * 0.9,
-             top=np.max(mses_boston) * 1.15)
+ax2.set_yticks(xval)
+ax2.set_xlabel('MSE')
+ax2.invert_yaxis()
+ax2.set_yticklabels([''] * n_bars)
 
 plt.show()

@@ -546,7 +546,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             It must support ``return_std`` in its ``predict`` method.
             If None, it will be cloned from self._predictor.
 
-        fit_mode: boolean, default=True
+        fit_mode : boolean, default=True
             Whether to fit and predict with the predictor or just predict.
 
         Returns
@@ -851,7 +851,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like}, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The input data to complete.
 
         Returns
