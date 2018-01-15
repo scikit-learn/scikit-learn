@@ -32,18 +32,18 @@ from .metrics.ranking import roc_curve
 
 
 class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
-    """Meta estimator that uses a base estimator and finds a cutoff point
-    (decision threshold) to be used by predict. Applicable only on binary
+    """Meta estimator that calibrates the decision threshold (cutoff point)
+    that is used for prediction by a base estimator. Applicable only on binary
     classification problems.
 
-    The methods for picking "optimal" cutoff points are inferred from ROC
-    analysis; making use of true positive and true negative rates and their
-    corresponding thresholds.
+    The methods for picking cutoff points are inferred from ROC analysis;
+    making use of true positive and true negative rates and their corresponding
+    thresholds.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
-    be used for the selection of the cutoff point that determines the output of
-    predict. Otherwise predict will use the average of the thresholds
-    resulting from the cross-validation loop.
+    be used for the selection of the cutoff point. Otherwise the decision
+    threshold is calculated as the average of the thresholds resulting from the
+    cross-validation loop.
 
     Parameters
     ----------
@@ -210,8 +210,8 @@ class _CutoffClassifier(object):
         self.min_val_tpr = min_val_tpr
 
     def fit(self, X, y):
-        """Select a decision threshold based on an optimal cutoff point for the
-        fitted model's positive class
+        """Select a decision threshold for the fitted model's positive class
+        using one of the available methods
 
         Parameters
         ----------
