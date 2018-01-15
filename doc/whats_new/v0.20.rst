@@ -29,6 +29,7 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
+- :func:`utils.multiclass._ovr_decision_function` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -303,6 +304,12 @@ Feature Extraction
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
+
+Utils
+
+- Fixed a bug in :func:`utils.multiclass._ovr_decision_function` which would give
+  different results when applied to a subset due to local scaling method.
+  :issue:`10440` :user:`Jonathan Ohayon <Johayon>`
 
 API changes summary
 -------------------

@@ -436,6 +436,7 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     # the votes without switching any decision made based on a difference
     # of 1 vote.
     eps = np.finfo(sum_of_confidences.dtype).eps
+    # add epsilon to ensure that we won't reach the limits
     transformed_confidences = (sum_of_confidences /
                                ((2 + eps) * (np.abs(sum_of_confidences) + 1)))
     return votes + transformed_confidences
