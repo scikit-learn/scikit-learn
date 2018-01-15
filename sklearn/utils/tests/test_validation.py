@@ -153,7 +153,7 @@ def test_ordering():
     "retype",
     [np.asarray, sp.csr_matrix]
 )
-def test_check_array_valid(value, force_all_finite, retype):
+def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(np.float))
     X[0, 0] = value
     X_checked = check_array(X, force_all_finite=force_all_finite,
@@ -173,7 +173,8 @@ def test_check_array_valid(value, force_all_finite, retype):
     "retype",
     [np.asarray, sp.csr_matrix]
 )
-def test_check_array_invalid(value, force_all_finite, match_msg, retype):
+def test_check_array_force_all_finiteinvalid(value, force_all_finite,
+                                             match_msg, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(np.float))
     X[0, 0] = value
     with pytest.raises(ValueError, message=match_msg):
