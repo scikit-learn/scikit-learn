@@ -1160,7 +1160,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='auto', max_iter=100,
+                 random_state=None, solver='default', max_iter=100,
                  multi_class='default', verbose=0, warm_start=False, n_jobs=1):
 
         self.penalty = penalty
@@ -1202,13 +1202,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
-        if self.solver == 'auto':
-            if self.penalty == 'l1':
-                _solver = 'liblinear'
-            if self.penalty == 'l2':
-                _solver = 'lbfgs'
+        if self.solver == 'default':
+            _solver = 'liblinear'
             warnings.warn("Default solver will be changed from 'liblinear' to "
-                          " auto solver in 0.22", FutureWarning)
+                          "auto solver in 0.22", FutureWarning)
         else:
             _solver = self.solver
         if self.multi_class == 'default':
@@ -1351,7 +1348,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
-        if self.multi_class == 'auto':
+        if self.multi_class == 'default':
             _multi_class = 'ovr'
         else:
             _multi_class = self.multi_class

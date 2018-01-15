@@ -372,8 +372,8 @@ function or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='auto', n_jobs=1, penalty='l2', random_state=None,
-              solver='auto', tol=0.0001, verbose=0, warm_start=False)
+              multi_class='default', n_jobs=1, penalty='l2', random_state=None,
+              solver='default', tol=0.0001, verbose=0, warm_start=False)
 
 This is known as :class:`LogisticRegression`.
 
