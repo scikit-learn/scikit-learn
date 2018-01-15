@@ -175,9 +175,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
-        The observations to cluster. It must be noted that, the data will
-        be converted to C ordering, which will cause a memory copy if the
-        given data is in fortran order.
+        The observations to cluster. It must be noted that, the data
+        will be converted to C ordering if the classical EM-style algorithm
+        i.e `algorithm="full"` is used, which will cause a memory copy
+        if the given data is in fortran order.
 
     n_clusters : int
         The number of clusters to form as well as the number of
@@ -902,8 +903,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster. It must be noted that, the data
-            will be converted to C ordering, which will cause a memory copy
-            if the given data is in fortran order.
+            will be converted to C ordering if the classical EM-style
+            algorithm i.e `algorithm="full"` is used, which will cause a memory
+            copy if the given data is in fortran order.
 
         y : Ignored
 
