@@ -225,7 +225,6 @@ def _yield_all_checks(name, estimator):
     if isinstance(estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, estimator):
             yield check
-    if hasattr():
     yield check_fit2d_predict1d
     if name != 'GaussianProcess':  # FIXME
         # XXX GaussianProcess deprecated in 0.20
