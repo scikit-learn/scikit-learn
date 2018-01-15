@@ -132,7 +132,7 @@ cdef class DistanceMetric:
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
     "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
-    "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
+    "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
@@ -141,12 +141,11 @@ cdef class DistanceMetric:
     distance metric requires data in the form of [latitude, longitude] and both
     inputs and outputs are in units of radians.
 
-    ============  ==================  ========================================
+    ============  ==================  ===============================================================
     identifier    class name          distance function
-    ------------  ------------------  ----------------------------------------
-    "haversine"   HaversineDistance   2 arcsin(sqrt(sin^2(0.5*dx)
-                                             + cos(x1)cos(x2)sin^2(0.5*dy)))
-    ============  ==================  ========================================
+    ------------  ------------------  ---------------------------------------------------------------
+    "haversine"   HaversineDistance   ``2 arcsin(sqrt(sin^2(0.5*dx) + cos(x1)cos(x2)sin^2(0.5*dy)))``
+    ============  ==================  ===============================================================
 
 
     **Metrics intended for integer-valued vector spaces:**  Though intended
@@ -567,12 +566,12 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # W-Minkowski Distance
-#  d = sum(w_i * (x_i^p - y_i^p)) ^ (1/p)
+#  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
     """Weighted Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i w_i (x_i - y_i)^p] ^ (1/p)
+       D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
 
     Weighted Minkowski Distance requires p >= 1 and finite.
 

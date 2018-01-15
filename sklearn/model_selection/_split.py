@@ -326,8 +326,8 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         if self.n_splits > n_samples:
             raise ValueError(
                 ("Cannot have number of splits n_splits={0} greater"
-                 " than the number of samples: {1}.").format(self.n_splits,
-                                                             n_samples))
+                 " than the number of samples: n_samples={1}.")
+                .format(self.n_splits, n_samples))
 
         for train, test in super(_BaseKFold, self).split(X, y, groups):
             yield train, test
@@ -581,6 +581,14 @@ class StratifiedKFold(_BaseKFold):
     def _make_test_folds(self, X, y=None):
         rng = self.random_state
         y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+        allowed_target_types = ('binary', 'multiclass')
+        if type_of_target_y not in allowed_target_types:
+            raise ValueError(
+                'Supported target types are: {}. Got {!r} instead.'.format(
+                    allowed_target_types, type_of_target_y))
+
+        y = column_or_1d(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = np.bincount(y_inversed)
@@ -1245,7 +1253,7 @@ class ShuffleSplit(BaseShuffleSplit):
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default (the is parameter
+        complement of the train size. By default (the parameter is
         unspecified), the value is set to 0.1.
         The default will change in version 0.21. It will remain 0.1 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -1526,8 +1534,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                                   self.train_size)
 
         if y.ndim == 2:
-            # for multi-label y, map each distinct row to its string repr:
-            y = np.array([str(row) for row in y])
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
@@ -1706,11 +1715,18 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
 class PredefinedSplit(BaseCrossValidator):
     """Predefined split cross-validator
 
-    Splits the data into training/test set folds according to a predefined
-    scheme. Each sample can be assigned to at most one test set fold, as
-    specified by the user through the ``test_fold`` parameter.
+    Provides train/test indices to split data into train/test sets using a
+    predefined scheme specified by the user with the ``test_fold`` parameter.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    test_fold : array-like, shape (n_samples,)
+        The entry ``test_fold[i]`` represents the index of the test set that
+        sample ``i`` belongs to. It is possible to exclude sample ``i`` from
+        any test set (i.e. include sample ``i`` in every training set) by
+        setting ``test_fold[i]`` equal to -1.
 
     Examples
     --------
@@ -2043,8 +2059,8 @@ def train_test_split(*arrays, **options):
                                      safe_indexing(a, test)) for a in arrays))
 
 
-train_test_split.__test__ = False  # to avoid a pb with nosetests
-
+# Tell nose that train_test_split is not a test
+train_test_split.__test__ = False
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

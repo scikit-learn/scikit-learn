@@ -153,7 +153,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, the maximum number of iterations (default 500)
+    max_iter : int (default 500)
+        The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
     tol : non-negative real, default 1e-06
@@ -245,7 +246,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -797,7 +799,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
