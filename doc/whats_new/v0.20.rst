@@ -129,7 +129,7 @@ Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
   :func:`cluster.k_means` are now optimized using row-major ordering for data
-  copying when classical EM-style algorithm is used.
+  copying.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
 Preprocessing

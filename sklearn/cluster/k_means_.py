@@ -302,11 +302,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     # Validate init array
     if hasattr(init, '__array__'):
-        if algorithm == "full":
-            order = "C"
-        else:
-            order = None
-        init = check_array(init, dtype=X.dtype.type, copy=True, order=order)
+        init = check_array(init, dtype=X.dtype.type, copy=True, order="C")
         _validate_center_shape(X, n_clusters, init)
 
         if n_init != 1:
@@ -398,8 +394,6 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          verbose=False, x_squared_norms=None,
                          random_state=None, tol=1e-4,
                          precompute_distances=True):
-    if sp.issparse(X):
-        raise ValueError("algorithm='elkan' not supported for sparse input X")
     X = check_array(X, order="C")
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
@@ -869,24 +863,15 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        if self.algorithm == "full":
-            order = "C"
-        else:
-            order = None
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order=order)
+                        order="C")
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 X.shape[0], self.n_clusters))
         return X
 
     def _check_test_data(self, X):
-        if self.algorithm == "full":
-            order = "C"
-        else:
-            order = None
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                        order=order)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -1379,7 +1364,7 @@ class MiniBatchKMeans(KMeans):
 
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X, accept_sparse="csr",
+        X = check_array(X, accept_sparse="csr", order='C',
                         dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
@@ -1544,7 +1529,7 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr")
+        X = check_array(X, accept_sparse="csr", order="C")
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
