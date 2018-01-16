@@ -987,7 +987,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -1003,7 +1002,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         check_consistent_length(X, y, sample_weight)
 
-        y = self._validate_y(y)
+        y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
@@ -1237,7 +1236,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         importances = total_sum / len(self.estimators_)
         return importances
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
+        # 'sample_weight' is not utilised but is used for
+        # consistency with similar method _validate_y of GBC
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
             y = y.astype(np.float64)
@@ -1410,7 +1411,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1491,7 +1492,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init_ : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
@@ -1551,9 +1552,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol)
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
+        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_trim_classes < 2:
+            raise ValueError("y contains %d class after sample_weight "
+                             "trimmed classes with zero weights, while a "
+                             "minimum of 2 classes are required."
+                             % n_trim_classes)
         self.n_classes_ = len(self.classes_)
         return y
 
@@ -1862,7 +1869,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1937,7 +1944,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init_ : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 

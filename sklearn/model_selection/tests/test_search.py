@@ -38,6 +38,7 @@ from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import fit_grid_point
+from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -114,6 +115,7 @@ class LinearSVCNoScore(LinearSVC):
     @property
     def score(self):
         raise AttributeError
+
 
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
@@ -340,9 +342,9 @@ def test_return_train_score_warn():
     y = np.array([0] * 5 + [1] * 5)
     grid = {'C': [1, 2]}
 
-    estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
+    estimators = [GridSearchCV(LinearSVC(random_state=0), grid, iid=False),
                   RandomizedSearchCV(LinearSVC(random_state=0), grid,
-                                     n_iter=2)]
+                                     n_iter=2, iid=False)]
 
     result = {}
     for estimator in estimators:
@@ -890,6 +892,7 @@ def test_random_search_cv_results():
         check_cv_results_grid_scores_consistency(search)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_search_iid_param():
     # Test the IID parameter
     # noise-free simple 2d-data
@@ -911,7 +914,7 @@ def test_search_iid_param():
                                        cv=cv)
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert_true(search.iid)
+        assert_true(search.iid or search.iid is None)
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s_i][0]
@@ -941,6 +944,8 @@ def test_search_iid_param():
                                     2)
         assert_almost_equal(test_mean, expected_test_mean)
         assert_almost_equal(test_std, expected_test_std)
+        assert_array_almost_equal(test_cv_scores,
+                                  cross_val_score(SVC(C=1), X, y, cv=cv))
 
         # For the train scores, we do not take a weighted mean irrespective of
         # i.i.d. or not
@@ -1520,3 +1525,24 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+def test_deprecated_grid_search_iid():
+    depr_message = ("The default of the `iid` parameter will change from True "
+                    "to False in version 0.22")
+    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=3)
+    # no warning with equally sized test sets
+    assert_no_warnings(grid.fit, X, y)
+
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=5)
+    # warning because 54 % 5 != 0
+    assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
+
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
+    # warning because stratification into two classes and 27 % 2 != 0
+    assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
+
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=KFold(2))
+    # no warning because no stratification and 54 % 2 == 0
+    assert_no_warnings(grid.fit, X, y)
