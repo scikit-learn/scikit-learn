@@ -52,7 +52,7 @@ with warnings.catch_warnings():
                                      ParameterGrid, ParameterSampler)
     from sklearn.cross_validation import KFold, StratifiedKFold
 
-from sklearn.preprocessing import Imputer
+from sklearn.impute import Imputer
 from sklearn.pipeline import Pipeline
 
 

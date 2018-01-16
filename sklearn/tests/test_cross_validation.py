@@ -45,7 +45,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer
+from sklearn.impute import Imputer
 from sklearn.pipeline import Pipeline
 
 

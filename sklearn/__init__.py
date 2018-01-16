@@ -143,7 +143,7 @@ else:
                'mixture', 'model_selection', 'multiclass', 'multioutput',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'Imputer'
+               'svm', 'tree', 'discriminant_analysis', 'impute',
                # Non-modules:
                'clone']
 
