@@ -3,6 +3,7 @@
 
 import numbers
 import warnings
+from collections import OrderedDict
 
 import numpy as np
 import scipy.sparse as sp
@@ -98,6 +99,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.n_features = n_features
         self.alternate_sign = alternate_sign
         self.non_negative = non_negative
+        self.feature_to_index_map = None
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -155,11 +157,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
-        indices, indptr, values = \
+        indices, indptr, values, self.feature_to_index_map = \
             _hashing.transform(raw_X, self.n_features, self.dtype,
                                self.alternate_sign)
         n_samples = indptr.shape[0] - 1
-
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
@@ -170,3 +171,19 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if self.non_negative:
             np.abs(X.data, X.data)
         return X
+
+    def get_feature_names(self):
+        """Returns OrderedDict of the feature mappings.
+
+        Returns
+        -------
+        feature_to_index_map : OrderedDict of the feature mappings.
+            The key is the index of the column in Featurehasher,
+            the value is a list of features that were mapped to the
+            column. Furthermore, it is sorted by the keys, that is
+            the indices of the features.
+        """
+        if self.feature_to_index_map is None:
+            raise ValueError("FeatureHasher not transformed yet. Call"
+                             " .transform() first.")
+        return OrderedDict(sorted(self.feature_to_index_map.items()))

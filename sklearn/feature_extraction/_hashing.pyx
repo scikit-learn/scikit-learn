@@ -31,7 +31,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
 
     cdef np.int32_t h
     cdef double value
-
+    cdef dict feature_to_index_map = dict()
     cdef array.array indices
     cdef array.array indptr
     indices = array.array("i")
@@ -39,7 +39,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
         indices_array_dtype = "q"
         indices_np_dtype = np.longlong
     else:
-        # On Windows with PY2.7 long int would still correspond to 32 bit. 
+        # On Windows with PY2.7 long int would still correspond to 32 bit.
         indices_array_dtype = "l"
         indices_np_dtype = np.int_
 
@@ -73,6 +73,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
+            _save_feature_mapping(feature_to_index_map,
+                                  abs(h) % n_features, f)
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
@@ -103,4 +105,17 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     else:
         indptr_a = indptr_a.astype(np.int32)
 
-    return (indices_a, indptr_a, values[:size])
+    return (indices_a, indptr_a, values[:size], feature_to_index_map)
+
+
+def _save_feature_mapping(into_dict, key, value):
+    """This function emulates a defaultdict with a list
+    as default value. It is used to save the mapping of
+    feature names and their indices in the value array."""
+
+    if key in into_dict:
+        into_dict[key].append(value)
+    else:
+        new_list = list()
+        new_list.append(value)
+        into_dict[key] = new_list

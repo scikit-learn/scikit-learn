@@ -166,3 +166,9 @@ def test_hasher_negative():
     Xt = FeatureHasher(alternate_sign=True, non_negative=True,
                        input_type="pair").fit_transform(X)
     assert_true(Xt.data.min() > 0)
+
+
+def test_hasher_order():
+    X = [{'dog': 1, 'cat': 3}, {'elephant': 9, 'bird': 32}]
+    hasher = FeatureHasher(n_features=5)
+    X_fit = hasher.transform(X)
