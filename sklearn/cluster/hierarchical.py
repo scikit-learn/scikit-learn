@@ -90,8 +90,8 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
-    epsilon_value = connectivity.data[connectivity > 0].min() * 1E-8
-    connectivity.data[connectivity == 0] = epsilon_value
+    epsilon_value = connectivity.data[connectivity.data > 0].min() * 1E-8
+    connectivity.data[connectivity.data == 0] = epsilon_value
 
     # Use scipy.sparse.csgraph to generate a minimum spanning tree
     mst = minimum_spanning_tree(connectivity.tocsr())
