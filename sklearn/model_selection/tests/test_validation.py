@@ -1205,9 +1205,8 @@ def test_validation_curve_cv_splits_consistency():
     n_splits = 5
     X, y = make_classification(n_samples=100, random_state=0)
 
-    scores1 = validation_curve(SVC(kernel='linear',
-                                   random_state=0),
-                               X, y, 'C', [0.1, 0.1, 0.2, 0.2],
+    scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
                                cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
@@ -1217,9 +1216,8 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(*np.vsplit(np.hstack(scores1)[(0, 2, 1, 3), :],
                                          2))
 
-    scores2 = validation_curve(SVC(kernel='linear',
-                                   random_state=0),
-                               X, y, 'C', [0.1, 0.1, 0.2, 0.2],
+    scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1228,9 +1226,8 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(*np.vsplit(np.hstack(scores2)[(0, 2, 1, 3), :],
                                          2))
 
-    scores3 = validation_curve(SVC(kernel='linear',
-                                   random_state=0),
-                               X, y, 'C', [0.1, 0.1, 0.2, 0.2],
+    scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.

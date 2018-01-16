@@ -154,8 +154,7 @@ def test_sparse_decision_function():
     # returns the same as the one in libsvm
 
     # multi class:
-    svc = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovo')
+    svc = svm.SVC(kernel='linear', C=0.1, decision_function_shape='ovo')
     clf = svc.fit(iris.data, iris.target)
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_

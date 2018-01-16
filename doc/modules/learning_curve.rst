@@ -144,8 +144,7 @@ average scores on the validation sets)::
   >>> from sklearn.svm import SVC
 
   >>> train_sizes, train_scores, valid_scores = learning_curve(
-  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110],
-  ...     cv=5)
+  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
   >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
   array([ 50, 80, 110])
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE

@@ -183,8 +183,7 @@ def test_linearsvr():
     lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
     score1 = lsvr.score(diabetes.data, diabetes.target)
 
-    svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data,
-                                                             diabetes.target)
+    svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
     score2 = svr.score(diabetes.data, diabetes.target)
 
     assert_allclose(np.linalg.norm(lsvr.coef_),
@@ -452,8 +451,8 @@ def test_auto_weight():
     class_weights = compute_class_weight('balanced', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
-    for clf in (svm.SVC(kernel='linear'),
-                svm.LinearSVC(random_state=0), LogisticRegression()):
+    for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
+                LogisticRegression()):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='balanced')
@@ -814,8 +813,8 @@ def test_svc_clone_with_callable_kernel():
     svm_cloned = base.clone(svm_callable)
     svm_cloned.fit(iris.data, iris.target)
 
-    svm_builtin = svm.SVC(kernel='linear', probability=True,
-                          random_state=0, decision_function_shape='ovr')
+    svm_builtin = svm.SVC(kernel='linear', probability=True, random_state=0,
+                          decision_function_shape='ovr')
     svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_,
@@ -879,8 +878,7 @@ def test_svr_coef_sign():
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)
 
-    for svr in [svm.SVR(kernel='linear'),
-                svm.NuSVR(kernel='linear'),
+    for svr in [svm.SVR(kernel='linear'), svm.NuSVR(kernel='linear'),
                 svm.LinearSVR()]:
         svr.fit(X, y)
         assert_array_almost_equal(svr.predict(X),
