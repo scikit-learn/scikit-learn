@@ -134,28 +134,14 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
-class BadTransformerWithoutMixin1(BaseEstimator):
+class BadTransformerWithoutMixin(BaseEstimator):
     def fit(self, X, y=None):
+        X = check_array(X)
         return self
 
     def transform(self, X):
+        X = check_array(X)
         return X
-
-
-class BadTransformerWithoutMixin2(BaseEstimator):
-
-    def fit(self, X, y=None):
-        try:
-            self.count_ += 1
-        except AttributeError:
-            self.count_ = 0
-        return self
-
-    def fit_transform(self, X, y=None):
-        return self.fit(X).transform(X)
-
-    def transform(self, X):
-        return np.array([self.count_] * len(X))
 
 
 def test_check_estimator():
@@ -235,9 +221,7 @@ def test_check_estimator():
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
     assert_raises_regex(AttributeError, '.*fit_transform.*',
-                        check_estimator, BadTransformerWithoutMixin1())
-    assert_raises_regex(AssertionError, 'consecutive fit_transform outcomes',
-                        check_estimator, BadTransformerWithoutMixin2())
+                        check_estimator, BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():
