@@ -1760,7 +1760,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
-  >>> clf = SVC(gamma='scale', kernel='linear', C=1).fit(X_train, y_train)
+  >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
   0.63...
   >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)

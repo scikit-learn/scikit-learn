@@ -443,8 +443,7 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    for base_classifier in [SVC(gamma='scale', kernel='linear',
-                                random_state=0),
+    for base_classifier in [SVC(kernel='linear', random_state=0),
                             LinearSVC(random_state=0)]:
         # SVC has sparse coef with sparse input data
 
@@ -715,7 +714,7 @@ def test_ecoc_float_y():
 
 
 def test_pairwise_indices():
-    clf_precomputed = svm.SVC(gamma='scale', kernel='precomputed')
+    clf_precomputed = svm.SVC(kernel='precomputed')
     X, y = iris.data, iris.target
 
     ovr_false = OneVsOneClassifier(clf_precomputed)
@@ -743,8 +742,8 @@ def test_pairwise_attribute():
 
 
 def test_pairwise_cross_val_score():
-    clf_precomputed = svm.SVC(gamma='scale', kernel='precomputed')
-    clf_notprecomputed = svm.SVC(gamma='scale', kernel='linear')
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_notprecomputed = svm.SVC(kernel='linear')
 
     X, y = iris.data, iris.target
 

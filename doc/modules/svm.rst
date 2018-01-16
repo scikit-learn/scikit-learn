@@ -529,12 +529,12 @@ test vectors must be provided.
     >>> from sklearn import svm
     >>> X = np.array([[0, 0], [1, 1]])
     >>> y = [0, 1]
-    >>> clf = svm.SVC(gamma='scale', kernel='precomputed')
+    >>> clf = svm.SVC(kernel='precomputed')
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='scale',
+        decision_function_shape='ovr', degree=3, gamma='auto',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples

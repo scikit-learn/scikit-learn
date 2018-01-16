@@ -171,7 +171,7 @@ It can be computed using :func:`chi2_kernel` and then passed to an
            [ 0.89...,  0.51...,  1.        ,  0.77... ],
            [ 0.58...,  0.83...,  0.77... ,  1.        ]])
 
-    >>> svm = SVC(gamma='scale', kernel='precomputed').fit(K, y)
+    >>> svm = SVC(kernel='precomputed').fit(K, y)
     >>> svm.predict(K)
     array([0, 1, 0, 1])
 

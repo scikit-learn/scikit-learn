@@ -275,7 +275,7 @@ def test_grid_search_iid():
     mask[np.where(y == 2)[0][::2]] = 0
     # this leads to perfect classification on one fold and a score of 1/3 on
     # the other
-    svm = SVC(gamma='scale', kernel='linear')
+    svm = SVC(kernel='linear')
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
@@ -395,7 +395,7 @@ def test_grid_search_precomputed_kernel():
     K_train = np.dot(X_[:180], X_[:180].T)
     y_train = y_[:180]
 
-    clf = SVC(gamma='scale', kernel='precomputed')
+    clf = SVC(kernel='precomputed')
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(K_train, y_train)
 
