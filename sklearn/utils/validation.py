@@ -43,7 +43,7 @@ def _assert_all_finite(X, allow_nan=False):
     if is_float and np.isfinite(X.sum()):
         pass
     elif is_float:
-        msg_err = "Input contains {} or value too large for {!r}"
+        msg_err = "Input contains {} or a value too large for {!r}"
         cond_err, type_err = ((np.isinf(X).any(), 'infinity') if allow_nan
                               else (not np.isfinite(X).all(), 'NaN, infinity'))
         if cond_err:
