@@ -23,19 +23,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
 
-np.random.seed(42)
+np.random.seed(10)
 
-# Generate train data
-X_inliers = 0.3 * np.random.randn(100, 2)
-X_inliers = np.r_[X_inliers + 2, X_inliers - 2]
+# Generate data
+X_norm1 = 0.3 * np.random.randn(100, 2)
+X_norm2 = 0.6 * np.random.randn(40, 2)
 
 # Generate some abnormal novel observations
-X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
-X = np.r_[X_inliers, X_outliers]
+X_uni = np.random.uniform(low=-4, high=4, size=(20, 2))
+X = np.r_[X_norm1 + 2, X_norm2 - 2, X_uni]
 
 # fit the model
 clf = LocalOutlierFactor(n_neighbors=20)
 y_pred = clf.fit_predict(X)
+X_inliers = X[y_pred==1]
+X_outliers = X[y_pred==-1]
 
 # plot the level sets of the decision function
 xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
