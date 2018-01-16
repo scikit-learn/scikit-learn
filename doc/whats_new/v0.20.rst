@@ -155,12 +155,6 @@ Linear, kernelized and related models
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
-- The default value of ``gamma`` parameter of :class:`svm.SVC`,
-  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`NuSVR`, :class:`OneClassSVM`
-  will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
-  better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
-  and :user:`Ting Neo <neokt>`.
-
 Miscellaneous
 
 - Add ``filename`` attribute to datasets that have a CSV file.
@@ -318,6 +312,12 @@ Linear, kernelized and related models
 - Deprecate ``positive=True`` option in :class:`linear_model.Lars` as the
   underlying implementation is broken. Use :class:`linear_model.Lasso` instead.
   :issue:`9837` by `Alexandre Gramfort`_.
+
+- The default value of ``gamma`` parameter of :class:`svm.SVC`,
+  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`NuSVR`, :class:`OneClassSVM`
+  will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
+  better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
+  and :user:`Ting Neo <neokt>`.
 
 Metrics
 
