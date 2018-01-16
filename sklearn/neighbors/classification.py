@@ -10,12 +10,13 @@
 
 import numpy as np
 from scipy import stats
+import scipy.sparse as sp
 from ..utils.extmath import weighted_mode
 
 from .base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+    RadiusNeighborsMixin, SupervisedIntegerMixin, _decompose_neighbors_graph
 from ..base import ClassifierMixin
 from ..utils import check_array
 
@@ -71,6 +72,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -144,7 +148,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.metric == 'precomputed' and sp.issparse(X):
+            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -189,7 +196,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.metric == 'precomputed' and sp.issparse(X):
+            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -280,6 +290,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
     outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
@@ -344,7 +357,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
-        neigh_dist, neigh_ind = self.radius_neighbors(X)
+        if self.metric == 'precomputed' and sp.issparse(X):
+            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
+        else:
+            neigh_dist, neigh_ind = self.radius_neighbors(X)
+
         inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
         outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
 

@@ -22,7 +22,6 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
-from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -97,6 +96,44 @@ def _get_weights(dist, weights):
     else:
         raise ValueError("weights not recognized: should be 'uniform', "
                          "'distance', or a callable function")
+
+
+def _decompose_neighbors_graph(graph):
+    """Decompose a nearest neighbors sparse graph into distances and indices
+
+    Parameters
+    ----------
+    graph : CSR sparse matrix
+        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+
+    Returns
+    -------
+    distances : array, shape (n_samples, n_neighbors) or array of arrays
+        Distances to nearest neighbors.
+        It is an array of arrays if the number of neighbors is not identical
+        for every samples.
+
+    indices : array, shape (n_samples, n_neighbors) or array of arrays
+        Indices of nearest neighbors.
+        It is an array of arrays if the number of neighbors is not identical
+        for every samples.
+    """
+    n_samples = graph.shape[0]
+
+    # if there is the same number of neighbors for each sample
+    if np.unique(np.diff(graph.indptr)).size == 1:
+        distances = graph.data.reshape(n_samples, -1)
+        indices = graph.indices.reshape(n_samples, -1)
+        return distances, indices
+
+    else:  # radius neighbors case
+        distances = np.empty(n_samples, dtype='object')
+        indices = np.empty(n_samples, dtype='object')
+        for i in range(0, n_samples):
+            idx = slice(graph.indptr[i], graph.indptr[i + 1])
+            distances[i] = graph.data[idx]
+            indices[i] = graph.indices[idx]
+        return distances, indices
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):

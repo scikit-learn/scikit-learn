@@ -11,6 +11,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -154,7 +155,6 @@ def test_precomputed(random_state=42):
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
-        print(Est)
         est = Est(metric='euclidean')
         est.radius = est.n_neighbors = 1
         pred_X = est.fit(X, target).predict(Y)
@@ -757,11 +757,8 @@ def test_kneighbors_regressor_sparse(n_samples=40,
             assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
 
             X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
-            if issparse(sparsev(X2_pre)):
-                assert_raises(ValueError, knn_pre.predict, X2_pre)
-            else:
-                assert_true(
-                    np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95)
+            assert_true(
+                np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95)
 
 
 def test_neighbors_iris():
@@ -1325,3 +1322,45 @@ def test_pairwise_boolean_distance():
     nn1 = NN(metric="jaccard", algorithm='brute').fit(X)
     nn2 = NN(metric="jaccard", algorithm='ball_tree').fit(X)
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
+
+
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining NearestNeighborsTransformer and classifiers/regressors
+    rng = np.random.RandomState(0)
+    X = 2 * rng.rand(40, 5) - 1
+    X2 = 2 * rng.rand(40, 5) - 1
+    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+
+    # ------ K Neighbors
+    for klass in [neighbors.KNeighborsClassifier,
+                  neighbors.KNeighborsRegressor]:
+        n_neighbors = 8
+        # compare the chained version and the compact version
+        est_chain = make_pipeline(
+            neighbors.NearestNeighborsTransformer(
+                n_neighbors=n_neighbors, mode='distance', include_self=True),
+            klass(metric='precomputed'))
+        est_compact = klass(n_neighbors=n_neighbors)
+
+        y_pred_chain = est_chain.fit(X, y).predict(X2)
+        y_pred_compact = est_compact.fit(X, y).predict(X2)
+        assert_array_equal(y_pred_chain, y_pred_compact)
+        if hasattr(est_chain, 'predict_proba'):
+            y_pred_chain = est_chain.predict_proba(X2)
+            y_pred_compact = est_compact.predict_proba(X2)
+            assert_array_equal(y_pred_chain, y_pred_compact)
+
+    # ------ Radius Neighbors
+    for klass in [neighbors.RadiusNeighborsClassifier,
+                  neighbors.RadiusNeighborsRegressor]:
+        radius = 2
+        # compare the chained version and the compact version
+        est_chain = make_pipeline(
+            neighbors.NearestNeighborsTransformer(
+                radius=radius, mode='distance', include_self=True),
+            klass(metric='precomputed'))
+        est_compact = klass(radius=radius)
+
+        y_pred_chain = est_chain.fit(X, y).predict(X2)
+        y_pred_compact = est_compact.fit(X, y).predict(X2)
+        assert_array_equal(y_pred_chain, y_pred_compact)

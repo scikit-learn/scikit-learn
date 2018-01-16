@@ -17,6 +17,7 @@ from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
+from .base import _decompose_neighbors_graph
 from ..base import RegressorMixin
 from ..utils import check_array
 
@@ -78,6 +79,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -145,14 +149,12 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        if issparse(X) and self.metric == 'precomputed':
-            raise ValueError(
-                "Sparse matrices not supported for prediction with "
-                "precomputed kernels. Densify your matrix."
-            )
         X = check_array(X, accept_sparse='csr')
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.metric == 'precomputed' and issparse(X):
+            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 
@@ -234,6 +236,9 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -290,7 +295,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        neigh_dist, neigh_ind = self.radius_neighbors(X)
+        if self.metric == 'precomputed' and issparse(X):
+            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
+        else:
+            neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 
@@ -315,7 +323,6 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
             empty_warning_msg = ("One or more samples have no neighbors "
                                  "within specified radius; predicting NaN.")
             warnings.warn(empty_warning_msg)
-
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
