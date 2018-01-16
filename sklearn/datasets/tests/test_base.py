@@ -163,10 +163,7 @@ def test_load_sample_image():
 def test_load_missing_sample_image_error():
     have_PIL = True
     try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread  # noqa
+        from sklearn.utils.image_read import _imread
     except ImportError:
         have_PIL = False
     if have_PIL:

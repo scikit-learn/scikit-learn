@@ -32,7 +32,7 @@ import numpy as np
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 from ..externals.joblib import Memory
-
+from sklearn.utils.image_read import _imread
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
@@ -137,13 +137,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
 
-    # Try to import imread and imresize from PIL. We do this here to prevent
-    # the whole sklearn.datasets module from depending on PIL.
+    # Try to import imread from scipy. We do this lazily here to prevent
+    # this module from depending on PIL.
     try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread
         from scipy.misc import imresize
     except ImportError:
         raise ImportError("The Python Imaging Library (PIL)"
@@ -181,7 +177,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        img = imread(file_path)
+        img = _imread(file_path)
         if img.ndim is 0:
             raise RuntimeError("Failed to read the image file %s, "
                                "Please make sure that libjpeg is installed"
