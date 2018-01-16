@@ -19,7 +19,7 @@ so I'll try to make it as simple as possible.
 
 Use a Graphics editor like Inkscape Vector Graphics Editor
 to open the ml_map.svg file, in this folder. From there
-you can move objects around, ect. as you need.
+you can move objects around, etc. as you need.
 
 Save when done, and make sure to export a .PNG file
 to replace the old-outdated ml_map.png, as that file

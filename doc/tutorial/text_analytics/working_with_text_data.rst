@@ -251,7 +251,7 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf-idf
 
 
 Both **tf** and **tf–idf** can be computed as follows::
@@ -495,7 +495,7 @@ Refine the implementation and iterate until the exercise is solved.
 
 **For each exercise, the skeleton file provides all the necessary import
 statements, boilerplate code to load the data and sample code to evaluate
-the predictive accurracy of the model.**
+the predictive accuracy of the model.**
 
 
 Exercise 1: Language identification

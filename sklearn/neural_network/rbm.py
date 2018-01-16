@@ -58,7 +58,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     verbose : int, optional
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : integer or RandomState, optional
         A random number generator instance to define the state of the
         random permutations generator. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.

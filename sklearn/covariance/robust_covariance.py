@@ -405,7 +405,7 @@ def fast_mcd(X, support_fraction=None,
             # get precision matrix in an optimized way
             precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
-# Starting FastMCD algorithm for p-dimensional case
+    # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         # 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
@@ -523,7 +523,7 @@ class MinCovDet(EmpiricalCovariance):
     store_precision : bool
         Specify if the estimated precision is stored.
 
-    assume_centered : Boolean
+    assume_centered : bool
         If True, the support of the robust location and the covariance
         estimates is computed, and a covariance estimate is recomputed from
         it, without centering the data.
@@ -606,12 +606,12 @@ class MinCovDet(EmpiricalCovariance):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
@@ -672,6 +672,14 @@ class MinCovDet(EmpiricalCovariance):
             Corrected robust covariance estimate.
 
         """
+
+        # Check that the covariance of the support data is not equal to 0.
+        # Otherwise self.dist_ = 0 and thus correction = 0.
+        n_samples = len(self.dist_)
+        n_support = np.sum(self.support_)
+        if n_support < n_samples and np.allclose(self.raw_covariance_, 0):
+            raise ValueError('The covariance matrix of the support data '
+                             'is equal to 0, try to increase support_fraction')
         correction = np.median(self.dist_) / chi2(data.shape[1]).isf(0.5)
         covariance_corrected = self.raw_covariance_ * correction
         self.dist_ /= correction

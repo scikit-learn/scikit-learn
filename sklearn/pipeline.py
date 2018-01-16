@@ -529,7 +529,7 @@ def make_pipeline(*steps, **kwargs):
 
     Parameters
     ----------
-    *steps : list of estimators,
+    *steps : list of estimators.
 
     memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
@@ -550,7 +550,8 @@ def make_pipeline(*steps, **kwargs):
     Pipeline(memory=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB(priors=None))])
+                    ('gaussiannb',
+                     GaussianNB(priors=None, var_smoothing=1e-09))])
 
     Returns
     -------

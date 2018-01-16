@@ -31,7 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
-
+from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
@@ -55,7 +55,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : numpy.RandomState
+    random_state : RandomState
         The generator used to initialize the centers.
 
     n_local_trials : integer, optional
@@ -374,6 +374,13 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             X += X_mean
         best_centers += X_mean
 
+    distinct_clusters = len(set(best_labels))
+    if distinct_clusters < n_clusters:
+        warnings.warn("Number of distinct clusters ({}) found smaller than "
+                      "n_clusters ({}). Possibly due to duplicate points "
+                      "in X.".format(distinct_clusters, n_clusters),
+                      ConvergenceWarning, stacklevel=2)
+
     if return_n_iter:
         return best_centers, best_labels, best_inertia, best_n_iter
     else:
@@ -551,7 +558,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
         Indices of clusters that samples are assigned to.
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     """
     n_samples = X.shape[0]
@@ -602,7 +609,7 @@ def _labels_inertia(X, x_squared_norms, centers,
         The resulting assignment
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
@@ -792,7 +799,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Labels of each point
 
     inertia_ : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     Examples
     --------
@@ -1068,7 +1075,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     Returns
     -------
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     squared_diff : numpy array, shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
@@ -1488,7 +1495,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : array, shap (n_samples,)
+        labels : array, shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float

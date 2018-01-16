@@ -133,8 +133,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : object
-            Returns self.
+        self : Imputer
         """
         # Check parameters
         allowed_strategies = ["mean", "median", "most_frequent"]
