@@ -336,7 +336,6 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 

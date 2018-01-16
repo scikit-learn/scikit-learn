@@ -97,7 +97,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -143,7 +142,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns self.
         """
 
         if not hasattr(self.estimator, "fit"):
@@ -243,7 +241,6 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         super(MultiOutputRegressor, self).partial_fit(
             X, y, sample_weight=sample_weight)
@@ -390,7 +387,6 @@ class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
 
@@ -561,7 +557,6 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         super(ClassifierChain, self).fit(X, Y)
         self.classes_ = []
@@ -707,7 +702,6 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         super(RegressorChain, self).fit(X, Y)
         return self

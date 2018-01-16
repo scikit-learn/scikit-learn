@@ -7,6 +7,11 @@
 Version 0.20 (under development)
 ================================
 
+As well as a plethora of new features and enhancements, this release is the
+first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
+glossary is a reference resource to help users and contributors become familiar
+with the terminology and conventions used in Scikit-learn.
+
 Changed models
 --------------
 
@@ -117,6 +122,15 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
+- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
+  only require X to be an object with finite length or shape.
+  :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
+Preprocessing
+
+- :class:`preprocessing.PolynomialFeatures` now supports sparse input.
+  :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -172,6 +186,11 @@ Classifiers and regressors
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegression` where when using the
+  parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
+  returning incorrect probabilities in the case of binary outcomes.
+  :issue:`9939` by :user:`Roger Westover <rwolst>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
@@ -186,6 +205,16 @@ Classifiers and regressors
   into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
   arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
+  NearestNeighbors model fails when a) the distance metric used is a
+  callable and b) the input to the NearestNeighbors model is sparse.
+  :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
+
+- Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
+  unicode in Python2, the ``predict_proba`` method was raising an
+  unexpected TypeError given dense inputs.
+  :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
 
 Decomposition, manifold learning and clustering
 
@@ -221,17 +250,26 @@ Decomposition, manifold learning and clustering
 - Fixed a bug when setting parameters on meta-estimator, involving both a
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
-  
+
 - ``k_means`` now gives a warning, if the number of distinct clusters found
-  is smaller than ``n_clusters``. This may occur when the number of distinct 
-  points in the data set is actually smaller than the number of cluster one is 
+  is smaller than ``n_clusters``. This may occur when the number of distinct
+  points in the data set is actually smaller than the number of cluster one is
   looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
   points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`_.
 
+- Fixed a bug in :func:`cluster.spectral_clustering` where the normalization of
+  the spectrum was using a division instead of a multiplication. :issue:`8129`
+  by :user:`Jan Margeta <jmargeta>`, :user:`Guillaume Lemaitre <glemaitre>`,
+  and :user:`Devansh D. <devanshdalal>`.
+
 Metrics
+
+- Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
+  when truncated `range(n_labels)` is passed as value for `labels`.
+  :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
 
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
   non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
@@ -241,6 +279,10 @@ Metrics
   Note that this will not influence the result from :func:`metrics.roc_auc_score`
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
+
+- Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
+  :func:`mutual_info_score`.
+  :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Neighbors
 
@@ -295,3 +337,11 @@ Changes to estimator checks
 - Allow tests in :func:`estimator_checks.check_estimator` to test functions
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
+
+- Allow :func:`estimator_checks.check_estimator` to check that there is no
+  private settings apart from parameters during estimator initialization.
+  :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- Add test :func:`estimator_checks.check_methods_subset_invariance` to check
+  that estimators methods are invariant if applied to a data subset.
+  :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
