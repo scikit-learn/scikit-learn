@@ -319,16 +319,16 @@ def downcast_intp_index(arr):
 
 
 def getnnz(X, axis=None):
-        if axis is None:
-            return int(X.indptr[-1])
-        else:
-            if axis < 0:
-                axis += 2
-            axis, _ = axis, 1 - axis
-            _, N = X.shape
-            if axis == 0:
-                return np.bincount(downcast_intp_index(X.indices),
-                                   minlength=N)
-            elif axis == 1:
-                return np.diff(X.indptr)
-            raise ValueError('axis out of bounds')
+    if axis is None:
+        return int(X.indptr[-1])
+    else:
+        if axis < 0:
+            axis += 2
+        axis, _ = axis, 1 - axis
+        _, N = X.shape
+        if axis == 0:
+            return np.bincount(downcast_intp_index(X.indices),
+                               minlength=N)
+        elif axis == 1:
+            return np.diff(X.indptr)
+        raise ValueError('axis out of bounds')
