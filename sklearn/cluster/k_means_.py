@@ -22,6 +22,7 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
@@ -394,7 +395,7 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          random_state=None, tol=1e-4,
                          precompute_distances=True):
     if sp.issparse(X):
-        raise ValueError("algorithm='elkan' not supported for sparse input X")
+        raise TypeError("algorithm='elkan' not supported for sparse input X")
     X = check_array(X, order="C")
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
@@ -866,9 +867,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """Verify that the number of samples given is larger than k"""
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
                         order="C")
-        if X.shape[0] < self.n_clusters:
+        if _num_samples(X) < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
-                X.shape[0], self.n_clusters))
+                _num_samples(X), self.n_clusters))
         return X
 
     def _check_test_data(self, X):
