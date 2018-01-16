@@ -478,10 +478,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     0.4722...
-    >>> jaccard_similarity_score(y_true, y_pred)
+    >>> jaccard_similarity_score(y_true, y_pred, average=None)
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
     array([ 0.66...,  0. ,  0.5  ])
-    >>> jaccard_similarity_score(y_true, y_pred,
+    >>> jaccard_similarity_score(y_true, y_pred, average=None,
     ... labels=['ant', 'cat', 'bird'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
     array([ 0.66...,  0.5 ,  0.  ])
@@ -560,7 +560,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 weights = sample_weight
             elif average == 'weighted':
                 sum_axis = 0
-                class_weight = y_true.toarray().sum(axis=0)
+                if sample_weight is None:
+                    class_weight = y_true.toarray().sum(axis=0)
+                else:
+                    class_weight = (y_true.toarray().T).dot(sample_weight)
                 weights = sample_weight
                 if class_weight.sum() == 0:
                     return 0
@@ -586,7 +589,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                         score = np.dot(score, class_weight)
                     else:
                         score = score.sum()
-                score = np.average(score, weights=class_weight)
+                else:
+                    score = np.average(score, weights=class_weight)
             return score
     elif average == 'samples':
         raise ValueError("Sample-based jaccard similarity score is "

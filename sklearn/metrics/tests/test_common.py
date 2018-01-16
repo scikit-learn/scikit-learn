@@ -489,7 +489,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
-                                        % name)
+                                    % name)
 
     for name in THRESHOLDED_MULTILABEL_METRICS:
         metric = ALL_METRICS[name]
