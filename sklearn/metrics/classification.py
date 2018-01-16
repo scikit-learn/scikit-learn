@@ -603,8 +603,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         y_pred = le.transform(y_pred)
 
         labels = le.transform(labels)[:n_labels]
-        indices = np.where(np.isin(y_true, labels) +
-                           np.isin(y_pred, labels) == True)[0]
+        # use 'np.in1d' instead of 'np.isin' (unavailable in version < 1.13.0)
+        indices = np.where(np.in1d(y_true, labels, assume_unique=False,
+                                   invert=False)
+                           + np.in1d(y_pred, labels, assume_unique=False,
+                                     invert=False) == True)[0]
 
         y_true = y_true[indices]
         y_pred = y_pred[indices]
