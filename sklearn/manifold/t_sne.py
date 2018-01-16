@@ -16,6 +16,7 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix
 from ..neighbors import NearestNeighbors
+from ..neighbors.base import _decompose_neighbors_graph
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
@@ -92,7 +93,8 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     # the desired perplexity
     distances.sort_indices()
     n_samples = distances.shape[0]
-    distances_data = distances.data.astype(np.float32, copy=False)
+    distances_data, _ = _decompose_neighbors_graph(distances, False)
+    distances_data = distances_data.astype(np.float32, copy=False)
     distances_data = distances_data.reshape(n_samples, -1)
     conditional_P = _utils._binary_search_perplexity(
         distances_data, desired_perplexity, verbose)

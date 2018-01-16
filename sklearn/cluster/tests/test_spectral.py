@@ -15,9 +15,11 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import discretize
 from sklearn.feature_extraction import img_to_graph
+from sklearn.neighbors import NearestNeighborsTransformer
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
+from sklearn.pipeline import make_pipeline
 from sklearn.datasets.samples_generator import make_blobs
 
 try:
@@ -99,6 +101,25 @@ def test_spectral_clustering_sparse():
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
     assert adjusted_rand_score(y, labels) == 1
+
+
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining NearestNeighborsTransformer and SpectralEmbedding
+    n_neighbors = 5
+    X, _ = make_blobs(random_state=0)
+
+    # compare the chained version and the compact version
+    est_chain = make_pipeline(
+        NearestNeighborsTransformer(n_neighbors=n_neighbors,
+                                    mode='connectivity',
+                                    include_self=True),
+        SpectralClustering(affinity='precomputed', random_state=42))
+    est_compact = SpectralClustering(n_neighbors=n_neighbors,
+                                     affinity='nearest_neighbors',
+                                     random_state=42)
+    labels_compact = est_compact.fit_predict(X)
+    labels_chain = est_chain.fit_predict(X)
+    assert_array_equal(labels_chain, labels_compact)
 
 
 def test_affinities():

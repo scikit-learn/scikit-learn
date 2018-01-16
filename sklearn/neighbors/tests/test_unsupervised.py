@@ -1,14 +1,10 @@
 import numpy as np
 
-from sklearn.pipeline import make_pipeline
-from sklearn.cluster import SpectralClustering
-from sklearn.manifold import SpectralEmbedding
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors.unsupervised import NearestNeighborsTransformer
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
 
 
 def test_transformer_query_parameters():
@@ -55,17 +51,3 @@ def test_transformer_shape():
 
     Xt = est.transform(X_transform)
     assert Xt.shape == (n_samples_transform, n_samples_fit)
-
-
-@ignore_warnings(category=UserWarning)
-def test_transformer_pipeline():
-    # smoke test using NearestNeighborsTransformer in a pipeline
-    X = np.random.randn(100, 10)
-
-    for klass in (SpectralEmbedding, SpectralClustering):
-        make_pipeline(
-            NearestNeighborsTransformer(n_neighbors=5, mode='connectivity'),
-            klass(affinity='precomputed')).fit(X)
-        make_pipeline(
-            NearestNeighborsTransformer(radius=0.9, mode='connectivity'),
-            klass(affinity='precomputed')).fit(X)

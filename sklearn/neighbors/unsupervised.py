@@ -144,7 +144,8 @@ class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     include_self : bool, default=True.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself.
+        itself. If None, then True is used for mode='connectivity' and False
+        for mode='distance'.
 
     n_neighbors : int, optional (default = None)
         Number of neighbors to use for :meth:`kneighbors` queries.
@@ -221,7 +222,7 @@ class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     ...     NearestNeighborsTransformer(radius=42.0, mode='distances'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='connectivity', include_self=True,
+    def __init__(self, mode='connectivity', include_self=None,
                  n_neighbors=None, radius=None, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None, n_jobs=1):
         super(NearestNeighborsTransformer, self).__init__(
@@ -257,8 +258,13 @@ class NearestNeighborsTransformer(NeighborsBase, KNeighborsMixin,
             raise ValueError(
                 "Please do not specify both radius and n_neighbors.")
 
+        if self.include_self is None:
+            include_self = self.mode == 'connectivity'
+        else:
+            include_self = self.include_self
+
         # If we don't include each sample as its own neighbors
-        if not self.include_self and X is self._fit_X:
+        if not include_self and X is self._fit_X:
             X = None
 
         if self.radius is not None:

@@ -152,7 +152,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         X = check_array(X, accept_sparse='csr')
 
         if self.metric == 'precomputed' and issparse(X):
-            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
+            neigh_dist, neigh_ind = _decompose_neighbors_graph(X, False)
         else:
             neigh_dist, neigh_ind = self.kneighbors(X)
 

@@ -6,6 +6,7 @@ from scipy import sparse
 from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
+from sklearn.neighbors import NearestNeighborsTransformer
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
 from sklearn.manifold.spectral_embedding_ import _graph_connected_component
@@ -14,6 +15,7 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.pipeline import make_pipeline
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -200,6 +202,24 @@ def test_pipeline_spectral_clustering(seed=36):
             normalized_mutual_info_score(
                 km.labels_,
                 true_labels), 1.0, 2)
+
+
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining NearestNeighborsTransformer and SpectralEmbedding
+    n_neighbors = 5
+
+    # compare the chained version and the compact version
+    est_chain = make_pipeline(
+        NearestNeighborsTransformer(n_neighbors=n_neighbors,
+                                    mode='connectivity',
+                                    include_self=True),
+        SpectralEmbedding(affinity='precomputed', random_state=42))
+    est_compact = SpectralEmbedding(n_neighbors=n_neighbors,
+                                    affinity='nearest_neighbors',
+                                    random_state=42)
+    St_compact = est_compact.fit_transform(S)
+    St_chain = est_chain.fit_transform(S)
+    assert_array_equal(St_chain, St_compact)
 
 
 def test_spectral_embedding_unknown_eigensolver(seed=36):

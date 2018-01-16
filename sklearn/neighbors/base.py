@@ -98,13 +98,17 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-def _decompose_neighbors_graph(graph):
+def _decompose_neighbors_graph(graph, accept_unequal=True):
     """Decompose a nearest neighbors sparse graph into distances and indices
 
     Parameters
     ----------
     graph : CSR sparse matrix
         Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+
+    accept_unequal : boolean, default=True
+        Whether to accept graphs with different number of neighbors for each
+        sample.
 
     Returns
     -------
@@ -120,13 +124,20 @@ def _decompose_neighbors_graph(graph):
     """
     n_samples = graph.shape[0]
 
-    # if there is the same number of neighbors for each sample
+    # if there is the same number of neighbors for each sample
     if np.unique(np.diff(graph.indptr)).size == 1:
         distances = graph.data.reshape(n_samples, -1)
         indices = graph.indices.reshape(n_samples, -1)
         return distances, indices
 
     else:  # radius neighbors case
+        if not accept_unequal:
+            raise ValueError(
+                'Precomputed sparse neighbors graph does not have the same '
+                'number of neighbors for each sample. Note that duplicated '
+                'samples should have an explicit zero entry in the sparse '
+                'neighbors graph.')
+
         distances = np.empty(n_samples, dtype='object')
         indices = np.empty(n_samples, dtype='object')
         for i in range(0, n_samples):
