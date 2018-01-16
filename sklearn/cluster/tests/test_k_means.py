@@ -750,10 +750,9 @@ def test_k_means_function():
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)
 
-    # kmeans for algorithm='elkan' raises standard error on sparse matrix
-    assert_raise_message(TypeError, "A sparse matrix was passed, but dense "
-                         "data is required. Use X.toarray() to convert to a "
-                         "dense numpy array.", k_means, X=X_csr, n_clusters=2,
+    # kmeans for algorithm='elkan' raises ValueError on sparse matrix
+    assert_raise_message(ValueError, "algorithm='elkan' not supported for "
+                         "sparse input X" , k_means, X=X_csr, n_clusters=2,
                          algorithm="elkan")
 
 
