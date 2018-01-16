@@ -1019,8 +1019,8 @@ def test_verbose(est, method, pattern, capsys):
 
     est.set_params(verbose=False)
     func(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
+    assert not capsys.readouterr()[0], 'Got output for verbose=False'
 
     est.set_params(verbose=True)
     func(X, y)
-    assert re.match(pattern, capsys.readouterr().out)
+    assert re.match(pattern, capsys.readouterr()[0])

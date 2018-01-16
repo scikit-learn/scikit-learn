@@ -332,4 +332,4 @@ def test_message_with_time(source, message, is_long, time, time_str):
 def test_log_elapsed(message, expected, capsys):
     with log_elapsed('ABC', message):
         time.sleep(0.1)
-    assert capsys.readouterr().out == expected
+    assert capsys.readouterr()[0] == expected
