@@ -107,11 +107,9 @@ def test_logistic_regression_warnings():
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
 
-    clf_solver_warning = LogisticRegression(C=len(iris.data),
-                                            multi_class='ovr')
-    clf_multi_class_warning = LogisticRegression(C=len(iris.data),
-                                                 solver='lbfgs')
-    clf_no_warnings = LogisticRegression(C=len(iris.data), solver='lbfgs',
+    clf_solver_warning = LogisticRegression(multi_class='ovr')
+    clf_multi_class_warning = LogisticRegression(solver='lbfgs')
+    clf_no_warnings = LogisticRegression(solver='lbfgs',
                                          multi_class='multinomial')
 
     solver_warning_msg = "Default solver will be changed from 'liblinear' " \
