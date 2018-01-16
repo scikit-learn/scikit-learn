@@ -431,7 +431,8 @@ def _ovr_decision_function(predictions, confidences, n_classes):
             votes[predictions[:, k] == 1, j] += 1
             k += 1
 
-    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # monotonically transform the sum_of_confidences to (-0.5, 0.5)
+    # and add it with votes.
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
