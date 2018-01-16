@@ -408,17 +408,27 @@ def test_matthews_corrcoef():
     y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
+    # Some architectures do not provide warnings on divide by zero
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as w:
+        1. / np.array([0.])
+        numpy_provides_div0_warning = len(w) == 1
+
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
+    if numpy_provides_div0_warning:
+        mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                                   matthews_corrcoef, [0, 0, 0, 0],
+                                   [0, 0, 0, 0])
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
 
     # And also for any other vector with 0 variance
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, ['a'] * len(y_true))
+    if numpy_provides_div0_warning:
+        mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                                   matthews_corrcoef, y_true,
+                                   ['a'] * len(y_true))
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
