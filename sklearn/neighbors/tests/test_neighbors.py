@@ -1,5 +1,6 @@
 from itertools import product
 
+import pytest
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
@@ -109,14 +110,13 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
-def test_precomputed(random_state=42):
+def check_precomputed(make_train_test):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
-    rng = np.random.RandomState(random_state)
+    rng = np.random.RandomState(42)
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((3, 4))
-    DXX = metrics.pairwise_distances(X, metric='euclidean')
-    DYX = metrics.pairwise_distances(Y, X, metric='euclidean')
+    DXX, DYX = make_train_test(X, Y)
     for method in ['kneighbors']:
         # TODO: also test radius_neighbors, but requires different assertion
 
@@ -164,7 +164,35 @@ def test_precomputed(random_state=42):
         assert_array_almost_equal(pred_X, pred_D)
 
 
-def test_precomputed_sparse():
+def test_precomputed_dense():
+    def make_train_test(X_train, X_test):
+        return (metrics.pairwise_distances(X_train),
+                metrics.pairwise_distances(X_test, X_train))
+
+    check_precomputed(make_train_test)
+
+
+@pytest.mark.parametrize('fmt', ['csr', 'lil'])
+def test_precomputed_sparse_implicit_diagonal(fmt):
+    def make_train_test(X_train, X_test):
+        nn = neighbors.NearestNeighbors(n_neighbors=3).fit(X_train)
+        return (nn.kneighbors_graph(mode='distance').asformat(fmt),
+                nn.kneighbors_graph(X_test, mode='distance').asformat(fmt))
+
+    check_precomputed(make_train_test)
+
+
+def test_precomputed_sparse_explicit_diagonal():
+    def make_train_test(X_train, X_test):
+        nn = neighbors.NearestNeighbors(n_neighbors=3, radius=10).fit(X_train)
+        return (nn.kneighbors_graph(X_train.copy(), mode='distance'),
+                nn.kneighbors_graph(X_test, mode='distance'))
+
+    check_precomputed(make_train_test)
+
+
+def test_precomputed_sparse_invalid():
+    # TODO:
     # Ensures enough number of nearest neighbors
     dist = np.array([[0., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
@@ -177,21 +205,8 @@ def test_precomputed_sparse():
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     assert_raises_regex(ValueError, "Not enough neighbors in"
-                        " .*nearest neighbors.*", neigh.kneighbors,
+                        " .* to get 1 nearest neighbors.*", neigh.kneighbors,
                         None, n_neighbors=1)
-
-    # Tests consistency of csr matrix with zeros replaced by large values
-    neigh = neighbors.NearestNeighbors(n_neighbors=2, metric="precomputed")
-    dist = np.array([[0., 1., 0., 3.], [1., 0., 3., 0.], [0., 3., 0., 1.],
-                     [3., 0., 1., 0.]])
-    dist_csr = csr_matrix(dist)
-    dist_orig = np.array([[0., 1., 100., 3.], [1., 0., 3., 100.],
-                         [100., 3., 0., 1.], [3., 100., 1., 0.]])
-    neigh.fit(dist_orig)
-    k_neighbors = neigh.kneighbors(None, n_neighbors=1)
-    neigh.fit(dist_csr)
-    k_neighbors_csr = neigh.kneighbors(None, n_neighbors=1)
-    assert_array_equal(k_neighbors, k_neighbors_csr)
 
     # Checks error with inconsistent distance matrix
     dist = np.array([[5., 2., 1.], [2., 0., 3.], [1., 3., 0.]])

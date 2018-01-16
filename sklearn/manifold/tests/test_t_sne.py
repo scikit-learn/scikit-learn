@@ -2,9 +2,11 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import kneighbors_graph
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -265,14 +267,15 @@ def test_optimization_minimizes_kl_divergence():
     assert_less_equal(kl_divergences[2], kl_divergences[1])
 
 
-def test_fit_csr_matrix():
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_fit_csr_matrix(method):
     # X can be a sparse matrix.
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                random_state=0, method='exact')
+                random_state=0, method=method)
     X_embedded = tsne.fit_transform(X_csr)
     assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0,
                         decimal=1)
@@ -307,29 +310,26 @@ def test_too_few_iterations():
                          np.array([[0.0], [0.0]]))
 
 
-def test_non_square_precomputed_distances():
-    # Precomputed distance matrices must be square matrices.
-    tsne = TSNE(metric="precomputed")
-    assert_raises_regexp(ValueError, ".* square distance matrix",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+@pytest.mark.parametrize('method, retype', [
+    ('exact', np.asarray),
+    ('barnes_hut', np.asarray),
+    ('barnes_hut', sp.csr_matrix),
+])
+@pytest.mark.parametrize('D, message_regex', [
+    ([[0.0], [1.0]], ".* square distance matrix"),
+    ([[0., -1.], [1., 0.]], ".* positive.*"),
+])
+def test_bad_precomputed_distances(method, D, retype, message_regex):
+    tsne = TSNE(metric="precomputed", method=method)
+    assert_raises_regexp(ValueError, message_regex,
+                         tsne.fit_transform, retype(D))
 
 
-def test_non_positive_precomputed_distances():
-    # Precomputed distance matrices must be positive.
-    bad_dist = np.array([[0., -1.], [1., 0.]])
-    for method in ['barnes_hut', 'exact']:
-        tsne = TSNE(metric="precomputed", method=method)
-        assert_raises_regexp(ValueError, "All distances .*precomputed.*",
-                             tsne.fit_transform, bad_dist)
-
-
-def test_non_positive_precomputed_csr_distances():
-    # Sparse precomputed distance matrices must be positive
-    dist = np.array([[0., -1.], [1., 0.]])
-    bad_dist = sp.csr_matrix(dist)
-    tsne = TSNE(metric="precomputed")
-    assert_raises_regexp(ValueError, "All distances .*precomputed.*",
-                         tsne.fit_transform, bad_dist)
+def test_exact_no_precomputed_sparse():
+    tsne = TSNE(metric='precomputed', method='exact')
+    assert_raises_regexp(TypeError, 'sparse',
+                         tsne.fit_transform,
+                         sp.csr_matrix([[0, 5], [5, 0]]))
 
 
 def test_high_perplexity_precomputed_sparse_distances():
@@ -338,8 +338,26 @@ def test_high_perplexity_precomputed_sparse_distances():
     bad_dist = sp.csr_matrix(dist)
     tsne = TSNE(metric="precomputed")
     assert_raises_regexp(ValueError, "2 neighbors per sample are "
-                         "required .*precomputed distance.*",
+                         "required .*perplexity.*precomputed distance.*",
                          tsne.fit_transform, bad_dist)
+
+
+def test_sparse_precomputed_distance():
+    """Make sure that TSNE works identically for sparse and dense matrix"""
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+
+    D_sparse = kneighbors_graph(X, n_neighbors=99, mode='distance')
+    D = pairwise_distances(X)
+    assert sp.issparse(D_sparse)
+    assert_almost_equal(D_sparse.A, D)
+
+    tsne = TSNE(metric="precomputed", random_state=0)
+    Xt_dense = tsne.fit_transform(D)
+
+    for fmt in ['csr', 'lil']:
+        Xt_sparse = tsne.fit_transform(D_sparse.asformat(fmt))
+        assert_almost_equal(Xt_dense, Xt_sparse)
 
 
 def test_non_positive_computed_distances():
@@ -814,14 +832,3 @@ def test_tsne_with_different_distance_metrics():
             metric='precomputed', n_components=n_components_embedding,
             random_state=0).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
-
-
-def test_tsne_with_csr_distance_metrics():
-    """Make sure that TSNE works identically for sparse and dense matrix"""
-    dist = np.zeros((3, 3))
-    dist_csr = sp.csr_matrix(dist)
-    tsne = TSNE(metric="precomputed")
-    X_transformed_dense = tsne.fit_transform(dist)
-    X_transformed_sparse = tsne.fit_transform(dist_csr)
-
-    assert_array_equal(X_transformed_sparse, X_transformed_dense)
