@@ -994,7 +994,7 @@ class _RidgeGCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
@@ -1113,7 +1113,7 @@ class _BaseRidgeCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
@@ -1364,7 +1364,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
-            Returns self.
         """
         check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                   multi_output=True)
