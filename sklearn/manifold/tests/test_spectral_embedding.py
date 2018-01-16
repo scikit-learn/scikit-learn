@@ -219,7 +219,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
                                     random_state=42)
     St_compact = est_compact.fit_transform(S)
     St_chain = est_chain.fit_transform(S)
-    assert_array_equal(St_chain, St_compact)
+    assert_array_almost_equal(St_chain, St_compact)
 
 
 def test_spectral_embedding_unknown_eigensolver(seed=36):

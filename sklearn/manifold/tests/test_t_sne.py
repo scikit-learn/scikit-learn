@@ -183,7 +183,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
         Xt_chain = est_chain.fit_transform(X)
         Xt_compact = est_compact.fit_transform(X)
-        assert_array_equal(Xt_chain, Xt_compact)
+        assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
 def test_binary_perplexity_stability():
@@ -296,9 +296,9 @@ def test_optimization_minimizes_kl_divergence():
 
 def test_fit_csr_matrix():
     # X can be a sparse matrix.
-    random_state = check_random_state(1)
-    X = random_state.randn(40, 2)
-    X[(np.random.randint(0, 40, 50), np.random.randint(0, 2, 50))] = 0.0
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
     for method in ['exact', 'barnes_hut']:
         tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,

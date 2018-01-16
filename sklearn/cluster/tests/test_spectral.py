@@ -9,6 +9,7 @@ from sklearn.externals.six.moves import cPickle
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
 
@@ -119,7 +120,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
                                      random_state=42)
     labels_compact = est_compact.fit_predict(X)
     labels_chain = est_chain.fit_predict(X)
-    assert_array_equal(labels_chain, labels_compact)
+    assert_array_almost_equal(labels_chain, labels_compact)
 
 
 def test_affinities():

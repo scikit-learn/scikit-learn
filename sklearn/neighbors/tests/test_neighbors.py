@@ -1331,7 +1331,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
     X2 = 2 * rng.rand(40, 5) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
 
-    # K Neighbors
+    # K Neighbors
     for klass in [neighbors.KNeighborsClassifier,
                   neighbors.KNeighborsRegressor]:
         n_neighbors = 8
@@ -1344,13 +1344,13 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
         y_pred_chain = est_chain.fit(X, y).predict(X2)
         y_pred_compact = est_compact.fit(X, y).predict(X2)
-        assert_array_equal(y_pred_chain, y_pred_compact)
+        assert_array_almost_equal(y_pred_chain, y_pred_compact)
         if hasattr(est_chain, 'predict_proba'):
             y_pred_chain = est_chain.predict_proba(X2)
             y_pred_compact = est_compact.predict_proba(X2)
-            assert_array_equal(y_pred_chain, y_pred_compact)
+            assert_array_almost_equal(y_pred_chain, y_pred_compact)
 
-    # Radius Neighbors
+    # Radius Neighbors
     for klass in [neighbors.RadiusNeighborsClassifier,
                   neighbors.RadiusNeighborsRegressor]:
         radius = 2
@@ -1363,4 +1363,4 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
         y_pred_chain = est_chain.fit(X, y).predict(X2)
         y_pred_compact = est_compact.fit(X, y).predict(X2)
-        assert_array_equal(y_pred_chain, y_pred_compact)
+        assert_array_almost_equal(y_pred_chain, y_pred_compact)

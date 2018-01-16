@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
-
+from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -105,6 +105,25 @@ def test_lof_precomputed(random_state=42):
 
     assert_array_almost_equal(pred_X_X, pred_D_X)
     assert_array_almost_equal(pred_X_Y, pred_D_Y)
+
+
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining NearestNeighborsTransformer and LocalOutlierFactor
+    n_neighbors = 8
+
+    rng = check_random_state(0)
+    X = rng.randn(20, 2)
+
+    # compare the chained version and the compact version
+    est_chain = make_pipeline(
+        neighbors.NearestNeighborsTransformer(
+            n_neighbors=n_neighbors, mode='distance', include_self=False),
+        neighbors.LocalOutlierFactor(metric='precomputed'))
+    est_compact = neighbors.LocalOutlierFactor(n_neighbors=n_neighbors)
+
+    pred_chain = est_chain.fit_predict(X)
+    pred_compact = est_compact.fit_predict(X)
+    assert_array_almost_equal(pred_chain, pred_compact)
 
 
 def test_n_neighbors_attribute():

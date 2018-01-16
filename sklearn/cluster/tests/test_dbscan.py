@@ -11,6 +11,7 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_not_in
@@ -383,4 +384,4 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
     labels_chain = est_chain.fit_predict(X)
     labels_compact = est_compact.fit_predict(X)
-    assert_array_equal(labels_chain, labels_compact)
+    assert_array_almost_equal(labels_chain, labels_compact)

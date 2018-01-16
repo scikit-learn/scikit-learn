@@ -3,13 +3,14 @@
 # License: BSD 3 clause
 
 import numpy as np
+import scipy.sparse as sp
 from warnings import warn
 from scipy.stats import scoreatpercentile
 
 from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
-
+from .base import _decompose_neighbors_graph
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
 
@@ -59,8 +60,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         metric used for the distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
-        If 'precomputed', the training input X is expected to be a distance
-        matrix.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -170,18 +172,27 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         if not (0. < self.contamination <= .5):
             raise ValueError("contamination must be in (0, 0.5]")
 
-        super(LocalOutlierFactor, self).fit(X)
+        if self.metric == 'precomputed' and sp.issparse(X):
+            distances, indices = _decompose_neighbors_graph(X, False)
+            n_samples, self.n_neighbors_ = distances.shape
+        else:
+            super(LocalOutlierFactor, self).fit(X)
 
-        n_samples = self._fit_X.shape[0]
-        if self.n_neighbors > n_samples:
-            warn("n_neighbors (%s) is greater than the "
-                 "total number of samples (%s). n_neighbors "
-                 "will be set to (n_samples - 1) for estimation."
-                 % (self.n_neighbors, n_samples))
-        self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
+            n_samples = self._fit_X.shape[0]
+            if self.n_neighbors > n_samples:
+                warn("n_neighbors (%s) is greater than the "
+                     "total number of samples (%s). n_neighbors "
+                     "will be set to (n_samples - 1) for estimation."
+                     % (self.n_neighbors, n_samples))
+            self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
-        self._distances_fit_X_, _neighbors_indices_fit_X_ = (
-            self.kneighbors(None, n_neighbors=self.n_neighbors_))
+            distances, indices = self.kneighbors(
+                None, n_neighbors=self.n_neighbors_)
+
+        self._distances_fit_X_ = distances
+        _neighbors_indices_fit_X_ = indices
+
+        self._distances_fit_X_, _neighbors_indices_fit_X_
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_)
@@ -225,7 +236,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             is_inlier = np.ones(X.shape[0], dtype=int)
             is_inlier[self._decision_function(X) <= self.threshold_] = -1
         else:
-            is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
+            n_samples_fit = self._distances_fit_X_.shape[0]
+            is_inlier = np.ones(n_samples_fit, dtype=int)
             is_inlier[self.negative_outlier_factor_ <= self.threshold_] = -1
 
         return is_inlier
@@ -258,8 +270,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         X = check_array(X, accept_sparse='csr')
 
-        distances_X, neighbors_indices_X = (
-            self.kneighbors(X, n_neighbors=self.n_neighbors_))
+        if self.metric == 'precomputed' and sp.issparse(X):
+            distances_X, neighbors_indices_X = _decompose_neighbors_graph(
+                X, False)
+            if distances_X.shape[1] != self.n_neighbors_:
+                raise ValueError(
+                    'Number of precomputed nearest neighbors changed between'
+                    'fit and _predict, from %d to %d.'
+                    % (self.n_neighbors_, distances_X.shape[1]))
+        else:
+            distances_X, neighbors_indices_X = (
+                self.kneighbors(X, n_neighbors=self.n_neighbors_))
         X_lrd = self._local_reachability_density(distances_X,
                                                  neighbors_indices_X)
 
