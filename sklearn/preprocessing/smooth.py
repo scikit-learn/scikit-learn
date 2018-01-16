@@ -53,11 +53,11 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         array_filler_up, array_filler_down = self.populate_fillers(x, self.mode, whisker, self.cval)
 
         supported_input = np.concatenate((array_filler_up, x, array_filler_down), axis=0)
-        result = np.zeros(x.shape)
 
         if self.mode == 'interp':
-            supported_input = x
             result = np.zeros((x.shape[0] - whisker, x.shape[1]))
+        else:
+            result = np.zeros(x.shape)
 
         result[0, :] = self.sum_samples(supported_input, 0, self.size)
         for row in range(1, result.shape[0]):
@@ -78,6 +78,10 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         if x.shape[0] < whisker:
             raise ValueError("Too few sample with respect to the chosen window size")
 
+        if mode == 'interp':
+            filler = np.zeros((0, x.shape[1]))
+            return filler, filler
+
         filler_up = np.zeros((whisker, x.shape[1]))
         filler_down = np.zeros((whisker, x.shape[1]))
 
@@ -89,8 +93,7 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
 
         if mode == 'constant':
             filler_up[:, :] = cval
-            filler_down[:, :] = cval
-            return filler_up, filler_down
+            return filler_up, filler_up
 
         if mode == 'nearest':
             filler_up[:, :] = x[0, :]
@@ -101,3 +104,4 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
             filler_up[:, :] = x[-whisker:, :]
             filler_down[:, :] = x[:whisker, :]
             return filler_up, filler_down
+
