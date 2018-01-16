@@ -1043,7 +1043,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'liblinear'
+        default: 'default'. Will be changed to 'auto' solver in 0.22.
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1058,16 +1058,22 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         features with approximately the same scale. You can
         preprocess the data with a scaler from sklearn.preprocessing.
 
+        The solver 'auto' selects 'lbfgs' if penalty is 'l2' and 'saga' is
+        penalty is 'l1'.
+
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
+        .. version:: 0.20
+           auto solver
 
     max_iter : int, default: 100
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial'}, default: 'ovr'
+    multi_class : str, {'ovr', 'multinomial'},
+        default: 'default'. Will be changed to 'multinomial' in 0.22.
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
@@ -1205,6 +1211,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             _solver = 'liblinear'
             warnings.warn("Default solver will be changed from 'liblinear' to "
                           "auto solver in 0.22", FutureWarning)
+        elif self.solver == 'auto':
+            if self.penalty == 'l1':
+                _solver = 'saga'
+            if self.penalty == 'l2':
+                _solver = 'lbfgs'
         else:
             _solver = self.solver
         if self.multi_class == 'default':
