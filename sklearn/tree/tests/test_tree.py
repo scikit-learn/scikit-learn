@@ -137,6 +137,7 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
+X_sparse_pos = csr_matrix(X_sparse_pos)
 y_random = random_state.randint(0, 4, size=(20, ))
 X_sparse_mix = sparse_random_matrix(20, 10, density=0.25, random_state=0)
 
