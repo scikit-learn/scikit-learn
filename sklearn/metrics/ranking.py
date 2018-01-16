@@ -31,9 +31,10 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import label_binarize
+from ..preprocessing import LabelBinarizer, label_binarize
 
-from .base import _average_binary_score
+from .base import _average_binary_score, _average_multiclass_ovo_score, \
+                  _average_multiclass_ovr_score
 
 
 def auc(x, y, reorder='deprecated'):
@@ -157,7 +158,8 @@ def average_precision_score(y_true, y_score, average="macro",
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : string, {None, 'micro', 'macro', 'samples', 'weighted'},
+              default 'macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -217,28 +219,39 @@ def average_precision_score(y_true, y_score, average="macro",
                                  sample_weight=sample_weight)
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
-    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
-    from prediction scores.
-
-    Note: this implementation is restricted to the binary classification task
-    or multilabel classification task in label indicator format.
+def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
+                  sample_weight=None):
+    """Compute Area Under the Curve (AUC) from prediction scores
 
     Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels or binary label indicators.
+        True binary labels in binary label indicators.
+        The multiclass case expects shape = [n_samples] and labels
+        with values from 0 to (n_classes-1), inclusive.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers). For binary
-        y_true, y_score is supposed to be the score of the class with greater
-        label.
+        (as returned by "decision_function" on some classifiers).
+        The multiclass case expects shape = [n_samples, n_classes]
+        where the scores correspond to probability estimates.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    multiclass : string, 'ovr' or 'ovo', default 'ovr'
+        Note: multiclass ROC AUC currently only handles the 'macro' and
+        'weighted' averages.
+
+        ``'ovr'``:
+            Calculate metrics for the multiclass case using the one-vs-rest
+            approach.
+        ``'ovo'``:
+            Calculate metrics for the multiclass case using the one-vs-one
+            approach.
+
+    average : string, {None, 'micro', 'macro', 'samples', 'weighted'},
+              default 'macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -295,13 +308,51 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
         return auc(fpr, tpr)
 
     y_type = type_of_target(y_true)
-    if y_type == "binary":
-        labels = np.unique(y_true)
-        y_true = label_binarize(y_true, labels)[:, 0]
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
 
-    return _average_binary_score(
-        _binary_roc_auc_score, y_true, y_score, average,
-        sample_weight=sample_weight)
+    if y_type == "multiclass" or (y_type == "binary" and
+                                  y_score.ndim == 2 and
+                                  y_score.shape[1] > 2):
+        # validation of the input y_score
+        if not np.allclose(1, y_score.sum(axis=1)):
+            raise ValueError("Target scores should sum up to 1.0 for all"
+                             "samples.")
+        # validation for multiclass parameter specifications
+        average_options = ("macro", "weighted")
+        if average not in average_options:
+            raise ValueError("Parameter 'average' must be one of {0} for"
+                             " multiclass problems.".format(average_options))
+        multiclass_options = ("ovo", "ovr")
+        if multiclass not in multiclass_options:
+            raise ValueError("Parameter multiclass='{0}' is not supported"
+                             " for multiclass ROC AUC. 'multiclass' must be"
+                             " one of {1}.".format(
+                                 multiclass, multiclass_options))
+        if sample_weight is not None:
+            # TODO: check if only in ovo case, if yes, do not raise when ovr
+            raise ValueError("Parameter 'sample_weight' is not supported"
+                             " for multiclass one-vs-one ROC AUC."
+                             " 'sample_weight' must be None in this case.")
+
+        if multiclass == "ovo":
+            # Hand & Till (2001) implementation
+            return _average_multiclass_ovo_score(
+                _binary_roc_auc_score, y_true, y_score, average)
+        elif multiclass == "ovr" and average == "weighted":
+            # Provost & Domingos (2001) implementation
+            return _average_multiclass_ovr_score(
+                _binary_roc_auc_score, y_true, y_score, average)
+        else:
+            y_true = y_true.reshape((-1, 1))
+            y_true_multilabel = LabelBinarizer().fit_transform(y_true)
+            return _average_binary_score(
+                 _binary_roc_auc_score, y_true_multilabel, y_score, average,
+                 sample_weight=sample_weight)
+    else:
+        return _average_binary_score(
+            _binary_roc_auc_score, y_true, y_score, average,
+            sample_weight=sample_weight)
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
