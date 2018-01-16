@@ -1072,6 +1072,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
+        if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
