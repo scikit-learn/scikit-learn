@@ -351,7 +351,6 @@ cdef class UnionFind(object):
     @cython.boundscheck(False)
     @cython.nonecheck(False)
     cdef void union(self, ITYPE_t m, ITYPE_t n):
-        self.size[self.next_label] = self.size[m] + self.size[n]
         self.parent[m] = self.next_label
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
@@ -359,7 +358,6 @@ cdef class UnionFind(object):
 
         return
 
-    @cython.boundscheck(False)
     @cython.nonecheck(False)
     cdef ITYPE_t fast_find(self, ITYPE_t n):
         cdef ITYPE_t p
@@ -371,7 +369,6 @@ cdef class UnionFind(object):
         while self.parent[p] != n:
             p, self.parent[p] = self.parent[p], n
         return n
-
 
 @cython.boundscheck(False)
 @cython.nonecheck(False)
