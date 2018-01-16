@@ -50,7 +50,7 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
                              " Expected %d, got %d."
                              % (self._feature_indices, x.shape[1]))
 
-        array_filler_up, array_filler_down = self.populate_fillers(x, self.mode, whisker, self.cval)
+        array_filler_up, array_filler_down = RectangularSmoother.populate_fillers(x, self.mode, whisker, self.cval)
 
         supported_input = np.concatenate((array_filler_up, x, array_filler_down), axis=0)
 
@@ -59,7 +59,7 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         else:
             result = np.zeros(x.shape)
 
-        result[0, :] = self.sum_samples(supported_input, 0, self.size)
+        result[0, :] = RectangularSmoother.sum_samples(supported_input, 0, self.size)
         for row in range(1, result.shape[0]):
             result[row, :] = result[row - 1, :] - supported_input[row - 1, :] + supported_input[row + self.size - 1, :]
         result = np.divide(result, self.size)
