@@ -398,8 +398,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
     cdef DTYPE_t delta
 
     result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
-    result = (<DTYPE_t[:L.shape[0], :4:1]> (
-        <DTYPE_t *> result_arr.data))
+    result = result_arr
     U = UnionFind(L.shape[0] + 1)
 
     for index in range(L.shape[0]):
