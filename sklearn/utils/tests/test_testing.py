@@ -404,8 +404,8 @@ class MockMetaEstimator(object):
         """
         return self.delegate.predict(X)
 
-    @deprecated("Testing a deprecated delegated method")
     @if_delegate_has_method(delegate=('delegate'))
+    @deprecated("Testing a deprecated delegated method")
     def score(self, X):
         """This is available only if delegate has score.
 
@@ -426,20 +426,7 @@ class MockMetaEstimator(object):
         """
         return X
 
-    @deprecated('Testing deprecated function with incorrect params')
-    @if_delegate_has_method(delegate=('delegate'))
-    def predict_log_proba(self, X):
-        """This is available only if delegate has predict_proba.
-
-        Parameters
-        ---------
-        y : ndarray
-            Parameter X
-        """
-        return X
-
     @deprecated('Testing deprecated function with wrong params')
-    @if_delegate_has_method(delegate=('delegate'))
     def fit(self, X, y):
         """Incorrect docstring but should not be tested"""
 
@@ -479,7 +466,6 @@ def test_check_docstring_parameters():
     messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
                 "predict y != X",
                 "predict_proba arg mismatch: ['X']",
-                "predict_log_proba arg mismatch: ['X']",
                 "score arg mismatch: ['X']",
                 ".fit arg mismatch: ['X', 'y']"]
 
@@ -488,7 +474,6 @@ def test_check_docstring_parameters():
     for mess, f in zip(messages,
                        [f_bad_order, f_missing, Klass.f_missing,
                         mock_meta.predict, mock_meta.predict_proba,
-                        mock_meta.predict_log_proba,
                         mock_meta.score, mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
         assert len(incorrect) >= 1
