@@ -783,7 +783,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         super(DecisionTreeClassifier, self).fit(
@@ -1117,7 +1116,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         super(DecisionTreeRegressor, self).fit(

@@ -127,7 +127,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         ------
@@ -228,15 +227,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
-
-        if six.PY2:
-            # In python2 ensure kernel is ascii bytes to prevent a TypeError
-            if isinstance(kernel, six.types.UnicodeType):
-                kernel = str(kernel)
-        if six.PY3:
-            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
-            if isinstance(kernel, bytes):
-                kernel = str(kernel, 'utf8')
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
