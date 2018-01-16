@@ -325,7 +325,7 @@ def f_missing(a, b):
     return c
 
 
-def f_check_param_definition(a, b, c, d):
+def f_check_param_definition(a, b, c, d, e):
     """Function f
 
     Parameters
@@ -338,6 +338,8 @@ def f_check_param_definition(a, b, c, d):
         Parameter c
     d:int
         Parameter d
+    e
+        No typespec is allowed without colon
     """
     return a + b + c + d
 
@@ -451,15 +453,28 @@ def test_check_docstring_parameters():
             "numpydoc is required to test the docstrings")
 
     incorrect = check_docstring_parameters(f_ok)
-    assert_equal(incorrect, [])
+    assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=['b'])
-    assert_equal(incorrect, [])
+    assert incorrect == []
     incorrect = check_docstring_parameters(f_missing, ignore=['b'])
-    assert_equal(incorrect, [])
+    assert incorrect == []
     assert_raise_message(RuntimeError, 'Unknown section Results',
                          check_docstring_parameters, f_bad_sections)
     assert_raise_message(RuntimeError, 'Unknown section Parameter',
                          check_docstring_parameters, Klass.f_bad_sections)
+
+    incorrect = check_docstring_parameters(f_check_param_definition)
+    assert (
+        incorrect == [
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('a: int')",
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('b:')",
+            "sklearn.utils.tests.test_testing.f_check_param_definition "
+            "Parameter 'c :' has an empty type spec. Remove the colon",
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('d:int')",
+        ])
 
     messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
                 "predict y != X",
@@ -476,18 +491,5 @@ def test_check_docstring_parameters():
                         mock_meta.predict_log_proba,
                         mock_meta.score, mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
-        assert_true(len(incorrect) >= 1)
-        assert_true(mess in incorrect[0],
-                    '"%s" not in "%s"' % (mess, incorrect[0]))
-
-    incorrect = check_docstring_parameters(f_check_param_definition)
-    assert_equal(
-        incorrect,
-        ['sklearn.utils.tests.test_testing.f_check_param_definition There was '
-         'no space between the param name and colon ("a: int")',
-         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
-         'no space between the param name and colon ("b:")',
-         'sklearn.utils.tests.test_testing.f_check_param_definition Incorrect '
-         'type definition for param: "c " (type definition was "")',
-         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
-         'no space between the param name and colon ("d:int")'])
+        assert len(incorrect) >= 1
+        assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
