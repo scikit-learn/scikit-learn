@@ -428,22 +428,12 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
-        ``'none-samples'``:
-            Calculate metrics for each instance, (only meaningful for
-            multilabel classification). This differs from 'samples' to return
-            an array of sample-wise jaccard index, instead of normalizing the
-            array.
 
     normalize : bool, optional (default=True)
         If ``False``, return an array of Jaccard similarity coefficient for
         each samples over the sample set. Otherwise, return the average of
         Jaccard similarity coefficient. 'normalize' is only to be specified in
         case `average='samples'`.
-
-        .. versionchanged: 0.20
-           'normalize' is deprecated and will be removed in 0.22, instead of
-           `normalize=True` use instead just `average='samples'` and for
-           `normalize=False` use instead `average='none-samples'`.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -497,8 +487,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     array([ 0.66...,  0.5 ,  0.  ])
     """
 
-    average_options = (None, 'micro', 'macro', 'weighted', 'samples',
-                       'none-samples')
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
         raise ValueError("average has to be one of " + str(average_options))
 
@@ -534,18 +523,13 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                                  assume_unique=True)])
 
     if y_type.startswith('multilabel'):
-        if normalize is not None:
-            if average == 'samples':
-                if not normalize:
-                    average = 'none-samples'
-            else:
-                raise ValueError("normalize != None' is only meaningful with "
-                                 "`average='samples'`, got `average='%s'`."
-                                 % average)
-            warn_message = ("'normalize' was deprecated in version 0.20 and "
-                            "will be removed in 0.22, instead use "
-                            "`average='%s'`." % average)
-            warnings.warn(warn_message, DeprecationWarning)
+        if average == 'samples':
+            if normalize is None:
+                normalize = True
+        elif normalize is not None:
+            raise ValueError("'normalize' is only meaningful with "
+                             "`average='samples'`, got `average='%s'`."
+                             % average)
 
         if not np.all(labels == present_labels):
             if np.max(labels) > np.max(present_labels):
@@ -562,7 +546,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
         with np.errstate(divide='ignore', invalid='ignore'):
 
-            if average == 'samples' or average == 'none-samples':
+            if average == 'samples':
                 sum_axis = 1
                 class_weight = sample_weight
                 weights = None
@@ -597,13 +581,14 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             score[pred_or_true == 0.0] = 1.0
 
             if average is not None:
-                if average == 'none-samples':
+                if normalize == False:
                     if class_weight is not None:
-                        score = score * class_weight
-                else:
-                    score = np.average(score, weights=class_weight)
+                        score = np.dot(score, class_weight)
+                    else:
+                        score = score.sum()
+                score = np.average(score, weights=class_weight)
             return score
-    elif average == 'samples' or average == 'none-samples':
+    elif average == 'samples':
         raise ValueError("Sample-based jaccard similarity score is "
                          "not meaningful outside multilabel "
                          "classification. See the accuracy_score instead.")

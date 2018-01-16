@@ -154,9 +154,6 @@ CLASSIFICATION_METRICS = {
 
     "cohen_kappa_score": cohen_kappa_score,
 
-    "none-samples_jaccard_similarity_score":
-    partial(jaccard_similarity_score, average='none-samples'),
-
     "binary_jaccard_similarity_score":
     partial(jaccard_similarity_score, average="binary")
 }
@@ -213,7 +210,6 @@ METRIC_UNDEFINED_BINARY = [
     "samples_recall_score",
     "coverage_error",
     "jaccard_similarity_score",
-    "none-samples_jaccard_similarity_score",
     "unnormalized_jaccard_similarity_score",
 
     "average_precision_score",
@@ -238,7 +234,6 @@ METRIC_UNDEFINED_MULTICLASS = [
     "samples_roc_auc",
 
     "jaccard_similarity_score",
-    "none-samples_jaccard_similarity_score",
     "unnormalized_jaccard_similarity_score",
     "binary_jaccard_similarity_score",
 
@@ -307,7 +302,6 @@ METRICS_WITH_LABELS = [
     "macro_precision_score", "macro_recall_score",
     "macro_jaccard_similarity_score",
 
-    "none-samples_jaccard_similarity_score",
     "unnormalized_jaccard_similarity_score",
 
     "binary_jaccard_similarity_score",
@@ -341,8 +335,7 @@ THRESHOLDED_MULTILABEL_METRICS = [
 MULTILABELS_METRICS = [
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "none-samples_jaccard_similarity_score",
-    "unnormalized_jaccard_similarity_score",
+    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
@@ -372,8 +365,7 @@ MULTIOUTPUT_METRICS = [
 SYMMETRIC_METRICS = [
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "none-samples_jaccard_similarity_score",
-    "unnormalized_jaccard_similarity_score",
+    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "micro_jaccard_similarity_score", "macro_jaccard_similarity_score",
@@ -494,11 +486,9 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
-        if name != 'unnormalized_jaccard_similarity_score' and \
-            name != 'none-samples_jaccard_similarity_score':
-            assert_almost_equal(metric(y_true, y_pred),
-                                metric(y_true_shuffle, y_pred_shuffle),
-                                err_msg="%s is not sample order invariant"
+        assert_almost_equal(metric(y_true, y_pred),
+                            metric(y_true_shuffle, y_pred_shuffle),
+                            err_msg="%s is not sample order invariant"
                                         % name)
 
     for name in THRESHOLDED_MULTILABEL_METRICS:
@@ -873,10 +863,8 @@ def test_normalize_option_multilabel_classification():
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
-        unnormalize_measure = metrics(y_true, y_pred, normalize=False)
-        if isinstance(unnormalize_measure, np.ndarray):
-            unnormalize_measure = np.sum(unnormalize_measure)
-        assert_almost_equal(unnormalize_measure / n_samples, measure,
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure,
                             err_msg="Failed with %s" % name)
 
 

@@ -951,11 +951,6 @@ def test_jaccard_similarity_score():
             "Please choose another average setting.")
     assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
                          y_pred, average='binary', pos_label=-1)
-    assert_warns_message(DeprecationWarning,
-                         "'normalize' was deprecated in version 0.20 and will "
-                         "be removed in 0.22, instead use `average='samples'`."
-                         , jaccard_similarity_score, y_true, y_pred,
-                         average='samples', normalize=True)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
@@ -968,7 +963,7 @@ def test_jaccard_similarity_score():
     assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
                          y_pred, average='samples')
     assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
-                         y_pred, average='none-samples')
+                         y_pred, average='samples', normalize=False)
 
     assert_warns_message(UserWarning,
                         "Note that pos_label (set to 3) is ignored when "
@@ -998,7 +993,7 @@ def test_multilabel_jaccard_similarity_score():
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     # average='macro'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='macro'), 2. / 3)
+                                                 average='macro'), 2. / 3)
     # average='micro'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                 average='micro'), 3. / 5)
@@ -1010,10 +1005,11 @@ def test_multilabel_jaccard_similarity_score():
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='samples',
                                                  labels=[1, 2]), 1. / 2)
-    # average='none-samples'
-    assert_array_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='none-samples'),
-                       np.array([2. / 3, 1. / 2]))
+    # average='samples', normalize=False
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='samples',
+                                                normalize=False),
+                       7. / 6)
     # average=None
     assert_array_equal(jaccard_similarity_score(y_true, y_pred, average=None),
                        np.array([1. / 2, 1., 1. / 2]))
