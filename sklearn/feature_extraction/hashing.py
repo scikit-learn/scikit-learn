@@ -59,7 +59,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
-
     non_negative : boolean, optional, default False
         When True, an absolute value is applied to the features matrix prior to
         returning it. When used in conjunction with alternate_sign=True, this
@@ -67,6 +66,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         .. deprecated:: 0.19
             This option will be removed in 0.21.
+    save_mappings : boolean, default False
+        When True, FeatureHasher will save the mappings between feature names,
+        and the corresponding column. This is disabled by default for
+        performance reasons.
 
 
     Examples
@@ -87,7 +90,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, alternate_sign=True, non_negative=False):
+                 dtype=np.float64, alternate_sign=True, non_negative=False,
+                 save_mappings=False):
         self._validate_params(n_features, input_type)
         if non_negative:
             warnings.warn("the option non_negative=True has been deprecated"
@@ -99,7 +103,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.n_features = n_features
         self.alternate_sign = alternate_sign
         self.non_negative = non_negative
-        self.feature_to_index_map = None
+        self.save_mappings = save_mappings
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -131,6 +135,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         # repeat input validation for grid search (which calls set_params)
+        self.feature_to_index_map_ = None
         self._validate_params(self.n_features, self.input_type)
         return self
 
@@ -157,9 +162,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
-        indices, indptr, values, self.feature_to_index_map = \
+        indices, indptr, values, self.feature_to_index_map_ = \
             _hashing.transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign)
+                               self.alternate_sign, self.save_mappings)
         n_samples = indptr.shape[0] - 1
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
@@ -183,7 +188,13 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             column. Furthermore, it is sorted by the keys, that is
             the indices of the features.
         """
-        if self.feature_to_index_map is None:
-            raise ValueError("FeatureHasher not transformed yet. Call"
-                             " .transform() first.")
-        return OrderedDict(sorted(self.feature_to_index_map.items()))
+        if not self.save_mappings:
+            raise ValueError("FeatureHasher was instantiated with"
+                             " save_mappings=False (default) Please pass in"
+                             " save_mappings=True to save the mappings.")
+
+        if not hasattr(self, "feature_to_index_map_") \
+                or self.feature_to_index_map_ is None:
+            raise ValueError("FeatureHasher has not transformed yet. Please"
+                             " call .fit_transform() first.")
+        return OrderedDict(sorted(self.feature_to_index_map_.items()))

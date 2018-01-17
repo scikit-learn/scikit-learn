@@ -1,11 +1,14 @@
 from __future__ import unicode_literals
 
+from collections import OrderedDict
+
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
-                                   ignore_warnings)
+                                   ignore_warnings, assert_raise_message)
 
 
 def test_feature_hasher_dicts():
@@ -168,7 +171,40 @@ def test_hasher_negative():
     assert_true(Xt.data.min() > 0)
 
 
-def test_hasher_order():
-    X = [{'dog': 1, 'cat': 3}, {'elephant': 9, 'bird': 32}]
-    hasher = FeatureHasher(n_features=5)
-    X_fit = hasher.transform(X)
+@pytest.mark.parametrize("X, expected_output, input_type", [
+    ([{'dog': 1, 'cat': 3}, {'elephant': 9, 'bird': 32}],
+        OrderedDict([(2, ['elephant']), (3, ['dog']), (4, ['cat', 'bird'])]),
+        'dict'),
+
+    (["a", "b", "c", "x", "y", "z"],
+        OrderedDict([(0, ['a', 'z']), (1, ['b']), (2, ['c']), (3, ['x']),
+                    (4, ['y'])]),
+        'string')
+])
+def test_hasher_order(X, expected_output, input_type):
+    hasher = FeatureHasher(n_features=5, save_mappings=True,
+                           input_type=input_type)
+    hasher.fit_transform(X)
+    actual = hasher.get_feature_names()
+    assert expected_output == actual
+
+
+def test_hasher_get_feature_without_transform():
+    hasher = FeatureHasher(n_features=5, save_mappings=True)
+    exception_message = ("FeatureHasher has not transformed yet. Please"
+                         " call .fit_transform() first.")
+    assert_raises(ValueError, hasher.get_feature_names)
+    assert_raise_message(ValueError, exception_message,
+                         hasher.get_feature_names)
+
+
+def test_hasher_get_feature_without_save_mappings():
+    X = ["uzumaki", "naruto", "dattebayoo"]
+    hasher = FeatureHasher(n_features=2, input_type='string')
+    hasher.fit_transform(X)
+    exception_message = ("FeatureHasher was instantiated with"
+                         " save_mappings=False (default) Please pass in"
+                         " save_mappings=True to save the mappings.")
+    assert_raises(ValueError, hasher.get_feature_names)
+    assert_raise_message(ValueError, exception_message,
+                         hasher.get_feature_names)

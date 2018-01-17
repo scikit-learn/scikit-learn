@@ -17,7 +17,8 @@ np.import_array()
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
+def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1,
+              save_mappings=False):
     """Guts of FeatureHasher.transform.
 
     Returns
@@ -30,11 +31,14 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     assert n_features > 0
 
     cdef np.int32_t h
+    cdef np.int32_t bucket
     cdef double value
-    cdef dict feature_to_index_map = dict()
+    cdef dict feature_to_index_map = None
     cdef array.array indices
     cdef array.array indptr
     indices = array.array("i")
+    if save_mappings:
+        feature_to_index_map = dict()
     if sys.version_info >= (3, 3):
         indices_array_dtype = "q"
         indices_np_dtype = np.longlong
@@ -72,9 +76,10 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
             h = murmurhash3_bytes_s32(<bytes>f, 0)
 
             array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = abs(h) % n_features
-            _save_feature_mapping(feature_to_index_map,
-                                  abs(h) % n_features, f)
+            bucket = abs(h) % n_features
+            indices[len(indices) - 1] = bucket
+            if save_mappings:
+                _save_feature_mappings(feature_to_index_map, bucket, f)
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
@@ -108,7 +113,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     return (indices_a, indptr_a, values[:size], feature_to_index_map)
 
 
-def _save_feature_mapping(into_dict, key, value):
+def _save_feature_mappings(into_dict, key, value):
     """This function emulates a defaultdict with a list
     as default value. It is used to save the mapping of
     feature names and their indices in the value array."""
