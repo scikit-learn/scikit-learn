@@ -151,4 +151,3 @@ plt.ylabel('scores')
 plt.title('Classifiers tpr and tnr before and after calibration')
 plt.legend()
 plt.show()
-
