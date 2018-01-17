@@ -3,4 +3,4 @@
 Calibration
 -----------------------
 
-Examples illustrating the calibration of predicted probabilities of classifiers.
+Examples concerning the :mod:`sklearn.calibration` module.
