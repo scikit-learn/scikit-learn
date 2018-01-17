@@ -354,7 +354,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         self._fit_X = check_array(X, accept_sparse='csr')

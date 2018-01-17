@@ -7,6 +7,11 @@
 Version 0.20 (under development)
 ================================
 
+As well as a plethora of new features and enhancements, this release is the
+first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
+glossary is a reference resource to help users and contributors become familiar
+with the terminology and conventions used in Scikit-learn.
+
 Changed models
 --------------
 
@@ -120,11 +125,10 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
-Feature Extraction
+Preprocessing
 
-- :class:`feature_extraction.FeatureHasher` now supports returning features
-  mappings through `get_feature_names`.
-  :issue:`10470` by :user:`Mayur Kulkarni <maykulkarni>`
+- :class:`preprocessing.PolynomialFeatures` now supports sparse input.
+  :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
 
 Model evaluation and meta-estimators
 
@@ -139,6 +143,12 @@ Model evaluation and meta-estimators
   sizes of different test sets in cross-validation were very unequal, i.e. in
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
+  
+Feature Extraction
+
+- :class:`feature_extraction.FeatureHasher` now supports returning features
+  mappings through `get_feature_names`.
+  :issue:`10470` by :user:`Mayur Kulkarni <maykulkarni>`
 
 Metrics
 
@@ -182,6 +192,11 @@ Classifiers and regressors
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegression` where when using the
+  parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
+  returning incorrect probabilities in the case of binary outcomes.
+  :issue:`9939` by :user:`Roger Westover <rwolst>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
@@ -201,6 +216,11 @@ Classifiers and regressors
   NearestNeighbors model fails when a) the distance metric used is a
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
+
+- Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
+  unicode in Python2, the ``predict_proba`` method was raising an
+  unexpected TypeError given dense inputs.
+  :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
 
 Decomposition, manifold learning and clustering
 
@@ -253,6 +273,10 @@ Decomposition, manifold learning and clustering
 
 Metrics
 
+- Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
+  when truncated `range(n_labels)` is passed as value for `labels`.
+  :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
+
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
   non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 
@@ -261,6 +285,10 @@ Metrics
   Note that this will not influence the result from :func:`metrics.roc_auc_score`
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
+
+- Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
+  :func:`mutual_info_score`.
+  :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Neighbors
 
@@ -319,3 +347,7 @@ Changes to estimator checks
 - Allow :func:`estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- Add test :func:`estimator_checks.check_methods_subset_invariance` to check
+  that estimators methods are invariant if applied to a data subset.
+  :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
