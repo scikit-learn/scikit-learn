@@ -270,9 +270,8 @@ def test_imputation_pipeline_grid_search():
         'imputer__axis': [0, 1]
     }
 
-    l = 100
-    X = sparse_random_matrix(l, l, density=0.10)
-    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
+    X = sparse_random_matrix(100, 100, density=0.10)
+    Y = sparse_random_matrix(100, 1, density=0.10).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
@@ -281,8 +280,7 @@ def test_imputation_pickle():
     # Test for pickling imputers.
     import pickle
 
-    l = 100
-    X = sparse_random_matrix(l, l, density=0.10)
+    X = sparse_random_matrix(100, 100, density=0.10)
 
     for strategy in ["mean", "median", "most_frequent"]:
         imputer = SimpleImputer(missing_values=0, strategy=strategy)
