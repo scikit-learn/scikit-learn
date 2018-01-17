@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
+from ..utils.fixes import getnnz
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
@@ -407,17 +408,48 @@ class KNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
 
-            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
-            neigh_ind = neigh_ind[:, :n_neighbors]
-            # argpartition doesn't guarantee sorted order, so we sort again
-            neigh_ind = neigh_ind[
-                sample_range, np.argsort(dist[sample_range, neigh_ind])]
+            if issparse(dist):
+                print "Dist being printed \n"
+                print dist.toarray()
+                print dist.indices
+                if np.any(getnnz(dist, axis=1) < n_neighbors - query_is_train):
+                    raise ValueError("Not enough neighbors in sparse "
+                                     "precomputed matrix to get {} "
+                                     "nearest neighbors"
+                                     .format(n_neighbors - query_is_train))
+                neigh_ind = np.full((dist.shape[0], dist.shape[1]), np.inf, dtype=np.int)
+                for i in range(0, dist.shape[0]):
+                    row = np.full(dist.shape[1], np.inf)
+                    data_col = dist.indices[dist.indptr[i]:dist.indptr[i + 1]]
+                    data_values = dist.data[dist.indptr[i]:dist.indptr[i + 1]]
+                    row[data_col] = data_values
+                    neigh_ind[i] = np.argsort(row)
+                neigh_ind = neigh_ind[:, :n_neighbors]
+                '''
+                if query_is_train and np.sum([(num in neigh_ind[num]) for num in range(neigh_ind.shape[0])]) == 0:
+                    # this is done to add self as nearest neighbor
+                    neigh_ind = np.concatenate((sample_range, neigh_ind),
+                                               axis=1)
+                    neigh_ind = neigh_ind[:, :-1]
+                '''
+            else:
+                neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+                neigh_ind = neigh_ind[:, :n_neighbors]
+                # argpartition doesn't guarantee sorted order, so we sort again
+                neigh_ind = neigh_ind[
+                    sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
-                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+                    if issparse(dist):
+                        result = np.sqrt(dist[sample_range, neigh_ind]).toarray(), neigh_ind
+                    else:
+                        result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
-                    result = dist[sample_range, neigh_ind], neigh_ind
+                    if issparse(dist):
+                        result = dist[sample_range, neigh_ind].toarray(), neigh_ind
+                    else:
+                        result = dist[sample_range, neigh_ind], neigh_ind
             else:
                 result = neigh_ind
 
@@ -458,7 +490,6 @@ class KNeighborsMixin(object):
             # In that case mask the first duplicate.
             dup_gr_nbrs = np.all(sample_mask, axis=1)
             sample_mask[:, 0][dup_gr_nbrs] = False
-
             neigh_ind = np.reshape(
                 neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
 

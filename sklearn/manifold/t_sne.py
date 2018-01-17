@@ -26,6 +26,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
 from ..utils import deprecated
+from ..utils.fixes import getnnz
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -640,6 +641,12 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.method == 'barnes_hut':
+            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
+                            dtype=[np.float32, np.float64])
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
             if isinstance(self.init, string_types) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
@@ -650,12 +657,6 @@ class TSNE(BaseEstimator):
                 raise ValueError("All distances should be positive, the "
                                  "precomputed distances given as X is not "
                                  "correct")
-        if self.method == 'barnes_hut':
-            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
