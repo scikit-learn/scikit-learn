@@ -525,7 +525,7 @@ class StratifiedKFold(_BaseKFold):
     Notes
     -----
     Train and test sizes may be different in each fold, with a difference of at
-    most n_classes.
+    most ``n_classes``.
 
     See also
     --------
