@@ -316,7 +316,7 @@ def test_identical_points():
     true_labels = np.array([0,0,1,1,2,2])
     connectivity = kneighbors_graph(X, n_neighbors=3, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
-    connectivity, n_components = _fix_connectivity(X, connectivity)
+    connectivity, n_components = _fix_connectivity(X, connectivity, 'euclidean')
 
     clustering = AgglomerativeClustering(n_clusters=3,
                                          linkage='single',
