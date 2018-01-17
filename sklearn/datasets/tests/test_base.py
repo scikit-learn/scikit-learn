@@ -21,7 +21,7 @@ from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 
 from sklearn.externals.six import b, u
-from sklearn.externals._pilutil import _have_image
+from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -162,7 +162,7 @@ def test_load_sample_image():
 
 
 def test_load_missing_sample_image_error():
-    if _have_image:
+    if pillow_installed:
         assert_raises(AttributeError, load_sample_image,
                       'blop.jpg')
     else:

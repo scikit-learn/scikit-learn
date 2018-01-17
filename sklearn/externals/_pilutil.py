@@ -1,11 +1,13 @@
 """
-Utility functions wrapping PIL functions
+A collection of image utilities using the Python Imaging Library (PIL).
 
 This is a local version of utility functions from scipy that are wrapping PIL
 functionality. These functions are deprecated in scipy 1.0.0 and will be
-removed in scipy 1.2.0. Therefore, the functionality used in sklearn is
-copied here. Origin is the file scipy/misc/pilutil.py. Functions that are
-not used in sklearn were removed.
+removed in scipy 1.2.0. Therefore, the functionality used in sklearn is copied
+here. This file is taken from scipy/misc/pilutil.py in scipy
+1.0.0. Modifications include: making this module importable if pillow is not
+installed, removal of DeprecationWarning, removal of functions scikit-learn
+does not need.
 
 Copyright (c) 2001, 2002 Enthought, Inc.
 All rights reserved.
@@ -41,25 +43,28 @@ THE POSSIBILITY OF SUCH DAMAGE.
 from __future__ import division, print_function, absolute_import
 
 
-__all__ = ['_have_image', 'bytescale', 'imread', 'imsave',
-           'fromimage', 'toimage', 'imresize']
-
 import numpy
+import tempfile
 
 from numpy import (amin, amax, ravel, asarray, arange, ones, newaxis,
                    transpose, iscomplexobj, uint8, issubdtype, array)
 
-_have_image = True
+# Modification of original scipy pilutil.py to make this module importable if
+# pillow is not installed. If pillow is not installed, functions will raise
+# ImportError when called.
 try:
     try:
         from PIL import Image
     except ImportError:
         import Image
+    pillow_installed = True
     if not hasattr(Image, 'frombytes'):
         Image.frombytes = Image.fromstring
+    
 except ImportError:
-    _have_image = False
+    pillow_installed = False
 
+__all__ = ['bytescale', 'imread', 'imsave', 'fromimage', 'toimage', 'imresize']
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     """
@@ -91,8 +96,7 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from sklearn.externals._pilutil import bytescale
+    >>> from scipy.misc import bytescale
     >>> img = np.array([[ 91.06794177,   3.39058326,  84.4221549 ],
     ...                 [ 73.88003259,  80.91433048,   4.88878881],
     ...                 [ 51.53875334,  34.45808177,  27.5873488 ]])
@@ -188,7 +192,7 @@ def imread(name, flatten=False, mode=None):
     mode 'F'.
 
     """
-    if not _have_image:
+    if not pillow_installed:
         raise ImportError("The Python Imaging Library (PIL) "
                           "is required to load data from jpeg files")
 
@@ -223,6 +227,24 @@ def imsave(name, arr, format=None):
         file name extension. If a file object was used instead of a file name,
         this parameter should always be used.
 
+    Examples
+    --------
+    Construct an array of gradient intensity values and save to file:
+
+    >>> from scipy.misc import imsave
+    >>> x = np.zeros((255, 255))
+    >>> x = np.zeros((255, 255), dtype=np.uint8)
+    >>> x[:] = np.arange(255)
+    >>> imsave('gradient.png', x)
+
+    Construct an array with three colour bands (R, G, B) and store to file:
+
+    >>> rgb = np.zeros((255, 255, 3), dtype=np.uint8)
+    >>> rgb[..., 0] = np.arange(255)
+    >>> rgb[..., 1] = 55
+    >>> rgb[..., 2] = 1 - np.arange(255)
+    >>> imsave('rgb_gradient.png', rgb)
+
     """
     im = toimage(arr, channel_axis=2)
     if format is None:
@@ -256,7 +278,7 @@ def fromimage(im, flatten=False, mode=None):
         RGB-image MxNx3 and an RGBA-image MxNx4.
 
     """
-    if not _have_image:
+    if not pillow_installed:
         raise ImportError("The Python Imaging Library (PIL) "
                           "is required to load data from jpeg files")
 
@@ -289,7 +311,6 @@ def fromimage(im, flatten=False, mode=None):
 
     a = array(im)
     return a
-
 
 _errstr = "Mode is unknown or incompatible with input array shape."
 
@@ -325,7 +346,7 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
     The numpy array must be either 2 dimensional or 3 dimensional.
 
     """
-    if not _have_image:
+    if not pillow_installed:
         raise ImportError("The Python Imaging Library (PIL) "
                           "is required to load data from jpeg files")
 
@@ -364,7 +385,7 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
             cmin = amin(ravel(data))
         if cmax is None:
             cmax = amax(ravel(data))
-        data = (data * 1.0 - cmin) * (high - low) / (cmax - cmin) + low
+        data = (data*1.0 - cmin)*(high - low)/(cmax - cmin) + low
         if mode == 'I':
             data32 = data.astype(numpy.uint32)
             image = Image.frombytes(mode, shape, data32.tostring())
@@ -457,17 +478,22 @@ def imresize(arr, size, interp='bilinear', mode=None):
     imresize : ndarray
         The resized array of image.
 
+    See Also
+    --------
+    toimage : Implicitly used to convert `arr` according to `mode`.
+    scipy.ndimage.zoom : More generic implementation that does not use PIL.
+
     """
     im = toimage(arr, mode=mode)
     ts = type(size)
     if issubdtype(ts, numpy.signedinteger):
         percent = size / 100.0
-        size = tuple((array(im.size) * percent).astype(int))
+        size = tuple((array(im.size)*percent).astype(int))
     elif issubdtype(type(size), numpy.floating):
-        size = tuple((array(im.size) * size).astype(int))
+        size = tuple((array(im.size)*size).astype(int))
     else:
         size = (size[1], size[0])
-    func = {'nearest': 0, 'lanczos': 1,
-            'bilinear': 2, 'bicubic': 3, 'cubic': 3}
+    func = {'nearest': 0, 'lanczos': 1, 'bilinear': 2, 'bicubic': 3, 'cubic': 3}
     imnew = im.resize(size, resample=func[interp])
     return fromimage(imnew)
+
