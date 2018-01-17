@@ -24,7 +24,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                          linkage_tree)
+                                          linkage_tree, _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
@@ -308,6 +308,23 @@ def test_scikit_vs_scipy():
 
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
+
+def test_identical_points():
+    # Ensure identical points are handled correctly when using mst with
+    # a sparse connectivity matrix
+    X = np.array([[0,0,0][0,0,0],[1,1,1],[1,1,1],[2,2,2],[2,2,2]])
+    true_labels = np.array([0,0,1,1,2,2])
+    connectivity = kneighbors_graph(X, n_neighbors=3, include_self=False)
+    connectivity = 0.5 * (connectivity + connectivity.T)
+    connectivity, n_components = _fix_connectivity(X, connectivity)
+
+    clustering = AgglomerativeClustering(n_clusters=3,
+                                         linkage='single',
+                                         connectivity=connectivity)
+    clustering.fit(X)
+
+    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                     true_labels), 1)
 
 
 def test_connectivity_propagation():
