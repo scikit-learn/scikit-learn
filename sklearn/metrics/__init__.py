@@ -31,6 +31,7 @@ from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
 from ._classification import precision_score
 from ._classification import recall_score
+from ._classification import top_k_accuracy_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
@@ -147,6 +148,7 @@ __all__ = [
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
+    'top_k_accuracy_score',
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
