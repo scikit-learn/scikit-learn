@@ -601,6 +601,7 @@ def test_mice_additive_matrix():
 
     imputer = MICEImputer(n_imputations=10,
                           n_burn_in=10,
-                          verbose=True).fit(X_train)
+                          verbose=True,
+                          random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_array_almost_equal(X_test_filled, X_test_est, decimal=2)
