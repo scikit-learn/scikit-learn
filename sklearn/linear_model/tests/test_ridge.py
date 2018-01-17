@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from itertools import product
+import pytest
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
@@ -11,6 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 
@@ -51,8 +53,11 @@ iris = datasets.load_iris()
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
-DENSE_FILTER = lambda X: X
-SPARSE_FILTER = lambda X: sp.csr_matrix(X)
+
+def DENSE_FILTER(X): return X
+
+
+def SPARSE_FILTER(X): return sp.csr_matrix(X)
 
 
 def test_ridge():
@@ -364,7 +369,7 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
-    func = lambda x, y: -mean_squared_error(x, y)
+    def func(x, y): return -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
@@ -704,34 +709,46 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
-def test_ridgecv_alphas():
-    # Test that no error is raised when fitting RidgeCV
-    # with integer alpha values and also
-    # check that an error is raised for negative alphas
+def test_ridgecv_alpha_conversion_to_array():
+
+    testdata_alpha = [
+        ((1, 10, 100), np.array([1.0, 10.0, 100.0])),
+        ((-1, -10, -100), np.array([-1.0, -10.0, -100.0]))
+    ]
+
+    @pytest.mark.parametrize("alpha_input, alpha_expected", testdata_alpha)
+    def test_conversion(alpha_input, alpha_expected):
+        assert(RidgeCV(alpha_input).get_params()['alphas'] == alpha_expected)
+
+
+def test_ridgecv_int_alphas():
 
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
 
     # Integers
-    alphas = (1, 10, 100)
-    ridge = RidgeCV(alphas)
+    ridge = RidgeCV(alphas=(1, 10, 100))
     ridge.fit(X, y)
+
+
+def test_ridgecv_negative_alphas():
+
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
 
     # Negative integers
-    alphas = (-1, -10, -100)
-    ridge = RidgeCV(alphas)
-    assert_raises(ValueError, ridge.fit, X, y)
-
-    # Positive alphas
-    alphas = (0.1, 1.0, 10.0)
-    ridge = RidgeCV(alphas)
-    ridge.fit(X, y)
+    ridge = RidgeCV(alphas=(-1, -10, -100))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
 
     # Negative alphas
-    alphas = (-0.1, -1.0, -10.0)
-    ridge = RidgeCV(alphas)
-    assert_raises(ValueError, ridge.fit, X, y)
+    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
