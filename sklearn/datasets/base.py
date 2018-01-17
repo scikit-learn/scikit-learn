@@ -769,7 +769,7 @@ def load_sample_images():
     """
     # Locally import _imread to prevent the whole sklearn.datasets module from
     # depending on PIL.
-    from ..externals.pilutil import _imread
+    from ..externals._pilutil import imread
 
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:
@@ -778,7 +778,7 @@ def load_sample_images():
                  for filename in os.listdir(module_path)
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
-    images = [_imread(filename) for filename in filenames]
+    images = [imread(filename) for filename in filenames]
 
     return Bunch(images=images,
                  filenames=filenames,

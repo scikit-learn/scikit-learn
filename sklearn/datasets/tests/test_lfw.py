@@ -14,7 +14,7 @@ import shutil
 import tempfile
 import numpy as np
 from sklearn.externals import six
-from sklearn.externals.pilutil import _have_image, _imsave
+from sklearn.externals._pilutil import _have_image, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
@@ -63,7 +63,7 @@ def setup_module():
             file_path = os.path.join(folder_name, name + '_%04d.jpg' % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
             try:
-                _imsave(file_path, uniface)
+                imsave(file_path, uniface)
             except ImportError:
                 raise SkipTest("PIL not installed")
 

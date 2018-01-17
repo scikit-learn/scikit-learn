@@ -21,7 +21,7 @@ from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 
 from sklearn.externals.six import b, u
-from sklearn.externals.pilutil import _have_image
+from sklearn.externals._pilutil import _have_image
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
