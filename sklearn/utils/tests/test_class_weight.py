@@ -126,6 +126,8 @@ def test_balanced_class_weight_numerical_precision(freq0, freq1):
     wfreq = w * [freq0, freq1]
     diff = np.diff(wfreq)
     assert np.abs(diff) < 1e-6  # we want to be very close to true balance
+    # sum of frequence should be close to the weighted sum
+    assert_almost_equal(np.sum(wfreq), np.sum([freq0, freq1]))
     # but in case of ambiguity, deterministically prefer original distribution
     assert diff == 0 or np.sign(diff) == np.sign(np.diff([freq0, freq1]))
 
