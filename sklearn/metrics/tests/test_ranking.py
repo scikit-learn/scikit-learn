@@ -547,7 +547,7 @@ def test_auc_score_multi_error():
     average_error_msg = ("Parameter 'average' must be one of "
                          "('macro', 'weighted') for multiclass problems.")
     assert_raise_message(ValueError, average_error_msg,
-                         roc_auc_score, y_true, y_pred, average="sample")
+                         roc_auc_score, y_true, y_pred, average="samples")
     assert_raise_message(ValueError, average_error_msg,
                          roc_auc_score, y_true, y_pred, average="micro")
     multiclass_error_msg = ("Parameter multiclass='invalid' is not "
