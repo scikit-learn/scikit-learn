@@ -282,31 +282,6 @@ def test_imputation_pipeline_grid_search():
     gs.fit(X, Y)
 
 
-def test_imputation_pickle():
-    # Test for pickling imputers.
-    import pickle
-
-    n = 100
-    X = sparse_random_matrix(n, n, density=0.10).todense()
-
-    for strategy in ["mean", "median", "most_frequent", "mice"]:
-        if strategy == 'mice':
-            imputer = MICEImputer(missing_values=0, n_imputations=1,
-                                  n_burn_in=1)
-        else:
-            imputer = Imputer(missing_values=0, strategy=strategy)
-        imputer.fit(X)
-
-        imputer_pickled = pickle.loads(pickle.dumps(imputer))
-
-        assert_array_almost_equal(
-            imputer.transform(X.copy()),
-            imputer_pickled.transform(X.copy()),
-            err_msg="Fail to transform the data after pickling "
-            "(strategy = %s)" % (strategy)
-        )
-
-
 def test_imputation_copy():
     # Test imputation with copy
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
@@ -373,26 +348,6 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
-
-
-def test_mice_pipeline_grid_search():
-    # Test imputation within a pipeline + gridsearch.
-    pipeline = Pipeline([('imputer', MICEImputer(missing_values=0,
-                                                 n_imputations=1,
-                                                 n_burn_in=1,
-                                                 random_state=0)),
-                         ('tree', tree.DecisionTreeRegressor(random_state=0))])
-
-    parameters = {
-        'imputer__initial_strategy': ["mean", "median", "most_frequent"]
-    }
-
-    n = 100
-    d = 10
-    X = sparse_random_matrix(n, d, density=0.50).toarray()
-    Y = np.random.random((n, d))
-    gs = GridSearchCV(pipeline, parameters)
-    gs.fit(X, Y)
 
 
 def test_mice_rank_one():
