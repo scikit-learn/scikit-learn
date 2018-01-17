@@ -402,21 +402,55 @@ def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
     return X
 
 
+def _generate_sparse_matrix(X_csr):
+    """
+        Generate matrices in multiple formats
+
+        For format belonging to CSR,CSC,COO
+        it generates pair belonging to int64 
+        and int32 indices type.
+
+        Parameters
+        ----------
+
+        X_csr: CSR Matrix 
+            Input matrix in CSR format
+
+        Returns
+        -------
+
+        out: iter(Matrices)
+            In format ['dok','lil','dia','bsr','csr','csc','coo','csr_64','csc_64','coo_64']
+    """
+
+    for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
+        yield X_csr.asformat(sparse_format)
+
+    for sparse_format in ['csr', 'csc']:
+        X = X_csr.asformat(sparse_format)
+        X.indices = X.indices.astype('int64')
+        X.indptr = X.indptr.astype('int64')
+        yield X
+
+    X_coo = X_csr.asformat('coo')
+    X_coo.row = X_coo.row.astype('int64')
+    X_coo.col = X_coo.col.astype('int64')
+    yield X_coo
+
+
 def check_estimator_sparse_data(name, estimator_orig):
 
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X_csr = pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
         estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
-        X = X_csr.asformat(sparse_format)
-        # catch deprecation warnings
+    for X in _generate_sparse_matrix(X_csr):
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             if name in ['Scaler', 'StandardScaler']:
                 estimator = clone(estimator).set_params(with_mean=False)
@@ -439,7 +473,7 @@ def check_estimator_sparse_data(name, estimator_orig):
                       "sparse input is not supported if this is not the case."
                       % name)
                 raise
-        except Exception:
+        except Exception as e:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
