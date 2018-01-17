@@ -60,11 +60,11 @@ try:
     pillow_installed = True
     if not hasattr(Image, 'frombytes'):
         Image.frombytes = Image.fromstring
-    
 except ImportError:
     pillow_installed = False
 
 __all__ = ['bytescale', 'imread', 'imsave', 'fromimage', 'toimage', 'imresize']
+
 
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     """
@@ -496,4 +496,3 @@ def imresize(arr, size, interp='bilinear', mode=None):
     func = {'nearest': 0, 'lanczos': 1, 'bilinear': 2, 'bicubic': 3, 'cubic': 3}
     imnew = im.resize(size, resample=func[interp])
     return fromimage(imnew)
-
