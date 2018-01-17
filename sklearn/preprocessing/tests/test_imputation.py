@@ -599,7 +599,7 @@ def test_mice_additive_matrix():
     X_test_filled = Xfilled[n:]
     X_test = X_missing[n:]
 
-    imputer = MICEImputer(n_imputations=10,
+    imputer = MICEImputer(n_imputations=25,
                           n_burn_in=10,
                           verbose=True,
                           random_state=rng).fit(X_train)
