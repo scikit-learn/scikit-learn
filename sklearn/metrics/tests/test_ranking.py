@@ -513,8 +513,10 @@ def test_multi_ovr_auc_toydata():
 
 def test_multi_auc_score_under_permutation():
     y_score = np.random.rand(100, 3)
-    y_score[:, 2] += .1
-    y_score[:, 1] -= .1
+    # Normalize the scores for each row
+    row_sums = y_score.sum(axis=1)
+    y_score = y_score / row_sums[:, np.newaxis]
+    # Generate the true labels
     y_true = np.argmax(y_score, axis=1)
     y_true[np.random.randint(len(y_score), size=20)] = np.random.randint(
         2, size=20)
