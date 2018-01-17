@@ -545,6 +545,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             y_pred = y_pred[:, labels[:n_labels]]
 
         with np.errstate(divide='ignore', invalid='ignore'):
+            class_weight = None
 
             if average == 'samples':
                 sum_axis = 1
@@ -560,11 +561,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 weights = sample_weight
             elif average == 'weighted':
                 sum_axis = 0
+                weights = sample_weight
                 if sample_weight is None:
                     class_weight = y_true.toarray().sum(axis=0)
                 else:
                     class_weight = (y_true.toarray().T).dot(sample_weight)
-                weights = sample_weight
                 if class_weight.sum() == 0:
                     return 0
             else:
@@ -622,33 +623,39 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         if len(tp_bins):
             tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
                                  minlength=len(labels))[labels]
-        else:
-            # pathological case
-            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
-
-        if len(y_pred):
-            pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                   minlength=len(labels))[labels]
-        if len(y_true):
             true_sum = np.bincount(y_true, weights=sample_weight,
                                    minlength=len(labels))[labels]
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
+                                   minlength=len(labels))[labels]
+        else:
+            tp_sum = np.zeros(len(labels))
+            if len(y_true):
+                true_sum = np.bincount(y_true, weights=sample_weight,
+                                       minlength=len(labels))[labels]
+            else:
+                true_sum = np.zeros(len(labels))
+            if len(y_pred):
+                pred_sum = np.bincount(y_pred, weights=sample_weight,
+                                       minlength=len(labels))[labels]
+            else:
+                pred_sum = np.zeros(len(labels))
 
         if average == 'micro' or average == 'binary':
             tp_sum = np.array([tp_sum.sum()])
             true_sum = np.array([true_sum.sum()])
             pred_sum = np.array([pred_sum.sum()])
-            weights = None
+            class_weight = None
         elif average == 'macro':
-            weights = None
+            class_weight = None
         elif average == 'weighted':
-            weights = true_sum
-            if weights.sum() == 0:
+            class_weight = true_sum
+            if class_weight.sum() == 0:
                 return 0
 
         score = tp_sum / (true_sum + pred_sum - tp_sum)
 
         if average is not None:
-            score = np.average(score, weights=weights)
+            score = np.average(score, weights=class_weight)
         return score
 
 
