@@ -58,8 +58,10 @@ def compute_class_weight(class_weight, classes, y):
             # Numerical imprecision issues.
             # Just in case, we will add a little eps in order to prefer
             # true class distribution.
-            order = np.argsort(freq)
-            weight[order] += np.arange(len(freq)) * 1e-8
+            jitter = np.zeros(len(freq))
+            jitter[np.argmax(freq)] = 1e-8
+            recip_freq = (len(y) + jitter) / (len(le.classes_) * freq)
+            weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
