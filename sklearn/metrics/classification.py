@@ -647,7 +647,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             class_weight = None
         elif average == 'macro':
             class_weight = None
-        elif average == 'weighted':
+        else:
+            # average='weighted'
             class_weight = true_sum
             if class_weight.sum() == 0:
                 return 0
