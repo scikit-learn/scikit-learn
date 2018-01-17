@@ -59,7 +59,7 @@ def compute_class_weight(class_weight, classes, y):
             # Just in case, we will add a little eps in order to prefer
             # true class distribution.
             jitter = np.zeros(len(freq))
-            jitter[np.argmax(freq)] = 1e-8
+            jitter[np.argsort(freq)] = np.arange(len(freq)) * 1e-8
             recip_freq = (len(y) + jitter) / (len(le.classes_) * freq)
             weight = recip_freq[le.transform(classes)]
     else:
