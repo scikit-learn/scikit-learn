@@ -978,7 +978,7 @@ def test_ovr_decision_function():
 
 
 def test_gamma_auto():
-    X, y = [[0.0], [1.0]], [0, 1]
+    X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
 
     msg = ("The default value of gamma will change from 'auto' to 'scale' in "
            "version 0.22 to account better for unscaled features. Set gamma "
@@ -986,6 +986,8 @@ def test_gamma_auto():
 
     assert_warns_message(DeprecationWarning, msg,
                          svm.SVC().fit, X, y)
+    assert_no_warnings(svm.SVC(kernel='linear').fit, X, y)
+    assert_no_warnings(svm.SVC(kernel='precomputed').fit, X, y)
 
 
 def test_gamma_scale():

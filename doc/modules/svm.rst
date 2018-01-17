@@ -534,7 +534,7 @@ test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto',
+        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
