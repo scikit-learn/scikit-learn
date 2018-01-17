@@ -4,7 +4,7 @@
 #         Balazs Kegl <balazs.kegl@gmail.com>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         Mathieu Blondel <mathieu@mblondel.org>
-#         Prokopis Gryllos <prokopis.gryllos@sentiance.com>
+#         Prokopios Gryllos <prokopis.gryllos@sentiance.com>
 #
 # License: BSD 3 clause
 
