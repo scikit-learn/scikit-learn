@@ -640,6 +640,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             else:
                 pred_sum = np.zeros(len(labels))
 
+        class_weight = None
         if average == 'micro' or average == 'binary':
             tp_sum = np.array([tp_sum.sum()])
             true_sum = np.array([true_sum.sum()])
@@ -647,8 +648,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             class_weight = None
         elif average == 'macro':
             class_weight = None
-        else:
-            # average='weighted'
+        elif average == 'weighted':
             class_weight = true_sum
             if class_weight.sum() == 0:
                 return 0
