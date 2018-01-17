@@ -767,8 +767,7 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # Locally import _imread to prevent the whole sklearn.datasets module from
-    # depending on PIL.
+    # import PIL only when needed
     from ..externals._pilutil import imread
 
     module_path = join(dirname(__file__), "images")

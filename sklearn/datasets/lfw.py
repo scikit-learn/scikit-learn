@@ -135,8 +135,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
-    # Locally import imread and imresize to prevent the whole
-    # sklearn.datasets module from depending on PIL.
+    # import PIL only when needed
     from ..externals._pilutil import imread, imresize
 
     # compute the portion of the images to load to respect the slice_ parameter
