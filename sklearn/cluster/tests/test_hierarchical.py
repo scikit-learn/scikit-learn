@@ -312,7 +312,7 @@ def test_scikit_vs_scipy():
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix
-    X = np.array([[0,0,0][0,0,0],[1,1,1],[1,1,1],[2,2,2],[2,2,2]])
+    X = np.array([[0,0,0],[0,0,0],[1,1,1],[1,1,1],[2,2,2],[2,2,2]])
     true_labels = np.array([0,0,1,1,2,2])
     connectivity = kneighbors_graph(X, n_neighbors=3, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
