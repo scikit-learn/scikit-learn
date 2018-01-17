@@ -255,7 +255,7 @@ def test_imputation_most_frequent():
 
     # scipy.stats.mode, used in SimpleImputer, doesn't return the first most
     # frequent as promised in the doc but the lowest most frequent. When this
-    # test will fail after an update of scipy, SimpleImputer will need to be 
+    # test will fail after an update of scipy, SimpleImputer will need to be
     # updated to be consistent with the new (correct) behaviour
     _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
 
@@ -311,7 +311,8 @@ def test_imputation_copy():
 
     # copy=True, sparse csr => copy
     X = X_orig.copy()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean", copy=True)
+    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
+                            copy=True)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
@@ -326,7 +327,7 @@ def test_imputation_copy():
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                      copy=False, axis=1)
+                            copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_array_almost_equal(X.data, Xt.data)
@@ -334,7 +335,7 @@ def test_imputation_copy():
     # copy=False, sparse csc, axis=0 => no copy
     X = X_orig.copy().tocsc()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                      copy=False, axis=0)
+                            copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_array_almost_equal(X.data, Xt.data)
@@ -342,7 +343,7 @@ def test_imputation_copy():
     # copy=False, sparse csr, axis=0 => copy
     X = X_orig.copy()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                      copy=False, axis=0)
+                            copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
@@ -350,7 +351,7 @@ def test_imputation_copy():
     # copy=False, sparse csc, axis=1 => copy
     X = X_orig.copy().tocsc()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                      copy=False, axis=1)
+                            copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
@@ -358,7 +359,7 @@ def test_imputation_copy():
     # copy=False, sparse csr, axis=1, missing_values=0 => copy
     X = X_orig.copy()
     imputer = SimpleImputer(missing_values=0, strategy="mean",
-                      copy=False, axis=1)
+                            copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     assert_false(sparse.issparse(Xt))
 
