@@ -45,7 +45,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.impute import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 
 
@@ -1061,7 +1061,7 @@ def test_cross_val_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     cval.cross_val_score(p, X, y, cv=5)
@@ -1081,7 +1081,7 @@ def test_permutation_test_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     cval.permutation_test_score(p, X, y, cv=5)

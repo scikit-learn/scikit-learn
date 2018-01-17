@@ -63,7 +63,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.impute import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
@@ -1291,12 +1291,12 @@ def test_predict_proba_disabled():
 
 
 def test_grid_search_allows_nans():
-    # Test GridSearchCV with Imputer
+    # Test GridSearchCV with SimpleImputer
     X = np.arange(20, dtype=np.float64).reshape(5, -1)
     X[2, :] = np.nan
     y = [0, 0, 1, 1, 1]
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)

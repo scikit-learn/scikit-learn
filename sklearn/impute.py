@@ -20,7 +20,7 @@ zip = six.moves.zip
 map = six.moves.map
 
 __all__ = [
-    'Imputer',
+    'SimpleImputer',
 ]
 
 
@@ -60,10 +60,10 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-class Imputer(BaseEstimator, TransformerMixin):
+class SimpleImputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
-    Read more in the :ref:`User Guide <imputation>`.
+    Read more in the :ref:`User Guide <impute>`.
 
     Parameters
     ----------
@@ -133,7 +133,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : Imputer
+        self : SimpleImputer
         """
         # Check parameters
         allowed_strategies = ["mean", "median", "most_frequent"]

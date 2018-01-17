@@ -52,7 +52,7 @@ with warnings.catch_warnings():
                                      ParameterGrid, ParameterSampler)
     from sklearn.cross_validation import KFold, StratifiedKFold
 
-from sklearn.impute import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 
 
@@ -699,7 +699,7 @@ def test_grid_search_allows_nans():
     X[2, :] = np.nan
     y = [0, 0, 1, 1, 1]
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)

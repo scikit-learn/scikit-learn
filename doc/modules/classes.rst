@@ -626,7 +626,7 @@ Kernels:
    :toctree: generated/
    :template: class.rst
 
-   impute.Imputer
+   impute.SimpleImputer
 
 .. _kernel_approximation_ref:
 
