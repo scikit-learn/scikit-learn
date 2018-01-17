@@ -120,6 +120,12 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+Feature Extraction
+
+- :class:`feature_extraction.FeatureHasher` now supports returning features
+  mappings through `get_feature_names`.
+  :issue:`10470` by :user:`Mayur Kulkarni <maykulkarni>`
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -150,6 +156,7 @@ Miscellaneous
 - Add ``filename`` attribute to datasets that have a CSV file.
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
+
 
 Bug fixes
 .........
