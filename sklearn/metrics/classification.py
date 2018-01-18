@@ -503,11 +503,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                     return 1.
                 else:
                     raise ValueError("pos_label=%r is not a valid label: "
-                                    "%r" % (pos_label, present_labels))
+                                     "%r" % (pos_label, present_labels))
             labels = [pos_label]
         else:
             raise ValueError("Target is %s but average='binary'. Please "
-                            "choose another average setting." % y_type)
+                             "choose another average setting." % y_type)
     elif pos_label not in (None, 1):
         warnings.warn("Note that pos_label (set to %r) is ignored when "
                       "average != 'binary' (got %r). You may use "
@@ -585,7 +585,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             score[pred_or_true == 0.0] = 1.0
 
             if average is not None:
-                if normalize == False:
+                if normalize is False:
                     if class_weight is not None:
                         score = np.dot(score, class_weight)
                     else:
@@ -608,7 +608,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         indices = np.where(np.in1d(y_true, labels, assume_unique=False,
                                    invert=False)
                            + np.in1d(y_pred, labels, assume_unique=False,
-                                     invert=False) == True)[0]
+                                     invert=False))[0]
 
         y_true = y_true[indices]
         y_pred = y_pred[indices]
@@ -1307,16 +1307,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         if len(tp_bins):
             tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
-                              minlength=len(labels))
+                                 minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
             pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                minlength=len(labels))
+                                   minlength=len(labels))
         if len(y_true):
             true_sum = np.bincount(y_true, weights=sample_weight,
-                                minlength=len(labels))
+                                   minlength=len(labels))
 
         # Retain only selected labels
         indices = np.searchsorted(sorted_labels, labels[:n_labels])

@@ -966,11 +966,11 @@ def test_jaccard_similarity_score():
                          y_pred, average='samples', normalize=False)
 
     assert_warns_message(UserWarning,
-                        "Note that pos_label (set to 3) is ignored when "
-                        "average != 'binary' (got 'micro'). You may use "
-                        "labels=[pos_label] to specify a single positive "
-                        "class.", jaccard_similarity_score, y_true, y_pred,
-                        average='micro', pos_label=3)
+                         "Note that pos_label (set to 3) is ignored when "
+                         "average != 'binary' (got 'micro'). You may use "
+                         "labels=[pos_label] to specify a single positive "
+                         "class.", jaccard_similarity_score, y_true, y_pred,
+                         average='micro', pos_label=3)
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -996,7 +996,7 @@ def test_multilabel_jaccard_similarity_score():
                                                  average='macro'), 2. / 3)
     # average='micro'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='micro'), 3. / 5)
+                                                 average='micro'), 3. / 5)
     # average='samples' (default)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 12)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
@@ -1007,9 +1007,9 @@ def test_multilabel_jaccard_similarity_score():
                                                  labels=[1, 2]), 1. / 2)
     # average='samples', normalize=False
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='samples',
-                                                normalize=False),
-                       7. / 6)
+                                                 average='samples',
+                                                 normalize=False),
+                        7. / 6)
     # average=None
     assert_array_equal(jaccard_similarity_score(y_true, y_pred, average=None),
                        np.array([1. / 2, 1., 1. / 2]))
@@ -1033,8 +1033,8 @@ def test_multiclass_jaccard_similarity_score():
     y_pred_bin = lb.transform(y_pred)
     multi_jaccard_similarity_score = partial(jaccard_similarity_score, y_true,
                                              y_pred)
-    bin_jaccard_similarity_score = partial(jaccard_similarity_score, y_true_bin
-                                           , y_pred_bin)
+    bin_jaccard_similarity_score = partial(jaccard_similarity_score,
+                                           y_true_bin, y_pred_bin)
     multi_labels_list = [['ant', 'bird'], ['ant', 'cat'], ['cat', 'bird'],
                          ['ant'], ['bird'], ['cat'], None]
     bin_labels_list = [[0, 1], [0, 2], [2, 1], [0], [1], [2], None]
