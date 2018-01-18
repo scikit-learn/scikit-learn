@@ -444,7 +444,8 @@ def single_linkage_label(L):
     if L[:, :2].min() < 0 or L[:, :2].max() >= 2 * L.shape[0] + 1:
         raise ValueError("Input MST array is not a validly formatted MST array")
 
-    if not np.all(np.sort(L[:, 2]) == L[:, 2]):
+    is_sorted = lambda x: np.all(x[:-1] <= x[1:])
+    if not is_sorted(L[:, 2]):
         raise ValueError("Input MST array must be sorted by weight")
 
     return _single_linkage_label(L)
