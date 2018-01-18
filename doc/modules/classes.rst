@@ -1395,6 +1395,28 @@ Low-level methods
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
 
+:mod:`sklearn.plot`: Plotting functions
+=======================================
+
+.. automodule:: sklearn.plot
+   :no-members:
+   :no-inherited-members:
+
+This module is experimental. Use at your own risk.
+Use of this module requires the matplotlib library,
+version 1.5 or later.
+
+.. currentmodule:: sklearn.plot
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   plot_heatmap
+   plot_confusion_matrix
+   plot_gridsearch_results
+
+
 Recently deprecated
 ===================
 
