@@ -373,12 +373,14 @@ cdef class UnionFind(object):
 
 @cython.boundscheck(False)
 @cython.nonecheck(False)
-cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
+cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     np.ndarray[DTYPE_t, ndim=2] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
-    efficiently.
+    efficiently. This is the private version of the function that assumes that
+    ``L`` has been properly validated. See ``single_linkage_label`` for the
+    user facing version of this function.
 
     Parameters
     ----------
@@ -386,9 +388,6 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
         The linkage array or MST where each row specifies two samples
         to be merged and a distance or weight at which the merge occurs. This
          array is assumed to be sorted by the distance/weight.
-
-        Invalid arrays will potentially cause segfaults. Please validate the
-        content of arrays prior to passing them to this function.
 
     Returns
     -------
@@ -422,3 +421,30 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
         U.union(left_cluster, right_cluster)
 
     return result_arr
+
+
+def single_linkage_label(L):
+    """
+    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    This is done by using a Union find structure to keep track of merges
+    efficiently.
+
+    Parameters
+    ----------
+    L: array of shape (n_samples - 1, 3)
+        The linkage array or MST where each row specifies two samples
+        to be merged and a distance or weight at which the merge occurs. This
+         array is assumed to be sorted by the distance/weight.
+
+    Returns
+    -------
+    A tree in the format used by scipy.cluster.hierarchy.
+    """
+    # Validate L
+    if L[:, :2].min() < 0 or L[:, :2].max() >= 2 * L.shape[0] + 1:
+        raise ValueError("Input MST array is not a validly formatted MST array")
+
+    if not np.all(np.sort(L[:, 2]) == L[:, 2]):
+        raise ValueError("Input MST array must be sorted by weight")
+
+    return _single_linkage_label(L)

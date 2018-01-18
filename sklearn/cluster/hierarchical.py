@@ -108,7 +108,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     mst_array = mst_array[np.argsort(mst_array.T[2]), :]
 
     # Convert edge list into standard hierarchical clustering format
-    single_linkage_tree = _hierarchical.single_linkage_label(mst_array)
+    single_linkage_tree = _hierarchical._single_linkage_label(mst_array)
     children_ = single_linkage_tree[:, :2].astype(np.int)
 
     # Compute parents
