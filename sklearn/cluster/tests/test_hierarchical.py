@@ -309,6 +309,7 @@ def test_scikit_vs_scipy():
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
+
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix
