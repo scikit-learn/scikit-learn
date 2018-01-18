@@ -272,7 +272,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean or str {'allow-nan'}, (default=True)
+    force_all_finite : boolean or 'allow-nan', (default=True)
         Whether to raise an error on np.inf and np.nan in X. The possibilities
         are:
 
@@ -386,7 +386,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean or str {'allow-nan'}, (default=True)
+    force_all_finite : boolean or 'allow-nan', (default=True)
         Whether to raise an error on np.inf and np.nan in X. The possibilities
         are:
 
@@ -596,7 +596,7 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean or str {'allow-nan'}, (default=True)
+    force_all_finite : boolean or 'allow-nan', (default=True)
         Whether to raise an error on np.inf and np.nan in X. This parameter
         does not influence whether y can have np.inf or np.nan values.
         The possibilities are:
