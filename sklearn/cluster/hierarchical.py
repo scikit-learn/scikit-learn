@@ -90,7 +90,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
-    epsilon_value = connectivity.data[connectivity.data > 0].min() * 1E-8
+    epsilon_value = np.nextafter(0, 1, dtype=connectivity.data.dtype)
     connectivity.data[connectivity.data == 0] = epsilon_value
 
     # Use scipy.sparse.csgraph to generate a minimum spanning tree
@@ -98,6 +98,10 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 
     # Convert the graph to scipy.cluster.hierarchy array format
     mst = mst.tocoo()
+
+    # Undo the epsilon values
+    mst.data[mst.data == epsilon_value] = 0
+
     mst_array = np.vstack([mst.row, mst.col, mst.data]).T
 
     # Sort edges of the min_spanning_tree by weight
@@ -806,7 +810,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                                        n_clusters=n_clusters,
                                        **kwargs)
         # Cut the tree
-        # if compute_full_tree or self.linkage == 'single':
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
                                    self.n_leaves_)
