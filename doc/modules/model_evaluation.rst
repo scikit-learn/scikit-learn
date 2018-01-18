@@ -70,6 +70,7 @@ Scoring                           Function                                      
 'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
 'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'jaccard' etc.                    :func:`metric.jaccard_similarity_score`           suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
@@ -667,28 +668,32 @@ with a ground truth label set :math:`y_i` and predicted label set
 
     J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
 
-In binary and multiclass classification, the Jaccard similarity coefficient
-score is equal to the classification accuracy.
+:func:`jaccard_similarity_score` works like :func:`precision_recall_fscore_support`
+as a naively set-wise measure applying only to binary and multilabel targets.
 
-::
+In the multilabel case with binary label indicators: ::
 
   >>> import numpy as np
   >>> from sklearn.metrics import jaccard_similarity_score
+  >>> y_true = np.array([[0, 1], [1, 1]])
+  >>> y_pred = np.ones((2, 2))
+  >>> jaccard_similarity_score(y_true, y_pred)
+  0.75
+  >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
+  1.5
+
+For which multiclass problems are binarized.
+
+::
+
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]
   >>> jaccard_similarity_score(y_true, y_pred, average='macro')
   0.5
   >>> jaccard_similarity_score(y_true, y_pred, average='micro')
   0.33...
-  >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
-  0.5
   >>> jaccard_similarity_score(y_true, y_pred, average=None)
   array([ 1.,  0.,  0.,  1.])
-
-In the multilabel case with binary label indicators: ::
-
-  >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
-  0.75
 
 .. _precision_recall_f_measure_metrics:
 
