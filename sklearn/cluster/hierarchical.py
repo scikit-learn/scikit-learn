@@ -126,6 +126,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
         return children_, n_components, n_samples, parent, distances
     return children_, n_components, n_samples, parent
 
+
 ###############################################################################
 # Hierarchical tree building functions
 
