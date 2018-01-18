@@ -3,7 +3,6 @@
 
 import numbers
 import warnings
-from collections import OrderedDict
 
 import numpy as np
 import scipy.sparse as sp
@@ -178,15 +177,13 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         return X
 
     def get_feature_names(self):
-        """Returns OrderedDict of the feature mappings.
+        """Returns a list of the feature mappings.
 
         Returns
         -------
-        feature_to_index_map : OrderedDict of the feature mappings.
-            The key is the index of the column in Featurehasher,
-            the value is a list of features that were mapped to the
-            column. Furthermore, it is sorted by the keys, that is
-            the indices of the features.
+        feature_names : list of the feature mappings. For features that were
+            not active in training are denoted by empty lists. Those that
+            contain multiple n_grams are contained within a single list.
         """
         if not self.save_mappings:
             raise ValueError("FeatureHasher was instantiated with"
@@ -197,4 +194,17 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
                 or self.feature_to_index_map_ is None:
             raise ValueError("FeatureHasher has not transformed yet. Please"
                              " call .fit_transform() first.")
-        return OrderedDict(sorted(self.feature_to_index_map_.items()))
+        reversed_dict = self._reverse_dict(self.feature_to_index_map_)
+        # return the results as a list for consistency with
+        # DictVectorizer.get_feature_names
+        feature_names = [reversed_dict.setdefault(i, [])
+                         for i in range(self.n_features)]
+        return feature_names
+
+    @staticmethod
+    def _reverse_dict(old_dict):
+        new_dict = {}
+        for key, value in old_dict.items():
+            # keys are received as bytes on Python 3, hence the decode
+            new_dict.setdefault(value, []).append(key.decode("utf-8"))
+        return new_dict

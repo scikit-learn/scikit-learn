@@ -173,12 +173,11 @@ def test_hasher_negative():
 
 @pytest.mark.parametrize("X, expected_output, input_type", [
     ([{'dog': 1, 'cat': 3}, {'elephant': 9, 'bird': 32}],
-        OrderedDict([(2, ['elephant']), (3, ['dog']), (4, ['cat', 'bird'])]),
+        [[], [], ['elephant'], ['dog'], ['cat', 'bird']],
         'dict'),
 
     (["a", "b", "c", "x", "y", "z"],
-        OrderedDict([(0, ['a', 'z']), (1, ['b']), (2, ['c']), (3, ['x']),
-                    (4, ['y'])]),
+        [['a', 'z'], ['b'], ['c'], ['x'], ['y']],
         'string')
 ])
 def test_hasher_order(X, expected_output, input_type):
@@ -186,7 +185,9 @@ def test_hasher_order(X, expected_output, input_type):
                            input_type=input_type)
     hasher.fit_transform(X)
     actual = hasher.get_feature_names()
-    assert expected_output == actual
+    # orderings in the list are not always the same, hence
+    # create a set for matching ['x', 'y'] with ['y', 'x']
+    assert all(set(x) == set(y) for x, y in zip(expected_output, actual))
 
 
 def test_hasher_get_feature_without_transform():

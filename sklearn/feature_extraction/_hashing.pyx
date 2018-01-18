@@ -18,7 +18,7 @@ np.import_array()
 @cython.boundscheck(False)
 @cython.cdivision(True)
 def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1,
-              save_mappings=False):
+              bint save_mappings=0):
     """Guts of FeatureHasher.transform.
 
     Returns
@@ -38,7 +38,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1,
     cdef array.array indptr
     indices = array.array("i")
     if save_mappings:
-        feature_to_index_map = dict()
+        feature_to_index_map = {}
     if sys.version_info >= (3, 3):
         indices_array_dtype = "q"
         indices_np_dtype = np.longlong
@@ -79,7 +79,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1,
             bucket = abs(h) % n_features
             indices[len(indices) - 1] = bucket
             if save_mappings:
-                _save_feature_mappings(feature_to_index_map, bucket, f)
+                feature_to_index_map[f] = bucket
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
@@ -112,15 +112,3 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1,
 
     return (indices_a, indptr_a, values[:size], feature_to_index_map)
 
-
-def _save_feature_mappings(into_dict, key, value):
-    """This function emulates a defaultdict with a list
-    as default value. It is used to save the mapping of
-    feature names and their indices in the value array."""
-
-    if key in into_dict:
-        into_dict[key].append(value)
-    else:
-        new_list = list()
-        new_list.append(value)
-        into_dict[key] = new_list
