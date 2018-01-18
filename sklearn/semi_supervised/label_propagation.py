@@ -30,6 +30,7 @@ Kernel:
 
 Examples
 --------
+>>> import numpy as np
 >>> from sklearn import datasets
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
@@ -356,6 +357,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelPropagation
     >>> label_prop_model = LabelPropagation()
@@ -473,6 +475,7 @@ class LabelSpreading(BaseLabelPropagation):
 
     Examples
     --------
+    >>> import nump as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelSpreading
     >>> label_prop_model = LabelSpreading()
