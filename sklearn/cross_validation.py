@@ -524,8 +524,8 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    All the folds have size trunc(n_samples / n_folds), the last one has the
-    complementary.
+    Train and test sizes may be different in each fold, with a difference of at
+    most ``n_classes``.
 
     See also
     --------
