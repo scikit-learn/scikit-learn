@@ -1479,7 +1479,7 @@ def check_classifiers_classes_helper(X, y, name, classifier_orig):
               (classifier, classes, classifier.classes_))
 
 
-def updateLabels(name, y, y_names):
+def choose_check_classifiers_labels(name, y, y_names):
     if name in ["LabelPropagation", "LabelSpreading"]:
         # TODO some complication with -1 label
         return y
@@ -1509,12 +1509,12 @@ def check_classifiers_classes(name, classifier_orig):
 
     for (X, y, y_names) in [(X_m, y_m, y_names_m), (X_b, y_b, y_names_b)]:
         for y_names_i in [y_names, y_names.astype('O')]:
-            y_ = updateLabels(name, y, y_names_i)
+            y_ = choose_check_classifiers_labels(name, y, y_names_i)
             check_classifiers_classes_helper(X, y_, name, classifier_orig)
 
     labels_b = [-1, 1]
     y_names_b = np.array(labels_b)[y_b]
-    y_b = updateLabels(name, y_b, y_names_b)
+    y_b = choose_check_classifiers_labels(name, y_b, y_names_b)
     check_classifiers_classes_helper(X_b, y_b, name, classifier_orig)
 
 
