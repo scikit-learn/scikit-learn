@@ -483,7 +483,7 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
     del diag_mask
 
     if affinity == 'precomputed':
-        distances = X[connectivity.row, connectivity.col]
+        distances = X[connectivity.row, connectivity.col].astype('float64')
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
