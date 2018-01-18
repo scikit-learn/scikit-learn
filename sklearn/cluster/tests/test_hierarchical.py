@@ -323,13 +323,14 @@ def test_identical_points():
                                                    connectivity,
                                                    'euclidean')
 
-    clustering = AgglomerativeClustering(n_clusters=3,
-                                         linkage='single',
-                                         connectivity=connectivity)
-    clustering.fit(X)
+    for linkage in ('single', 'average', 'average', 'ward'):
+        clustering = AgglomerativeClustering(n_clusters=3,
+                                             linkage=linkage,
+                                             connectivity=connectivity)
+        clustering.fit(X)
 
-    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
-                                                     true_labels), 1)
+        assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                         true_labels), 1)
 
 
 def test_connectivity_propagation():
