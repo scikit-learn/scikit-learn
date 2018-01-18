@@ -4,11 +4,10 @@
 from __future__ import division
 
 import numpy as np
-from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.validation import (check_is_fitted, FLOAT_DTYPES)
+from ..utils.validation import check_is_fitted
 
 POSSIBLE_MODES = ['mirror', 'constant', 'nearest', 'wrap', 'interp']
 
@@ -26,22 +25,24 @@ def rectangular_smoother(x, size=3, mode='constant', cval=0.0):
         raise ValueError("Size must be odd.")
 
     whisker = int((size - 1) / 2)
-    print(whisker)
     x = check_array(x, ensure_min_samples=whisker, warn_on_dtype=True,
                     estimator='The rectangular_smoother function.')
 
-    array_filler_up, array_filler_down = populate_fillers(x, mode, whisker, cval)
+    array_filler_up, array_filler_down = populate_fillers(x, mode, whisker,
+                                                          cval)
 
-    supported_input = np.concatenate((array_filler_up, x, array_filler_down), axis=0)
+    supported_input = np.concatenate((array_filler_up, x, array_filler_down),
+                                     axis=0)
     if mode == 'interp':
         result = np.zeros((x.shape[0] - size + 1, x.shape[1]))
-        print(result)
     else:
         result = np.zeros(x.shape)
 
     result[0, :] = sum_samples(supported_input, 0, size)
     for row in range(1, result.shape[0]):
-        result[row, :] = result[row - 1, :] - supported_input[row - 1, :] + supported_input[row + size - 1, :]
+        result[row, :] = result[row - 1, :] \
+                         - supported_input[row - 1, :] \
+                         + supported_input[row + size - 1, :]
     result = np.divide(result, size)
     return result
 
@@ -60,8 +61,9 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         self.cval = cval
 
     def fit(self, x, y=None):
-
-        x = check_array(x, ensure_min_samples=int((self.size - 1) / 2), warn_on_dtype=True, estimator=self)
+        x = check_array(x,
+                        ensure_min_samples=int((self.size - 1) / 2),
+                        warn_on_dtype=True, estimator=self)
         self._feature_indices = x.shape[1]
         return self
 
@@ -74,7 +76,8 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
                              " Expected %d, got %d."
                              % (self._feature_indices, x.shape[1]))
 
-        return rectangular_smoother(x, size=self.size, mode=self.mode, cval=self.cval)
+        return rectangular_smoother(x, size=self.size, mode=self.mode,
+                                    cval=self.cval)
 
 
 def sum_samples(x, start, end):
@@ -87,7 +90,8 @@ def sum_samples(x, start, end):
 def populate_fillers(x, mode, whisker, cval=None):
 
     if x.shape[0] < whisker:
-        raise ValueError("Too few sample with respect to the chosen window size")
+        raise ValueError("Too few sample with respect to the chosen window "
+                         "size")
 
     if mode == 'interp':
         filler = np.zeros((0, x.shape[1]))
@@ -115,4 +119,3 @@ def populate_fillers(x, mode, whisker, cval=None):
         filler_up[:, :] = x[-whisker:, :]
         filler_down[:, :] = x[:whisker, :]
         return filler_up, filler_down
-
