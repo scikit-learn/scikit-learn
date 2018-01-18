@@ -389,6 +389,8 @@ class PCA(_BasePCA):
             n_components = self.n_components
 
         # Handle svd_solver
+        if n_components == 'mle':
+            self.svd_solver = 'full'
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
             # Small problem or n_components == 'mle', just call full PCA
