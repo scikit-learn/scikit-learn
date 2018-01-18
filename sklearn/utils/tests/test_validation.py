@@ -285,6 +285,22 @@ def test_check_array():
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
 
+    # deprecation warning if string-like array with dtype="numeric"
+    X_str = [['a', 'b'], ['c', 'd']]
+    assert_warns(DeprecationWarning, check_array, X_str, "numeric")
+    assert_warns(
+        DeprecationWarning,
+        check_array, np.array(X_str, dtype='U1'), "numeric")
+
+    # deprecation warning if byte-like array with dtype="numeric"
+    X_byte = [[b'a', b'b'], [b'c', b'd']]
+    assert_warns(
+        DeprecationWarning,
+        check_array, np.array(X_byte, dtype='S1'), "numeric")
+    assert_warns(
+        DeprecationWarning,
+        check_array, np.array(X_byte, dtype='V1'), "numeric")
+
 
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object

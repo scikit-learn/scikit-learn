@@ -516,6 +516,13 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
+        # in the future np.flexible dtypes will be handled like object dtypes
+        if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
+            warnings.warn(
+                "In the future, array with dtype {} will be handled as object,"
+                " and will be attempted to be cast to numeric.".format(
+                    array.dtype), DeprecationWarning)
+
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
