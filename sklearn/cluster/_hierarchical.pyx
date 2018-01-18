@@ -358,6 +358,7 @@ cdef class UnionFind(object):
 
         return
 
+    @cython.boundscheck(False)
     @cython.nonecheck(False)
     cdef ITYPE_t fast_find(self, ITYPE_t n):
         cdef ITYPE_t p
@@ -385,6 +386,9 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
         The linkage array or MST where each row specifies two samples
         to be merged and a distance or weight at which the merge occurs. This
          array is assumed to be sorted by the distance/weight.
+
+        Invalid arrays will potentially cause segfaults. Please validate the
+        content of arrays prior to passing them to this function.
 
     Returns
     -------
