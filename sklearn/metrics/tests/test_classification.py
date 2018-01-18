@@ -1026,7 +1026,7 @@ def test_multilabel_jaccard_similarity_score():
                                                  average='weighted'), 7. / 8)
     # normalize error
     msg1 = ("'normalize' is only meaningful with `average='samples'`, got "
-           "`average='macro'`.")
+            "`average='macro'`.")
     assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
                          y_pred, average='macro', normalize=False)
     msg2 = 'All labels must be in [0, n, labels). Got 4 > 2'
