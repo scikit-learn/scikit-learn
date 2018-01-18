@@ -940,10 +940,13 @@ def test_multilabel_hamming_loss():
 
 
 def test_jaccard_similarity_score():
-    y_true = np.array([0, 0])
-    y_pred = np.array([0, 0])
+    y_true = np.array([0, 1, 0, 1, 1])
+    y_pred = np.array([0, 1, 0, 1, 1])
     assert_equal(jaccard_similarity_score(y_true, y_pred, average='binary',
-                                          pos_label=-1), 1.)
+                                          pos_label=0), 1.)
+    assert_raise_message(ValueError, "pos_label=2 is not a valid label: "
+                         "array([0, 1])", jaccard_similarity_score, y_true,
+                         y_pred, average='binary', pos_label=2)
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
@@ -1021,6 +1024,17 @@ def test_multilabel_jaccard_similarity_score():
     # average='weighted'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='weighted'), 7. / 8)
+    # normalize error
+    msg1 = ("'normalize' is only meaningful with `average='samples'`, got "
+           "`average='macro'`.")
+    assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
+                         y_pred, average='macro', normalize=False)
+    msg2 = 'All labels must be in [0, n, labels). Got 4 > 2'
+    assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
+                         y_pred, labels=[4])
+    msg3 = 'All labels must be in [0, n, labels). Got -1 < 0'
+    assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
+                         y_pred, labels=[-1])
 
 
 def test_multiclass_jaccard_similarity_score():
@@ -1046,6 +1060,11 @@ def test_multiclass_jaccard_similarity_score():
                                                                labels=m_label),
                                 bin_jaccard_similarity_score(average=average,
                                                              labels=b_label))
+
+    y_true = np.array([])
+    y_pred = np.array([])
+    assert_equal(jaccard_similarity_score(y_true, y_pred, average='weighted'),
+                 0.)
 
 
 def test_average_binary_jaccard_similarity_score():

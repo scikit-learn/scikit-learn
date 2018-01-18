@@ -430,10 +430,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             meaningful for multilabel classification).
 
     normalize : bool, optional (default=True)
-        If ``False``, return an array of Jaccard similarity coefficient for
-        each samples over the sample set. Otherwise, return the average of
-        Jaccard similarity coefficient. 'normalize' is only to be specified in
-        case `average='samples'`.
+        If ``False``, return the sum of the Jaccard similarity coefficient
+        over the sample set. Otherwise, return the average of Jaccard
+        similarity coefficient. ``normalize`` is only meaningful when
+        ``average='samples'``.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -640,24 +640,25 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             else:
                 pred_sum = np.zeros(len(labels))
 
-        class_weight = None
-        if average == 'micro' or average == 'binary':
-            tp_sum = np.array([tp_sum.sum()])
-            true_sum = np.array([true_sum.sum()])
-            pred_sum = np.array([pred_sum.sum()])
+        with np.errstate(divide='ignore', invalid='ignore'):
             class_weight = None
-        elif average == 'macro':
-            class_weight = None
-        elif average == 'weighted':
-            class_weight = true_sum
-            if class_weight.sum() == 0:
-                return 0
+            if average == 'micro' or average == 'binary':
+                tp_sum = np.array([tp_sum.sum()])
+                true_sum = np.array([true_sum.sum()])
+                pred_sum = np.array([pred_sum.sum()])
+                class_weight = None
+            elif average == 'macro':
+                class_weight = None
+            elif average == 'weighted':
+                class_weight = true_sum
+                if class_weight.sum() == 0:
+                    return 0
 
-        score = tp_sum / (true_sum + pred_sum - tp_sum)
+            score = tp_sum / (true_sum + pred_sum - tp_sum)
 
-        if average is not None:
-            score = np.average(score, weights=class_weight)
-        return score
+            if average is not None:
+                score = np.average(score, weights=class_weight)
+            return score
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
@@ -1267,7 +1268,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # Select labels:
         if not np.all(labels == present_labels):
             if np.max(labels) > np.max(present_labels):
-                raise ValueError('All labels must be in [0, n labels). '
+                raise ValueError('All labels must be in [0, n, labels). '
                                  'Got %d > %d' %
                                  (np.max(labels), np.max(present_labels)))
             if np.min(labels) < 0:

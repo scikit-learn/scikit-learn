@@ -1004,25 +1004,19 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
-    if isinstance(weighted_score, np.ndarray):
-        assert(not np.allclose(weighted_score, unweighted_score))
-    else:
-        assert_not_equal(
-            unweighted_score, weighted_score,
-            msg="Unweighted and weighted scores are unexpectedly "
-                "equal (%r) for %s" % (weighted_score, name))
+    assert_not_equal(
+        unweighted_score, weighted_score,
+        msg="Unweighted and weighted scores are unexpectedly "
+            "equal (%f) for %s" % (weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
                                  sample_weight=sample_weight.tolist())
-    if isinstance(weighted_score, np.ndarray):
-        assert(np.allclose(weighted_score, weighted_score_list))
-    else:
-        assert_almost_equal(
-            weighted_score, weighted_score_list,
-            err_msg=("Weighted scores for array and list "
-                     "sample_weight input are not equal (%f != %f) for %s") % (
-                         weighted_score, weighted_score_list, name))
+    assert_almost_equal(
+        weighted_score, weighted_score_list,
+        err_msg=("Weighted scores for array and list "
+                 "sample_weight input are not equal (%f != %f) for %s") % (
+                    weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(
