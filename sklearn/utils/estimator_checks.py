@@ -1443,41 +1443,79 @@ def check_supervised_y_2d(name, estimator_orig):
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@ignore_warnings
+def check_classifiers_classes_helper(X, y, name, classifier_orig):
+    classes = np.unique(y)
+    classifier = clone(classifier_orig)
+    if name == 'BernoulliNB':
+        X = X > X.mean()
+    set_random_state(classifier)
+    # fit
+    classifier.fit(X, y)
+
+    y_pred = classifier.predict(X)
+
+    if hasattr(classifier, "decision_function"):
+        decision = classifier.decision_function(X)
+        n_samples, n_features = X.shape
+        if len(classes) == 2:
+            assert_equal(decision.shape, (n_samples, ))
+            dec_pred = (decision.ravel() > 0).astype(np.int)
+            assert_array_equal(classifier.classes_[dec_pred], y_pred)
+        elif (len(classes) == 3 and
+              # 1on1 of LibSVM works differently
+              not isinstance(classifier, BaseLibSVM)):
+            assert_equal(decision.shape, (n_samples, len(classes)))
+            decision_y = np.argmax(decision, axis=1).astype(int)
+            assert_array_equal(classifier.classes_[decision_y], y_pred)
+
+    # training set performance
+    if name != "ComplementNB":
+        # This is a pathological data set for ComplementNB.
+        assert_array_equal(np.unique(y), np.unique(y_pred))
+    if np.any(classifier.classes_ != classes):
+        print("Unexpected classes_ attribute for %r: "
+              "expected %s, got %s" %
+              (classifier, classes, classifier.classes_))
+
+
+def updateLabels(name, y, y_names):
+    if name in ["LabelPropagation", "LabelSpreading"]:
+        # TODO some complication with -1 label
+        return y
+
+    return y_names
+
+
 def check_classifiers_classes(name, classifier_orig):
-    X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
-    X, y = shuffle(X, y, random_state=7)
-    X = StandardScaler().fit_transform(X)
+    X_m, y_m = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
+    X_m, y_m = shuffle(X_m, y_m, random_state=7)
+    X_m = StandardScaler().fit_transform(X_m)
     # We need to make sure that we have non negative data, for things
     # like NMF
-    X -= X.min() - .1
-    X = pairwise_estimator_convert_X(X, classifier_orig)
-    y_names = np.array(["one", "two", "three"])[y]
+    X_m -= X_m.min() - .1
 
-    for y_names in [y_names, y_names.astype('O')]:
-        if name in ["LabelPropagation", "LabelSpreading"]:
-            # TODO some complication with -1 label
-            y_ = y
-        else:
-            y_ = y_names
+    X_b = X_m[y_m != 2]
+    y_b = y_m[y_m != 2]
 
-        classes = np.unique(y_)
-        classifier = clone(classifier_orig)
-        if name == 'BernoulliNB':
-            X = X > X.mean()
-        set_random_state(classifier)
-        # fit
-        classifier.fit(X, y_)
+    X_m = pairwise_estimator_convert_X(X_m, classifier_orig)
+    X_b = pairwise_estimator_convert_X(X_b, classifier_orig)
 
-        y_pred = classifier.predict(X)
-        # training set performance
-        if name != "ComplementNB":
-            # This is a pathological data set for ComplementNB.
-            assert_array_equal(np.unique(y_), np.unique(y_pred))
-        if np.any(classifier.classes_ != classes):
-            print("Unexpected classes_ attribute for %r: "
-                  "expected %s, got %s" %
-                  (classifier, classes, classifier.classes_))
+    labels_m = ["one", "two", "three"]
+    labels_b = ["one", "two"]
+
+    y_names_m = np.array(labels_m)[y_m]
+    y_names_b = np.array(labels_b)[y_b]
+
+    for (X, y, y_names) in [(X_m, y_m, y_names_m), (X_b, y_b, y_names_b)]:
+        for y_names_i in [y_names, y_names.astype('O')]:
+            y_ = updateLabels(name, y, y_names_i)
+            check_classifiers_classes_helper(X, y_, name, classifier_orig)
+
+    labels_b = [-1, 1]
+    y_names_b = np.array(labels_b)[y_b]
+    y_b = updateLabels(name, y_b, y_names_b)
+    check_classifiers_classes_helper(X_b, y_b, name, classifier_orig)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
