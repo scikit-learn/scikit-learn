@@ -197,7 +197,7 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
         """
-        check_is_fitted(self, 'mode')
+        check_is_fitted(self, '_feature_indices')
 
         x = check_array(x)
         if x.shape[1] != self._feature_indices:
