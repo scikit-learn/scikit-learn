@@ -1004,17 +1004,23 @@ def test_vectorizer_string_object_as_input():
     np.float32,
     np.float64
 ])
-def test_tfidf_preserved_type(dtype):
+def test_tfidf_transformer_type(dtype):
     # create made up data with parameterized dtype
     X = rand(10, 20000, dtype=dtype, random_state=42)
     X_trans = TfidfTransformer().fit_transform(X)
     # check if the required data types match
     assert X.dtype == X_trans.dtype
 
-    # another case with string
+
+@pytest.mark.parametrize("dtype", [
+    np.float32,
+    np.float64,
+])
+def test_tfidf_vectorizer_type(dtype):
+    X = np.array(["numpy", "scipy", "sklearn"])
     vectorizer = TfidfVectorizer(dtype=dtype)
-    X_idf_str = vectorizer.fit_transform(["I love DotA2"])
-    assert dtype == X_idf_str.dtype
+    X_idf = vectorizer.fit_transform(X)
+    assert dtype == X_idf.dtype
 
 
 def test_tfidf_fallback():
