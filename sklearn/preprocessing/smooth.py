@@ -18,6 +18,63 @@ __all__ = [
 
 
 def rectangular_smoother(x, size=3, mode='constant', cval=0.0):
+    """Smooth a features set using the "rectangular" or "unweighted
+    sliding-average smooth" method.
+
+    Parameters
+    ----------
+    X : {array-like}, shape [n_samples, n_features]
+        The data to smooth per feature.
+
+    size : any odd number, optional, default 3
+        The window size the algorithm use to determine the new value of a point.
+
+    mode : 'mirror', 'constant', 'nearest', 'wrap', 'interp', optional,
+            default constant
+        This determines the type of extension to use for the padded signal to
+        which the filter is applied. When mode is ‘constant’, the padding value
+        is given by cval. When the ‘interp’ mode is selected, no extension is
+        used.
+        Details on the mode options:
+            ‘mirror’:
+                Repeats the values at the edges in reverse order. The value
+                closest to the edge is not included.
+            ‘nearest’:
+                The extension contains the nearest input value.
+            ‘constant’:
+                The extension contains the value given by the cval argument.
+            ‘wrap’:
+                The extension contains the values from the other end of the
+                array.
+        E.g.
+            mode       |   Ext   |         Input          |   Ext
+            -----------+---------+------------------------+---------
+            'mirror'   | 4  3  2 | 1  2  3  4  5  6  7  8 | 7  6  5
+            'nearest'  | 1  1  1 | 1  2  3  4  5  6  7  8 | 8  8  8
+            'constant' | 0  0  0 | 1  2  3  4  5  6  7  8 | 0  0  0
+            'wrap'     | 6  7  8 | 1  2  3  4  5  6  7  8 | 1  2  3
+
+    cval : any number, optional, default 0.0
+        Only used by mode constant. Define the constant value appendend to
+        array during the evaluation.
+
+    Returns
+    -------
+    X : array-like, shape [n_samples, n_features]
+        Smoothed input X.
+
+    See also
+    --------
+    RectangularSmoother: Performs normalization using the ``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    """
     if mode not in POSSIBLE_MODES:
         raise ValueError("Given mode is not supported.")
 
@@ -48,7 +105,58 @@ def rectangular_smoother(x, size=3, mode='constant', cval=0.0):
 
 
 class RectangularSmoother(BaseEstimator, TransformerMixin):
+    """Smooth a features set using the "rectangular" or "unweighted
+    sliding-average smooth" method.
 
+    To smooth a data set is to create an approximating function that attempts
+    to capture important patterns in the data, while leaving out noise or
+    other fine-scale structures/rapid phenomena.
+
+    Parameters
+    ----------
+    size : any odd number, optional, default 3
+        The window size the algorithm use to determine the new value of a point.
+
+    mode : 'mirror', 'constant', 'nearest', 'wrap', 'interp', optional,
+            default constant
+        This determines the type of extension to use for the padded signal to
+        which the filter is applied. When mode is ‘constant’, the padding value
+        is given by cval. When the ‘interp’ mode is selected, no extension is
+        used.
+
+        Details on the mode options:
+            ‘mirror’:
+                Repeats the values at the edges in reverse order. The value
+                closest to the edge is not included.
+            ‘nearest’:
+                The extension contains the nearest input value.
+            ‘constant’:
+                The extension contains the value given by the cval argument.
+            ‘wrap’:
+                The extension contains the values from the other end of the
+                array.
+        E.g.
+            mode       |   Ext   |         Input          |   Ext
+            -----------+---------+------------------------+---------
+            'mirror'   | 4  3  2 | 1  2  3  4  5  6  7  8 | 7  6  5
+            'nearest'  | 1  1  1 | 1  2  3  4  5  6  7  8 | 8  8  8
+            'constant' | 0  0  0 | 1  2  3  4  5  6  7  8 | 0  0  0
+            'wrap'     | 6  7  8 | 1  2  3  4  5  6  7  8 | 1  2  3
+
+    cval : any number, optional, default 0.0
+        Only used by mode constant. Define the constant value appendend to
+        array during the evaluation.
+
+    Notes
+    -----
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
+
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    """
     def __init__(self, size=3, mode='constant', cval=0.0):
         if mode not in POSSIBLE_MODES:
             raise ValueError("Given mode is not supported.")
@@ -61,6 +169,15 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         self.cval = cval
 
     def fit(self, x, y=None):
+        """Do nothing and return the estimator unchanged.
+
+        This method is just there to implement the usual API and hence
+        work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like
+        """
         x = check_array(x,
                         ensure_min_samples=int((self.size - 1) / 2),
                         warn_on_dtype=True, estimator=self)
@@ -68,6 +185,18 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, x):
+        """Smooth each feature with the parameters defined in the constructor.
+        If the mode 'interp' is used the returned array is 'size' elements
+        shorter than the original one.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data to smooth, row by row.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
+        """
         check_is_fitted(self, 'mode')
 
         x = check_array(x)
@@ -81,14 +210,80 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
 
 
 def sum_samples(x, start, end):
+    """This method evaluate the sum of the rows from 'start' index to the 'end'
+    index of the passed array 'x'.
+
+    Parameters
+    ----------
+    X : array-like, shape [n_samples, n_features]
+        Bidimensional array
+
+    start : int
+        Starting index
+
+    end : int
+        Ending index
+
+    Returns
+    -------
+    X : array-like, shape [1, n_features]
+        The sum column by column of the selected indexes.
+    """
     result = np.zeros(x.shape[1])
     for row in x[start:end, :]:
         result += row
     return result
 
 
-def populate_fillers(x, mode, whisker, cval=None):
+def populate_fillers(x, mode, whisker, cval=0.0):
+    """This method evaluate the sum of the rows from 'start' index to the 'end'
+    index of the passed array 'x'.
 
+    Parameters
+    ----------
+     X : {array-like}, shape [n_samples, n_features]
+        The data to smooth per feature.
+
+    mode : 'mirror', 'constant', 'nearest', 'wrap', 'interp'
+        This determines the type of extension to use for the padded signal to
+        which the filter is applied. When mode is ‘constant’, the padding value
+        is given by cval. When the ‘interp’ mode is selected, no extension is
+        used.
+        Details on the mode options:
+            ‘mirror’:
+                Repeats the values at the edges in reverse order. The value
+                closest to the edge is not included.
+            ‘nearest’:
+                The extension contains the nearest input value.
+            ‘constant’:
+                The extension contains the value given by the cval argument.
+            ‘wrap’:
+                The extension contains the values from the other end of the
+                array.
+        E.g.
+            mode       |   Ext   |         Input          |   Ext
+            -----------+---------+------------------------+---------
+            'mirror'   | 4  3  2 | 1  2  3  4  5  6  7  8 | 7  6  5
+            'nearest'  | 1  1  1 | 1  2  3  4  5  6  7  8 | 8  8  8
+            'constant' | 0  0  0 | 1  2  3  4  5  6  7  8 | 0  0  0
+            'wrap'     | 6  7  8 | 1  2  3  4  5  6  7  8 | 1  2  3
+
+    whisker : int
+        It's the length of the generated extensions. In general is defined as
+        half the size of the current filter ( int((size - 1) / 2) ).
+
+    cval : any number, optional, default 0.0
+        Only used by mode constant. Define the constant value appendend to
+        array during the evaluation.
+
+    Returns
+    -------
+    filler_up : array-like, shape [whisker, n_features]
+        The upper extension of the given array.
+
+    filler_down : array-like, shape [whisker, n_features]
+        The lower extension of the given array.
+    """
     if x.shape[0] < whisker:
         raise ValueError("Too few sample with respect to the chosen window "
                          "size")
