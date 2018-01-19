@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_consistent_docs
 from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
@@ -1628,3 +1629,19 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+
+def test_docstring():
+    # Test for consistency among docstring of different metrics
+    assert_consistent_docs([precision_recall_fscore_support, precision_score,
+                            recall_score, f1_score, fbeta_score],
+                           include_returns=False,
+                           exclude_params=['labels', 'average', 'beta'])
+
+    error_str = ("Parameter 'labels' of 'precision_score' has inconsistent "
+                 "description with that of 'precision_recall_fscore_support'.")
+    assert_raise_message(AssertionError, error_str, assert_consistent_docs,
+                         [precision_recall_fscore_support, precision_score,
+                          recall_score, f1_score, fbeta_score],
+                         include_returns=False,
+                         exclude_params=['average', 'beta'])

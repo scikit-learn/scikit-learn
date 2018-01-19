@@ -914,7 +914,7 @@ def _check_matching_docstrings(doc_list, type_dict, type_name, object_name,
 
     If a matching key is not found in ``type_dict``, the docstring element is
     added in it with it's name as the key and value being a dictionary of it's
-    type_definition and description.
+    type definition and description.
 
     """
     for name, type_definition, description in doc_list:
@@ -960,31 +960,33 @@ def assert_consistent_docs(objects,
 
     Parameters
     ----------
-    objects : list
-        The list of objects that may be either ``NumpyDocString`` instances or
-        objects (classes, functions, descriptors) with docstrings that can be
-        parsed as numpydoc.
+    objects : collection
+        The collection (list, set etc.) of objects that may be either
+        ``NumpyDocString`` instances or objects (classes, functions,
+        descriptors) with docstrings that can be parsed by numpydoc.
 
-    include_params : list, False or True (default)
-        List of Parameters to be included. True, for including all parameters.
+    include_params : collection, False or True (default)
+        Collection of Parameters to be included. True, for including all
+        parameters.
 
-    exclude_params : list or None (default)
-        List of Parameters to be excluded. Set only if ``include_params`` is
-        True.
+    exclude_params : collection or None (default)
+        Collection of Parameters to be excluded. Set only if
+        ``include_params`` is True.
 
-    include_attribs : list, False or True (default)
-        List of Attributes to be included. True, for including all attributes.
+    include_attribs : collection, False or True (default)
+        Collection of Attributes to be included. True, for including all
+        attributes.
 
-    exclude_attribs : list or None (default)
-        List of Attributes to be excluded. Set only if ``include_attribs`` is
-        True.
+    exclude_attribs : collection or None (default)
+        Collection of Attributes to be excluded. Set only if
+        ``include_attribs`` is True.
 
-    include_returns : list, False or True (default)
-        List of Returns to be included. True, for including all returns.
+    include_returns : collection, False or True (default)
+        Collection of Returns to be included. True, for including all returns.
 
-    exclude_returns : list or None (default)
-        List of Returns to be excluded. Set only if ``include_returns`` is
-        True.
+    exclude_returns : collection or None (default)
+        Collection of Returns to be excluded. Set only if ``include_returns``
+        is True.
 
     Notes
     -----
@@ -1002,20 +1004,21 @@ def assert_consistent_docs(objects,
     ... # doctest: +SKIP
     >>> assert_consistent_docs([mean_absolute_error, mean_squared_error],
     ... include_params=['y_true', 'y_pred', 'sample_weight'],
-    ... exclude_attribs='*', exclude_returns='*')  # doctest: +SKIP
+    ... include_attribs=False, include_returns=False)  # doctest: +SKIP
     >>> assert_consistent_docs([median_absolute_error, mean_squared_error],
-    ... include_params='*', exclude_attribs='*', exclude_returns='*')
-    ... # doctest: +SKIP
+    ... include_params=True, include_attribs=False, include_returns=False)
+    ... # doctest: +NORMALIZE_WHITESPACE, +SKIP
     Traceback (most recent call last):
         ...
-    AssertionError: Parameter y_true of mean_squared_error has inconsistency.
+    AssertionError: Parameter 'y_true' of 'mean_squared_error' has inconsistent
+    type definition with that of 'median_absolute_error'.
 
     """
-    if ((isinstance(exclude_params, list) and include_params is not True) or
-       (isinstance(exclude_attribs, list) and include_attribs is not True) or
-       (isinstance(exclude_returns, list) and include_returns is not True)):
+    if ((exclude_params and include_params is not True) or
+       (exclude_attribs and include_attribs is not True) or
+       (exclude_returns and include_returns is not True)):
         raise TypeError("exclude_ argument can be set only if include_"
-                        "argument is True.")
+                        " argument is True.")
 
     from numpydoc import docscrape
 
@@ -1024,10 +1027,11 @@ def assert_consistent_docs(objects,
     attrib_dict = {}
     return_dict = {}
 
+    i = 1  # sequence of object in the collection
     for u in objects:
         if isinstance(u, docscrape.NumpyDocString):
             doc = u
-            name = 'NumpyDocString'
+            name = 'Object '+str(i)
         elif (inspect.isdatadescriptor(u) or inspect.isfunction(u) or
               inspect.isclass(u)):
             doc = docscrape.NumpyDocString(inspect.getdoc(u))
@@ -1035,6 +1039,7 @@ def assert_consistent_docs(objects,
         else:
             raise TypeError("Object passed not a Function, Class, "
                             "Descriptor or NumpyDocString.")
+        i = i + 1
 
         # check for inconsistency in Parameters
         if include_params is not False:
