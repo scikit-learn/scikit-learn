@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-from collections import OrderedDict
-
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
