@@ -124,6 +124,17 @@ def test_logistic_regression_warnings():
     assert_no_warnings(clf_no_warnings.fit, iris.data, target)
 
 
+def test_logistic_regression_auto():
+    # Test logistic regression with auto mode
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+    clf_solver_l1 = LogisticRegression(penalty='l1', solver='auto')
+    clf_solver_l2 = LogisticRegression(penalty='l2', solver='auto')
+
+    clf_solver_l1.fit(iris.data, target)
+    clf_solver_l2.fir(iris.data, target)
+
+
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
