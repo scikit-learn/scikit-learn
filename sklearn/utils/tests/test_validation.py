@@ -289,8 +289,11 @@ def test_check_array():
     X_str = [['a', 'b'], ['c', 'd']]
     assert_warns_message(
         DeprecationWarning,
+        lambda message:  # numpy may convert to dtype U1 or S1 so check both
         "arrays with dtype {} will be handled as arrays with dtype object"
-        .format(np.dtype('U1')),
+        .format(np.dtype('U1')) in message or
+        "arrays with dtype {} will be handled as arrays with dtype object"
+        .format(np.dtype('S1')) in message,
         check_array, X_str, "numeric")
     assert_warns_message(
         DeprecationWarning,
