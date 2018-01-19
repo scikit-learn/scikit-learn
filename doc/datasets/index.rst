@@ -290,10 +290,6 @@ refer to:
 * `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
   `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_ 
   for loading images and videos to numpy arrays
-* `scipy.misc.imread <https://docs.scipy.org/doc/scipy/reference/generated/scipy.
-  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
-  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
-  data from various image file formats
 * `scipy.io.wavfile.read 
   <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ 
   for reading WAV files into a numpy array
