@@ -20,8 +20,11 @@ clean: clean-ctags
 	rm -rf dist
 
 in: inplace # just a shortcut
-inplace:
+inplace: prox_wrappers
 	$(PYTHON) setup.py build_ext -i
+
+prox_wrappers:
+	make -C sklearn/linear_model
 
 test-code: in
 	$(PYTEST) --showlocals -v sklearn
