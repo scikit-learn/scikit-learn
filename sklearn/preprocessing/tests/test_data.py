@@ -7,10 +7,12 @@ from __future__ import division
 
 import warnings
 import re
+
 import numpy as np
 import numpy.linalg as la
-from scipy import sparse
+from scipy import sparse, stats
 from distutils.version import LooseVersion
+import pytest
 
 from sklearn.utils import gen_batches
 
@@ -54,7 +56,9 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.exceptions import DataConversionWarning
+from sklearn.preprocessing.data import PowerTransformer
+from sklearn.preprocessing.data import power_transform
+from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
@@ -151,6 +155,28 @@ def test_polynomial_feature_names():
         [u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
+
+
+@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
+                         [(1, True, False, int),
+                          (2, True, False, int),
+                          (2, True, False, np.float32),
+                          (2, True, False, np.float64),
+                          (3, False, False, np.float64),
+                          (3, False, True, np.float64)])
+def test_polynomial_features_sparse_X(deg, include_bias, interaction_only,
+                                      dtype):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_sparse = sparse.csr_matrix(X)
+
+    est = PolynomialFeatures(deg, include_bias=include_bias)
+    Xt_sparse = est.fit_transform(X_sparse.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype))
+
+    assert isinstance(Xt_sparse, sparse.csc_matrix)
+    assert Xt_sparse.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
 
 
 def test_standard_scaler_1d():
@@ -2224,3 +2250,124 @@ def test_quantile_transform_valid_axis():
 
     assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
                         ". Got axis=2", quantile_transform, X.T, axis=2)
+
+
+def test_power_transformer_notfitted():
+    pt = PowerTransformer(method='box-cox')
+    X = np.abs(X_1col)
+    assert_raises(NotFittedError, pt.transform, X)
+    assert_raises(NotFittedError, pt.inverse_transform, X)
+
+
+def test_power_transformer_1d():
+    X = np.abs(X_1col)
+
+    for standardize in [True, False]:
+        pt = PowerTransformer(method='box-cox', standardize=standardize)
+
+        X_trans = pt.fit_transform(X)
+        X_trans_func = power_transform(X, standardize=standardize)
+
+        X_expected, lambda_expected = stats.boxcox(X.flatten())
+
+        if standardize:
+            X_expected = scale(X_expected)
+
+        assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
+        assert_almost_equal(X_expected.reshape(-1, 1), X_trans_func)
+
+        assert_almost_equal(X, pt.inverse_transform(X_trans))
+        assert_almost_equal(lambda_expected, pt.lambdas_[0])
+
+        assert len(pt.lambdas_) == X.shape[1]
+        assert isinstance(pt.lambdas_, np.ndarray)
+
+
+def test_power_transformer_2d():
+    X = np.abs(X_2d)
+
+    for standardize in [True, False]:
+        pt = PowerTransformer(method='box-cox', standardize=standardize)
+
+        X_trans_class = pt.fit_transform(X)
+        X_trans_func = power_transform(X, standardize=standardize)
+
+        for X_trans in [X_trans_class, X_trans_func]:
+            for j in range(X_trans.shape[1]):
+                X_expected, lmbda = stats.boxcox(X[:, j].flatten())
+
+                if standardize:
+                    X_expected = scale(X_expected)
+
+                assert_almost_equal(X_trans[:, j], X_expected)
+                assert_almost_equal(lmbda, pt.lambdas_[j])
+
+            # Test inverse transformation
+            X_inv = pt.inverse_transform(X_trans)
+            assert_array_almost_equal(X_inv, X)
+
+        assert len(pt.lambdas_) == X.shape[1]
+        assert isinstance(pt.lambdas_, np.ndarray)
+
+
+def test_power_transformer_strictly_positive_exception():
+    pt = PowerTransformer(method='box-cox')
+    pt.fit(np.abs(X_2d))
+
+    # Exceptions should be raised for negative arrays and zero arrays
+    X_with_negatives = X_2d
+    not_positive_message = 'strictly positive'
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.transform, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.fit, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         power_transform, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.transform, np.zeros(X_2d.shape))
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.fit, np.zeros(X_2d.shape))
+
+    assert_raise_message(ValueError, not_positive_message,
+                         power_transform, np.zeros(X_2d.shape))
+
+
+def test_power_transformer_shape_exception():
+    pt = PowerTransformer(method='box-cox')
+    X = np.abs(X_2d)
+    pt.fit(X)
+
+    # Exceptions should be raised for arrays with different num_columns
+    # than during fitting
+    wrong_shape_message = 'Input data has a different number of features'
+
+    assert_raise_message(ValueError, wrong_shape_message,
+                         pt.transform, X[:, 0:1])
+
+    assert_raise_message(ValueError, wrong_shape_message,
+                         pt.inverse_transform, X[:, 0:1])
+
+
+def test_power_transformer_method_exception():
+    pt = PowerTransformer(method='monty-python')
+    X = np.abs(X_2d)
+
+    # An exception should be raised if PowerTransformer.method isn't valid
+    bad_method_message = "'method' must be one of"
+    assert_raise_message(ValueError, bad_method_message,
+                         pt.fit, X)
+
+
+def test_power_transformer_lambda_zero():
+    pt = PowerTransformer(method='box-cox', standardize=False)
+    X = np.abs(X_2d)[:, 0:1]
+
+    # Test the lambda = 0 case
+    pt.lambdas_ = np.array([0])
+    X_trans = pt.transform(X)
+    assert_array_almost_equal(pt.inverse_transform(X_trans), X)

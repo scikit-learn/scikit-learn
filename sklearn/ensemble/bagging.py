@@ -242,7 +242,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -275,7 +274,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         random_state = check_random_state(self.random_state)
 
