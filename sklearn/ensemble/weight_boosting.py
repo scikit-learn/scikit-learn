@@ -308,10 +308,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
+    base_estimator : object, optional (default=see below)
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper `classes_`
         and `n_classes_` attributes.
+        Default value: DecisionTreeClassifier(max_depth=1)
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
