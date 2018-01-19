@@ -407,20 +407,20 @@ def _generate_sparse_matrix(X_csr):
         Generate matrices in multiple formats
 
         For format belonging to CSR,CSC,COO
-        it generates pair belonging to int64 
+        it generates pair belonging to int64
         and int32 indices type.
 
         Parameters
         ----------
 
-        X_csr: CSR Matrix 
+        X_csr: CSR Matrix
             Input matrix in CSR format
 
         Returns
         -------
 
         out: iter(Matrices)
-            In format ['dok','lil','dia','bsr','csr','csc','coo','csr_64','csc_64','coo_64']
+            In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo', 'csr_64', 'csc_64', 'coo_64']
     """
 
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
@@ -443,7 +443,7 @@ def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
-    X_csr = pairwise_estimator_convert_X(X, estimator_orig)
+    X = pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
     # catch deprecation warnings
@@ -1606,7 +1606,7 @@ def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_class_weight_balanced_linear_classifier(name, Classifier):
-    """Test class weights with non-contiguous class labels."""
+    """Test class weights with non - contiguous class labels."""
     # this is run on classes, not instances, though this should be changed
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -1675,7 +1675,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_no_fit_attributes_set_in_init(name, Estimator):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
+    """Check that Estimator.__init__ doesn't set trailing - _ attributes."""
     # this check works on classes, not instances
     estimator = Estimator()
     for attr in dir(estimator):
