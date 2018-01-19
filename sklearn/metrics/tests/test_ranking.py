@@ -542,7 +542,9 @@ def test_auc_score_multi_error():
     # to compute multiclass AUC for parameters where an output
     # is not defined.
     rng = check_random_state(404)
-    y_pred = rng.rand(10)
+    y_pred = rng.rand(10, 3)
+    row_sums = y_pred.sum(axis=1)
+    y_pred = y_pred / row_sums[:, np.newaxis]
     y_true = rng.randint(0, 3, size=10)
     average_error_msg = ("Parameter 'average' must be one of "
                          "('macro', 'weighted') for multiclass problems.")
