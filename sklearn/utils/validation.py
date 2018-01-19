@@ -519,8 +519,9 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         # in the future np.flexible dtypes will be handled like object dtypes
         if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
             warnings.warn(
-                "In the future, array with dtype {} will be handled as object,"
-                " and will be attempted to be cast to numeric.".format(
+                "Beginning in version 0.22, arrays with dtype {} will be "
+                "handled as arrays with dtype object, and will be attempted "
+                "to be cast to numeric.".format(
                     array.dtype), DeprecationWarning)
 
         # make sure we actually converted to numeric:
