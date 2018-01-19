@@ -287,18 +287,24 @@ def test_check_array():
 
     # deprecation warning if string-like array with dtype="numeric"
     X_str = [['a', 'b'], ['c', 'd']]
-    assert_warns(DeprecationWarning, check_array, X_str, "numeric")
-    assert_warns(
+    assert_warns_message(
         DeprecationWarning,
+        "array with dtype {} will be handled as object".format(np.dtype('U1')),
+        check_array, X_str, "numeric")
+    assert_warns_message(
+        DeprecationWarning,
+        "array with dtype {} will be handled as object".format(np.dtype('U1')),
         check_array, np.array(X_str, dtype='U1'), "numeric")
 
     # deprecation warning if byte-like array with dtype="numeric"
     X_byte = [[b'a', b'b'], [b'c', b'd']]
-    assert_warns(
+    assert_warns_message(
         DeprecationWarning,
+        "array with dtype {} will be handled as object".format(np.dtype('S1')),
         check_array, np.array(X_byte, dtype='S1'), "numeric")
-    assert_warns(
+    assert_warns_message(
         DeprecationWarning,
+        "array with dtype {} will be handled as object".format(np.dtype('V1')),
         check_array, np.array(X_byte, dtype='V1'), "numeric")
 
 
