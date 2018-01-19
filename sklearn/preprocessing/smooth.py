@@ -1,6 +1,6 @@
 # Authors: Luigi De Bianchi <luigi.debianchi@gmail.com>
 # License: BSD 3 clause
-
+# -*- coding: utf-8 -*-
 from __future__ import division
 
 import numpy as np
@@ -32,18 +32,18 @@ def rectangular_smoother(x, size=3, mode='constant', cval=0.0):
     mode : 'mirror', 'constant', 'nearest', 'wrap', 'interp', optional,
             default constant
         This determines the type of extension to use for the padded signal to
-        which the filter is applied. When mode is ‘constant’, the padding value
-        is given by cval. When the ‘interp’ mode is selected, no extension is
+        which the filter is applied. When mode is 'constant', the padding value
+        is given by cval. When the 'interp' mode is selected, no extension is
         used.
         Details on the mode options:
-            ‘mirror’:
+            'mirror':
                 Repeats the values at the edges in reverse order. The value
                 closest to the edge is not included.
-            ‘nearest’:
+            'nearest':
                 The extension contains the nearest input value.
-            ‘constant’:
+            'constant':
                 The extension contains the value given by the cval argument.
-            ‘wrap’:
+            'wrap':
                 The extension contains the values from the other end of the
                 array.
         E.g.
@@ -120,19 +120,19 @@ class RectangularSmoother(BaseEstimator, TransformerMixin):
     mode : 'mirror', 'constant', 'nearest', 'wrap', 'interp', optional,
             default constant
         This determines the type of extension to use for the padded signal to
-        which the filter is applied. When mode is ‘constant’, the padding value
-        is given by cval. When the ‘interp’ mode is selected, no extension is
+        which the filter is applied. When mode is 'constant', the padding value
+        is given by cval. When the 'interp' mode is selected, no extension is
         used.
 
         Details on the mode options:
-            ‘mirror’:
+            'mirror':
                 Repeats the values at the edges in reverse order. The value
                 closest to the edge is not included.
-            ‘nearest’:
+            'nearest':
                 The extension contains the nearest input value.
-            ‘constant’:
+            'constant':
                 The extension contains the value given by the cval argument.
-            ‘wrap’:
+            'wrap':
                 The extension contains the values from the other end of the
                 array.
         E.g.
@@ -246,18 +246,18 @@ def populate_fillers(x, mode, whisker, cval=0.0):
 
     mode : 'mirror', 'constant', 'nearest', 'wrap', 'interp'
         This determines the type of extension to use for the padded signal to
-        which the filter is applied. When mode is ‘constant’, the padding value
-        is given by cval. When the ‘interp’ mode is selected, no extension is
+        which the filter is applied. When mode is 'constant', the padding value
+        is given by cval. When the 'interp' mode is selected, no extension is
         used.
         Details on the mode options:
-            ‘mirror’:
+            'mirror':
                 Repeats the values at the edges in reverse order. The value
                 closest to the edge is not included.
-            ‘nearest’:
+            'nearest':
                 The extension contains the nearest input value.
-            ‘constant’:
+            'constant':
                 The extension contains the value given by the cval argument.
-            ‘wrap’:
+            'wrap':
                 The extension contains the values from the other end of the
                 array.
         E.g.
