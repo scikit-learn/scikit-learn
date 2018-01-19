@@ -1,6 +1,6 @@
 # Author: Elvis Dohmatob <gmdopp@gmail.com>
 # License: BSD
-from types cimport floating, complexing
+from cython cimport floating
 
 cpdef enum:
     # N.B.: Negative values indicate constraints, postive values indicate penalties
@@ -26,7 +26,4 @@ cpdef enum:
 # := argmin_z .5 * ||z - w / ajj||_2^2 + (reg / ajj) * pen(z)
 # where ajj > 0 is a constant. ajj = 0 corresponds armin_z pen(z),  while
 # ajj = 1 corresponds to classical definition of the prox.
-ctypedef void (*PROX)(int n,
-                      complexing *w,
-                      floating reg,
-                      floating ajj) nogil except *
+ctypedef void (*PROX)(int n, floating *w, floating reg, floating ajj) nogil

@@ -1,10 +1,12 @@
 # Author: Elvis Dohmatob <gmdopp@gmail.com>
 # License: BSD
 
-from types cimport floating, complexing
+from cython cimport floating
 
-"""Projection unto l1 ball for real and complex data.
+"""Projection unto l1 ball.
 """
-cdef void proj_l1(int n, complexing *w, floating reg,
-                  floating ajj) nogil except *
+cdef void enet_projection(unsigned int m, floating *v, floating *out, floating radius,
+                          floating l1_ratio) nogil
+cdef void proj_l1(int n, floating *w, floating reg,
+                  floating ajj) nogil
 

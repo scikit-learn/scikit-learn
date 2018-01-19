@@ -1,10 +1,10 @@
 # Author: Elvis Dohmatob <gmdopp@gmail.com>
 # License: BSD
 
-from types cimport floating, complexing
+from cython cimport floating
 
-"""In-place L21 Group-Lasso thresholding for real and complex data.
+"""In-place L21 Group-Lasso thresholding.
 """
-cdef void prox_l2(int n_tasks, complexing *Wj, floating reg,
-                  floating ajj) nogil except *
+cdef void prox_l2(int n_tasks, floating *Wj, floating reg,
+                  floating ajj) nogil
 

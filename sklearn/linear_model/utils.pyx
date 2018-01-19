@@ -1,39 +1,16 @@
-from types cimport floating, complexing
-from blas_api cimport fused_dotc
-
-
-cdef complexing real_part(complexing x) nogil:
-    if complexing is float or complexing is double:
-        return x
-    elif complexing is complex:
-        return creal(x)
-    else:
-        return crealf(x)
+from cython cimport floating
+from blas_api cimport fused_dot
 
 
 cdef inline floating fmax(floating x, floating y) nogil:
+    """Max of two real numbers"""
     if x < y:
         return y
     else:
         return x
 
 
-cdef double abs_max(int n, complexing *a, int inca) nogil:
-    """b = np.max(np.abs(a))"""
-    if complexing is float or complexing is double:
-        abs = fabs
-    else:
-        abs = cabs
-    cdef int i
-    cdef double m = abs(a[0])
-    for i in range(1, n):
-        i *= inca
-        m = fmax(m, abs(a[i]))
-    return m
-
-
-cdef floating real_max(int n, floating *a, int inca) nogil:
-    """np.max(a.real)"""
+cdef floating arr_max(int n, floating *a, int inca) nogil:
     cdef int i
     cdef floating m = a[0]
     for i in range(1, n):
@@ -42,17 +19,23 @@ cdef floating real_max(int n, floating *a, int inca) nogil:
     return m
 
 
-cdef double diff_abs_max(int n, complexing *a, int inca, complexing *b,
-                         int incb) nogil:
-    """c = np.max(np.abs(a - b))"""
-    if complexing is float or complexing is double:
-        abs = fabs
-    else:
-        abs = cabs
+cdef floating abs_max(int n, floating *a, int inca) nogil:
+    """b = np.max(np.abs(a))"""
     cdef int i
-    cdef double m = abs(a[0] - b[0])
+    cdef floating m = fabs(a[0])
     for i in range(1, n):
-        m = fmax(m, abs(a[i * inca] - b[i * incb]))
+        i *= inca
+        m = fmax(m, fabs(a[i]))
+    return m
+
+
+cdef floating diff_abs_max(int n, floating *a, int inca, floating *b,
+                           int incb) nogil:
+    """c = np.max(np.abs(a - b))"""
+    cdef int i
+    cdef double m = fabs(a[0] - b[0])
+    for i in range(1, n):
+        m = fmax(m, fabs(a[i * inca] - b[i * incb]))
     return m
 
 
@@ -64,6 +47,15 @@ cdef inline void relu(int n, floating *x, int incx) nogil:
             x[i] = 0.
 
 
-cdef complexing fused_nrm2_squared(int N, complexing *X, int incX) nogil:
+cdef floating fused_nrm2_squared(int N, floating *X, int incX) nogil:
     """Computes squared L2 norm of X"""
-    return fused_dotc(N, X, incX, X, incX)
+    return fused_dot(N, X, incX, X, incX)
+
+
+cdef inline floating fsign(floating x) nogil:
+    if x == 0:
+        return 0
+    elif x > 0:
+        return 1.
+    else:
+        return -1.

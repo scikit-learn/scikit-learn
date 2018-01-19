@@ -11,29 +11,28 @@
 import warnings
 cimport numpy as np
 import numpy as np
-from libc.stdio cimport printf
-from types cimport complexing, floating
-from utils cimport real_part, real_max, abs_max, fused_nrm2_squared, fmax
-from blas_api cimport fused_nrm2, fused_dotu, fused_dotc, fused_asum
+from cython cimport floating
+from utils cimport arr_max, abs_max, fused_nrm2_squared, fmax
+from blas_api cimport fused_nrm2, fused_dot, fused_asum
 from coordescendant cimport L11_PENALTY, L21_PENALTY
 
 
 cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
-                               complexing *W_ptr,  # C-order 2d array
+                               floating *W_ptr,  # C-order 2d array
                                floating reg, floating l2_reg,
-                               complexing *X_or_Gram_conj_ptr,  # F-order 2d
-                               complexing *Y_or_Cov_ptr,  # F-order 2d
-                               complexing *R_or_RCov_ptr,  # F-order 2d
-                               complexing *Grad_ptr,  # F-order 2d
+                               floating *X_or_Gram_ptr,  # F-order 2d
+                               floating *Y_or_Cov_ptr,  # F-order 2d
+                               floating *R_or_RCov_ptr,  # F-order 2d
+                               floating *Grad_ptr,  # F-order 2d
                                floating Y_norm2, bint precomputed,
                                int penalty_model,
-                               bint positive) nogil except *:
+                               bint positive) nogil:
     """Compute duality gap for penalized regression problems.
     Parameters
     ----------
     W_ptr: pointer to 2d C-order array of model coefficients
 
-    X_or_Gram_conj_ptr: pointer to 2d F-order array of design of Gram matrix
+    X_or_Gram_ptr: pointer to 2d F-order array of design of Gram matrix
     and points to `X^HX` in `precomputed` mode of `X` in normal mode.
 
     Y_or_Cov_ptr: pointer to 2d F-order array of target of covariance matrix
@@ -56,8 +55,6 @@ cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
             raise ValueError(
                 "`precomputed=True` was specified, expected a value for "
                 "`Y_norm2`")
-        if positive and not (complexing is float or complexing is double):
-            raise TypeError("positive=True makes no sense for complex data")
 
     # matrix sizes
     cdef int W_size = n_features * n_targets
@@ -69,25 +66,22 @@ cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
     # more auxiliary variables
     cdef floating R_norm2, ry_sum, W_norm2, C, pen, gap
     cdef floating Grad_axis1norm, dual_norm_Grad
-    cdef complexing alpha, beta
 
     # compute R_norm2, ry_sum, and Grad
     if precomputed:
         # R_norm2 = ||R||^2_F = ||Y||^2_F - Re(<W, R_or_RCov + Cov>_F)
         # ry_sum = <R, Y>_F = np.sum(R * Y) = ||Y||^2_F - Re(<W, Cov>_F)
         # N.B. we temporarily store R_or_RCov + Y_or_Cov in Grad
-        alpha = Y_norm2
-        beta = Y_norm2
+        R_norm2 = Y_norm2
+        ry_sum = Y_norm2
         for j in range(n_features):
             for k in range(n_targets):
                 f_ind = j + n_features * k
                 Grad_ptr[f_ind] = R_or_RCov_ptr[f_ind] + Y_or_Cov_ptr[f_ind]
-            alpha -= fused_dotc(n_targets, W_ptr + j * n_targets, 1,
-                                Grad_ptr + j, n_features)
-            beta -= fused_dotc(n_targets, W_ptr + j * n_targets, 1,
-                               Y_or_Cov_ptr + j, n_features)
-        R_norm2 = <floating>real_part(alpha)
-        ry_sum = <floating>real_part(beta)
+            R_norm2 -= fused_dot(n_targets, W_ptr + j * n_targets, 1,
+                                 Grad_ptr + j, n_features)
+            ry_sum -= fused_dot(n_targets, W_ptr + j * n_targets, 1,
+                                Y_or_Cov_ptr + j, n_features)
 
         # Grad = RCov - l2_reg * W
         # XXX Is there a faster BLAS way for doing this ?
@@ -98,19 +92,18 @@ cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
                 Grad_ptr[f_ind]  = R_or_RCov_ptr[f_ind] - l2_reg * W_ptr[c_ind]
     else:
         # R_norm2 = ||R||^2_F
-        R_norm2 = <floating>fused_nrm2_squared(R_or_RCov_size, R_or_RCov_ptr, 1)
+        R_norm2 = fused_nrm2_squared(R_or_RCov_size, R_or_RCov_ptr, 1)
 
-        # ry_sum = <R_conj, Y>_F
-        ry_sum = <floating>real_part(fused_dotc(R_or_RCov_size, R_or_RCov_ptr,
-                                                1, Y_or_Cov_ptr, 1))
+        # ry_sum = <R, Y>_F
+        ry_sum = fused_dot(R_or_RCov_size, R_or_RCov_ptr, 1, Y_or_Cov_ptr, 1)
 
         # Grad = np.dot(X.conjugate().T, R) - l2_reg * W
         for j in range(n_features):
             for k in range(n_targets):
                 f_ind = j + n_features * k
                 c_ind = k + n_targets * j
-                Grad_ptr[f_ind]  = fused_dotu(
-                    n_samples, X_or_Gram_conj_ptr + j * n_samples, 1,
+                Grad_ptr[f_ind]  = fused_dot(
+                    n_samples, X_or_Gram_ptr + j * n_samples, 1,
                     R_or_RCov_ptr + k * n_samples, 1) - l2_reg * W_ptr[c_ind]
 
     # dual_norm_Grad = np.max(np.sqrt(np.sum(np.abs(Grad) ** 2, axis=1)))
@@ -118,12 +111,11 @@ cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
     for j in range(n_features):
         if penalty_model == L21_PENALTY:
             # Grad_axis1norm = np.sqrt(np.sum(Grad[j] ** 2))
-            Grad_axis1norm = <floating>fused_nrm2(n_targets, Grad_ptr + j,
-                                                  n_features)
+            Grad_axis1norm = fused_nrm2(n_targets, Grad_ptr + j, n_features)
         elif penalty_model == L11_PENALTY:
             # Grad_axis1norm = np.abs(Grad[j]).max()
             if positive:
-                Grad_axis1norm = real_max(n_targets, <floating *>Grad_ptr + j, n_features)
+                Grad_axis1norm = arr_max(n_targets, Grad_ptr + j, n_features)
             else:
                 Grad_axis1norm = abs_max(n_targets, Grad_ptr + j, n_features)
         if Grad_axis1norm > dual_norm_Grad:
@@ -134,7 +126,7 @@ cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
         dual_norm_Grad = 0
 
     # W_norm2 = ||W||^2_F
-    W_norm2 = <floating>fused_nrm2_squared(W_size, W_ptr, 1)
+    W_norm2 = fused_nrm2_squared(W_size, W_ptr, 1)
 
     # R-scale Grad to ensure dual-feasibility
     if (dual_norm_Grad > reg):
@@ -150,10 +142,10 @@ cdef floating compute_dual_gap(int n_samples, int n_features, int n_targets,
     for j in range(n_features):
         if penalty_model == L21_PENALTY:
             # pen += np.sqrt(np.sum(W[j] ** 2))
-            pen += <floating>fused_nrm2(n_targets, W_ptr + j * n_targets, 1)
+            pen += fused_nrm2(n_targets, W_ptr + j * n_targets, 1)
         else:
             # pen += np.abs(W[j]).sum()
-            pen += <floating>fused_asum(n_targets, W_ptr + j * n_targets, 1)
+            pen += fused_asum(n_targets, W_ptr + j * n_targets, 1)
     pen *= reg
     pen += .5 * l2_reg * (1. + C ** 2) * W_norm2
 

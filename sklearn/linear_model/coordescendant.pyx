@@ -30,8 +30,6 @@
 #           - Certain problems arising in data-driven compressive sensing
 #
 # XXX TODO:
-#    - Add single-precision (32-bit) support. Not easy due to issues with
-#      specialization of fused types. Long story short...
 #    - Add support for sparse matrices and vectors
 #    - Screening rules for LASSO-type problems (inexact Stanford, GapSafe,
 #      etc.)
@@ -42,12 +40,11 @@ cimport cython
 cimport numpy as np
 import numpy as np
 ctypedef np.uint32_t UINT32_t
-from types cimport floating, complexing
+from cython cimport floating
 from blas_api cimport (CblasColMajor, fused_scal, fused_copy, fused_nrm2,
-                       fused_dotu, fused_dotc, fused_geru, fused_axpy)
+                       fused_dot, fused_ger, fused_axpy)
 from dual_gap cimport compute_dual_gap
-from utils cimport (fmax, abs_max, diff_abs_max, relu, real_part,
-                    fused_nrm2_squared)
+from utils cimport (fmax, abs_max, diff_abs_max, relu, fused_nrm2_squared)
 from proj_l2 cimport proj_l2
 from proj_l1 cimport proj_l1
 from prox_l1 cimport prox_l1
@@ -75,10 +72,10 @@ cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
 
 
-def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
+def coordescendant(np.ndarray[floating, ndim=2, mode="c"] W,
                    floating reg, floating l2_reg,
-                   np.ndarray[complexing, ndim=2, mode="fortran"] X_or_Gram,
-                   np.ndarray[complexing, ndim=2, mode="fortran"] Y_or_Cov,
+                   np.ndarray[floating, ndim=2, mode="fortran"] X_or_Gram,
+                   np.ndarray[floating, ndim=2, mode="fortran"] Y_or_Cov,
                    bint precomputed=True, floating Y_norm2=np.nan,
                    object penalty_model=L11_PENALTY, unsigned int max_iter=100,
                    floating tol=0, bint random=False, object rng=None,
@@ -115,11 +112,6 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     - certain problems arising in data-driven compressive sensing
 
     """
-    # some sanity checks
-    if positive:
-        if not (complexing is double or complexing is float):
-            raise TypeError("positive=True for complex data makes no sense")
-
     # select an appropriate prox handle by model
     cdef PROX prox
     if hasattr(penalty_model, "__call__"):
@@ -159,9 +151,9 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     cdef int n_samples = X_or_Gram.shape[0]
     cdef int n_features = X_or_Gram.shape[1]
     cdef int n_targets = Y_or_Cov.shape[1]
-    cdef complexing[:] Wj = np.empty(n_targets, dtype=dtype)
+    cdef floating[:] Wj = np.empty(n_targets, dtype=dtype)
     cdef floating ajj
-    cdef complexing alpha, beta
+    cdef floating alpha, beta
     cdef int X_size = n_samples * n_features
     cdef int W_size = n_features * n_targets
     cdef int R_size = n_samples * n_targets
@@ -187,21 +179,13 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                      "Disabling computation of dual gaps."))
             dgap_available = False
     elif np.isnan(Y_norm2 ):
-        Y_norm2 = <floating>fused_nrm2_squared(R_size, &Y_or_Cov[0, 0], 1)
-
-    # pre-compute conjugate of X_or_Gram for latter use in *gemm
-    cdef np.ndarray[complexing, ndim=2, mode="fortran"] X_or_Gram_conj
-    if complexing is float or complexing is double:
-        X_or_Gram_conj = X_or_Gram
-    else:
-        X_or_Gram_conj = X_or_Gram.conjugate()
+        Y_norm2 = fused_nrm2_squared(R_size, &Y_or_Cov[0, 0], 1)
 
     # pointers are faster than numpy array addresses
-    cdef complexing *W_ptr = &W[0, 0]
-    cdef complexing *Wj_ptr = &Wj[0]
-    cdef complexing *X_or_Gram_ptr = &X_or_Gram[0, 0]
-    cdef complexing *Y_or_Cov_ptr = &Y_or_Cov[0, 0]
-    cdef complexing *X_or_Gram_conj_ptr = &X_or_Gram_conj[0, 0]
+    cdef floating *W_ptr = &W[0, 0],
+    cdef floating *Wj_ptr = &Wj[0]
+    cdef floating *X_or_Gram_ptr = &X_or_Gram[0, 0]
+    cdef floating *Y_or_Cov_ptr = &Y_or_Cov[0, 0]
 
     # some sanity checking
     if reg == l2_reg == 0:
@@ -216,24 +200,24 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
         raise ValueError("You specified precomputed=True. But X_or_Gram "
                          "has shape (%i, %i) which is non-square" % (
                              n_samples, n_features))
-    cdef np.ndarray[complexing, ndim=2, mode="fortran"] R
+    cdef np.ndarray[floating, ndim=2, mode="fortran"] R
     R = np.asfortranarray(Y_or_Cov - np.dot(X_or_Gram, W))
-    cdef complexing *R_ptr = &R[0, 0]
+    cdef floating *R_ptr = &R[0, 0]
 
     # stuff for computing dual gap
     cdef floating gap = tol + 1.
-    cdef np.ndarray[complexing, ndim=2, mode="fortran"] Grad
+    cdef np.ndarray[floating, ndim=2, mode="fortran"] Grad
     Grad = np.empty((n_features, n_targets), dtype=dtype, order="F")
-    cdef complexing *Grad_ptr = &Grad[0, 0]
+    cdef floating *Grad_ptr = &Grad[0, 0]
 
+    # compute squared l2 norms of columns of design matrix X
     cdef np.ndarray[floating, ndim=1] X_col_norms_squared
     X_col_norms_squared = np.empty(n_features, dtype=floating_dtype)
-
     for j in range(n_features):
         if precomputed:
-            X_col_norms_squared[j] = X_or_Gram[j, j].real
+            X_col_norms_squared[j] = X_or_Gram[j, j]
         else:
-            X_col_norms_squared[j] = <floating>fused_dotc(
+            X_col_norms_squared[j] = fused_dot(
                 n_samples, X_or_Gram_ptr + j * n_samples, inc,
                 X_or_Gram_ptr + j * n_samples, inc)
 
@@ -262,31 +246,30 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
 
                 # rank-1 update: R += np.outer(X_or_Gram[:, j], W[j])
                 if n_targets == 1:
-                    alpha = W_ptr[j]
-                    if alpha != 0.:
+                    if W_ptr[j] != 0.:
                         fused_axpy(
-                            n_samples, alpha, X_or_Gram_ptr + j * n_samples,
+                            n_samples, W_ptr[j], X_or_Gram_ptr + j * n_samples,
                             inc, R_ptr, inc)
                 else:
                     alpha = 1
                     if fused_nrm2(n_targets, W_ptr + j * n_targets, inc) != 0.:
-                        fused_geru(CblasColMajor, n_samples, n_targets, alpha,
-                                   X_or_Gram_ptr + j * n_samples, inc,
-                                   W_ptr + j * n_targets, inc, R_ptr,
-                                   n_samples)
+                        fused_ger(CblasColMajor, n_samples, n_targets, alpha,
+                                  X_or_Gram_ptr + j * n_samples, inc,
+                                  W_ptr + j * n_targets, inc, R_ptr,
+                                  n_samples)
 
                 # XXX The following step only makes sense if we're not running
                 # in "precomputed" mode. However, for some reason, sklearn's
                 # implementation of dict-learning BCD update does it
                 # regardless.
                 if (not precomputed) or emulate_sklearn_dl:
-                    # W[j] <- ajj * np.dot(X_or_Gram_conj[:, j], R)
+                    # W[j] <- ajj * np.dot(X_or_Gram[:, j], R)
                     if emulate_sklearn_dl:
                         alpha = ajj
                     else:
                         alpha = 1.
                     for k in range(n_targets):
-                        W_ptr[j * n_targets + k] = alpha * fused_dotc(
+                        W_ptr[j * n_targets + k] = alpha * fused_dot(
                             n_samples, X_or_Gram_ptr + j * n_samples, inc,
                             R_ptr + k * n_samples, inc)
                 else:
@@ -299,7 +282,7 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
 
                 # proximal update
                 if positive:
-                    relu(n_targets, <floating *>W_ptr + j * n_targets, 1)
+                    relu(n_targets, W_ptr + j * n_targets, 1)
                 if user_prox is not None:
                     # invoke user-supplied prox operator
                     # XXX it would be nice to do this without requiring the GIL
@@ -320,18 +303,15 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
 
                 # rank-1 update: R -= np.outer(X_or_Gram[:, j], W[j])
                 if n_targets == 1:
-                    alpha = -W_ptr[j]
-                    if alpha != 0.:
+                    if W_ptr[j] != 0.:
                         fused_axpy(
-                            n_samples, alpha, X_or_Gram_ptr + j * n_samples,
+                            n_samples, -W_ptr[j], X_or_Gram_ptr + j * n_samples,
                             inc, R_ptr, inc)
                 else:
-                    alpha = -1
                     if fused_nrm2(n_targets, W_ptr + j * n_targets, inc) != 0.:
-                        fused_geru(
-                            CblasColMajor, n_samples, n_targets, alpha,
-                            X_or_Gram_ptr + j * n_samples, inc,
-                            W_ptr + j * n_targets, inc, R_ptr, n_samples)
+                        fused_ger(CblasColMajor, n_samples, n_targets, -1,
+                                  X_or_Gram_ptr + j * n_samples, inc,
+                                  W_ptr + j * n_targets, inc, R_ptr, n_samples)
 
                 # update the maximum absolute coefficient
                 d_Wj_abs_max = diff_abs_max(n_targets, W_ptr + j * n_targets, 1,
@@ -341,15 +321,14 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                 W_abs_max = fmax(W_abs_max, Wj_abs_max)
 
             # check convergence
-            if (W_abs_max == 0. or
-                d_W_abs_max / W_abs_max < d_W_abs_tol or
+            if (W_abs_max == 0. or d_W_abs_max / W_abs_max < d_W_abs_tol or
                 n_iter == max_iter - 1):
                 # the biggest coordinate update of this iteration was smaller
                 # than check the duality gap as ultimate stopping criterion
                 if dgap_available:
                     gap = compute_dual_gap(
                         n_samples, n_features, n_targets, W_ptr, reg, l2_reg,
-                        X_or_Gram_conj_ptr, Y_or_Cov_ptr, R_ptr, Grad_ptr,
+                        X_or_Gram_ptr, Y_or_Cov_ptr, R_ptr, Grad_ptr,
                         Y_norm2, precomputed, penalty_model_int, positive)
                 else:
                     gap = tol
