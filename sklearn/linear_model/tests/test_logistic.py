@@ -132,7 +132,7 @@ def test_logistic_regression_auto():
     clf_solver_l2 = LogisticRegression(penalty='l2', solver='auto')
 
     clf_solver_l1.fit(iris.data, target)
-    clf_solver_l2.fir(iris.data, target)
+    clf_solver_l2.fit(iris.data, target)
 
 
 def test_predict_3_classes():
