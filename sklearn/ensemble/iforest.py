@@ -150,10 +150,9 @@ class IsolationForest(BaseBagging):
 
         if contamination == "legacy":
             warnings.warn('default contamination parameter 0.1 will change '
-                          'in 0.22 to "auto". This will change the predict '
-                          'method behavior.',
+                          'in version 0.22 to "auto". This will change the '
+                          'predict method behavior.',
                           DeprecationWarning)
-            contamination = 0.1
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):
@@ -224,6 +223,9 @@ class IsolationForest(BaseBagging):
             self.offset_ = -0.5
             # need to save (depreciated) threshold_ in this case:
             self._threshold_ = sp.stats.scoreatpercentile(
+                self.score_samples(X), 100. * 0.1)
+        elif self.contamination == "legacy":  # to be rm in 0.22
+            self.offset_ = sp.stats.scoreatpercentile(
                 self.score_samples(X), 100. * 0.1)
         else:
             self.offset_ = sp.stats.scoreatpercentile(

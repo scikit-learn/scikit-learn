@@ -146,6 +146,5 @@ def test_contamination():
 def test_deprecation():
     assert_warns_message(DeprecationWarning,
                          'default contamination parameter 0.1 will change '
-                         'in 0.22 to "auto"',
+                         'in version 0.22 to "auto"',
                          neighbors.LocalOutlierFactor, )
-

@@ -144,10 +144,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         if contamination == "legacy":
             warnings.warn('default contamination parameter 0.1 will change '
-                          'in 0.22 to "auto". This will change the predict '
-                          'method behavior.',
+                          'in version 0.22 to "auto". This will change the '
+                          'predict method behavior.',
                           DeprecationWarning)
-            contamination = 0.1
         self.contamination = contamination
 
     def fit_predict(self, X, y=None):
@@ -184,7 +183,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         self : object
             Returns self.
         """
-        if self.contamination != "auto":
+        if self.contamination not in ["auto", "legacy"]:  # rm legacy in 0.22
             if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
@@ -194,9 +193,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         n_samples = self._fit_X.shape[0]
         if self.n_neighbors > n_samples:
             warnings.warn("n_neighbors (%s) is greater than the "
-                 "total number of samples (%s). n_neighbors "
-                 "will be set to (n_samples - 1) for estimation."
-                 % (self.n_neighbors, n_samples))
+                          "total number of samples (%s). n_neighbors "
+                          "will be set to (n_samples - 1) for estimation."
+                          % (self.n_neighbors, n_samples))
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
         self._distances_fit_X_, _neighbors_indices_fit_X_ = (
@@ -214,6 +213,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         if self.contamination == "auto":
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
+        elif self.contamination == "legacy":  # to rm in 0.22
+            self.offset_ = scoreatpercentile(
+                self.negative_outlier_factor_, 100. * 0.1)
         else:
             self.offset_ = scoreatpercentile(
                 self.negative_outlier_factor_, 100. * self.contamination)

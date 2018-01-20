@@ -246,7 +246,7 @@ def test_score_samples():
 def test_deprecation():
     assert_warns_message(DeprecationWarning,
                          'default contamination parameter 0.1 will change '
-                         'in 0.22 to "auto"',
+                         'in version 0.22 to "auto"',
                          IsolationForest, )
     X = [[0.0], [1.0]]
     clf = IsolationForest().fit(X)
