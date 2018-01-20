@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import if_numpydoc, ignore_warnings
 from sklearn.utils.testing import assert_consistent_docs
 from sklearn.utils.mocking import MockDataFrame
 
