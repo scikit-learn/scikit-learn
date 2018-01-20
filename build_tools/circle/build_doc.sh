@@ -57,9 +57,13 @@ get_build_type() {
         echo QUICK BUILD: no changed filenames for $git_range
         return
     fi
-    if echo "$filenames" | grep -q -e ^examples/
+    changed_examples=$(echo "$filenames" | grep -e ^examples/)
+    if [[ -n "$changed_examples" ]]
     then
-        echo BUILD: detected examples/ filename modified in $git_range: $(echo "$filenames" | grep -e ^examples/ | head -n1)
+        echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
+        pattern=$(echo "$changed_examples" | paste -sd '|')
+        # pattern for examples to run is the last line of output
+        echo "$pattern"
         return
     fi
     echo QUICK BUILD: no examples/ filename modified in $git_range:
@@ -75,12 +79,17 @@ fi
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     # PDF linked into HTML
-    MAKE_TARGET="dist LATEXMKOPTS=-halt-on-error"
+    make_args="dist LATEXMKOPTS=-halt-on-error"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
-    MAKE_TARGET=html-noplot
+    make_args=html-noplot
+elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
+then
+    # pattern for examples to run is the last line of output
+    pattern=$(echo "$build_type" | tail -n 1)
+    make_args="html EXAMPLES_PATTERN=$pattern"
 else
-    MAKE_TARGET=html
+    make_args=html
 fi
 
 # Installing required system packages to support the rendering of math
@@ -124,7 +133,7 @@ then
 fi
 
 # The pipefail is requested to propagate exit code
-set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
+set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
 cd -
 set +o pipefail
