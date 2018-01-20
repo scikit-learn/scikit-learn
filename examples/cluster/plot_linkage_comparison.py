@@ -35,10 +35,10 @@ from itertools import cycle, islice
 
 np.random.seed(0)
 
-# ============
+######################################################################
 # Generate datasets. We choose the size big enough to see the scalability
 # of the algorithms, but not too big to avoid too long running times
-# ============
+
 n_samples = 1500
 noisy_circles = datasets.make_circles(n_samples=n_samples, factor=.5,
                                       noise=.05)
@@ -61,7 +61,7 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-plt.figure(figsize=(9 * 2 + 3, 12.5))
+plt.figure(figsize=(9 * 2 + 3, 14.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 

@@ -71,7 +71,7 @@ def plot_clustering(X_red, X, labels, title=None):
     if title is not None:
         plt.title(title, size=17)
     plt.axis('off')
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 #----------------------------------------------------------------------
 # 2D embedding of the digits dataset
@@ -85,7 +85,7 @@ for linkage in ('ward', 'average', 'complete', 'single'):
     clustering = AgglomerativeClustering(linkage=linkage, n_clusters=10)
     t0 = time()
     clustering.fit(X_red)
-    print("%s : %.2fs" % (linkage, time() - t0))
+    print("%s :\t%.2fs" % (linkage, time() - t0))
 
     plot_clustering(X_red, X, clustering.labels_, "%s linkage" % linkage)
 

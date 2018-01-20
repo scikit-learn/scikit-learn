@@ -9,17 +9,18 @@ neighbors.
 Two consequences of imposing a connectivity can be seen. First clustering
 with a connectivity matrix is much faster.
 
-Second, when using a connectivity matrix, average and complete linkage are
-unstable and tend to create a few clusters that grow very quickly. Indeed,
-average and complete linkage fight this percolation behavior by considering all
-the distances between two clusters when merging them. The connectivity
-graph breaks this mechanism. This effect is more pronounced for very
-sparse graphs (try decreasing the number of neighbors in
-kneighbors_graph) and with complete linkage. In particular, having a very
-small number of neighbors in the graph, imposes a geometry that is
-close to that of single linkage, which is well known to have this
-percolation instability.
-"""
+Second, when using a connectivity matrix, single, average and complete
+linkage are unstable and tend to create a few clusters that grow very
+quickly. Indeed, average and complete linkage fight this percolation behavior
+by considering all the distances between two clusters when merging them (
+while single linkage exaggerates the behaviour by considering only the
+shortest distance between clusters). The connectivity graph breaks this
+mechanism for average and complete linkage, making them resemble the more
+brittle single linkage. This effect is more pronounced for very sparse graphs
+(try decreasing the number of neighbors in kneighbors_graph) and with
+complete linkage. In particular, having a very small number of neighbors in
+the graph, imposes a geometry that is close to that of single linkage,
+which is well known to have this percolation instability. """
 # Authors: Gael Varoquaux, Nelle Varoquaux
 # License: BSD 3 clause
 
@@ -65,7 +66,7 @@ for connectivity in (None, knn_graph):
             elapsed_time = time.time() - t0
             plt.scatter(X[:, 0], X[:, 1], c=model.labels_,
                         cmap=plt.cm.spectral)
-            plt.title('linkage=%s (time %.2fs)' % (linkage, elapsed_time),
+            plt.title('linkage=%s\n(time %.2fs)' % (linkage, elapsed_time),
                       fontdict=dict(verticalalignment='top'))
             plt.axis('equal')
             plt.axis('off')

@@ -567,7 +567,7 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
-Different linkage type: Ward, complete, average and single linkage
+Different linkage type: Ward, complete, average, and single linkage
 ------------------------------------------------------------------
 
 :class:`AgglomerativeClustering` supports Ward, single, average, and complete
@@ -646,15 +646,16 @@ enable only merging of neighboring pixels on an image, as in the
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
-.. warning:: **Connectivity constraints with average and complete linkage**
+.. warning:: **Connectivity constraints with single, average and complete linkage**
 
-    Connectivity constraints and complete or average linkage can enhance
+    Connectivity constraints and single, complete or average linkage can enhance
     the 'rich getting richer' aspect of agglomerative clustering,
     particularly so if they are built with
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
     :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    Single linkage is the most brittle linkage option with regard to this issue.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
