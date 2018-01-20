@@ -361,24 +361,29 @@ class KNeighborsMixin(object):
                     **self.effective_metric_params_)
 
             if issparse(dist):
-                if np.any(getnnz(dist, axis=1) < n_neighbors):
+                print "Dist being printed \n"
+                print dist.toarray()
+                print dist.indices
+                if np.any(getnnz(dist, axis=1) < n_neighbors - query_is_train):
                     raise ValueError("Not enough neighbors in sparse "
                                      "precomputed matrix to get {} "
                                      "nearest neighbors"
                                      .format(n_neighbors - query_is_train))
-                neigh_ind = np.zeros((dist.shape[0], n_neighbors),
-                                     dtype=np.int)
+                neigh_ind = np.full((dist.shape[0], dist.shape[1]), np.inf, dtype=np.int)
                 for i in range(0, dist.shape[0]):
-                    row = slice(dist.indptr[i], dist.indptr[i + 1])
-                    col = slice(dist.indptr[i], dist.indptr[i+1])
-                    sort = np.argsort(dist.data[col])
-                    neigh_ind[i][:n_neighbors] = \
-                        dist.indices[row][sort][:n_neighbors]
-                if query_is_train:
+                    row = np.full(dist.shape[1], np.inf)
+                    data_col = dist.indices[dist.indptr[i]:dist.indptr[i + 1]]
+                    data_values = dist.data[dist.indptr[i]:dist.indptr[i + 1]]
+                    row[data_col] = data_values
+                    neigh_ind[i] = np.argsort(row)
+                neigh_ind = neigh_ind[:, :n_neighbors]
+                '''
+                if query_is_train and np.sum([(num in neigh_ind[num]) for num in range(neigh_ind.shape[0])]) == 0:
                     # this is done to add self as nearest neighbor
                     neigh_ind = np.concatenate((sample_range, neigh_ind),
                                                axis=1)
                     neigh_ind = neigh_ind[:, :-1]
+                '''
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
                 neigh_ind = neigh_ind[:, :n_neighbors]
@@ -388,9 +393,15 @@ class KNeighborsMixin(object):
 
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
-                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+                    if issparse(dist):
+                        result = np.sqrt(dist[sample_range, neigh_ind]).toarray(), neigh_ind
+                    else:
+                        result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
-                    result = dist[sample_range, neigh_ind], neigh_ind
+                    if issparse(dist):
+                        result = dist[sample_range, neigh_ind].toarray(), neigh_ind
+                    else:
+                        result = dist[sample_range, neigh_ind], neigh_ind
             else:
                 result = neigh_ind
 
