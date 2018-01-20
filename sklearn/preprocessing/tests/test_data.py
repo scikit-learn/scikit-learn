@@ -2111,7 +2111,7 @@ def test_categorical_encoder_specified_categories():
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories[0] == ['a', 'b', 'c']
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
 
     # unsorted passed categories raises for now
     enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
@@ -2125,7 +2125,7 @@ def test_categorical_encoder_specified_categories():
                     [0., 1., 0., 0., 0., 1.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
     assert enc.categories_[1].tolist() == [0, 1, 2]
     assert np.issubdtype(enc.categories_[1].dtype, np.integer)
 
