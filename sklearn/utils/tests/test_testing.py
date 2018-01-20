@@ -601,6 +601,7 @@ def test_assert_consistent_docs():
         doc1[typ] = doc2[typ] = []
 
 
+@if_numpydoc
 def test_precedence_assert_consistent_docs():
     # Test order of error reporting
     from numpydoc import docscrape
