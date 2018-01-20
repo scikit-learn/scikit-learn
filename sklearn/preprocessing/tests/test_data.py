@@ -2227,6 +2227,15 @@ def test_categorical_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
+def test_categorical_encoder_warning():
+    # check no warning is raised
+    with warnings.catch_warnings(record=True) as w:
+        enc = CategoricalEncoder()
+        X = [['Male', 1], ['Female', 3], ['Female', 2]]
+        enc.fit_transform(X)
+    assert len(w) == 0
+
+
 def test_fit_cold_start():
     X = iris.data
     X_2d = X[:, :2]
