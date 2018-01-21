@@ -209,6 +209,17 @@ def test_label_encoder_errors():
     assert_raise_message(ValueError, msg, le.inverse_transform, [-2, -3, -4])
 
 
+def test_label_encoder_empty_array():
+    le = LabelEncoder()
+    le.fit(np.array(["1", "2", "1", "2", "2"], dtype=np.float64))
+    # test empty transform
+    transformed = le.transform([])
+    assert_array_equal(np.array([]), transformed)
+    # test empty inverse transform
+    inverse_transformed = le.inverse_transform([])
+    assert_array_equal(np.array([]), inverse_transformed)
+
+
 def test_sparse_output_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
@@ -513,14 +524,3 @@ def test_inverse_binarize_multiclass():
                                                    [0, 0, 0]]),
                                        np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
-
-
-def test_empty_labels():
-    le = LabelEncoder()
-    le.fit(np.array(["1", "2", "1", "2", "2"], dtype=np.float64))
-    # test empty transform
-    transformed = le.transform([])
-    assert_array_equal(np.array([]), transformed)
-    # test empty inverse transform
-    inverse_transformed = le.inverse_transform([])
-    assert_array_equal(np.array([]), inverse_transformed)
