@@ -128,6 +128,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             return np.array([])
         check_is_fitted(self, 'classes_')
         y = column_or_1d(y, warn=True)
+
         classes = np.unique(y)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
