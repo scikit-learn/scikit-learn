@@ -150,6 +150,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : numpy array of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
         # inverse transform of empty array is empty array
         if _num_samples(y) == 0:
             return np.array([])

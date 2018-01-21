@@ -208,6 +208,11 @@ def test_label_encoder_errors():
     assert_raise_message(ValueError, msg, le.inverse_transform, [-2])
     assert_raise_message(ValueError, msg, le.inverse_transform, [-2, -3, -4])
 
+    # Fail on inverse_transform("")
+    msg = "bad input shape ()"
+    assert_raises(ValueError, le.inverse_transform, "")
+    assert_raise_message(ValueError, msg, le.inverse_transform, "")
+
 
 def test_label_encoder_empty_array():
     le = LabelEncoder()
