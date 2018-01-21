@@ -280,7 +280,7 @@ Preprocessing
 
 - Fixed bugs in :class:`preprocessing.LabelEncoder` which would throw
   errors when `transform` or `inverse_transform` was called with empty arrays
-  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`
+  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
 
 API changes summary
 -------------------

@@ -515,15 +515,12 @@ def test_inverse_binarize_multiclass():
     assert_array_equal(got, np.array([1, 1, 0]))
 
 
-def test_empty_labels_transform():
+def test_empty_labels():
     le = LabelEncoder()
-    le.fit(np.array([1, 2, 1, 2, 2], dtype=np.float64))
+    le.fit(np.array(["1", "2", "1", "2", "2"], dtype=np.float64))
+    # test empty transform
     transformed = le.transform([])
     assert_array_equal(np.array([]), transformed)
-
-
-def test_empty_labels_inverse_transform():
-    le = LabelEncoder()
-    le.fit(np.array([1, 2, 1, 2, 2], dtype=np.float64))
+    # test empty inverse transform
     inverse_transformed = le.inverse_transform([])
     assert_array_equal(np.array([]), inverse_transformed)

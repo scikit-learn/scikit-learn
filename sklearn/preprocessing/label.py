@@ -148,7 +148,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
         # inverse transform of empty array is empty array
-        if len(y) == 0:
+        if _num_samples(y) == 0:
             return np.array([])
 
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
