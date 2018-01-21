@@ -27,6 +27,7 @@ from ..utils.validation import column_or_1d
 from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
+from . import cd_fast2
 
 
 ###############################################################################
@@ -460,7 +461,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 X.indptr, y, X_sparse_scaling,
                 max_iter, tol, rng, random, positive)
         elif multi_output:
-            model = cd_fast.enet_coordinate_descent_multi_task(
+            model = cd_fast2.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -1782,7 +1783,7 @@ class MultiTaskElasticNet(Lasso):
         random = (self.selection == 'random')
 
         self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
-            cd_fast.enet_coordinate_descent_multi_task(
+            cd_fast2.enet_coordinate_descent_multi_task(
                 self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
                 check_random_state(self.random_state), random)
 

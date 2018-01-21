@@ -13,7 +13,7 @@ import warnings
 cimport numpy as np
 import numpy as np
 from types cimport complexing, floating
-from utils cimport real_part
+from utils cimport real_part, abs_max
 from blas_api cimport (fused_nrm2, fused_dotu, fused_dotc,
                        fused_asum)
 from cd_fast2 cimport L11_PENALTY, L21_PENALTY
@@ -141,11 +141,11 @@ cdef floating _compute_dual_gap(int n_samples,
                        n_features,
                        &Grad_axis1norm)
         else:
-            # Grad_axis1norm = np.abs(Grad[j]).sum()
-            fused_asum(n_targets,
-                       Grad_ptr + j,
-                       n_features,
-                       &Grad_axis1norm)
+            # Grad_axis1norm = np.abs(Grad[j]).max()
+            abs_max(n_targets,
+                    Grad_ptr + j,
+                    n_features,
+                    &Grad_axis1norm)
         if Grad_axis1norm > dual_norm_Grad:
             dual_norm_Grad = Grad_axis1norm
 

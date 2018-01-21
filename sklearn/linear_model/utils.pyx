@@ -14,7 +14,7 @@ cdef inline floating fmax(floating x, floating y) nogil:
     return y if x < y else x
 
 
-cdef void abs_max(int n, complexing *a, floating *b) nogil:
+cdef void abs_max(int n, complexing *a, int inca, floating *b) nogil:
     """np.max(np.abs(a))"""
     if complexing is float or complexing is double:
         abs = fabs
@@ -27,24 +27,26 @@ cdef void abs_max(int n, complexing *a, floating *b) nogil:
     cdef double d
     b[0] = abs(a[0])
     for i in range(1, n):
+        i *= inca
         d = abs(a[i])
         if d > b[0]:
             b[0] = d
 
 
-cdef floating fmax_arr(int n, floating *a) nogil:
+cdef floating fmax_arr(int n, floating *a, int inca) nogil:
     """np.max(a)"""
     cdef int i
     cdef floating m = a[0]
     cdef floating d
     for i in range(1, n):
+        i *= inca
         d = a[i]
         if d > m:
             m = d
     return m
 
 
-cdef void diff_abs_max(int n, complexing *a, complexing *b, floating *c) nogil:
+cdef void diff_abs_max(int n, complexing *a, int inca, complexing *b, int incb, floating *c) nogil:
     """np.max(np.abs(a - b))"""
     if complexing is double or complexing is float:
         abs = fabs
@@ -56,11 +58,12 @@ cdef void diff_abs_max(int n, complexing *a, complexing *b, floating *c) nogil:
     cdef floating d
     c[0] = abs(a[0] - b[0])
     for i in range(1, n):
-        d = fmax(c[0], abs(a[i] - b[i]))
+        d = fmax(c[0], abs(a[i * inca] - b[i * incb]))
 
 
-cdef inline void relu(int n, floating *x) nogil:
-    cdef int inc
-    for inc in range(n):
-        if x[inc] < 0.:
-            x[inc] = 0.
+cdef inline void relu(int n, floating *x, int incx) nogil:
+    cdef int i
+    for i in range(n):
+        i *= incx
+        if x[i] < 0.:
+            x[i] = 0.

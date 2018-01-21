@@ -74,29 +74,19 @@ cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
 
 
-# What's a proximal operator ?
-# := argmin_z .5 * ||z - w / ajj||_2^2 + (reg / ajj) * pen(z)
-# where ajj > 0 is a constant. ajj = 0 corresponds armin_z pen(z),  while
-# ajj = 1 corresponds to classical definition of the prox.
-ctypedef void (*PROX)(int n,
-                      complexing *w,
-                      floating reg,
-                      floating ajj) nogil except *
-
-
 def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                    floating reg,
                    floating l2_reg,
                    np.ndarray[complexing, ndim=2, mode="fortran"] X_or_Gram,
                    np.ndarray[complexing, ndim=2, mode="fortran"] Y_or_Cov,
-                   bint precomputed=1,
+                   bint precomputed=True,
                    floating Y_norm2=np.nan,
                    object penalty_model=L11_PENALTY,
                    unsigned int max_iter=100,
                    floating tol=0,
-                   bint random=0,
+                   bint random=False,
                    object rng=None,
-                   bint pos=0,
+                   bint positive=False,
                    bint emulate_sklearn_dl=False):
     """Multi-output penalized least-squares solver for both real- and complex-valued
     data.
@@ -131,8 +121,8 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
 
     """
     # some sanity checks
-    if pos and not (complexing is double or complexing is float):
-            raise TypeError("pos=True for complex data makes no sense")
+    if positive and not (complexing is double or complexing is float):
+            raise TypeError("positive=True for complex data makes no sense")
 
     # select an appropriate prox handle by model
     cdef PROX prox
@@ -300,10 +290,10 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                         alpha = 1.
                     for k in range(n_targets):
                         W_ptr[j * n_targets + k] = alpha * fused_dotc(n_samples,
-                                                                     X_or_Gram_ptr + j * n_samples,
-                                                                     inc,
-                                                                     R_ptr + k * n_samples,
-                                                                     inc)
+                                                                      X_or_Gram_ptr + j * n_samples,
+                                                                      inc,
+                                                                      R_ptr + k * n_samples,
+                                                                      inc)
                 else:
                     # copy: W[j] <- R[:, j]
                     if n_targets == 1:
@@ -316,20 +306,19 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                                    inc)
 
                 # proximal update
+                if positive:
+                    relu(n_targets,
+                         <floating *>W_ptr + j * n_targets,
+                         1)
                 if user_prox is not None:
                     # invoke user-supplied prox operator
                     # XXX it would be nice to do this without requiring the GIL
-                    if pos:
-                        relu(n_targets,
-                             <floating *>W_ptr + j * n_targets)
                     with gil:
                         user_prox(W[j],
                                   reg,
                                   ajj)
                 else:
                     # invoke a standard prox operator
-                    if pos:
-                        relu(n_targets, <floating *>W_ptr + j * n_targets)
                     if prox:
                         prox(n_targets,
                              W_ptr + j * n_targets,
@@ -375,9 +364,9 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                                    n_samples)
 
                 # update the maximum absolute coefficient
-                diff_abs_max(n_targets, W_ptr + j * n_targets, Wj_ptr, &d_Wj_abs_max)
+                diff_abs_max(n_targets, W_ptr + j * n_targets, 1, Wj_ptr, 1, &d_Wj_abs_max)
                 d_W_abs_max = fmax(d_W_abs_max, d_Wj_abs_max)
-                abs_max(n_targets, W_ptr + j * n_targets, &Wj_abs_max)
+                abs_max(n_targets, W_ptr + j * n_targets, 1, &Wj_abs_max)
                 W_abs_max = fmax(W_abs_max, Wj_abs_max)
 
             # check convergence
@@ -410,4 +399,108 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                 if gap < tol:
                     break
 
-    return W, gap, tol, n_iter + 1
+    return np.asarray(W), gap, tol, n_iter + 1
+
+
+def enet_coordinate_descent(np.ndarray[complexing, ndim=1] w,
+                            floating alpha,
+                            floating beta,
+                            np.ndarray[complexing, ndim=2, mode='fortran'] X,
+                            np.ndarray[complexing, ndim=1, mode='c'] y,
+                            int max_iter,
+                            floating tol,
+                            object rng,
+                            bint random=0,
+                            bint positive=0):
+    """Cython version of the coordinate descent algorithm
+    for Elastic-Net regression
+
+    We minimize
+
+        (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
+
+    """
+    cdef np.ndarray[complexing, ndim=2, mode="c"] W = np.ascontiguousarray(w[:, None])
+    cdef np.ndarray[complexing, ndim=2, mode="fortran"] Y = np.asfortranarray(y[:, None])
+    W, gap, tol, n_iter = coordescendant(W,
+                                         alpha,
+                                         beta,
+                                         X,
+                                         Y,
+                                         precomputed=False,
+                                         max_iter=max_iter,
+                                         tol=tol,
+                                         penalty_model=L11_PENALTY,
+                                         rng=rng,
+                                         random=random,
+                                         positive=positive)
+    return W[:, 0], gap, tol, n_iter
+
+
+def enet_coordinate_descent_gram(complexing[:] w, floating alpha, floating beta,
+                                 np.ndarray[complexing, ndim=2, mode='c'] Q,
+                                 np.ndarray[complexing, ndim=1, mode='c'] q,
+                                 np.ndarray[complexing, ndim=1] y,
+                                 int max_iter, floating tol, object rng,
+                                 bint random=0, bint positive=0):
+    """Cython version of the coordinate descent algorithm
+    for Elastic-Net regression
+
+    We minimize
+
+        (1/2) * w^T Q w - q^T w + alpha norm(w, 1) + (beta/2) * norm(w, 2)^2
+
+    which amounts to the Elastic-Net problem when:
+
+        Q = X^T X (Gram matrix)
+        q = X^T y
+    """
+    cdef np.ndarray[complexing, ndim=2, mode="c"] W = np.ascontiguousarray(w[:, None])
+    cdef np.ndarray[complexing, ndim=2, mode="fortran"] Gram = np.asfortranarray(Q)
+    cdef np.ndarray[complexing, ndim=2, mode="fortran"] Cov = np.asfortranarray(q[:, None])
+    cdef floating Y_norm2
+    fused_nrm2(len(y), &y[0], 1, &Y_norm2)
+    W, gap, tol, n_iter = coordescendant(W,
+                                         alpha,
+                                         beta,
+                                         Gram,
+                                         Cov,
+                                         Y_norm2=Y_norm2,
+                                         precomputed=True,
+                                         max_iter=max_iter,
+                                         tol=tol,
+                                         penalty_model=L11_PENALTY,
+                                         rng=rng,
+                                         random=random,
+                                         positive=positive)
+    return W[:, 0], gap, tol, n_iter
+
+
+def enet_coordinate_descent_multi_task(complexing[::1, :] W, floating l1_reg,
+                                       floating l2_reg,
+                                       np.ndarray[complexing, ndim=2, mode='fortran'] X,
+                                       np.ndarray[complexing, ndim=2] Y,
+                                       int max_iter, floating tol, object rng,
+                                       bint random=0):
+    """Cython version of the coordinate descent algorithm
+        for Elastic-Net mult-task regression
+
+        We minimize
+
+        (1/2) * norm(y - X w, 2)^2 + l1_reg ||w||_21 + (1/2) * l2_reg norm(w, 2)^2
+
+    """
+    cdef np.ndarray[complexing, ndim=2, mode="c"] W_c = np.ascontiguousarray(W.T)
+    cdef np.ndarray[complexing, ndim=2, mode="fortran"] Y_f = np.asfortranarray(Y)
+    W_c, gap, tol, n_iter = coordescendant(W_c,
+                                           l1_reg,
+                                           l2_reg,
+                                           X,
+                                           Y_f,
+                                           precomputed=False,
+                                           max_iter=max_iter,
+                                           tol=tol,
+                                           penalty_model=L21_PENALTY,
+                                           rng=rng,
+                                           random=random)
+    return W_c.T, gap, tol, n_iter
