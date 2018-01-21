@@ -314,6 +314,7 @@ writing data in that format.
     olivetti_faces
     twenty_newsgroups
     mldata
+    openml
     labeled_faces
     covtype
     rcv1
@@ -323,6 +324,8 @@ writing data in that format.
 .. include:: olivetti_faces.rst
 
 .. include:: twenty_newsgroups.rst
+
+.. include:: openml.rst
 
 .. include:: mldata.rst
 

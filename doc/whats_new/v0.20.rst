@@ -54,6 +54,9 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 Preprocessing
 
 - Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
@@ -79,8 +82,11 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+Datasets
+
+- Added :func:`dataset.fetch_openml` to fetch any dataset from `OpenML <http://openml.org>`.
+  OpenML is a free, open data sharing platform and will replace mldata, which
+  is no longer maintained. :issue:`9908` by `Andreas Müller`_
 
 - Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
