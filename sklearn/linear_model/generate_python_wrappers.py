@@ -46,13 +46,13 @@ def _py_%s(np.ndarray[complexing, ndim=1] X,
     return %s(len(X), &X[0], 1, &Y[0], 1)\n""" % (api, api))
 
         write_stuff("\n### More wrappers")
-        write_stuff("from utils cimport l1_norm")
+        write_stuff("from blas_api cimport fused_asum")
         write_stuff("")
         write_stuff("""
-def _py_l1_norm(np.ndarray[complexing, ndim=1] w):
-    return l1_norm(len(w),
-                   &w[0],
-                   1)""")
+def _py_fused_asum(np.ndarray[complexing, ndim=1] w):
+    return fused_asum(len(w),
+                      &w[0],
+                      1)""")
 
 
 if __name__ == "__main__":
