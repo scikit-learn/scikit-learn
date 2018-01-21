@@ -211,7 +211,7 @@ def test_label_encoder_errors():
 
 def test_label_encoder_empty_array():
     le = LabelEncoder()
-    le.fit(np.array(["1", "2", "1", "2", "2"], dtype=np.float64))
+    le.fit(np.array(["1", "2", "1", "2", "2"]))
     # test empty transform
     transformed = le.transform([])
     assert_array_equal(np.array([]), transformed)
