@@ -284,8 +284,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                          ' got %d instead' % max_iter)
 
     X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                    order="C")
-    X = as_float_array(X, copy=copy_x)
+                    order="C", copy=copy_x)
     tol = _tolerance(X, tol)
 
     # If the distances are precomputed every job will create a matrix of shape
