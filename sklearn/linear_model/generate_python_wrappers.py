@@ -50,9 +50,12 @@ def _py_%s(np.ndarray[complexing, ndim=1] X,
         write_stuff("")
         write_stuff("""
 def _py_fused_asum(np.ndarray[complexing, ndim=1] w):
-    return fused_asum(len(w),
-                      &w[0],
-                      1)""")
+    s = 0.
+    fused_asum(len(w),
+               &w[0],
+               1,
+               &s)
+    return s""")
 
 
 if __name__ == "__main__":
