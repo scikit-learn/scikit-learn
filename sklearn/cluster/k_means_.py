@@ -283,6 +283,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
+    X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                    order="C")
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
 
@@ -302,7 +304,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     # Validate init array
     if hasattr(init, '__array__'):
-        init = check_array(init, dtype=X.dtype.type, copy=True, order="C")
+        init = check_array(init, dtype=X.dtype.type, copy=True)
         _validate_center_shape(X, n_clusters, init)
 
         if n_init != 1:
@@ -396,7 +398,6 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          precompute_distances=True):
     if sp.issparse(X):
         raise TypeError("algorithm='elkan' not supported for sparse input X")
-    X = check_array(X, order="C")
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
@@ -865,8 +866,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order="C")
         if _num_samples(X) < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 _num_samples(X), self.n_clusters))
