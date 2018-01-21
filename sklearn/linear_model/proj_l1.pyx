@@ -1,5 +1,4 @@
 # encoding: utf-8
-# cython: linetrace=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -13,7 +12,7 @@ from libc.math cimport fabs, sqrt
 cimport numpy as np
 import numpy as np
 from types cimport floating, complexing
-from blas_api cimport (fused_scal, fused_copy)
+from blas_api cimport fused_scal, fused_copy
 from utils cimport cabs
 
 

@@ -1,4 +1,5 @@
 from types cimport complexing
+from utils cimport cabs, cabsf
 
 
 cdef void fused_copy(int N,
@@ -28,6 +29,28 @@ cdef void fused_scal(int N,
         zscal(N, &alpha, X, incX)
     else:
         cscal(N, &alpha, X, incX)
+
+
+cdef double fused_asum(int n,
+                       complexing *w,
+                       int inc) nogil:
+    if complexing is float:
+        return sasum(n,
+                     w,
+                     inc)
+    if complexing is double:
+        return dasum(n,
+                     w,
+                     inc)
+    cdef double s = 0.
+    cdef int k
+    for k in range(0, n):
+        k *= inc
+        if complexing is complex:
+            s += cabs(w[k])
+        else:
+            s += cabsf(w[k])
+    return s
 
 
 cdef complexing fused_dotc(int N,

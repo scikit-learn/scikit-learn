@@ -46,7 +46,7 @@ from types cimport floating, complexing
 from blas_api cimport (CblasColMajor, fused_scal, fused_copy, fused_nrm2,
                        fused_dotu, fused_dotc, fused_geru, fused_axpy)
 from dual_gap cimport _compute_dual_gap
-from utils cimport fmax, abs_max, diff_abs_max, relu, l1_norm
+from utils cimport fmax, abs_max, diff_abs_max, relu
 from proj_l2 cimport proj_l2
 from proj_l1 cimport proj_l1
 from prox_l1 cimport prox_l1

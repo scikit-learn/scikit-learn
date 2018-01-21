@@ -13,8 +13,8 @@ import warnings
 cimport numpy as np
 import numpy as np
 from types cimport complexing, floating
-from blas_api cimport (fused_nrm2, fused_dotu, fused_dotc)
-from utils cimport l1_norm
+from blas_api cimport (fused_nrm2, fused_dotu, fused_dotc,
+                       fused_asum)
 from cd_fast2 cimport L11_PENALTY, L21_PENALTY
 
 cdef extern from "complex.h" nogil:
@@ -152,9 +152,9 @@ cdef floating _compute_dual_gap(int n_samples,
                                         n_features)
         else:
             # Grad_axis1norm = np.abs(Grad[j]).sum()
-            Grad_axis1norm = l1_norm(n_targets,
-                                     Grad_ptr + j,
-                                     n_features)
+            Grad_axis1norm = fused_asum(n_targets,
+                                        Grad_ptr + j,
+                                        n_features)
         if Grad_axis1norm > dual_norm_Grad:
             dual_norm_Grad = Grad_axis1norm
 
@@ -184,9 +184,9 @@ cdef floating _compute_dual_gap(int n_samples,
                               1)
         else:
             # pen += np.abs(W[j]).sum()
-            pen += l1_norm(n_targets,
-                           W_ptr + j * n_targets,
-                           1)
+            pen += fused_asum(n_targets,
+                              W_ptr + j * n_targets,
+                              1)
     pen *= reg
     pen += .5 * l2_reg * (1. + C ** 2) * W_norm2
 

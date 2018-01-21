@@ -5,11 +5,6 @@ from types cimport floating, complexing
 from blas_api cimport (fused_nrm2, fused_scal)
 from utils cimport fmax
 
-# for testing
-cimport numpy as np
-import numpy as np
-from sklearn.utils.testing import assert_array_equal
-
 
 cdef inline void prox_l2(int n,
                          complexing *w,
