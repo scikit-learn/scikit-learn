@@ -196,11 +196,6 @@ def test_label_encoder_fit_transform():
 
 
 def test_label_encoder_errors():
-    # Check that invalid arguments yield ValueError
-    le = LabelEncoder()
-    assert_raises(ValueError, le.transform, [])
-    assert_raises(ValueError, le.inverse_transform, [])
-
     # Fail on unseen labels
     le = LabelEncoder()
     le.fit([1, 2, 3, -1, 1])
