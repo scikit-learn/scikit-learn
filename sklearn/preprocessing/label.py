@@ -124,9 +124,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
+        check_is_fitted(self, 'classes_')
         if _num_samples(y) == 0:
             return np.array([])
-        check_is_fitted(self, 'classes_')
         y = column_or_1d(y, warn=True)
 
         classes = np.unique(y)
