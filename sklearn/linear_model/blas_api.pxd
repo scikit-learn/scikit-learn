@@ -189,9 +189,10 @@ cdef void fused_scal(int N,
                      complexing alpha,
                      complexing *X,
                      int incX) nogil
-cdef double fused_asum(int N,
-                       complexing *X,
-                       int incX) nogil
+cdef void fused_asum(int N,
+                     complexing *X,
+                     int incX,
+                     floating *s) nogil
 cdef complexing fused_axpy(int N,
                            complexing alpha,
                            complexing *X,

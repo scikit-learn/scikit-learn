@@ -46,17 +46,13 @@ from types cimport floating, complexing
 from blas_api cimport (CblasColMajor, fused_scal, fused_copy, fused_nrm2,
                        fused_dotu, fused_dotc, fused_geru, fused_axpy)
 from dual_gap cimport _compute_dual_gap
-from utils cimport fmax, abs_max, diff_abs_max, relu
+from utils cimport fmax, abs_max, diff_abs_max, relu, real_part
 from proj_l2 cimport proj_l2
 from proj_l1 cimport proj_l1
 from prox_l1 cimport prox_l1
 from prox_l2 cimport prox_l2
 
 np.import_array()
-
-cdef extern from "complex.h" nogil:
-    double creal(double complex)
-    float crealf(float complex)
 
 
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
@@ -138,20 +134,6 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     if pos and not (complexing is double or complexing is float):
             raise TypeError("pos=True for complex data makes no sense")
 
-    # specialization of fuzed types / functions
-    if complexing is float:
-        dtype = np.float32
-        real_part = crealf
-    elif complexing is double:
-        dtype = np.float64
-        real_part = creal
-    elif complexing is complex:
-        dtype = np.complex128
-        real_part = creal
-    else:
-        dtype = np.complex64
-        real_part = crealf
-
     # select an appropriate prox handle by model
     cdef PROX prox
     if hasattr(penalty_model, "__call__"):
@@ -186,7 +168,7 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     cdef int n_samples = X_or_Gram.shape[0]
     cdef int n_features = X_or_Gram.shape[1]
     cdef int n_targets = Y_or_Cov.shape[1]
-    cdef complexing[:] Wj = np.zeros(n_targets, dtype=dtype)
+    cdef complexing[:] Wj = np.zeros(n_targets, dtype=W.dtype)
     cdef floating ajj
     cdef complexing alpha, beta
     cdef int X_size = n_samples * n_features
@@ -246,11 +228,12 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
         if precomputed:
             X_col_norms_squared[j] = X_or_Gram[j, j].real
         else:
-            X_col_norms_squared[j] = real_part(fused_dotc(n_samples,
-                                                         X_or_Gram_ptr + j * n_samples,
-                                                         inc,
-                                                         X_or_Gram_ptr + j * n_samples,
-                                                         inc))
+            alpha = fused_dotc(n_samples,
+                               X_or_Gram_ptr + j * n_samples,
+                               inc,
+                               X_or_Gram_ptr + j * n_samples,
+                               inc)
+            real_part(alpha, &X_col_norms_squared[j])
 
     # main loop: the rest of code doesn't need the GIL
     with nogil:
@@ -388,9 +371,9 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                                    n_samples)
 
                 # update the maximum absolute coefficient
-                d_Wj_abs_max = diff_abs_max(n_targets, W_ptr + j * n_targets, Wj_ptr)
+                diff_abs_max(n_targets, W_ptr + j * n_targets, Wj_ptr, &d_Wj_abs_max)
                 d_W_abs_max = fmax(d_W_abs_max, d_Wj_abs_max)
-                Wj_abs_max = abs_max(n_targets, W_ptr + j * n_targets)
+                abs_max(n_targets, W_ptr + j * n_targets, &Wj_abs_max)
                 W_abs_max = fmax(W_abs_max, Wj_abs_max)
 
             # check convergence

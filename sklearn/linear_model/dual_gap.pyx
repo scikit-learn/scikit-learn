@@ -13,13 +13,10 @@ import warnings
 cimport numpy as np
 import numpy as np
 from types cimport complexing, floating
+from utils cimport real_part
 from blas_api cimport (fused_nrm2, fused_dotu, fused_dotc,
                        fused_asum)
 from cd_fast2 cimport L11_PENALTY, L21_PENALTY
-
-cdef extern from "complex.h" nogil:
-    double creal(double complex)
-    float crealf(float complex)
 
 
 cdef floating _compute_dual_gap(int n_samples,
@@ -64,16 +61,6 @@ cdef floating _compute_dual_gap(int n_samples,
             raise ValueError(
                 "`precomputed=True` was specified, expected a value for `Y_norm2`")
 
-    # specialization of fuzed types / functions
-    if complexing is float:
-        real_part = crealf
-    elif complexing is double:
-        real_part = creal
-    elif complexing is complex:
-        real_part = creal
-    else:
-        real_part = crealf
-
     # matrix sizes
     cdef int W_size = n_features * n_targets
     cdef int R_or_RCov_size = n_samples * n_targets
@@ -82,8 +69,8 @@ cdef floating _compute_dual_gap(int n_samples,
     cdef int i, j, k, f_index, c_index
 
     # more auxiliary variables
-    cdef floating R_norm2, W_norm2, C, pen, gap, Grad_axis1norm, dual_norm_Grad
-    cdef complexing alpha, beta, ry_sum
+    cdef floating tmp, R_norm2, ry_sum, W_norm2, C, pen, gap, Grad_axis1norm, dual_norm_Grad
+    cdef complexing alpha, beta
 
     # compute R_norm2, ry_sum, and Grad
     if precomputed:
@@ -106,8 +93,8 @@ cdef floating _compute_dual_gap(int n_samples,
                                1,
                                Y_or_Cov_ptr + j,
                                n_features)
-        R_norm2 = real_part(alpha)
-        ry_sum = real_part(beta)
+        real_part(alpha, &R_norm2)
+        real_part(beta, &ry_sum)
 
         # Grad = RCov - l2_reg * W
         # XXX Is there a faster BLAS way for doing this ?
@@ -118,18 +105,20 @@ cdef floating _compute_dual_gap(int n_samples,
                 Grad_ptr[f_index]  = R_or_RCov_ptr[f_index] - l2_reg * W_ptr[c_index]
     else:
         # R_norm2 = ||R||^2_F
-        R_norm2 = real_part(fused_dotc(R_or_RCov_size,
-                                       R_or_RCov_ptr,
-                                       1,
-                                       R_or_RCov_ptr,
-                                       1))
+        alpha = fused_dotc(R_or_RCov_size,
+                           R_or_RCov_ptr,
+                           1,
+                           R_or_RCov_ptr,
+                           1)
+        real_part(alpha, &R_norm2)
 
-        # ry_sum = <R_conj, Y>_F
-        ry_sum = real_part(fused_dotc(R_or_RCov_size,
-                                      R_or_RCov_ptr,
-                                      1,
-                                      Y_or_Cov_ptr,
-                                      1))
+        # ry_sum = <R_conj,  Y>_F
+        beta = fused_dotc(R_or_RCov_size,
+                          R_or_RCov_ptr,
+                          1,
+                          Y_or_Cov_ptr,
+                          1)
+        real_part(beta, &ry_sum)
 
         # Grad = np.dot(X.conjugate().T, R) - l2_reg * W
         for j in range(n_features):
@@ -152,18 +141,20 @@ cdef floating _compute_dual_gap(int n_samples,
                                         n_features)
         else:
             # Grad_axis1norm = np.abs(Grad[j]).sum()
-            Grad_axis1norm = fused_asum(n_targets,
-                                        Grad_ptr + j,
-                                        n_features)
+            fused_asum(n_targets,
+                       Grad_ptr + j,
+                       n_features,
+                       &Grad_axis1norm)
         if Grad_axis1norm > dual_norm_Grad:
             dual_norm_Grad = Grad_axis1norm
 
     # W_norm2 = ||W||^2_F
-    W_norm2 = real_part(fused_dotc(W_size,
-                                   W_ptr,
-                                   1,
-                                   W_ptr,
-                                   1))
+    alpha = fused_dotc(W_size,
+                       W_ptr,
+                       1,
+                       W_ptr,
+                       1)
+    real_part(alpha, &W_norm2)
 
     # R-scale Grad to ensure dual-feasibility
     if (dual_norm_Grad > reg):
@@ -184,17 +175,16 @@ cdef floating _compute_dual_gap(int n_samples,
                               1)
         else:
             # pen += np.abs(W[j]).sum()
-            pen += fused_asum(n_targets,
-                              W_ptr + j * n_targets,
-                              1)
+            fused_asum(n_targets,
+                       W_ptr + j * n_targets,
+                       1,
+                       &tmp)
+            pen += tmp
     pen *= reg
     pen += .5 * l2_reg * (1. + C ** 2) * W_norm2
 
     # complete the computation of the dual gap
-    if complexing is float or complexing is double:
-        gap += pen - C * ry_sum
-    else:
-        gap += pen - C * real_part(ry_sum)
+    gap += pen - C * ry_sum
 
     return gap
 

@@ -1,11 +1,20 @@
 from types cimport floating, complexing
 
 
+cdef void real_part(complexing x, floating *y) nogil:
+    if complexing is float or complexing is double:
+        y[0] = x
+    elif complexing is complex:
+        y[0] = creal(x)
+    else:
+        y[0] = crealf(x)
+
+
 cdef inline floating fmax(floating x, floating y) nogil:
     return y if x < y else x
 
 
-cdef double abs_max(int n, complexing* a) nogil:
+cdef void abs_max(int n, complexing *a, floating *b) nogil:
     """np.max(np.abs(a))"""
     if complexing is float or complexing is double:
         abs = fabs
@@ -15,16 +24,15 @@ cdef double abs_max(int n, complexing* a) nogil:
         abs = cabsf
 
     cdef int i
-    cdef double m = abs(a[0])
     cdef double d
+    b[0] = abs(a[0])
     for i in range(1, n):
         d = abs(a[i])
-        if d > m:
-            m = d
-    return m
+        if d > b[0]:
+            b[0] = d
 
 
-cdef floating fmax_arr(int n, floating* a) nogil:
+cdef floating fmax_arr(int n, floating *a) nogil:
     """np.max(a)"""
     cdef int i
     cdef floating m = a[0]
@@ -36,7 +44,7 @@ cdef floating fmax_arr(int n, floating* a) nogil:
     return m
 
 
-cdef double diff_abs_max(int n, complexing* a, complexing* b) nogil:
+cdef void diff_abs_max(int n, complexing *a, complexing *b, floating *c) nogil:
     """np.max(np.abs(a - b))"""
     if complexing is double or complexing is float:
         abs = fabs
@@ -45,13 +53,10 @@ cdef double diff_abs_max(int n, complexing* a, complexing* b) nogil:
     else:
         abs = cabsf
     cdef int i
-    cdef double m = abs(a[0] - b[0])
-    cdef double d
+    cdef floating d
+    c[0] = abs(a[0] - b[0])
     for i in range(1, n):
-        d = abs(a[i] - b[i])
-        if d > m:
-            m = d
-    return m
+        d = fmax(c[0], abs(a[i] - b[i]))
 
 
 cdef inline void relu(int n, floating *x) nogil:

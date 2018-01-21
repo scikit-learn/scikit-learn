@@ -31,26 +31,27 @@ cdef void fused_scal(int N,
         cscal(N, &alpha, X, incX)
 
 
-cdef double fused_asum(int n,
-                       complexing *w,
-                       int inc) nogil:
-    if complexing is float:
-        return sasum(n,
-                     w,
-                     inc)
-    if complexing is double:
-        return dasum(n,
-                     w,
-                     inc)
-    cdef double s = 0.
+cdef void fused_asum(int n,
+                     complexing *w,
+                     int inc,
+                     floating *s) nogil:
     cdef int k
-    for k in range(0, n):
-        k *= inc
-        if complexing is complex:
-            s += cabs(w[k])
-        else:
-            s += cabsf(w[k])
-    return s
+    if complexing is float:
+        s[0] = sasum(n,
+                     w,
+                     inc)
+    elif complexing is double:
+        s[0] = dasum(n,
+                     w,
+                     inc)
+    else:
+        s[0] = 0
+        for k in range(0, n):
+            k *= inc
+            if complexing is complex:
+                s[0] += cabs(w[k])
+            else:
+                s[0] += cabsf(w[k])
 
 
 cdef complexing fused_dotc(int N,
