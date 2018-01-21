@@ -175,8 +175,8 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     cdef int W_size = n_features * n_targets
     cdef int R_size = n_samples * n_targets
     cdef int inc = 1
-    cdef floating Wj_abs_max, d_Wj_abs_max, W_abs_max, d_W_abs_max
-    cdef floating d_W_abs_tol = tol
+    cdef floating Wj_abs_max, d_Wj_abs_max, W_abs_max, d_W_abs_max, d_W_abs_tol = tol
+    cdef floating Wj_norm
     cdef int j, k
     cdef unsigned int n_iter = 0
     cdef UINT32_t rand_r_state_seed
@@ -272,9 +272,11 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                                    inc)
                 else:
                     alpha = 1
-                    if fused_nrm2(n_targets,
-                                  W_ptr + j * n_targets,
-                                  inc):
+                    fused_nrm2(n_targets,
+                               W_ptr + j * n_targets,
+                               inc,
+                               &Wj_norm)
+                    if Wj_norm > 0:
                         fused_geru(CblasColMajor,
                                    n_samples,
                                    n_targets,
@@ -356,9 +358,11 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                                    inc)
                 else:
                     alpha = -1
-                    if fused_nrm2(n_targets,
-                                  W_ptr + j * n_targets,
-                                  inc):
+                    fused_nrm2(n_targets,
+                               W_ptr + j * n_targets,
+                               inc,
+                               &Wj_norm)
+                    if Wj_norm > 0:
                         fused_geru(CblasColMajor,
                                    n_samples,
                                    n_targets,

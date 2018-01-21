@@ -90,25 +90,26 @@ cdef complexing fused_dotu(int N,
         return z
 
 
-cdef double fused_nrm2(int N,
-                       complexing *X,
-                       int incX) nogil:
+cdef void fused_nrm2(int N,
+                     complexing *X,
+                     int incX,
+                     floating *normX) nogil:
     if complexing is float:
-        return snrm2(N, X, incX)
+        normX[0] = snrm2(N, X, incX)
     elif complexing is double:
-        return dnrm2(N, X, incX)
+        normX[0] = dnrm2(N, X, incX)
     elif complexing is complex:
-        return dznrm2(N, X, incX)
+        normX[0] = dznrm2(N, X, incX)
     else:
-        return scnrm2(N, X, incX)
+        normX[0] = scnrm2(N, X, incX)
 
 
-cdef complexing fused_axpy(int N,
-                           complexing alpha,
-                           complexing *X,
-                           int incX,
-                           complexing *Y,
-                           int incY) nogil:
+cdef void fused_axpy(int N,
+                     complexing alpha,
+                     complexing *X,
+                     int incX,
+                     complexing *Y,
+                     int incY) nogil:
     if complexing is float:
         saxpy(N, alpha, X, incX, Y, incY)
     elif complexing is double:

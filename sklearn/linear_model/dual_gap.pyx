@@ -136,9 +136,10 @@ cdef floating _compute_dual_gap(int n_samples,
     for j in range(n_features):
         if penalty_model == L21_PENALTY:
             # Grad_axis1norm = np.sqrt(np.sum(Grad[j] ** 2))
-            Grad_axis1norm = fused_nrm2(n_targets,
-                                        Grad_ptr + j,
-                                        n_features)
+            fused_nrm2(n_targets,
+                       Grad_ptr + j,
+                       n_features,
+                       &Grad_axis1norm)
         else:
             # Grad_axis1norm = np.abs(Grad[j]).sum()
             fused_asum(n_targets,
@@ -170,9 +171,11 @@ cdef floating _compute_dual_gap(int n_samples,
     for j in range(n_features):
         if penalty_model == L21_PENALTY:
             # pen += np.sqrt(np.sum(W[j] ** 2))
-            pen += fused_nrm2(n_targets,
-                              W_ptr + j * n_targets,
-                              1)
+            fused_nrm2(n_targets,
+                       W_ptr + j * n_targets,
+                       1,
+                       &tmp)
+            pen += tmp
         else:
             # pen += np.abs(W[j]).sum()
             fused_asum(n_targets,

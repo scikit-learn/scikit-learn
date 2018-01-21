@@ -13,9 +13,10 @@ cdef inline void prox_l2(int n,
     cdef floating scaling
 
     # N.B.: scaling = ||w||_2
-    scaling = <floating>fused_nrm2(n,
-                                   w,
-                                   1)
+    fused_nrm2(n,
+               w,
+               1,
+               &scaling)
     if scaling != 0.:  # Else w must be the zero vector; do nothing
         scaling = fmax(1. - reg / scaling, 0.)
         if ajj != 0.:

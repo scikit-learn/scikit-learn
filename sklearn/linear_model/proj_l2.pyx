@@ -16,9 +16,10 @@ cdef inline void proj_l2(int n,
     if ajj == 0.:
         scaling = 0.
     else:
-        scaling = <floating>fused_nrm2(n,
-                                       w,
-                                       1)
+        fused_nrm2(n,
+                   w,
+                   1,
+                   &scaling)
         if scaling > ajj * reg:
             scaling = reg / scaling
         else:

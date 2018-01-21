@@ -179,36 +179,51 @@ cdef extern from "cblas.h" nogil:
                              void *A,
                              int lda)
 
-# Special treatment of trick BLAS APIs
+
+### Wrap BLAS subroutines into a consistent API
+
+# copy data from one array (X) to another (Y)
 cdef void fused_copy (int N,
                       complexing *X,
                       int incX,
                       complexing *Y,
                       int incY) nogil
+
+# multiply a array (X) with a scalar (alpha) in-place
 cdef void fused_scal(int N,
                      complexing alpha,
                      complexing *X,
                      int incX) nogil
+
+# compute some of absolute values of an array (X)
 cdef void fused_asum(int N,
                      complexing *X,
                      int incX,
-                     floating *s) nogil
-cdef complexing fused_axpy(int N,
-                           complexing alpha,
-                           complexing *X,
-                           int incX,
-                           complexing *Y,
-                           int incY) nogil
-cdef complexing fused_dotc(int N,
-                           complexing *X,
-                           int incX,
-                           complexing *Y,
-                           int incY) nogil
+                     floating *asumX) nogil
+
+# vector update: Y = Y + alpha * X
+cdef void fused_axpy(int N,
+                     complexing alpha,
+                     complexing *X,
+                     int incX,
+                     complexing *Y,
+                     int incY) nogil
+
+# computes dot inner product of X with Y
 cdef complexing fused_dotu(int N,
                            complexing *X,
                            int incX,
                            complexing *Y,
                            int incY) nogil
+
+# computes dot inner product of complex conjugate of X with Y
+cdef complexing fused_dotc(int N,
+                           complexing *X,
+                           int incX,
+                           complexing *Y,
+                           int incY) nogil
+
+# rank-1 update: A = A + alpha * outer(X, Y)
 cdef void fused_geru(CBLAS_ORDER Order,
                      int M,
                      int N,
@@ -219,6 +234,9 @@ cdef void fused_geru(CBLAS_ORDER Order,
                      int incY,
                      complexing *A,
                      int lda) nogil
-cdef double fused_nrm2(int N,
-                       complexing *X,
-                       int incX) nogil
+
+# norm of array: normX = ||X||_2
+cdef void fused_nrm2(int N,
+                     complexing *X,
+                     int incX,
+                     floating *normX) nogil
