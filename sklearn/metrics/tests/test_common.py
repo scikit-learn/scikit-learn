@@ -1015,7 +1015,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         weighted_score, weighted_score_list,
         err_msg=("Weighted scores for array and list "
                  "sample_weight input are not equal (%f != %f) for %s") % (
-                    weighted_score, weighted_score_list, name))
+                     weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(

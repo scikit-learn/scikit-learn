@@ -373,7 +373,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
 
 def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average='samples', normalize=None,
+                             average='samples', normalize=True,
                              sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -440,7 +440,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     Returns
     -------
-    score: float (if average is not None) or array of float, shape =\
+    score: float (if average is not None) or array of floats, shape =\
             [n_unique_labels]
 
     See also
@@ -459,32 +459,24 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     In the multilabel case with binary label indicators:
 
-    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),
-    ... np.ones((2, 2)))
-    0.75
+    >>> y_true = np.array([[1, 0, 1], [0, 0, 1], [1, 1, 1]])
+    >>> y_pred = np.array([[0, 1, 1], [1, 1, 1], [0, 0, 1]])
+    >>> jaccard_similarity_score(y_true, y_pred)
+    ... # doctest: +ELLIPSIS
+    0.33...
+    >>> jaccard_similarity_score(y_true, y_pred, average='micro')
+    ... # doctest: +ELLIPSIS
+    0.33...
+    >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
+    0.5
+    >>> jaccard_similarity_score(y_true, y_pred, average=None)
+    array([ 0.,  0.,  1.])
 
     In the multiclass case:
 
-    >>> y_pred = [0, 2, 1, 3]
-    >>> y_true = [0, 1, 2, 3]
-    >>> jaccard_similarity_score(y_true, y_pred, average='macro')
+    >>> jaccard_similarity_score(np.array([0, 2, 1, 3]),
+    ... np.array([0, 1, 2, 3]), average='macro')
     0.5
-    >>> jaccard_similarity_score(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
-    0.333...
-
-    >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
-    >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
-    >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
-    0.4722...
-    >>> jaccard_similarity_score(y_true, y_pred, average=None)
-    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    array([ 0.66...,  0. ,  0.5  ])
-    >>> jaccard_similarity_score(y_true, y_pred, average=None,
-    ... labels=['ant', 'cat', 'bird'])
-    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    array([ 0.66...,  0.5 ,  0.  ])
     """
 
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
@@ -523,10 +515,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                                  assume_unique=True)])
 
     if y_type.startswith('multilabel'):
-        if average == 'samples':
-            if normalize is None:
-                normalize = True
-        elif normalize is not None:
+        if average != 'samples' and not normalize:
             raise ValueError("'normalize' is only meaningful with "
                              "`average='samples'`, got `average='%s'`."
                              % average)
@@ -585,7 +574,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             score[pred_or_true == 0.0] = 1.0
 
             if average is not None:
-                if normalize is False:
+                if not normalize:
                     if class_weight is not None:
                         score = np.dot(score, class_weight)
                     else:
@@ -640,7 +629,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             else:
                 pred_sum = np.zeros(len(labels))
 
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide='ignore'):
             class_weight = None
             if average == 'micro' or average == 'binary':
                 tp_sum = np.array([tp_sum.sum()])
@@ -1268,7 +1257,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # Select labels:
         if not np.all(labels == present_labels):
             if np.max(labels) > np.max(present_labels):
-                raise ValueError('All labels must be in [0, n, labels). '
+                raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d > %d' %
                                  (np.max(labels), np.max(present_labels)))
             if np.min(labels) < 0:

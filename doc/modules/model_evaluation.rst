@@ -683,9 +683,7 @@ In the multilabel case with binary label indicators: ::
   >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
   1.5
 
-For which multiclass problems are binarized.
-
-::
+Multiclass problems are binarized: ::
 
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]

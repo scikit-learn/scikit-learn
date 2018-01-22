@@ -149,6 +149,12 @@ Metrics
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
   ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- :func:`metrics.jaccard_similarity_score` now accepts ``average`` argument
+  like :func:`metrics.precision_recall_fscore_support` as a naively set-wise
+  measure applying only to binary, multilabel targets and binarizing
+  multiclass input.
+  :issue:`10083` by :user:`Gaurav Dhingra <gxyd>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
@@ -265,6 +271,11 @@ Decomposition, manifold learning and clustering
   and :user:`Devansh D. <devanshdalal>`.
 
 Metrics
+
+- Fixed a bug in :func:`metrics.jaccard_similarity_score`, to disallow
+  sample-wise averaging for 1d input, since it is redundantly equal to
+  :func:`metrics.accuracy_score`.
+  :issue:`10083` by :user:`Gaurav Dhingra <gxyd>`.
 
 - Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
   when truncated `range(n_labels)` is passed as value for `labels`.

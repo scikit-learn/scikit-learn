@@ -543,7 +543,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     # estimators.
     def _check_proba(self):
         if not self.probability:
-            raise AttributeError("predict_proba is not available when"
+            raise AttributeError("predict_proba is not available when "
                                  " probability=False")
         if self._impl not in ('c_svc', 'nu_svc'):
             raise AttributeError("predict_proba only implemented for SVC"
