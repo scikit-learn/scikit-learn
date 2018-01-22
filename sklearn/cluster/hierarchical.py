@@ -779,7 +779,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                              (self.affinity, ))
 
         if self.linkage not in _TREE_BUILDERS:
-            raise ValueError("Unknown linkage type %s."
+            raise ValueError("Unknown linkage type %s. "
                              "Valid options are %s" % (self.linkage,
                                                        _TREE_BUILDERS.keys()))
         tree_builder = _TREE_BUILDERS[self.linkage]
