@@ -25,6 +25,8 @@ group1 through groupN are group ids.  If only want particular groups used,
 enter their ids here and all others will be ignored.
 """
 
+from __future__ import print_function
+
 import os
 import re
 import sys
