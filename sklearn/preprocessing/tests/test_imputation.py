@@ -97,40 +97,6 @@ def test_imputation_shape():
         assert_equal(X_imputed.shape, (10, 2))
 
 
-def test_imputation_mean_median_only_zero():
-    # Test imputation using the mean and median strategies, when
-    # missing_values == 0.
-    X = np.array([
-        [np.nan, 0, 0, 0, 5],
-        [np.nan, 1, 0, np.nan, 3],
-        [np.nan, 2, 0, 0, 0],
-        [np.nan, 6, 0, 5, 13],
-    ])
-
-    X_imputed_mean = np.array([
-        [3, 5],
-        [1, 3],
-        [2, 7],
-        [6, 13],
-    ])
-    statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
-
-    # Behaviour of median with NaN is undefined, e.g. different results in
-    # np.median and np.ma.median
-    X_for_median = X[:, [0, 1, 2, 4]]
-    X_imputed_median = np.array([
-        [2, 5],
-        [1, 3],
-        [2, 5],
-        [6, 13],
-    ])
-    statistics_median = [np.nan, 2, np.nan, 5]
-
-    _check_statistics(X, X_imputed_mean, "mean", statistics_mean, 0)
-    _check_statistics(X_for_median, X_imputed_median, "median",
-                      statistics_median, 0)
-
-
 def safe_median(arr, *args, **kwargs):
     # np.median([]) raises a TypeError for numpy >= 1.10.1
     length = arr.size if hasattr(arr, 'size') else len(arr)
