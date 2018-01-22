@@ -2228,11 +2228,11 @@ def test_categorical_encoder_dtypes_pandas():
 
 
 def test_categorical_encoder_warning():
-    # check no warning is raised
+    enc = CategoricalEncoder()
+    X = [['Male', 1], ['Female', 3]]
     with warnings.catch_warnings(record=True) as w:
-        enc = CategoricalEncoder()
-        X = [['Male', 1], ['Female', 3], ['Female', 2]]
         enc.fit_transform(X)
+    # check that no warning is raised
     assert len(w) == 0
 
 
