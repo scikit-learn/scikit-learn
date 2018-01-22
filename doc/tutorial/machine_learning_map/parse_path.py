@@ -4,6 +4,8 @@
 Based on: http://wxpsvg.googlecode.com/svn/trunk/svg/pathdata.py
 According to that project, this file is licensed under the LGPL
 """
+from __future__ import print_function
+
 try:
     from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
         Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, ParseException, OneOrMore)
