@@ -212,9 +212,6 @@ cdef class Criterion:
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    cdef SIZE_t* n_classes
-    cdef SIZE_t sum_stride
-
     def __cinit__(self, SIZE_t n_outputs,
                   np.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
@@ -703,8 +700,6 @@ cdef class RegressionCriterion(Criterion):
         var = \sum_i^n (y_i - y_bar) ** 2
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
-
-    cdef double sq_sum_total
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.

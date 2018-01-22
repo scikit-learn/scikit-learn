@@ -15,12 +15,13 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
 
-# Inherit KDTree from BinaryTree
 include "binary_tree.pxi"
 
+# Inherit KDTree from BinaryTree
 cdef class KDTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
     pass
+
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree

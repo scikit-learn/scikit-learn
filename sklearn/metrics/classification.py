@@ -344,7 +344,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
            doi:10.1177/001316446002000104.
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596.
-           <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
+           <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
@@ -1275,6 +1275,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
+        if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
@@ -1685,16 +1686,25 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     """
 
+    labels_given = True
     if labels is None:
         labels = unique_labels(y_true, y_pred)
+        labels_given = False
     else:
         labels = np.asarray(labels)
 
     if target_names is not None and len(labels) != len(target_names):
-        warnings.warn(
-            "labels size, {0}, does not match size of target_names, {1}"
-            .format(len(labels), len(target_names))
-        )
+        if labels_given:
+            warnings.warn(
+                "labels size, {0}, does not match size of target_names, {1}"
+                .format(len(labels), len(target_names))
+            )
+        else:
+            raise ValueError(
+                "Number of classes, {0}, does not match size of "
+                "target_names, {1}. Try specifying the labels "
+                "parameter".format(len(labels), len(target_names))
+            )
 
     last_line_heading = 'avg / total'
 

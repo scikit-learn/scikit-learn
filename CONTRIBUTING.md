@@ -139,8 +139,8 @@ tools:
 -  Code with good unittest **coverage** (at least 80%), check with:
 
   ```bash
-  $ pip install nose coverage
-  $ nosetests --with-coverage path/to/tests_for_package
+  $ pip install pytest pytest-cov
+  $ pytest --cov sklearn path/to/tests_for_package
   ```
 
 -  No pyflakes warnings, check with:
@@ -182,7 +182,7 @@ following rules before submitting:
 
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
-   [new algorithm requirements](http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published).
+   [new algorithm requirements](http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.

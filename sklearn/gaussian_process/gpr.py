@@ -63,7 +63,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must have the signature::
 
             def optimizer(obj_func, initial_theta, bounds):
-                # * 'obj_func' is the objective function to be maximized, which
+                # * 'obj_func' is the objective function to be minimized, which
                 #   takes the hyperparameters theta as parameter and an
                 #   optional flag eval_gradient, which determines if the
                 #   gradient is returned additionally to the function value
