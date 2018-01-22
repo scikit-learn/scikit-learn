@@ -273,7 +273,7 @@ Decomposition, manifold learning and clustering
 Metrics
 
 - Fixed a bug in :func:`metrics.jaccard_similarity_score`, to disallow
-  sample-wise averaging for 1d input, since it is redundantly equal to
+  sample-wise averaging of multiclass input, since it is redundantly equal to
   :func:`metrics.accuracy_score`.
   :issue:`10083` by :user:`Gaurav Dhingra <gxyd>`.
 
