@@ -1058,11 +1058,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         features with approximately the same scale. You can
         preprocess the data with a scaler from sklearn.preprocessing.
 
-        The solver 'auto' selects 'lbfgs' if penalty is 'l2' and 'saga' is
-        penalty is 'l1'. Selecting 'l1' on `saga` may suffer performance
-        issues. Use solver='liblinear', multiclass='ovr' for better
-        performance at the cost of `intercept_scaling`.
-        performance
+        The solver 'auto' selects 'lbfgs' if penalty is 'l2' and 'saga' if
+        penalty is 'l1'. Note that 'saga' may suffer from slow convergence
+        issues on small datasets. The only other solver supporting 'l1' is
+        'liblinear', which requires multiclass='ovr' and which unfortunately
+        regularizes the intercept (see 'intercept_scaling').
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
