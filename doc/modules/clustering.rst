@@ -568,7 +568,7 @@ considers at each step all the possible merges.
    :ref:`data_reduction`.
 
 Different linkage type: Ward, complete, average, and single linkage
------------------------------------------------------------------)-
+-------------------------------------------------------------------
 
 :class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
