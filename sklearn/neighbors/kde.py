@@ -95,9 +95,10 @@ class KernelDensity(BaseEstimator):
         
         if bandwidth in ['scott', 'silvermann','cv']:
             self.bandwidth_ = bandwidth
-            
-        elif bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
+        elif bandwidth > 0:
+            self.bandwidth_ = 'float'
+        else:    
+            raise ValueError("bandwidth must be positive, scott, silvermann or cv")
 
         if kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(kernel))
@@ -133,15 +134,13 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
-
-        print(X.shape)
         
         if self.bandwidth_ == 'scott':
             self.bandwidth =  X.shape[0]**(-1./(X.shape[1]+4)) #3.49083 * X.std() / len(X)**(1/3)
         elif self.bandwidth_ == 'silvermann':
             self.bandwidth = (X.shape[0] * (X.shape[1] + 2) / 4.)**(-1. / (X.shape[1] + 4))# 1.05922*X.std()/len(X)**0.2
-        elif self.bandwidth_ = 'cv':
-             steps = 10
+        elif self.bandwidth_ == 'cv':
+            steps = 10
             lower = 0.01*X.std()
             upper = 0.5*X.std()
             current_best = -10000000
@@ -158,7 +157,7 @@ class KernelDensity(BaseEstimator):
                                     {'bandwidth': bandwidth_range},
                                     cv=20,
                                     return_train_score=False,
-                                    n_jobs = -1,
+                                    #n_jobs = 1,
                                     )
                 grid.fit(X)
                 if abs(current_best -grid.best_score_ ) > 0.001:
