@@ -34,6 +34,8 @@ from .label import MultiLabelBinarizer
 
 from ._target import TransformedTargetRegressor
 from .imputation import Imputer
+from .smooth import RectangularSmoother
+from .smooth import rectangular_smoother
 
 
 __all__ = [
@@ -65,4 +67,6 @@ __all__ = [
     'label_binarize',
     'quantile_transform',
     'power_transform',
+    'RectangularSmoother',
+    'rectangular_smoother',
 ]

@@ -63,6 +63,7 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import PowerTransformer
+from sklearn.preprocessing import RectangularSmoother
 
 from sklearn.datasets import fetch_california_housing
 
@@ -97,6 +98,8 @@ distributions = [
         .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
         Normalizer().fit_transform(X)),
+    ('Data after smoothing with a rectangular filter',
+        RectangularSmoother().fit_transform(X)),
 ]
 
 # scale the output between 0 and 1 for the colorbar
