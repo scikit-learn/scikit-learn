@@ -20,8 +20,8 @@ from matplotlib import colors
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
-###############################################################################
-# colormap
+# #############################################################################
+# Colormap
 cmap = colors.LinearSegmentedColormap(
     'red_blue_classes',
     {'red': [(0, 1, 1), (1, 0.7, 0.7)],
@@ -30,8 +30,8 @@ cmap = colors.LinearSegmentedColormap(
 plt.cm.register_cmap(cmap=cmap)
 
 
-###############################################################################
-# generate datasets
+# #############################################################################
+# Generate datasets
 def dataset_fixed_cov():
     '''Generate 2 Gaussians samples with the same covariance matrix'''
     n, dim = 300, 2
@@ -54,17 +54,17 @@ def dataset_cov():
     return X, y
 
 
-###############################################################################
-# plot functions
+# #############################################################################
+# Plot functions
 def plot_data(lda, X, y, y_pred, fig_index):
     splot = plt.subplot(2, 2, fig_index)
     if fig_index == 1:
         plt.title('Linear Discriminant Analysis')
-        plt.ylabel('Data with fixed covariance')
+        plt.ylabel('Data with\n fixed covariance')
     elif fig_index == 2:
         plt.title('Quadratic Discriminant Analysis')
     elif fig_index == 3:
-        plt.ylabel('Data with varying covariances')
+        plt.ylabel('Data with\n varying covariances')
 
     tp = (y == y_pred)  # True Positive
     tp0, tp1 = tp[y == 0], tp[y == 1]
@@ -76,15 +76,15 @@ def plot_data(lda, X, y, y_pred, fig_index):
 
     # class 0: dots
     plt.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', alpha=alpha,
-             color='red')
+             color='red', markeredgecolor='k')
     plt.plot(X0_fp[:, 0], X0_fp[:, 1], '*', alpha=alpha,
-             color='#990000')  # dark red
+             color='#990000', markeredgecolor='k')  # dark red
 
     # class 1: dots
     plt.plot(X1_tp[:, 0], X1_tp[:, 1], 'o', alpha=alpha,
-             color='blue')
+             color='blue', markeredgecolor='k')
     plt.plot(X1_fp[:, 0], X1_fp[:, 1], '*', alpha=alpha,
-             color='#000099')  # dark blue
+             color='#000099', markeredgecolor='k')  # dark blue
 
     # class 0 and 1 : areas
     nx, ny = 200, 100
@@ -100,9 +100,9 @@ def plot_data(lda, X, y, y_pred, fig_index):
 
     # means
     plt.plot(lda.means_[0][0], lda.means_[0][1],
-             'o', color='black', markersize=10)
+             'o', color='black', markersize=10, markeredgecolor='k')
     plt.plot(lda.means_[1][0], lda.means_[1][1],
-             'o', color='black', markersize=10)
+             'o', color='black', markersize=10, markeredgecolor='k')
 
     return splot
 
@@ -114,7 +114,8 @@ def plot_ellipse(splot, mean, cov, color):
     angle = 180 * angle / np.pi  # convert to degrees
     # filled Gaussian at 2 standard deviation
     ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
-                              180 + angle, facecolor=color, edgecolor='yellow',
+                              180 + angle, facecolor=color,
+                              edgecolor='yellow',
                               linewidth=2, zorder=2)
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
@@ -132,7 +133,6 @@ def plot_qda_cov(qda, splot):
     plot_ellipse(splot, qda.means_[0], qda.covariances_[0], 'red')
     plot_ellipse(splot, qda.means_[1], qda.covariances_[1], 'blue')
 
-###############################################################################
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis
     lda = LinearDiscriminantAnalysis(solver="svd", store_covariance=True)
@@ -147,5 +147,6 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
     plot_qda_cov(qda, splot)
     plt.axis('tight')
-plt.suptitle('Linear Discriminant Analysis vs Quadratic Discriminant Analysis')
+plt.suptitle('Linear Discriminant Analysis vs Quadratic Discriminant'
+             'Analysis')
 plt.show()

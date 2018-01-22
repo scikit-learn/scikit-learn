@@ -5,9 +5,11 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -223,6 +225,38 @@ def test_lda_scaling():
                      'using covariance: %s' % solver)
 
 
+def test_lda_store_covariance():
+    # Test for slover 'lsqr' and 'eigen'
+    # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
+    for solver in ('lsqr', 'eigen'):
+        clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
+        assert_true(hasattr(clf, 'covariance_'))
+
+        # Test the actual attribute:
+        clf = LinearDiscriminantAnalysis(solver=solver,
+                                         store_covariance=True).fit(X6, y6)
+        assert_true(hasattr(clf, 'covariance_'))
+
+        assert_array_almost_equal(
+            clf.covariance_,
+            np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
+        )
+
+    # Test for SVD slover, the default is to not set the covariances_ attribute
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
+    assert_false(hasattr(clf, 'covariance_'))
+
+    # Test the actual attribute:
+    clf = LinearDiscriminantAnalysis(solver=solver,
+                                     store_covariance=True).fit(X6, y6)
+    assert_true(hasattr(clf, 'covariance_'))
+
+    assert_array_almost_equal(
+        clf.covariance_,
+        np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
+    )
+
+
 def test_qda():
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
@@ -262,24 +296,38 @@ def test_qda_priors():
     assert_greater(n_pos2, n_pos)
 
 
-def test_qda_store_covariances():
+def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
-    assert_true(not hasattr(clf, 'covariances_'))
+    assert_false(hasattr(clf, 'covariance_'))
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariances_'))
+    clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    assert_true(hasattr(clf, 'covariance_'))
 
     assert_array_almost_equal(
-        clf.covariances_[0],
+        clf.covariance_[0],
         np.array([[0.7, 0.45], [0.45, 0.7]])
     )
 
     assert_array_almost_equal(
-        clf.covariances_[1],
+        clf.covariance_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
+
+
+def test_qda_deprecation():
+    # Test the deprecation
+    clf = QuadraticDiscriminantAnalysis(store_covariances=True)
+    assert_warns_message(DeprecationWarning, "'store_covariances' was renamed"
+                         " to store_covariance in version 0.19 and will be "
+                         "removed in 0.21.", clf.fit, X, y)
+
+    # check that covariance_ (and covariances_ with warning) is stored
+    assert_warns_message(DeprecationWarning, "Attribute covariances_ was "
+                         "deprecated in version 0.19 and will be removed "
+                         "in 0.21. Use covariance_ instead", getattr, clf,
+                         'covariances_')
 
 
 def test_qda_regularization():

@@ -91,8 +91,8 @@ def _check_precision_matrix(precision, covariance_type):
 
 def _check_precisions_full(precisions, covariance_type):
     """Check the precision matrices are symmetric and positive-definite."""
-    for k, prec in enumerate(precisions):
-        prec = _check_precision_matrix(prec, covariance_type)
+    for prec in precisions:
+        _check_precision_matrix(prec, covariance_type)
 
 
 def _check_precisions(precisions, covariance_type, n_components, n_features):
@@ -100,7 +100,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
 
     Parameters
     ----------
-    precisions : array-like,
+    precisions : array-like
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
         'diag' : shape of (n_components, n_features)
@@ -343,7 +343,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
 
     Parameters
     ----------
-    matrix_chol : array-like,
+    matrix_chol : array-like
         Cholesky decompositions of the matrices.
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
@@ -387,7 +387,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
     means : array-like, shape (n_components, n_features)
 
-    precisions_chol : array-like,
+    precisions_chol : array-like
         Cholesky decompositions of the precision matrices.
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
@@ -439,10 +439,9 @@ class GaussianMixture(BaseMixture):
     This class allows to estimate the parameters of a Gaussian mixture
     distribution.
 
-    .. versionadded:: 0.18
-    *GaussianMixture*.
-
     Read more in the :ref:`User Guide <gmm>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -500,8 +499,11 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state : RandomState or an int seed, defaults to None.
-        A random number generator instance.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as

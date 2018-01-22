@@ -114,7 +114,7 @@ cdef class DistanceMetric:
 
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
-             [3, 4, 5]])
+             [3, 4, 5]]
     >>> dist.pairwise(X)
     array([[ 0.        ,  5.19615242],
            [ 5.19615242,  0.        ]])
@@ -132,7 +132,7 @@ cdef class DistanceMetric:
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
     "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
-    "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
+    "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
@@ -141,12 +141,11 @@ cdef class DistanceMetric:
     distance metric requires data in the form of [latitude, longitude] and both
     inputs and outputs are in units of radians.
 
-    ============  ==================  ========================================
+    ============  ==================  ===============================================================
     identifier    class name          distance function
-    ------------  ------------------  ----------------------------------------
-    "haversine"   HaversineDistance   2 arcsin(sqrt(sin^2(0.5*dx)
-                                             + cos(x1)cos(x2)sin^2(0.5*dy)))
-    ============  ==================  ========================================
+    ------------  ------------------  ---------------------------------------------------------------
+    "haversine"   HaversineDistance   ``2 arcsin(sqrt(sin^2(0.5*dx) + cos(x1)cos(x2)sin^2(0.5*dy)))``
+    ============  ==================  ===============================================================
 
 
     **Metrics intended for integer-valued vector spaces:**  Though intended
@@ -343,7 +342,7 @@ cdef class DistanceMetric:
         """Convert the Reduced distance to the true distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -353,7 +352,7 @@ cdef class DistanceMetric:
         """Convert the true distance to the reduced distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -567,12 +566,12 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # W-Minkowski Distance
-#  d = sum(w_i * (x_i^p - y_i^p)) ^ (1/p)
+#  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
     """Weighted Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i w_i (x_i - y_i)^p] ^ (1/p)
+       D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
 
     Weighted Minkowski Distance requires p >= 1 and finite.
 
@@ -1093,22 +1092,29 @@ cdef class PyFuncDistance(DistanceMetric):
         self.func = func
         self.kwargs = kwargs
 
+    # in cython < 0.26, GIL was required to be acquired during definition of
+    # the function and inside the body of the function. This behaviour is not
+    # allowed in cython >= 0.26 since it is a redundant GIL acquisition. The
+    # only way to be back compatible is to inherit `dist` from the base class
+    # without GIL and called an inline `_dist` which acquire GIL.
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size) except -1 with gil:
+                             ITYPE_t size) nogil except -1:
+        return self._dist(x1, x2, size)
+
+    cdef inline DTYPE_t _dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1 with gil:
         cdef np.ndarray x1arr
         cdef np.ndarray x2arr
-        with gil:
-            x1arr = _buffer_to_ndarray(x1, size)
-            x2arr = _buffer_to_ndarray(x2, size)
-            d = self.func(x1arr, x2arr, **self.kwargs)
-            try:
-                # Cython generates code here that results in a TypeError
-                # if d is the wrong type.
-                return d
-            except TypeError:
-                raise TypeError("Custom distance function must accept two "
-                                "vectors and return a float.")
-            
+        x1arr = _buffer_to_ndarray(x1, size)
+        x2arr = _buffer_to_ndarray(x2, size)
+        d = self.func(x1arr, x2arr, **self.kwargs)
+        try:
+            # Cython generates code here that results in a TypeError
+            # if d is the wrong type.
+            return d
+        except TypeError:
+            raise TypeError("Custom distance function must accept two "
+                            "vectors and return a float.")
 
 
 cdef inline double fmax(double a, double b) nogil:

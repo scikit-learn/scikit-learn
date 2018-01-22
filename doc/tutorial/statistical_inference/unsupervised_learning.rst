@@ -155,7 +155,7 @@ that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
   * **Agglomerative** - bottom-up approaches: each observation starts in its
-    own cluster, and clusters are iterativelly merged in such a way to
+    own cluster, and clusters are iteratively merged in such a way to
     minimize a *linkage* criterion. This approach is particularly interesting
     when the clusters of interest are made of only a few observations. When
     the number of clusters is large, it is much more computationally efficient
@@ -171,7 +171,7 @@ Connectivity-constrained clustering
 .....................................
 
 With agglomerative clustering, it is possible to specify which samples can be
-clustered together by giving a connectivity graph. Graphs in the scikit
+clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
@@ -305,14 +305,17 @@ a maximum amount of independent information. It is able to recover
 ::
 
     >>> # Generate sample data
+    >>> import numpy as np
+    >>> from scipy import signal
     >>> time = np.linspace(0, 10, 2000)
     >>> s1 = np.sin(2 * time)  # Signal 1 : sinusoidal signal
     >>> s2 = np.sign(np.sin(3 * time))  # Signal 2 : square signal
-    >>> S = np.c_[s1, s2]
+    >>> s3 = signal.sawtooth(2 * np.pi * time)  # Signal 3: saw tooth signal
+    >>> S = np.c_[s1, s2, s3]
     >>> S += 0.2 * np.random.normal(size=S.shape)  # Add noise
     >>> S /= S.std(axis=0)  # Standardize data
     >>> # Mix data
-    >>> A = np.array([[1, 1], [0.5, 2]])  # Mixing matrix
+    >>> A = np.array([[1, 1, 1], [0.5, 2, 1], [1.5, 1, 2]])  # Mixing matrix
     >>> X = np.dot(S, A.T)  # Generate observations
 
     >>> # Compute ICA

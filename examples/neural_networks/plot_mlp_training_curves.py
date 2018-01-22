@@ -85,5 +85,5 @@ for ax, data, name in zip(axes.ravel(), data_sets, ['iris', 'digits',
                                                     'circles', 'moons']):
     plot_on_dataset(*data, ax=ax, name=name)
 
-fig.legend(ax.get_lines(), labels=labels, ncol=3, loc="upper center")
+fig.legend(ax.get_lines(), labels, ncol=3, loc="upper center")
 plt.show()
