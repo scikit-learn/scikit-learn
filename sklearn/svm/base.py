@@ -181,6 +181,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif self.gamma == 'auto' or self.gamma == 'auto_deprecated':
             if self.gamma == 'auto_deprecated' and (self.kernel not in
                                                     ('linear', 'precomputed')):
+                # NOTE: when deprecation end we need to remove explicitly
+                # setting `gamma` in examples (also in tests) after the
+                # See https://github.com/scikit-learn/scikit-learn/pull/10331
+                # for the examples/tests that need to be reverted.
                 warnings.warn("The default value of gamma will change from "
                               "'auto' to 'scale' in version 0.22 to account "
                               "better for unscaled features. Set gamma "
