@@ -26,7 +26,6 @@ from .data import PowerTransformer
 from .data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
-from ._encoders import NewOneHotEncoder
 from ._encoders import OrdinalEncoder
 
 from .label import label_binarize
