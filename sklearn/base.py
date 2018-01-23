@@ -225,11 +225,26 @@ class BaseEstimator(object):
             Parameter names mapped to their values.
         """
         out = dict()
-        for key in self._get_param_names():
+
+        param_names_all = self._get_param_names()
+
+        # Split in normal and deprecated param names
+        param_names = []
+        deprecated_param_names = []
+        for p in param_names_all:
+            if '_deprecated_' + p in self.__dict__:
+                deprecated_param_names.append(p)
+            else:
+                param_names.append(p)
+
+        for key in param_names:
             value = getattr(self, key, None)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
+            out[key] = value
+        for key in deprecated_param_names:
+            value = getattr(self, '_deprecated_' + key, None)
             out[key] = value
         return out
 

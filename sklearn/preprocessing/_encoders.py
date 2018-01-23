@@ -363,17 +363,29 @@ class OneHotEncoder(_BaseEncoder):
         self.dtype = dtype
         self.handle_unknown = handle_unknown
 
-    # Deprecated keywords and attributes
+    # Deprecated keywords
 
     @property
     def n_values(self):
         warnings.warn("Deprecated", DeprecationWarning)
         return self._deprecated_n_values
 
+    @n_values.setter
+    def n_values(self, value):
+        warnings.warn("Deprecated", DeprecationWarning)
+        self._deprecated_n_values = value
+
     @property
     def categorical_features(self):
         warnings.warn("Deprecated", DeprecationWarning)
         return self._deprecated_categorical_features
+
+    @categorical_features.setter
+    def categorical_features(self, value):
+        warnings.warn("Deprecated", DeprecationWarning)
+        self._deprecated_categorical_features = value
+
+    # Deprecated attributes
 
     @property
     def active_features_(self):
