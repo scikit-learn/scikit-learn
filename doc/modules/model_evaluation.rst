@@ -100,7 +100,7 @@ Usage examples:
     >>> X, y = iris.data, iris.target
     >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
     >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.09999396, -0.16338728, -0.07541304])
+    array([-0.09..., -0.16..., -0.07...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):

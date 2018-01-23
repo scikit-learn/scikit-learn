@@ -461,11 +461,11 @@ class SVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if gamma='scale' is passed then it uses 1 / (n_features * X.std())
-        features. The current default of gamma, 'auto', will change to 'scale'
-        in version 0.22. 'auto_deprecated', a deprecated version of 'auto' is
-        used as a default indicating that no explicit value of gamma was
-        passed.
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as a value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
         .. versionchanged:: 0.20
            Default parameter value will change to 'scale' in version 0.22.
@@ -629,11 +629,11 @@ class NuSVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if gamma='scale' is passed then it uses 1 / (n_features * X.std())
-        features. The current default of gamma, 'auto', will change to 'scale'
-        in version 0.22. 'auto_deprecated', a deprecated version of 'auto' is
-        used as a default indicating that no explicit value of gamma was
-        passed.
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as a value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
         .. versionchanged:: 0.20
            Default parameter value will change to 'scale' in version 0.22.
@@ -796,11 +796,11 @@ class SVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if gamma='scale' is passed then it uses 1 / (n_features * X.std())
-        features. The current default of gamma, 'auto', will change to 'scale'
-        in version 0.22. 'auto_deprecated', a deprecated version of 'auto' is
-        used as a default indicating that no explicit value of gamma was
-        passed.
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as a value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
         .. versionchanged:: 0.20
            Default parameter value will change to 'scale' in version 0.22.
@@ -923,11 +923,11 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if gamma='scale' is passed then it uses 1 / (n_features * X.std())
-        features. The current default of gamma, 'auto', will change to 'scale'
-        in version 0.22. 'auto_deprecated', a deprecated version of 'auto' is
-        used as a default indicating that no explicit value of gamma was
-        passed.
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as a value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
         .. versionchanged:: 0.20
            Default parameter value will change to 'scale' in version 0.22.
@@ -1043,11 +1043,11 @@ class OneClassSVM(BaseLibSVM):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if gamma='scale' is passed then it uses 1 / (n_features * X.std())
-        features. The current default of gamma, 'auto', will change to 'scale'
-        in version 0.22. 'auto_deprecated', a deprecated version of 'auto' is
-        used as a default indicating that no explicit value of gamma was
-        passed.
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as a value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
         .. versionchanged:: 0.20
            Default parameter value will change to 'scale' in version 0.22.

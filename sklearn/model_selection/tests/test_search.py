@@ -814,12 +814,6 @@ def test_grid_search_cv_results():
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    grid_search = GridSearchCV(SVC(gamma="scale"), cv=n_splits, iid=False,
-                               param_grid=params)
-    grid_search.fit(X, y)
-    grid_search_iid = GridSearchCV(SVC(gamma="scale"), cv=n_splits, iid=True,
-                                   param_grid=params)
-    grid_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
     score_keys = ('mean_test_score', 'mean_train_score',
@@ -870,16 +864,6 @@ def test_random_search_cv_results():
 
     n_splits = 3
     n_search_iter = 30
-    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(gamma="scale"),
-                                       n_iter=n_search_iter, cv=n_splits,
-                                       iid=False, param_distributions=params)
-    random_search.fit(X, y)
-    random_search_iid = RandomizedSearchCV(SVC(gamma="scale"),
-                                           n_iter=n_search_iter,
-                                           cv=n_splits, iid=True,
-                                           param_distributions=params)
-    random_search_iid.fit(X, y)
 
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
     param_keys = ('param_C', 'param_gamma')
