@@ -462,7 +462,7 @@ class SVC(BaseSVC):
 
         Current default is 'auto' which uses 1 / n_features,
         if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
-        as a value of gamma. The current default of gamma, 'auto', will change
+        as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
@@ -630,7 +630,7 @@ class NuSVC(BaseSVC):
 
         Current default is 'auto' which uses 1 / n_features,
         if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
-        as a value of gamma. The current default of gamma, 'auto', will change
+        as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
@@ -797,7 +797,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
         Current default is 'auto' which uses 1 / n_features,
         if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
-        as a value of gamma. The current default of gamma, 'auto', will change
+        as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
@@ -924,7 +924,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
         Current default is 'auto' which uses 1 / n_features,
         if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
-        as a value of gamma. The current default of gamma, 'auto', will change
+        as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
@@ -1044,7 +1044,7 @@ class OneClassSVM(BaseLibSVM):
 
         Current default is 'auto' which uses 1 / n_features,
         if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
-        as a value of gamma. The current default of gamma, 'auto', will change
+        as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
