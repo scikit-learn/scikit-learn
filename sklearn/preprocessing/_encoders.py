@@ -294,9 +294,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', categories='auto',
-           dtype=<... 'numpy.float64'>, encoded_input=False,
-           handle_unknown='ignore', n_values='auto', sparse=True)
+    OneHotEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+           encoded_input=False, handle_unknown='ignore', sparse=True)
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -314,13 +313,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc = OneHotEncoder(encoded_input=True)
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', categories='auto',
-           dtype=<... 'numpy.float64'>, encoded_input=True,
-           handle_unknown='error', n_values='auto', sparse=True)
-    >>> enc.n_values_
-    array([2, 3, 4])
-    >>> enc.feature_indices_
-    array([0, 2, 5, 9])
+    OneHotEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+           encoded_input=True, handle_unknown='error', sparse=True)
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 

@@ -285,10 +285,18 @@ class BaseEstimator(object):
 
         return self
 
+    def _get_params_non_deprecated(self, **kwargs):
+        """Version of get_params that excludes deprecated params for repr"""
+        all_params = self.get_params(**kwargs)
+
+        return {key: val for key, val in all_params.items()
+                if '_deprecated_' + key not in self.__dict__}
+
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
-                                               offset=len(class_name),),)
+        return '%s(%s)' % (
+            class_name, _pprint(self._get_params_non_deprecated(deep=False),
+                                offset=len(class_name),),)
 
     def __getstate__(self):
         try:
