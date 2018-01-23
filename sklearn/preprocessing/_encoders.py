@@ -295,7 +295,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', categories='auto',
-           dtype=<class 'numpy.float64'>, encoded_input=False,
+           dtype=<... 'numpy.float64'>, encoded_input=False,
            handle_unknown='ignore', n_values='auto', sparse=True)
 
     >>> enc.categories_
@@ -315,7 +315,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', categories='auto',
-           dtype=<class 'numpy.float64'>, encoded_input=True,
+           dtype=<... 'numpy.float64'>, encoded_input=True,
            handle_unknown='error', n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
