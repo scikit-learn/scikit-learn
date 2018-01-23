@@ -767,16 +767,9 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # Try to import imread from scipy. We do this lazily here to prevent
-    # this module from depending on PIL.
-    try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread
-    except ImportError:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+    # import PIL only when needed
+    from ..externals._pilutil import imread
+
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
