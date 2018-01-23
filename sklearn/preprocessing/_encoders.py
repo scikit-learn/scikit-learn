@@ -5,6 +5,7 @@
 from __future__ import division
 
 import numbers
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -28,6 +29,14 @@ __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
+
+
+WARNING_MSG = (
+    "Handling encoded integer data is deprecated as the default behaviour. "
+    "You can specify 'encoded_input=True' to keep the existing behaviour, or "
+    "specify 'encoded_input=False' to silence this warning and get the future "
+    "default behaviour"
+)
 
 
 def _handle_zeros_in_scale(scale, copy=True):
@@ -346,6 +355,26 @@ class OneHotEncoder(_BaseEncoder):
         self.dtype = dtype
         self.handle_unknown = handle_unknown
 
+    # Deprecated attributes
+
+    @property
+    def active_features_(self):
+        check_is_fitted(self, 'categories_')
+        warnings.warn("Deprecated", DeprecationWarning)
+        return self._active_features_
+
+    @property
+    def feature_indices_(self):
+        check_is_fitted(self, 'categories_')
+        warnings.warn("Deprecated", DeprecationWarning)
+        return self._feature_indices_
+
+    @property
+    def n_values_(self):
+        check_is_fitted(self, 'categories_')
+        warnings.warn("Deprecated", DeprecationWarning)
+        return self._n_values_
+
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
@@ -370,6 +399,7 @@ class OneHotEncoder(_BaseEncoder):
             except ValueError:
                 self.encoded_input = False
             else:
+                warnings.warn(WARNING_MSG, DeprecationWarning)
                 self.encoded_input = True
 
         if not self.encoded_input:
@@ -405,10 +435,11 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
 
-        self.n_values_ = n_values
+        self._n_values_ = n_values
+        self.categories_ = [np.arange(n_val - 1) for n_val in n_values]
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
-        self.feature_indices_ = indices
+        self._feature_indices_ = indices
 
         column_indices = (X + indices[:-1]).ravel()
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
@@ -423,7 +454,7 @@ class OneHotEncoder(_BaseEncoder):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
-            self.active_features_ = active_features
+            self._active_features_ = active_features
 
         return out if self.sparse else out.toarray()
 
@@ -450,6 +481,7 @@ class OneHotEncoder(_BaseEncoder):
             except ValueError:
                 self.encoded_input = False
             else:
+                warnings.warn(WARNING_MSG, DeprecationWarning)
                 self.encoded_input = True
 
         if not self.encoded_input:
@@ -465,7 +497,7 @@ class OneHotEncoder(_BaseEncoder):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
 
-        indices = self.feature_indices_
+        indices = self._feature_indices_
         if n_features != indices.shape[0] - 1:
             raise ValueError("X has different shape than during fitting."
                              " Expected %d, got %d."
@@ -476,7 +508,7 @@ class OneHotEncoder(_BaseEncoder):
         # This means, if self.handle_unknown is "ignore", the row_indices and
         # col_indices corresponding to the unknown categorical feature are
         # ignored.
-        mask = (X < self.n_values_).ravel()
+        mask = (X < self._n_values_).ravel()
         if np.any(~mask):
             if self.handle_unknown not in ['error', 'ignore']:
                 raise ValueError("handle_unknown should be either error or "
@@ -494,7 +526,7 @@ class OneHotEncoder(_BaseEncoder):
                                 dtype=self.dtype).tocsr()
         if (isinstance(self.n_values, six.string_types) and
                 self.n_values == 'auto'):
-            out = out[:, self.active_features_]
+            out = out[:, self._active_features_]
 
         return out if self.sparse else out.toarray()
 
