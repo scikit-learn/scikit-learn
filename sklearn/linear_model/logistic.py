@@ -449,9 +449,9 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='lbfgs', coef=None,
+                             solver='default', coef=None,
                              class_weight=None, dual=False, penalty='l2',
-                             intercept_scaling=1., multi_class='ovr',
+                             intercept_scaling=1., multi_class='default',
                              random_state=None, check_input=True,
                              max_squared_sum=None, sample_weight=None):
     """Compute a Logistic Regression model for a list of regularization
@@ -500,6 +500,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         number for verbosity.
 
     solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
+        default: 'default'. Will be changed to 'auto' solver in 0.22.
         Numerical solver to use.
 
     coef : array-like, shape (n_features,), default None
@@ -540,6 +541,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         (and therefore on the intercept) intercept_scaling has to be increased.
 
     multi_class : str, {'ovr', 'multinomial'}
+        default: 'default'. Will be changed to 'multinomial' in 0.22.
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
@@ -587,6 +589,19 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
     """
+    if solver == 'default':
+        solver = 'lbfgs'
+        warnings.warn("Default solver will be changed from 'lbfgs' "
+                      "to 'auto' solver in 0.22", FutureWarning)
+    elif solver == 'auto':
+        if penalty == 'l1':
+            solver = 'saga'
+        if penalty == 'l2':
+            solver = 'lbfgs'
+    if multi_class == 'default':
+        multi_class = 'ovr'
+        warnings.warn("Default multi_class will be changed from 'ovr' to"
+                      " 'multinomial' in 0.22", FutureWarning)
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
@@ -1068,7 +1083,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
-        .. version:: 0.20
+        .. versionadded:: 0.20
            auto solver
 
     max_iter : int, default: 100
@@ -1213,7 +1228,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'default':
             _solver = 'liblinear'
             warnings.warn("Default solver will be changed from 'liblinear' to "
-                          "auto solver in 0.22", FutureWarning)
+                          "'auto' solver in 0.22", FutureWarning)
         elif self.solver == 'auto':
             if self.penalty == 'l1':
                 _solver = 'saga'
@@ -1455,7 +1470,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         default scoring option used is 'accuracy'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'lbfgs'
+        default: 'default'. Will be changed to 'auto' solver in 0.22.
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
@@ -1472,6 +1487,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         features with approximately the same scale. You can preprocess the data
         with a scaler from sklearn.preprocessing.
 
+        The solver 'auto' selects 'lbfgs' if penalty is 'l2' and 'saga' if
+        penalty is 'l1'. Note that 'saga' may suffer from slow convergence
+        issues on small datasets. The only other solver supporting 'l1' is
+        'liblinear', which requires multiclass='ovr' and which unfortunately
+        regularizes the intercept (see 'intercept_scaling').
+
+        .. versionadded:: 0.20
+           auto solver
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
@@ -1526,6 +1549,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         (and therefore on the intercept) intercept_scaling has to be increased.
 
     multi_class : str, {'ovr', 'multinomial'}
+        default: 'default'. Will be changed to 'multinomial' in 0.22
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
