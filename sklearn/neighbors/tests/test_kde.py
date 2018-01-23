@@ -3,6 +3,7 @@ from sklearn.utils.testing import (assert_allclose, assert_raises,
                                    assert_equal)
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
+from scipy.stats.distributions import norm as norm_dist
 from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
@@ -124,6 +125,8 @@ def test_kde_badargs():
     assert_raises(ValueError, KernelDensity,
                   bandwidth=0)
     assert_raises(ValueError, KernelDensity,
+                  bandwidth='urgh')
+    assert_raises(ValueError, KernelDensity,
                   kernel='blah')
     assert_raises(ValueError, KernelDensity,
                   metric='blah')
@@ -141,3 +144,32 @@ def test_kde_pipeline_gridsearch():
     search = GridSearchCV(pipe1, param_grid=params, cv=5)
     search.fit(X)
     assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
+
+def test_fitting_with_finding_bandwidth():
+    x_grid = np.linspace(-4.5, 6, 1000)
+    rng = np.random.RandomState(0)
+
+    #stats a list of tuples (x, pdf_true)
+    stats = [(norm_dist(1, 0.2).rvs(1000),
+              norm_dist(1, 0.2).pdf(x_grid)),
+             (norm_dist(-1, 0.5).rvs(100),
+              norm_dist(-1, 0.5).pdf(x_grid)),
+             (np.concatenate([norm_dist(-1, 1.).rvs(400, random_state=rng),
+                              norm_dist(1, 0.3).rvs(100, random_state=rng)]),
+             (0.8 * norm_dist(-1, 1).pdf(x_grid) +
+              0.2 * norm_dist(1, 0.3).pdf(x_grid)))]
+
+    res = {}
+    distribution = 0
+    for x, pdf_true in stats:
+        distribution += 1
+        for bandwidth in ['scott', 'cv', 'silvermann']:
+            for kernel in ['epanechnikov', 'gaussian', 'tophat']: 
+                kde_skl = KernelDensity(bandwidth=bandwidth, kernel = kernel)
+                
+                kde_skl.fit(x[:, np.newaxis])
+                
+                log_pdf = kde_skl.score_samples(x_grid[:, np.newaxis])
+                kde_skl_y = np.exp(log_pdf)
+
+                res[distribution,kernel,bandwidth] = np.sum(np.abs(kde_skl_y - pdf_true))

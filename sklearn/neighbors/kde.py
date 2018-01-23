@@ -3,7 +3,7 @@ Kernel Density Estimation
 -------------------------
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
-
+import pdb
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
@@ -131,17 +131,24 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
+        Warnings
+        --------
+        RuntimeWarning : A RuntimeWarning can be raised by 
+            sklearn.model_selection._search._store() This is caused by too small
+            initial bandwidth guasses of the grid search in cv. The grid search 
+            should still complete successfully. 
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
         
         if self.bandwidth_ == 'scott':
-            self.bandwidth =  X.shape[0]**(-1./(X.shape[1]+4)) #3.49083 * X.std() / len(X)**(1/3)
+            self.bandwidth =  X.shape[0]**(-1./(X.shape[1]+4)) 
         elif self.bandwidth_ == 'silvermann':
-            self.bandwidth = (X.shape[0] * (X.shape[1] + 2) / 4.)**(-1. / (X.shape[1] + 4))# 1.05922*X.std()/len(X)**0.2
+            self.bandwidth = (X.shape[0] * (X.shape[1] + 2) / 4.)**(-1. / (X.shape[1] + 4))
         elif self.bandwidth_ == 'cv':
             steps = 10
-            lower = 0.01*X.std()
+            lower = 0.1*X.std()
             upper = 0.5*X.std()
             current_best = -10000000
             for _ in range(5):
@@ -155,11 +162,10 @@ class KernelDensity(BaseEstimator):
                                                 leaf_size = self.leaf_size,
                                                 metric_params = self.metric_params),
                                     {'bandwidth': bandwidth_range},
-                                    cv=20,
-                                    return_train_score=False,
-                                    #n_jobs = 1,
+                                    cv=20
                                     )
                 grid.fit(X)
+                
                 if abs(current_best -grid.best_score_ ) > 0.001:
                     current_best = grid.best_score_
                 else: 
@@ -169,7 +175,6 @@ class KernelDensity(BaseEstimator):
 
                 if (grid.best_index_ == 0) or (grid.best_index_ == steps):
                     #edge case
-                    print('edge case')
                     diff = (lower - upper)/steps
                     lower = grid.best_index_ - diff
                     upper = grid.best_index_ + diff
