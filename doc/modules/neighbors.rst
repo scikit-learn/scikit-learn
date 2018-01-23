@@ -514,3 +514,49 @@ the model from 0.81 to 0.82.
 
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
+
+
+Nearest Neighbors Transformer
+=============================
+
+Many scikit-learn estimators rely on nearest neighbors. Several classifiers and
+regressors such as :class:`KNeighborsClassifier` and
+:class:`KNeighborsRegressor`, but also some clustering methods such as
+:class:`cluster.DBSCAN` and :class:`cluster.SpectralClustering`, and some
+manifold embeddings such as :class:`manifold.TSNE` and :class:`manifold.Isomap`.
+
+All these estimators can compute internally the nearest neighbors, but most of
+them also accept precomputed nearest neighbors graph, as given by
+:func:`neighbors.kneighbors_graph` and :func:`neighbors.radius_neighbors_graph`.
+The benefits of precomputation are multiple.
+
+First, the precomputed graph can be re-used multiple times, for instance while
+varying a parameter of the estimator. This can be done manually, or using the
+caching properties of the scikit-learn pipeline, with the help of
+:class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer` to
+include the precomputation in a pipeline:
+
+    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.neighbors import KNeighborsTransformer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> estimator = make_pipeline(
+            KNeighborsTransformer(n_neighbors=5, mode='distance'),
+            Isomap(neighbors_algorithm='precomputed'),
+            memory='/path/to/cache')
+
+Second, these transformers give finer control on the nearest neighbors
+estimation, for instance unabling multiprocessing though the parameter `n_jobs`.
+
+Finally, the precomputation can be performed by custom estimators to use
+different implementations, such as approximate nearest neighbors methods, or
+implementation with special data types. The precomputed neighbors need to be
+formatted as a sparse CSR distance/affinity matrix, where the explicit zeros are
+interpreted as the number 0, but implicit zeros indicate the absence of
+connections between two samples, and where an explicit value indicates an edge’s
+weight.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_neighbors_pipeline_api.py`: an
+    example of pipelining KNeighborsTransformer and TSNE, and of using custom
+    nearest neighbors estimator.
