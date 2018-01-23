@@ -76,7 +76,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.CategoricalEncoder : encode categorical features
+    sklearn.preprocessing.OrdinalEncoder : encode categorical features
         using a one-hot or ordinal encoding scheme.
     """
 

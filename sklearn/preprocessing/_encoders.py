@@ -193,12 +193,12 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array.
-    Alternatively, the input to this transformer can be a matrix of already
-    encoded integers denoting the values taken on by categorical (discrete)
-    features. In that case you have to specify ``encoded_input=True`` and
-    it is assumed that input features take on values in the range
-    [0, max(values)) instead of determining the categories based on the
-    unique values of the input features of any type.
+    By default, encoder derives the categories based on the unique values
+    in each feature.  Alternatively, the input to this transformer can be a
+    matrix of already encoded integers denoting the values taken on by
+    categorical (discrete) features. In that case you have to specify
+    ``encoded_input=True`` and it is assumed that input features take on
+    values in the range [0, max(values)).
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
@@ -326,10 +326,6 @@ class OneHotEncoder(_BaseEncoder):
 
     See also
     --------
-    sklearn.preprocessing.CategoricalEncoder : performs a one-hot or ordinal
-      encoding of all features (also handles string-valued features). This
-      encoder derives the categories based on the unique values in each
-      feature.
     sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
       encoding of the categorical features.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of

@@ -50,7 +50,6 @@ __all__ = [
     'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
-    'NewOneHotEncoder',
     'OrdinalEncoder',
     'PowerTransformer',
     'RobustScaler',
