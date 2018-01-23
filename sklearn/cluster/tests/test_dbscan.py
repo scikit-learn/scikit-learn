@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_not_in
-from sklearn.neighbors import NearestNeighbors, NearestNeighborsTransformer
+from sklearn.neighbors import NearestNeighbors, RadiusNeighborsTransformer
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -372,12 +372,12 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and DBSCAN
+    # Test chaining RadiusNeighborsTransformer and DBSCAN
     radius = 0.3
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        NearestNeighborsTransformer(
+        RadiusNeighborsTransformer(
             radius=radius, mode='distance', include_self=False),
         DBSCAN(metric='precomputed'))
     est_compact = DBSCAN(eps=radius)

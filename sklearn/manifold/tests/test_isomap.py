@@ -103,7 +103,7 @@ def test_transform():
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and Isomap with
+    # Test chaining KNeighborsTransformer and Isomap with
     # neighbors_algorithm='precomputed'
     algorithm = 'auto'
     n_neighbors = 10
@@ -113,7 +113,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
     # compare the chained version and the compact version
     est_chain = pipeline.make_pipeline(
-        neighbors.NearestNeighborsTransformer(
+        neighbors.KNeighborsTransformer(
             n_neighbors=n_neighbors, algorithm=algorithm, mode='distance',
             include_self=False),
         manifold.Isomap(neighbors_algorithm='precomputed'))

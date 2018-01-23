@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import discretize
 from sklearn.feature_extraction import img_to_graph
-from sklearn.neighbors import NearestNeighborsTransformer
+from sklearn.neighbors import KNeighborsTransformer
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
@@ -105,15 +105,14 @@ def test_spectral_clustering_sparse():
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and SpectralEmbedding
+    # Test chaining KNeighborsTransformer and SpectralEmbedding
     n_neighbors = 5
     X, _ = make_blobs(random_state=0)
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        NearestNeighborsTransformer(n_neighbors=n_neighbors,
-                                    mode='connectivity',
-                                    include_self=True),
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity',
+                              include_self=True),
         SpectralClustering(affinity='precomputed', random_state=42))
     est_compact = SpectralClustering(n_neighbors=n_neighbors,
                                      affinity='nearest_neighbors',

@@ -108,7 +108,7 @@ def test_lof_precomputed(random_state=42):
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and LocalOutlierFactor
+    # Test chaining KNeighborsTransformer and LocalOutlierFactor
     n_neighbors = 8
 
     rng = check_random_state(0)
@@ -116,7 +116,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        neighbors.NearestNeighborsTransformer(
+        neighbors.KNeighborsTransformer(
             n_neighbors=n_neighbors, mode='distance', include_self=False),
         neighbors.LocalOutlierFactor(metric='precomputed'))
     est_compact = neighbors.LocalOutlierFactor(n_neighbors=n_neighbors)

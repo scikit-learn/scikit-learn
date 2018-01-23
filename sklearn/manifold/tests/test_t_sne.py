@@ -3,7 +3,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.neighbors import NearestNeighbors, NearestNeighborsTransformer
+from sklearn.neighbors import NearestNeighbors, KNeighborsTransformer
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -160,7 +160,7 @@ def test_binary_search_neighbors():
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and TSNE
+    # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
     perplexity = 5
     n_neighbors = int(3. * perplexity + 1)
@@ -173,7 +173,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
         # compare the chained version and the compact version
         est_chain = make_pipeline(
-            NearestNeighborsTransformer(
+            KNeighborsTransformer(
                 n_neighbors=n_neighbors, mode='distance', metric=metric,
                 include_self=False),
             TSNE(metric='precomputed', perplexity=perplexity,

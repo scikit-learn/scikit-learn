@@ -1325,7 +1325,7 @@ def test_pairwise_boolean_distance():
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and classifiers/regressors
+    # Test chaining KNeighborsTransformer and classifiers/regressors
     rng = np.random.RandomState(0)
     X = 2 * rng.rand(40, 5) - 1
     X2 = 2 * rng.rand(40, 5) - 1
@@ -1337,7 +1337,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
         n_neighbors = 8
         # compare the chained version and the compact version
         est_chain = make_pipeline(
-            neighbors.NearestNeighborsTransformer(
+            neighbors.KNeighborsTransformer(
                 n_neighbors=n_neighbors, mode='distance', include_self=True),
             klass(metric='precomputed'))
         est_compact = klass(n_neighbors=n_neighbors)
@@ -1356,7 +1356,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
         radius = 2
         # compare the chained version and the compact version
         est_chain = make_pipeline(
-            neighbors.NearestNeighborsTransformer(
+            neighbors.RadiusNeighborsTransformer(
                 radius=radius, mode='distance', include_self=True),
             klass(metric='precomputed'))
         est_compact = klass(radius=radius)

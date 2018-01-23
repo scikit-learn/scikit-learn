@@ -6,7 +6,7 @@ from scipy import sparse
 from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
-from sklearn.neighbors import NearestNeighborsTransformer
+from sklearn.neighbors import KNeighborsTransformer
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
 from sklearn.manifold.spectral_embedding_ import _graph_connected_component
@@ -205,14 +205,13 @@ def test_pipeline_spectral_clustering(seed=36):
 
 
 def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining NearestNeighborsTransformer and SpectralEmbedding
+    # Test chaining KNeighborsTransformer and SpectralEmbedding
     n_neighbors = 5
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        NearestNeighborsTransformer(n_neighbors=n_neighbors,
-                                    mode='connectivity',
-                                    include_self=True),
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity',
+                              include_self=True),
         SpectralEmbedding(affinity='precomputed', random_state=42))
     est_compact = SpectralEmbedding(n_neighbors=n_neighbors,
                                     affinity='nearest_neighbors',
