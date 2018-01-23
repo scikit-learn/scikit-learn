@@ -59,7 +59,7 @@ For bug reports or feature requests, please make use of the
 
 There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found. 
+might be found.
 
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
@@ -80,10 +80,10 @@ How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
 
 Generally, scikit-learn works on any numeric data stored as numpy arrays
-or scipy sparse matrices. Other types that are convertible to numeric 
+or scipy sparse matrices. Other types that are convertible to numeric
 arrays such as pandas DataFrame are also acceptable.
 
-For more information on loading your data files into these usable data 
+For more information on loading your data files into these usable data
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
 .. _new_algorithms_inclusion_criteria:
@@ -105,7 +105,7 @@ numpy array or sparse matrix, are accepted.
 The contributor should support the importance of the proposed addition with
 research papers and/or implementations in other similar packages, demonstrate
 its usefulness via common use-cases/applications and corroborate performance
-improvements, if any, with benchmarks and/or plots. It is expected that the 
+improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
@@ -128,8 +128,8 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-See also :ref:`new_algorithms_inclusion_criteria`. For a great read about 
-long-term maintenance issues in open-source software, look at 
+See also :ref:`new_algorithms_inclusion_criteria`. For a great read about
+long-term maintenance issues in open-source software, look at
 `the Executive Summary of Roads and Bridges
 <https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
@@ -335,32 +335,20 @@ Why do categorical variables need preprocessing in scikit-learn, compared to oth
 --------------------------------------------------------------------------------
 
 Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices of
-a single dtype. These are efficient to process, but do not directly represent
-categorical variables at present. See the :class:`preprocessing.CategoricalEncoder`
-for a tool to encode categorical variables, say within a pandas.DataFrame, as
-numeric data.
+a single dtype. These do not directly represent categorical variables at
+present. See the :class:`preprocessing.CategoricalEncoder` for a tool to encode
+categorical variables, say within a pandas.DataFrame, as numeric data.
 
-For more such practical information, read more in the
-:ref:`User Guide <preprocessing_categorical_features>`.
+Why not directly build on, for example, the pandas.DataFrame?
 
-On a side note, the requirements in handling missing values in scikit-learn are
-similarly very conditioned by the fact that the previously mentioned expected
-data objects, the standard NumPy ndarray and the scipy.sparse matrices,
-do not directly handle them.
+The homogeneous NumPy and SciPy data objects currently expected are most
+efficient to process for most operations, and extensive work would be needed for
+change at that level since scikit-learn has been developed over time on such
+building blocks. Facilitating explicit preprocessing is a much more
+cost-effective solution.
 
-Since sklearn has been developed over the years on such building blocks,
-not only would implicit conversion need a new categorical dtype being added
-(a decision external to scikit-learn), but extensive work would also be
-needed since manipulating heterogeneous data is handled by NumPy for example
-with a different construct (recarrays) whose adoption by scikit-learn would be
-really challenging.
-
-A seemingly straightforward option often discussed is further integration with
-pandas, which is widely used as a data science library and already handles both
-heterogeneity and things like categorical values and missing values.
-However, overall compatibility is an issue. Calling upon the pandas own dtype
-system would not be fast enough, especially because pandas does not have a
-C-level API. And the pandas.DataFrame does not have the required properties for
-scikit-learn to consider the commitment of a complete transition to using it as
-its main data structure: NumPy arrays are both more efficient and convenient
-for most algorithms.
+Hence, even though inputting only homogeneous datasets can seem like a
+significant restriction, scikit-learn has dedicated aid tools: for example
+:class:`experimental.ColumnTransformer`, which allows the application of
+different transformations to different dataset columns from within a single
+transformer. Read more in the :ref:`User Guide <column_transformer>`.
