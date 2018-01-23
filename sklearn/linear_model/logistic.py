@@ -1595,9 +1595,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     """
 
     def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
-                 penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
+                 penalty='l2', scoring=None, solver='default', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
-                 refit=True, intercept_scaling=1., multi_class='ovr',
+                 refit=True, intercept_scaling=1., multi_class='default',
                  random_state=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -1636,7 +1636,24 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         -------
         self : object
         """
-        _check_solver_option(self.solver, self.multi_class, self.penalty,
+        if self.solver == 'default':
+            _solver = 'liblinear'
+            warnings.warn("Default solver will be changed from 'liblinear' "
+                          "to 'auto' solver in 0.22", FutureWarning)
+        elif self.solver == 'auto':
+            if self.penalty == 'l1':
+                _solver = 'saga'
+            if self.penalty == 'l2':
+                _solver = 'lbfgs'
+        else:
+            _solver = self.solver
+        if self.multi_class == 'default':
+            _multi_class = 'ovr'
+            warnings.warn("Default multi_class will be changed from 'ovr' to"
+                          " 'multinomial' in 0.22", FutureWarning)
+        else:
+            _multi_class = self.multi_class
+        _check_solver_option(_solver, _multi_class, self.penalty,
                              self.dual)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
@@ -1663,7 +1680,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         classes = self.classes_ = label_encoder.classes_
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
-        if self.solver in ['sag', 'saga']:
+        if _solver in ['sag', 'saga']:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -1689,7 +1706,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # We need this hack to iterate only once over labels, in the case of
         # multi_class = multinomial, without changing the value of the labels.
-        if self.multi_class == 'multinomial':
+        if _multi_class == 'multinomial':
             iter_encoded_labels = iter_classes = [None]
         else:
             iter_encoded_labels = encoded_labels
@@ -1706,7 +1723,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
-        if self.solver in ['sag', 'saga']:
+        if _solver in ['sag', 'saga']:
             backend = 'threading'
         else:
             backend = 'multiprocessing'
@@ -1714,10 +1731,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                                backend=backend)(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
-                      dual=self.dual, solver=self.solver, tol=self.tol,
+                      dual=self.dual, solver=_solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
                       class_weight=class_weight, scoring=self.scoring,
-                      multi_class=self.multi_class,
+                      multi_class=_multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
@@ -1726,7 +1743,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             for label in iter_encoded_labels
             for train, test in folds)
 
-        if self.multi_class == 'multinomial':
+        if _multi_class == 'multinomial':
             multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
             multi_coefs_paths = np.asarray(multi_coefs_paths)
             multi_scores = np.asarray(multi_scores)
@@ -1763,14 +1780,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_ = np.zeros(n_classes)
 
         # hack to iterate only once for multinomial case.
-        if self.multi_class == 'multinomial':
+        if _multi_class == 'multinomial':
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
         for index, (cls, encoded_label) in enumerate(
                 zip(iter_classes, iter_encoded_labels)):
 
-            if self.multi_class == 'ovr':
+            if _multi_class == 'ovr':
                 # The scores_ / coefs_paths_ dict have unencoded class
                 # labels as their keys
                 scores = self.scores_[cls]
@@ -1781,7 +1798,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
                 C_ = self.Cs_[best_index]
                 self.C_.append(C_)
-                if self.multi_class == 'multinomial':
+                if _multi_class == 'multinomial':
                     coef_init = np.mean(coefs_paths[:, best_index, :, :],
                                         axis=0)
                 else:
@@ -1790,12 +1807,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # Note that y is label encoded and hence pos_class must be
                 # the encoded label / None (for 'multinomial')
                 w, _, _ = logistic_regression_path(
-                    X, y, pos_class=encoded_label, Cs=[C_], solver=self.solver,
+                    X, y, pos_class=encoded_label, Cs=[C_], solver=_solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty,
                     class_weight=class_weight,
-                    multi_class=self.multi_class,
+                    multi_class=_multi_class,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False, max_squared_sum=max_squared_sum,
@@ -1810,7 +1827,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                              for i in range(len(folds))], axis=0)
                 self.C_.append(np.mean(self.Cs_[best_indices]))
 
-            if self.multi_class == 'multinomial':
+            if _multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)
                 self.coef_ = w[:, :X.shape[1]]
                 if self.fit_intercept:
