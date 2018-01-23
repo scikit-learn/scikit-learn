@@ -78,14 +78,15 @@ Model evaluation
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
-  the target y before fitting a regression model. The predictions are mapped
-  back to the original space via an inverse transform. :issue:`9041` by
-  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
+Clustering
+
+- :class:`cluster.AgglomerativeClustering` now supports Single Linkage
+  clustering via ``linkage='single'``. :issue:`9372` by
+  :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
 
 Enhancements
 ............
@@ -303,6 +304,12 @@ Feature Extraction
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
+
+Preprocessing
+
+- Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
+  errors when ``transform`` or ``inverse_transform`` was called with empty arrays.
+  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
 
 API changes summary
 -------------------
