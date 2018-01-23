@@ -285,6 +285,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
                     order="C", copy=copy_x)
+    # verify that the number of samples given is larger than k
+    if _num_samples(X) < n_clusters:
+        raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
+            _num_samples(X), n_clusters))
     tol = _tolerance(X, tol)
 
     # If the distances are precomputed every job will create a matrix of shape
@@ -863,13 +867,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.n_jobs = n_jobs
         self.algorithm = algorithm
 
-    def _check_fit_data(self, X):
-        """Verify that the number of samples given is larger than k"""
-        if _num_samples(X) < self.n_clusters:
-            raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
-                _num_samples(X), self.n_clusters))
-        return X
-
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
@@ -895,7 +892,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         """
         random_state = check_random_state(self.random_state)
-        X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
@@ -948,7 +944,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         # np.array or CSR format already.
         # XXX This skips _check_test_data, which may change the dtype;
         # we should refactor the input validation.
-        X = self._check_fit_data(X)
         return self.fit(X)._transform(X)
 
     def transform(self, X):
