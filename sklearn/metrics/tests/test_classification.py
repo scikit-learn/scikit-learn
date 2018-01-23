@@ -1051,6 +1051,8 @@ def test_multilabel_jaccard_similarity_score():
             "`average='macro'`.")
     assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
                          y_pred, average='macro', normalize=False)
+    assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
+                         y_pred, average='macro', normalize=True)
     msg2 = 'All labels must be in [0, n, labels). Got 4 > 2'
     assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
                          y_pred, labels=[4])

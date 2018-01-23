@@ -373,7 +373,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
 
 def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average='samples', normalize=True,
+                             average='samples', normalize='true-if-samples',
                              sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -515,7 +515,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                                  assume_unique=True)])
 
     if y_type.startswith('multilabel'):
-        if average != 'samples' and not normalize:
+        if average != 'samples' and normalize != 'true-if-samples':
             raise ValueError("'normalize' is only meaningful with "
                              "`average='samples'`, got `average='%s'`."
                              % average)
