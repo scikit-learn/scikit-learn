@@ -1637,8 +1637,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
         """
         if self.solver == 'default':
-            _solver = 'liblinear'
-            warnings.warn("Default solver will be changed from 'liblinear' "
+            _solver = 'lbfgs'
+            warnings.warn("Default solver will be changed from 'lbfgs' "
                           "to 'auto' solver in 0.22", FutureWarning)
         elif self.solver == 'auto':
             if self.penalty == 'l1':
