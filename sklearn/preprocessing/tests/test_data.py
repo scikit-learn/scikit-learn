@@ -2230,10 +2230,7 @@ def test_categorical_encoder_dtypes_pandas():
 def test_categorical_encoder_warning():
     enc = CategoricalEncoder()
     X = [['Male', 1], ['Female', 3]]
-    with warnings.catch_warnings(record=True) as w:
-        enc.fit_transform(X)
-    # check that no warning is raised
-    assert len(w) == 0
+    np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
 def test_fit_cold_start():
