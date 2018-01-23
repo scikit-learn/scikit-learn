@@ -134,7 +134,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError(
-                "y contains previously unseen labels: %s" % str(diff))
+                    "y contains previously unseen labels: %s" % str(diff))
         return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
