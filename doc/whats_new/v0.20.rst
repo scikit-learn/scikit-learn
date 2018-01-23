@@ -128,8 +128,8 @@ Classifiers and regressors
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
-  :func:`cluster.k_means` are now optimized using row-major ordering for data
-  copying.
+  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
 Preprocessing

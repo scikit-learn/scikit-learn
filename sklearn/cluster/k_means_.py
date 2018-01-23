@@ -283,8 +283,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
+    # avoid forcing order when copy_x=False
+    order = "C" if copy_x else None
     X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                    order="C", copy=copy_x)
+                    order=order, copy=copy_x)
     # verify that the number of samples given is larger than k
     if _num_samples(X) < n_clusters:
         raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
