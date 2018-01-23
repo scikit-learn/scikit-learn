@@ -9,7 +9,6 @@ import re
 
 import numpy as np
 from scipy import sparse
-import pytest
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -83,14 +82,16 @@ def test_one_hot_encoder_sparse():
                         [1., 0., 1., 0., 1.]])
 
     # max value given as 3
-    enc = OneHotEncoder(encoded_input=True, n_values=4)
+    enc = assert_warns(DeprecationWarning,
+                       OneHotEncoder, encoded_input=True, n_values=4)
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (2, 4 * 3))
     with ignore_warnings(category=DeprecationWarning):
         assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
 
     # max value given per feature
-    enc = OneHotEncoder(encoded_input=True, n_values=[3, 2, 2])
+    enc = assert_warns(DeprecationWarning,
+                       OneHotEncoder, encoded_input=True, n_values=[3, 2, 2])
     X = [[1, 0, 1], [0, 1, 1]]
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (2, 3 + 2 + 2))
@@ -209,7 +210,9 @@ def test_transform_selected_copy_arg():
 
 
 def _run_one_hot(X, X2, cat):
-    enc = OneHotEncoder(encoded_input=True, categorical_features=cat)
+    enc = assert_warns(
+        DeprecationWarning,
+        OneHotEncoder, encoded_input=True, categorical_features=cat)
     Xtr = enc.fit_transform(X)
     X2tr = enc.transform(X2)
     return Xtr, X2tr

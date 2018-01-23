@@ -344,18 +344,36 @@ class OneHotEncoder(_BaseEncoder):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
-    def __init__(self, n_values="auto", categorical_features="all",
+    def __init__(self, n_values=None, categorical_features=None,
                  categories='auto', encoded_input=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
-        self.n_values = n_values
-        self.categorical_features = categorical_features
+        if n_values is not None:
+            warnings.warn("Deprecated", DeprecationWarning)
+        else:
+            n_values = "auto"
+        self._deprecated_n_values = n_values
+        if categorical_features is not None:
+            warnings.warn("Deprecated", DeprecationWarning)
+        else:
+            categorical_features = "all"
+        self._deprecated_categorical_features = categorical_features
         self.categories = categories
         self.encoded_input = encoded_input
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
 
-    # Deprecated attributes
+    # Deprecated keywords and attributes
+
+    @property
+    def n_values(self):
+        warnings.warn("Deprecated", DeprecationWarning)
+        return self._deprecated_n_values
+
+    @property
+    def categorical_features(self):
+        warnings.warn("Deprecated", DeprecationWarning)
+        return self._deprecated_categorical_features
 
     @property
     def active_features_(self):
@@ -411,22 +429,23 @@ class OneHotEncoder(_BaseEncoder):
 
     def _fit_transform_old(self, X):
         """Assumes X contains only categorical features."""
+        self_n_values = self._deprecated_n_values
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self_n_values, six.string_types) and
+                self_n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
-        elif isinstance(self.n_values, numbers.Integral):
-            if (np.max(X, axis=0) >= self.n_values).any():
+        elif isinstance(self_n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self_n_values).any():
                 raise ValueError("Feature out of bounds for n_values=%d"
-                                 % self.n_values)
+                                 % self_n_values)
             n_values = np.empty(n_features, dtype=np.int)
-            n_values.fill(self.n_values)
+            n_values.fill(self_n_values)
         else:
             try:
-                n_values = np.asarray(self.n_values, dtype=int)
+                n_values = np.asarray(self_n_values, dtype=int)
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
@@ -449,8 +468,8 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self_n_values, six.string_types) and
+                self_n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -488,10 +507,12 @@ class OneHotEncoder(_BaseEncoder):
             return self.fit(X).transform(X)
         else:
             return _transform_selected(X, self._fit_transform_old,
-                                       self.categorical_features, copy=True)
+                                       self._deprecated_categorical_features,
+                                       copy=True)
 
     def _transform_old(self, X):
         """Assumes X contains only categorical features."""
+        self_n_values = self._deprecated_n_values
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -524,8 +545,8 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
+        if (isinstance(self_n_values, six.string_types) and
+                self_n_values == 'auto'):
             out = out[:, self._active_features_]
 
         return out if self.sparse else out.toarray()
@@ -577,7 +598,8 @@ class OneHotEncoder(_BaseEncoder):
             return self._transform_new(X)
         else:
             return _transform_selected(X, self._transform_old,
-                                       self.categorical_features, copy=True)
+                                       self._deprecated_categorical_features,
+                                       copy=True)
 
     def inverse_transform(self, X):
         """Convert back the data to the original representation.
