@@ -218,7 +218,7 @@ def test_logistic_regression_cv_warnings():
     clf_solver_warning = LogisticRegressionCV(multi_class='ovr')
     clf_multi_class_warning = LogisticRegressionCV(solver='lbfgs')
     clf_no_warnings = LogisticRegressionCV(solver='lbfgs',
-                                         multi_class='multinomial')
+                                           multi_class='multinomial')
 
     solver_warning_msg = "Default solver will be changed from 'lbfgs' " \
                          "to 'auto' solver in 0.22"
