@@ -151,8 +151,8 @@ Metrics
 
 - :func:`metrics.jaccard_similarity_score` now accepts ``average`` argument
   like :func:`metrics.precision_recall_fscore_support` as a naively set-wise
-  measure applying only to binary, multilabel targets and binarizing
-  multiclass input.
+  measure applying only to binary, multilabel targets and it binarizes
+  multiclass input and treats them like the corresponding multilabel problem.
   :issue:`10083` by :user:`Gaurav Dhingra <gxyd>`.
 
 Linear, kernelized and related models

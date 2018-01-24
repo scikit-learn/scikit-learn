@@ -70,7 +70,7 @@ Scoring                           Function                                      
 'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
 'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
-'jaccard' etc.                    :func:`metric.jaccard_similarity_score`           suffixes apply as with 'f1'
+'jaccard' etc.                    :func:`metrics.jaccard_similarity_score`          suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
@@ -683,7 +683,8 @@ In the multilabel case with binary label indicators: ::
   >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
   1.5
 
-Multiclass problems are binarized: ::
+Multiclass problems are binarized and treated like the corresponding
+multilabel problem: ::
 
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]

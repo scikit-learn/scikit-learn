@@ -435,8 +435,7 @@ def test_symmetry():
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        if (name in METRIC_UNDEFINED_BINARY and
-                name in METRIC_UNDEFINED_BINARY):
+        if name in METRIC_UNDEFINED_BINARY:
             assert_almost_equal(metric(y_true_bin, y_pred_bin),
                                 metric(y_pred_bin, y_true_bin),
                                 err_msg="%s is not symmetric" % name)
