@@ -3,20 +3,21 @@ Generalized Linear Models with Exponential Dispersion Family
 """
 
 # Author: Christian Lorentzen <lorentzen.ch@googlemail.ch>
+# some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
 # TODO: Write more tests
-# TODO: Add l1-penalty (elastic net)
+# TODO: Write examples and more docu
 # TODO: deal with option self.copy_X
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
 # TODO: Add cross validation
-# TODO: Write examples and more docu
-# TODO: Make it as much consistent to other estimators in linear_model as
-#       possible
-# TODO: which dtype to force for y and X? Which for P1, P2?
+# TODO: Should GeneralizedLinearRegressor inherit from LinearModel?
+#       So far, it does not.
 # TODO: Include further classes in class.rst? ExponentialDispersionModel?
 #       TweedieDistribution?
+# TODO: Negative values in P1 are not allowed so far. They could be used form
+#       group lasse.
 
 # Design Decisions:
 # - Which name? GeneralizedLinearModel vs GeneralizedLinearRegressor.
@@ -52,10 +53,11 @@ from .ridge import Ridge
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
+from ..externals.six.moves import xrange
 from ..utils import check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import newton_cg
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_random_state
 
 
 class Link(six.with_metaclass(ABCMeta)):
@@ -309,7 +311,9 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
 
         .. math:
 
-            \mathbf{score}(\boldsymbol{w}) = \mathbf{X}^T \mathbf{D}
+            \mathbf{score}(\boldsymbol{w})
+            = \frac{\partial loglike}{\partial\boldsymbol{w}}
+            = \mathbf{X}^T \mathbf{D}
             \boldsymbol{\Sigma}^-1 (\mathbf{y} - \boldsymbol{\mu})\,,
 
         with :math:`\mathbf{D}=\mathrm{diag}(h'(\eta_1),\ldots)` and
@@ -410,6 +414,29 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         info_matrix = self._observed_information(coef=coef, phi=1, X=X, y=y,
                                                  weights=weights, link=link)
         return 2*info_matrix
+
+    def _eta_mu_score_fisher(self, coef, phi, X, y, weights, link):
+        """Calculates eta (linear predictor), mu, score function (derivative
+        of log-likelihood) and Fisher matrix (all with phi=1) all in one go"""
+        n_samples, n_features = X.shape
+        # eta = linear predictor
+        eta = safe_sparse_dot(X, coef, dense_output=True)
+        mu = link.inverse(eta)
+        sigma_inv = 1./self.variance(mu, phi=phi, weights=weights)
+        d1 = link.inverse_derivative(eta)  # = h'(eta)
+        # Alternatively:
+        # h'(eta) = h'(g(mu)) = 1/g'(mu), note that h is inverse of g
+        # d1 = 1./link.derivative(mu)
+        d1_sigma_inv = sparse.dia_matrix((sigma_inv*d1, 0),
+                                         shape=(n_samples, n_samples))
+        temp = safe_sparse_dot(d1_sigma_inv, (y-mu), dense_output=True)
+        score = safe_sparse_dot(X.T, temp, dense_output=True)
+        #
+        d2_sigma_inv = sparse.dia_matrix((sigma_inv*(d1**2), 0),
+                                         shape=(n_samples, n_samples))
+        temp = safe_sparse_dot(d2_sigma_inv, X, dense_output=False)
+        fisher = safe_sparse_dot(X.T, temp, dense_output=False)
+        return eta, mu, score, fisher
 
     def starting_mu(self, y, weights=1):
         """Starting values for the mean mu_i in (unpenalized) IRLS."""
@@ -670,8 +697,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             alpha = a + b and l1_ratio = a / (a + b)
 
     The parameter `l1_ratio` corresponds to alpha in the glmnet R package while
-    alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
-    = 1 is the lasso penalty.
+    'alpha' corresponds to the lambda parameter in glmnet. Specifically,
+    l1_ratio = 1 is the lasso penalty.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -686,6 +713,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     TODO: For `alpha` > 0, the feature matrix `X` is assumed to be
     standardized. Call
     :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
+    Otherwise, the strength of the penalty is different for the features.
 
     TODO: Estimation of the dispersion parameter phi.
 
@@ -742,8 +770,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         the chi squared statisic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'auto', 'irls', 'newton-cg', 'lbfgs'}, optional (defaul='auto')
+    solver : {'auto', 'irls', 'newton-cg', 'lbfgs', 'cd'}, \
+            optional (defaul='auto')
         Algorithm to use in the optimization problem.
+
+        - 'auto' sets 'irls' if l1_ratio equals 0, else 'cd'.
 
         - 'irls' is iterated reweighted least squares (Fisher scoring).
             It is the standard algorithm for GLMs. Cannot deal with
@@ -751,10 +782,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'newton-cg', 'lbfgs'. Cannot deal with L1 penalties.
 
-        - 'auto' sets 'irls'.
+        - 'cd' is the coordinate descent algorithm. It can deal with L1 and
+            L2 penalties.
 
     max_iter : int, optional (default=100)
-        TODO
+        The maximal number of iterations for solver algorithms.
 
     tol : float, optional (default=1e-4)
         Stopping criterion. For the irls, newton-cg and lbfgs solvers,
@@ -780,6 +812,23 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         irls.
         This option only applies if ``warm_start=False`` or if fit is called
         the first time (``self.coef_`` does not exist).
+
+    selection : str, optional (default='random')
+        For the solver 'cd' (coordinate descent), the coordinates (features)
+        can be updated in either cyclic or random order.
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator that selects a random
+        feature to be updated for solver 'cd' (coordinate descent).
+        If int, random_state is the seed used by the random
+        number generator; if RandomState instance, random_state is the random
+        number generator; if None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
+        'random'.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -816,7 +865,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0, P1=None, P2=None,
                  fit_intercept=True, family='normal', link='identity',
                  fit_dispersion='chisqr', solver='auto', max_iter=100,
-                 tol=1e-4, warm_start=False, start_params=None, copy_X=True,
+                 tol=1e-4, warm_start=False, start_params=None,
+                 selection='random', random_state=None, copy_X=True,
                  check_input=True, verbose=0):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -831,6 +881,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.tol = tol
         self.warm_start = warm_start
         self.start_params = start_params
+        self.selection = selection
+        self.random_state = random_state
         self.copy_X = copy_X
         self.check_input = check_input
         self.verbose = verbose
@@ -925,24 +977,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
-        if self.solver == 'auto':
-            solver = 'irls'
-        else:
-            solver = self.solver
-        if solver not in ['irls', 'lbfgs', 'newton-cg']:
+        if self.solver not in ['auto', 'irls', 'lbfgs', 'newton-cg', 'cd']:
             raise ValueError("GeneralizedLinearRegressor supports only irls, "
-                             "lbfgs and newton-cg solvers, got {0}"
-                             "".format(solver))
-        if self.alpha > 0:
-            if (self.l1_ratio > 0 and
-                    solver not in []):
-                # TODO: Add solver for L1
-                # raise ValueError("The solver option (solver={0}) is not "
-                #                  "appropriate for the chosen penalty which"
-                #                  " includes L1 (alpha={1})."
-                #                  .format(solver, self.alpha))
-                raise NotImplementedError("Currently, no solver is implemented"
-                                          " that can deal with L1 penalties.")
+                             "auto, lbfgs, newton-cg and cd solvers, got {0}"
+                             "".format(self.solver))
+        solver = self.solver
+        if self.solver == 'auto':
+            if self.l1_ratio == 0:
+                solver = 'irls'
+            else:
+                solver = 'cd'
+        if (self.alpha > 0 and self.l1_ratio > 0 and solver not in ['cd']):
+                raise ValueError("The chosen solver (solver={0}) can't deal "
+                                 "with L1 penalties, which are included with "
+                                 "(alpha={1}) and (l1_ratio={2})."
+                                 .format(solver, self.alpha, self.l1_ratio))
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
                              " got (max_iter={0!r})".format(self.max_iter))
@@ -953,7 +1002,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
         start_params = self.start_params
-        if start_params is not None and start_params != 'least_squares':
+        if start_params is None:
+            pass
+        elif isinstance(start_params, six.string_types):
+            if start_params not in ['least_squares']:
+                raise ValueError("The argument start_params must be None, "
+                                 "'least-squares' or an array of right length,"
+                                 " got(start_params={0})".format(start_params))
+        else:
             start_params = np.atleast_1d(start_params)
             if ((start_params.shape[0] != X.shape[1] + self.fit_intercept) or
                     (start_params.ndim != 1)):
@@ -963,6 +1019,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  .format(X.shape[1] + self.fit_intercept,
                                          start_params.shape[0],
                                          start_params.ndim))
+
+        if self.selection not in ['cyclic', 'random']:
+            raise ValueError("The argument selection must be 'cyclic' or "
+                             "'random', got (selection={0})"
+                             .format(self.selection))
+        random_state = check_random_state(self.random_state)
         if not isinstance(self.copy_X, bool):
             raise ValueError("The argument copy_X must be bool;"
                              " got {0}".format(self.copy_X))
@@ -974,15 +1036,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             P1 = np.ones(X.shape[1])
         else:
             P1 = np.atleast_1d(np.copy(self.P1))
-            if (P1.shape[0] != X.shape[1]) or (P1.ndim != 1):
+            if (P1.ndim != 1) or (P1.shape[0] != X.shape[1]):
                 raise ValueError("P1 must be either None or an 1D array with "
                                  "the length of X.shape[1]; "
                                  "got (P1.shape[0]={0}), "
                                  "needed (X.shape[1]={1})."
                                  .format(P1.shape[0], X.shape[1]))
         if self.P2 is None:
-            P2 = np.ones(X.shape[1])
-            if sparse.issparse(X):
+            if not sparse.issparse(X):
+                P2 = np.ones(X.shape[1])
+            else:
                 P2 = (sparse.dia_matrix((np.ones(X.shape[1]), 0),
                       shape=(X.shape[1], X.shape[1]))).tocsr()
         else:
@@ -1024,6 +1087,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         l2 = self.alpha * (1-self.l1_ratio)
         P1 *= l1
         P2 *= l2
+        # one only ever needs the symmetrized L2 penalty matrix 1/2 (P2 + P2')
+        # reason: w' P2 w = (w' P2 w)', i.e. it is symmetric
+        if sparse.issparse(P2):
+            P2 = 0.5 * (P2 + P2.transpose())
+        else:
+            P2 = 0.5 * (P2 + P2.T)
 
         # 1.3 additional validations ##########################################
         if self.check_input:
@@ -1033,14 +1102,20 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  .format(family.__class__.__name__))
             if not np.all(weights >= 0):
                 raise ValueError("Sample weights must be non-negative.")
-            # check that P2 is positive semidefinite
+            # check if P1 has only non-negative values, negative values might
+            # indicate group lasso in the future.
+            if self.P1 is not None:
+                if not np.all(P1 >= 0):
+                    raise ValueError("P1 must not have negative values.")
+            # check if P2 is positive semidefinite
             # np.linalg.cholesky(P2) 'only' asserts positive definite
             if self.P2 is not None:
                 if sparse.issparse(P2):
                     # TODO: check sparse P2 for non-negativeness
-                    raise NotImplementedError("Check sparse P2 for "
-                                              "non-negaitveness is not yet "
-                                              "implemented.")
+                    # raise NotImplementedError("Check sparse P2 for "
+                    #                          "non-negaitveness is not yet "
+                    #                          "implemented.")
+                    pass
                 elif P2.ndim == 2:
                     if not np.all(np.linalg.eigvals(P2) >= -1e-15):
                         raise ValueError("P2 must be positive definite.")
@@ -1090,7 +1165,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 # with L1 penalty, start with coef = 0
                 coef = np.zeros(n_features)
-        elif self.start_params == 'least_squares':
+        elif (isinstance(self.start_params, six.string_types) and
+                self.start_params == 'least_squares'):
             if self.alpha == 0:
                 reg = LinearRegression(copy_X=True, fit_intercept=False)
                 reg.fit(Xnew, link.link(y))
@@ -1102,7 +1178,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 reg.fit(Xnew, link.link(y))
                 coef = reg.coef_
             else:
-                # TODO: Does this make sense?
+                # TODO: Does this make sense at all?
                 reg = ElasticNet(copy_X=True, fit_intercept=False,
                                  alpha=self.alpha, l1_ratio=self.l1_ratio)
                 reg.fit(Xnew, link.link(y))
@@ -1125,14 +1201,17 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         #   D2  = link.inverse_derivative(eta)^2 = D^2
         #   W   = D2/V(mu)
         #   l2  = alpha * (1 - l1_ratio)
-        #   Obj' = d(Obj)/d(w) = 1/2 Dev' + P2 w
+        #   Obj' = d(Obj)/d(w) = 1/2 Dev' + l2 P2 w
         #        = -X' D (y-mu)/V(mu) + l2 P2 w
         #   Obj''= d2(Obj)/d(w)d(w') = Hessian = -X'(...) X + l2 P2
         #   Use Fisher matrix instead of full info matrix -X'(...) X,
         #    i.e. E[Dev''] with E[y-mu]=0:
         #   Obj'' ~ X' W X + l2 P2
-        # (1): w = (X' W X + l2 P2)^-1 X' W z, with z = eta + D^-1 (y-mu)
-        # Note: P2 = l2*P2, see above
+        # (1): w = (X' W X + l2 P2)^-1 X' W z,
+        #      with z = eta + D^-1 (y-mu)
+        # Note: we already set P2 = l2*P2, see above
+        # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
+        # Note: ' denotes derivative, but also transpose for matrices
         if solver == 'irls':
             # eta = linear predictor
             eta = safe_sparse_dot(Xnew, coef, dense_output=True)
@@ -1150,9 +1229,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # working observations
                 z = eta + (y-mu)/hp
                 # solve A*coef = b
-                # A = X' W X + l2 P2, b = X' W z
+                # A = X' W X + P2, b = X' W z
                 coef = _irls_step(Xnew, W, P2, z)
-
                 # updated linear predictor
                 # do it here for updated values for tolerance
                 eta = safe_sparse_dot(Xnew, coef, dense_output=True)
@@ -1242,25 +1320,182 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # Reference: Guo-Xun Yuan, Chia-Hua Ho, Chih-Jen Lin
         # An Improved GLMNET for L1-regularized Logistic Regression,
         # Journal of Machine Learning Research 13 (2012) 1999-2030
-        # Note: Use Fisher matrix instead of Hessian
+        # Note: Use Fisher matrix instead of Hessian for H
         #
         # 1. find optimal descent direction d by minimizing
         #    min_d F(w+d) = min_d F(w+d) - F(w)
-        #    F = f + g; f(w) = 1/2 dev; g(w) = 1/2*w*P2*w + ||P1*w||_1
-        # 2. quadrdatic approx of f(w+d)-f(w):
-        #    q(d) = f'(w)*d +1/2 d*H*d
-        #    min_d q(d) + g(w+d) - g(w)
+        #    F = f + g, f(w) = 1/2 deviance, g(w) = 1/2 w*P2*w + ||P1*w||_1
+        # 2. quadrdatic approximation of F(w+d)-F(w) = q(d):
+        #    using f(w+d) = f(w) + f'(w)*d + 1/2 d*H(w)*d + O(d^3) gives
+        #    q(d) = (f'(w) + w*P2)*d + 1/2 d*(H(w)+P2)*d
+        #           + ||P1*(w+d)||_1 - ||P1*w||_1
+        #    min_d q(d)
         # 3. coordinate descent by updating coordinate j (d -> d+z*e_j):
-        #    min_z q(d+z*e_j) + g(w+d+z*e_j) - g(w)
-        #    = min_z q(d+z e_j) - q(d) + g(w+d+z*e_j) - g(w+d)
-        # TODO
-        # elif solver == 'cd':
+        #    min_z q(d+z*e_j)
+        #    = min_z q(d+z*e_j) - q(d)
+        #    = min_z A_j z + 1/2 B_jj z^2
+        #            + ||P1_j (w_j+d_j+z)||_1 - ||P1_j (w_j+d_j)||_1
+        #    A = f'(w) + d*H(w) + (w+d)*P2
+        #    B = H+P2
+        # Note: we already set P2 = l2*P2, P1 = l1*P1, see above
+        # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
+        # Note: f' = -score, H = Fisher matrix
+        elif solver == 'cd':
             # line search parameters
-            # (beta, sigma) = (0.5, 0.01)
-            # for iteration k from 1 to maxiter
-            #     for coordinate j sample at random
-            #     np.random.choice(coord, replace = False)
-            #
+            (beta, sigma) = (0.5, 0.01)
+            # max inner loops (cycles through all features)
+            max_inner_iter = 1000
+            # some precalculations
+            eta, mu, score, fisher = family._eta_mu_score_fisher(
+                coef=coef, phi=1, X=Xnew, y=y, weights=weights, link=link)
+            # initial stopping tolerance of inner loop
+            # use L1-norm of minimum-norm of subgradient of F
+            # fp_wP2 = f'(w) + w*P2
+            if P2.ndim == 1:
+                fp_wP2 = -score + coef*P2
+            else:
+                fp_wP2 = -score + safe_sparse_dot(coef, P2)
+            inner_tol = (np.where(coef == 0,
+                         np.sign(fp_wP2)*np.maximum(np.abs(fp_wP2)-P1, 0),
+                         fp_wP2+np.sign(coef)*P1))
+            inner_tol = linalg.norm(inner_tol, ord=1)
+            # outer loop
+            while self.n_iter_ < self.max_iter:
+                self.n_iter_ += 1
+                # initialize search direction d (to be optimized)
+                d = np.zeros_like(coef)
+                # inner loop
+                # TODO: use sparsity (coefficient already 0 due to L1 penalty)
+                d = np.zeros_like(coef)
+                # A = f'(w) + d*H(w) + (w+d)*P2
+                # B = H+P2
+                # Note: f'=-score and H=fisher are updated at the end of outer
+                #       iteration
+                B = fisher
+                if P2.ndim == 1:
+                    coef_P2 = coef * P2
+                    B[np.diag_indices_from(B)] += P2
+                else:
+                    coef_P2 = safe_sparse_dot(coef, P2)
+                    B += P2
+                A = -score + coef_P2  # + d*(H+P2) but d=0 so far
+                inner_iter = 0
+                while inner_iter < max_inner_iter:
+                    inner_iter += 1
+                    if self.selection == 'random':
+                        featurelist = random_state.permutation(n_features)
+                    else:
+                        featurelist = np.arange(n_features)
+                    for j in featurelist:
+                        # minimize_z: a z + 1/2 b z^2 + c |d+z|
+                        # a = A_j
+                        # b = B_jj > 0
+                        # c = |P1_j| = P1_j > 0, ee 1.3
+                        # d = w_j + d_j
+                        # cf. https://arxiv.org/abs/0708.1485 Eqs. (3) - (4)
+                        # with beta = z+d, beta_hat = d-a/b and gamma = c/b
+                        # z = 1/b * S(bd-a,c) - d
+                        # S(a,b) = sign(a) max(|a|-b, 0) soft thresholding
+                        a = A[j]
+                        b = B[j, j]
+                        if P1[j] == 0:
+                            if b == 0:
+                                z = 0
+                            else:
+                                z = -a/b
+                        elif a + P1[j] < b * (coef[j]+d[j]):
+                            if b == 0:
+                                z = 0
+                            else:
+                                z = -(a + P1[j])/b
+                        elif a - P1[j] > b * (coef[j]+d[j]):
+                            if b == 0:
+                                z = 0
+                            else:
+                                z = -(a - P1[j])/b
+                        else:
+                            z = -(coef[j] + d[j])
+                        # update direction d
+                        d[j] += z
+                        # update A because d_j is now d_j+z
+                        # A = f'(w) + d*H(w) + (w+d)*P2
+                        # => A += (H+P2)*e_j z  = B_j * z
+                        # Note: B is symmetric B = B.transpose
+                        if sparse.issparse(B):
+                            if sparse.isspmatrix_csc(B):
+                                # slice columns
+                                A += B[:, j].toarray().ravel() * z
+                            else:
+                                # slice rows
+                                A += B[j, :].toarray().ravel() * z
+                        else:
+                            A += B[j, :] * z
+                        # end of cycle
+                    # stopping criterion for inner loop
+                    # sum_i(|minimum-norm subgrad of q(d)_i|)
+                    mn_subgrad = (np.where(coef + d == 0,
+                                  np.sign(A)*np.maximum(np.abs(A)-P1, 0),
+                                  A+np.sign(coef+d)*P1))
+                    mn_subgrad = np.sum(np.abs(mn_subgrad))
+                    if mn_subgrad <= inner_tol:
+                        if inner_iter == 1:
+                            inner_tol = inner_tol/4.
+                        break
+                    # end of inner loop
+                # line search by sequence beta^k, k=0, 1, ..
+                # F(w + lambda d) - F(w) <= lambda * bound
+                # bound = sigma * (f'(w)*d + w*P2*d
+                #                  +||P1 (w+d)||_1 - ||P1 w||_1)
+                P1w_1 = linalg.norm(P1*coef, ord=1)
+                # Note: coef_P2 already calculated and still valid
+                bound = sigma * (
+                    safe_sparse_dot(-score, d) +
+                    safe_sparse_dot(coef_P2, d) +
+                    linalg.norm(P1*(coef+d), ord=1) -
+                    P1w_1)
+                Fw = (0.5 * family.deviance(y, mu, weights) +
+                      0.5 * safe_sparse_dot(coef_P2, coef) +
+                      P1w_1)
+                la = 1./beta
+                for k in range(20):
+                    la *= beta  # starts with la=1
+                    mu_wd = link.inverse(safe_sparse_dot(Xnew, coef+la*d,
+                                         dense_output=True))
+                    Fwd = (0.5 * family.deviance(y, mu_wd, weights) +
+                           linalg.norm(P1*(coef+la*d), ord=1))
+                    if P2.ndim == 1:
+                        Fwd += 0.5 * safe_sparse_dot((coef+la*d)*P2, coef+la*d)
+                    else:
+                        Fwd += 0.5 * (safe_sparse_dot(coef+la*d,
+                                      safe_sparse_dot(P2, coef+la*d)))
+                    if Fwd-Fw <= sigma*la*bound:
+                        break
+                # update coefficients
+                # coef_old = coef.copy()
+                coef += la * d
+                # calculate eta, mu, score, Fisher matrix for next iteration
+                eta, mu, score, fisher = family._eta_mu_score_fisher(
+                    coef=coef, phi=1, X=Xnew, y=y, weights=weights, link=link)
+                # stopping criterion for outer loop
+                # sum_i(|minimum-norm subgrad of F(w)_i|)
+                # fp_wP2 = f'(w) + w*P2
+                # Note: eta, mu and score are already updated
+                if P2.ndim == 1:
+                    fp_wP2 = -score + coef*P2
+                else:
+                    fp_wP2 = -score + safe_sparse_dot(coef, P2)
+                mn_subgrad = (np.where(coef == 0,
+                              np.sign(fp_wP2)*np.maximum(np.abs(fp_wP2)-P1, 0),
+                              fp_wP2+np.sign(coef)*P1))
+                mn_subgrad = np.sum(np.abs(mn_subgrad))
+                if mn_subgrad <= self.tol:
+                    converged = True
+                    break
+                # end of outer loop
+            if not converged:
+                warnings.warn("Coordinate descent failed to converge. Increase"
+                              " the number of iterations (currently {0})"
+                              .format(self.max_iter), ConvergenceWarning)
 
         #######################################################################
         # 5. postprocessing                                                   #

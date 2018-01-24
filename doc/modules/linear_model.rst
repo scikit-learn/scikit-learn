@@ -894,9 +894,9 @@ becomes
             +\frac{\alpha(1-\rho)}{2} w^T P_2 w
 
 with sample weights :math:`s`.
-:math:`P_1` can be used to exclude some of the coefficients in the L1
-penalty, :math:`P_2` (must be positive semi-definite) allows for a more
-versatile L2 penalty.
+:math:`P_1` (diagonal matrix) can be used to exclude some of the coefficients in
+the L1 penalty, the matrix :math:`P_2` (must be positive semi-definite) allows
+for a more versatile L2 penalty.
 
 Use cases, where a loss different from the squared loss might be appropriate,
 are the following:
@@ -908,22 +908,23 @@ are the following:
   * If the target values seem to be heavy tailed, you might try an Inverse Gaussian deviance (or even higher variance power of the Tweedie family).
 
 Since the linear predictor :math:`Xw` can be negative and
-Poisson, Gamma and Inverse Gaussian distributions don't have negative values,
+Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
 it is convenient to apply a link function different from the identity link
 :math:`h(x)=x` that guarantees the non-negativeness, e.g. the log-link with
 :math:`h(Xw)=\exp(Xw)`.
 
 Note that the feature matrix `X` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
-follows::
+follows:
 
     >>> from sklearn.linear_model import GeneralizedLinearRegressor
     >>> reg = GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
-    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
-    GeneralizedLinearRegressor(alpha=0.5, copy_X=True, family='poisson',
-                  fit_dispersion='chisqr', fit_intercept=True, l1_ratio=0,
-                  link='log', max_iter=100, solver='irls', start_params=None,
-                  tol=0.0001, verbose=0, warm_start=False)
+    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2]) # doctest: +SKIP
+    GeneralizedLinearRegressor(P1=None, P2=None, alpha=0.5, check_input=True,
+              copy_X=True, family='poisson', fit_dispersion='chisqr',
+              fit_intercept=True, l1_ratio=0, link='log', max_iter=100,
+              random_state=None, selection='random', solver='auto',
+              start_params=None, tol=0.0001, verbose=0, warm_start=False)
     >>> reg.coef_
     array([ 0.24630255,  0.43373521])
     >>> reg.intercept_ #doctest: +ELLIPSIS

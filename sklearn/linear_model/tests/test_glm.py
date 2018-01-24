@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 import scipy as sp
+from scipy import sparse
 
 from sklearn.linear_model.glm import (
     Link,
@@ -126,7 +127,7 @@ def test_glm_identiy_regression():
         GammaDistribution(), InverseGaussianDistribution(),
         TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
         GeneralizedHyperbolicSecand())
-    for solver in ['irls', 'lbfgs', 'newton-cg']:
+    for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
         for family in families:
             glm = GeneralizedLinearRegressor(
                 alpha=0, family=family, fit_intercept=False, solver=solver)
@@ -162,28 +163,31 @@ def test_normal_ridge():
     rng = np.random.RandomState(0)
     alpha = 1.0
 
-    # With more samples than features
+    # 1. With more samples than features
     n_samples, n_features, n_predict = 6, 5, 10
     y = rng.randn(n_samples)
     X = rng.randn(n_samples, n_features)
     T = rng.randn(n_predict, n_features)
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True)
+    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True, tol=1e-6,
+                  solver='svd', normalize=False)
     ridge.fit(X, y)
-    for solver in ['irls', 'lbfgs', 'newton-cg']:
+    for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
         glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0,
                                          family='normal', link='identity',
-                                         fit_intercept=True, solver=solver)
+                                         fit_intercept=True, tol=1e-6,
+                                         max_iter=100, solver=solver)
         glm.fit(X, y)
         assert_equal(glm.coef_.shape, (X.shape[1], ))
         assert_array_almost_equal(glm.coef_, ridge.coef_)
         assert_almost_equal(glm.intercept_, ridge.intercept_)
         assert_array_almost_equal(glm.predict(T), ridge.predict(T))
 
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, normalize=False)
+    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-6,
+                  solver='svd', normalize=False)
     ridge.fit(X, y)
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0,
+    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-6,
                                      family='normal', link='identity',
                                      fit_intercept=False, solver='irls')
     glm.fit(X, y)
@@ -192,28 +196,30 @@ def test_normal_ridge():
     assert_almost_equal(glm.intercept_, ridge.intercept_)
     assert_array_almost_equal(glm.predict(T), ridge.predict(T))
 
-    # With more features than samples
+    # 2. With more features than samples and sparse
     n_samples, n_features, n_predict = 5, 10, 10
     y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
-    T = rng.randn(n_predict, n_features)
+    X = sparse.csr_matrix(rng.randn(n_samples, n_features))
+    T = sparse.csr_matrix(rng.randn(n_predict, n_features))
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True)
+    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True, tol=1e-9,
+                  solver='sag', normalize=False, max_iter=100000)
     ridge.fit(X, y)
-    for solver in ['irls', 'lbfgs', 'newton-cg']:
-        glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0,
+    for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
+        glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-7,
                                          family='normal', link='identity',
                                          fit_intercept=True, solver=solver)
         glm.fit(X, y)
         assert_equal(glm.coef_.shape, (X.shape[1], ))
-        assert_array_almost_equal(glm.coef_, ridge.coef_)
-        assert_almost_equal(glm.intercept_, ridge.intercept_)
-        assert_array_almost_equal(glm.predict(T), ridge.predict(T))
+        assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=5)
+        assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=5)
+        assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=5)
 
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, normalize=False)
+    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-6,
+                  solver='sag', normalize=False, max_iter=1000)
     ridge.fit(X, y)
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0,
+    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-6,
                                      family='normal', link='identity',
                                      fit_intercept=False, solver='irls')
     glm.fit(X, y)
@@ -240,9 +246,41 @@ def test_poisson_ridge():
     # b            0.03741173122
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
-    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0, family='poisson',
-                                     link='log', tol=1e-10)
+    s_dec = {'irls': 7, 'lbfgs': 5, 'newton-cg': 7, 'cd': 7}
+    for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
+        glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
+                                         fit_intercept=True, family='poisson',
+                                         link='log', tol=1e-7,
+                                         solver=solver, max_iter=200)
+        glm.fit(X, y)
+        assert_almost_equal(glm.intercept_, -0.12889386979,
+                            decimal=s_dec[solver])
+        assert_array_almost_equal(glm.coef_, [0.29019207995, 0.03741173122],
+                                  decimal=s_dec[solver])
+
+
+def test_poisson_enet():
+    """Test elastic net regression with poisson family and LogLink
+
+    Compare to R's glmnet"""
+    # library("glmnet")
+    # options(digits=10)
+    # library("glmnet")
+    # options(digits=10)
+    # df <- data.frame(a=c(-2,-1,1,2), b=c(0,0,1,1), y=c(0,1,1,2))
+    # x <- data.matrix(df[,c("a", "b")])
+    # y <- df$y
+    # fit <- glmnet(x=x, y=y, alpha=0.5, intercept=T, family="poisson",
+    #               standardize=F, thresh=1e-10, nlambda=10000)
+    # coef(fit, s=1)
+    # (Intercept) -0.03550978409
+    # a            0.16936423283
+    # b            .
+    X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
+    y = np.array([0, 1, 1, 2])
+    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
+                                     link='log', tol=1e-7)
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, -0.12889386979, decimal=7)
-    assert_array_almost_equal(glm.coef_, [0.29019207995, 0.03741173122],
+    assert_almost_equal(glm.intercept_, -0.03550978409, decimal=7)
+    assert_array_almost_equal(glm.coef_, [0.16936423283, 0.],
                               decimal=7)
