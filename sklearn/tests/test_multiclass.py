@@ -731,7 +731,7 @@ def test_pairwise_indices():
 
 def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
-    clf_notprecomputed = svm.SVC(gamma="scale")
+    clf_notprecomputed = svm.SVC()
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
         ovr_false = MultiClassClassifier(clf_notprecomputed)

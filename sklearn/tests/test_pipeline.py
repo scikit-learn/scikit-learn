@@ -168,7 +168,7 @@ def test_pipeline_init():
     repr(pipe)
 
     # Test with two objects
-    clf = SVC(gamma="scale")
+    clf = SVC()
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
@@ -884,7 +884,7 @@ def test_pipeline_wrong_memory():
     # Define memory as an integer
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()),
-                            ('svc', SVC(gamma="scale"))], memory=memory)
+                            ('svc', SVC())], memory=memory)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
                         "sklearn.externals.joblib.Memory."
@@ -979,9 +979,9 @@ def test_pipeline_memory():
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
     memory = Memory(cachedir=cachedir)
-    pipeline = make_pipeline(DummyTransf(), SVC(gamma='scale'), memory=memory)
+    pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert_true(pipeline.memory is memory)
-    pipeline = make_pipeline(DummyTransf(), SVC(gamma='scale'))
+    pipeline = make_pipeline(DummyTransf(), SVC())
     assert_true(pipeline.memory is None)
 
     shutil.rmtree(cachedir)

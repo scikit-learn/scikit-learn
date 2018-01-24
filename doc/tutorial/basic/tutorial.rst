@@ -327,16 +327,16 @@ more than once will overwrite what was learned by any previous ``fit()``::
   >>> y = rng.binomial(1, 0.5, 100)
   >>> X_test = rng.rand(5, 10)
 
-  >>> clf = SVC(gamma='scale')
+  >>> clf = SVC()
   >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='scale', kernel='linear',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+    decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
+    kernel='linear', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])
 
-  >>> clf.set_params(kernel='rbf').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+  >>> clf.set_params(kernel='rbf', gamma='scale').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
@@ -345,7 +345,7 @@ more than once will overwrite what was learned by any previous ``fit()``::
   array([1, 0, 1, 1, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` after the
-estimator has been constructed via ``SVC(gamma='scale')``, and changed back to ``rbf`` to
+estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
 refit the estimator and to make a second prediction.
 
 Multiclass vs. multilabel fitting
