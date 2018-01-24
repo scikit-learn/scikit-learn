@@ -207,19 +207,20 @@ def test_normal_ridge():
                   solver='sag', normalize=False, max_iter=100000)
     ridge.fit(X, y)
     for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
-        glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-7,
+        glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-8,
                                          family='normal', link='identity',
-                                         fit_intercept=True, solver=solver)
+                                         fit_intercept=True, solver=solver,
+                                         max_iter=300)
         glm.fit(X, y)
         assert_equal(glm.coef_.shape, (X.shape[1], ))
         assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=5)
         assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=5)
         assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=5)
 
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-6,
+    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-7,
                   solver='sag', normalize=False, max_iter=1000)
     ridge.fit(X, y)
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-6,
+    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-7,
                                      family='normal', link='identity',
                                      fit_intercept=False, solver='irls')
     glm.fit(X, y)
@@ -247,11 +248,12 @@ def test_poisson_ridge():
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
     s_dec = {'irls': 7, 'lbfgs': 5, 'newton-cg': 5, 'cd': 7}
+    s_tol = {'irls': 1e-8, 'lbfgs': 1e-7, 'newton-cg': 1e-7, 'cd': 1e-8}
     for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
         glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
                                          fit_intercept=True, family='poisson',
-                                         link='log', tol=1e-7,
-                                         solver=solver, max_iter=200)
+                                         link='log', tol=s_tol[solver],
+                                         solver=solver, max_iter=300)
         glm.fit(X, y)
         assert_almost_equal(glm.intercept_, -0.12889386979,
                             decimal=s_dec[solver])

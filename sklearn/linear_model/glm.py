@@ -1376,7 +1376,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     B[np.diag_indices_from(B)] += P2
                 else:
                     coef_P2 = safe_sparse_dot(coef, P2)
-                    B += P2
+                    B = B + P2
                 A = -score + coef_P2  # + d*(H+P2) but d=0 so far
                 inner_iter = 0
                 while inner_iter < max_inner_iter:
