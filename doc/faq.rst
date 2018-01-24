@@ -351,3 +351,21 @@ However, a global random state is prone to modification by other code during
 execution. Thus, the only way to ensure replicability is to pass ``RandomState``
 instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
+
+Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
+--------------------------------------------------------------------------------
+
+Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices of
+a single numeric dtype. These do not directly explicitly categorical variables at
+present. See the :class:`preprocessing.CategoricalEncoder` for a tool to encode
+categorical variables, say within a pandas.DataFrame, as numeric data.
+See :ref:`sphx_glr_auto_examples_hetero_feature_union.py` for an example of
+working with heterogeneous (e.g. categorical and numeric) data.
+
+Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
+
+The homogeneous NumPy and SciPy data objects currently expected are most
+efficient to process for most operations. Extensive work would also be needed
+to support Pandas categorical types. Restricting input to homogeneous
+types therefore reduces maintenance cost and encourages usage of efficient
+data structures.
