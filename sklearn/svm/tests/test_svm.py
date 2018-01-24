@@ -996,3 +996,6 @@ def test_gamma_scale():
     clf = svm.SVC(gamma='scale')
     assert_no_warnings(clf.fit, X, y)
     assert_equal(clf._gamma, 2.)
+
+    X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
+    assert_no_warnings(clf.fit, X, y)
