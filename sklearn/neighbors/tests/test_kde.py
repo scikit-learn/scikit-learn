@@ -124,7 +124,7 @@ def test_kde_badargs():
                   algorithm='blah')
     assert_raises(ValueError, KernelDensity,
                   bandwidth=0)
-    assert_raises(ValueError, KernelDensity,
+    assert_raises(TypeError, KernelDensity,
                   bandwidth='urgh')
     assert_raises(ValueError, KernelDensity,
                   kernel='blah')
