@@ -26,26 +26,30 @@ import time
 
 import numpy as np
 import scipy as sp
+from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
+from skimage.transform import rescale
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
-from sklearn.externals._pilutil import imresize
 
 
 # load the raccoon face as a numpy array
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face
-    face = face(gray=True)
+    orig_face = face(gray=True)
 except ImportError:
-    face = sp.face(gray=True)
+    orig_face = sp.face(gray=True)
 
 # Resize it to 10% of the original size to speed up the processing
-face = imresize(face, 0.10) / 255.
+# Applying a Gaussian filter for smoothing prior to down-scaling
+# reduces aliasing artifacts.
+smoothened_face = gaussian_filter(orig_face, sigma=(1/0.10-1)/2.)
+rescaled_face = rescale(smoothened_face, 0.10, mode="reflect")/255.
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
-graph = image.img_to_graph(face)
+graph = image.img_to_graph(rescaled_face)
 
 # Take a decreasing function of the gradient: an exponential
 # The smaller beta is, the more independent the segmentation is of the
@@ -66,10 +70,10 @@ for assign_labels in ('kmeans', 'discretize'):
     labels = spectral_clustering(graph, n_clusters=N_REGIONS,
                                  assign_labels=assign_labels, random_state=42)
     t1 = time.time()
-    labels = labels.reshape(face.shape)
+    labels = labels.reshape(rescaled_face.shape)
 
     plt.figure(figsize=(5, 5))
-    plt.imshow(face, cmap=plt.cm.gray)
+    plt.imshow(rescaled_face, cmap=plt.cm.gray)
     for l in range(N_REGIONS):
         plt.contour(labels == l, contours=1,
                     colors=[plt.cm.spectral(l / float(N_REGIONS))])
