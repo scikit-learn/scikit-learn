@@ -156,7 +156,7 @@ validation iterator instead, for instance::
       ...     iris.data, iris.target, test_size=0.4, random_state=0)
       >>> scaler = preprocessing.StandardScaler().fit(X_train)
       >>> X_train_transformed = scaler.transform(X_train)
-      >>> clf = svm.SVC(gamma='scale', C=1).fit(X_train_transformed, y_train)
+      >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
       >>> X_test_transformed = scaler.transform(X_test)
       >>> clf.score(X_test_transformed, y_test)  # doctest: +ELLIPSIS
       0.9333...
@@ -166,7 +166,7 @@ validation iterator instead, for instance::
 
       >>> from sklearn.pipeline import make_pipeline
       >>> clf = make_pipeline(preprocessing.StandardScaler(),
-      ...                     svm.SVC(gamma='scale', C=1))
+      ...                     svm.SVC(C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
       array([ 0.97...,  0.93...,  0.95...])
