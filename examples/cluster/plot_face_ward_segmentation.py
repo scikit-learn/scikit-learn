@@ -39,8 +39,8 @@ except ImportError:
 # Resize it to 10% of the original size to speed up the processing
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
-smoothened_face = gaussian_filter(orig_face, sigma=(1/0.10-1)/2.)
-rescaled_face = rescale(smoothened_face, 0.10, mode="reflect")/255.
+smoothened_face = gaussian_filter(orig_face/255., sigma=(1/0.10-1)/2.)
+rescaled_face = rescale(smoothened_face, 0.10, mode="reflect")
 
 X = np.reshape(rescaled_face, (-1, 1))
 
