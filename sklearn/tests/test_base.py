@@ -207,7 +207,7 @@ def test_get_params():
 
 
 def test_is_classifier():
-    svc = SVC(gamma="scale")
+    svc = SVC()
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
@@ -217,7 +217,7 @@ def test_is_classifier():
 
 def test_set_params():
     # test nested estimator parameter setting
-    clf = Pipeline([("svc", SVC(gamma="scale"))])
+    clf = Pipeline([("svc", SVC())])
     # non-existing parameter in svc
     assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
     # non-existing parameter of pipeline
@@ -250,7 +250,7 @@ def test_set_params_updates_valid_params():
     # Check that set_params tries to set SVC().C, not
     # DecisionTreeClassifier().C
     gscv = GridSearchCV(DecisionTreeClassifier(), {})
-    gscv.set_params(estimator=SVC(gamma='scale'), estimator__C=42.0)
+    gscv.set_params(estimator=SVC(), estimator__C=42.0)
     assert gscv.estimator.C == 42.0
 
 

@@ -452,7 +452,7 @@ def test_grid_search_one_grid_point():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
 
-    clf = SVC(gamma="scale")
+    clf = SVC()
     cv = GridSearchCV(clf, param_dict)
     cv.fit(X_, y_)
 
@@ -476,7 +476,7 @@ def test_grid_search_when_param_grid_includes_range():
 
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
-    clf = SVC(gamma="scale")
+    clf = SVC()
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -491,7 +491,7 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
-    clf = SVC(gamma="scale")
+    clf = SVC()
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -910,9 +910,9 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid={'C': [1, 10]},
+    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]},
                                cv=cv)
-    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=2,
+    random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv)
     for search in (grid_search, random_search):
@@ -948,7 +948,7 @@ def test_search_iid_param():
         assert_almost_equal(test_mean, expected_test_mean)
         assert_almost_equal(test_std, expected_test_std)
         assert_array_almost_equal(test_cv_scores,
-                                  cross_val_score(SVC(gamma='scale', C=1), X,
+                                  cross_val_score(SVC(C=1), X,
                                                   y, cv=cv))
 
         # For the train scores, we do not take a weighted mean irrespective of
@@ -957,10 +957,10 @@ def test_search_iid_param():
         assert_almost_equal(train_std, 0)
 
     # once with iid=False
-    grid_search = GridSearchCV(SVC(gamma="scale"),
+    grid_search = GridSearchCV(SVC(),
                                param_grid={'C': [1, 10]},
                                cv=cv, iid=False)
-    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=2,
+    random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv, iid=False)
 
@@ -1031,7 +1031,7 @@ def test_random_search_cv_results_multimetric():
                 # If True, for multi-metric pass refit='accuracy'
                 if refit:
                     refit = 'accuracy' if isinstance(scoring, tuple) else refit
-                clf = SVC(gamma='scale', probability=True, random_state=42)
+                clf = SVC(probability=True, random_state=42)
                 random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
                                                    cv=n_splits, iid=iid,
                                                    param_distributions=params,
