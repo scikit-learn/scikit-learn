@@ -358,7 +358,7 @@ Why do categorical variables need preprocessing in scikit-learn, compared to oth
 --------------------------------------------------------------------------------
 
 Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices of
-a single numeric dtype. These do not directly explicitly categorical variables at
+a single numeric dtype. These do not explicitly represent categorical variables at
 present. See the :class:`preprocessing.CategoricalEncoder` for a tool to encode
 categorical variables, say within a pandas.DataFrame, as numeric data.
 See :ref:`sphx_glr_auto_examples_hetero_feature_union.py` for an example of
