@@ -997,5 +997,7 @@ def test_gamma_scale():
     assert_no_warnings(clf.fit, X, y)
     assert_equal(clf._gamma, 2.)
 
+    # X_std ~= 1 shouldn't raise warning, for when
+    # gamma is not explicitly set
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)
