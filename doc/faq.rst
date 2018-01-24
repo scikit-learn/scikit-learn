@@ -357,11 +357,12 @@ splitters have their ``random_state`` parameter set.
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 --------------------------------------------------------------------------------
 
-Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices of
-a single numeric dtype. These do not explicitly represent categorical variables at
-present. See the :class:`preprocessing.CategoricalEncoder` for a tool to encode
-categorical variables, say within a pandas.DataFrame, as numeric data.
-See :ref:`sphx_glr_auto_examples_hetero_feature_union.py` for an example of
+Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices
+of a single numeric dtype. These do not explicitly represent categorical
+variables at present. Thus, unlike R's data.frames or pandas.DataFrame, we
+require explicit conversion of categorical features to numeric values, as
+discussed in :ref:`preprocessing_categorical_features`.
+See also :ref:`sphx_glr_auto_examples_hetero_feature_union.py` for an example of
 working with heterogeneous (e.g. categorical and numeric) data.
 
 Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
