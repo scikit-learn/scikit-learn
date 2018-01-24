@@ -51,9 +51,15 @@ def compute_class_weight(class_weight, classes, y):
         if not all(np.in1d(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        recip_freq = len(y) / (len(le.classes_) *
-                               np.bincount(y_ind).astype(np.float64))
+        freq = np.bincount(y_ind).astype(np.float64)
+        recip_freq = len(y) / (len(le.classes_) * freq)
         weight = recip_freq[le.transform(classes)]
+        if np.any(np.diff(freq * weight)):
+            # Numerical imprecision issues.
+            # Just in case, we will add a little eps in order to prefer
+            # true class distribution.
+            order = np.argsort(freq)
+            weight[order] += np.arange(len(freq)) * 1e-8
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
