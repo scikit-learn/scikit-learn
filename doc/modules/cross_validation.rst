@@ -165,8 +165,7 @@ validation iterator instead, for instance::
     estimators, providing this behavior under cross-validation::
 
       >>> from sklearn.pipeline import make_pipeline
-      >>> clf = make_pipeline(preprocessing.StandardScaler(),
-      ...                     svm.SVC(C=1))
+      >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
       array([ 0.97...,  0.93...,  0.95...])
