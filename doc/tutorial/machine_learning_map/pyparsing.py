@@ -148,7 +148,7 @@ class ParseBaseException(Exception):
         elif( aname == "line" ):
             return line( self.loc, self.pstr )
         else:
-            raise AttributeError, aname
+            raise AttributeError(aname)
 
     def __str__( self ):
         return "%s (at char %d), (line:%d, col:%d)" % \
@@ -842,7 +842,7 @@ class ParserElement(object):
                     loc,tokens = self.parseImpl( instring, preloc, doActions )
                 except IndexError:
                     raise ParseException( instring, len(instring), self.errmsg, self )
-            except ParseException, err:
+            except ParseException as err:
                 #~ print ("Exception raised:", err)
                 if self.debugActions[2]:
                     self.debugActions[2]( instring, tokensStart, self, err )
@@ -876,7 +876,7 @@ class ParserElement(object):
                                                       self.resultsName,
                                                       asList=self.saveAsList and isinstance(tokens,(ParseResults,list)),
                                                       modal=self.modalResults )
-                except ParseException, err:
+                except ParseException as err:
                     #~ print "Exception raised in user parse action:", err
                     if (self.debugActions[2] ):
                         self.debugActions[2]( instring, tokensStart, self, err )
@@ -916,7 +916,7 @@ class ParserElement(object):
                 value = self._parseNoCache( instring, loc, doActions, callPreParse )
                 ParserElement._exprArgCache[ lookup ] = (value[0],value[1].copy())
                 return value
-            except ParseBaseException, pe:
+            except ParseBaseException as pe:
                 ParserElement._exprArgCache[ lookup ] = pe
                 raise
 
@@ -1272,7 +1272,7 @@ class ParserElement(object):
             self.myException = ret = self.getException()
             return ret
         else:
-            raise AttributeError, "no such attribute " + aname
+            raise AttributeError("no such attribute " + aname)
 
     def __eq__(self,other):
         if isinstance(other, __BASE_STRING__):
@@ -1481,7 +1481,7 @@ class Word(Token):
         self.maxSpecified = max > 0
 
         if min < 1:
-            raise ValueError, "cannot specify a minimum length < 1; use Optional(Word()) if zero-length word is permitted"
+            raise ValueError("cannot specify a minimum length < 1; use Optional(Word()) if zero-length word is permitted")
 
         self.minLen = min
 
@@ -1604,7 +1604,7 @@ class Regex(Token):
         try:
             self.re = re.compile(self.pattern, self.flags)
             self.reString = self.pattern
-        except sre_constants.error,e:
+        except sre_constants.error as e:
             warnings.warn("invalid pattern (%s) passed to Regex" % pattern,
                 SyntaxWarning, stacklevel=2)
             raise
@@ -1709,7 +1709,7 @@ class QuotedString(Token):
         try:
             self.re = re.compile(self.pattern, self.flags)
             self.reString = self.pattern
-        except sre_constants.error,e:
+        except sre_constants.error as e:
             warnings.warn("invalid pattern (%s) passed to Regex" % self.pattern,
                 SyntaxWarning, stacklevel=2)
             raise
@@ -1772,7 +1772,7 @@ class CharsNotIn(Token):
         self.notChars = notChars
 
         if min < 1:
-            raise ValueError, "cannot specify a minimum length < 1; use Optional(CharsNotIn()) if zero-length char group is permitted"
+            raise ValueError("cannot specify a minimum length < 1; use Optional(CharsNotIn()) if zero-length char group is permitted")
 
         self.minLen = min
 
@@ -2219,7 +2219,7 @@ class Or(ParseExpression):
         for e in self.exprs:
             try:
                 loc2 = e.tryParse( instring, loc )
-            except ParseException, err:
+            except ParseException as err:
                 if err.loc > maxExcLoc:
                     maxException = err
                     maxExcLoc = err.loc
@@ -2282,7 +2282,7 @@ class MatchFirst(ParseExpression):
             try:
                 ret = e._parse( instring, loc, doActions )
                 return ret
-            except ParseException, err:
+            except ParseException as err:
                 if err.loc > maxExcLoc:
                     maxException = err
                     maxExcLoc = err.loc
@@ -2875,7 +2875,7 @@ def traceParseAction(f):
         sys.stderr.write( ">>entering %s(line: '%s', %d, %s)\n" % (thisFunc,line(l,s),l,t) )
         try:
             ret = f(*paArgs)
-        except Exception, exc:
+        except Exception as exc:
             sys.stderr.write( "<<leaving %s (exception: %s)\n" % (thisFunc,exc) )
             raise
         sys.stderr.write( "<<leaving %s (ret: %s)\n" % (thisFunc,ret) )
@@ -3127,7 +3127,7 @@ def keepOriginalText(s,startLoc,t):
     try:
         endloc = getTokensEndLoc()
     except ParseException:
-        raise ParseFatalException, "incorrect usage of keepOriginalText - may only be called as a parse action"
+        raise ParseFatalException("incorrect usage of keepOriginalText - may only be called as a parse action")
     del t[:]
     t += ParseResults(s[startLoc:endloc])
     return t
@@ -3144,7 +3144,7 @@ def getTokensEndLoc():
                 endloc = f[0].f_locals["loc"]
                 return endloc
         else:
-            raise ParseFatalException, "incorrect usage of getTokensEndLoc - may only be called from within a parse action"
+            raise ParseFatalException("incorrect usage of getTokensEndLoc - may only be called from within a parse action")
     finally:
         del fstack
 
@@ -3252,7 +3252,7 @@ def operatorPrecedence( baseExpr, opList ):
             elif arity == 2:
                 matchExpr = Group( FollowedBy(lastExpr + opExpr + lastExpr) + lastExpr + OneOrMore( opExpr + lastExpr ) )
             else:
-                raise ValueError, "operator must be unary (1) or binary (2)"
+                raise ValueError("operator must be unary (1) or binary (2)")
         elif rightLeftAssoc == opAssoc.RIGHT:
             if arity == 1:
                 # try to avoid LR with this extra test
@@ -3262,9 +3262,9 @@ def operatorPrecedence( baseExpr, opList ):
             elif arity == 2:
                 matchExpr = Group( FollowedBy(lastExpr + opExpr + thisExpr) + lastExpr + OneOrMore( opExpr + thisExpr ) )
             else:
-                raise ValueError, "operator must be unary (1) or binary (2)"
+                raise ValueError("operator must be unary (1) or binary (2)")
         else:
-            raise ValueError, "operator must indicate right or left associativity"
+            raise ValueError("operator must indicate right or left associativity")
         if pa:
             matchExpr.setParseAction( pa )
         thisExpr << ( matchExpr | lastExpr )
@@ -3349,7 +3349,7 @@ if __name__ == "__main__":
             print ("tokens.columns =", tokens.columns)
             print ("tokens.tables =",  tokens.tables)
             print (tokens.asXML("SQL",True))
-        except ParseException,err:
+        except ParseException as err:
             print (err.line)
             print (" "*(err.column-1) + "^")
             print (err)
