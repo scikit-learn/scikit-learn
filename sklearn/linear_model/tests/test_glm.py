@@ -246,7 +246,7 @@ def test_poisson_ridge():
     # b            0.03741173122
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
-    s_dec = {'irls': 7, 'lbfgs': 5, 'newton-cg': 7, 'cd': 7}
+    s_dec = {'irls': 7, 'lbfgs': 5, 'newton-cg': 5, 'cd': 7}
     for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
         glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
                                          fit_intercept=True, family='poisson',

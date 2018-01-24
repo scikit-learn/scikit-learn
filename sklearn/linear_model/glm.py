@@ -53,7 +53,6 @@ from .ridge import Ridge
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
-from ..externals.six.moves import xrange
 from ..utils import check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import newton_cg
@@ -1288,7 +1287,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 if P2.ndim == 1:
                     hessian[np.diag_indices_from(hessian)] += P2
                 else:
-                    hessian += P2
+                    hessian = hessian + P2
 
                 def Hs(s):
                     ret = safe_sparse_dot(hessian, s)

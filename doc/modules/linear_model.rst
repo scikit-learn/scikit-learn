@@ -919,7 +919,7 @@ follows:
 
     >>> from sklearn.linear_model import GeneralizedLinearRegressor
     >>> reg = GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
-    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2]) # doctest: +SKIP
+    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2]) # doctest: +NORMALIZE_WHITESPACE
     GeneralizedLinearRegressor(P1=None, P2=None, alpha=0.5, check_input=True,
               copy_X=True, family='poisson', fit_dispersion='chisqr',
               fit_intercept=True, l1_ratio=0, link='log', max_iter=100,
