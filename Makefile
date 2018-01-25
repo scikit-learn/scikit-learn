@@ -21,7 +21,6 @@ clean: clean-ctags
 
 in: inplace # just a shortcut
 inplace:
-	make -C sklearn/linear_model
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
