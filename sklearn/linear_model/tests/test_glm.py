@@ -164,7 +164,7 @@ def test_normal_ridge():
     alpha = 1.0
 
     # 1. With more samples than features
-    n_samples, n_features, n_predict = 6, 5, 10
+    n_samples, n_features, n_predict = 10, 5, 10
     y = rng.randn(n_samples)
     X = rng.randn(n_samples, n_features)
     T = rng.randn(n_predict, n_features)
@@ -189,12 +189,16 @@ def test_normal_ridge():
     ridge.fit(X, y)
     glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-6,
                                      family='normal', link='identity',
-                                     fit_intercept=False, solver='irls')
+                                     fit_intercept=False, solver='irls',
+                                     fit_dispersion='chisqr')
     glm.fit(X, y)
     assert_equal(glm.coef_.shape, (X.shape[1], ))
     assert_array_almost_equal(glm.coef_, ridge.coef_)
     assert_almost_equal(glm.intercept_, ridge.intercept_)
     assert_array_almost_equal(glm.predict(T), ridge.predict(T))
+    mu = glm.predict(X)
+    assert_almost_equal(glm.dispersion_,
+                        np.sum((y-mu)**2/(n_samples-n_features)))
 
     # 2. With more features than samples and sparse
     n_samples, n_features, n_predict = 5, 10, 10
@@ -278,11 +282,34 @@ def test_poisson_enet():
     # (Intercept) -0.03550978409
     # a            0.16936423283
     # b            .
+    glmnet_intercept = -0.03550978409
+    glmnet_coef = [0.16936423283, 0.]
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
     glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
-                                     link='log', tol=1e-7)
+                                     link='log', solver='cd', tol=1e-7)
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, -0.03550978409, decimal=7)
-    assert_array_almost_equal(glm.coef_, [0.16936423283, 0.],
-                              decimal=7)
+    assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=7)
+    assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=7)
+
+    # same for start_params='zero' with reduced precision
+    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
+                                     link='log', solver='cd', tol=1e-5,
+                                     start_params='zero')
+    glm.fit(X, y)
+    assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
+    assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)
+
+    # start_params='least_squares' with different alpha
+    glm = GeneralizedLinearRegressor(alpha=0.005, l1_ratio=0.5,
+                                     family='poisson',
+                                     link='log', solver='cd', tol=1e-5,
+                                     start_params='zero')
+    glm.fit(X, y)
+    # warm start with original alpha and use of sparse matrices
+    glm.warm_start = True
+    glm.alpha = 1
+    X = sparse.csr_matrix(X)
+    glm.fit(X, y)
+    assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
+    assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)

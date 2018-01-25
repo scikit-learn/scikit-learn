@@ -11,13 +11,13 @@ Generalized Linear Models with Exponential Dispersion Family
 # TODO: deal with option self.copy_X
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
-# TODO: Add cross validation
+# TODO: Add cross validation support
 # TODO: Should GeneralizedLinearRegressor inherit from LinearModel?
 #       So far, it does not.
 # TODO: Include further classes in class.rst? ExponentialDispersionModel?
 #       TweedieDistribution?
-# TODO: Negative values in P1 are not allowed so far. They could be used form
-#       group lasse.
+# TODO: Negative values in P1 are not allowed so far. They could be used to
+#       for group lasso.
 
 # Design Decisions:
 # - Which name? GeneralizedLinearModel vs GeneralizedLinearRegressor.
@@ -642,7 +642,7 @@ def _irls_step(X, W, P2, z):
     -------
     coef: array, shape = (X.shape[1])
     """
-    # TODO: scipy.linalg.solve if faster, but ordinary least squares uses
+    # TODO: scipy.linalg.solve is faster, but ordinary least squares uses
     #       scipy.linalg.lstsq. What is more appropriate?
     n_samples, n_features = X.shape
     if sparse.issparse(X):
@@ -709,16 +709,20 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     (penalized) maximum likelihood which is equivalent to minimizing the
     deviance.
 
-    TODO: For `alpha` > 0, the feature matrix `X` is assumed to be
-    standardized. Call
+    For `alpha` > 0, the feature matrix `X` should be standardized in order to
+    penalize features equally strong. Call
     :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
-    Otherwise, the strength of the penalty is different for the features.
 
     TODO: Estimation of the dispersion parameter phi.
 
-    TODO: Notes on weights and 'scaled' distributions. For Poisson, this means
-    to fit y = z/w with z=counts and w=exposure (time, money, persons, ...)
-    => y is a ratio with weights w. Same for other distributions.
+    If your target `y` is a ratio, you should also provide appropriate weights
+    `w`. As an example, consider Poission distributed counts `z` (integers) and
+    weights `w`=exposure (time, money, persons years, ...), then you fit
+    `y = z/w`, i.e. ``GeneralizedLinearModel(family='Poisson').fit(X, y,
+    sample_weight=w)``. You need the weights for the right mean, consider:
+    :math:`\bar(y) = \frac{\sum_i w_i y_i}{\sum_i w_i}`.
+    In this case one might say that y has a 'scaled' Poisson distributions.
+    The same holds for other distributions.
 
     Parameters
     ----------
@@ -800,8 +804,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         does not exit (first call to fit), option ``start_params`` sets the
         starting values for ``coef_`` and ``intercept_``.
 
-    start_params : None or array of shape (n_features, ) or 'least_squares'}, \
-            optional (default=None)
+    start_params : {None, 'least_squares', 'zero'} or array of shape \
+            (n_features, ) or }, optional (default=None)
         If an array of size n_features is supplied, use these as start values
         for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
         is assumed to be the start value for the ``intercept_``.
@@ -854,16 +858,18 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     n_iter_ : int
         Actual number of iterations of the solver.
 
-    Notes
-    -----
 
     References
     ----------
-    TODO
+    For the coordinate descent implementation:
+    .. [1] Guo-Xun Yuan, Chia-Hua Ho, Chih-Jen Lin
+           An Improved GLMNET for L1-regularized Logistic Regression,
+           Journal of Machine Learning Research 13 (2012) 1999-2030
+           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
     def __init__(self, alpha=1.0, l1_ratio=0, P1=None, P2=None,
                  fit_intercept=True, family='normal', link='identity',
-                 fit_dispersion='chisqr', solver='auto', max_iter=100,
+                 fit_dispersion=None, solver='auto', max_iter=100,
                  tol=1e-4, warm_start=False, start_params=None,
                  selection='random', random_state=None, copy_X=True,
                  check_input=True, verbose=0):
@@ -1004,9 +1010,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if start_params is None:
             pass
         elif isinstance(start_params, six.string_types):
-            if start_params not in ['least_squares']:
+            if start_params not in ['least_squares', 'zero']:
                 raise ValueError("The argument start_params must be None, "
-                                 "'least-squares' or an array of right length,"
+                                 "'least-squares', 'zero' or an array of right"
+                                 " length,"
                                  " got(start_params={0})".format(start_params))
         else:
             start_params = np.atleast_1d(start_params)
@@ -1129,6 +1136,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # deviance = sum(sample_weight * unit_deviance),
         # we rescale weights such that sum(weights) = 1 and this becomes
         # 1/2*deviance + L1 + L2 with deviance=sum(weights * unit_deviance)
+        weights_sum = np.sum(weights)
         weights = weights/np.sum(weights)
 
         #######################################################################
@@ -1141,7 +1149,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         coef = None
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
-                coef = np.concatenate((self.intercept_, self.coef_))
+                coef = np.concatenate((np.array([self.intercept_]),
+                                       self.coef_))
             else:
                 coef = self.coef_
         elif self.start_params is None:
@@ -1164,24 +1173,27 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 # with L1 penalty, start with coef = 0
                 coef = np.zeros(n_features)
-        elif (isinstance(self.start_params, six.string_types) and
-                self.start_params == 'least_squares'):
-            if self.alpha == 0:
-                reg = LinearRegression(copy_X=True, fit_intercept=False)
-                reg.fit(Xnew, link.link(y))
-                coef = reg.coef_
-            elif self.l1_ratio <= 0.01:
-                # ElasticNet says l1_ratio <= 0.01 is not reliable, use Ridge
-                reg = Ridge(copy_X=True, fit_intercept=False,
-                            alpha=self.alpha)
-                reg.fit(Xnew, link.link(y))
-                coef = reg.coef_
-            else:
-                # TODO: Does this make sense at all?
-                reg = ElasticNet(copy_X=True, fit_intercept=False,
-                                 alpha=self.alpha, l1_ratio=self.l1_ratio)
-                reg.fit(Xnew, link.link(y))
-                coef = reg.coef_
+        elif isinstance(self.start_params, six.string_types):
+            if self.start_params == 'zero':
+                coef = np.zeros(n_features)
+            elif self.start_params == 'least_squares':
+                if self.alpha == 0:
+                    reg = LinearRegression(copy_X=True, fit_intercept=False)
+                    reg.fit(Xnew, link.link(y))
+                    coef = reg.coef_
+                elif self.l1_ratio <= 0.01:
+                    # ElasticNet says l1_ratio <= 0.01 is not reliable
+                    # => use Ridge
+                    reg = Ridge(copy_X=True, fit_intercept=False,
+                                alpha=self.alpha)
+                    reg.fit(Xnew, link.link(y))
+                    coef = reg.coef_
+                else:
+                    # TODO: Does this make sense at all?
+                    reg = ElasticNet(copy_X=True, fit_intercept=False,
+                                     alpha=self.alpha, l1_ratio=self.l1_ratio)
+                    reg.fit(Xnew, link.link(y))
+                    coef = reg.coef_
         else:
             coef = start_params
 
@@ -1365,6 +1377,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 d = np.zeros_like(coef)
                 # inner loop
                 # TODO: use sparsity (coefficient already 0 due to L1 penalty)
+                #       => active set of features for featurelist, see paper
                 d = np.zeros_like(coef)
                 # A = f'(w) + d*H(w) + (w+d)*P2
                 # B = H+P2
@@ -1508,7 +1521,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             self.coef_ = coef
 
         if self.fit_dispersion in ['chisqr', 'deviance']:
-            self.dispersion_ = self.estimate_phi(y, X, weights)
+            # attention because of rescaling of weights
+            self.dispersion_ = self.estimate_phi(y, X, weights)*weights_sum
 
         return self
 
@@ -1544,9 +1558,23 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         C : array, shape = (n_samples)
             Returns predicted values times sample_weight.
         """
-        # TODO: validation of sample_weight
         eta = self.linear_predictor(X)
         mu = self._link_instance.inverse(eta)
+        if sample_weight is None:
+            return mu
+        elif np.isscalar(sample_weight):
+            if sample_weight <= 0:
+                raise ValueError("Sample weight must be positive, "
+                                 "got (sample_weight={0})."
+                                 .format(sample_weight))
+        else:
+            sample_weights = np.atleast_1d(sample_weight)
+            if sample_weight.ndim > 1:
+                raise ValueError("Sample weight must be 1D array or scalar.")
+            elif sample_weight.shape[0] != mu.shape[0]:
+                raise ValueError("Sample weights must have the same length as"
+                                 " X.shape[1].")
+
         return mu*sample_weight
 
     def estimate_phi(self, y, X, sample_weight):
@@ -1554,10 +1582,20 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Returns the estimate.
         """
         check_is_fitted(self, "coef_")
+        _dtype = [np.float64, np.float32]
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         dtype=_dtype, y_numeric=True, multi_output=False)
         n_samples, n_features = X.shape
         eta = safe_sparse_dot(X, self.coef_, dense_output=True)
         if self.fit_intercept is True:
             eta += self.intercept_
+            n_features += 1
+        if n_samples <= n_features:
+            raise ValueError("Estimation of dispersion parameter phi requires"
+                             " more samples than features, got"
+                             " samples=X.shape[0]={0} and"
+                             " n_features=X.shape[1]+fit_intercept={1}."
+                             .format(n_samples, n_features))
         mu = self._link_instance.inverse(eta)
         if self.fit_dispersion == 'chisqr':
             chisq = np.sum(sample_weight*(y-mu)**2 /
