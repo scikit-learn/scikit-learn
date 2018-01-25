@@ -921,10 +921,10 @@ follows:
     >>> reg = GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2]) # doctest: +NORMALIZE_WHITESPACE
     GeneralizedLinearRegressor(P1=None, P2=None, alpha=0.5, check_input=True,
-              copy_X=True, family='poisson', fit_dispersion='chisqr',
-              fit_intercept=True, l1_ratio=0, link='log', max_iter=100,
-              random_state=None, selection='random', solver='auto',
-              start_params=None, tol=0.0001, verbose=0, warm_start=False)
+                  copy_X=True, family='poisson', fit_dispersion='chisqr',
+                  fit_intercept=True, l1_ratio=0, link='log', max_iter=100,
+                  random_state=None, selection='random', solver='auto',
+                  start_params=None, tol=0.0001, verbose=0, warm_start=False)
     >>> reg.coef_
     array([ 0.24630255,  0.43373521])
     >>> reg.intercept_ #doctest: +ELLIPSIS
