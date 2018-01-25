@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 from scipy import linalg, optimize, sparse
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
@@ -102,18 +103,21 @@ def test_lr_liblinear_warning():
                          lr.fit, iris.data, target)
 
 
-def test_logistic_regression_warnings():
+@pytest.mark.parametrize('model, default_solver',
+                         [(LogisticRegression, 'liblinear'),
+                          (LogisticRegressionCV, 'lbfgs')])
+def test_logistic_regression_warnings(model, default_solver):
     # Test logistic regression with the iris dataset
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
 
-    clf_solver_warning = LogisticRegression(multi_class='ovr')
-    clf_multi_class_warning = LogisticRegression(solver='lbfgs')
-    clf_no_warnings = LogisticRegression(solver='lbfgs',
-                                         multi_class='multinomial')
+    clf_solver_warning = model(multi_class='ovr')
+    clf_multi_class_warning = model(solver='lbfgs')
+    clf_no_warnings = model(solver='lbfgs',
+                            multi_class='multinomial')
 
-    solver_warning_msg = "Default solver will be changed from 'liblinear' " \
-                         "to 'auto' solver in 0.22"
+    solver_warning_msg = "Default solver will be changed from '{}' " \
+                         "to 'auto' solver in 0.22".format(default_solver)
     multi_class_warning_msg = "Default multi_class will be changed from" \
                               " 'ovr' to 'multinomial' in 0.22"
 
@@ -124,12 +128,13 @@ def test_logistic_regression_warnings():
     assert_no_warnings(clf_no_warnings.fit, iris.data, target)
 
 
-def test_logistic_regression_auto():
+@pytest.mark.parametrize('model', [LogisticRegression, LogisticRegressionCV])
+def test_logistic_regression_auto(model):
     # Test logistic regression with auto mode
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
-    clf_solver_l1 = LogisticRegression(penalty='l1', solver='auto')
-    clf_solver_l2 = LogisticRegression(penalty='l2', solver='auto')
+    clf_solver_l1 = model(penalty='l1', solver='auto')
+    clf_solver_l2 = model(penalty='l2', solver='auto')
 
     clf_solver_l1.fit(iris.data, target)
     clf_solver_l2.fit(iris.data, target)
@@ -208,39 +213,6 @@ def test_check_solver_option():
                    solver)
             lr = LR(solver=solver, dual=True)
             assert_raise_message(ValueError, msg, lr.fit, X, y)
-
-
-def test_logistic_regression_cv_warnings():
-    # Test logistic regression with the iris dataset
-    n_samples, n_features = iris.data.shape
-    target = iris.target_names[iris.target]
-
-    clf_solver_warning = LogisticRegressionCV(multi_class='ovr')
-    clf_multi_class_warning = LogisticRegressionCV(solver='lbfgs')
-    clf_no_warnings = LogisticRegressionCV(solver='lbfgs',
-                                           multi_class='multinomial')
-
-    solver_warning_msg = "Default solver will be changed from 'lbfgs' " \
-                         "to 'auto' solver in 0.22"
-    multi_class_warning_msg = "Default multi_class will be changed from" \
-                              " 'ovr' to 'multinomial' in 0.22"
-
-    assert_warns_message(FutureWarning, solver_warning_msg,
-                         clf_solver_warning.fit, iris.data, target)
-    assert_warns_message(FutureWarning, multi_class_warning_msg,
-                         clf_multi_class_warning.fit, iris.data, target)
-    assert_no_warnings(clf_no_warnings.fit, iris.data, target)
-
-
-def test_logistic_regression_cv_auto():
-    # Test logistic regression with auto mode
-    n_samples, n_features = iris.data.shape
-    target = iris.target_names[iris.target]
-    clf_solver_l1 = LogisticRegressionCV(penalty='l1', solver='auto')
-    clf_solver_l2 = LogisticRegressionCV(penalty='l2', solver='auto')
-
-    clf_solver_l1.fit(iris.data, target)
-    clf_solver_l2.fit(iris.data, target)
 
 
 def test_multinomial_binary():
