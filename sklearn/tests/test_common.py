@@ -88,11 +88,8 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            try:               # Python 2
-                execfile('setup.py', dict(__name__='__main__'))
-            except NameError:  # Python 3
-                with open('setup.py') as f:
-                    exec(f.read(), dict(__name__='__main__'))
+            with open('setup.py') as f:
+                exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
