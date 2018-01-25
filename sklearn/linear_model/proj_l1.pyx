@@ -128,9 +128,7 @@ cdef void enet_projection(unsigned int m, floating *v, floating *out, floating r
                 out[i] = sign(v[i]) * relu(fabs(v[i]) - l) / (1. + l * gamma)
 
 
-cdef inline void proj_l1(int n,
-                         complexing *w,
-                         floating reg,
+cdef inline void proj_l1(int n, complexing *w, floating reg,
                          floating ajj) nogil except *:
     with gil:
         if complexing is float:
@@ -152,16 +150,9 @@ cdef inline void proj_l1(int n,
     else:
         if ajj != 1.:
             scaling = 1. / ajj
-            fused_scal(n,
-                       <complexing>scaling,
-                       w,
-                       1)
+            fused_scal(n, <complexing>scaling, w, 1)
         with gil:
             out = np.zeros(n, dtype=dtype)
         enet_projection(n, w, &out[0], reg, 1.)
-        fused_copy(n,
-                   &out[0],
-                   1,
-                   w,
-                   1)
+        fused_copy(n, &out[0], 1, w, 1)
 

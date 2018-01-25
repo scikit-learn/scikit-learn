@@ -3,12 +3,11 @@
 
 cimport numpy as np
 from types cimport floating, complexing
-from blas_api cimport (fused_nrm2, fused_scal)
+from blas_api cimport fused_nrm2, fused_scal
+from utils cimport real_part
 
 
-cdef inline void proj_l2(int n,
-                         complexing *w,
-                         floating reg,
+cdef inline void proj_l2(int n, complexing *w, floating reg,
                          floating ajj) nogil except *:
     cdef floating scaling
 
@@ -16,17 +15,12 @@ cdef inline void proj_l2(int n,
     if ajj == 0.:
         scaling = 0.
     else:
-        fused_nrm2(n,
-                   w,
-                   1,
-                   &scaling)
+        scaling = <floating>fused_nrm2(n, w, 1)
         if scaling > ajj * reg:
             scaling = reg / scaling
         else:
             scaling = 1. / ajj
 
     # N.B.: w *= scaling
-    fused_scal(n,
-               <complexing>scaling,
-               w,
-               1)
+    fused_scal(n, <complexing>scaling, w, 1)
+

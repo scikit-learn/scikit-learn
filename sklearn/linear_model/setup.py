@@ -24,6 +24,14 @@ def configuration(parent_package='', top_path=None):
                          extra_compile_args=blas_info.pop('extra_compile_args',
                                                           []), **blas_info)
 
+    config.add_extension('coordescendant', sources=['coordescendant.pyx'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
+
     config.add_extension('cd_fast2', sources=['cd_fast2.pyx'],
                          libraries=cblas_libs,
                          include_dirs=[join('..', 'src', 'cblas'),

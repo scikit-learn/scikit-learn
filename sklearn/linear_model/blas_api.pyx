@@ -1,26 +1,28 @@
+# Synopsis: Unified consistent BLAS wrappers
+# Author: Elvis Dohmatob <gmdopp@gmail.com>
+#
+# Notes: A modern alternative would be to use scipy.linalg.cython_blas
+
+from libc.math cimport fabs
 from types cimport complexing
 from utils cimport cabs, cabsf
 
 
-cdef void fused_copy(int N,
-                     complexing *X,
-                     int incX,
-                     complexing *Y,
+cdef void fused_copy(int N, complexing *X, int incX, complexing *Y,
                      int incY) nogil:
+    """Copy data from one buffer to another"""
     if complexing is float:
         scopy(N, X, incX, Y, incY)
     elif complexing is double:
         dcopy(N, X, incX, Y, incY)
-    if complexing is complex:
+    elif complexing is complex:
         zcopy(N, X, incX, Y, incY)
     else:
         ccopy(N, X, incX, Y, incY)
 
 
-cdef void fused_scal(int N,
-                     complexing alpha,
-                     complexing *X,
-                     int incX) nogil:
+cdef void fused_scal(int N, complexing alpha, complexing *X, int incX) nogil:
+    """In-place scaling of a buffer"""
     if complexing is float:
         sscal(N, alpha, X, incX)
     elif complexing is double:
@@ -31,85 +33,70 @@ cdef void fused_scal(int N,
         cscal(N, &alpha, X, incX)
 
 
-cdef void fused_asum(int n,
-                     complexing *w,
-                     int inc,
-                     floating *s) nogil:
+cdef complexing fused_asum(int N, complexing *X, int incX) nogil:
+    """Sum of absolute values of a buffer"""
+    cdef complexing asumX
     cdef int k
     if complexing is float:
-        s[0] = sasum(n,
-                     w,
-                     inc)
+        return sasum(N, X, incX)
     elif complexing is double:
-        s[0] = dasum(n,
-                     w,
-                     inc)
+        return dasum(N, X, incX)
     else:
-        s[0] = 0
-        for k in range(0, n):
-            k *= inc
+        asumX = 0.
+        for k in range(N):
+            k *= incX
             if complexing is complex:
-                s[0] += cabs(w[k])
+                asumX += cabs(X[k])
             else:
-                s[0] += cabsf(w[k])
+                asumX += cabsf(X[k])
+        return asumX
 
 
-cdef complexing fused_dotc(int N,
-                           complexing *X,
-                           int incX,
-                           complexing *Y,
+cdef complexing fused_dotc(int N, complexing *X, int incX, complexing *Y,
                            int incY) nogil:
-    """Wraps sdot, ddot, cdotc_sub, and zdotc_sub"""
-    cdef complexing z
-    if complexing is float or complexing is double:
-        return fused_dotu(N, X, incX, Y, incY)
+    """Inner product of the complex conjugate of X with Y"""
+    cdef complexing dotcXY
+    if complexing is float:
+        dotcXY = sdot(N, X, incX, Y, incY)
+    elif complexing is double:
+        dotcXY = ddot(N, X, incX, Y, incY)
     elif complexing is complex:
-        zdotc(N, X, incX, Y, incY, &z)
-        return z
+        zdotc(N, X, incX, Y, incY, &dotcXY)
     else:
-        cdotc(N, X, incX, Y, incY, &z)
-        return z
+        cdotc(N, X, incX, Y, incY, &dotcXY)
+    return dotcXY
 
 
-cdef complexing fused_dotu(int N,
-                           complexing *X,
-                           int incX,
-                           complexing *Y,
+cdef complexing fused_dotu(int N, complexing *X, int incX, complexing *Y,
                            int incY) nogil:
-    """Wraps sdot, ddot, cdotu_sub, and zdotu_sub"""
-    cdef complexing z
+    """Inner product of X with Y"""
+    cdef complexing dotuXY
     if complexing is float:
-        return sdot(N, X, incX, Y, incY)
+        dotuXY = sdot(N, X, incX, Y, incY)
     elif complexing is double:
-        return ddot(N, X, incX, Y, incY)
+        dotuXY = ddot(N, X, incX, Y, incY)
     elif complexing is complex:
-        zdotu(N, X, incX, Y, incY, &z)
-        return z
+        zdotu(N, X, incX, Y, incY, &dotuXY)
     else:
-        cdotu(N, X, incX, Y, incY, &z)
-        return z
+        cdotu(N, X, incX, Y, incY, &dotuXY)
+    return dotuXY
 
 
-cdef void fused_nrm2(int N,
-                     complexing *X,
-                     int incX,
-                     floating *normX) nogil:
+cdef complexing fused_nrm2(int N, complexing *X, int incX) nogil:
+    """L2 norm"""
     if complexing is float:
-        normX[0] = snrm2(N, X, incX)
+        return snrm2(N, X, incX)
     elif complexing is double:
-        normX[0] = dnrm2(N, X, incX)
+        return dnrm2(N, X, incX)
     elif complexing is complex:
-        normX[0] = dznrm2(N, X, incX)
+        return dznrm2(N, X, incX)
     else:
-        normX[0] = scnrm2(N, X, incX)
+        return scnrm2(N, X, incX)
 
 
-cdef void fused_axpy(int N,
-                     complexing alpha,
-                     complexing *X,
-                     int incX,
-                     complexing *Y,
-                     int incY) nogil:
+cdef void fused_axpy(int N, complexing alpha, complexing *X, int incX,
+                     complexing *Y, int incY) nogil:
+    """Computes Y = Y + alpha * X"""
     if complexing is float:
         saxpy(N, alpha, X, incX, Y, incY)
     elif complexing is double:
@@ -120,16 +107,10 @@ cdef void fused_axpy(int N,
         caxpy(N, &alpha, X, incX, Y, incY)
 
 
-cdef void fused_geru(CBLAS_ORDER Order,
-                     int M,
-                     int N,
-                     complexing alpha,
-                     complexing *X,
-                     int incX,
-                     complexing *Y,
-                     int incY,
-                     complexing *A,
-                     int lda) nogil:
+cdef void fused_geru(CBLAS_ORDER Order, int M, int N, complexing alpha,
+                     complexing *X, int incX, complexing *Y, int incY,
+                     complexing *A, int lda) nogil:
+    """Computes A = A + alpha * outer(X, Y)"""
     if complexing is float:
         sger(Order, M, N, alpha, X, incX, Y, incY, A, lda)
     elif complexing is double:
@@ -138,6 +119,4 @@ cdef void fused_geru(CBLAS_ORDER Order,
         zgeru(Order, M, N, &alpha, X, incX, Y, incY, A, lda)
     else:
         cgeru(Order, M, N, &alpha, X, incX, Y, incY, A, lda)
-
-
 
