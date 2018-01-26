@@ -754,7 +754,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         case, the design matrix X must have full column rank
         (no collinearities).
 
-    l1_ratio : float, optional (defaul=0)
+    l1_ratio : float, optional (default=0)
         The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. For
         ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
@@ -768,7 +768,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Note that n_features* = X.shape[1] = length of coef_ (intercept
         always excluded from counting).
 
-    P2 : None or array of shape (n_features*, n_features*)
+    P2 : None or array of shape (n_features*, n_features*), optional\
+            (default=None)
         With this square matrix the L2 penalty is calculated as `w P2 w`.
         This gives a fine control over this penalty (Tikhonov
         regularization).
@@ -781,20 +782,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} or an instance\
             of class ExponentialDispersionModel, optional(default='normal')
-        the distributional assumption of the GLM.
+        the distributional assumption of the GLM, i.e. which loss function to
+        be minimized.
 
     link : {'identity', 'log'} or an instance of class Link,
         optional (default='identity')
         the link function of the GLM, i.e. mapping from linear predictor
         (X*coef) to expectation (mu).
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (defaul='chisqr')
+    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (defaul=None)
         method for estimation of the dispersion parameter phi. Whether to use
         the chi squared statisic or the deviance statistic. If None, the
         dispersion is not estimated.
 
     solver : {'auto', 'irls', 'newton-cg', 'lbfgs', 'cd'}, \
-            optional (defaul='auto')
+            optional (default='auto')
         Algorithm to use in the optimization problem.
 
         - 'auto' sets 'irls' if l1_ratio equals 0, else 'cd'.
@@ -830,11 +832,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
         is assumed to be the start value for the ``intercept_``.
         If 'least_squares' is set, the result of a least squares fit in the
-        link space (linear predictor) is taken. If ``None``, the start values
-        are calculated by setting mu to family.starting_mu(..) and one step of
-        irls.
-        This option only applies if ``warm_start=False`` or if fit is called
-        the first time (``self.coef_`` does not exist).
+        link space (linear predictor) is taken.
+        If 'zero' is set, all coefficients start with zero.
+        If ``None``, the start values are calculated by setting mu to
+        family.starting_mu(..) and one step of irls.
+        These options only apply if ``warm_start=False`` or if fit is called
+        the first time (``self.coef_`` does not yet exist).
 
     selection : str, optional (default='random')
         For the solver 'cd' (coordinate descent), the coordinates (features)
@@ -1550,7 +1553,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self, "coef_")
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype='numeric', copy=True, ensure_2d=True,
+                        allow_nd=False)
         return safe_sparse_dot(X, self.coef_,
                                dense_output=True) + self.intercept_
 
@@ -1568,9 +1573,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         C : array, shape = (n_samples)
             Returns predicted values times sample_weight.
         """
-        weights = _check_weights(sample_weight, X.shape[0])
+        # validation of X in linear_predictor
         eta = self.linear_predictor(X)
         mu = self._link_instance.inverse(eta)
+        weights = _check_weights(sample_weight, X.shape[0])
 
         return mu*weights
 
@@ -1596,11 +1602,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                              .format(n_samples, n_features))
         mu = self._link_instance.inverse(eta)
         if self.fit_dispersion == 'chisqr':
-            chisq = np.sum(sample_weight*(y-mu)**2 /
+            chisq = np.sum(weights*(y-mu)**2 /
                            self._family_instance.unit_variance(mu))
             return chisq/(n_samples - n_features)
         elif self.fit_dispersion == 'deviance':
-            dev = self._family_instance.deviance(y, mu, sample_weight)
+            dev = self._family_instance.deviance(y, mu, weights)
             return dev/(n_samples - n_features)
 
     # Note: check_estimator(GeneralizedLinearRegressor) might raise
