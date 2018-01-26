@@ -481,7 +481,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                                current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
 
                                 if current.threshold == Xf[p]:
                                     current.threshold = Xf[p - 1]
@@ -1383,7 +1383,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
 
-                                current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
+                                current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
+
                                 if current.threshold == Xf[p]:
                                     current.threshold = Xf[p_prev]
 

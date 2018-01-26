@@ -3,6 +3,7 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
+import pytest
 from functools import partial
 from itertools import product
 import struct
@@ -1731,3 +1732,19 @@ def test_criterion_copy():
             assert_equal(typename, typename_)
             assert_equal(n_outputs, n_outputs_)
             assert_equal(n_samples, n_samples_)
+
+
+@pytest.mark.parametrize('data',
+                         np.random.RandomState(0).randn(50, 100, 11) * 2e38)
+def test_empty_leaf_infinite_threshold(data):
+    # try to make empty leaf by using near infinite value.
+    data = np.nan_to_num(data.astype('float32'))
+    X = data[:, :-1]
+    y = data[:, -1]
+    tree = DecisionTreeRegressor().fit(X, y)
+    terminal_regions = tree.apply(X)
+    empty_leaf = set(np.where(tree.tree_.children_left
+                              == TREE_LEAF)[0]).difference(terminal_regions)
+    infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
+    assert_equal(len(infinite_threshold), 0)
+    assert_equal(len(empty_leaf), 0)
