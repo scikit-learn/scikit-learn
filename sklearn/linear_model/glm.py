@@ -1573,7 +1573,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         C : array, shape = (n_samples)
             Returns predicted values times sample_weight.
         """
-        # validation of X in linear_predictor
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype='numeric', copy=True, ensure_2d=True,
+                        allow_nd=False)
         eta = self.linear_predictor(X)
         mu = self._link_instance.inverse(eta)
         weights = _check_weights(sample_weight, X.shape[0])

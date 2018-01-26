@@ -284,7 +284,6 @@ def test_poisson_enet():
     # (Intercept) -0.03550978409
     # a            0.16936423283
     # b            .
-    rand = 0
     glmnet_intercept = -0.03550978409
     glmnet_coef = [0.16936423283, 0.]
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
