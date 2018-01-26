@@ -73,7 +73,7 @@ def _check_weights(sample_weight, n_samples):
         elif weights.shape[0] != n_samples:
             raise ValueError("Sample weights must have the same length as"
                              " y")
-        if not np.all(sample_weight >= 0):
+        if not np.all(weights >= 0):
             raise ValueError("Sample weights must be non-negative.")
 
     return weights
@@ -1132,7 +1132,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 if sparse.issparse(P2):
                     # TODO: check sparse P2 for non-negativeness
                     # raise NotImplementedError("Check sparse P2 for "
-                    #                          "non-negaitveness is not yet "
+                    #                          "non-negativeness is not yet "
                     #                          "implemented.")
                     pass
                 elif P2.ndim == 2:
@@ -1391,7 +1391,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # inner loop
                 # TODO: use sparsity (coefficient already 0 due to L1 penalty)
                 #       => active set of features for featurelist, see paper
-                d = np.zeros_like(coef)
                 # A = f'(w) + d*H(w) + (w+d)*P2
                 # B = H+P2
                 # Note: f'=-score and H=fisher are updated at the end of outer
