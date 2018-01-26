@@ -9,6 +9,7 @@ from scipy.stats import scoreatpercentile
 from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
+
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
 
@@ -180,13 +181,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
                  % (self.n_neighbors, n_samples))
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
-        distances, indices = self.kneighbors(
+        self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
             None, n_neighbors=self.n_neighbors_)
-
-        self._distances_fit_X_ = distances
-        _neighbors_indices_fit_X_ = indices
-
-        self._distances_fit_X_, _neighbors_indices_fit_X_
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_)

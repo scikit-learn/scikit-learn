@@ -99,27 +99,12 @@ def _get_weights(dist, weights):
 
 
 def _kneighbors_from_sorted_graph(graph, n_neighbors):
-    """Decompose a nearest neighbors sparse graph into distances and indices
-
-    Parameters
-    ----------
-    graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
-
-    n_neighbors : int
-        Number of neighbors required for each sample.
-
-    Returns
-    -------
-    neigh_dist : array, shape (n_samples, n_neighbors)
-        Distances to nearest neighbors.
-
-    neigh_ind : array, shape (n_samples, n_neighbors)
-        Indices of nearest neighbors.
+    """Not used for now, since it requires the graph to be sorted by
+    increasing distances.
     """
     n_samples = graph.shape[0]
 
-    # number of  neighbors for each samples
+    # number of neighbors for each samples
     row_nnz = np.diff(graph.indptr)
     if row_nnz.min() < n_neighbors:
         raise ValueError(
@@ -165,7 +150,7 @@ def _kneighbors_from_graph(graph, n_neighbors):
     """
     n_samples = graph.shape[0]
 
-    # number of  neighbors for each samples
+    # number of neighbors for each samples
     row_nnz = np.diff(graph.indptr)
     if row_nnz.min() < n_neighbors:
         raise ValueError(
@@ -196,7 +181,7 @@ def _kneighbors_from_graph(graph, n_neighbors):
             this_dist = graph.data[idx]
             this_ind = graph.indices[idx]
             # sort neigh_dist and neigh_ind to have increasing distances
-            perm = np.argsort(neigh_dist)
+            perm = np.argsort(this_dist)
             neigh_dist[i] = this_dist[perm][:n_neighbors]
             neigh_ind[i] = this_ind[perm][:n_neighbors]
         return neigh_dist, neigh_ind
@@ -502,14 +487,7 @@ class KNeighborsMixin(object):
 
             if issparse(dist):
                 neigh_dist, neigh_ind = _kneighbors_from_graph(
-                    dist, n_neighbors=n_neighbors - query_is_train)
-
-                if query_is_train:
-                    # add each sample as its own nearest neighbor
-                    neigh_ind = np.concatenate(
-                        (sample_range, neigh_ind), axis=1)
-                    neigh_dist = np.concatenate(
-                        (np.zeros(n_samples)[:, None], neigh_dist), axis=1)
+                    dist, n_neighbors=n_neighbors)
 
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
@@ -518,11 +496,12 @@ class KNeighborsMixin(object):
                 neigh_ind = neigh_ind[
                     sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
-            if return_distance:
-                if not issparse(dist):
+                if return_distance:
                     neigh_dist = dist[sample_range, neigh_ind]
-                if self.effective_metric_ == 'euclidean':
-                    neigh_dist = np.sqrt(neigh_dist)
+                    if self.effective_metric_ == 'euclidean':
+                        neigh_dist = np.sqrt(neigh_dist)
+
+            if return_distance:
                 result = neigh_dist, neigh_ind
             else:
                 result = neigh_ind
@@ -545,7 +524,7 @@ class KNeighborsMixin(object):
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-        if not query_is_train:
+        if not query_is_train or issparse(dist):
             return result
         else:
             # If the query data is the same as the indexed data, we would like

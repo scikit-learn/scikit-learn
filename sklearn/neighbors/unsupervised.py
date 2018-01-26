@@ -228,16 +228,38 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples_transform, n_features]
+        X : array-like, shape (n_samples_transform, n_features)
             Sample data
 
         Returns
         -------
-        Xt : CSR sparse matrix, shape = [n_samples_fit, n_samples_transform]
+        Xt : CSR sparse matrix, shape (n_samples_fit, n_samples_transform)
             Xt[i, j] is assigned the weight of edge that connects i to j.
         """
         check_is_fitted(self, '_fit_X')
-        check_array(X, accept_sparse='csr')
+        if X is not None:
+            check_array(X, accept_sparse='csr')
+        return self.kneighbors_graph(X, self.n_neighbors, self.mode)
+
+    def fit_transform(self, X, y=None):
+        """Fit to data, then transform it.
+
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+
+        Parameters
+        ----------
+        X : numpy array of shape (n_samples, n_features)
+            Training set.
+
+        y : ignored
+
+        Returns
+        -------
+        Xt : CSR sparse matrix, shape (n_samples, n_samples)
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+        """
+        self.fit(X)
 
         if self.include_self is None:
             include_self = self.mode == 'connectivity'
@@ -245,15 +267,14 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
             include_self = self.include_self
 
         # If we don't include each sample as its own neighbors
-        if not include_self and X is self._fit_X:
+        if not include_self:
             X = None
-
-        return self.kneighbors_graph(X, self.n_neighbors, self.mode)
+        return self.transform(X)
 
 
 class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
                                  UnsupervisedMixin, TransformerMixin):
-    """Transform X into a (weighted) graph of radius nearest neighbors
+    """Transform X into a (weighted) graph of neighbors nearer than a radius
 
     The transformed data is a sparse graph as return by radius_neighbors_graph.
 
@@ -354,16 +375,38 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples_transform, n_features]
+        X : array-like, shape (n_samples_transform, n_features)
             Sample data
 
         Returns
         -------
-        Xt : CSR sparse matrix, shape = [n_samples_fit, n_samples_transform]
+        Xt : CSR sparse matrix, shape (n_samples_fit, n_samples_transform)
             Xt[i, j] is assigned the weight of edge that connects i to j.
         """
         check_is_fitted(self, '_fit_X')
-        check_array(X, accept_sparse='csr')
+        if X is not None:
+            check_array(X, accept_sparse='csr')
+        return self.radius_neighbors_graph(X, self.radius, self.mode)
+
+    def fit_transform(self, X, y=None):
+        """Fit to data, then transform it.
+
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+
+        Parameters
+        ----------
+        X : numpy array of shape (n_samples, n_features)
+            Training set.
+
+        y : ignored
+
+        Returns
+        -------
+        Xt : CSR sparse matrix, shape (n_samples, n_samples)
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+        """
+        self.fit(X)
 
         if self.include_self is None:
             include_self = self.mode == 'connectivity'
@@ -371,7 +414,6 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
             include_self = self.include_self
 
         # If we don't include each sample as its own neighbors
-        if not include_self and X is self._fit_X:
+        if not include_self:
             X = None
-
-        return self.radius_neighbors_graph(X, self.radius, self.mode)
+        return self.transform(X)

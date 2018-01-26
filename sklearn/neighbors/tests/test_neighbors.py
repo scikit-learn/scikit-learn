@@ -201,16 +201,15 @@ def test_precomputed_sparse_invalid():
     dist = np.array([[0., 2., 0.], [2., 0., 3.], [0., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
-    assert_raises_regex(ValueError, "Not enough neighbors in"
-                        " .* to get 2 nearest neighbors.*", neigh.kneighbors,
-                        None, n_neighbors=2)
+    msg = "2 neighbors per samples are required, but some samples have only 1"
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=2)
 
     # Checks error with inconsistent distance matrix
     dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
-    assert_raises_regex(ValueError, "Not a valid distance"
-                        " .*non-negative values.*", neigh.kneighbors,
-                        dist_csr, n_neighbors=1)
+    msg = "Not a valid distance .*non-negative values.*"
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, dist_csr,
+                        n_neighbors=1)
 
 
 def test_precomputed_cross_validation():

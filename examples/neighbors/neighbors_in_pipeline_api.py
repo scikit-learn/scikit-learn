@@ -8,28 +8,28 @@ using them in TSNE. TSNE can compute the nearest neighbors internally, but
 precomputing them can have several benefits, such as finer control, caching for
 multiple use, or custom implementations.
 
-This example present how to chain KNeighborsTransformer and TSNE in a pipeline,
-and how to wrap the package `annoy` to replace KNeighborsTransformer and
-perform approximate nearest neighbors. This package can be installed with `pip
-install annoy`.
+This example presents how to chain KNeighborsTransformer and TSNE in a
+pipeline, and how to wrap the package `annoy` to replace KNeighborsTransformer
+and perform approximate nearest neighbors. This package can be installed with
+`pip install annoy`.
 
-Output:
+Expected output:
 
 Benchmarking on MNIST_2000:
 ---------------------------
-AnnoyTransformer:                1.885 sec
-KNeighborsTransformer:           1.550 sec
-TSNE with AnnoyTransformer:      12.408 sec
-TSNE with KNeighborsTransformer: 11.856 sec
-TSNE with internal NN:           11.884 sec
+AnnoyTransformer:                    1.885 sec
+KNeighborsTransformer:               1.550 sec
+TSNE with AnnoyTransformer:          12.408 sec
+TSNE with KNeighborsTransformer:     11.856 sec
+TSNE with internal NearestNeighbors: 11.884 sec
 
 Benchmarking on MNIST_10000:
 ----------------------------
-AnnoyTransformer:                12.613 sec
-KNeighborsTransformer:           44.348 sec
-TSNE with AnnoyTransformer:      75.256 sec
-TSNE with KNeighborsTransformer: 110.472 sec
-TSNE with internal NN:           110.527 sec
+AnnoyTransformer:                    12.613 sec
+KNeighborsTransformer:               44.348 sec
+TSNE with AnnoyTransformer:          75.256 sec
+TSNE with KNeighborsTransformer:     110.472 sec
+TSNE with internal NearestNeighbors: 110.527 sec
 
 """
 
@@ -48,6 +48,8 @@ from sklearn.datasets import fetch_mldata
 from sklearn.pipeline import make_pipeline
 from sklearn.manifold import TSNE
 from sklearn.utils import shuffle
+
+print(__doc__)
 
 
 class AnnoyTransformer(BaseEstimator, TransformerMixin):
@@ -144,7 +146,7 @@ def run_benchmark():
     n_iter = 250
     perplexity = 30
     # TSNE requires a certain number of neighbors which depends on the
-    # perplexity parameter
+    # perplexity parameter
     n_neighbors = int(3. * perplexity + 1)
 
     transformers = {
@@ -172,7 +174,7 @@ def run_benchmark():
                  method="barnes_hut", random_state=42, n_iter=n_iter),
         ),
 
-        'TSNE with internal NN':
+        'TSNE with internal NearestNeighbors':
         TSNE(metric='sqeuclidean', perplexity=perplexity, method="barnes_hut",
              random_state=42, n_iter=n_iter),
     }

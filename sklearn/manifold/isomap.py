@@ -119,14 +119,15 @@ class Isomap(BaseEstimator, TransformerMixin):
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors, metric=metric,
-                               mode='distance', n_jobs=self.n_jobs)
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
+
+        kng = kneighbors_graph(self.nbrs_, self.n_neighbors, metric=metric,
+                               mode='distance', n_jobs=self.n_jobs)
 
         self.dist_matrix_ = graph_shortest_path(kng,
                                                 method=self.path_method,
@@ -220,15 +221,13 @@ class Isomap(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'embedding_')
         X = check_array(X, accept_sparse=['csr'])
+        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
         # self.training_data_ via the nearest neighbors of X.
         # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
-        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
-        G_X_shape = (X.shape[0], self.training_data_.shape[0])
-
-        G_X = np.zeros(G_X_shape)
+        G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
         for i in range(X.shape[0]):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] +
                             distances[i][:, None], 0)

@@ -544,9 +544,9 @@ include the precomputation in a pipeline:
     >>> from sklearn.neighbors import KNeighborsTransformer
     >>> from sklearn.pipeline import make_pipeline
     >>> estimator = make_pipeline(
-            KNeighborsTransformer(n_neighbors=5, mode='distance'),
-            Isomap(neighbors_algorithm='precomputed'),
-            memory='/path/to/cache')
+    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
+    ...     Isomap(neighbors_algorithm='precomputed'),
+    ...     memory='/path/to/cache')
 
 Second, these transformers give finer control on the nearest neighbors
 estimation, for instance enabling multiprocessing though the parameter `n_jobs`.

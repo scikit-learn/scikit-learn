@@ -10,7 +10,6 @@
 
 import numpy as np
 from scipy import stats
-import scipy.sparse as sp
 from ..utils.extmath import weighted_mode
 
 from .base import \

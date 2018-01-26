@@ -172,7 +172,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
     X = rng.randn(20, 2)
 
     # XXX: This test currently fail for euclidean metric since it's not squared
-    for metric in ['minkowski']:
+    for metric in ['minkowski', 'sqeuclidean']:
 
         # compare the chained version and the compact version
         est_chain = make_pipeline(
