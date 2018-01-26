@@ -177,7 +177,8 @@ def test_normal_ridge():
         glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0,
                                          family='normal', link='identity',
                                          fit_intercept=True, tol=1e-6,
-                                         max_iter=100, solver=solver)
+                                         max_iter=100, solver=solver,
+                                         random_state=42)
         glm.fit(X, y)
         assert_equal(glm.coef_.shape, (X.shape[1], ))
         assert_array_almost_equal(glm.coef_, ridge.coef_)
@@ -214,7 +215,7 @@ def test_normal_ridge():
         glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, tol=1e-8,
                                          family='normal', link='identity',
                                          fit_intercept=True, solver=solver,
-                                         max_iter=300)
+                                         max_iter=300, random_state=42)
         glm.fit(X, y)
         assert_equal(glm.coef_.shape, (X.shape[1], ))
         assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=5)
@@ -257,7 +258,8 @@ def test_poisson_ridge():
         glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
                                          fit_intercept=True, family='poisson',
                                          link='log', tol=s_tol[solver],
-                                         solver=solver, max_iter=300)
+                                         solver=solver, max_iter=300,
+                                         random_state=42)
         glm.fit(X, y)
         assert_almost_equal(glm.intercept_, -0.12889386979,
                             decimal=s_dec[solver])
@@ -282,20 +284,23 @@ def test_poisson_enet():
     # (Intercept) -0.03550978409
     # a            0.16936423283
     # b            .
+    rand = 0
     glmnet_intercept = -0.03550978409
     glmnet_coef = [0.16936423283, 0.]
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
     glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
-                                     link='log', solver='cd', tol=1e-7)
+                                     link='log', solver='cd', tol=1e-7,
+                                     selection='random', random_state=42)
     glm.fit(X, y)
     assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=7)
     assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=7)
 
-    # same for start_params='zero' with reduced precision
+    # same for start_params='zero' and selection='cyclic'
+    # with reduced precision
     glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
                                      link='log', solver='cd', tol=1e-5,
-                                     start_params='zero')
+                                     selection='cyclic', start_params='zero')
     glm.fit(X, y)
     assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
     assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)
