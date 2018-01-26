@@ -528,7 +528,11 @@ manifold embeddings such as :class:`manifold.TSNE` and :class:`manifold.Isomap`.
 All these estimators can compute internally the nearest neighbors, but most of
 them also accept precomputed nearest neighbors graph, as given by
 :func:`neighbors.kneighbors_graph` and :func:`neighbors.radius_neighbors_graph`.
-The benefits of precomputation are multiple.
+With mode `mode='connectivity'`, these functions return an affinity graph
+(larger values mean closer points) as required for instance in
+:class:`cluster.SpectralClustering`, whereas with `mode='distance'`, they return
+a distance graph (smaller values mean closer points) as required for instance in
+:class:`cluster.DBSCAN`. The benefits of precomputation are multiple.
 
 First, the precomputed graph can be re-used multiple times, for instance while
 varying a parameter of the estimator. This can be done manually, or using the
@@ -545,15 +549,25 @@ include the precomputation in a pipeline:
             memory='/path/to/cache')
 
 Second, these transformers give finer control on the nearest neighbors
-estimation, for instance unabling multiprocessing though the parameter `n_jobs`.
+estimation, for instance enabling multiprocessing though the parameter `n_jobs`.
 
 Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or
 implementation with special data types. The precomputed neighbors need to be
-formatted as a sparse CSR distance/affinity matrix, where the explicit zeros are
-interpreted as the number 0, but implicit zeros indicate the absence of
-connections between two samples, and where an explicit value indicates an edge’s
-weight.
+formatted as in `radius_neighbors_graph` output with `mode='distance'`:
+
+* a CSR matrix (although COO, CSC or LIL will be accepted).
+* only explicitly store nearest neighborhoods of each sample with respect to the
+  training data. This should include those at 0 distance from a query point, but
+  exclude the matrix diagonal in the training data.
+* each row's `data` should store the distance in increasing order (although
+  unsorted data will be stable-sorted).
+* all values in data should be non-negative.
+* (there should be no duplicate `indices` in any row; but if you don't get what
+  this means, you're probably fine).
+* if the algorithm being passed the precomputed matrix uses k nearest neighbors
+  (as opposed to radius neighborhood), at least k neighbors must be stored in
+  each row.
 
 .. topic:: Examples:
 
