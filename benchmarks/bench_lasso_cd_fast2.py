@@ -83,13 +83,13 @@ if __name__ == '__main__':
     sns.set_style("darkgrid")
 
     alpha = 0.1  # regularization parameter
-    l1_ratio = 0.
+    l1_ratio = 1.
 
     plt.figure('scikit-learn LASSO benchmark results')
     for i, precompute in enumerate([True, False]):
         plt.subplot("21%i" % (i + 1))
         if precompute:
-            n_features = 1000
+            n_features = 100
             list_n_features = [n_features]
             list_n_samples = np.linspace(100, 100000, 5).astype(np.int)
             plt.title('precomputed Gram matrix, %d features, alpha=%s' % (

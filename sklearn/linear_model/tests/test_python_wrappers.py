@@ -86,13 +86,10 @@ def test_abs_max(random_state=0):
 
 def test_real_max(random_state=0):
     rng = check_random_state(random_state)
-    for real in [True, False]:
-        x = rng.randn(10)
-        if not real:
-            x = as_complex(x, rng.randn(*x.shape))
-            for dtype in [np.float32, np.float64, np.complex64, np.complex128]:
-                x = dtype(x)
-                assert_almost_equal(_py_real_max(x), np.max(x), decimal=13)
+    x = rng.randn(10)
+    for dtype in [np.float32, np.float64]:
+        x = dtype(x)
+        assert_almost_equal(_py_real_max(x), np.max(x), decimal=13)
 
 
 def test_fused_copy(random_state=0):

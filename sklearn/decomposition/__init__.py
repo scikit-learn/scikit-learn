@@ -13,7 +13,7 @@ from .truncated_svd import TruncatedSVD
 from .fastica_ import FastICA, fastica
 from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             DictionaryLearning, MiniBatchDictionaryLearning,
-                            SparseCoder)
+                            SparseCoder, _update_dict)
 from .factor_analysis import FactorAnalysis
 from ..utils.extmath import randomized_svd
 from .online_lda import LatentDirichletAllocation
@@ -37,4 +37,5 @@ __all__ = ['DictionaryLearning',
            'sparse_encode',
            'FactorAnalysis',
            'TruncatedSVD',
-           'LatentDirichletAllocation']
+           'LatentDirichletAllocation',
+           '_update_dict']

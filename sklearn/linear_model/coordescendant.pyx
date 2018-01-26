@@ -119,8 +119,6 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     if positive:
         if not (complexing is double or complexing is float):
             raise TypeError("positive=True for complex data makes no sense")
-        elif penalty_model != L11_PENALTY:
-            raise ValueError("positive=True only makes sense when L1 penalty is imposed.")
 
     # select an appropriate prox handle by model
     cdef PROX prox
@@ -154,9 +152,9 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     else:
         floating_dtype = np.float64
     cdef int penalty_model_int
-    cdef bint dual_gap_available = False
+    cdef bint dgap_available = False
     if penalty_model in [L11_PENALTY, L21_PENALTY]:
-        dual_gap_available = True
+        dgap_available = True
         penalty_model_int = penalty_model
     cdef int n_samples = X_or_Gram.shape[0]
     cdef int n_features = X_or_Gram.shape[1]
@@ -183,8 +181,11 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
     # check Y_norm2
     if precomputed:
         if np.isnan(Y_norm2):
-            raise ValueError(
-                "Require a value for Y_norm2 since precomputed=True")
+            if max_iter > 1:
+                warnings.warn(
+                    ("Require a value for Y_norm2 since precomputed=True. "
+                     "Disabling computation of dual gaps."))
+            dgap_available = False
     elif np.isnan(Y_norm2 ):
         Y_norm2 = <floating>fused_nrm2_squared(R_size, &Y_or_Cov[0, 0], 1)
 
@@ -345,7 +346,7 @@ def coordescendant(np.ndarray[complexing, ndim=2, mode="c"] W,
                 n_iter == max_iter - 1):
                 # the biggest coordinate update of this iteration was smaller
                 # than check the duality gap as ultimate stopping criterion
-                if dual_gap_available:
+                if dgap_available:
                     gap = compute_dual_gap(
                         n_samples, n_features, n_targets, W_ptr, reg, l2_reg,
                         X_or_Gram_conj_ptr, Y_or_Cov_ptr, R_ptr, Grad_ptr,
