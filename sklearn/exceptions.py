@@ -154,3 +154,7 @@ class UndefinedMetricWarning(UserWarning):
     .. versionchanged:: 0.18
        Moved from sklearn.base.
     """
+
+
+class NearInifinteValuesWarning(UserWarning):
+    """Warning used if X or y contains near infinite values."""
