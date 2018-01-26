@@ -930,4 +930,4 @@ def test_complete_features():
     ])
 
     imputer_comp = KNNImputer(use_complete=True)
-    assert_array_equal(imputer_comp.fit_transform(X), X_imputed)
+    assert_array_almost_equal(imputer_comp.fit_transform(X), X_imputed)
