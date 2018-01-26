@@ -830,16 +830,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 # Mask for fitted_X
                 mask_fx = _get_mask(fitted_X, np.nan)
 
-                # Locate unique patterns, but first a numpy version check
-                np_version = np.__version__.split(".")
-
-                # Different behavior for np.unique in Numpy < 1.13.x
-                if float('.'.join(np_version[:2])) < 1.13:
-                    patterns, row_pat_idx = _unique(
-                        mask, return_inverse=True, axis=0)
-                else:
-                    patterns, row_pat_idx = np.unique(
-                        mask, return_inverse=True, axis=0)
+                # Locate unique patterns
+                patterns, row_pat_idx = _unique(
+                    mask, return_inverse=True, axis=0)
 
                 # Get row idx for receivers (missing)
                 receiver_row_missing_index, _ = np.where(mask)
