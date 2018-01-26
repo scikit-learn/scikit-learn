@@ -114,22 +114,27 @@ def test_compute_class_weight_balanced_negative():
     assert_array_almost_equal(cw, [2. / 3, 2., 1.])
 
 
-@pytest.mark.parametrize(('freq0', 'freq1'),
-                         [(59, 19)] +  # a known issue
+@pytest.mark.parametrize('freq',
+                         [[59, 19]] +  # a known issue
                          # random checks for other architectures
                          np.random.RandomState(0).randint(
-                             1, 100, size=(50, 2)).tolist())
-def test_balanced_class_weight_numerical_precision(freq0, freq1):
-    y = np.hstack([np.zeros(freq0), np.ones(freq1)])
+                             1, 100, size=(25, 2)).tolist() +
+                         np.random.RandomState(0).randint(
+                             1, 100, size=(25, 5)).tolist()
+                         )
+def test_balanced_class_weight_numerical_precision(freq):
+    freq = np.array(freq)
+    k = len(freq)
+    y = np.hstack([np.ones(freq[i]) * i for i in range(k)])
     # make sure we do comparisons as numpy floats to maintain imprecision
-    w = compute_class_weight('balanced', [0, 1], y)
-    wfreq = w * [freq0, freq1]
-    diff = np.diff(wfreq)
-    assert np.abs(diff) < 1e-6  # we want to be very close to true balance
+    w = compute_class_weight('balanced', np.arange(k), y)
+    wfreq = w * freq
+    diff = np.diff(wfreq.reshape((k,1)) - wfreq.reshape((1,k)))
+    assert np.all(np.abs(diff) < 1e-6)  # we want to be very close to true balance
     # sum of frequence should be close to the weighted sum
-    assert_almost_equal(np.sum(wfreq), np.sum([freq0, freq1]))
+    assert_almost_equal(np.sum(wfreq), np.sum(freq))
     # but in case of ambiguity, deterministically prefer original distribution
-    assert diff == 0 or np.sign(diff) == np.sign(np.diff([freq0, freq1]))
+    assert np.all(diff == 0) or np.all(np.equal(np.argsort(freq), np.argsort(wfreq)))
 
 
 def test_compute_class_weight_balanced_unordered():
