@@ -169,44 +169,6 @@ def _unique(ar, return_index=False, return_inverse=False,
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
 
-    Examples
-    --------
-    >>> np.unique([1, 1, 2, 2, 3, 3])
-    array([1, 2, 3])
-    >>> a = np.array([[1, 1], [2, 3]])
-    >>> np.unique(a)
-    array([1, 2, 3])
-
-    Return the unique rows of a 2D array
-
-    >>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])
-    >>> np.unique(a, axis=0)
-    array([[1, 0, 0], [2, 3, 4]])
-
-    Return the indices of the original array that give the unique values:
-
-    >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
-    >>> u, indices = np.unique(a, return_index=True)
-    >>> u
-    array(['a', 'b', 'c'],
-           dtype='|S1')
-    >>> indices
-    array([0, 1, 3])
-    >>> a[indices]
-    array(['a', 'b', 'c'],
-           dtype='|S1')
-
-    Reconstruct the input array from the unique values:
-
-    >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
-    >>> u, indices = np.unique(a, return_inverse=True)
-    >>> u
-    array([1, 2, 3, 4, 6])
-    >>> indices
-    array([0, 1, 4, 3, 1, 2, 1])
-    >>> u[indices]
-    array([1, 2, 6, 4, 2, 3, 2])
-
     """
     ar = np.asanyarray(ar)
     if axis is None:
