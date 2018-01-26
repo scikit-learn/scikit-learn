@@ -115,7 +115,7 @@ def test_sparse_classification():
             for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
                 # Trained on sparse format
                 sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='auto',
+                    base_estimator=CustomSVC(gamma='scale',
                                              decision_function_shape='ovr'),
                     random_state=1,
                     **params
@@ -124,13 +124,13 @@ def test_sparse_classification():
 
                 # Trained on dense format
                 dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='auto',
+                    base_estimator=CustomSVC(gamma='scale',
                                              decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train, y_train)
                 dense_results = getattr(dense_classifier, f)(X_test)
-                assert_array_equal(sparse_results, dense_results)
+                assert_array_almost_equal(sparse_results, dense_results)
 
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
