@@ -122,7 +122,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
-            if X.max() == np.finfo(DTYPE).max or X.min() == np.finfo(DTYPE).min:
+            if X.max() == np.finfo(DTYPE).max or \
+               X.min() == np.finfo(DTYPE).min:
                 warnings.warn("X contains near infinite values. If possible, "
                               "X should be scaled in order to avoid "
                               "infinite values to appear during tree fitting.",
