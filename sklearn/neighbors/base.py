@@ -22,7 +22,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
-from ..exceptions import DataConversionWarning
+from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
@@ -98,10 +98,24 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-def _kneighbors_from_sorted_graph(graph, n_neighbors):
-    """Not used for now, since it requires the graph to be sorted by
-    increasing distances.
-    """
+def _check_sorted(graph):
+    """Check if the sparse graph is correctly sorted by data"""
+    out_of_order = graph.data[:-1] > graph.data[1:]
+
+    if (out_of_order.sum() !=
+            out_of_order.take(graph.indptr[1:-1], mode='clip').sum()):
+        warnings.warn('Precomputed sparse input was not sorted by data.',
+                      EfficiencyWarning)
+        for start, stop in zip(graph.indptr, graph.indptr[1:]):
+            order = np.argsort(graph.data[start:stop], kind='mergesort')
+            graph.data[start:stop] = graph.data[order]
+            graph.indices[start:stop] = graph.indices[order]
+    return graph
+
+
+def _kneighbors_from_graph_2(graph, n_neighbors):
+    """Alternative to _kneighbors_from_graph, needs to be benchmarked"""
+    graph = _check_sorted(graph)
     n_samples = graph.shape[0]
 
     # number of neighbors for each samples
@@ -487,7 +501,7 @@ class KNeighborsMixin(object):
 
             if issparse(dist):
                 neigh_dist, neigh_ind = _kneighbors_from_graph(
-                    dist, n_neighbors=n_neighbors)
+                    dist, n_neighbors=n_neighbors - query_is_train)
 
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
@@ -507,6 +521,7 @@ class KNeighborsMixin(object):
                 result = neigh_ind
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
+            dist = None
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
