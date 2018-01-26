@@ -4,10 +4,8 @@
 # License: BSD 3 clause (C) 2011
 
 import numpy as np
-import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..neighbors.base import _decompose_neighbors_graph
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
@@ -108,18 +106,21 @@ class Isomap(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
 
         if self.neighbors_algorithm == 'precomputed':
-            kng = check_array(X, accept_sparse=['csr'])
-            self.training_data_ = None
-            self.nbrs_ = None
+            X = check_array(X, accept_sparse=['csr'])
+            algorithm = 'brute'
+            metric = 'precomputed'
         else:
             X = check_array(X)
-            self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                          algorithm=self.neighbors_algorithm,
-                                          n_jobs=self.n_jobs)
-            self.nbrs_.fit(X)
-            self.training_data_ = self.nbrs_._fit_X
-            kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                                   mode='distance', n_jobs=self.n_jobs)
+            algorithm = self.neighbors_algorithm
+            metric = 'minkowski'
+
+        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                      algorithm=algorithm, metric=metric,
+                                      n_jobs=self.n_jobs)
+        self.nbrs_.fit(X)
+        self.training_data_ = self.nbrs_._fit_X
+        kng = kneighbors_graph(self.nbrs_, self.n_neighbors, metric=metric,
+                               mode='distance', n_jobs=self.n_jobs)
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
@@ -224,12 +225,8 @@ class Isomap(BaseEstimator, TransformerMixin):
         # self.training_data_ via the nearest neighbors of X.
         # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
-        if self.neighbors_algorithm == 'precomputed' and sp.issparse(X):
-            distances, indices = _decompose_neighbors_graph(X)
-            G_X_shape = X.shape
-        else:
-            distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
-            G_X_shape = (X.shape[0], self.training_data_.shape[0])
+        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        G_X_shape = (X.shape[0], self.training_data_.shape[0])
 
         G_X = np.zeros(G_X_shape)
         for i in range(X.shape[0]):

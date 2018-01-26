@@ -18,7 +18,6 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
-from ..utils.fixes import getnnz
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
@@ -99,53 +98,146 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-def _decompose_neighbors_graph(graph, accept_unequal=True):
+def _kneighbors_from_sorted_graph(graph, n_neighbors):
     """Decompose a nearest neighbors sparse graph into distances and indices
 
     Parameters
     ----------
-    graph : CSR sparse matrix
+    graph : CSR sparse matrix, shape (n_samples, n_samples)
         Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
 
-    accept_unequal : boolean, default=True
-        Whether to accept graphs with different number of neighbors for each
-        sample.
+    n_neighbors : int
+        Number of neighbors required for each sample.
 
     Returns
     -------
-    distances : array, shape (n_samples, n_neighbors) or array of arrays
+    neigh_dist : array, shape (n_samples, n_neighbors)
         Distances to nearest neighbors.
-        It is an array of arrays if the number of neighbors is not identical
-        for every samples.
 
-    indices : array, shape (n_samples, n_neighbors) or array of arrays
+    neigh_ind : array, shape (n_samples, n_neighbors)
         Indices of nearest neighbors.
-        It is an array of arrays if the number of neighbors is not identical
-        for every samples.
     """
     n_samples = graph.shape[0]
 
+    # number of  neighbors for each samples
+    row_nnz = np.diff(graph.indptr)
+    if row_nnz.min() < n_neighbors:
+        raise ValueError(
+            '%d neighbors per samples are required, but some samples have only'
+            ' %d neighbors in precomputed graph matrix. Decrease number of '
+            'neighbors used or recompute the graph with more neighbors.'
+            % (n_neighbors, row_nnz.min()))
+
     # if there is the same number of neighbors for each sample
-    if np.unique(np.diff(graph.indptr)).size == 1:
-        distances = graph.data.reshape(n_samples, -1)
-        indices = graph.indices.reshape(n_samples, -1)
-        return distances, indices
+    if row_nnz.max() == row_nnz.min():
+        def extract(a):
+            return a.reshape(n_samples, -1)[:, :n_neighbors]
 
     else:  # radius neighbors case
-        if not accept_unequal:
-            raise ValueError(
-                'Precomputed sparse neighbors graph does not have the same '
-                'number of neighbors for each sample. Note that duplicated '
-                'samples should have an explicit zero entry in the sparse '
-                'neighbors graph.')
+        idx = np.tile(np.arange(n_neighbors), n_samples)
+        idx = idx.reshape(n_samples, n_neighbors)
+        idx += graph.indptr[:-1, np.newaxis]
 
-        distances = np.empty(n_samples, dtype='object')
-        indices = np.empty(n_samples, dtype='object')
-        for i in range(0, n_samples):
+        def extract(a):
+            return a.take(idx, mode='clip').reshape(n_samples, n_neighbors)
+
+    return extract(graph.data), extract(graph.indices)
+
+
+def _kneighbors_from_graph(graph, n_neighbors):
+    """Decompose a nearest neighbors sparse graph into distances and indices
+
+    Parameters
+    ----------
+    graph : CSR sparse matrix, shape (n_samples, n_samples)
+        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+
+    n_neighbors : int
+        Number of neighbors required for each sample.
+
+    Returns
+    -------
+    neigh_dist : array, shape (n_samples, n_neighbors)
+        Distances to nearest neighbors.
+
+    neigh_ind : array, shape (n_samples, n_neighbors)
+        Indices of nearest neighbors.
+    """
+    n_samples = graph.shape[0]
+
+    # number of  neighbors for each samples
+    row_nnz = np.diff(graph.indptr)
+    if row_nnz.min() < n_neighbors:
+        raise ValueError(
+            '%d neighbors per samples are required, but some samples have only'
+            ' %d neighbors in precomputed graph matrix. Decrease number of '
+            'neighbors used or recompute the graph with more neighbors.'
+            % (n_neighbors, row_nnz.min()))
+
+    # if there is the same number of neighbors for each sample
+    if row_nnz.max() == row_nnz.min():
+        neigh_dist = graph.data.reshape(n_samples, -1)
+        neigh_ind = graph.indices.reshape(n_samples, -1)
+
+        # sort neigh_dist and neigh_ind to have increasing distances
+        n_samples, n_neighbors_2 = neigh_dist.shape
+        perm = np.argsort(neigh_dist)
+        perm += np.arange(n_samples)[:, None] * n_neighbors_2
+        perm = perm.ravel()
+        neigh_dist = neigh_dist.ravel()[perm].reshape(n_samples, n_neighbors_2)
+        neigh_ind = neigh_ind.ravel()[perm].reshape(n_samples, n_neighbors_2)
+        return neigh_dist[:, :n_neighbors], neigh_ind[:, :n_neighbors]
+
+    else:
+        neigh_dist = np.empty((n_samples, n_neighbors))
+        neigh_ind = np.empty((n_samples, n_neighbors))
+        for i in range(n_samples):
             idx = slice(graph.indptr[i], graph.indptr[i + 1])
-            distances[i] = graph.data[idx]
-            indices[i] = graph.indices[idx]
-        return distances, indices
+            this_dist = graph.data[idx]
+            this_ind = graph.indices[idx]
+            # sort neigh_dist and neigh_ind to have increasing distances
+            perm = np.argsort(neigh_dist)
+            neigh_dist[i] = this_dist[perm][:n_neighbors]
+            neigh_ind[i] = this_ind[perm][:n_neighbors]
+        return neigh_dist, neigh_ind
+
+
+def _radius_neighbors_from_graph(graph, radius):
+    """Decompose a nearest neighbors sparse graph into distances and indices
+
+    Parameters
+    ----------
+    graph : CSR sparse matrix, shape (n_samples, n_samples)
+        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+
+    radius : float > 0
+        Radius of neighborhoods.
+
+    Returns
+    -------
+    niegh_dist : array, shape (n_samples,) of arrays
+        Distances to nearest neighbors.
+
+    neigh_ind :array, shape (n_samples,) of arrays
+        Indices of nearest neighbors.
+    """
+    n_samples = graph.shape[0]
+
+    if graph.data.max() <= radius:
+        data, indices, indptr = graph.data, graph.indices, graph.indptr
+    else:
+        mask = graph.data <= radius
+        data = np.compress(mask, graph.data)
+        indices = np.compress(mask, graph.indices)
+        indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
+
+    niegh_dist = np.empty(n_samples, dtype='object')
+    neigh_ind = np.empty(n_samples, dtype='object')
+    for i in range(n_samples):
+        idx = slice(indptr[i], indptr[i + 1])
+        niegh_dist[i] = data[idx]
+        neigh_ind[i] = indices[idx]
+    return niegh_dist, neigh_ind
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -341,11 +433,11 @@ class KNeighborsMixin(object):
 
         Returns
         -------
-        dist : array
+        neigh_dist : array, shape (n_samples, n_neighbors)
             Array representing the lengths to points, only present if
             return_distance=True
 
-        ind : array
+        neigh_ind : array, shape (n_samples, n_neighbors)
             Indices of the nearest points in the population matrix.
 
         Examples
@@ -409,29 +501,16 @@ class KNeighborsMixin(object):
                     **self.effective_metric_params_)
 
             if issparse(dist):
-                print "Dist being printed \n"
-                print dist.toarray()
-                print dist.indices
-                if np.any(getnnz(dist, axis=1) < n_neighbors - query_is_train):
-                    raise ValueError("Not enough neighbors in sparse "
-                                     "precomputed matrix to get {} "
-                                     "nearest neighbors"
-                                     .format(n_neighbors - query_is_train))
-                neigh_ind = np.full((dist.shape[0], dist.shape[1]), np.inf, dtype=np.int)
-                for i in range(0, dist.shape[0]):
-                    row = np.full(dist.shape[1], np.inf)
-                    data_col = dist.indices[dist.indptr[i]:dist.indptr[i + 1]]
-                    data_values = dist.data[dist.indptr[i]:dist.indptr[i + 1]]
-                    row[data_col] = data_values
-                    neigh_ind[i] = np.argsort(row)
-                neigh_ind = neigh_ind[:, :n_neighbors]
-                '''
-                if query_is_train and np.sum([(num in neigh_ind[num]) for num in range(neigh_ind.shape[0])]) == 0:
-                    # this is done to add self as nearest neighbor
-                    neigh_ind = np.concatenate((sample_range, neigh_ind),
-                                               axis=1)
-                    neigh_ind = neigh_ind[:, :-1]
-                '''
+                neigh_dist, neigh_ind = _kneighbors_from_graph(
+                    dist, n_neighbors=n_neighbors - query_is_train)
+
+                if query_is_train:
+                    # add each sample as its own nearest neighbor
+                    neigh_ind = np.concatenate(
+                        (sample_range, neigh_ind), axis=1)
+                    neigh_dist = np.concatenate(
+                        (np.zeros(n_samples)[:, None], neigh_dist), axis=1)
+
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
                 neigh_ind = neigh_ind[:, :n_neighbors]
@@ -440,16 +519,11 @@ class KNeighborsMixin(object):
                     sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
+                if not issparse(dist):
+                    neigh_dist = dist[sample_range, neigh_ind]
                 if self.effective_metric_ == 'euclidean':
-                    if issparse(dist):
-                        result = np.sqrt(dist[sample_range, neigh_ind]).toarray(), neigh_ind
-                    else:
-                        result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
-                else:
-                    if issparse(dist):
-                        result = dist[sample_range, neigh_ind].toarray(), neigh_ind
-                    else:
-                        result = dist[sample_range, neigh_ind], neigh_ind
+                    neigh_dist = np.sqrt(neigh_dist)
+                result = neigh_dist, neigh_ind
             else:
                 result = neigh_ind
 
@@ -464,8 +538,8 @@ class KNeighborsMixin(object):
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
-                dist, neigh_ind = tuple(zip(*result))
-                result = np.vstack(dist), np.vstack(neigh_ind)
+                neigh_dist, neigh_ind = tuple(zip(*result))
+                result = np.vstack(neigh_dist), np.vstack(neigh_ind)
             else:
                 result = np.vstack(result)
         else:
@@ -478,7 +552,7 @@ class KNeighborsMixin(object):
             # to ignore the first nearest neighbor of every sample, i.e
             # the sample itself.
             if return_distance:
-                dist, neigh_ind = result
+                neigh_dist, neigh_ind = result
             else:
                 neigh_ind = result
 
@@ -494,9 +568,9 @@ class KNeighborsMixin(object):
                 neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
 
             if return_distance:
-                dist = np.reshape(
-                    dist[sample_mask], (n_samples, n_neighbors - 1))
-                return dist, neigh_ind
+                neigh_dist = np.reshape(
+                    neigh_dist[sample_mask], (n_samples, n_neighbors - 1))
+                return neigh_dist, neigh_ind
             return neigh_ind
 
     def kneighbors_graph(self, X=None, n_neighbors=None,
@@ -607,12 +681,12 @@ class RadiusNeighborsMixin(object):
 
         Returns
         -------
-        dist : array, shape (n_samples,) of arrays
+        neigh_dist : array, shape (n_samples,) of arrays
             Array representing the distances to each point, only present if
             return_distance=True. The distance values are computed according
             to the ``metric`` constructor parameter.
 
-        ind : array, shape (n_samples,) of arrays
+        neigh_ind : array, shape (n_samples,) of arrays
             An array of arrays of indices of the approximate nearest points
             from the population matrix that lie within a ball of size
             ``radius`` around the query points.
@@ -672,24 +746,29 @@ class RadiusNeighborsMixin(object):
                                           n_jobs=self.n_jobs,
                                           **self.effective_metric_params_)
 
-            neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
+            if issparse(dist):
+                neigh_dist, neigh_ind = _radius_neighbors_from_graph(
+                    dist, radius=radius)
+            else:
+                neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
 
-            # See https://github.com/numpy/numpy/issues/5456
-            # if you want to understand why this is initialized this way.
-            neigh_ind = np.empty(n_samples, dtype='object')
-            neigh_ind[:] = neigh_ind_list
+                # See https://github.com/numpy/numpy/issues/5456
+                # if you want to understand why this is initialized this way.
+                neigh_ind = np.empty(n_samples, dtype='object')
+                neigh_ind[:] = neigh_ind_list
+
+                if return_distance:
+                    neigh_dist = np.empty(n_samples, dtype='object')
+                    if self.effective_metric_ == 'euclidean':
+                        dist_list = [np.sqrt(d[neigh_ind[i]])
+                                     for i, d in enumerate(dist)]
+                    else:
+                        dist_list = [d[neigh_ind[i]]
+                                     for i, d in enumerate(dist)]
+                    neigh_dist[:] = dist_list
 
             if return_distance:
-                dist_array = np.empty(n_samples, dtype='object')
-                if self.effective_metric_ == 'euclidean':
-                    dist_list = [np.sqrt(d[neigh_ind[i]])
-                                 for i, d in enumerate(dist)]
-                else:
-                    dist_list = [d[neigh_ind[i]]
-                                 for i, d in enumerate(dist)]
-                dist_array[:] = dist_list
-
-                results = dist_array, neigh_ind
+                results = neigh_dist, neigh_ind
             else:
                 results = neigh_ind
 
@@ -712,7 +791,7 @@ class RadiusNeighborsMixin(object):
             # to ignore the first nearest neighbor of every sample, i.e
             # the sample itself.
             if return_distance:
-                dist, neigh_ind = results
+                neigh_dist, neigh_ind = results
             else:
                 neigh_ind = results
 
@@ -721,10 +800,10 @@ class RadiusNeighborsMixin(object):
 
                 neigh_ind[ind] = ind_neighbor[mask]
                 if return_distance:
-                    dist[ind] = dist[ind][mask]
+                    neigh_dist[ind] = neigh_dist[ind][mask]
 
             if return_distance:
-                return dist, neigh_ind
+                return neigh_dist, neigh_ind
             return neigh_ind
 
     def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity'):

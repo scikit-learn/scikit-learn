@@ -11,12 +11,10 @@
 from time import time
 import numpy as np
 from scipy import linalg
-import scipy.sparse as sp
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from ..neighbors import NearestNeighbors
-from ..neighbors.base import _decompose_neighbors_graph
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
@@ -26,7 +24,6 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
 from ..utils import deprecated
-from ..utils.fixes import getnnz
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -94,7 +91,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     # the desired perplexity
     distances.sort_indices()
     n_samples = distances.shape[0]
-    distances_data, _ = _decompose_neighbors_graph(distances, False)
+    distances_data = distances.data.reshape(distances.shape[0], -1)
     distances_data = distances_data.astype(np.float32, copy=False)
     distances_data = distances_data.reshape(n_samples, -1)
     conditional_P = _utils._binary_search_perplexity(
@@ -678,6 +675,11 @@ class TSNE(BaseEstimator):
             # computing it.
             if self.metric == "precomputed":
                 distances = X
+                if issparse(X):
+                    raise TypeError(
+                        'TSNE with method="exact" does not accept sparse '
+                        'precomputed distance matrix. Use method="barnes_hut" '
+                        'or provide the dense distance matrix.')
             else:
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
@@ -706,43 +708,31 @@ class TSNE(BaseEstimator):
             # set the neighbors to n - 1.
             n_neighbors = min(n_samples - 1, int(3. * self.perplexity + 1))
 
-            if self.metric == "precomputed" and sp.issparse(X):
-                distances_nn = X
+            if self.verbose:
+                print("[t-SNE] Computing {} nearest neighbors..."
+                      .format(n_neighbors))
 
-                n_neighbors_precomputed = distances_nn.nnz // n_samples
-                if n_neighbors_precomputed < n_neighbors:
-                    raise ValueError(
-                        "Precomputed distance matrix contains only %d "
-                        "neighbors, but %d are required. Decrease perplexity, "
-                        "or increase the number of precomputed distances."
-                        % (n_neighbors_precomputed, n_neighbors))
+            # Find the nearest neighbors for every point
+            knn = NearestNeighbors(algorithm='auto',
+                                   n_neighbors=n_neighbors,
+                                   metric=self.metric)
+            t0 = time()
+            knn.fit(X)
+            duration = time() - t0
+            if self.verbose:
+                print("[t-SNE] Indexed {} samples in {:.3f}s...".format(
+                    n_samples, duration))
 
-            else:
-                if self.verbose:
-                    print("[t-SNE] Computing {} nearest neighbors..."
-                          .format(n_neighbors))
+            t0 = time()
+            distances_nn = knn.kneighbors_graph(
+                n_neighbors=n_neighbors, mode='distance')
+            duration = time() - t0
+            if self.verbose:
+                print("[t-SNE] Computed neighbors for {} samples "
+                      "in {:.3f}s...".format(n_samples, duration))
 
-                # Find the nearest neighbors for every point
-                knn = NearestNeighbors(algorithm='auto',
-                                       n_neighbors=n_neighbors,
-                                       metric=self.metric)
-                t0 = time()
-                knn.fit(X)
-                duration = time() - t0
-                if self.verbose:
-                    print("[t-SNE] Indexed {} samples in {:.3f}s...".format(
-                        n_samples, duration))
-
-                t0 = time()
-                distances_nn = knn.kneighbors_graph(
-                    n_neighbors=n_neighbors, mode='distance')
-                duration = time() - t0
-                if self.verbose:
-                    print("[t-SNE] Computed neighbors for {} samples "
-                          "in {:.3f}s...".format(n_samples, duration))
-
-                # Free the memory used by the ball_tree
-                del knn
+            # Free the memory used by the ball_tree
+            del knn
 
             if self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared

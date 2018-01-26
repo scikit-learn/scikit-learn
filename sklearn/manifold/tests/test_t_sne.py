@@ -364,12 +364,11 @@ def test_exact_no_precomputed_sparse():
 
 def test_high_perplexity_precomputed_sparse_distances():
     # Perplexity should be less than 50
-    dist = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 0.]])
+    dist = np.array([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.]])
     bad_dist = sp.csr_matrix(dist)
     tsne = TSNE(metric="precomputed")
-    assert_raises_regexp(ValueError, "2 neighbors per sample are "
-                         "required .*perplexity.*precomputed distance.*",
-                         tsne.fit_transform, bad_dist)
+    msg = "2 neighbors per samples are required, but some samples have only 1"
+    assert_raises_regexp(ValueError, msg, tsne.fit_transform, bad_dist)
 
 
 def test_sparse_precomputed_distance():

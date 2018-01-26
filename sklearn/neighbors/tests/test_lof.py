@@ -118,7 +118,8 @@ def test_pipeline_with_nearest_neighbors_transformer():
     est_chain = make_pipeline(
         neighbors.KNeighborsTransformer(
             n_neighbors=n_neighbors, mode='distance', include_self=False),
-        neighbors.LocalOutlierFactor(metric='precomputed'))
+        neighbors.LocalOutlierFactor(
+            metric='precomputed', n_neighbors=n_neighbors))
     est_compact = neighbors.LocalOutlierFactor(n_neighbors=n_neighbors)
 
     pred_chain = est_chain.fit_predict(X)

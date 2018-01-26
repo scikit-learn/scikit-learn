@@ -13,11 +13,9 @@
 import warnings
 
 import numpy as np
-from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
-from .base import _decompose_neighbors_graph
 from ..base import RegressorMixin
 from ..utils import check_array
 
@@ -151,10 +149,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        if self.metric == 'precomputed' and issparse(X):
-            neigh_dist, neigh_ind = _decompose_neighbors_graph(X, False)
-        else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
+        neigh_dist, neigh_ind = self.kneighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 
@@ -295,10 +290,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        if self.metric == 'precomputed' and issparse(X):
-            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
-        else:
-            neigh_dist, neigh_ind = self.radius_neighbors(X)
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 

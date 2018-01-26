@@ -212,7 +212,8 @@ def test_pipeline_with_nearest_neighbors_transformer():
     est_chain = make_pipeline(
         KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity',
                               include_self=True),
-        SpectralEmbedding(affinity='precomputed', random_state=42))
+        SpectralEmbedding(n_neighbors=n_neighbors, affinity='precomputed',
+                          random_state=42))
     est_compact = SpectralEmbedding(n_neighbors=n_neighbors,
                                     affinity='nearest_neighbors',
                                     random_state=42)

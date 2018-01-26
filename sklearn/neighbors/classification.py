@@ -16,7 +16,7 @@ from ..utils.extmath import weighted_mode
 from .base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin, _decompose_neighbors_graph
+    RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
 from ..utils import check_array
 
@@ -148,10 +148,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        if self.metric == 'precomputed' and sp.issparse(X):
-            neigh_dist, neigh_ind = _decompose_neighbors_graph(X, False)
-        else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
+        neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -196,10 +193,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = check_array(X, accept_sparse='csr')
 
-        if self.metric == 'precomputed' and sp.issparse(X):
-            neigh_dist, neigh_ind = _decompose_neighbors_graph(X, False)
-        else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
+        neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -357,10 +351,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
-        if self.metric == 'precomputed' and sp.issparse(X):
-            neigh_dist, neigh_ind = _decompose_neighbors_graph(X)
-        else:
-            neigh_dist, neigh_ind = self.radius_neighbors(X)
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
 
         inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
         outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]

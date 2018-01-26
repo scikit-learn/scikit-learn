@@ -379,7 +379,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
     est_chain = make_pipeline(
         RadiusNeighborsTransformer(
             radius=radius, mode='distance', include_self=False),
-        DBSCAN(metric='precomputed'))
+        DBSCAN(metric='precomputed', eps=radius))
     est_compact = DBSCAN(eps=radius)
 
     labels_chain = est_chain.fit_predict(X)

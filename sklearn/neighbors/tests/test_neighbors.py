@@ -111,14 +111,14 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
-def check_precomputed(make_train_test):
+def check_precomputed(make_train_test, implicit_diagonal=True):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
     rng = np.random.RandomState(42)
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((3, 4))
     DXX, DYX = make_train_test(X, Y)
-    for method in ['kneighbors']:
+    for method in ['kneighbors', ]:
         # TODO: also test radius_neighbors, but requires different assertion
 
         # As a feature matrix (n_samples by n_features)
@@ -143,19 +143,17 @@ def check_precomputed(make_train_test):
         assert_array_almost_equal(ind_X, ind_D)
 
         # Check X=None in prediction
-        dist_X, ind_X = getattr(nbrs_X, method)(None)
-        dist_D, ind_D = getattr(nbrs_D, method)(None)
-        assert_array_almost_equal(dist_X, dist_D)
-        assert_array_almost_equal(ind_X, ind_D)
+        if implicit_diagonal:
+            dist_X, ind_X = getattr(nbrs_X, method)(None)
+            dist_D, ind_D = getattr(nbrs_D, method)(None)
+            assert_array_almost_equal(dist_X, dist_D)
+            assert_array_almost_equal(ind_X, ind_D)
 
         # Must raise a ValueError if the matrix is not of correct shape
         assert_raises(ValueError, getattr(nbrs_D, method), X)
 
     target = np.arange(X.shape[0])
-    for Est in (neighbors.KNeighborsClassifier,
-                neighbors.RadiusNeighborsClassifier,
-                neighbors.KNeighborsRegressor,
-                neighbors.RadiusNeighborsRegressor):
+    for Est in (neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor):
         est = Est(metric='euclidean')
         est.radius = est.n_neighbors = 1
         pred_X = est.fit(X, target).predict(Y)
@@ -176,46 +174,43 @@ def test_precomputed_dense():
 def test_precomputed_sparse_implicit_diagonal(fmt):
     def make_train_test(X_train, X_test):
         nn = neighbors.NearestNeighbors(n_neighbors=3).fit(X_train)
-        return (nn.kneighbors_graph(mode='distance').asformat(fmt),
+        return (nn.kneighbors_graph(None, mode='distance').asformat(fmt),
                 nn.kneighbors_graph(X_test, mode='distance').asformat(fmt))
 
-    check_precomputed(make_train_test)
+    check_precomputed(make_train_test, implicit_diagonal=True)
 
 
 def test_precomputed_sparse_explicit_diagonal():
     def make_train_test(X_train, X_test):
-        nn = neighbors.NearestNeighbors(n_neighbors=3, radius=10).fit(X_train)
+        nn = neighbors.NearestNeighbors(n_neighbors=3).fit(X_train)
         return (nn.kneighbors_graph(X_train.copy(), mode='distance'),
                 nn.kneighbors_graph(X_test, mode='distance'))
 
-    check_precomputed(make_train_test)
+    check_precomputed(make_train_test, implicit_diagonal=False)
 
 
 def test_precomputed_sparse_invalid():
-    # TODO:
     # Ensures enough number of nearest neighbors
     dist = np.array([[0., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
     neigh.fit(dist_csr)
-    neigh.kneighbors(None, n_neighbors=1)
-    neigh.kneighbors(np.array([[0., 0., 0.]]), n_neighbors=1)
+    neigh.kneighbors(None, n_neighbors=2)
+    neigh.kneighbors(np.array([[0., 0., 0.]]), n_neighbors=2)
 
     dist = np.array([[0., 2., 0.], [2., 0., 3.], [0., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     assert_raises_regex(ValueError, "Not enough neighbors in"
-                        " .* to get 1 nearest neighbors.*", neigh.kneighbors,
-                        None, n_neighbors=1)
+                        " .* to get 2 nearest neighbors.*", neigh.kneighbors,
+                        None, n_neighbors=2)
 
     # Checks error with inconsistent distance matrix
-    dist = np.array([[5., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
+    dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
-    neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
-    neigh.fit(dist_csr)
     assert_raises_regex(ValueError, "Not a valid distance"
                         " .*non-negative values.*", neigh.kneighbors,
-                        None, n_neighbors=1)
+                        dist_csr, n_neighbors=1)
 
 
 def test_precomputed_cross_validation():
@@ -1379,7 +1374,9 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-def test_pipeline_with_nearest_neighbors_transformer():
+# If bonus > 0, we precompute more neighbors than necessary
+@pytest.mark.parametrize('bonus', [0, 2])
+def test_pipeline_with_nearest_neighbors_transformer(bonus):
     # Test chaining KNeighborsTransformer and classifiers/regressors
     rng = np.random.RandomState(0)
     X = 2 * rng.rand(40, 5) - 1
@@ -1393,8 +1390,9 @@ def test_pipeline_with_nearest_neighbors_transformer():
         # compare the chained version and the compact version
         est_chain = make_pipeline(
             neighbors.KNeighborsTransformer(
-                n_neighbors=n_neighbors, mode='distance', include_self=True),
-            klass(metric='precomputed'))
+                n_neighbors=n_neighbors + bonus, mode='distance',
+                include_self=True),
+            klass(metric='precomputed', n_neighbors=n_neighbors))
         est_compact = klass(n_neighbors=n_neighbors)
 
         y_pred_chain = est_chain.fit(X, y).predict(X2)
@@ -1412,8 +1410,8 @@ def test_pipeline_with_nearest_neighbors_transformer():
         # compare the chained version and the compact version
         est_chain = make_pipeline(
             neighbors.RadiusNeighborsTransformer(
-                radius=radius, mode='distance', include_self=True),
-            klass(metric='precomputed'))
+                radius=radius + bonus, mode='distance', include_self=True),
+            klass(metric='precomputed', radius=radius))
         est_compact = klass(radius=radius)
 
         y_pred_chain = est_chain.fit(X, y).predict(X2)

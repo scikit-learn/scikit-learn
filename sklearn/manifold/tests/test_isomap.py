@@ -116,7 +116,8 @@ def test_pipeline_with_nearest_neighbors_transformer():
         neighbors.KNeighborsTransformer(
             n_neighbors=n_neighbors, algorithm=algorithm, mode='distance',
             include_self=False),
-        manifold.Isomap(neighbors_algorithm='precomputed'))
+        manifold.Isomap(
+            n_neighbors=n_neighbors, neighbors_algorithm='precomputed'))
     est_compact = manifold.Isomap(n_neighbors=n_neighbors,
                                   neighbors_algorithm=algorithm)
 
