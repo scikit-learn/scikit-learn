@@ -473,7 +473,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
     def __init__(self, missing_values="NaN", max_neighbors=5,
                  weights="uniform", metric="masked_euclidean",
-                 row_max_missing=0.5, col_max_missing=0.8, copy=True):
+                 row_max_missing=0.5, col_max_missing=0.8,
+                 use_complete=False, copy=True):
 
         self.missing_values = missing_values
         self.max_neighbors = max_neighbors
@@ -481,6 +482,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.metric = metric
         self.row_max_missing = row_max_missing
         self.col_max_missing = col_max_missing
+        self.use_complete = use_complete
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -633,60 +635,144 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         row_has_missing = row_total_missing.astype(np.bool)
 
         if np.any(row_has_missing):
-            # Row index of receivers & identify neighbors (potential donors)
-            receiver_row_index = np.where(row_has_missing)[0].reshape((-1, 1))
-            neighbors = self._fitted_neighbors.kneighbors(
-                X[row_has_missing, :], n_neighbors=adjusted_max_neighbors)
+            if self.use_complete:
+                # Initializations
+                # Mask for fitted_X
+                mask_fx = _get_mask(fitted_X, np.nan)
 
-            # Get row index, distance, and weights of donors
-            knn_distances, knn_row_index = neighbors
-            row_repeats = row_total_missing[row_total_missing != 0]
+                # Locate unique patterns
+                patterns, row_pat_idx = np.unique(
+                    mask, return_inverse=True, axis=0)
 
-            # Weighting: Set self and degenerate donor(s) distance to inf
-            weight_matrix = None
-            if self.weights in ["distance"] or callable(self.weights):
-                weight_matrix = self._get_weight_matrix(
-                    fitted_X,
-                    mask,
-                    adjusted_max_neighbors,
-                    receiver_row_index,
-                    row_repeats,
-                    knn_row_index,
-                    knn_distances
-                )
+                # Get row idx for receivers (missing)
+                receiver_row_missing_index, _ = np.where(mask)
 
-            # Repeat each set donor indices by
-            # missing count in the corresponding recipient row
-            knn_row_index_repeat = np.repeat(
-                knn_row_index, row_repeats, axis=0).ravel()
+                # For every pattern, index receivers and potential donors
+                for p in range(len(patterns)):
+                    if not np.any(patterns[p]):
+                        continue
+                    # receivers are those with pattern 'p'
+                    row_has_missing_pat = (row_pat_idx == p)
 
-            # Get repeated column index of donors
-            receiver_row_missing_index, receiver_col_missing_index = \
-                np.where(mask)
-            knn_col_index_repeat = np.repeat(receiver_col_missing_index,
-                                             adjusted_max_neighbors)
+                    # Donors have features missing in receivers available
+                    # The bitwise-AND captures if something is missing in both
+                    donor_row_idx = ~np.any(patterns[p] & mask_fx, axis=1)
 
-            # Retrieve donor cells and calculate kNN score
-            donors = fitted_X[
-                knn_row_index_repeat, knn_col_index_repeat].reshape(
-                (-1, adjusted_max_neighbors))
-            donors_mask = _get_mask(donors, self.missing_values)
-            donors = np.ma.array(donors, mask=donors_mask)
+                    # Change donor set to ones not missing relevant features
+                    self._fitted_neighbors._fit_X = fitted_X[donor_row_idx]
+                    if len(self._fitted_neighbors._fit_X) < self.max_neighbors:
+                        err_msg = "Insufficient neighbors with feature values."
+                        raise ValueError(err_msg)
 
-            # Warning if donor count < max_neighbors
-            if np.any(donors_mask.sum(axis=1) < self.max_neighbors):
-                warnings.warn("One or more donor(s) have the relevant "
-                              "feature value missing.")
+                    # Row index of receivers & identify potential donors
+                    receiver_row_index = np.where(
+                        row_has_missing_pat)[0].reshape((-1, 1))
+                    neighbors = self._fitted_neighbors.kneighbors(
+                        X[row_has_missing_pat, :],
+                        n_neighbors=self.max_neighbors)
 
-            # Final imputation
-            imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
-            X[mask] = imputed.data
-            unimputed_index = np.where(donors_mask.all(axis=1))
-            if len(unimputed_index[0]) > 0:
-                unimputed_rows = receiver_row_missing_index[unimputed_index]
-                unimputed_cols = receiver_col_missing_index[unimputed_index]
-                X[unimputed_rows, unimputed_cols] = np.take(self.statistics_,
-                                                            unimputed_cols)
+                    # Get row index, distance, and weights of donors
+                    knn_distances, knn_row_index = neighbors
+                    row_repeats = row_total_missing[row_has_missing_pat]
+
+                    # Weighting: Set self/degenerate donor(s) distance to inf
+                    weight_matrix = None
+                    if self.weights in ["distance"] or callable(self.weights):
+                        weight_matrix = self._get_weight_matrix(
+                            self._fitted_neighbors._fit_X,
+                            mask,
+                            self.max_neighbors,
+                            receiver_row_index,
+                            row_repeats,
+                            knn_row_index,
+                            knn_distances
+                        )
+
+                    # Repeat each set donor indices by
+                    # missing count in the corresponding recipient row
+                    knn_row_index_repeat = np.repeat(
+                        knn_row_index, row_repeats, axis=0).ravel()
+
+                    # Get repeated column index of donors
+                    _, receiver_col_missing_index = \
+                        np.where(mask[row_has_missing_pat])
+                    knn_col_index_repeat = np.repeat(
+                        receiver_col_missing_index,
+                        self.max_neighbors)
+
+                    # Retrieve donor cells and calculate kNN score
+                    donors = self._fitted_neighbors._fit_X[
+                        knn_row_index_repeat, knn_col_index_repeat].reshape(
+                        (-1, self.max_neighbors))
+                    donors_mask = _get_mask(donors, self.missing_values)
+                    donors = np.ma.array(donors, mask=donors_mask)
+
+                    # Final imputation
+                    imputed = np.ma.average(donors, axis=1,
+                                            weights=weight_matrix)
+                    X[np.where(row_has_missing_pat)[0],
+                      receiver_col_missing_index] = imputed.data
+
+                    # Recover original dataset
+                    self._fitted_neighbors._fit_X = fitted_X
+            else:
+                # Row index of receivers & identify potential donors
+                receiver_row_index = np.where(
+                    row_has_missing)[0].reshape((-1, 1))
+                neighbors = self._fitted_neighbors.kneighbors(
+                    X[row_has_missing, :], n_neighbors=adjusted_max_neighbors)
+
+                # Get row index, distance, and weights of donors
+                knn_distances, knn_row_index = neighbors
+                row_repeats = row_total_missing[row_total_missing != 0]
+
+                # Weighting: Set self and degenerate donor(s) distance to inf
+                weight_matrix = None
+                if self.weights in ["distance"] or callable(self.weights):
+                    weight_matrix = self._get_weight_matrix(
+                        fitted_X,
+                        mask,
+                        adjusted_max_neighbors,
+                        receiver_row_index,
+                        row_repeats,
+                        knn_row_index,
+                        knn_distances
+                    )
+
+                # Repeat each set donor indices by
+                # missing count in the corresponding recipient row
+                knn_row_index_repeat = np.repeat(
+                    knn_row_index, row_repeats, axis=0).ravel()
+
+                # Get repeated column index of donors
+                receiver_row_missing_index, receiver_col_missing_index = \
+                    np.where(mask)
+                knn_col_index_repeat = np.repeat(receiver_col_missing_index,
+                                                 adjusted_max_neighbors)
+
+                # Retrieve donor cells and calculate kNN score
+                donors = fitted_X[
+                    knn_row_index_repeat, knn_col_index_repeat].reshape(
+                    (-1, adjusted_max_neighbors))
+                donors_mask = _get_mask(donors, self.missing_values)
+                donors = np.ma.array(donors, mask=donors_mask)
+
+                # Warning if donor count < max_neighbors
+                if np.any(donors_mask.sum(axis=1) < self.max_neighbors):
+                    warnings.warn("One or more donor(s) have the relevant "
+                                  "feature value missing.")
+
+                # Final imputation
+                imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
+                X[mask] = imputed.data
+                unimputed_index = np.where(donors_mask.all(axis=1))
+                if len(unimputed_index[0]) > 0:
+                    unimputed_rows = receiver_row_missing_index[
+                        unimputed_index]
+                    unimputed_cols = receiver_col_missing_index[
+                        unimputed_index]
+                    X[unimputed_rows, unimputed_cols] = np.take(
+                        self.statistics_, unimputed_cols)
 
         # Merge bad rows to X and mean impute their missing values
         if np.any(bad_rows):

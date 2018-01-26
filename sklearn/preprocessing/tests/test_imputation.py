@@ -897,3 +897,37 @@ def test_callable_metric():
 
     imputer = KNNImputer(max_neighbors=2, metric=custom_callable)
     assert_array_equal(imputer.fit_transform(X), X_imputed)
+
+
+def test_complete_features():
+
+    # Test with use_complete=True
+    X = np.array([
+        [0,      0, 0,       np.nan],
+        [1,      1, 1,       np.nan],
+        [2,      2, np.nan,  2],
+        [3,      3, 3,       3],
+        [4,      4, 4,       4],
+        [5,      5, 5,       5],
+        [6,      6, 6,       6],
+        [np.nan, 7, 7,       7]
+    ])
+
+    r0c3 = np.mean(X[2:-1, -1])
+    r1c3 = np.mean(X[2:-1, -1])
+    r2c2 = np.nanmean(X[:6, 2])
+    r7c0 = np.mean(X[2:-1, 0])
+
+    X_imputed = np.array([
+        [0,     0, 0,    r0c3],
+        [1,     1, 1,    r1c3],
+        [2,     2, r2c2, 2],
+        [3,     3, 3,    3],
+        [4,     4, 4,    4],
+        [5,     5, 5,    5],
+        [6,     6, 6,    6],
+        [r7c0,  7, 7,    7]
+    ])
+
+    imputer_comp = KNNImputer(use_complete=True)
+    assert_array_equal(imputer_comp.fit_transform(X), X_imputed)
