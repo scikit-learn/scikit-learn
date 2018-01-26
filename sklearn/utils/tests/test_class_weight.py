@@ -130,12 +130,14 @@ def test_balanced_class_weight_numerical_precision(freq):
     # make sure we do comparisons as numpy floats to maintain imprecision
     w = compute_class_weight('balanced', np.arange(k), y)
     wfreq = w * freq
-    diff = np.diff(wfreq.reshape((k,1)) - wfreq.reshape((1,k)))
-    assert np.all(np.abs(diff) < 1e-6)  # we want to be very close to true balance
+    diff = np.diff(wfreq.reshape((k, 1)) - wfreq.reshape((1, k)))
+    # we want to be very close to true balance
+    assert np.all(np.abs(diff) < 1e-6)
     # sum of frequence should be close to the weighted sum
     assert_allclose(np.sum(wfreq), np.sum(freq))
     # but in case of ambiguity, deterministically prefer original distribution
-    assert np.all(diff == 0) or np.all(np.equal(np.argsort(freq), np.argsort(wfreq)))
+    assert (np.all(diff == 0) or np.all(np.equal(np.argsort(freq),
+                                                 np.argsort(wfreq))))
 
 
 def test_compute_class_weight_balanced_unordered():
