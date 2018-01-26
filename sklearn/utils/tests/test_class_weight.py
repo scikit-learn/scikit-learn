@@ -8,6 +8,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils.class_weight import compute_sample_weight
 
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
@@ -132,7 +133,7 @@ def test_balanced_class_weight_numerical_precision(freq):
     diff = np.diff(wfreq.reshape((k,1)) - wfreq.reshape((1,k)))
     assert np.all(np.abs(diff) < 1e-6)  # we want to be very close to true balance
     # sum of frequence should be close to the weighted sum
-    assert_almost_equal(np.sum(wfreq), np.sum(freq))
+    assert_allclose(np.sum(wfreq), np.sum(freq))
     # but in case of ambiguity, deterministically prefer original distribution
     assert np.all(diff == 0) or np.all(np.equal(np.argsort(freq), np.argsort(wfreq)))
 
