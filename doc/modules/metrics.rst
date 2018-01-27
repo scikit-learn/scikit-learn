@@ -177,7 +177,7 @@ It can be computed using :func:`chi2_kernel` and then passed to an
 
 It can also be directly used as the ``kernel`` argument::
 
-    >>> svm = SVC(gamma='scale', kernel=chi2_kernel).fit(X, y)
+    >>> svm = SVC(kernel=chi2_kernel).fit(X, y)
     >>> svm.predict(X)
     array([0, 1, 0, 1])
 

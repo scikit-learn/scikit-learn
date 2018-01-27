@@ -182,7 +182,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             else:
                 if (self.gamma == 'auto_deprecated' and
                         self.kernel not in ('linear', 'precomputed') and
-                        not np.isclose(X_std, 1.0)):
+                        not np.isclose(X_std, 1.0) and
+                        not callable(self.kernel)):
                     # NOTE: when deprecation ends we need to remove explicitly
                     # setting `gamma` in examples (also in tests). See
                     # https://github.com/scikit-learn/scikit-learn/pull/10331
