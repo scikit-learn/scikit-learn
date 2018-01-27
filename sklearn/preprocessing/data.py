@@ -3386,3 +3386,4 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     X_tr[mask, idx] = None
 
         return X_tr
+        
