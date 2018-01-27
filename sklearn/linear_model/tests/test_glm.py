@@ -12,7 +12,7 @@ from sklearn.linear_model.glm import (
     GammaDistribution, InverseGaussianDistribution,
     GeneralizedHyperbolicSecand,
     GeneralizedLinearRegressor)
-from sklearn.linear_model.ridge import Ridge
+from sklearn.linear_model import ElasticNet, Ridge
 
 from sklearn.utils.testing import (
     assert_equal, assert_almost_equal,
@@ -267,12 +267,35 @@ def test_poisson_ridge():
                                   decimal=s_dec[solver])
 
 
+def test_normal_enet():
+    """Tet elastic net regression with normal/gaussian family"""
+    rng = np.random.RandomState(0)
+    alpha, l1_ratio = 0.3, 0.7
+    n_samples, n_features = 20, 2
+    X = rng.randn(n_samples, n_features).copy(order='F')
+    beta = rng.randn(n_features)
+    y = 2 + np.dot(X, beta) + rng.randn(n_samples)
+
+    glm = GeneralizedLinearRegressor(alpha=alpha, l1_ratio=l1_ratio,
+                                     family='normal', link='identity',
+                                     fit_intercept=True, tol=1e-7,
+                                     max_iter=100, selection='cyclic',
+                                     solver='cd', start_params='zero',
+                                     check_input=False)
+    glm.fit(X, y)
+
+    enet = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, fit_intercept=True,
+                      normalize=False, tol=1e-7, copy_X=True)
+    enet.fit(X, y)
+
+    assert_almost_equal(glm.intercept_, enet.intercept_)
+    assert_array_almost_equal(glm.coef_, enet.coef_)
+
+
 def test_poisson_enet():
     """Test elastic net regression with poisson family and LogLink
 
     Compare to R's glmnet"""
-    # library("glmnet")
-    # options(digits=10)
     # library("glmnet")
     # options(digits=10)
     # df <- data.frame(a=c(-2,-1,1,2), b=c(0,0,1,1), y=c(0,1,1,2))
