@@ -31,7 +31,17 @@ new observations can then be sorted as inliers or outliers with a
 
     estimator.predict(X_test)
 
-Inliers are labeled 1, while outliers are labeled -1.
+Inliers are labeled 1, while outliers are labeled -1. The predict method
+makes use of a threshold on the raw scoring function computed by the
+estimator. This scoring function is accessible through the `score_samples`
+method, while the threshold can be controlled by the `contamination`
+parameter.
+
+The `decision_function` method is also defined from the scoring function,
+in such a way that negative values are outliers and non-negative ones are
+inliers::
+
+    estimator.decision_function(X_test)
 
 Overview of outlier detection methods
 =====================================
