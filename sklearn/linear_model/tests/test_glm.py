@@ -278,18 +278,18 @@ def test_normal_enet():
 
     glm = GeneralizedLinearRegressor(alpha=alpha, l1_ratio=l1_ratio,
                                      family='normal', link='identity',
-                                     fit_intercept=True, tol=1e-7,
+                                     fit_intercept=True, tol=1e-8,
                                      max_iter=100, selection='cyclic',
                                      solver='cd', start_params='zero',
                                      check_input=False)
     glm.fit(X, y)
 
     enet = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, fit_intercept=True,
-                      normalize=False, tol=1e-7, copy_X=True)
+                      normalize=False, tol=1e-8, copy_X=True)
     enet.fit(X, y)
 
-    assert_almost_equal(glm.intercept_, enet.intercept_)
-    assert_array_almost_equal(glm.coef_, enet.coef_)
+    assert_almost_equal(glm.intercept_, enet.intercept_, decimal=7)
+    assert_array_almost_equal(glm.coef_, enet.coef_, decimal=7)
 
 
 def test_poisson_enet():
