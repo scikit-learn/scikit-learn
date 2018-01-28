@@ -31,7 +31,6 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..externals import six
-from ..exceptions import NearInifinteValuesWarning
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -122,12 +121,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
-            if X.max() == np.finfo(DTYPE).max or \
-               X.min() == np.finfo(DTYPE).min:
-                warnings.warn("X contains near infinite values. If possible, "
-                              "X should be scaled in order to avoid "
-                              "infinite values to appear during tree fitting.",
-                              NearInifinteValuesWarning)
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape

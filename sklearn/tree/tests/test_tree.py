@@ -36,7 +36,7 @@ from sklearn.utils.testing import assert_raise_message
 
 from sklearn.utils.validation import check_random_state
 
-from sklearn.exceptions import NotFittedError, NearInifinteValuesWarning
+from sklearn.exceptions import NotFittedError
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -1748,16 +1748,3 @@ def test_empty_leaf_infinite_threshold(data):
     infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
     assert (len(infinite_threshold) == 0)
     assert (len(empty_leaf) == 0)
-
-
-def test_near_infinite_warning():
-    # check if warning is correctly raised if X contains near infinite values
-    X = np.random.RandomState(0).randn(10, 2)
-    X[0, 0] = np.finfo(np.float32).max
-    y = np.random.RandomState(0).randn(10, 1)
-    est = DecisionTreeRegressor()
-    assert_warns_message(NearInifinteValuesWarning,
-                         "X contains near infinite values. If possible, "
-                         "X should be scaled in order to avoid "
-                         "infinite values to appear during tree fitting.",
-                         est.fit, X, y)
