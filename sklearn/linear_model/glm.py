@@ -63,11 +63,14 @@ def _check_weights(sample_weight, n_samples):
     if sample_weight is None:
         weights = np.ones(n_samples)
     elif np.isscalar(sample_weight):
-        if sample_weight < 0:
+        if sample_weight <= 0:
             raise ValueError("Sample weights must be non-negative.")
         weights = sample_weight*np.ones(n_samples)
     else:
-        weights = np.atleast_1d(sample_weight)
+        _dtype = [np.float64, np.float32]
+        weights = check_array(sample_weight, accept_sparse='csr',
+                              force_all_finite=True, ensure_2d=False,
+                              dtype=_dtype)
         if weights.ndim > 1:
             raise ValueError("Sample weight must be 1D array or scalar")
         elif weights.shape[0] != n_samples:
@@ -75,6 +78,9 @@ def _check_weights(sample_weight, n_samples):
                              " y")
         if not np.all(weights >= 0):
             raise ValueError("Sample weights must be non-negative.")
+        elif not np.sum(weights) > 0:
+            raise ValueError("Sample weights must have at least one positive "
+                             "element.")
 
     return weights
 
@@ -1010,10 +1016,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  "with L1 penalties, which are included with "
                                  "(alpha={1}) and (l1_ratio={2})."
                                  .format(solver, self.alpha, self.l1_ratio))
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError("Maximum number of iteration must be positive;"
+        if (not isinstance(self.max_iter, six.integer_types)
+                or self.max_iter <= 0):
+            raise ValueError("Maximum number of iteration must be a positive "
+                             "integer;"
                              " got (max_iter={0!r})".format(self.max_iter))
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+        if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol={0!r})".format(self.tol))
         if not isinstance(self.warm_start, bool):
@@ -1029,7 +1037,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  " length,"
                                  " got(start_params={0})".format(start_params))
         else:
-            start_params = np.atleast_1d(start_params)
+            start_params = check_array(start_params, accept_sparse='csr',
+                                       force_all_finite=True, ensure_2d=False,
+                                       dtype=_dtype, copy=True)
             if ((start_params.shape[0] != X.shape[1] + self.fit_intercept) or
                     (start_params.ndim != 1)):
                 raise ValueError("Start values for parameters must have the"
@@ -1160,7 +1170,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         # set start values for coef
         coef = None
-        if self.warm_start and hasattr(self, "coef_"):
+        if self.warm_start and hasattr(self, 'coef_'):
             if self.fit_intercept:
                 coef = np.concatenate((np.array([self.intercept_]),
                                        self.coef_))

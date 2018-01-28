@@ -5,7 +5,7 @@ from scipy import sparse
 
 from sklearn.linear_model.glm import (
     Link,
-    # IdentityLink,
+    IdentityLink,
     LogLink,
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
@@ -16,7 +16,8 @@ from sklearn.linear_model import ElasticNet, Ridge
 
 from sklearn.utils.testing import (
     assert_equal, assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal)
+    assert_array_equal, assert_array_almost_equal,
+    assert_raises)
 
 
 def test_link_properties():
@@ -102,6 +103,34 @@ def test_fisher_matrix():
         assert_allclose(fisher, approx, rtol=1e-3)
 
 
+def test_sample_weights_validation():
+    """Test the raised errors in the validation of sample_weight"""
+    # 1. scalar value but not positive
+    X = [[1]]
+    y = [1]
+    weights = 0
+    glm = GeneralizedLinearRegressor(fit_intercept=False)
+    assert_raises(ValueError, glm.fit, X, y, weights)
+
+    # 2. 2d array
+    weights = [[0]]
+    assert_raises(ValueError, glm.fit, X, y, weights)
+
+    # 3. 1d but wrong length
+    weights = [1, 0]
+    assert_raises(ValueError, glm.fit, X, y, weights)
+
+    # 4. 1d but only zeros (sum not greater than 0)
+    weights = [0, 0]
+    X = [[0], [1]]
+    y = [1, 2]
+    assert_raises(ValueError, glm.fit, X, y, weights)
+
+    # 5. 1d but weith a negative value
+    weights = [2, -1]
+    assert_raises(ValueError, glm.fit, X, y, weights)
+
+
 def test_glm_family_argument():
     """Test GLM family argument set as string
     """
@@ -115,6 +144,147 @@ def test_glm_family_argument():
                                          alpha=0).fit(X, y)
         assert_equal(type(glm._family_instance), type(fam))
 
+    glm = GeneralizedLinearRegressor(family='not a family',
+                                     fit_intercept=False)
+    assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_link_argument():
+    """Test GLM link argument set as string
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for (l, link) in [('identity', IdentityLink()),
+                      ('log', LogLink())]:
+        glm = GeneralizedLinearRegressor(family='normal', fit_intercept=False,
+                                         link=l).fit(X, y)
+        assert_equal(type(glm._link_instance), type(link))
+
+    glm = GeneralizedLinearRegressor(family='normal', fit_intercept=False,
+                                     link='not a link')
+    assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_alpha_argument():
+    """Test GLM alpha argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for alpha in ['not a number', -4.2]:
+        glm = GeneralizedLinearRegressor(family='normal', fit_intercept=False,
+                                         alpha=alpha)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_l1_ratio_argument():
+    """Test GLM l1_ratio argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for l1_ratio in ['not a number', -4.2, 1.1, [1]]:
+        glm = GeneralizedLinearRegressor(family='normal', fit_intercept=False,
+                                         l1_ratio=l1_ratio)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_fit_intercept_argument():
+    """Test GLM fit_intercept argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for fit_intercept in ['not bool', 1, 0, [True]]:
+        glm = GeneralizedLinearRegressor(fit_intercept=fit_intercept)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_solver_argument():
+    """Test GLM solver argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for solver in ['not a solver', 1, [1]]:
+        glm = GeneralizedLinearRegressor(solver=solver)
+        assert_raises(ValueError, glm.fit, X, y)
+
+    # solver not suitable for L1 penalty
+    for solver in ['irls', 'lbfgs', 'newton-cg']:
+        glm = GeneralizedLinearRegressor(solver=solver, alpha=1, l1_ratio=0.1)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_max_iter_argument():
+    """Test GLM max_iter argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for max_iter in ['not a number', 0, -1, 5.5, [1]]:
+        glm = GeneralizedLinearRegressor(max_iter=max_iter)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_tol_argument():
+    """Test GLM tol argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for tol in ['not a number', 0, -1.0, [1e-3]]:
+        glm = GeneralizedLinearRegressor(tol=tol)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_warm_start_argument():
+    """Test GLM warm_start argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for warm_start in ['not bool', 1, 0, [True]]:
+        glm = GeneralizedLinearRegressor(warm_start=warm_start)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_start_params_argument():
+    """Test GLM start_params argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for start_params in ['not a start_params', ['zero'], [0, 0, 0],
+                         [[0, 0]], ['a', 'b']]:
+        glm = GeneralizedLinearRegressor(start_params=start_params)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_selection_argument():
+    """Test GLM selection argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for selection in ['not a selection', 1, 0, ['cyclic']]:
+        glm = GeneralizedLinearRegressor(selection=selection)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_check_input_argument():
+    """Test GLM check_input argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for check_input in ['not bool', 1, 0, [True]]:
+        glm = GeneralizedLinearRegressor(check_input=check_input)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_random_state_argument():
+    """Test GLM random_state argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for random_state in ['a string', 0.5, [0]]:
+        glm = GeneralizedLinearRegressor(random_state=random_state)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+# TODO: check P1 and P2
+# TODO: check additional validations if check_input == True
 
 def test_glm_identiy_regression():
     """Test GLM regression with identity link on a simple dataset
