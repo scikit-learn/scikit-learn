@@ -905,7 +905,8 @@ are the following:
 
   * If the target values are positive valued and skewed, you might try a Gamma deviance.
 
-  * If the target values seem to be heavy tailed, you might try an Inverse Gaussian deviance (or even higher variance power of the Tweedie family).
+  * If the target values seem to be heavier tailed than a Gamma distribution, you might try an Inverse Gaussian deviance (or even higher variance powers of the Tweedie family).
+    Keep in mind that the mean is not a good measure for very heavy tailed distributions, cf. extreme value theory.
 
 Since the linear predictor :math:`Xw` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
