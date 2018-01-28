@@ -148,6 +148,7 @@ plt.xticks(
      'true negative rate adaboost')
 )
 plt.ylabel('scores')
-plt.title('Classifiers tpr and tnr before and after calibration')
+plt.title('tpr and tnr before and after calibration on Logistic Regression and'
+          'Adaboost')
 plt.legend()
 plt.show()
