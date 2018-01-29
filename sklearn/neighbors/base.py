@@ -328,7 +328,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        if self.effective_metric_ == 'precomputed':
+        if getattr(self, 'effective_metric_', '') == 'precomputed':
             X = _check_precomputed(X)
         else:
             X = check_array(X, accept_sparse='csr')
@@ -462,7 +462,7 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ == 'precomputed':
+            if getattr(self, 'effective_metric_', '') == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = check_array(X, accept_sparse='csr')
@@ -611,7 +611,7 @@ class KNeighborsMixin(object):
 
         # kneighbors does the None handling.
         if X is not None:
-            if self.effective_metric_ == 'precomputed':
+            if getattr(self, 'effective_metric_', '') == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = check_array(X, accept_sparse='csr')
@@ -717,7 +717,7 @@ class RadiusNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ == 'precomputed':
+            if getattr(self, 'effective_metric_', '') == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = check_array(X, accept_sparse='csr')
@@ -846,7 +846,7 @@ class RadiusNeighborsMixin(object):
         kneighbors_graph
         """
         if X is not None:
-            if self.effective_metric_ == 'precomputed':
+            if getattr(self, 'effective_metric_', '') == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
