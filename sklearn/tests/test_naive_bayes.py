@@ -676,16 +676,16 @@ def test_alpha_vector():
 
     # Setting alpha=np.array with same length
     # as number of features should be fine
-    alpha = np.array([1., 2.])
+    alpha = np.array([1, 2])
     nb = MultinomialNB(alpha=alpha)
     nb.partial_fit(X, y, classes=[0, 1])
 
     # Test feature probabilities uses pseudo-counts (alpha)
-    feature_prob = np.array([[1./2, 1./2], [2./5, 3./5]])
+    feature_prob = np.array([[1 / 2, 1 / 2], [2 / 5, 3 / 5]])
     assert_array_almost_equal(nb.feature_log_prob_, np.log(feature_prob))
 
     # Test predictions
-    prob = np.array([[5./9, 4./9], [25./49, 24./49]])
+    prob = np.array([[5 / 9, 4 / 9], [25 / 49, 24 / 49]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test alpha non-negative
@@ -695,6 +695,15 @@ def test_alpha_vector():
     m_nb = MultinomialNB(alpha=alpha)
     assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
 
+    # Test that too small pseudo-counts are replaced
+    ALPHA_MIN = 1e-10
+    alpha = np.array([ALPHA_MIN / 2, 0.5])
+    m_nb = MultinomialNB(alpha=alpha)
+    m_nb.partial_fit(X, y, classes=[0, 1])
+    assert_array_almost_equal(m_nb._check_alpha(),
+                              [ALPHA_MIN, 0.5],
+                              decimal=12)
+    
     # Test correct dimensions
     alpha = np.array([1., 2., 3.])
     m_nb = MultinomialNB(alpha=alpha)

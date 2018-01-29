@@ -478,7 +478,7 @@ class BaseDiscreteNB(BaseNB):
         if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn('alpha too small will result in numeric errors, '
                           'setting alpha = %.1e' % _ALPHA_MIN)
-            return _ALPHA_MIN
+            return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
