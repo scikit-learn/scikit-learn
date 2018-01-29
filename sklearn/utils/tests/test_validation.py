@@ -289,29 +289,26 @@ def test_check_array():
     X_str = [['a', 'b'], ['c', 'd']]
     assert_warns_message(
         DeprecationWarning,
-        lambda message:  # numpy may convert to dtype U1 or S1 so check both
-        "arrays with dtype {} will be handled as arrays with dtype object"
-        .format(np.dtype('U1')) in message or
-        "arrays with dtype {} will be handled as arrays with dtype object"
-        .format(np.dtype('S1')) in message,
+        "arrays of strings will be interpreted as decimal numbers "
+        "if parameter 'dtype' is 'numeric'.",
         check_array, X_str, "numeric")
     assert_warns_message(
         DeprecationWarning,
-        "arrays with dtype {} will be handled as arrays with dtype object"
-        .format(np.dtype('U1')),
+        "arrays of strings will be interpreted as decimal numbers "
+        "if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_str, dtype='U1'), "numeric")
 
     # deprecation warning if byte-like array with dtype="numeric"
     X_byte = [[b'a', b'b'], [b'c', b'd']]
     assert_warns_message(
         DeprecationWarning,
-        "arrays with dtype {} will be handled as arrays with dtype object"
-        .format(np.dtype('S1')),
+        "arrays of strings will be interpreted as decimal numbers "
+        "if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_byte, dtype='S1'), "numeric")
     assert_warns_message(
         DeprecationWarning,
-        "arrays with dtype {} will be handled as arrays with dtype object"
-        .format(np.dtype('V1')),
+        "arrays of strings will be interpreted as decimal numbers "
+        "if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_byte, dtype='V1'), "numeric")
 
 
