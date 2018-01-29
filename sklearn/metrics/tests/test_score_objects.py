@@ -19,7 +19,8 @@ from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss, precision_score, recall_score)
+                             log_loss, precision_score, recall_score,
+                             jaccard_similarity_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
@@ -39,6 +40,10 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
+from functools import partial
+
+jaccard_similarity_score = partial(jaccard_similarity_score, average='binary')
+
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -52,7 +57,9 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss', 'brier_score_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss', 'jaccard_similarity',
+               'jaccard_similarity_weighted', 'jaccard_similarity_macro',
+               'jaccard_similarity_micro']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -64,7 +71,8 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
                    "normalized_mutual_info_score",
                    "fowlkes_mallows_score"]
 
-MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
+MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
+                           'jaccard_similarity_samples']
 
 
 def _make_estimators(X_train, y_train, y_ml_train):
@@ -283,7 +291,8 @@ def test_classification_scores():
     clf.fit(X_train, y_train)
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
-                           ('recall', recall_score)]:
+                           ('recall', recall_score),
+                           ('jaccard_similarity', jaccard_similarity_score)]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
         score2 = metric(y_test, clf.predict(X_test), pos_label=None,
