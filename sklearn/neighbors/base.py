@@ -98,17 +98,53 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-def _is_sorted(graph):
+def _is_sorted_by_data(graph):
+    """Returns whether the graph's non-zero entries are sorted by data
+
+    The non-zero entries are stored in graph.data and graph.indices.
+    For each row (or sample), the non-zero entries can be either:
+        - sorted by indices, as after graph.sort_indices()
+        - sorted by data, as after _check_precomputed(graph)
+        - not sorted.
+
+    Parameters
+    ----------
+    graph : CSR sparse matrix, shape (n_samples, n_samples)
+        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+
+    Returns
+    -------
+    res : boolean
+        Whether input graph is sorted by data
+    """
     assert issparse(graph)
     out_of_order = graph.data[:-1] > graph.data[1:]
     return (out_of_order.sum() == out_of_order.take(graph.indptr[1:-1] - 1,
                                                     mode='clip').sum())
 
 
-def _check_precomputed(graph):
-    """Check precomputed nearest neighbors graph"""
-    if not issparse(graph):
-        return check_array(graph)
+def _check_precomputed(X):
+    """Check precomputed precomputed distance matrix
+
+    If the precomputed distance matrix is sparse, it checks that the non-zero
+    entries are sorted by distances. If not, the matrix is copied and sorted.
+
+    Parameters
+    ----------
+    X : {sparse matrix, array-like}, (n_samples, n_samples)
+        Distance matrix to other samples. X may be a sparse matrix, in which
+        case only non-zero elements may be considered neighbors.
+
+    Returns
+    -------
+    X : {sparse matrix, array-like}, (n_samples, n_samples)
+        Distance matrix to other samples. X may be a sparse matrix, in which
+        case only non-zero elements may be considered neighbors.
+    """
+    if not issparse(X):
+        return check_array(X)
+    else:
+        graph = X
 
     if graph.format not in ('csr', 'csc', 'coo', 'lil'):
         raise TypeError('Sparse matrix in {!r} format is not supported due to '
@@ -116,7 +152,7 @@ def _check_precomputed(graph):
     copied = graph.format != 'csr'
     graph = graph.tocsr()
 
-    if not _is_sorted(graph):
+    if not _is_sorted_by_data(graph):
         warnings.warn('Precomputed sparse input was not sorted by data.',
                       EfficiencyWarning)
         if not copied:

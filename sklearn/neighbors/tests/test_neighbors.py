@@ -12,6 +12,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors.base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -187,6 +188,22 @@ def test_precomputed_sparse_explicit_diagonal():
                 nn.kneighbors_graph(X_test, mode='distance'))
 
     check_precomputed(make_train_test, implicit_diagonal=False)
+
+
+def test_is_sorted_by_data():
+    # Test the helper function _is_sorted_by_data
+    X = csr_matrix(np.arange(10))
+    assert _is_sorted_by_data(X)
+    X[0, 2] = 5
+    assert not _is_sorted_by_data(X)
+
+
+def test_check_precomputed():
+    # Test that _check_precomputed returns a graph sorted by data
+    X = csr_matrix(np.random.RandomState(42).randn(10, 10))
+    assert not _is_sorted_by_data(X)
+    Xt = _check_precomputed(X)
+    assert _is_sorted_by_data(Xt)
 
 
 def test_precomputed_sparse_invalid():
