@@ -177,7 +177,7 @@ latest stable release::
 If there are no binary packages matching your python, version you might
 to try to install scikit-learn and its dependencies from `christoph gohlke
 unofficial windows installers
-<http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
+<https://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
 or from a :ref:`python distribution <install_by_distribution>` instead.
 
 

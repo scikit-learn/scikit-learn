@@ -55,7 +55,7 @@ def empirical_covariance(X, assume_centered=False):
     X : ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : Boolean
+    assume_centered : boolean
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -142,7 +142,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        precision_ : array-like,
+        precision_ : array-like
             The precision matrix associated to the current covariance object.
 
         """
@@ -162,12 +162,12 @@ class EmpiricalCovariance(BaseEstimator):
           Training data, where n_samples is the number of samples and
           n_features is the number of features.
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         X = check_array(X)
@@ -193,7 +193,8 @@ class EmpiricalCovariance(BaseEstimator):
             X_test is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------

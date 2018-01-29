@@ -93,7 +93,6 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         # Check parameters
         if self.learning_rate <= 0:
@@ -188,7 +187,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
-        random_state : numpy.RandomState
+        random_state : RandomState
             The current random number generator
 
         Returns
@@ -309,10 +308,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
+    base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes.
+        Support for sample weighting is required, as well as proper
+        ``classes_`` and ``n_classes_`` attributes. If ``None``, then
+        the base estimator is ``DecisionTreeClassifier(max_depth=1)``
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -403,7 +403,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         # Check that algorithm is supported
         if self.algorithm not in ('SAMME', 'SAMME.R'):
@@ -452,7 +451,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
-        random_state : numpy.RandomState
+        random_state : RandomState
             The current random number generator
 
         Returns
@@ -865,9 +864,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeRegressor)
+    base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required.
+        Support for sample weighting is required. If ``None``, then
+        the base estimator is ``DecisionTreeRegressor(max_depth=3)``
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -949,7 +949,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         # Check loss
         if self.loss not in ('linear', 'square', 'exponential'):
@@ -986,7 +985,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
-        random_state : numpy.RandomState
+        random_state : RandomState
             The current random number generator
 
         Returns

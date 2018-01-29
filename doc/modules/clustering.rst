@@ -554,6 +554,8 @@ metric used for the merge strategy:
   observations of pairs of clusters.
 - **Average linkage** minimizes the average of the distances between all
   observations of pairs of clusters.
+- **Single linkage** minimizes the distance between the closest
+  observations of pairs of clusters.
 
 :class:`AgglomerativeClustering` can also scale to large number of samples
 when it is used jointly with a connectivity matrix, but is computationally
@@ -567,30 +569,24 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
-Different linkage type: Ward, complete and average linkage
------------------------------------------------------------
+Different linkage type: Ward, complete, average, and single linkage
+-------------------------------------------------------------------
 
-:class:`AgglomerativeClustering` supports Ward, average, and complete
+:class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_linkage_comparison_001.png
+    :target: ../auto_examples/cluster/plot_linkage_comparison.html
     :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
 
 Agglomerative cluster has a "rich get richer" behavior that leads to
-uneven cluster sizes. In this regard, complete linkage is the worst
+uneven cluster sizes. In this regard, single linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
-Euclidean metrics, average linkage is a good alternative.
+Euclidean metrics, average linkage is a good alternative. Single linkage,
+while not robust to noisy data, can be computed very efficiently and can
+therefore be useful to provide hierarchical clustering of larger datasets.
+Single linkage can also perform well on non-globular data.
 
 .. topic:: Examples:
 
@@ -652,15 +648,16 @@ enable only merging of neighboring pixels on an image, as in the
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
-.. warning:: **Connectivity constraints with average and complete linkage**
+.. warning:: **Connectivity constraints with single, average and complete linkage**
 
-    Connectivity constraints and complete or average linkage can enhance
+    Connectivity constraints and single, complete or average linkage can enhance
     the 'rich getting richer' aspect of agglomerative clustering,
     particularly so if they are built with
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
     :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    Single linkage is the most brittle linkage option with regard to this issue.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
@@ -682,7 +679,7 @@ enable only merging of neighboring pixels on an image, as in the
 Varying the metric
 -------------------
 
-Average and complete linkage can be used with a variety of distances (or
+Single, average and complete linkage can be used with a variety of distances (or
 affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.

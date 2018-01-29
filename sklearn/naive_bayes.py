@@ -186,7 +186,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
@@ -305,7 +304,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._partial_fit(X, y, classes, _refit=False,
                                  sample_weight=sample_weight)
@@ -339,7 +337,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
@@ -519,7 +516,6 @@ class BaseDiscreteNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
@@ -585,7 +581,6 @@ class BaseDiscreteNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
@@ -662,7 +657,7 @@ class MultinomialNB(BaseDiscreteNB):
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    intercept_ : property
+    intercept_ : array, shape (n_classes, )
         Mirrors ``class_log_prior_`` for interpreting MultinomialNB
         as a linear model.
 
@@ -670,7 +665,7 @@ class MultinomialNB(BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    coef_ : property
+    coef_ : array, shape (n_classes, n_features)
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
         as a linear model.
 
