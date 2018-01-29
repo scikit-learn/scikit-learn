@@ -1229,9 +1229,12 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
-        if X.min() < 0:
+
+        # avoid X.min() on sparse matrix since it also sorts the indices
+        X_min = X.data.min() if issparse(X) else X.min()
+        if X_min < 0:
             raise ValueError('Not a valid distance %f<0. Precomputed distance'
-                             ' need to have non-negative values.' % X.min())
+                             ' need to have non-negative values.' % X_min)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]

@@ -98,49 +98,48 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-def _check_sorted(graph):
-    """Check if the sparse graph is correctly sorted by data"""
+def _is_sorted(graph):
+    assert issparse(graph)
     out_of_order = graph.data[:-1] > graph.data[1:]
+    return (out_of_order.sum() == out_of_order.take(graph.indptr[1:-1] - 1,
+                                                    mode='clip').sum())
 
-    if (out_of_order.sum() !=
-            out_of_order.take(graph.indptr[1:-1], mode='clip').sum()):
+
+def _check_precomputed(graph):
+    """Check precomputed nearest neighbors graph"""
+    if not issparse(graph):
+        return check_array(graph)
+
+    if graph.format not in ('csr', 'csc', 'coo', 'lil'):
+        raise TypeError('Sparse matrix in {!r} format is not supported due to '
+                        'its handling of explicit zeros'.format(graph.format))
+    copied = graph.format != 'csr'
+    graph = graph.tocsr()
+
+    if not _is_sorted(graph):
         warnings.warn('Precomputed sparse input was not sorted by data.',
                       EfficiencyWarning)
-        for start, stop in zip(graph.indptr, graph.indptr[1:]):
-            order = np.argsort(graph.data[start:stop], kind='mergesort')
-            graph.data[start:stop] = graph.data[order]
-            graph.indices[start:stop] = graph.indices[order]
+        if not copied:
+            graph = graph.copy()
+
+        # if it has the same number of neighbors for each samples
+        row_nnz = np.diff(graph.indptr)
+        if row_nnz.max() == row_nnz.min():
+            n_samples = graph.shape[0]
+            distances = graph.data.reshape(n_samples, -1)
+
+            order = np.argsort(distances)
+            order += np.arange(n_samples)[:, None] * row_nnz[0]
+            order = order.ravel()
+            graph.data = graph.data[order]
+            graph.indices = graph.indices[order]
+
+        else:
+            for start, stop in zip(graph.indptr, graph.indptr[1:]):
+                order = np.argsort(graph.data[start:stop], kind='mergesort')
+                graph.data[start:stop] = graph.data[start:stop][order]
+                graph.indices[start:stop] = graph.indices[start:stop][order]
     return graph
-
-
-def _kneighbors_from_graph_2(graph, n_neighbors):
-    """Alternative to _kneighbors_from_graph, needs to be benchmarked"""
-    graph = _check_sorted(graph)
-    n_samples = graph.shape[0]
-
-    # number of neighbors for each samples
-    row_nnz = np.diff(graph.indptr)
-    if row_nnz.min() < n_neighbors:
-        raise ValueError(
-            '%d neighbors per samples are required, but some samples have only'
-            ' %d neighbors in precomputed graph matrix. Decrease number of '
-            'neighbors used or recompute the graph with more neighbors.'
-            % (n_neighbors, row_nnz.min()))
-
-    # if there is the same number of neighbors for each sample
-    if row_nnz.max() == row_nnz.min():
-        def extract(a):
-            return a.reshape(n_samples, -1)[:, :n_neighbors]
-
-    else:  # radius neighbors case
-        idx = np.tile(np.arange(n_neighbors), n_samples)
-        idx = idx.reshape(n_samples, n_neighbors)
-        idx += graph.indptr[:-1, np.newaxis]
-
-        def extract(a):
-            return a.take(idx, mode='clip').reshape(n_samples, n_neighbors)
-
-    return extract(graph.data), extract(graph.indices)
 
 
 def _kneighbors_from_graph(graph, n_neighbors):
@@ -164,41 +163,31 @@ def _kneighbors_from_graph(graph, n_neighbors):
     """
     n_samples = graph.shape[0]
 
-    # number of neighbors for each samples
+    # number of neighbors by samples
     row_nnz = np.diff(graph.indptr)
-    if row_nnz.min() < n_neighbors:
+    row_nnz_min = row_nnz.min()
+    if n_neighbors is not None and row_nnz_min < n_neighbors:
         raise ValueError(
             '%d neighbors per samples are required, but some samples have only'
             ' %d neighbors in precomputed graph matrix. Decrease number of '
             'neighbors used or recompute the graph with more neighbors.'
-            % (n_neighbors, row_nnz.min()))
+            % (n_neighbors, row_nnz_min))
 
     # if there is the same number of neighbors for each sample
-    if row_nnz.max() == row_nnz.min():
-        neigh_dist = graph.data.reshape(n_samples, -1)
-        neigh_ind = graph.indices.reshape(n_samples, -1)
+    if row_nnz.max() == row_nnz_min:
 
-        # sort neigh_dist and neigh_ind to have increasing distances
-        n_samples, n_neighbors_2 = neigh_dist.shape
-        perm = np.argsort(neigh_dist)
-        perm += np.arange(n_samples)[:, None] * n_neighbors_2
-        perm = perm.ravel()
-        neigh_dist = neigh_dist.ravel()[perm].reshape(n_samples, n_neighbors_2)
-        neigh_ind = neigh_ind.ravel()[perm].reshape(n_samples, n_neighbors_2)
-        return neigh_dist[:, :n_neighbors], neigh_ind[:, :n_neighbors]
+        def extract(a):
+            return a.reshape(n_samples, -1)[:, :n_neighbors]
 
-    else:
-        neigh_dist = np.empty((n_samples, n_neighbors))
-        neigh_ind = np.empty((n_samples, n_neighbors))
-        for i in range(n_samples):
-            idx = slice(graph.indptr[i], graph.indptr[i + 1])
-            this_dist = graph.data[idx]
-            this_ind = graph.indices[idx]
-            # sort neigh_dist and neigh_ind to have increasing distances
-            perm = np.argsort(this_dist)
-            neigh_dist[i] = this_dist[perm][:n_neighbors]
-            neigh_ind[i] = this_ind[perm][:n_neighbors]
-        return neigh_dist, neigh_ind
+    else:  # radius neighbors case
+        idx = np.tile(np.arange(n_neighbors), n_samples)
+        idx = idx.reshape(n_samples, n_neighbors)
+        idx += graph.indptr[:-1, np.newaxis]
+
+        def extract(a):
+            return a.take(idx, mode='clip').reshape(n_samples, n_neighbors)
+
+    return extract(graph.data), extract(graph.indices)
 
 
 def _radius_neighbors_from_graph(graph, radius):
@@ -214,7 +203,7 @@ def _radius_neighbors_from_graph(graph, radius):
 
     Returns
     -------
-    niegh_dist : array, shape (n_samples,) of arrays
+    neigh_dist : array, shape (n_samples,) of arrays
         Distances to nearest neighbors.
 
     neigh_ind :array, shape (n_samples,) of arrays
@@ -230,13 +219,13 @@ def _radius_neighbors_from_graph(graph, radius):
         indices = np.compress(mask, graph.indices)
         indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
 
-    niegh_dist = np.empty(n_samples, dtype='object')
+    neigh_dist = np.empty(n_samples, dtype='object')
     neigh_ind = np.empty(n_samples, dtype='object')
     for i in range(n_samples):
         idx = slice(indptr[i], indptr[i + 1])
-        niegh_dist[i] = data[idx]
+        neigh_dist[i] = data[idx]
         neigh_ind[i] = indices[idx]
-    return niegh_dist, neigh_ind
+    return neigh_dist, neigh_ind
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -339,7 +328,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        if self.effective_metric_ == 'precomputed':
+            X = _check_precomputed(X)
+        else:
+            X = check_array(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -470,7 +462,10 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+            if self.effective_metric_ == 'precomputed':
+                X = _check_precomputed(X)
+            else:
+                X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
             X = self._fit_X
@@ -616,7 +611,10 @@ class KNeighborsMixin(object):
 
         # kneighbors does the None handling.
         if X is not None:
-            X = check_array(X, accept_sparse='csr')
+            if self.effective_metric_ == 'precomputed':
+                X = _check_precomputed(X)
+            else:
+                X = check_array(X, accept_sparse='csr')
             n_samples1 = X.shape[0]
         else:
             n_samples1 = self._fit_X.shape[0]
@@ -719,7 +717,10 @@ class RadiusNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+            if self.effective_metric_ == 'precomputed':
+                X = _check_precomputed(X)
+            else:
+                X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
             X = self._fit_X
@@ -845,7 +846,10 @@ class RadiusNeighborsMixin(object):
         kneighbors_graph
         """
         if X is not None:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+            if self.effective_metric_ == 'precomputed':
+                X = _check_precomputed(X)
+            else:
+                X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_samples2 = self._fit_X.shape[0]
         if radius is None:

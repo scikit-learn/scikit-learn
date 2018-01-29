@@ -30,9 +30,11 @@ KNeighborsTransformer:               44.348 sec
 TSNE with AnnoyTransformer:          75.256 sec
 TSNE with KNeighborsTransformer:     110.472 sec
 TSNE with internal NearestNeighbors: 110.527 sec
-
 """
-
+# Author: Tom Dupre la Tour
+#
+# License: BSD 3 clause
+from __future__ import print_function
 import time
 
 import annoy
