@@ -426,6 +426,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     parameters : dict or None, optional
         The parameters that have been evaluated.
     """
+    
     if verbose > 1:
         if parameters is None:
             msg = ''
@@ -504,6 +505,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+
+    # check for inf or -inf values in the train and test scores   
+    if(np.any(np.logical_not(np.isfinite(a))) for a in test_scores.values() ):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('once', RuntimeWarning)
+            warnings.warn('Non-finite test scores were'
+                          ' generated during'
+                          ' cross-validation.', RuntimeWarning)            
+                          
+    if(np.any(np.logical_not(np.isfinite(a))) for a in train_scores.values() ):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('once', RuntimeWarning)
+            warnings.warn('Non-finite train scores were'
+                          ' generated during'
+                          ' cross-validation.', RuntimeWarning)             
 
     ret = [train_scores, test_scores] if return_train_score else [test_scores]
 

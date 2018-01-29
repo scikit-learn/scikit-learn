@@ -653,6 +653,20 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.return_train_score:
             train_scores = _aggregate_score_dicts(train_score_dicts)
 
+        # check for inf or -inf values in the train and test scores.-------------------------
+        
+        if(np.any(np.logical_not(np.isfinite(a))) for a in test_scores.values() ):
+            warnings.warn('Non-finite test scores were'
+                          ' generated during'
+                          ' cross-validation.', RuntimeWarning)
+                          
+        if(np.any(np.logical_not(np.isfinite(a))) for a in train_scores.values() ):
+            warnings.warn('Non-finite train scores were'
+                          ' generated during'
+                          ' cross-validation.', RuntimeWarning)
+        #------------------------------------------------------------------------------------
+      
+      
         # TODO: replace by a dict in 0.21
         results = (DeprecationDict() if self.return_train_score == 'warn'
                    else {})
@@ -678,8 +692,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             results['std_%s' % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
+                lis = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
+                nn = np.count_nonzero(np.isnan(lis))
+                results["rank_%s" % key_name] = (lis + nn - 1) % len(lis) + 1
+                    
 
         _store('fit_time', fit_time)
         _store('score_time', score_time)
@@ -742,6 +759,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             self.best_params_ = candidate_params[self.best_index_]
             self.best_score_ = results["mean_test_%s" % refit_metric][
                 self.best_index_]
+
+        ### my code---
+        print('results[] keys= ')
+        print(str( results.keys() ))
+        print('\n\n\n')
+        print('results[] = ')
+        print(str( results))
+        print('\n\n\n')
 
         if self.refit:
             self.best_estimator_ = clone(base_estimator).set_params(
