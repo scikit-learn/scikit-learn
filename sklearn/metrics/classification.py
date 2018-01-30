@@ -478,9 +478,9 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     ... np.array([0, 1, 2, 3]), average='macro')
     0.5
     """
-    validate_average(average)
-    y_type, y_true, y_pred, present_labels = validate_input(y_true, y_pred,
-                                                            sample_weight)
+    _validate_prfsj_average(average)
+    y_type, y_true, y_pred, present_labels = _validate_prfsj_input(y_true,
+                                                        y_pred, sample_weight)
 
     if average == 'binary':
         if y_type == 'binary':
@@ -1062,14 +1062,22 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     return result
 
 
-def validate_average(average):
+def _validate_prfsj_average(average):
+    """Validate ``average`` as a valid average option for
+    functions :func:`metrics.precision_recall_fscore_support` and
+    :func:`metrics.jaccard_similarity_score`.
+    """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
         raise ValueError('average has to be one of ' +
                          str(average_options))
 
 
-def validate_input(y_true, y_pred, sample_weight):
+def _validate_prfsj_input(y_true, y_pred, sample_weight):
+    """Validate input for consistent length and type for functions
+    :func:`metrics.precision_recall_fscore_support` and
+    :func:`metrics.jaccard_similarity_score`.
+    """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
@@ -1219,13 +1227,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
      array([2, 2, 2]))
 
     """
-    validate_average(average)
+    _validate_prfsj_average(average)
 
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
-    y_type, y_true, y_pred, present_labels = validate_input(y_true, y_pred,
-                                                            sample_weight)
+    y_type, y_true, y_pred, present_labels = _validate_prfsj_input(y_true,
+                                                        y_pred, sample_weight)
 
     if average == 'binary':
         if y_type == 'binary':
