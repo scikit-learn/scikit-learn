@@ -153,7 +153,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, the maximum number of iterations (default 500)
+    max_iter : int (default 500)
+        The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
     tol : non-negative real, default 1e-06

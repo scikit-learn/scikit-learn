@@ -87,6 +87,8 @@ plt.ylabel('Digit classification accuracy')
 plt.ylim((0, 1))
 plt.legend(loc='upper left')
 
+plt.show()
+
 ###############################################################################
 # Caching transformers within a ``Pipeline``
 ###############################################################################
@@ -126,5 +128,3 @@ rmtree(cachedir)
 # estimator data, leading to save processing time. Therefore, the use of
 # caching the pipeline using ``memory`` is highly beneficial when fitting
 # a transformer is costly.
-
-plt.show()

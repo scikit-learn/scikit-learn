@@ -135,10 +135,12 @@ random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
     random_state=0, n_samples=30, n_features=10)
 
+# NB: despite their names X_sparse_* are numpy arrays (and not sparse matrices)
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25, random_state=0)
+X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
+                                    random_state=0).toarray()
 
 
 DATASETS = {

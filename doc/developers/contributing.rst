@@ -444,15 +444,17 @@ to the documentation, e.g.::
 
     pip install --editable ..
 
-To generate the full web site, including the example gallery (this might take a
-while)::
+To generate the full web site, including the example gallery::
 
     make html
 
-Or, if you'd rather quickly generate the documentation without the example
-gallery::
-
-    make html-noplot
+Generating the example gallery will run all our examples which takes a
+while. To save some time, you can use:
+    - ``make html-noplot``: this will generate the documentation without the
+      example gallery. This is useful when changing a docstring for example.
+    - ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
+      matching ``your_regex_goes_here`` will be run. This is particularly
+      useful if you are modifying a few examples.
 
 That should create all the documentation in the ``_build/html/stable`` directory.
 
@@ -752,6 +754,8 @@ when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
 
+.. _contributing_deprecation:
+
 Deprecation
 -----------
 
@@ -893,6 +897,7 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+.. _api_overview:
 
 APIs of scikit-learn objects
 ============================
@@ -901,6 +906,9 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object must implement.
+
+Elements of the scikit-learn API are described more definitively in the
+:ref:`glossary`.
 
 Different objects
 -----------------
@@ -1260,7 +1268,9 @@ is implemented using the ``_estimator_type`` attribute, which takes a string val
 It should be ``"classifier"`` for classifiers and ``"regressor"`` for
 regressors and ``"clusterer"`` for clustering methods, to work as expected.
 Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
-will set the attribute automatically.
+will set the attribute automatically.  When a meta-estimator needs to distinguish
+among estimator types, instead of checking ``_estimator_type`` directly, helpers
+like :func:`base.is_classifier` should be used.
 
 Working notes
 -------------
