@@ -479,9 +479,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     0.5
     """
     _validate_prfsj_average(average)
-    y_type, y_true, y_pred, present_labels = _validate_prfsj_input(y_true,
-                                                        y_pred, sample_weight)
-
+    y_type, y_true, y_pred, present_labels = _validate_input(y_true, y_pred,
+                                                             sample_weight)
     if average == 'binary':
         if y_type == 'binary':
             if pos_label not in present_labels:
@@ -1073,7 +1072,7 @@ def _validate_prfsj_average(average):
                          str(average_options))
 
 
-def _validate_prfsj_input(y_true, y_pred, sample_weight):
+def _validate_input(y_true, y_pred, sample_weight):
     """Validate input for consistent length and type for functions
     :func:`metrics.precision_recall_fscore_support` and
     :func:`metrics.jaccard_similarity_score`.
@@ -1228,13 +1227,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     """
     _validate_prfsj_average(average)
-
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
-
-    y_type, y_true, y_pred, present_labels = _validate_prfsj_input(y_true,
-                                                        y_pred, sample_weight)
-
+    y_type, y_true, y_pred, present_labels = _validate_input(y_true, y_pred,
+                                                             sample_weight)
     if average == 'binary':
         if y_type == 'binary':
             if pos_label not in present_labels:
