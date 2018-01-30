@@ -709,29 +709,6 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
-testdata_alpha = [
-    ((1, 10, 100), np.array([1.0, 10.0, 100.0])),
-    ((-1, -10, -100), np.array([-1.0, -10.0, -100.0]))
-]
-
-
-@pytest.mark.parametrize("alpha_input, alpha_expected", testdata_alpha)
-def test_conversion(alpha_input, alpha_expected):
-    assert((RidgeCV(alpha_input).get_params()['alphas'] ==
-            alpha_expected).all())
-
-
-def test_ridgecv_int_alphas():
-
-    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
-                  [1.0, 1.0], [1.0, 0.0]])
-    y = [1, 1, 1, -1, -1]
-
-    # Integers
-    ridge = RidgeCV(alphas=(1, 10, 100))
-    ridge.fit(X, y)
-
-
 def test_ridgecv_negative_alphas():
 
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],

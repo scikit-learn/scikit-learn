@@ -639,7 +639,6 @@ class Ridge(_BaseRidge, RegressorMixin):
           normalize=False, random_state=None, solver='auto', tol=0.001)
 
     """
-
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
@@ -1092,7 +1091,7 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = np.asarray(alphas, dtype=np.float64)
+        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
