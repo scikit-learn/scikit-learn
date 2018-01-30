@@ -478,15 +478,9 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     ... np.array([0, 1, 2, 3]), average='macro')
     0.5
     """
-
-    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
-    if average not in average_options and average != 'binary':
-        raise ValueError("average has to be one of " + str(average_options))
-
-    # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-    present_labels = unique_labels(y_true, y_pred)
+    validate_average(average)
+    y_type, y_true, y_pred, present_labels = validate_input(y_true, y_pred,
+                                                            sample_weight)
 
     if average == 'binary':
         if y_type == 'binary':
@@ -1068,6 +1062,20 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     return result
 
 
+def validate_average(average):
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    if average not in average_options and average != 'binary':
+        raise ValueError('average has to be one of ' +
+                         str(average_options))
+
+
+def validate_input(y_true, y_pred, sample_weight):
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    present_labels = unique_labels(y_true, y_pred)
+    return y_type, y_true, y_pred, present_labels
+
+
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
@@ -1211,16 +1219,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
      array([2, 2, 2]))
 
     """
-    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
-    if average not in average_options and average != 'binary':
-        raise ValueError('average has to be one of ' +
-                         str(average_options))
+    validate_average(average)
+
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-    present_labels = unique_labels(y_true, y_pred)
+    y_type, y_true, y_pred, present_labels = validate_input(y_true, y_pred,
+                                                            sample_weight)
 
     if average == 'binary':
         if y_type == 'binary':
