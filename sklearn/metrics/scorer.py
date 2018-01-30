@@ -42,7 +42,6 @@ from .cluster import fowlkes_mallows_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
 from ..base import is_regressor
-from functools import partial
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
