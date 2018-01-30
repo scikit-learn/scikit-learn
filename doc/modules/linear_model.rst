@@ -837,8 +837,8 @@ while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 Perceptron
 ==========
 
-The :class:`Perceptron` is another simple algorithm suitable for large scale
-learning. By default:
+The :class:`Perceptron` is another simple classification algorithm suitable for
+large scale learning. It is a multiclass classifier. By default:
 
     - It does not require a learning rate.
 

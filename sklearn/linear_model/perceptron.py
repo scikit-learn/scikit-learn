@@ -97,6 +97,7 @@ class Perceptron(BaseSGDClassifier):
     Notes
     -----
 
+    `Perceptron` is a binary classifier.
     `Perceptron` and `SGDClassifier` share the same underlying implementation.
     In fact, `Perceptron()` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
