@@ -56,8 +56,8 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'brier_score_loss',
-               'jaccard_similarity', 'jaccard_similarity_weighted',
-               'jaccard_similarity_macro', 'jaccard_similarity_micro']
+               'jaccard', 'jaccard_weighted', 'jaccard_macro',
+               'jaccard_micro']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -70,7 +70,7 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
                    "fowlkes_mallows_score"]
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
-                           'jaccard_similarity_samples']
+                           'jaccard_samples']
 
 
 def _make_estimators(X_train, y_train, y_ml_train):
@@ -290,9 +290,8 @@ def test_classification_scores():
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
                            ('recall', recall_score),
-                           ('jaccard_similarity',
-                            partial(jaccard_similarity_score,
-                                    average='binary'))]:
+                           ('jaccard', partial(jaccard_similarity_score,
+                                               average='binary'))]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
         score2 = metric(y_test, clf.predict(X_test), pos_label=None,
