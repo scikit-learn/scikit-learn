@@ -703,7 +703,7 @@ def test_alpha_vector():
     assert_array_almost_equal(m_nb._check_alpha(),
                               [ALPHA_MIN, 0.5],
                               decimal=12)
-    
+
     # Test correct dimensions
     alpha = np.array([1., 2., 3.])
     m_nb = MultinomialNB(alpha=alpha)
