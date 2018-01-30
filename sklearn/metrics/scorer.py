@@ -565,8 +565,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
 
 for name, metric in [('precision', precision_score),
                      ('recall', recall_score), ('f1', f1_score),
-                     ('jaccard_similarity', partial(jaccard_similarity_score, average='binary'))]:
-    SCORERS[name] = make_scorer(metric)
+                     ('jaccard_similarity', jaccard_similarity_score)]:
+    SCORERS[name] = make_scorer(metric, average='binary')
     for average in ['macro', 'micro', 'samples', 'weighted']:
         qualified_name = '{0}_{1}'.format(name, average)
         SCORERS[qualified_name] = make_scorer(metric, pos_label=None,

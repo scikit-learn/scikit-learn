@@ -42,8 +42,6 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
 from functools import partial
 
-jaccard_similarity_score = partial(jaccard_similarity_score, average='binary')
-
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -292,7 +290,9 @@ def test_classification_scores():
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
                            ('recall', recall_score),
-                           ('jaccard_similarity', jaccard_similarity_score)]:
+                           ('jaccard_similarity',
+                            partial(jaccard_similarity_score,
+                                    average='binary'))]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
         score2 = metric(y_test, clf.predict(X_test), pos_label=None,
