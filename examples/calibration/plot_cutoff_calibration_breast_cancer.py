@@ -60,11 +60,11 @@ clf_ada = AdaBoostClassifier().fit(
 # we want to maximize the true positive rate while the true negative rate is at
 # least 0.5
 clf_lr_max_tpr = CutoffClassifier(
-    clf_lr, method='max_tpr', cv=3, min_val_tnr=0.5
+    clf_lr, method='max_tpr', cv=3, min_tnr=0.5
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 
 clf_ada_max_tpr = CutoffClassifier(
-    clf_ada, method='max_tpr', cv=3, min_val_tnr=0.5
+    clf_ada, method='max_tpr', cv=3, min_tnr=0.5
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 
 y_pred_lr = clf_lr.predict(X_test)

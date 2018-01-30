@@ -59,7 +59,7 @@ def test_cutoff_prefit():
     assert_greater(tpr_roc + tnr_roc, tpr + tnr)
 
     clf_max_tpr = CutoffClassifier(
-        lr, method='max_tpr', cv='prefit', min_val_tnr=0.3
+        lr, method='max_tpr', cv='prefit', min_tnr=0.3
     ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
 
     y_pred_max_tpr = clf_max_tpr.predict(X_test[calibration_samples:])
@@ -76,7 +76,7 @@ def test_cutoff_prefit():
     assert_greater_equal(tnr_max_tpr, 0.3)
 
     clf_max_tnr = CutoffClassifier(
-        lr, method='max_tnr', cv='prefit', min_val_tpr=0.3
+        lr, method='max_tnr', cv='prefit', min_tpr=0.3
     ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
 
     y_pred_clf = clf_max_tnr.predict(X_test[calibration_samples:])

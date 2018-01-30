@@ -58,11 +58,11 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         - 'max_tpr', selects the point that yields the highest true positive
         rate with true negative rate at least equal to the value of the
-        parameter min_val_tnr
+        parameter min_tnr
 
         - 'max_tnr', selects the point that yields the highest true negative
         rate with true positive rate at least equal to the value of the
-        parameter min_val_tpr
+        parameter min_tpr
 
     pos_label : object
         Object representing the positive label
@@ -74,11 +74,11 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         the calibration of the probability threshold
         (default value: "prefit")
 
-    min_val_tnr : float in [0, 1]
+    min_tnr : float in [0, 1]
         In case method = 'max_tpr' this value must be set to specify the
         minimum required value for the true negative rate
 
-    min_val_tpr : float in [0, 1]
+    min_tpr : float in [0, 1]
         In case method = 'max_tnr' this value must be set to specify the
         minimum required value for the true positive rate
 
@@ -96,13 +96,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     """
     def __init__(self, base_estimator, method='roc', pos_label=1, cv=3,
-                 min_val_tnr=None, min_val_tpr=None):
+                 min_tnr=None, min_tpr=None):
         self.base_estimator = base_estimator
         self.method = method
         self.pos_label = pos_label
         self.cv = cv
-        self.min_val_tnr = min_val_tnr
-        self.min_val_tpr = min_val_tpr
+        self.min_tnr = min_tnr
+        self.min_tpr = min_tpr
 
     def fit(self, X, y):
         """Fit model
@@ -136,7 +136,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if self.cv == 'prefit':
             self.threshold_ = _CutoffClassifier(
                 self.base_estimator, self.method, self.pos_label,
-                self.min_val_tnr, self.min_val_tpr
+                self.min_tnr, self.min_tpr
             ).fit(X, y).threshold_
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -148,8 +148,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                     _CutoffClassifier(estimator,
                                       self.method,
                                       self.pos_label,
-                                      self.min_val_tnr,
-                                      self.min_val_tpr).fit(
+                                      self.min_tnr,
+                                      self.min_tpr).fit(
                         X[test], y[test]
                     ).threshold_
                 )
@@ -187,11 +187,11 @@ class _CutoffClassifier(object):
     pos_label : object
         Label considered as positive during the roc_curve construction.
 
-    min_val_tnr : float in [0, 1]
+    min_tnr : float in [0, 1]
         minimum required value for true negative rate (specificity) in case
         method 'max_tpr' is used
 
-    min_val_tpr : float in [0, 1]
+    min_tpr : float in [0, 1]
         minimum required value for true positive rate (sensitivity) in case
         method 'max_tnr' is used
 
@@ -200,13 +200,12 @@ class _CutoffClassifier(object):
     threshold_ : float
         Acquired optimal decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, pos_label, min_val_tnr,
-                 min_val_tpr):
+    def __init__(self, base_estimator, method, pos_label, min_tnr, min_tpr):
         self.base_estimator = base_estimator
         self.method = method
         self.pos_label = pos_label
-        self.min_val_tnr = min_val_tnr
-        self.min_val_tpr = min_val_tpr
+        self.min_tnr = min_tnr
+        self.min_tpr = min_tpr
 
     def fit(self, X, y):
         """Select a decision threshold for the fitted model's positive class
@@ -233,18 +232,18 @@ class _CutoffClassifier(object):
                 euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
             )]
         elif self.method == 'max_tpr':
-            if not self.min_val_tnr or not isinstance(self.min_val_tnr, float)\
-                    or not self.min_val_tnr >= 0 or not self.min_val_tnr <= 1:
+            if not self.min_tnr or not isinstance(self.min_tnr, float)\
+                    or not self.min_tnr >= 0 or not self.min_tnr <= 1:
                 raise ValueError('max_tnr must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.min_val_tnr))
-            indices = np.where(1 - fpr >= self.min_val_tnr)[0]
+                                 'Got %s instead' % repr(self.min_tnr))
+            indices = np.where(1 - fpr >= self.min_tnr)[0]
             self.threshold_ = thresholds[indices[np.argmax(tpr[indices])]]
         elif self.method == 'max_tnr':
-            if not self.min_val_tpr or not isinstance(self.min_val_tpr, float)\
-                    or not self.min_val_tpr >= 0 or not self.min_val_tpr <= 1:
+            if not self.min_tpr or not isinstance(self.min_tpr, float)\
+                    or not self.min_tpr >= 0 or not self.min_tpr <= 1:
                 raise ValueError('max_tpr must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.min_val_tnr))
-            indices = np.where(tpr >= self.min_val_tpr)[0]
+                                 'Got %s instead' % repr(self.min_tnr))
+            indices = np.where(tpr >= self.min_tpr)[0]
             self.threshold_ = thresholds[indices[np.argmax(1 - fpr[indices])]]
         else:
             raise ValueError('method must be "roc" or "max_tpr" or "max_tnr.'
