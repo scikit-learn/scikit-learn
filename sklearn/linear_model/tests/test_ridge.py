@@ -709,16 +709,16 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
-def test_ridgecv_alpha_conversion_to_array():
+testdata_alpha = [
+    ((1, 10, 100), np.array([1.0, 10.0, 100.0])),
+    ((-1, -10, -100), np.array([-1.0, -10.0, -100.0]))
+]
 
-    testdata_alpha = [
-        ((1, 10, 100), np.array([1.0, 10.0, 100.0])),
-        ((-1, -10, -100), np.array([-1.0, -10.0, -100.0]))
-    ]
 
-    @pytest.mark.parametrize("alpha_input, alpha_expected", testdata_alpha)
-    def test_conversion(alpha_input, alpha_expected):
-        assert(RidgeCV(alpha_input).get_params()['alphas'] == alpha_expected)
+@pytest.mark.parametrize("alpha_input, alpha_expected", testdata_alpha)
+def test_conversion(alpha_input, alpha_expected):
+    assert((RidgeCV(alpha_input).get_params()['alphas'] ==
+            alpha_expected).all())
 
 
 def test_ridgecv_int_alphas():
