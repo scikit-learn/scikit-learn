@@ -6,6 +6,7 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
@@ -74,9 +75,6 @@ class Isomap(BaseEstimator, TransformerMixin):
     kernel_pca_ : object
         `KernelPCA` object used to implement the embedding.
 
-    training_data_ : array-like, shape (n_samples, n_features)
-        Stores the training data.
-
     nbrs_ : sklearn.neighbors.NearestNeighbors instance
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
@@ -116,7 +114,6 @@ class Isomap(BaseEstimator, TransformerMixin):
                                       algorithm=algorithm, metric=metric,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
-        self.training_data_ = self.nbrs_._fit_X
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
@@ -134,6 +131,13 @@ class Isomap(BaseEstimator, TransformerMixin):
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
+
+    @property
+    @deprecated("Attribute training_data_ was deprecated in version 0.20 and "
+                "will be removed in 0.22.")
+    def training_data_(self):
+        check_is_fitted(self, 'nbrs_')
+        return self.nbrs_._fit_X
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.
@@ -221,11 +225,14 @@ class Isomap(BaseEstimator, TransformerMixin):
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
-        # self.training_data_ via the nearest neighbors of X.
+        # training data via the nearest neighbors of X.
         # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
-        G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
-        for i in range(X.shape[0]):
+
+        n_samples_fit = self.nbrs_._fit_X.shape[0]
+        n_samples_transform = distances.shape[0]
+        G_X = np.zeros((n_samples_transform, n_samples_fit))
+        for i in range(n_samples_transform):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] +
                             distances[i][:, None], 0)
 

@@ -37,7 +37,13 @@ TSNE with internal NearestNeighbors: 110.527 sec
 from __future__ import print_function
 import time
 
-import annoy
+try:
+    import annoy
+except:
+    print("The package 'annoy' is required to run this example.")
+    import sys
+    sys.exit()
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter

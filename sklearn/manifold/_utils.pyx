@@ -25,7 +25,8 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     distances : array-like, shape (n_samples, n_neighbors)
         Distances between training samples and their k nearest neighbors.
         When using the exact method, this is a square (n_samples, n_samples)
-        distance matrix.
+        distance matrix. The TSNE default metric is "euclidean" which is
+        interpreted as squared euclidean distance.
 
     desired_perplexity : float
         Desired perplexity (2^entropy) of the conditional Gaussians.

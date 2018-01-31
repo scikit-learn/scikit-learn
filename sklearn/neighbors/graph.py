@@ -1,6 +1,7 @@
 """Nearest Neighbors graph functions"""
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
+#         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from .base import KNeighborsMixin, RadiusNeighborsMixin
@@ -8,7 +9,7 @@ from .base import NeighborsBase
 from .base import UnsupervisedMixin
 from .unsupervised import NearestNeighbors
 from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted
 
 
 def _check_params(X, metric, p, metric_params):
@@ -189,6 +190,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     mode : {'distance', 'connectivity'}, optional (default = 'distance')
@@ -295,8 +298,6 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
             Xt[i, j] is assigned the weight of edge that connects i to j.
         """
         check_is_fitted(self, '_fit_X')
-        if X is not None:
-            check_array(X, accept_sparse='csr')
         return self.kneighbors_graph(X, self.n_neighbors, self.mode)
 
     def fit_transform(self, X, y=None):
@@ -329,6 +330,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
     The transformed data is a sparse graph as returned by
     radius_neighbors_graph.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -436,8 +439,6 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
             Xt[i, j] is assigned the weight of edge that connects i to j.
         """
         check_is_fitted(self, '_fit_X')
-        if X is not None:
-            check_array(X, accept_sparse='csr')
         return self.radius_neighbors_graph(X, self.radius, self.mode)
 
     def fit_transform(self, X, y=None):

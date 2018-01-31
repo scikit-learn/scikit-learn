@@ -324,6 +324,10 @@ def set_checking_parameters(estimator):
         # SVC
         estimator.set_params(decision_function_shape='ovo')
 
+    if "include_self" in params:
+        # KNeighborsTransformer
+        estimator.set_params(include_self=True)
+
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
         estimator.set_params(alpha=.5)

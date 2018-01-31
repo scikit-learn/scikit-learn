@@ -7,31 +7,69 @@ from sklearn.neighbors import KNeighborsTransformer, RadiusNeighborsTransformer
 def test_transformer_nonzero():
     # Test the number of neighbors returned
     n_neighbors = 5
-    X = np.random.randn(20, 10)
+    n_samples_fit = 20
+    n_samples_transform = 18
+    n_features = 10
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples_fit, n_features)
+    X2 = rng.randn(n_samples_transform, n_features)
     radius = np.percentile(euclidean_distances(X), 10)
 
     # with n_neighbors
     for mode in ('distance', 'connectivity'):
-        Xt = KNeighborsTransformer(n_neighbors=n_neighbors,
-                                   mode=mode).fit_transform(X)
-        assert Xt.data.shape == (X.shape[0] * n_neighbors, )
+        nnt = KNeighborsTransformer(n_neighbors=n_neighbors, mode=mode)
+        Xt = nnt.fit_transform(X)
+        assert Xt.shape == (n_samples_fit, n_samples_fit)
+        assert Xt.data.shape == (n_samples_fit * n_neighbors, )
+
+        X2t = nnt.transform(X2)
+        assert X2t.shape == (n_samples_transform, n_samples_fit)
+        assert X2t.data.shape == (n_samples_transform * n_neighbors, )
 
     # with radius
     for mode in ('distance', 'connectivity'):
-        Xt = RadiusNeighborsTransformer(radius=radius,
-                                        mode=mode).fit_transform(X)
-        assert not Xt.data.shape == (X.shape[0] * n_neighbors, )
+        nnt = RadiusNeighborsTransformer(radius=radius, mode=mode)
+        Xt = nnt.fit_transform(X)
+        assert Xt.shape == (n_samples_fit, n_samples_fit)
+        assert not Xt.data.shape == (n_samples_fit * n_neighbors, )
+
+        X2t = nnt.transform(X2)
+        assert X2t.shape == (n_samples_transform, n_samples_fit)
+        assert not X2t.data.shape == (n_samples_transform * n_neighbors, )
 
 
-def test_transformer_shape():
-    # Test the shape of the returned array
-    n_samples_fit, n_samples_transform, n_features = 100, 80, 10
-    X_fit = np.random.randn(n_samples_fit, n_features)
-    X_transform = np.random.randn(n_samples_transform, n_features)
-    est = KNeighborsTransformer(n_neighbors=5)
+def test_include_self_logic():
+    # Test the effect of parameter include_self
+    n_neighbors = 5
+    n_samples_fit, n_samples_transform, n_features = 20, 18, 10
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples_fit, n_features)
+    X2 = rng.randn(n_samples_transform, n_features)
 
-    Xt = est.fit_transform(X_fit)
-    assert Xt.shape == (n_samples_fit, n_samples_fit)
+    # Same behavior for both cases
+    for include_self in [True, False]:
+        nnt = KNeighborsTransformer(n_neighbors=n_neighbors,
+                                    include_self=include_self)
+        Xt = nnt.fit_transform(X)
+        # Each sample is it's own neighbor
+        assert np.all(Xt.diagonal() == 0)
 
-    Xt = est.transform(X_transform)
-    assert Xt.shape == (n_samples_transform, n_samples_fit)
+        # Using transform on the fit data always returns explicit diagonal
+        Xt = nnt.transform(X)
+        assert np.all(Xt.diagonal() == 0)
+        assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors)[:, 0] == 0)
+        # Using transform on new data should not always have zero diagonal
+        X2t = nnt.transform(X2)
+        assert not np.all(X2t.diagonal() == 0)
+
+    # The only difference is explicit/implicit zero diagonal on fit_transform
+    nnt = KNeighborsTransformer(n_neighbors=n_neighbors, include_self=True)
+    Xt = nnt.fit_transform(X)
+    # explicit zero diagonal
+    assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors)[:, 0] == 0)
+
+    nnt = KNeighborsTransformer(n_neighbors=n_neighbors, include_self=False)
+    Xt = nnt.fit_transform(X)
+    # implicit zero diagonal
+    assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors)[:, 0] != 0)

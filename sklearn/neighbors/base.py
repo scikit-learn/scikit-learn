@@ -518,6 +518,7 @@ class KNeighborsMixin(object):
             )
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
+        neigh_dist = None
 
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
@@ -764,6 +765,7 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
+        neigh_dist = None
         n_samples = X.shape[0]
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
