@@ -11,16 +11,14 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_not_in
-from sklearn.neighbors import NearestNeighbors, RadiusNeighborsTransformer
+from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.pipeline import make_pipeline
 
 
 n_clusters = 3
@@ -369,19 +367,3 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
     labels = DBSCAN(eps=0.2, metric='precomputed',
                     min_samples=2).fit(matrix).labels_
     assert_array_equal(labels, [-1, -1,  0,  0,  0,  1,  1])
-
-
-def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining RadiusNeighborsTransformer and DBSCAN
-    radius = 0.3
-
-    # compare the chained version and the compact version
-    est_chain = make_pipeline(
-        RadiusNeighborsTransformer(
-            radius=radius, mode='distance', include_self=False),
-        DBSCAN(metric='precomputed', eps=radius))
-    est_compact = DBSCAN(eps=radius)
-
-    labels_chain = est_chain.fit_predict(X)
-    labels_compact = est_compact.fit_predict(X)
-    assert_array_almost_equal(labels_chain, labels_compact)

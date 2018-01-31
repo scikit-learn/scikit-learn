@@ -4,7 +4,6 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.neighbors import KNeighborsTransformer
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from sklearn.utils.testing import assert_less_equal
@@ -34,7 +33,6 @@ from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import cosine_distances
-from sklearn.pipeline import make_pipeline
 
 
 x = np.linspace(0, 1, 10)
@@ -160,33 +158,6 @@ def test_binary_search_neighbors():
         idx = np.argsort(P2k.ravel())[::-1]
         P2top = P2k.ravel()[idx][:topn]
         assert_array_almost_equal(P1top, P2top, decimal=2)
-
-
-def test_pipeline_with_nearest_neighbors_transformer():
-    # Test chaining KNeighborsTransformer and TSNE
-    n_iter = 250
-    perplexity = 5
-    n_neighbors = int(3. * perplexity + 1)
-
-    rng = check_random_state(0)
-    X = rng.randn(20, 2)
-
-    # XXX: This test currently fail for euclidean metric since it's not squared
-    for metric in ['minkowski', 'sqeuclidean']:
-
-        # compare the chained version and the compact version
-        est_chain = make_pipeline(
-            KNeighborsTransformer(
-                n_neighbors=n_neighbors, mode='distance', metric=metric,
-                include_self=False),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter))
-        est_compact = TSNE(metric=metric, perplexity=perplexity, n_iter=n_iter,
-                           method="barnes_hut", random_state=42)
-
-        Xt_chain = est_chain.fit_transform(X)
-        Xt_compact = est_compact.fit_transform(X)
-        assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
 def test_binary_perplexity_stability():

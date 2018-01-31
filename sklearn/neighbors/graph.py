@@ -3,8 +3,6 @@
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-import numpy as np
-
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .base import NeighborsBase
 from .base import UnsupervisedMixin
