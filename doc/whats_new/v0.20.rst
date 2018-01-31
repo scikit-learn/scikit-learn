@@ -341,6 +341,9 @@ Cluster
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
+- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
+  :issue:`9672` by :user:`Baze Petrushev <petrushev>`.
+
 Changes to estimator checks
 ---------------------------
 

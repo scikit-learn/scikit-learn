@@ -89,8 +89,9 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=1`, then impute along rows.
 
         .. deprecated:: 0.20
-           ``axis`` will be removed from ``Imputer``, and it will only impute
-           along columns (i.e., ``axis=0``) in 0.22.
+           Parameter ``axis`` has been deprecated in 0.20 and will be removed
+           in 0.22. Future (and default) behavior is equivalent to ``axis=0``
+           (impute along columns).
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -149,9 +150,10 @@ class Imputer(BaseEstimator, TransformerMixin):
         if self.axis is None:
             self._axis = 0
         else:
-            warnings.warn("'axis' will be removed from Imputer, and it will "
-                          "only impute along columns (axis=0) in 0.22",
-                          DeprecationWarning)
+            warnings.warn("Parameter 'axis' has been deprecated in 0.20 and "
+                          "will be removed in 0.22. Future (and default) "
+                          "behavior is equivalent to 'axis=0' (impute along "
+                          "columns).", DeprecationWarning)
             self._axis = self.axis
 
         if self._axis not in [0, 1]:
