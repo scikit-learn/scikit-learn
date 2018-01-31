@@ -640,6 +640,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     See also
     --------
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
     SGDRegressor: implements elastic net regression with incremental training.
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
@@ -1688,7 +1690,10 @@ class MultiTaskElasticNet(Lasso):
 
     See also
     --------
-    ElasticNet, MultiTaskLasso
+    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+    ElasticNet
+    MultiTaskLasso
 
     Notes
     -----
@@ -1873,7 +1878,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     See also
     --------
-    Lasso, MultiTaskElasticNet
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
+    Lasso
+    MultiTaskElasticNet
 
     Notes
     -----

@@ -213,9 +213,9 @@ def test_sparse_regression():
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
+            assert_array_almost_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
-            assert_array_equal(sparse_results, dense_results)
+            assert_array_almost_equal(sparse_results, dense_results)
 
 
 def test_bootstrap_samples():
@@ -376,7 +376,7 @@ def test_single_estimator():
 
     clf2 = KNeighborsRegressor().fit(X_train, y_train)
 
-    assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+    assert_array_almost_equal(clf1.predict(X_test), clf2.predict(X_test))
 
 
 def test_error():

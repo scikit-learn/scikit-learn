@@ -212,20 +212,21 @@ def load_data(module_path, data_file_name):
 
     Parameters
     ----------
-    data_file_name : String. Name of csv file to be loaded from
-    module_path/data/data_file_name. For example 'wine_data.csv'.
+    data_file_name : string
+        Name of csv file to be loaded from
+        module_path/data/data_file_name. For example 'wine_data.csv'.
 
     Returns
     -------
-    data : Numpy Array
+    data : Numpy array
         A 2D array with each row representing one sample and each column
         representing the features of a given sample.
 
-    target : Numpy Array
+    target : Numpy array
         A 1D array holding target variables for all the samples in `data.
         For example target[0] is the target varible for data[0].
 
-    target_names : Numpy Array
+    target_names : Numpy array
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
@@ -352,8 +353,9 @@ def load_iris(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        meaning of the features, 'DESCR', the full description of
+        the dataset, 'filename', the physical location of
+        iris csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -373,6 +375,7 @@ def load_iris(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'iris.csv')
+    iris_csv_filename = join(module_path, 'data', 'iris.csv')
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -384,7 +387,8 @@ def load_iris(return_X_y=False):
                  target_names=target_names,
                  DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'])
+                                'petal length (cm)', 'petal width (cm)'],
+                 filename=iris_csv_filename)
 
 
 def load_breast_cancer(return_X_y=False):
@@ -415,8 +419,9 @@ def load_breast_cancer(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        meaning of the features, and 'DESCR', the full description of
+        the dataset, 'filename', the physical location of
+        breast cancer csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -440,6 +445,7 @@ def load_breast_cancer(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'breast_cancer.csv')
+    csv_filename = join(module_path, 'data', 'breast_cancer.csv')
 
     with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -466,7 +472,8 @@ def load_breast_cancer(return_X_y=False):
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=feature_names)
+                 feature_names=feature_names,
+                 filename=csv_filename)
 
 
 def load_digits(n_class=10, return_X_y=False):
@@ -573,18 +580,21 @@ def load_diabetes(return_X_y=False):
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn and 'target', the regression target for each
-        sample.
+        'data', the data to learn, 'target', the regression target for each
+        sample, 'data_filename', the physical location
+        of diabetes data csv dataset, and 'target_filename', the physical
+        location of diabetes targets csv datataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
     """
-
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
-    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
-    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    data_filename = join(base_dir, 'diabetes_data.csv.gz')
+    data = np.loadtxt(data_filename)
+    target_filename = join(base_dir, 'diabetes_target.csv.gz')
+    target = np.loadtxt(target_filename)
 
     with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -594,7 +604,9 @@ def load_diabetes(return_X_y=False):
 
     return Bunch(data=data, target=target, DESCR=fdescr,
                  feature_names=['age', 'sex', 'bmi', 'bp',
-                                's1', 's2', 's3', 's4', 's5', 's6'])
+                                's1', 's2', 's3', 's4', 's5', 's6'],
+                 data_filename=data_filename,
+                 target_filename=target_filename)
 
 
 def load_linnerud(return_X_y=False):
@@ -622,21 +634,29 @@ def load_linnerud(return_X_y=False):
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
+        In addition, you will also have access to 'data_filename',
+        the physical location of linnerud data csv dataset, and
+        'target_filename', the physical location of
+        linnerud targets csv datataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data/')
+    data_filename = join(base_dir, 'linnerud_exercise.csv')
+    target_filename = join(base_dir, 'linnerud_physiological.csv')
+
     # Read data
-    data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
-    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
-                                    skiprows=1)
+    data_exercise = np.loadtxt(data_filename, skiprows=1)
+    data_physiological = np.loadtxt(target_filename, skiprows=1)
+
     # Read header
-    with open(base_dir + 'linnerud_exercise.csv') as f:
+    with open(data_filename) as f:
         header_exercise = f.readline().split()
-    with open(base_dir + 'linnerud_physiological.csv') as f:
+    with open(target_filename) as f:
         header_physiological = f.readline().split()
+
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
@@ -646,7 +666,9 @@ def load_linnerud(return_X_y=False):
     return Bunch(data=data_exercise, feature_names=header_exercise,
                  target=data_physiological,
                  target_names=header_physiological,
-                 DESCR=descr)
+                 DESCR=descr,
+                 data_filename=data_filename,
+                 target_filename=target_filename)
 
 
 def load_boston(return_X_y=False):
@@ -672,7 +694,9 @@ def load_boston(return_X_y=False):
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        and 'DESCR', the full description of the dataset.
+        'DESCR', the full description of the dataset,
+        and 'filename', the physical location of boston
+        csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -713,7 +737,8 @@ def load_boston(return_X_y=False):
                  target=target,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 DESCR=descr_text)
+                 DESCR=descr_text,
+                 filename=data_file_name)
 
 
 def load_sample_images():
@@ -742,16 +767,9 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # Try to import imread from scipy. We do this lazily here to prevent
-    # this module from depending on PIL.
-    try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread
-    except ImportError:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+    # import PIL only when needed
+    from ..externals._pilutil import imread
+
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()

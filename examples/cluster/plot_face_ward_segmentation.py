@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.externals._pilutil import imresize
 
 
 # #############################################################################
@@ -34,7 +35,7 @@ except ImportError:
     face = sp.face(gray=True)
 
 # Resize it to 10% of the original size to speed up the processing
-face = sp.misc.imresize(face, 0.10) / 255.
+face = imresize(face, 0.10) / 255.
 
 X = np.reshape(face, (-1, 1))
 

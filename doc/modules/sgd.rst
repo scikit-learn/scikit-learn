@@ -59,11 +59,11 @@ for the training samples::
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = SGDClassifier(loss="hinge", penalty="l2")
+    >>> clf = SGDClassifier(loss="hinge", penalty="l2", max_iter=5)
     >>> clf.fit(X, y)
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', max_iter=None, n_iter=None,
+           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
            n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
            shuffle=True, tol=None, verbose=0, warm_start=False)
 
@@ -109,7 +109,7 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`::
 
-    >>> clf = SGDClassifier(loss="log").fit(X, y)
+    >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]])                      # doctest: +ELLIPSIS
     array([[ 0.00...,  0.99...]])
 
@@ -142,9 +142,9 @@ the decision surface induced by the three classifiers.
    :align: center
    :scale: 75
 
-In the case of multi-class classification ``coef_`` is a two-dimensionally
-array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a one
-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
+In the case of multi-class classification ``coef_`` is a two-dimensional
+array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a
+one-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are
 indexed in ascending order (see attribute ``classes_``).
 Note that, in principle, since they allow to create a probability model,

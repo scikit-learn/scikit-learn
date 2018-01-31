@@ -35,7 +35,7 @@ Installing an official release
 
 Scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.3),
+- Python (>= 2.7 or >= 3.4),
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
@@ -67,15 +67,15 @@ Python 2 you can install all these requirements by issuing::
 
     sudo apt-get install build-essential python-dev python-setuptools \
                          python-numpy python-scipy \
-                         libatlas-dev libatlas3gf-base
+                         libatlas-dev libatlas3-base
 
 If you have Python 3::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                          python3-numpy python3-scipy \
-                         libatlas-dev libatlas3gf-base
+                         libatlas-dev libatlas3-base
 
-On recent Debian and Ubuntu (e.g. Ubuntu 13.04 or later) make sure that ATLAS
+On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
 is used to provide the implementation of the BLAS and LAPACK linear algebra
 routines::
 
@@ -177,7 +177,7 @@ latest stable release::
 If there are no binary packages matching your python, version you might
 to try to install scikit-learn and its dependencies from `christoph gohlke
 unofficial windows installers
-<http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
+<https://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
 or from a :ref:`python distribution <install_by_distribution>` instead.
 
 
@@ -376,24 +376,17 @@ Testing
 Testing scikit-learn once installed
 -----------------------------------
 
-Testing requires having the `nose
-<https://nose.readthedocs.io/en/latest/>`_ library. After
+Testing requires having the `pytest
+<https://docs.pytest.org>`_ library. After
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    $ nosetests -v sklearn
-
-Under Windows, it is recommended to use the following command (adjust the path
-to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
-interact with tests that use ``multiprocessing``::
-
-    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
+    $ pytest sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with a message similar to::
 
-    Ran 3246 tests in 260.618s
-    OK (SKIP=20)
+    =========== 8304 passed, 26 skipped, 4659 warnings in 557.76 seconds ===========
 
 Otherwise, please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
@@ -411,9 +404,9 @@ source directory::
 
     python setup.py build_ext --inplace
 
-Test can now be run using nosetests::
+Test can now be run using pytest::
 
-    nosetests -v sklearn/
+    pytest sklearn
 
 This is automated by the commands::
 

@@ -4,6 +4,8 @@
 #         Wei LI <kuantkid@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
+
 import warnings
 
 import numpy as np
@@ -11,6 +13,7 @@ from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh, lobpcg
 from scipy.sparse.csgraph import connected_components
+from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
 from ..externals import six
@@ -234,8 +237,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    laplacian, dd = sparse.csgraph.laplacian(adjacency, normed=norm_laplacian,
-                                             return_diag=True)
+    laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                      return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -268,7 +271,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol, v0=v0)
-            embedding = diffusion_map.T[n_components::-1] * dd
+            embedding = diffusion_map.T[n_components::-1]
+            if norm_laplacian:
+                embedding = embedding / dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -291,7 +296,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
-        embedding = diffusion_map.T * dd
+        embedding = diffusion_map.T
+        if norm_laplacian:
+            embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
 
@@ -306,7 +313,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
             lambdas, diffusion_map = eigh(laplacian)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T[:n_components]
+            if norm_laplacian:
+                embedding = embedding / dd
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
@@ -315,7 +324,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T[:n_components]
+            if norm_laplacian:
+                embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError
 
@@ -428,6 +439,8 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
+        Y: Ignored
+
         Returns
         -------
         affinity_matrix, shape (n_samples, n_samples)
@@ -474,6 +487,8 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
+        Y: Ignored
+
         Returns
         -------
         self : object
@@ -513,6 +528,8 @@ class SpectralEmbedding(BaseEstimator):
             X : array-like, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
+
+        Y: Ignored
 
         Returns
         -------

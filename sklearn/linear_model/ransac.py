@@ -197,7 +197,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
@@ -270,7 +270,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                              "positive.")
         if min_samples > X.shape[0]:
             raise ValueError("`min_samples` may not be larger than number "
-                             "of samples ``X.shape[0]``.")
+                             "of samples: n_samples = %d." % (X.shape[0]))
 
         if self.stop_probability < 0 or self.stop_probability > 1:
             raise ValueError("`stop_probability` must be in range [0, 1].")
