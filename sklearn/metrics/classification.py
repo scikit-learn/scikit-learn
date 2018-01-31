@@ -485,7 +485,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         if y_type == 'binary':
             if pos_label not in present_labels:
                 if len(present_labels) < 2:
-                    return 1.
+                    return 0.
                 else:
                     raise ValueError("pos_label=%r is not a valid label: "
                                      "%r" % (pos_label, present_labels))
@@ -558,7 +558,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
         with np.errstate(divide='ignore', invalid='ignore'):
             score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] = 1.0
+            score[pred_or_true == 0.0] = 0.0
 
             if average is not None:
                 if not normalize:
