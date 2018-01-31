@@ -39,7 +39,7 @@ import time
 
 try:
     import annoy
-except:
+except ImportError:
     print("The package 'annoy' is required to run this example.")
     import sys
     sys.exit()
