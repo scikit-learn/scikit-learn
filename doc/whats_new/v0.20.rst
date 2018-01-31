@@ -342,7 +342,8 @@ Cluster
   <thechargedneutron>`.
 
 - Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
-  :issue:`9672` by :user:`Baze Petrushev <petrushev>`.
+  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
+  :user:`Hanmin Qin <qinhanmin2014>`.
 
 Changes to estimator checks
 ---------------------------
