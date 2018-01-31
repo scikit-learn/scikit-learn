@@ -54,16 +54,22 @@ def compute_class_weight(class_weight, classes, y):
         freq = np.bincount(y_ind).astype(np.float64)
         recip_freq = len(y) / (len(le.classes_) * freq)
         weight = recip_freq[le.transform(classes)]
-        freq_weight = np.reshape(freq * weight, (len(freq), 1))
-        if np.any(freq_weight - freq_weight.swapaxes(0, 1)):
+        # needed if classes is not ordered
+        ordered_freq = freq[le.transform(classes)]
+        if len(np.unique(ordered_freq * weight)) > 1:
             # Numerical imprecision issues.
             # Just in case, we will add a little eps in order to prefer
             # true class distribution.
-            true_order = np.argsort(freq)[::-1]
-            bad_order = np.argsort(freq * weight)[::-1]
-            jitter = _jitter_transform(true_order, bad_order)
-            recip_freq = (len(y) + jitter * 1e-7) / (len(le.classes_) * freq)
-            weight = recip_freq[le.transform(classes)]
+            true_order = np.argsort(ordered_freq)[::-1]
+            weighted_order = np.argsort(ordered_freq * weight)[::-1]
+            jitter = np.zeros(len(true_order))
+            while not np.all(np.equal(true_order, weighted_order)):
+                # add jitter until weighted order = true order.
+                jitter += _jitter_transform(true_order, weighted_order)
+                recip_freq = (len(y) + jitter * 1e-7) / (len(le.classes_) * freq)
+                weight = recip_freq[le.transform(classes)]
+                weighted_order = np.argsort(ordered_freq * weight)[::-1]
+
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
@@ -84,19 +90,24 @@ def _jitter_transform(true_order, bad_order):
     # function to add jitter to class_weight in order to
     # respect true order
     k = len(true_order)
+    shifted_order = bad_order.copy()
     jitter = np.zeros(k)
-    for i in range(k // 2 + 1):
-        j = np.where(bad_order == true_order[i])[0][0]
+    for i in range(k // 2):
+        # check the position of ith element
+        # add jitter only if the position is higher
+        j = np.where(shifted_order == true_order[i])[0][0]
         if j > i:
             jitter[true_order[:i+1]] += 1
-            bad_order[i + 1:j + 1] = bad_order[i:j]
-            bad_order[i] = true_order[i]
+            shifted_order[i + 1:j + 1] = shifted_order[i:j]
+            shifted_order[i] = true_order[i]
 
-        j = np.where(bad_order == true_order[k-i-1])[0][0]
+        # same as before but in reverse.
+        j = np.where(shifted_order == true_order[k-i-1])[0][0]
         if j < k - i - 1:
             jitter[true_order[k-1-i:]] -= 1
-            bad_order[j:k-i-1] = bad_order[j+1:k-i]
-            bad_order[k-i-1] = true_order[k-i-1]
+            shifted_order[j:k-i-1] = shifted_order[j+1:k-i]
+            shifted_order[k-i-1] = shifted_order[k-i-1]
+
     return jitter
 
 
