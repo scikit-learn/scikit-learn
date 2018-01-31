@@ -431,7 +431,7 @@ class SVC(BaseSVC):
     is more than quadratic with the number of samples which makes it hard
     to scale to dataset with more than a couple of 10000 samples.
 
-    The multiclass support is handled according to a one-vs-one scheme.
+    The multiclass support is handled according to a one-vs-rest scheme.
 
     For details on the precise mathematical formulation of the provided
     kernel functions and how `gamma`, `coef0` and `degree` affect each
