@@ -21,11 +21,11 @@ from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
-from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
+from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars, Ridge
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
-                   regularization=None, copy_cov=True,
+                   regularization=None, copy_cov=True, l1_ratio=1.,
                    init=None, max_iter=1000, check_input=True, verbose=0):
     """Generic sparse coding
 
@@ -121,19 +121,27 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         finally:
             np.seterr(**err_mgt)
 
-    elif algorithm == 'lasso_cd':
+    elif algorithm in ['lasso_cd', 'ridge']:
         alpha = float(regularization) / n_features  # account for scaling
 
         # TODO: Make verbosity argument for Lasso?
         # sklearn.linear_model.coordinate_descent.enet_path has a verbosity
         # argument that we could pass in from Lasso.
-        clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
-                    precompute=gram, max_iter=max_iter, warm_start=True)
+        init_kwargs = dict(precompute=gram, max_iter=max_iter, warm_start=True)
+        fit_kwargs = {}
+        if algorithm == "lasso_cd":
+            cls = Lasso
+            fit_kwargs = dict(check_input=check_input)
+        elif algorithm == "ridge":
+            init_kwargs = {}
+            cls = Ridge
+        clf = cls(alpha=alpha, fit_intercept=False, normalize=False,
+                  **init_kwargs)
 
         if init is not None:
             clf.coef_ = init
 
-        clf.fit(dictionary.T, X.T, check_input=check_input)
+        clf.fit(dictionary.T, X.T, **fit_kwargs)
         new_code = clf.coef_
 
     elif algorithm == 'lars':
@@ -161,9 +169,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             tol=None, norms_squared=row_norms(X, squared=True),
             copy_Xy=copy_cov).T
     else:
-        raise ValueError('Sparse coding method must be "lasso_lars" '
-                         '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
-                         % algorithm)
+        raise ValueError('Sparse coding method must be "lasso_lars", '
+                         '"lasso_cd", ridge", "lasso", '
+                         '"threshold" or "omp", got %s.' % algorithm)
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
     return new_code
@@ -198,7 +206,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     cov : array, shape=(n_components, n_samples)
         Precomputed covariance, dictionary' * X
 
-    algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    algorithm : {'lasso_lars', 'lasso_cd', ridge', lars', 'omp',
+    'threshold'}
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -503,9 +512,10 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     MiniBatchSparsePCA
     """
     if method is None or isinstance(method, str):
-        if method not in ('lars', 'cd'):
+        if method not in ('lars', 'cd', 'ridge'):
             raise ValueError('Coding method not supported as a fit algorithm.')
-        method = 'lasso_' + method
+        if method in ('lars', 'cd'):
+            method = 'lasso_' + method
 
     t0 = time.time()
     # Avoid integer division problems
@@ -705,9 +715,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         n_components = X.shape[1]
 
     if method is None or isinstance(method, str):
-        if method not in ('lars', 'cd'):
+        if method not in ('lars', 'cd', 'ridge'):
             raise ValueError('Coding method not supported as a fit algorithm.')
-        method = 'lasso_' + method
+        if method in ('lars', 'cd'):
+            method = 'lasso_' + method
 
     t0 = time.time()
     n_samples, n_features = X.shape
