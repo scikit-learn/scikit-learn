@@ -66,7 +66,8 @@ def compute_class_weight(class_weight, classes, y):
             while not np.all(np.equal(true_order, weighted_order)):
                 # add jitter until weighted order = true order.
                 jitter += _jitter_transform(true_order, weighted_order)
-                recip_freq = (len(y) + jitter * 1e-7) / (len(le.classes_) * freq)
+                recip_freq = (len(y) + jitter * 1e-7) / (len(le.classes_) *
+                                                         freq)
                 weight = recip_freq[le.transform(classes)]
                 weighted_order = np.argsort(ordered_freq * weight)[::-1]
 
