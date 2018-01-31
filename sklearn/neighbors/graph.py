@@ -24,14 +24,16 @@ def _check_params(X, metric, p, metric_params):
                     func_param, param_name, est_params[param_name]))
 
 
-def _query_include_self(X, include_self):
+def _query_include_self(X, include_self, mode):
     """Return the query based on include_self param"""
-    if include_self:
-        query = X._fit_X
-    else:
-        query = None
+    if include_self is None:
+        include_self = mode == 'connectivity'
 
-    return query
+    # it does not include each sample as its own neighbors
+    if not include_self:
+        X = None
+
+    return X
 
 
 def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
@@ -70,7 +72,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     include_self : bool, default=False.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself.
+        itself. If None, then True is used for mode='connectivity' and False
+        for mode='distance'.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -101,7 +104,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     else:
         _check_params(X, metric, p, metric_params)
 
-    query = _query_include_self(X, include_self)
+    query = _query_include_self(X._fit_X, include_self, mode)
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
@@ -144,7 +147,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     include_self : bool, default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself.
+        itself. If None, then True is used for mode='connectivity' and False
+        for mode='distance'.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -175,7 +179,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     else:
         _check_params(X, metric, p, metric_params)
 
-    query = _query_include_self(X, include_self)
+    query = _query_include_self(X._fit_X, include_self, mode)
     return X.radius_neighbors_graph(query, radius, mode)
 
 
@@ -183,16 +187,16 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
                             UnsupervisedMixin, TransformerMixin):
     """Transform X into a (weighted) graph of k nearest neighbors
 
-    The transformed data is a sparse graph as return by kneighbors_graph.
+    The transformed data is a sparse graph as returned by kneighbors_graph.
 
     Parameters
     ----------
-    mode : {'distance', 'connectivity'}, optional (default = 'connectivity')
+    mode : {'distance', 'connectivity'}, optional (default = 'distance')
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    include_self : bool, default=True.
+    include_self : bool, default=None.
         Whether or not to mark each sample as the first nearest neighbor to
         itself. If None, then True is used for mode='connectivity' and False
         for mode='distance'.
@@ -267,7 +271,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
-    def __init__(self, mode='connectivity', include_self=None,
+    def __init__(self, mode='distance', include_self=None,
                  n_neighbors=5, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None, n_jobs=1):
         super(KNeighborsTransformer, self).__init__(
@@ -315,14 +319,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         """
         self.fit(X)
 
-        if self.include_self is None:
-            include_self = self.mode == 'connectivity'
-        else:
-            include_self = self.include_self
-
-        # If we don't include each sample as its own neighbors
-        if not include_self:
-            X = None
+        X = _query_include_self(X, self.include_self, self.mode)
         return self.transform(X)
 
 
@@ -330,16 +327,17 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
                                  UnsupervisedMixin, TransformerMixin):
     """Transform X into a (weighted) graph of neighbors nearer than a radius
 
-    The transformed data is a sparse graph as return by radius_neighbors_graph.
+    The transformed data is a sparse graph as returned by
+    radius_neighbors_graph.
 
     Parameters
     ----------
-    mode : {'distance', 'connectivity'}, optional (default = 'connectivity')
+    mode : {'distance', 'connectivity'}, optional (default = 'distance')
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    include_self : bool, default=True.
+    include_self : bool, default=None.
         Whether or not to mark each sample as the first nearest neighbor to
         itself. If None, then True is used for mode='connectivity' and False
         for mode='distance'.
@@ -414,7 +412,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='connectivity', include_self=None,
+    def __init__(self, mode='distance', include_self=None,
                  radius=1., algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None, n_jobs=1):
         super(RadiusNeighborsTransformer, self).__init__(
@@ -462,12 +460,5 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         """
         self.fit(X)
 
-        if self.include_self is None:
-            include_self = self.mode == 'connectivity'
-        else:
-            include_self = self.include_self
-
-        # If we don't include each sample as its own neighbors
-        if not include_self:
-            X = None
+        X = _query_include_self(X, self.include_self, self.mode)
         return self.transform(X)

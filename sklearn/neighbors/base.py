@@ -158,7 +158,7 @@ def _check_precomputed(X):
         if not copied:
             graph = graph.copy()
 
-        # if it has the same number of neighbors for each samples
+        # if each sample has the same number of provided neighbors
         row_nnz = np.diff(graph.indptr)
         if row_nnz.max() == row_nnz.min():
             n_samples = graph.shape[0]
@@ -209,13 +209,13 @@ def _kneighbors_from_graph(graph, n_neighbors):
             'neighbors used or recompute the graph with more neighbors.'
             % (n_neighbors, row_nnz_min))
 
-    # if there is the same number of neighbors for each sample
+    # if each sample has the same number of provided neighbors
     if row_nnz.max() == row_nnz_min:
 
         def extract(a):
             return a.reshape(n_samples, -1)[:, :n_neighbors]
 
-    else:  # radius neighbors case
+    else:
         idx = np.tile(np.arange(n_neighbors), n_samples)
         idx = idx.reshape(n_samples, n_neighbors)
         idx += graph.indptr[:-1, np.newaxis]

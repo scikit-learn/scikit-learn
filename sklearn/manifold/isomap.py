@@ -6,7 +6,7 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -106,11 +106,9 @@ class Isomap(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
 
         if self.neighbors_algorithm == 'precomputed':
-            X = check_array(X, accept_sparse=['csr'])
             algorithm = 'brute'
             metric = 'precomputed'
         else:
-            X = check_array(X)
             algorithm = self.neighbors_algorithm
             metric = 'minkowski'
 
@@ -220,7 +218,6 @@ class Isomap(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples_transform, n_components)
         """
         check_is_fitted(self, 'embedding_')
-        X = check_array(X, accept_sparse=['csr'])
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
