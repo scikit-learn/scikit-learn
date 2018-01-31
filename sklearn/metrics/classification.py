@@ -513,14 +513,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                              "`average='samples'`, got `average='%s'`."
                              % average)
 
-        if not np.all(labels == present_labels):
-            if np.max(labels) > np.max(present_labels):
-                raise ValueError('All labels must be in [0, n, labels). '
-                                 'Got %d > %d' %
-                                 (np.max(labels), np.max(present_labels)))
-            if np.min(labels) < 0:
-                raise ValueError('All labels must be in [0, n, labels). '
-                                 'Got %d < 0' % np.min(labels))
+        _validate_multilabels(labels, present_labels)
 
         if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
@@ -1083,6 +1076,18 @@ def _validate_input(y_true, y_pred, sample_weight):
     return y_type, y_true, y_pred, present_labels
 
 
+def _validate_multilabels(labels, present_labels):
+    """All labels are index integers for multilabel."""
+    if not np.all(labels == present_labels):
+        if np.max(labels) > np.max(present_labels):
+            raise ValueError('All labels must be in [0, n, labels). '
+                             'Got %d > %d' %
+                             (np.max(labels), np.max(present_labels)))
+        if np.min(labels) < 0:
+            raise ValueError('All labels must be in [0, n, labels). '
+                             'Got %d < 0' % np.min(labels))
+
+
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
@@ -1263,16 +1268,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if y_type.startswith('multilabel'):
         sum_axis = 1 if average == 'samples' else 0
 
-        # All labels are index integers for multilabel.
-        # Select labels:
-        if not np.all(labels == present_labels):
-            if np.max(labels) > np.max(present_labels):
-                raise ValueError('All labels must be in [0, n labels). '
-                                 'Got %d > %d' %
-                                 (np.max(labels), np.max(present_labels)))
-            if np.min(labels) < 0:
-                raise ValueError('All labels must be in [0, n labels). '
-                                 'Got %d < 0' % np.min(labels))
+        _validate_multilabels(labels, present_labels)
 
         if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
