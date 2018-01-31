@@ -311,6 +311,10 @@ Preprocessing
   errors when ``transform`` or ``inverse_transform`` was called with empty arrays.
   :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
 
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
+
 API changes summary
 -------------------
 
