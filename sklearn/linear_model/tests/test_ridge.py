@@ -709,6 +709,17 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
+def test_ridgecv_int_alphas():
+
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Integers
+    ridge = RidgeCV(alphas=(1, 10, 100))
+    ridge.fit(X, y)
+
+
 def test_ridgecv_negative_alphas():
 
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
