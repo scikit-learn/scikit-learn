@@ -905,7 +905,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     See also
     --------
-    AdaBoostClassifier, GradientBoostingRegressor
+    AdaBoostClassifier, GradientBoostingRegressor,
     sklearn.tree.DecisionTreeRegressor
 
     References
