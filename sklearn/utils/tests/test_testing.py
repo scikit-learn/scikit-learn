@@ -576,6 +576,11 @@ def test_assert_consistent_docs():
                          [doc1, doc2], include_returns=['precision'],
                          include_params=False)  # type definition mismatch
 
+    doc3 = doc1  # both doc1 and doc3 return 'recall' whereas doc2 does not
+    assert_consistent_docs([doc1, doc2, doc3],
+                           include_returns=['fbeta_score', 'recall'],
+                           include_attribs=False, include_params=False)
+
     # Test for incorrect usage
     test_list1 = doc1['Parameters']
     test_list2 = doc2['Parameters']
@@ -589,7 +594,7 @@ def test_assert_consistent_docs():
         doc1[typ] = test_list1
         doc2[typ] = test_list2
 
-        # Pssing lists to both include_ and exclude_ arguments
+        # Passing lists to both include_ and exclude_ arguments
         kwargs = {include: ['sample_weight'], exclude: ['sample_weight']}
         assert_raises(TypeError, assert_consistent_docs, [doc1, doc2],
                       **kwargs)
