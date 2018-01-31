@@ -62,6 +62,7 @@ require to download any file from some external website.
    load_linnerud
    load_wine
    load_breast_cancer
+   fetch_california_housing
 
 These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in scikit-learn. They are however often too
