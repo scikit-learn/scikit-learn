@@ -38,6 +38,7 @@ jobs:
       # PYTHON_VERSION environment variable.
       - image: circleci/python:3.6.1
     environment:
+      # Test examples run with minimal dependencies.
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 2
