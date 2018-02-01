@@ -914,7 +914,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
-        u : Ignored
+        y : Ignored
 
         Returns
         -------
