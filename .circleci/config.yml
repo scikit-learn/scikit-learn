@@ -38,9 +38,12 @@ jobs:
       # PYTHON_VERSION environment variable.
       - image: circleci/python:3.6.1
     environment:
+      # Test examples run with minimal dependencies.
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 2
+      - NUMPY_VERSION: 1.8.2
+      - SCIPY_VERSION: 0.13.3
       - MATPLOTLIB_VERSION: "1.3"
     steps:
       - checkout
