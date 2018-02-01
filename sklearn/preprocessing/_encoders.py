@@ -118,12 +118,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     def _fit(self, X, handle_unknown='error'):
 
-        if self.categories != 'auto':
-            for cats in self.categories:
-                if not np.all(np.sort(cats) == np.array(cats)):
-                    raise ValueError("Unsorted categories are not yet "
-                                     "supported")
-
         X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
@@ -131,6 +125,15 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X = X_temp
 
         n_samples, n_features = X.shape
+
+        if self.categories != 'auto':
+            for cats in self.categories:
+                if not np.all(np.sort(cats) == np.array(cats)):
+                    raise ValueError("Unsorted categories are not yet "
+                                     "supported")
+            if len(self.categories) != n_features:
+                raise ValueError("Shape mismatch: if n_values is an array,"
+                                 " it has to be of shape (n_features,).")
 
         self._label_encoders_ = [LabelEncoder() for _ in range(n_features)]
 
@@ -193,7 +196,7 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array.
-    By default, encoder derives the categories based on the unique values
+    By default, the encoder derives the categories based on the unique values
     in each feature.  Alternatively, the input to this transformer can be a
     matrix of already encoded integers denoting the values taken on by
     categorical (discrete) features. In that case you have to specify
@@ -219,14 +222,6 @@ class OneHotEncoder(_BaseEncoder):
           strings and numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
-
-    encoded_input : boolean
-        How to interpret the input data:
-
-        encoded_input=False : categorical features that still need to be
-            encoded.
-        encoded_input=True : already integer encoded data, and the categories
-            are determined based on the maximum instead of unique.
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
@@ -335,23 +330,24 @@ class OneHotEncoder(_BaseEncoder):
       and n_classes-1.
     """
     def __init__(self, n_values=None, categorical_features=None,
-                 categories='auto', encoded_input=None, sparse=True,
-                 dtype=np.float64, handle_unknown='error'):
+                 categories='auto', sparse=True, dtype=np.float64,
+                 handle_unknown='error'):
+        self.categories = categories
+        self.sparse = sparse
+        self.dtype = dtype
+        self.handle_unknown = handle_unknown
+
         if n_values is not None:
             warnings.warn("Deprecated", DeprecationWarning)
         else:
             n_values = "auto"
         self._deprecated_n_values = n_values
+
         if categorical_features is not None:
             warnings.warn("Deprecated", DeprecationWarning)
         else:
             categorical_features = "all"
         self._deprecated_categorical_features = categorical_features
-        self.categories = categories
-        self.encoded_input = encoded_input
-        self.sparse = sparse
-        self.dtype = dtype
-        self.handle_unknown = handle_unknown
 
     # Deprecated keywords
 
@@ -395,6 +391,60 @@ class OneHotEncoder(_BaseEncoder):
         warnings.warn("Deprecated", DeprecationWarning)
         return self._n_values_
 
+    def _handle_deprecations(self, X):
+
+        if self.categories != 'auto':
+            self._legacy_mode = False
+
+        elif self._deprecated_n_values != 'auto':
+            warnings.warn("Deprecated", DeprecationWarning)
+
+            # we internally translate this to the correct categories
+            # and don't use legacy mode
+            X = check_array(X, dtype=np.int)
+
+            if isinstance(self._deprecated_n_values, numbers.Integral):
+                n_features = X.shape[1]
+                self.categories = [
+                    list(range(self._deprecated_n_values))
+                    for _ in range(n_features)]
+                n_values = np.empty(n_features, dtype=np.int)
+                n_values.fill(self._deprecated_n_values)
+            else:
+                try:
+                    n_values = np.asarray(self._deprecated_n_values, dtype=int)
+                    self.categories = [list(range(i))
+                                       for i in self._deprecated_n_values]
+                except (ValueError, TypeError):
+                    raise TypeError(
+                        "Wrong type for parameter `n_values`. Expected 'auto',"
+                        " int or array of ints, got %r".format(type(X)))
+
+            self._n_values_ = n_values
+            n_values = np.hstack([[0], n_values])
+            indices = np.cumsum(n_values)
+            self._feature_indices_ = indices
+
+            self._legacy_mode = False
+
+        else:  # n_values = 'auto'
+            if self.handle_unknown == 'ignore':
+                # no change in behaviour, no need to raise deprecation warning
+                self._legacy_mode = False
+            else:
+
+                # check if we have integer or categorical input
+                try:
+                    X = check_array(X, dtype=np.int)
+                except ValueError:
+                    self._legacy_mode = False
+                else:
+                    warnings.warn(WARNING_MSG, DeprecationWarning)
+                    self._legacy_mode = True
+
+        if self._deprecated_categorical_features != 'all':
+            self._legacy_mode = True
+
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
@@ -412,26 +462,20 @@ class OneHotEncoder(_BaseEncoder):
                         "'ignore', got %s")
             raise ValueError(template % self.handle_unknown)
 
-        if self.encoded_input is None:
-            # check if we have integer or categorical input
-            try:
-                X = check_array(X, dtype=np.int)
-            except ValueError:
-                self.encoded_input = False
-            else:
-                warnings.warn(WARNING_MSG, DeprecationWarning)
-                self.encoded_input = True
+        self._handle_deprecations(X)
 
-        if not self.encoded_input:
-            self._fit(X, handle_unknown=self.handle_unknown)
+        if self._legacy_mode:
+            # TODO not with _transform_selected ??
+            self._fit_transform_old(X)
             return self
         else:
-            self._fit_transform_old(X)
+            self._fit(X, handle_unknown=self.handle_unknown)
             return self
 
     def _fit_transform_old(self, X):
         """Assumes X contains only categorical features."""
         self_n_values = self._deprecated_n_values
+        dtype = getattr(X, 'dtype', None)
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -457,7 +501,8 @@ class OneHotEncoder(_BaseEncoder):
                                  " it has to be of shape (n_features,).")
 
         self._n_values_ = n_values
-        self.categories_ = [np.arange(n_val - 1) for n_val in n_values]
+        self.categories_ = [np.arange(n_val - 1, dtype=dtype)
+                            for n_val in n_values]
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
         self._feature_indices_ = indices
@@ -477,6 +522,11 @@ class OneHotEncoder(_BaseEncoder):
             out = out[:, active_features]
             self._active_features_ = active_features
 
+            self.categories_ = [
+                np.unique(X[:, i]).astype(dtype) if dtype else np.unique(X[:, i])
+                for i in range(n_features)]
+            #import pdb; pdb.set_trace()
+
         return out if self.sparse else out.toarray()
 
     def fit_transform(self, X, y=None):
@@ -495,22 +545,14 @@ class OneHotEncoder(_BaseEncoder):
                         "'ignore', got %s")
             raise ValueError(template % self.handle_unknown)
 
-        if self.encoded_input is None:
-            # check if we have integer or categorical input
-            try:
-                X = check_array(X, dtype=np.int)
-            except ValueError:
-                self.encoded_input = False
-            else:
-                warnings.warn(WARNING_MSG, DeprecationWarning)
-                self.encoded_input = True
+        self._handle_deprecations(X)
 
-        if not self.encoded_input:
-            return self.fit(X).transform(X)
-        else:
+        if self._legacy_mode:
             return _transform_selected(X, self._fit_transform_old,
                                        self._deprecated_categorical_features,
                                        copy=True)
+        else:
+            return self.fit(X).transform(X)
 
     def _transform_old(self, X):
         """Assumes X contains only categorical features."""
@@ -596,7 +638,7 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        if not self.encoded_input:
+        if not self._legacy_mode:
             return self._transform_new(X)
         else:
             return _transform_selected(X, self._transform_old,
@@ -620,8 +662,8 @@ class OneHotEncoder(_BaseEncoder):
             Inverse transformed array.
 
         """
-        if self.encoded_input:
-            raise ValueError("only supported for categorical features")
+        # if self._legacy_mode:
+        #     raise ValueError("only supported for categorical features")
 
         check_is_fitted(self, 'categories_')
         X = check_array(X, accept_sparse='csr')
