@@ -712,7 +712,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=False)
+                     self.fit_intercept, copy=self.copy_X)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
