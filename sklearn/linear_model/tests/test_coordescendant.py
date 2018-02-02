@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 import scipy
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
+from sklearn.utils.testing import (assert_array_almost_equal,
                                    assert_equal, assert_less_equal,
                                    assert_array_equal, assert_false,
                                    assert_true, assert_array_less,
@@ -14,11 +14,49 @@ from sklearn.linear_model import ElasticNet, MultiTaskElasticNet
 from sklearn.linear_model.coordescendant import (coordescendant, L11_PENALTY,
                                                  L2INF_CONSTRAINT, L21_PENALTY,
                                                  L1INF_CONSTRAINT, NOP)
+from sklearn.linear_model import cd_fast
 from .coordescendant_slow import coordescendant_slow
 from .dual_gap_slow import compute_dual_gap_slow
 from .prox_slow import prox_l1_slow, prox_l2_slow, proj_l1_slow, proj_l2_slow
 from sklearn.linear_model.python_wrappers import (
     _py_prox_l1, _py_prox_l2, _py_proj_l1, _py_proj_l2, _py_compute_dual_gap)
+
+
+def cd_fast_api(W, l1_reg, l2_reg, X_or_Gram, Y_or_Cov, Y=None, Y_norm2=None,
+                precomputed=False, max_iter=1000, tol=1e-4, rng=None,
+                random=False, positive=False, penalty_model=1):
+    """Simulate coordescendant using sklearn's legacy cd_fast module. This
+    is only for testing purposes."""
+    rng = check_random_state(rng)
+    for stuff in W, X_or_Gram, Y_or_Cov, Y:
+        if stuff is not None:
+            assert stuff.ndim == 2
+    if penalty_model == L21_PENALTY:
+        assert not precomputed
+        X_or_Gram = np.asfortranarray(X_or_Gram)
+        W, gap, tol, n_iter = cd_fast.enet_coordinate_descent_multi_task(
+            W.T, l1_reg, l2_reg, X_or_Gram, Y_or_Cov, max_iter, tol, rng,
+            random)
+        return W.T, gap, tol, n_iter
+    elif penalty_model == L11_PENALTY:
+        assert W.shape[1] == Y_or_Cov.shape[1] == 1
+        W = W[:, 0]
+        Y_or_Cov = Y_or_Cov[:, 0]
+        if Y is not None:
+            assert Y.shape[1] == 1
+            Y = Y[:, 0]
+        if precomputed:
+            X_or_Gram = np.ascontiguousarray(X_or_Gram)
+            Y_or_Cov = np.ascontiguousarray(Y_or_Cov)
+            return cd_fast.enet_coordinate_descent_gram(
+                W, l1_reg, l2_reg, X_or_Gram, Y_or_Cov, Y, max_iter, tol,
+                rng, random, positive=positive)
+        else:
+            return cd_fast.enet_coordinate_descent(
+                W, l1_reg, l2_reg, X_or_Gram, Y_or_Cov, max_iter, tol,
+                rng, random, positive=positive)
+    else:
+        raise NotImplementedError
 
 
 def as_complex(X, Y):
@@ -27,8 +65,8 @@ def as_complex(X, Y):
 
 
 def _make_test_data(n_samples, n_features, n_targets, single_precision=False,
-                    real=True, random_state=0, fake_complex=False,
-                    sparsity=0., noise_std=0., double_precision=True):
+                    real=True, random_state=0, fake_complex=False, sparsity=0.,
+                    noise_std=0.):
     rng = check_random_state(random_state)
     if single_precision:
         real_dtype = np.float32
@@ -62,10 +100,10 @@ def _make_test_data(n_samples, n_features, n_targets, single_precision=False,
             Y += noise_std * as_complex(
                 real_dtype(rng.randn(n_samples, n_targets)),
                 real_dtype(rng.randn(n_samples, n_targets)))
-    Gram = np.dot(X.conjugate().T, X)
-    Cov = np.dot(X.conjugate().T, Y)
+    Gram = np.dot(X.T, X)
+    Cov = np.dot(X.T, Y)
     assert_array_almost_equal(
-        Gram, Gram.conjugate().T)  # Gram must be conj symm
+        Gram, Gram.T)  # Gram must be conj symm
     X = np.asarray(X, order="F")
     Y = np.asarray(Y, order="F")
     Gram = np.asarray(Gram, order="F")
@@ -81,25 +119,18 @@ def _make_test_data(n_samples, n_features, n_targets, single_precision=False,
 
 @ignore_warnings
 def test_lstsq(random_state=0):
-    for precompute, real in itertools.product([True, False],
-                                              [True, False]):
-        imag_unit = scipy.sqrt(-1)
+    for precompute in [True, False]:
         rng = check_random_state(random_state)
-        X = np.diag([1., 10. + 2. * imag_unit])
+        X = np.diag([1., 10.])
         X[0, 1] = -4.
         X = np.vstack((X, np.ones(2)))
-        W = rng.randn(2, 3) + imag_unit * rng.randn(2, 3)
-        X = X.astype(np.complex128)
-        W = W.astype(np.complex128)
-        if real:
-            W = W.real
-            X = X.real
+        W = rng.randn(2, 3)
         Y = np.dot(X, W)
         Y_flat = Y.ravel()
-        Y_norm2 = np.dot(Y_flat.conjugate(), Y_flat)
+        Y_norm2 = np.dot(Y_flat, Y_flat)
         if precompute:
-            X_or_Gram = np.dot(X.conjugate().T, X)
-            Y_or_Cov = np.dot(X.conjugate().T, Y)
+            X_or_Gram = np.dot(X.T, X)
+            Y_or_Cov = np.dot(X.T, Y)
         else:
             X_or_Gram = X
             Y_or_Cov = Y
@@ -117,11 +148,17 @@ def test_lstsq(random_state=0):
 def test_cmp_with_sklearn(max_iter=10, X=None, Y=None, random_state=0):
     rng = check_random_state(random_state)
     for (n_samples, n_features, n_targets, penalty_model, alpha, l1_ratio,
-         precompute, positive) in itertools.product(
+         precompute, positive, sp) in itertools.product(
              range(1, 3), range(1, 3), range(1, 3), [L11_PENALTY, L21_PENALTY],
-             [.1, 1., 10.], [.5, 1.], [True, False], [True, False]):
+             [.1, 1., 10.], [.5, 1.], [True, False], [True, False],
+             [True, False]):
         X, Y, Gram, Cov, _ = _make_test_data(
-            n_samples, n_features, n_targets, random_state=rng)
+            n_samples, n_features, n_targets, random_state=rng,
+            single_precision=sp)
+        if sp:
+            decimal = 5
+        else:
+            decimal = 13
         if positive and penalty_model != L11_PENALTY:
             continue
         kwargs = {}
@@ -140,46 +177,50 @@ def test_cmp_with_sklearn(max_iter=10, X=None, Y=None, random_state=0):
             tol = 0.
         else:
             tol = 1e-2
-        assert_array_almost_equal(Gram, Gram.conjugate().T, decimal=14)
+        assert_array_almost_equal(Gram, Gram.T, decimal=decimal)
         sk_model = sk_cls(
             alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False, tol=tol,
             random_state=rng, max_iter=max_iter, **kwargs)
         W1 = sk_model.fit(X.real, Y.real).coef_.T
         Y_flat = Y.ravel()
-        Y_norm2 = np.dot(Y_flat.conjugate(), Y_flat)
+        Y_norm2 = np.dot(Y_flat, Y_flat)
         if precompute:
             X_or_Gram = Gram
             Y_or_Cov = Cov
         else:
             X_or_Gram = X
             Y_or_Cov = Y
-        for backend in [coordescendant_slow, coordescendant]:
+        for backend in [coordescendant_slow, coordescendant, cd_fast_api]:
+            kwargs = {}
+            if backend == cd_fast_api:
+                if penalty_model == L11_PENALTY and n_targets > 1:
+                    continue
+                if penalty_model == L21_PENALTY and precompute:
+                    continue
+                kwargs["Y"] = Y
             W2 = np.zeros_like(Cov, order="C")
             W2, gap, _, n_iter = backend(
                 W2, l1_reg, l2_reg, X_or_Gram, Y_or_Cov, Y_norm2=Y_norm2,
                 precomputed=precompute, max_iter=max_iter, tol=tol,
-                penalty_model=penalty_model, positive=positive)
+                penalty_model=penalty_model, positive=positive, **kwargs)
             if W1.ndim == 1:
                 W2 = W2.ravel()
             if n_targets == 1:
                 assert_equal(n_iter, sk_model.n_iter_)
-            assert_array_almost_equal(W1, W2.real, decimal=13)
+            assert_array_almost_equal(W1, W2.real, decimal=decimal)
 
 
 @ignore_warnings
 def test_user_prox(random_state=0, max_iter=10):
     rng = check_random_state(random_state)
     n_samples, n_features, n_targets = 4, 2, 3
-    for ((penalty_model, proxes), real, fake_complex,
-         alpha, l1_ratio, emulate_sklearn_dl) in itertools.product(
-            zip([L11_PENALTY, L21_PENALTY, L2INF_CONSTRAINT, L1INF_CONSTRAINT],
-                [[prox_l1_slow, _py_prox_l1], [prox_l2_slow, _py_prox_l2],
-                 [proj_l2_slow, _py_proj_l2], [proj_l1_slow, _py_proj_l1]]),
-             [True, False], [True, False], [0., 1., 10.], [0., .5, 1.],
-             [True, False]):
-        if penalty_model == L1INF_CONSTRAINT and (not real
-                                                  or fake_complex):
-            continue
+    for ((penalty_model, proxes), alpha, l1_ratio,
+         emulate_sklearn_dl) in itertools.product(
+             zip([L11_PENALTY, L21_PENALTY, L2INF_CONSTRAINT,
+                  L1INF_CONSTRAINT], [[prox_l1_slow, _py_prox_l1],
+                                      [prox_l2_slow, _py_prox_l2],
+                  [proj_l2_slow, _py_proj_l2], [proj_l1_slow, _py_proj_l1]]),
+             [0., 1., 10.], [0., .5, 1.], [True, False]):
         if emulate_sklearn_dl and penalty_model not in [L1INF_CONSTRAINT,
                                                         L2INF_CONSTRAINT]:
             continue
@@ -187,15 +228,14 @@ def test_user_prox(random_state=0, max_iter=10):
             reg = alpha * l1_ratio
             l2_reg = alpha - reg
             X, Y, Gram, Cov, _ = _make_test_data(
-                n_samples, n_features, n_targets, random_state=rng, real=real,
-                fake_complex=fake_complex)
+                n_samples, n_features, n_targets, random_state=rng)
             stuff = dict(W=[], tol=[], gap=[], n_iter=[])
             for precompute in [True, False][1:]:
                 if precompute:
                     X_or_Gram = Gram
                     Y_or_Cov = Cov
                     Y_flat = Y.ravel()
-                    Y_norm2 = np.dot(Y_flat.conjugate(), Y_flat)
+                    Y_norm2 = np.dot(Y_flat, Y_flat)
                 else:
                     X_or_Gram = X
                     Y_or_Cov = Y
@@ -230,35 +270,29 @@ def test_user_prox(random_state=0, max_iter=10):
 def test_coordescendant_cython_equals_python(random_state=0, max_iter=10):
     rng = check_random_state(random_state)
     n_samples, n_features, n_targets = 4, 2, 3
-    for (penalty_model, real, fake_complex, alpha, l1_ratio, positive,
+    for (penalty_model, alpha, l1_ratio, positive,
          emulate_sklearn_dl) in itertools.product(
             [NOP, L11_PENALTY, L21_PENALTY, L2INF_CONSTRAINT,
-             L1INF_CONSTRAINT], [True, False], [True, False],
-             [0., 1., 10.], [0., .5, 1.], [True, False][:1], [True, False]):
-        if penalty_model == L1INF_CONSTRAINT and (not real or
-                                                  fake_complex):
-            continue
+             L1INF_CONSTRAINT], [0., 1., 10.], [0., .5, 1.],
+             [True, False][:1], [True, False]):
         if emulate_sklearn_dl and penalty_model not \
            in [L1INF_CONSTRAINT, L2INF_CONSTRAINT]:
             continue
         if positive:
             if penalty_model != L11_PENALTY:
                 continue
-            if (fake_complex or not real):
-                continue
             if emulate_sklearn_dl:
                 continue
         reg = alpha * l1_ratio
         l2_reg = alpha - reg
         X, Y, Gram, Cov, _ = _make_test_data(
-            n_samples, n_features, n_targets, random_state=rng,
-            real=real, fake_complex=fake_complex)
+            n_samples, n_features, n_targets, random_state=rng)
         for precompute in [True, False]:
             if precompute:
                 X_or_Gram = Gram
                 Y_or_Cov = Cov
                 Y_flat = Y.ravel()
-                Y_norm2 = np.dot(Y_flat.conjugate(), Y_flat)
+                Y_norm2 = np.dot(Y_flat, Y_flat)
             else:
                 X_or_Gram = X
                 Y_or_Cov = Y
@@ -285,24 +319,19 @@ def test_coordescendant_cython_equals_python(random_state=0, max_iter=10):
 
 @ignore_warnings
 def test_precompute(random_state=0, max_iter=1):
-    for (tol, sp, real, positive, n_samples, n_features, n_targets, alpha,
+    for (tol, sp, positive, n_samples, n_features, n_targets, alpha,
          l1_ratio, penalty_model) in itertools.product(
-             [0, 1e-2], [True, False][1:], [True, False], [True, False][1:],
+             [0, 1e-2], [True, False][1:], [True, False][1:],
              range(1, 3), range(1, 3), range(1, 3), [0., 1., 10.],
              [1e-4, .5, 1.], [L11_PENALTY, L21_PENALTY]):
-        if positive:
-            if penalty_model != L11_PENALTY or not real:
-                continue
         X, Y, Gram, Cov, _ = _make_test_data(
-            n_samples, n_features, n_targets, real=real,
-            random_state=random_state)
+            n_samples, n_features, n_targets, random_state=random_state,
+            single_precision=sp)
         reg = alpha * l1_ratio
         l2_reg = alpha - reg
-        if penalty_model == L1INF_CONSTRAINT and not real:
-            continue
         stuff = dict(gap=[], n_iter=[], W=[])
         Y_flat = Y.ravel()
-        Y_norm2 = np.dot(Y_flat.conjugate(), Y_flat).real
+        Y_norm2 = np.dot(Y_flat, Y_flat).real
         for precompute in [True, False]:
             if precompute:
                 X_or_Gram = Gram
@@ -332,14 +361,11 @@ def test_precompute(random_state=0, max_iter=1):
 
 @ignore_warnings
 def test_compute_dual_gap(random_state=0):
-    for (sp, real, positive, n_samples, n_features, n_targets, alpha, l1_ratio,
+    for (sp, positive, n_samples, n_features, n_targets, alpha, l1_ratio,
          penalty_model) in itertools.product(
-             [True, False][1:], [True, False], [True, False], range(1, 3),
+             [True, False], [True, False], range(1, 3),
              range(1, 3), range(1, 3), [0., 1., 10.], [0., .5, 1.],
              [L11_PENALTY, L21_PENALTY]):
-        if positive:
-            if not real or penalty_model != L11_PENALTY:
-                continue
         reg = l1_ratio * alpha
         l2_reg = alpha - reg
         if sp:
@@ -350,7 +376,7 @@ def test_compute_dual_gap(random_state=0):
         else:
             decimal = 12
         X, Y, Gram, Cov, W = _make_test_data(
-            n_samples, n_features, n_targets, real=real, single_precision=sp,
+            n_samples, n_features, n_targets, single_precision=sp,
             random_state=random_state)
         Grad = np.zeros_like(W, order="F")
         gaps = []
@@ -361,8 +387,8 @@ def test_compute_dual_gap(random_state=0):
                 X_or_Gram = Gram
                 Y_or_Cov = Cov
                 Y_flat = Y.ravel()
-                Y_norm2 = np.dot(Y_flat.conjugate(), Y_flat).real
-                R = np.dot(X.conjugate().T, R)
+                Y_norm2 = np.dot(Y_flat, Y_flat)
+                R = np.dot(X.T, R)
             else:
                 X_or_Gram = X
                 Y_or_Cov = Y
@@ -370,7 +396,7 @@ def test_compute_dual_gap(random_state=0):
             for dgap in [compute_dual_gap_slow, _py_compute_dual_gap][1:]:
                 print(dgap)
                 gap = dgap(
-                    W, reg, l2_reg, X_or_Gram.conjugate(), Y_or_Cov, R, Grad,
+                    W, reg, l2_reg, X_or_Gram, Y_or_Cov, R, Grad,
                     Y_norm2=Y_norm2, precomputed=precompute,
                     penalty_model=penalty_model, positive=positive)
                 assert_true(np.isreal(gap), msg="gap=%s" % gap)
