@@ -10,9 +10,12 @@ jobs:
       - PYTHON_VERSION: 3
     steps:
       - run: ssh-add -l
-      - add_ssh_keys
+      - add_ssh_keys:
+          fingerprints:
+            - "09:c7:46:ad:0a:0e:19:74:36:3d:e4:e3:6e:8c:a3:4e"
       - run: ssh-add -l
       - checkout
+      - run: ssh-add -l
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
