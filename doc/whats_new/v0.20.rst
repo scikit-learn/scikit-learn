@@ -167,6 +167,10 @@ Bug fixes
 
 Classifiers and regressors
 
+- Fixed a bug in :class:`cross_decomposition.PLSRegression`
+  where predict returns a 2D-array when a 1D-array is expected
+  :issue:`8856` by :user:`Jean-Baptiste Delafosse <jbDelafosse>`.
+
 - Fixed a bug in :class:`isotonic.IsotonicRegression` which incorrectly
   combined weights when fitting a model to data involving points with
   identical X values.
