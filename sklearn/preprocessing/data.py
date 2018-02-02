@@ -651,7 +651,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                                                 last_mean=self.mean_,
                                                 last_var=self.var_,
                                                 last_n=0,
-                                                last_n_feat= \
+                                                last_n_feat=
                                                 self.n_samples_seen_)
             else:
                 self.mean_ = None
