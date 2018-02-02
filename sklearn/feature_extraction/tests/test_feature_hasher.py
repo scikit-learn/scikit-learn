@@ -207,3 +207,15 @@ def test_hasher_get_feature_without_save_mappings():
     assert_raises(ValueError, hasher.get_feature_names)
     assert_raise_message(ValueError, exception_message,
                          hasher.get_feature_names)
+
+
+def test_hasher_get_feature_without_fit():
+    X = ["uzumaki", "naruto", "dattebayoo"]
+    hasher = FeatureHasher(n_features=2, input_type='string',
+                           save_mappings=True)
+    hasher.fit_transform(X)
+    X = ["uchiha", "sasuke"]
+    message = ("Transform cannot be called directly when"
+               " save_mappings=True. Please call"
+               " .fit_transform()")
+    assert_raise_message(ValueError, message, hasher.transform, X)

@@ -6,6 +6,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from sklearn.utils.validation import check_is_fitted
 
 from . import _hashing
 from ..base import BaseEstimator, TransformerMixin
@@ -103,6 +104,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.alternate_sign = alternate_sign
         self.non_negative = non_negative
         self.save_mappings = save_mappings
+        self.fitted_values = None
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -118,11 +120,26 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raise ValueError("input_type must be 'dict', 'pair' or 'string',"
                              " got %r." % input_type)
 
-    def fit(self, X=None, y=None):
-        """No-op.
+    def _learn_params(self, raw_X):
+        raw_X = iter(raw_X)
+        if self.input_type == "dict":
+            raw_X = (_iteritems(d) for d in raw_X)
+        elif self.input_type == "string":
+            raw_X = (((f, 1) for f in x) for x in raw_X)
 
-        This method doesn't do anything. It exists purely for compatibility
-        with the scikit-learn transformer API.
+        if self.save_mappings:
+            indices, indptr, values, self.feature_to_index_map_ = \
+                _hashing.transform(raw_X, self.n_features, self.dtype,
+                                   self.alternate_sign, self.save_mappings)
+        else:
+            indices, indptr, values, _ = \
+                _hashing.transform(raw_X, self.n_features, self.dtype,
+                                   self.alternate_sign, self.save_mappings)
+        self.fitted_values = (indices, indptr, values)
+
+    def fit(self, X=None, y=None):
+        """This method fits the values when save_mappings is set to true.
+        Otherwise, the values are learnt at transform time.
 
         Parameters
         ----------
@@ -136,6 +153,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         # repeat input validation for grid search (which calls set_params)
         self.feature_to_index_map_ = None
         self._validate_params(self.n_features, self.input_type)
+        if self.save_mappings:
+            self._learn_params(X)
         return self
 
     def transform(self, raw_X):
@@ -156,14 +175,16 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        raw_X = iter(raw_X)
-        if self.input_type == "dict":
-            raw_X = (_iteritems(d) for d in raw_X)
-        elif self.input_type == "string":
-            raw_X = (((f, 1) for f in x) for x in raw_X)
-        indices, indptr, values, self.feature_to_index_map_ = \
-            _hashing.transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign, self.save_mappings)
+        if not self.fitted_values and self.save_mappings:
+            raise ValueError("Transform cannot be called directly when"
+                             " save_mappings=True. Please call"
+                             " .fit_transform()")
+
+        if not self.fitted_values:
+            self._learn_params(raw_X)
+
+        indices, indptr, values = self.fitted_values
+        self.fitted_values = None
         n_samples = indptr.shape[0] - 1
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
@@ -189,11 +210,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raise ValueError("FeatureHasher was instantiated with"
                              " save_mappings=False (default) Please pass in"
                              " save_mappings=True to save the mappings.")
-
-        if not hasattr(self, "feature_to_index_map_") \
-                or self.feature_to_index_map_ is None:
-            raise ValueError("FeatureHasher has not transformed yet. Please"
-                             " call .fit_transform() first.")
+        check_is_fitted(self, "feature_to_index_map_",
+                        "FeatureHasher has not transformed yet. Please"
+                        " call .fit_transform() first.")
         reversed_dict = self._reverse_dict(self.feature_to_index_map_)
         # return the results as a list for consistency with
         # DictVectorizer.get_feature_names
