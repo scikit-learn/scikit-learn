@@ -287,7 +287,7 @@ def test_type_of_target():
                               % (example, group, type_of_target(example))))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
-        msg_regex = 'Expected array-like \(array or non-string sequence\).*'
+        msg_regex = r'Expected array-like \(array or non-string sequence\).*'
         assert_raises_regex(ValueError, msg_regex, type_of_target, example)
 
     for example in MULTILABEL_SEQUENCES:
