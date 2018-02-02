@@ -9,6 +9,11 @@ jobs:
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3
     steps:
+      - run: ssh-add -l
+      - add_ssh_keys:
+          fingerprints:
+            - "50:a0:20:25:2b:9f:26:39:06:8b:17:8b:43:a2:ef:ef"
+      - run: ssh-add -l
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
