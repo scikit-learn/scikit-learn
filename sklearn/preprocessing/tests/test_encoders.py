@@ -169,6 +169,28 @@ def test_one_hot_encoder_deprecationwarnings():
         assert_warns(DeprecationWarning, lambda: enc.n_values_)
 
 
+def test_one_hot_encoder_force_new_behaviour():
+    # ambiguous integer case (non secutive range of categories)
+    X = np.array([[1, 2]]).T
+    X2 = np.array([[0, 1]]).T
+
+    # without argument -> by default using legacy behaviour with warnings
+    enc = OneHotEncoder()
+
+    with ignore_warnings(category=DeprecationWarning):
+        enc.fit(X)
+
+    res = enc.transform(X2)
+    exp = np.array([[0, 0], [1, 0]])
+    assert_array_equal(res.toarray(), exp)
+
+    # with explicit auto argument -> don't use legacy behaviour
+    # (so will raise an error on unseen value within range)
+    enc = OneHotEncoder(categories='auto')
+    enc.fit(X)
+    assert_raises(ValueError, enc.transform, X2)
+
+
 def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
         Xtr = _transform_selected(M, Binarizer().transform, sel)

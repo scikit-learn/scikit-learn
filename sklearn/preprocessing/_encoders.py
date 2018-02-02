@@ -330,9 +330,13 @@ class OneHotEncoder(_BaseEncoder):
       and n_classes-1.
     """
     def __init__(self, n_values=None, categorical_features=None,
-                 categories='auto', sparse=True, dtype=np.float64,
+                 categories=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
-        self.categories = categories
+        self._categories = categories
+        if categories is None:
+            self.categories = 'auto'
+        else:
+            self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
@@ -393,7 +397,7 @@ class OneHotEncoder(_BaseEncoder):
 
     def _handle_deprecations(self, X):
 
-        if self.categories != 'auto':
+        if self._categories is not None:
             self._legacy_mode = False
 
         elif self._deprecated_n_values != 'auto':
