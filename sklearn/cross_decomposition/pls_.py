@@ -16,6 +16,7 @@ from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 from ..utils.extmath import safe_sparse_dot
 
