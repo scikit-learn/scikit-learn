@@ -357,3 +357,7 @@ writing data in that format.
 .. _linnerud:
 
 .. include:: ../../sklearn/datasets/descr/linnerud.rst
+
+.. _calfornia_housing:
+
+.. include:: ../../sklearn/datasets/descr/california_housing.rst
