@@ -15,6 +15,7 @@
 
 from math import sqrt
 import numpy as np
+from sklearn.linear_model.python_wrappers import _py_enet_projection
 
 
 def nrm2(w, squared=False):
@@ -40,17 +41,13 @@ def prox_l1_slow(w, reg, ajj):
 
 def proj_l1_slow(w, reg, ajj, l1_ratio=1.):
     """Projection onto L1 ball"""
-    try:
-        from modl.utils.math.enet import enet_projection
-    except ImportError:
-        raise NotImplementedError("proj_l1")
     if ajj == 0. or reg == 0.:
         w[:] = 0.
     else:
         if ajj != 1.:
             w /= ajj
         out = np.zeros_like(w)
-        enet_projection(w, out, reg, l1_ratio)
+        _py_enet_projection(w, out, reg, l1_ratio)
         w[:] = out
 
 
