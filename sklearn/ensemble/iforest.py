@@ -157,7 +157,6 @@ class IsolationForest(BaseBagging):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):

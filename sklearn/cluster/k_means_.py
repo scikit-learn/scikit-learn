@@ -31,7 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
-
+from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
@@ -55,7 +55,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : numpy.RandomState
+    random_state : RandomState
         The generator used to initialize the centers.
 
     n_local_trials : integer, optional
@@ -373,6 +373,13 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         if not copy_x:
             X += X_mean
         best_centers += X_mean
+
+    distinct_clusters = len(set(best_labels))
+    if distinct_clusters < n_clusters:
+        warnings.warn("Number of distinct clusters ({}) found smaller than "
+                      "n_clusters ({}). Possibly due to duplicate points "
+                      "in X.".format(distinct_clusters, n_clusters),
+                      ConvergenceWarning, stacklevel=2)
 
     if return_n_iter:
         return best_centers, best_labels, best_inertia, best_n_iter
@@ -907,7 +914,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
-        u : Ignored
+        y : Ignored
 
         Returns
         -------
@@ -1488,7 +1495,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : array, shap (n_samples,)
+        labels : array, shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float

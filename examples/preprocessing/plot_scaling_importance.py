@@ -5,7 +5,7 @@
 Importance of Feature Scaling
 =========================================================
 
-Feature scaling though standardization (or Z-score normalization)
+Feature scaling through standardization (or Z-score normalization)
 can be an important preprocessing step for many machine learning
 algorithms. Standardization involves rescaling the features such
 that they have the properties of a standard normal distribution

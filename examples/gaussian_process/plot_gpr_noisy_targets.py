@@ -85,8 +85,8 @@ dy = 0.5 + 1.0 * np.random.random(y.shape)
 noise = np.random.normal(0, dy)
 y += noise
 
-# Instanciate a Gaussian Process model
-gp = GaussianProcessRegressor(kernel=kernel, alpha=(dy / y) ** 2,
+# Instantiate a Gaussian Process model
+gp = GaussianProcessRegressor(kernel=kernel, alpha=dy ** 2,
                               n_restarts_optimizer=10)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters

@@ -241,7 +241,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         # Validate or convert input data
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
@@ -1895,7 +1894,6 @@ class RandomTreesEmbedding(BaseForest):
         Returns
         -------
         self : object
-            Returns self.
 
         """
         self.fit_transform(X, y, sample_weight=sample_weight)

@@ -479,3 +479,18 @@ def test_nmf_decreasing():
                 if previous_loss is not None:
                     assert_greater(previous_loss, loss)
                 previous_loss = loss
+
+
+def test_nmf_underflow():
+    # Regression test for an underflow issue in _beta_divergence
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 10, 2, 2
+    X = np.abs(rng.randn(n_samples, n_features)) * 10
+    W = np.abs(rng.randn(n_samples, n_components)) * 10
+    H = np.abs(rng.randn(n_components, n_features))
+
+    X[0, 0] = 0
+    ref = nmf._beta_divergence(X, W, H, beta=1.0)
+    X[0, 0] = 1e-323
+    res = nmf._beta_divergence(X, W, H, beta=1.0)
+    assert_almost_equal(res, ref)
