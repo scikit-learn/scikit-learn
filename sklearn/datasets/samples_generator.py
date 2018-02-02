@@ -790,15 +790,16 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
             n_features = centers.shape[1]
             print(centers)
         else:
-            raise ValueError("Wrong centers argument")
+            raise ValueError("Length of `n_samples` not consistent"
+                             " with number of centers.")
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
     if ((isinstance(cluster_std, list) or
             isinstance(cluster_std, np.ndarray)) and
             len(cluster_std) != n_centers):
-        raise ValueError("Length of clusters_std not consistent"
-                         " with number of centers")
+        raise ValueError("Length of `clusters_std` not consistent"
+                         " with number of centers.")
 
     if isinstance(cluster_std, numbers.Real):
         cluster_std = np.ones(len(centers)) * cluster_std
