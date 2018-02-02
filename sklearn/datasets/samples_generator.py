@@ -781,14 +781,12 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
             # generate centers based on [n_samples]
             centers = generator.uniform(center_box[0], center_box[1],
                                         size=(n_centers, n_features))
-            print(centers)
         elif ((isinstance(centers, np.ndarray) or
               isinstance(centers, list)) and
               len(centers) == n_centers):
             # correct list given
             centers = check_array(centers)
             n_features = centers.shape[1]
-            print(centers)
         else:
             raise ValueError("Length of `n_samples` not consistent"
                              " with number of centers.")
