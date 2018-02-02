@@ -278,9 +278,18 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
     def _validation_score(self, coef, intercept):
         """Compute the score on the validation set. Used for early stopping."""
+        # store attributes
+        old_coefs, old_intercept = self.coef_, self.intercept_
+
+        # replace them with current coefficients for scoring
         self.coef_ = coef.reshape(1, -1)
         self.intercept_ = np.atleast_1d(intercept)
-        return self.score(self._X_val, self._y_val, self._sample_weight_val)
+        score = self.score(self._X_val, self._y_val, self._sample_weight_val)
+
+        # restore old attributes
+        self.coef_, self.intercept_ = old_coefs, old_intercept
+
+        return score
 
 
 def _prepare_fit_binary(est, y, i):

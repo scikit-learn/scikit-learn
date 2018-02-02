@@ -296,6 +296,7 @@ class CommonTest(object):
         assert_greater(clf1.n_iter_, clf2.n_iter_)
 
     def test_validation_set_not_used_for_training(self):
+        X, Y = iris.data, iris.target
         validation_fraction = 0.4
         random_state = 42
         shuffle = False
