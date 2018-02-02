@@ -245,6 +245,39 @@ def test_make_blobs():
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
 
+def test_make_blobs_n_features_list():
+    n_samples = [50, 30, 20]
+    X, y = make_blobs(n_samples=n_samples, n_features=2, random_state=0)
+
+    assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
+    assert_equal(y.shape, (sum(n_samples),), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
+
+
+def test_make_blobs_n_features_list_with_centers():
+    n_samples = [20, 20, 20]
+    centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
+    cluster_stds = np.array([0.05, 0.2, 0.4])
+    X, y = make_blobs(n_samples=n_samples, centers=centers,
+                      cluster_std=cluster_stds, random_state=0)
+
+    assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
+    assert_equal(y.shape, (sum(n_samples),), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
+    for i, (ctr, std) in enumerate(zip(centers, cluster_stds)):
+        assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
+
+
+def test_make_blobs_n_features_list_centers_none():
+    n_samples = [5, 3, 0]
+    centers = None
+    X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
+
+    assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
+    assert_equal(y.shape, (sum(n_samples),), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (2,), "Unexpected number of blobs")
+
+
 def test_make_friedman1():
     X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0,
                           random_state=0)
