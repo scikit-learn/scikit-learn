@@ -318,6 +318,7 @@ writing data in that format.
     covtype
     rcv1
     kddcup99
+    california_housing
 
 
 .. include:: olivetti_faces.rst
