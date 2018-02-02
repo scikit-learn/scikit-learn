@@ -9,7 +9,7 @@
 #!python
 #cython: boundscheck=False, wraparound=False, cdivision=True
 
-from libc.math cimport fabs, sqrt, pow
+from libc.math cimport fabs, sqrt, pow, isnan
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
@@ -79,7 +79,8 @@ def csr_mean_variance_axis0(X):
 
 def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                              shape,
-                             np.ndarray[int, ndim=1] X_indices):
+                             np.ndarray[int, ndim=1] X_indices,
+                             ignore_nan=True):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef unsigned int n_samples = shape[0]
@@ -94,6 +95,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     cdef np.ndarray[floating, ndim=1] means
     # variances[j] contains the variance of feature j
     cdef np.ndarray[floating, ndim=1] variances
+    # n_samples_feat[j] contains the number of Non-NaN values of feature j
+    cdef np.ndarray[floating, ndim=1] n_samples_feat
 
     if floating is float:
         dtype = np.float32
@@ -102,6 +105,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     means = np.zeros(n_features, dtype=dtype)
     variances = np.zeros_like(means, dtype=dtype)
+    n_samples_feat = np.ones_like(means, dtype=dtype) * n_samples
 
     # counts[j] contains the number of samples where feature j is non-zero
     cdef np.ndarray[int, ndim=1] counts = np.zeros(n_features,
@@ -109,19 +113,29 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
-        means[col_ind] += X_data[i]
+        x_i = X_data[i]
+        if isnan(x_i) and ignore_nan:
+            n_samples_feat[col_ind] -= 1
+            continue
+        means[col_ind] += x_i
 
-    means /= n_samples
+    for i in xrange(n_features):
+        # Avoid division by Zero in cases when all column elements are NaN
+        if n_samples_feat[i]:
+            means[i] /= n_samples_feat[i]
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
-        diff = X_data[i] - means[col_ind]
+        x_i = X_data[i]
+        if isnan(x_i) and ignore_nan:
+            continue
+        diff = x_i - means[col_ind]
         variances[col_ind] += diff * diff
         counts[col_ind] += 1
 
     for i in xrange(n_features):
-        variances[i] += (n_samples - counts[i]) * means[i] ** 2
-        variances[i] /= n_samples
+        variances[i] += (n_samples_feat[i] - counts[i]) * means[i] ** 2
+        variances[i] /= n_samples_feat[i]
 
     return means, variances
 
@@ -152,7 +166,8 @@ def csc_mean_variance_axis0(X):
 def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                              shape,
                              np.ndarray[int, ndim=1] X_indices,
-                             np.ndarray[int, ndim=1] X_indptr):
+                             np.ndarray[int, ndim=1] X_indptr,
+                             ignore_nan=True):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef unsigned int n_samples = shape[0]
@@ -163,6 +178,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     cdef unsigned int counts
     cdef unsigned int startptr
     cdef unsigned int endptr
+    cdef unsigned int n_samples_feat
     cdef floating diff
 
     # means[j] contains the mean of feature j
@@ -182,22 +198,80 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         startptr = X_indptr[i]
         endptr = X_indptr[i + 1]
         counts = endptr - startptr
+        n_samples_feat = n_samples
 
         for j in xrange(startptr, endptr):
-            means[i] += X_data[j]
-        means[i] /= n_samples
+            x_i = X_data[j]
+            if isnan(x_i) and ignore_nan:
+                n_samples_feat -= 1
+                continue
+            means[i] += x_i
+        # Avoid division by Zero in case where all values are NaN in feature i
+        if n_samples_feat:
+            means[i] /= n_samples_feat
 
         for j in xrange(startptr, endptr):
-            diff = X_data[j] - means[i]
+            x_i = X_data[j]
+            if isnan(x_i) and ignore_nan:
+                continue
+            diff = x_i - means[i]
             variances[i] += diff * diff
 
-        variances[i] += (n_samples - counts) * means[i] * means[i]
-        variances[i] /= n_samples
+        variances[i] += (n_samples_feat - counts) * means[i] * means[i]
+        variances[i] /= n_samples_feat
 
     return means, variances
 
+def n_samples_count_csc(np.ndarray[floating, ndim=1] X_data,
+                             shape,
+                             np.ndarray[int, ndim=1] X_indices,
+                             np.ndarray[int, ndim=1] X_indptr):
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
+    cdef unsigned int startptr
+    cdef unsigned int endptr
+    cdef unsigned int i
+    cdef unsigned int j
 
-def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
+    cdef np.ndarray[unsigned int, ndim=1] n_samples_feat
+
+    n_samples_feat = np.ones(n_features, dtype=np.uint32) * n_samples
+
+    for i in xrange(n_features):
+        startptr = X_indptr[i]
+        endptr = X_indptr[i+1]
+
+        for j in xrange(startptr, endptr):
+            if isnan(X_data[j]):
+                n_samples_feat[i] -= 1
+
+    return n_samples_feat
+
+def n_samples_count_csr(np.ndarray[floating, ndim=1, mode="c"] X_data,
+                             shape,
+                             np.ndarray[int, ndim=1] X_indices):
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
+
+    cdef unsigned int i
+    cdef unsigned int non_zero = X_indices.shape[0]
+    cdef unsigned int col_ind
+
+    cdef np.ndarray[unsigned int, ndim=1] n_samples_feat
+
+    n_samples_feat = np.ones(n_features, dtype=np.uint32) * n_samples
+
+    for i in xrange(non_zero):
+        col_ind = X_indices[i]
+        x_i = X_data[i]
+        if isnan(x_i):
+            n_samples_feat[col_ind] -= 1
+
+    return n_samples_feat
+
+
+def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n,
+                             last_n_feat=np.array([0], dtype=np.uint32)):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
@@ -244,7 +318,8 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     if X.dtype != np.float32:
         X = X.astype(np.float64)
     return _incr_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr,
-                                     X.format, last_mean, last_var, last_n)
+                                     X.format, last_mean, last_var, last_n,
+                                     last_n_feat)
 
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
@@ -254,7 +329,8 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               X_format,
                               last_mean,
                               last_var,
-                              unsigned long last_n):
+                              unsigned long last_n,
+                              np.ndarray[unsigned int, ndim=1] last_n_feat):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef unsigned long n_samples = shape[0]
@@ -280,7 +356,9 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     updated_var = np.zeros_like(new_mean, dtype=dtype)
 
     cdef unsigned long new_n
+    cdef np.ndarray[unsigned int, ndim=1] new_n_feat
     cdef unsigned long updated_n
+    cdef np.ndarray[unsigned int, ndim=1] updated_n_feat
     cdef floating last_over_new_n
 
     # Obtain new stats first
@@ -288,16 +366,53 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
 
     if X_format == 'csr':
         # X is a CSR matrix
+        new_n_feat = n_samples_count_csr(X_data, shape, X_indices)
         new_mean, new_var = _csr_mean_variance_axis0(X_data, shape, X_indices)
     else:
         # X is a CSC matrix
+        new_n_feat = n_samples_count_csc(X_data, shape, X_indices, X_indptr)
         new_mean, new_var = _csc_mean_variance_axis0(X_data, shape, X_indices,
                                                      X_indptr)
+    new_n = new_n_feat[0]
 
     # First pass
-    if last_n == 0:
+    if last_n == 0 and (last_n_feat==0).all():
         return new_mean, new_var, new_n
     # Next passes
+
+    # Where each feature has different values and updated_n_feat is a vector
+    elif last_n==0 and (last_n_feat!=0).any():
+        updated_n_feat = last_n_feat + new_n_feat
+
+        for i in xrange(n_features):
+            if updated_n_feat[i] == 0:
+                continue
+            if new_n_feat[i] == 0:
+                updated_mean[i] = last_mean[i]
+                updated_var[i] = last_var[i]
+                continue
+            last_over_new_n = last_n_feat[i] * 1.0 / new_n_feat[i]
+            # Unnormalized old stats
+            last_mean[i] *= last_n_feat[i]
+            last_var[i] *= last_n_feat[i]
+
+            # Unnormalized new stats
+            new_mean[i] *= new_n_feat[i]
+            new_var[i] *= new_n_feat[i]
+
+            # Update stats
+            updated_var[i] = (last_var[i] + new_var[i] +
+                              last_over_new_n / updated_n_feat[i] *
+                              (last_mean[i] / last_over_new_n -
+                               new_mean[i]) ** 2)
+
+            updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n_feat[i]
+            updated_var[i] = updated_var[i] / updated_n_feat[i]
+
+        return updated_mean, updated_var, updated_n_feat
+
+
+    # Where updated_n is a scaler
     else:
         updated_n = last_n + new_n
         last_over_new_n = last_n / new_n

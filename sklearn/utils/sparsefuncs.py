@@ -99,7 +99,8 @@ def mean_variance_axis(X, axis):
         _raise_typeerror(X)
 
 
-def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
+def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n,
+                            last_n_feat=np.array([0], dtype=np.uint32)):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 
@@ -143,17 +144,21 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
             return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        last_n_feat=last_n_feat)
         else:
             return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        last_n_feat=last_n_feat)
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
             return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        last_n_feat=last_n_feat)
         else:
             return _incr_mean_var_axis0(X.T, last_mean=last_mean,
-                                        last_var=last_var, last_n=last_n)
+                                        last_var=last_var, last_n=last_n,
+                                        last_n_feat=last_n_feat)
     else:
         _raise_typeerror(X)
 
