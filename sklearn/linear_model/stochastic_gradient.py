@@ -249,7 +249,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         Returns
         -------
-        validation_set : array, shape(n_samples, )
+        validation_mask : array, shape(n_samples, )
             Equal to 1 on the validation set, 0 on the training set
         """
         n_samples = X.shape[0]
@@ -266,9 +266,15 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self._X_val = X_val
         self._y_val = y_val
         self._sample_weight_val = sample_weight_val
-        validation_set = np.zeros(n_samples, dtype=np.int16)
-        validation_set[idx_val] = 1
-        return validation_set
+        validation_mask = np.zeros(n_samples, dtype=np.int16)
+        validation_mask[idx_val] = 1
+        return validation_mask
+
+    def _delete_validation_split(self):
+        if self.early_stopping:
+            del self._X_val
+            del self._y_val
+            del self._sample_weight_val
 
     def _validation_score(self, coef, intercept):
         """Compute the score on the validation set. Used for early stopping."""
@@ -325,7 +331,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
-    validation_set = est._train_validation_split(X, y, sample_weight)
+    validation_mask = est._train_validation_split(X, y, sample_weight)
 
     # XXX should have random_state_!
     random_state = check_random_state(est.random_state)
@@ -336,22 +342,22 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     tol = est.tol if est.tol is not None else -np.inf
 
     if not est.average:
-        return plain_sgd(coef, intercept, est.loss_function_,
-                         penalty_type, alpha, C, est.l1_ratio,
-                         dataset, validation_set, est.early_stopping, est,
-                         int(est.n_iter_no_change),
-                         max_iter, tol, int(est.fit_intercept),
-                         int(est.verbose), int(est.shuffle), seed,
-                         pos_weight, neg_weight,
-                         learning_rate_type, est.eta0,
-                         est.power_t, est.t_, intercept_decay)
+        result = plain_sgd(coef, intercept, est.loss_function_,
+                           penalty_type, alpha, C, est.l1_ratio,
+                           dataset, validation_mask, est.early_stopping, est,
+                           int(est.n_iter_no_change),
+                           max_iter, tol, int(est.fit_intercept),
+                           int(est.verbose), int(est.shuffle), seed,
+                           pos_weight, neg_weight,
+                           learning_rate_type, est.eta0,
+                           est.power_t, est.t_, intercept_decay)
 
     else:
         standard_coef, standard_intercept, average_coef, average_intercept, \
             n_iter_ = average_sgd(coef, intercept, average_coef,
                                   average_intercept, est.loss_function_,
                                   penalty_type, alpha, C, est.l1_ratio,
-                                  dataset, validation_set, est.early_stopping,
+                                  dataset, validation_mask, est.early_stopping,
                                   est, int(est.n_iter_no_change),
                                   max_iter, tol,
                                   int(est.fit_intercept), int(est.verbose),
@@ -365,7 +371,10 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
         else:
             est.average_intercept_[i] = average_intercept
 
-        return standard_coef, standard_intercept, n_iter_
+        result = standard_coef, standard_intercept, n_iter_
+
+    est._delete_validation_split()
+    return result
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -1175,7 +1184,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
-        validation_set = self._train_validation_split(X, y, sample_weight)
+        validation_mask = self._train_validation_split(X, y, sample_weight)
 
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
@@ -1196,7 +1205,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             alpha, C,
                             self.l1_ratio,
                             dataset,
-                            validation_set, self.early_stopping, self,
+                            validation_mask, self.early_stopping, self,
                             int(self.n_iter_no_change),
                             max_iter, tol,
                             int(self.fit_intercept),
@@ -1228,7 +1237,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           alpha, C,
                           self.l1_ratio,
                           dataset,
-                          validation_set, self.early_stopping, self,
+                          validation_mask, self.early_stopping, self,
                           int(self.n_iter_no_change),
                           max_iter, tol,
                           int(self.fit_intercept),
@@ -1242,6 +1251,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
             self.t_ += self.n_iter_ * X.shape[0]
             self.intercept_ = np.atleast_1d(self.intercept_)
+
+        self._delete_validation_split()
 
 
 class SGDRegressor(BaseSGDRegressor):

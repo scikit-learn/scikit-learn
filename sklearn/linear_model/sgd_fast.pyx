@@ -339,7 +339,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double alpha, double C,
               double l1_ratio,
               SequentialDataset dataset,
-              np.ndarray[short, ndim=1, mode='c'] validation_set,
+              np.ndarray[short, ndim=1, mode='c'] validation_mask,
               bint early_stopping, estimator,
               int n_iter_no_change,
               int max_iter, double tol, int fit_intercept,
@@ -370,7 +370,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    validation_set : ndarray[short, ndim=1]
+    validation_mask : ndarray[short, ndim=1]
         Equal to True on the validation set
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set
@@ -431,7 +431,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                                    alpha, C,
                                    l1_ratio,
                                    dataset,
-                                   validation_set,
+                                   validation_mask,
                                    early_stopping,
                                    estimator,
                                    n_iter_no_change,
@@ -455,7 +455,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double alpha, double C,
                 double l1_ratio,
                 SequentialDataset dataset,
-                np.ndarray[short, ndim=1, mode='c'] validation_set,
+                np.ndarray[short, ndim=1, mode='c'] validation_mask,
                 bint early_stopping, estimator,
                 int n_iter_no_change,
                 int max_iter, double tol, int fit_intercept,
@@ -491,7 +491,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    validation_set : ndarray[short, ndim=1]
+    validation_mask : ndarray[short, ndim=1]
         Equal to True on the validation set
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set
@@ -558,7 +558,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       alpha, C,
                       l1_ratio,
                       dataset,
-                      validation_set,
+                      validation_mask,
                       early_stopping,
                       estimator,
                       n_iter_no_change,
@@ -581,7 +581,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               np.ndarray[short, ndim=1, mode='c'] validation_set,
+               np.ndarray[short, ndim=1, mode='c'] validation_mask,
                bint early_stopping, estimator,
                int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
@@ -627,7 +627,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double max_change = 0.0
     cdef double max_weight = 0.0
 
-    cdef short * validation_set_ptr = <short *> validation_set.data
+    cdef long long sample_index
+    cdef short [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -664,7 +665,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
                              &y, &sample_weight)
 
-                if validation_set_ptr[dataset.sample_index]:
+                sample_index = dataset.index_data_ptr[dataset.current_index]
+                if validation_mask_view[sample_index]:
                     # do not learn on the validation set
                     continue
 

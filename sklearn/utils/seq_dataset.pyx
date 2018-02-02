@@ -15,11 +15,43 @@ np.import_array()
 
 
 cdef class SequentialDataset:
-    """Base class for datasets with sequential data access. """
+    """Base class for datasets with sequential data access.
+
+    SequentialDataset is used to iterate over the rows of a matrix X and
+    corresponding target values y, i.e. to iterate over samples.
+    There are two methods to get the next sample:
+        - next : Iterate sequentially (optionally randomized)
+        - random : Iterate randomly (with replacement)
+
+    Attributes
+    ----------
+    index : np.ndarray
+        Index array for fast shuffling.
+
+    index_data_ptr : int
+        Pointer to the index array.
+
+    current_index : int
+        Index of current sample in ``index``.
+        The index of current sample in the data is given by
+        index_data_ptr[current_index].
+
+    n_samples : Py_ssize_t
+        Number of samples in the dataset.
+
+    seed : np.uint32_t
+        Seed used for random sampling.
+
+    """
 
     cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
                    int *nnz, double *y, double *sample_weight) nogil:
         """Get the next example ``x`` from the dataset.
+
+        This method get the next sample looping sequentially over all samples.
+        The order can be shuffled with the method ``shuffle``.
+        Shuffling once before iterating over all samples corresponds to a
+        random draw without replacement. It is used for instance in SGD solver.
 
         Parameters
         ----------
@@ -49,6 +81,10 @@ cdef class SequentialDataset:
                     int *nnz, double *y, double *sample_weight) nogil:
         """Get a random example ``x`` from the dataset.
 
+        This method get next sample chosen randomly over a uniform distribution.
+        It corresponds to a random draw with replacement.
+        It is used for instance in SAG solver.
+
         Parameters
         ----------
         x_data_ptr : double**
@@ -71,8 +107,8 @@ cdef class SequentialDataset:
 
         Returns
         -------
-        index : int
-            The index sampled
+        current_index : int
+            Index of current sample
         """
         cdef int current_index = self._get_random_index()
         self._sample(x_data_ptr, x_ind_ptr, nnz, y, sample_weight,
@@ -129,7 +165,6 @@ cdef class SequentialDataset:
         cdef int* x_indices_ptr
         cdef int nnz, j
         cdef double y, sample_weight
-        cdef long long sample_index
 
         # call _sample in cython
         self._sample(&x_data_ptr, &x_indices_ptr, &nnz, &y, &sample_weight,
@@ -145,8 +180,9 @@ cdef class SequentialDataset:
             x_data[j] = x_data_ptr[j]
             x_indices[j] = x_indices_ptr[j]
 
-        sample_index = self.sample_index
-        return (x_data, x_indices, x_indptr), y, sample_weight, sample_index
+        cdef int sample_idx = self.index_data_ptr[current_index]
+
+        return (x_data, x_indices, x_indptr), y, sample_weight, sample_idx
 
 cdef class ArrayDataset(SequentialDataset):
     """Dataset backed by a two-dimensional numpy array.
@@ -207,14 +243,14 @@ cdef class ArrayDataset(SequentialDataset):
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
                       int current_index) nogil:
-        self.sample_index = self.index_data_ptr[current_index]
-        cdef long long offset = self.sample_index * self.X_stride
+        cdef long long sample_idx = self.index_data_ptr[current_index]
+        cdef long long offset = sample_idx * self.X_stride
 
-        y[0] = self.Y_data_ptr[self.sample_index]
+        y[0] = self.Y_data_ptr[sample_idx]
         x_data_ptr[0] = self.X_data_ptr + offset
         x_ind_ptr[0] = self.feature_indices_ptr
         nnz[0] = self.n_features
-        sample_weight[0] = self.sample_weight_data[self.sample_index]
+        sample_weight[0] = self.sample_weight_data[sample_idx]
 
 
 cdef class CSRDataset(SequentialDataset):
@@ -276,13 +312,13 @@ cdef class CSRDataset(SequentialDataset):
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
                       int current_index) nogil:
-        self.sample_index = self.index_data_ptr[current_index]
-        cdef long long offset = self.X_indptr_ptr[self.sample_index]
-        y[0] = self.Y_data_ptr[self.sample_index]
+        cdef long long sample_idx = self.index_data_ptr[current_index]
+        cdef long long offset = self.X_indptr_ptr[sample_idx]
+        y[0] = self.Y_data_ptr[sample_idx]
         x_data_ptr[0] = self.X_data_ptr + offset
         x_ind_ptr[0] = self.X_indices_ptr + offset
-        nnz[0] = self.X_indptr_ptr[self.sample_index + 1] - offset
-        sample_weight[0] = self.sample_weight_data[self.sample_index]
+        nnz[0] = self.X_indptr_ptr[sample_idx + 1] - offset
+        sample_weight[0] = self.sample_weight_data[sample_idx]
 
 
 cdef enum:

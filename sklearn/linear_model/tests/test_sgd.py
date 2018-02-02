@@ -101,7 +101,8 @@ Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
 
-# Classification Test Case
+###############################################################################
+# Tests common to classification and regression
 
 class CommonTest(object):
 
@@ -275,6 +276,60 @@ class CommonTest(object):
         assert_raises(ValueError, self.factory,
                       alpha=0, learning_rate="optimal")
 
+    def test_early_stopping(self):
+        for early_stopping in [True, False]:
+            max_iter = 1000
+            clf = self.factory(early_stopping=early_stopping, tol=1e-3,
+                               max_iter=max_iter).fit(X, Y)
+            assert clf.n_iter_ < max_iter
+            assert not hasattr(clf, '_X_val')
+            assert not hasattr(clf, '_y_val')
+            assert not hasattr(clf, '_sample_weight_val')
+
+    def test_adaptive_longer_than_constant(self):
+        clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf1.fit(iris.data, iris.target)
+        clf2 = self.factory(learning_rate="constant", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf2.fit(iris.data, iris.target)
+        assert_greater(clf1.n_iter_, clf2.n_iter_)
+
+    def test_validation_set_not_used_for_training(self):
+        validation_fraction = 0.4
+        random_state = 42
+        shuffle = False
+        clf1 = self.factory(early_stopping=True, random_state=random_state,
+                            validation_fraction=validation_fraction,
+                            learning_rate='constant', eta0=0.01,
+                            tol=None, max_iter=1000, shuffle=shuffle)
+        clf1.fit(X, Y)
+
+        idx_train, idx_val = train_test_split(
+            np.arange(X.shape[0]), test_size=validation_fraction,
+            random_state=random_state)
+        clf2 = self.factory(early_stopping=False,
+                            random_state=random_state,
+                            learning_rate='constant', eta0=0.01,
+                            tol=None, max_iter=1000, shuffle=shuffle)
+        idx_train = np.sort(idx_train)  # remove shuffling
+        clf2.fit(X[idx_train], np.array(Y)[idx_train])
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
+
+    def test_n_iter_no_change(self):
+        # test that n_iter_ increases monotonically with n_iter_no_change
+        for early_stopping in [True, False]:
+            n_iter_list = [self.factory(early_stopping=early_stopping,
+                                        n_iter_no_change=n_iter_no_change,
+                                        tol=1e-4, max_iter=1000
+                                        ).fit(X, Y).n_iter_
+                           for n_iter_no_change in [2, 3, 10]]
+            assert_array_equal(n_iter_list, sorted(n_iter_list))
+
+
+###############################################################################
+# Classification Test Case
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
@@ -835,54 +890,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
         clf.fit(X[:, :-1], y)
 
-    def test_early_stopping(self):
-        for early_stopping in [True, False]:
-            max_iter = 1000
-            clf = self.factory(early_stopping=early_stopping, tol=1e-3,
-                               max_iter=max_iter).fit(X, Y)
-            assert clf.n_iter_ < max_iter
-
-    def test_adaptive_longer_than_constant(self):
-        clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
-                            max_iter=100)
-        clf1.fit(iris.data, iris.target)
-        clf2 = self.factory(learning_rate="constant", eta0=0.01, tol=1e-3,
-                            max_iter=100)
-        clf2.fit(iris.data, iris.target)
-        assert_greater(clf1.n_iter_, clf2.n_iter_)
-
-    def test_validation_set_not_used_for_training(self):
-        validation_fraction = 0.4
-        random_state = 42
-        shuffle = False
-        clf1 = self.factory(early_stopping=True, random_state=random_state,
-                            validation_fraction=validation_fraction,
-                            learning_rate='constant', eta0=0.01,
-                            tol=None, max_iter=1000, shuffle=shuffle)
-        clf1.fit(X, Y)
-
-        idx_train, idx_val = train_test_split(
-            np.arange(X.shape[0]), test_size=validation_fraction,
-            random_state=random_state)
-        clf2 = self.factory(early_stopping=False,
-                            random_state=random_state,
-                            learning_rate='constant', eta0=0.01,
-                            tol=None, max_iter=1000, shuffle=shuffle)
-        idx_train = np.sort(idx_train)  # remove shuffling
-        clf2.fit(X[idx_train], np.array(Y)[idx_train])
-
-        assert_array_equal(clf1.coef_, clf2.coef_)
-
-    def test_n_iter_no_change(self):
-        # test that n_iter_ increases monotonically with n_iter_no_change
-        for early_stopping in [True, False]:
-            n_iter_list = [self.factory(early_stopping=early_stopping,
-                                        n_iter_no_change=n_iter_no_change,
-                                        tol=1e-4, max_iter=1000
-                                        ).fit(X, Y).n_iter_
-                           for n_iter_no_change in [2, 3, 10]]
-            assert_array_equal(n_iter_list, sorted(n_iter_list))
-
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -1141,52 +1148,6 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(epsilon=0.9)
         clf.set_params(epsilon=0.1)
         assert clf.loss_functions['huber'][1] == 0.1
-
-    def test_early_stopping(self):
-        for early_stopping in [True, False]:
-            max_iter = 1000
-            clf = self.factory(early_stopping=early_stopping, tol=1e-3,
-                               max_iter=max_iter).fit(X, Y)
-            assert clf.n_iter_ < max_iter
-
-    def test_adaptive_longer_than_constant(self):
-        clf1 = self.factory(learning_rate="adaptive", tol=1e-3, max_iter=100)
-        clf1.fit(iris.data, iris.target)
-        clf2 = self.factory(learning_rate="constant", tol=1e-3, max_iter=100)
-        clf2.fit(iris.data, iris.target)
-        assert_greater(clf1.n_iter_, clf2.n_iter_)
-
-    def test_validation_set_not_used_for_training(self):
-        validation_fraction = 0.4
-        random_state = 42
-        shuffle = False
-        clf1 = self.factory(early_stopping=True, random_state=random_state,
-                            validation_fraction=validation_fraction,
-                            learning_rate='constant',
-                            tol=None, max_iter=1000, shuffle=shuffle)
-        clf1.fit(X, Y)
-
-        idx_train, idx_val = train_test_split(
-            np.arange(X.shape[0]), test_size=validation_fraction,
-            random_state=random_state)
-        clf2 = self.factory(early_stopping=False,
-                            random_state=random_state,
-                            learning_rate='constant',
-                            tol=None, max_iter=1000, shuffle=shuffle)
-        idx_train = np.sort(idx_train)  # remove shuffling
-        clf2.fit(X[idx_train], np.array(Y)[idx_train])
-
-        assert_array_equal(clf1.coef_, clf2.coef_)
-
-    def test_n_iter_no_change(self):
-        # test that n_iter_ increases monotonically with n_iter_no_change
-        for early_stopping in [True, False]:
-            n_iter_list = [self.factory(early_stopping=early_stopping,
-                                        n_iter_no_change=n_iter_no_change,
-                                        tol=1e-4, max_iter=1000
-                                        ).fit(X, Y).n_iter_
-                           for n_iter_no_change in [2, 3, 10]]
-            assert_array_equal(n_iter_list, sorted(n_iter_list))
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):

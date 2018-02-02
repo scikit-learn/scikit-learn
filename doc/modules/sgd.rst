@@ -239,9 +239,9 @@ Stopping criterion
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide two
 criteria to stop the algorithm when a given level of convergence is reached:
 
-  * With ``early_stopping=True``, the input data is splitted into a training
-    set and a validation set. The model is then fitted on the training set, and
-    the stopping criterion is based on the prediction score computed on the
+  * With ``early_stopping=True``, the input data is split into a training set
+    and a validation set. The model is then fitted on the training set, and the
+    stopping criterion is based on the prediction score computed on the
     validation set. The size of the validation set can be changed with the
     parameter ``validation_fraction``.
   * With ``early_stopping=False``, the model is fitted on the entire input data
