@@ -636,10 +636,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 # First pass
                 if not hasattr(self, 'n_samples_seen_'):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
-                    if isinstance (X, sparse.csc_matrix):
-                        self.n_samples_seen_ = n_samples_count_csc(X.data, X.shape, X.indices, X.indptr)
+                    if isinstance(X, sparse.csc_matrix):
+                        self.n_samples_seen_ = \
+                            n_samples_count_csc(X.data, X.shape,
+                                                X.indices, X.indptr)
                     else:
-                        self.n_samples_seen_ = n_samples_count_csr(X.data, X.shape, X.indices)
+                        self.n_samples_seen_ = \
+                            n_samples_count_csr(X.data, X.shape, X.indices)
 
                 # Next passes
                 else:
@@ -648,7 +651,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                                                 last_mean=self.mean_,
                                                 last_var=self.var_,
                                                 last_n=0,
-                                                last_n_feat=self.n_samples_seen_)
+                                                last_n_feat= \
+                                                self.n_samples_seen_)
             else:
                 self.mean_ = None
                 self.var_ = None

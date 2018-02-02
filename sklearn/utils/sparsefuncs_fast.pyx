@@ -222,10 +222,11 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
 
     return means, variances
 
+
 def n_samples_count_csc(np.ndarray[floating, ndim=1] X_data,
-                             shape,
-                             np.ndarray[int, ndim=1] X_indices,
-                             np.ndarray[int, ndim=1] X_indptr):
+                        shape,
+                        np.ndarray[int, ndim=1] X_indices,
+                        np.ndarray[int, ndim=1] X_indptr):
     cdef unsigned int n_samples = shape[0]
     cdef unsigned int n_features = shape[1]
     cdef unsigned int startptr
@@ -247,9 +248,10 @@ def n_samples_count_csc(np.ndarray[floating, ndim=1] X_data,
 
     return n_samples_feat
 
+
 def n_samples_count_csr(np.ndarray[floating, ndim=1, mode="c"] X_data,
-                             shape,
-                             np.ndarray[int, ndim=1] X_indices):
+                        shape,
+                        np.ndarray[int, ndim=1] X_indices):
     cdef unsigned int n_samples = shape[0]
     cdef unsigned int n_features = shape[1]
 
@@ -410,7 +412,6 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
             updated_var[i] = updated_var[i] / updated_n_feat[i]
 
         return updated_mean, updated_var, updated_n_feat
-
 
     # Where updated_n is a scaler
     else:

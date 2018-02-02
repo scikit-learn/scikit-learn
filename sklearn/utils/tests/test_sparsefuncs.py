@@ -22,8 +22,8 @@ from sklearn.utils.testing import assert_raises
 
 
 def test_mean_variance_axis0_nan():
-    X = np.zeros(10).reshape(5,2) * np.nan
-    X[0,0] = 1
+    X = np.zeros(10).reshape(5, 2) * np.nan
+    X[0, 0] = 1
     X_csr = sp.csr_matrix(X)
     X_csc = sp.csc_matrix(X)
 
@@ -104,12 +104,13 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_means, np.mean(X_test, axis=0))
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
+
 def test_incr_mean_variance_axis_nan():
     for axis in [0, 1]:
         n_features = 50
-        data_chunk = np.random.randint(0,2, size=500).reshape(50,10)
+        data_chunk = np.random.randint(0, 2, size=500).reshape(50, 10)
         data_chunk = np.array(data_chunk, dtype=np.float)
-        data_chunk[0,0] = np.nan
+        data_chunk[0, 0] = np.nan
 
         # default params for incr_mean_variance
         last_mean = np.zeros(n_features)
@@ -228,6 +229,7 @@ def test_incr_mean_variance_axis():
                 assert_array_almost_equal(X_means, X_means_incr)
                 assert_array_almost_equal(X_vars, X_vars_incr)
                 assert_equal(X.shape[axis], n_incr)
+
 
 def test_mean_variance_illegal_axis():
     X, _ = make_classification(5, 4, random_state=0)
