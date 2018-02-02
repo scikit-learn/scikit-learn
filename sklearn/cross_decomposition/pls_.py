@@ -16,7 +16,9 @@ from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.extmath import safe_sparse_dot
 from ..externals import six
+from ..utils.extmath import safe_sparse_dot
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -249,7 +251,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X = check_array(X, dtype=np.float64, copy=self.copy,
                         ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y_ndim_is_one = False
         if Y.ndim == 1:
+            Y_ndim_is_one = True
             Y = Y.reshape(-1, 1)
 
         n = X.shape[0]
@@ -327,13 +331,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, y_scores)
-                              / np.dot(y_scores.T, y_scores))
+                y_loadings = (np.dot(Yk.T, y_scores) /
+                              np.dot(y_scores.T, y_scores))
                 Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
                 # - regress Yk's on x_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, x_scores)
-                              / np.dot(x_scores.T, x_scores))
+                y_loadings = (np.dot(Yk.T, x_scores) /
+                              np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
             # 3) Store weights, scores and loadings # Notation:
             self.x_scores_[:, k] = x_scores.ravel()  # T
@@ -369,6 +373,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # => B = W*Q' (p x q)
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
             self.coef_ = self.coef_ * self.y_std_
+            if Y_ndim_is_one:
+                self.coef_ = np.ravel(self.coef_)
+                self.y_mean_ = np.ravel(self.y_mean_)
+                self.y_std_ = np.ravel(self.y_std_)
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -431,8 +439,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_
-        Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
+        Ypred = safe_sparse_dot(X, self.coef_,
+                                dense_output=True) + self.y_mean_
+        return Ypred
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
