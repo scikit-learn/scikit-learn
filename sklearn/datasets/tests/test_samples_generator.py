@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -266,6 +267,21 @@ def test_make_blobs_n_features_list_with_centers():
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
     for i, (ctr, std) in enumerate(zip(centers, cluster_stds)):
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
+
+
+def test_make_blobs_error():
+    n_samples = [20, 20, 20]
+    centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
+    cluster_stds = np.array([0.05, 0.2, 0.4])
+    wrong_centers_msg = "Length of `n_samples` not consistent"\
+                        " with number of centers."
+    assert_raise_message(ValueError, wrong_centers_msg,
+                         make_blobs, n_samples, centers=centers[:-1])
+    wrong_std_msg = "Length of `clusters_std` not consistent"\
+                    " with number of centers."
+    assert_raise_message(ValueError, wrong_std_msg,
+                         make_blobs, n_samples,
+                         centers=centers, cluster_std=cluster_stds[:-1])
 
 
 def test_make_blobs_n_features_list_centers_none():
