@@ -288,7 +288,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.intercept_ = np.atleast_1d(intercept)
         score = self.score(self._X_val, self._y_val, self._sample_weight_val)
 
-        # restore old attributes
+        # restore old attributes
         self.coef_, self.intercept_ = old_coefs, old_intercept
 
         return score

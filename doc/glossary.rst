@@ -287,6 +287,13 @@ General Concepts
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
 
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
+
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
         class from a constructed instance. For example, in the following,
@@ -925,7 +932,7 @@ Class APIs and Estimator Types
 There are further APIs specifically related to a small family of estimators,
 such as:
 
-.. glossary:
+.. glossary::
 
     cross-validation splitter
     CV splitter
@@ -1434,6 +1441,11 @@ functions or non-estimator constructors.
         The number of features which a :term:`transformer` should transform the
         input into. See :term:`components_` for the special case of affine
         projection.
+
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. It is typically used with :term:`early stopping` to
+        avoid stopping too early.
 
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
