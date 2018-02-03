@@ -104,7 +104,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.alternate_sign = alternate_sign
         self.non_negative = non_negative
         self.save_mappings = save_mappings
-        self.fitted_values = None
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -120,14 +119,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raise ValueError("input_type must be 'dict', 'pair' or 'string',"
                              " got %r." % input_type)
 
-    def _learn_params(self, raw_X):
+    def _transform(self, raw_X, save_mappings):
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
 
-        if self.save_mappings:
+        if save_mappings:
             indices, indptr, values, self.feature_to_index_map_ = \
                 _hashing.transform(raw_X, self.n_features, self.dtype,
                                    self.alternate_sign, self.save_mappings)
@@ -135,11 +134,49 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             indices, indptr, values, _ = \
                 _hashing.transform(raw_X, self.n_features, self.dtype,
                                    self.alternate_sign, self.save_mappings)
-        self.fitted_values = (indices, indptr, values)
+        return indices, indptr, values
 
-    def fit(self, X=None, y=None):
+    def _post_transform(self, indices, indptr, values):
+        n_samples = indptr.shape[0] - 1
+        if n_samples == 0:
+            raise ValueError("Cannot vectorize empty sequence.")
+
+        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
+                          shape=(n_samples, self.n_features))
+        X.sum_duplicates()  # also sorts the indices
+
+        if self.non_negative:
+            np.abs(X.data, X.data)
+        return X
+
+    def fit_transform(self, X, y=None, **fit_params):
         """This method fits the values when save_mappings is set to true.
         Otherwise, the values are learnt at transform time.
+
+        Parameters
+        ----------
+        X : iterable over iterable over raw features, length = n_samples
+            Samples. Each sample must be iterable an (e.g., a list or tuple)
+            containing/generating feature names (and optionally values, see
+            the input_type constructor argument) which will be hashed.
+            raw_X need not support the len function, so it can be the result
+            of a generator; n_samples is determined on the fly.
+
+        y : this parameter is simply for compatibility and is not used.
+
+        fit_params : this paramter is simply for compatibility and is not used.
+        444
+        Returns
+        -------
+        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+            Feature matrix, for use with estimators or further transformers"""
+
+        indices, indptr, values = self._transform(X, save_mappings=True)
+        return self._post_transform(indices, indptr, values)
+
+    def fit(self, X=None, y=None):
+        """This method calls fit_transform and is used when save_mappings
+        is true.
 
         Parameters
         ----------
@@ -154,7 +191,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.feature_to_index_map_ = None
         self._validate_params(self.n_features, self.input_type)
         if self.save_mappings:
-            self._learn_params(X)
+            self.fit_transform(X)
         return self
 
     def transform(self, raw_X):
@@ -175,27 +212,13 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        if not self.fitted_values and self.save_mappings:
+        if self.save_mappings:
             raise ValueError("Transform cannot be called directly when"
                              " save_mappings=True. Please call"
                              " .fit_transform()")
 
-        if not self.fitted_values:
-            self._learn_params(raw_X)
-
-        indices, indptr, values = self.fitted_values
-        self.fitted_values = None
-        n_samples = indptr.shape[0] - 1
-        if n_samples == 0:
-            raise ValueError("Cannot vectorize empty sequence.")
-
-        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
-                          shape=(n_samples, self.n_features))
-        X.sum_duplicates()  # also sorts the indices
-
-        if self.non_negative:
-            np.abs(X.data, X.data)
-        return X
+        indices, indptr, values = self._transform(raw_X, save_mappings=False)
+        return self._post_transform(indices, indptr, values)
 
     def get_feature_names(self):
         """Returns a list of the feature mappings.
