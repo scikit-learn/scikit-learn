@@ -10,6 +10,7 @@ jobs:
       - PYTHON_VERSION: 3
     steps:
       - checkout
+      - run: ssh-add -l
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
