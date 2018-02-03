@@ -17,8 +17,6 @@ set -e
 # If the inspection of the current commit fails for any reason, the default
 # behavior is to quick build the documentation.
 
-exit 123
-
 get_build_type() {
     if [ -z "$CIRCLE_SHA1" ]
     then
