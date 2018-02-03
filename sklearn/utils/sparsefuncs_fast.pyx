@@ -9,14 +9,14 @@
 #!python
 #cython: boundscheck=False, wraparound=False, cdivision=True
 
-from libc.math cimport fabs, sqrt, pow, isnan
+from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 cimport cython
 from cython cimport floating
-cdef extern from "numpy/npy_math.h" nogil:
-    bint isnan "npy_isnan"(long double)
+
+from numpy.math cimport isnan
 
 np.import_array()
 
