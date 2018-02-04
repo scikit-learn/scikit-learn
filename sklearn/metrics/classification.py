@@ -1560,6 +1560,10 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
 
         .. versionadded:: 0.18
 
+        .. deprecated:: 0.18
+            This parameter has been deprecated as input is always multilabel
+            and the number of labels is identical to y_true.shape[1].
+
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
@@ -1622,15 +1626,9 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     if classes is not None:
         warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
                       "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
-
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels)
 
     if sample_weight is None:
         weight_average = 1.
@@ -1641,7 +1639,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         n_differences = count_nonzero(y_true - y_pred,
                                       sample_weight=sample_weight)
         return (n_differences /
-                (y_true.shape[0] * len(labels) * weight_average))
+                (y_true.shape[0] * y_true.shape[1] * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
