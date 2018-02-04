@@ -347,7 +347,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise'):
+                   return_times=False, error_score='raise-deprecating'):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -381,9 +381,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise-deprecating' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
+        If set to 'raise-deprecating', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
@@ -462,7 +462,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         # Note fit time as time until error
         fit_time = time.time() - start_time
         score_time = 0.0
-        if error_score == 'raise':
+        if error_score == 'raise-deprecating':
+            warnings.warn('Estimator fit failed. In the future this error will '
+                          'not be raised. Instead you should choose between '
+                          'error_score=np.nan or the '
+                          'default error_score=`raise`')
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
