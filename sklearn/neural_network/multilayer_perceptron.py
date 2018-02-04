@@ -903,7 +903,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, n_iter_no_change=10):
+                 epsilon=1e-8, n_iter_no_change=10, class_weight=None):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -918,6 +918,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      validation_fraction=validation_fraction,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
                      n_iter_no_change=n_iter_no_change)
+        self.class_weight = class_weight
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1014,6 +1015,15 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             raise AttributeError("partial_fit is only available for stochastic"
                                  " optimizer. %s is not stochastic"
                                  % self.solver)
+        if self.class_weight in ['balanced']:
+            raise ValueError("class_weight '{0}' is not supported for "
+                             "partial_fit. In order to use 'balanced' weights,"
+                             " use compute_class_weight('{0}', classes, y). "
+                             "In place of y you can us a large enough sample "
+                             "of the full training set target to properly "
+                             "estimate the class frequency distributions. "
+                             "Pass the resulting weights as the class_weight "
+                             "parameter.".format(self.class_weight))
         return self._partial_fit
 
     def _partial_fit(self, X, y, classes=None):
@@ -1024,6 +1034,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             else:
                 self._label_binarizer.fit(classes)
 
+        # Allocate datastructures from input arguments
+        self._expanded_class_weight = compute_class_weight(self.class_weight,
+                                                           self.classes_, y)
         super(MLPClassifier, self)._partial_fit(X, y)
 
         return self
