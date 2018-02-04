@@ -1560,7 +1560,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
 
         .. versionadded:: 0.18
 
-        .. deprecated:: 0.18
+        .. deprecated:: 0.20
             This parameter has been deprecated as input is always multilabel
             and the number of labels is identical to y_true.shape[1].
 
