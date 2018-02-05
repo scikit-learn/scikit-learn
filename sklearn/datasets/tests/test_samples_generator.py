@@ -282,6 +282,10 @@ def test_make_blobs_error():
     assert_raise_message(ValueError, wrong_std_msg,
                          make_blobs, n_samples,
                          centers=centers, cluster_std=cluster_stds[:-1])
+    wrong_type_msg = "Parameter `centers` should be a"\
+                     "list or a np.array."
+    assert_raise_message(ValueError, wrong_type_msg,
+                         make_blobs, n_samples, centers=3)
 
 
 def test_make_blobs_n_features_list_centers_none():
