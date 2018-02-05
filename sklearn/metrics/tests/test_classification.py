@@ -1655,7 +1655,7 @@ def test_balanced_accuracy_score_unseen():
 def test_balanced_accuracy_score(y_true, y_pred):
     macro_recall = recall_score(y_true, y_pred, average='macro',
                                 labels=np.unique(y_true))
-    with ignore_warnings:
+    with ignore_warnings():
         # Warnings are tested in test_balanced_accuracy_score_unseen
         balanced = balanced_accuracy_score(y_true, y_pred)
     assert balanced == pytest.approx(macro_recall)
