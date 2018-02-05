@@ -760,19 +760,20 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(n_samples, int):
+    if isinstance(n_samples, numbers.Integral):
         # n_centers is figured by the centers arg
         if centers is None:
             centers = 3
 
         if isinstance(centers, numbers.Integral):
+            n_centers = centers
             centers = generator.uniform(center_box[0], center_box[1],
-                                        size=(centers, n_features))
+                                        size=(n_centers, n_features))
+
         else:
             centers = check_array(centers)
             n_features = centers.shape[1]
-
-        n_centers = centers.shape[0]
+            n_centers = centers.shape[0]
 
     else:
         # n_centers is figured by the [n_samples] arg
@@ -781,15 +782,17 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
             # generate centers based on [n_samples]
             centers = generator.uniform(center_box[0], center_box[1],
                                         size=(n_centers, n_features))
-        elif ((isinstance(centers, np.ndarray) or
-              isinstance(centers, list)) and
-              len(centers) == n_centers):
-            # correct list given
-            centers = check_array(centers)
-            n_features = centers.shape[1]
-        else:
+        try:
+            assert len(centers) == n_centers
+        except TypeError:
+            raise ValueError("Parameter `centers` should be a"
+                             "list or a np.array.")
+        except AssertionError:
             raise ValueError("Length of `n_samples` not consistent"
                              " with number of centers.")
+        else:
+            centers = check_array(centers)
+            n_features = centers.shape[1]
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
