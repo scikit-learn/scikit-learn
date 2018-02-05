@@ -450,9 +450,9 @@ is the corresponding sample weight, then we adjust the sample weight to:
 
 .. math::
 
-   :math:`\hat{w}_i` = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
+   \hat{w}_i = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
 
-the balanced accuracy is defined as:
+and the balanced accuracy is defined as:
 
 .. math::
 
@@ -462,7 +462,7 @@ where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Ind
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{#\text{classes}}`.  In the binary case, this is also known as
+\frac{1}{\text{n classes}}`.  In the binary case, this is also known as
 *Youden's J statistic*, or *informedness*.
 
 .. note::
