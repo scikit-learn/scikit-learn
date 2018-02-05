@@ -451,14 +451,13 @@ is the corresponding sample weight, then we adjust the sample weight to:
 
    \hat{w}_i = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
 
+where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
 Given predicted :math:`\hat{y}_i` for sample :math:`i`, balanced accuracy is
 defined as:
 
 .. math::
 
    \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i == y_i) \hat{w}_i
-
-where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
