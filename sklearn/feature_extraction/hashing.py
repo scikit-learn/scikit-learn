@@ -126,17 +126,13 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
 
-        if save_mappings:
-            indices, indptr, values, self.feature_to_index_map_ = \
-                _hashing.transform(raw_X, self.n_features, self.dtype,
-                                   self.alternate_sign, self.save_mappings)
-        else:
-            indices, indptr, values, _ = \
-                _hashing.transform(raw_X, self.n_features, self.dtype,
-                                   self.alternate_sign, self.save_mappings)
-        return indices, indptr, values
+        indices, indptr, values, feature_to_index_map_ = \
+            _hashing.transform(raw_X, self.n_features, self.dtype,
+                               self.alternate_sign, self.save_mappings)
 
-    def _post_transform(self, indices, indptr, values):
+        if save_mappings:
+            self.feature_to_index_map_ = feature_to_index_map_
+
         n_samples = indptr.shape[0] - 1
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
@@ -165,14 +161,13 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         y : this parameter is simply for compatibility and is not used.
 
         fit_params : this paramter is simply for compatibility and is not used.
-        444
+
         Returns
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Feature matrix, for use with estimators or further transformers"""
 
-        indices, indptr, values = self._transform(X, save_mappings=True)
-        return self._post_transform(indices, indptr, values)
+        return self._transform(X, self.save_mappings)
 
     def fit(self, X=None, y=None):
         """This method calls fit_transform and is used when save_mappings
@@ -188,7 +183,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         # repeat input validation for grid search (which calls set_params)
-        self.feature_to_index_map_ = None
         self._validate_params(self.n_features, self.input_type)
         if self.save_mappings:
             self.fit_transform(X)
@@ -217,8 +211,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
                              " save_mappings=True. Please call"
                              " .fit_transform()")
 
-        indices, indptr, values = self._transform(raw_X, save_mappings=False)
-        return self._post_transform(indices, indptr, values)
+        return self._transform(raw_X, self.save_mappings)
 
     def get_feature_names(self):
         """Returns a list of the feature mappings.
