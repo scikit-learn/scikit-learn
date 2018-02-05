@@ -444,15 +444,15 @@ The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled
 to the range [1 / (1 - number of classes), 1] with performance at random being
 0.
 
-If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th
-sample and :math:`y_i` is the corresponding true value, and :math:`w_i`
+If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
 is the corresponding sample weight, then we adjust the sample weight to:
 
 .. math::
 
    \hat{w}_i = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
 
-and the balanced accuracy is defined as:
+Given predicted :math:`\hat{y}_i` for sample :math:`i`, balanced accuracy is
+defined as:
 
 .. math::
 
