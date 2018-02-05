@@ -1365,14 +1365,13 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
+                            corrected=False):
     """Compute the balanced accuracy
 
-    The balanced accuracy is used in binary classification problems to deal
-    with imbalanced datasets. It is defined as the arithmetic mean of
-    sensitivity (true positive rate) and specificity (true negative rate),
-    or the average recall obtained on either class. It is also equal to the
-    ROC AUC score given binary inputs.
+    The balanced accuracy in binary and muitclass classification problems to
+    deal with imbalanced datasets. It is defined as the average of recall
+    obtained on each class.
 
     The best value is 1 and the worst value is 0.
 
@@ -1389,6 +1388,10 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    corrected : bool, default=False
+        When true, the result is chance-corrected, so that random
+        performance would score 0, and perfect performance scores 1.
+
     Returns
     -------
     balanced_accuracy : float.
@@ -1404,6 +1407,10 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
            The balanced accuracy and its posterior distribution.
            Proceedings of the 20th International Conference on Pattern
            Recognition, 3121-24.
+    .. [2] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, (2015).
+           `Fundamentals of Machine Learning for Predictive Data Analytics:
+           Algorithms, Worked Examples, and Case Studies
+           <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_.
 
     Examples
     --------
@@ -1415,15 +1422,31 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
-    if y_type != 'binary':
+    if y_type.startswith('multilabel'):
         raise ValueError('Balanced accuracy is only meaningful '
-                         'for binary classification problems.')
-    # simply wrap the ``recall_score`` function
-    return recall_score(y_true, y_pred,
-                        pos_label=None,
-                        average='macro',
-                        sample_weight=sample_weight)
+                         'for binary and multiclass problems.')
+
+    missing_from_true = np.setdiff1d(y_pred, y_true)
+    if len(missing_from_true):
+        warnings.warn('y_pred contains classes not in y_true')
+
+    # This emulates compute_sample_weight('balanced', y_true),
+    # but accounts for sample weight when balancing classes.
+    unique_classes, encoded_y_true = np.unique(y_true, return_inverse=True)
+    n_classes = len(unique_classes)
+    class_weight = 1 / np.bincount(encoded_y_true, weights=sample_weight,
+                                   minlength=n_classes)
+    if sample_weight is None:
+        sample_weight = 1
+    sample_weight = class_weight.take(encoded_y_true) * sample_weight
+    score = accuracy_score(y_true, y_pred, sample_weight=sample_weight)
+    if corrected:
+        chance = 1 / n_classes
+        score -= chance
+        score /= 1 - chance
+    return score
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,

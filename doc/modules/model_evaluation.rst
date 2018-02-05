@@ -418,65 +418,65 @@ In the multilabel case with binary label indicators: ::
 Balanced accuracy score
 -----------------------
 
-The :func:`balanced_accuracy_score` function computes the
-`balanced accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which
-avoids inflated performance estimates on imbalanced datasets. It is defined as the
-arithmetic mean of `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true positive rate) and `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true negative rate), or the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
-obtained on either class.
+The :func:`balanced_accuracy_score` function computes the `balanced accuracy
+<https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which avoids inflated
+performance estimates on imbalanced datasets. It is the macro-average of recall
+scores per class or, equivalently, raw accuracy where each sample is weighted
+according to the inverse prevalence of its true class.
+Thus for balanced datasets, the score is equal to accuracy.
 
-If the classifier performs equally well on either class, this term reduces to the
-conventional accuracy (i.e., the number of correct predictions divided by the total
-number of predictions). In contrast, if the conventional accuracy is above chance only
-because the classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to 50%.
+In the binary case, balanced accuracy is equal to the arithmetic mean of
+`sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true positive rate) and `specificity
+<https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
+rate), or the area under the ROC curve with binary predictions rather than
+scores.
 
-If :math:`\hat{y}_i\in\{0,1\}` is the predicted value of
-the :math:`i`-th sample and :math:`y_i\in\{0,1\}` is the corresponding true value,
-then the balanced accuracy is defined as
+If the classifier performs equally well on either class, this term reduces to
+the conventional accuracy (i.e., the number of correct predictions divided by
+the total number of predictions).
+
+In contrast, if the conventional accuracy is above chance only because the
+classifier takes advantage of an imbalanced test set, then the balanced
+accuracy, as appropriate, will drop to 1/(number of classes).
+
+The score ranges from 0 to 1, or when ``corrected=True`` is used, it rescaled
+to the range [1 / (1 - number of classes), 1] with performance at random being
+0.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th
+sample and :math:`y_i` is the corresponding true value, and :math:`w_i`
+is the corresponding sample weight, then we adjust the sample weight to:
 
 .. math::
 
-   \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{2} \left(\frac{\sum_i 1(\hat{y}_i = 1 \land y_i = 1)}{\sum_i 1(y_i = 1)} + \frac{\sum_i 1(\hat{y}_i = 0 \land y_i = 0)}{\sum_i 1(y_i = 0)}\right)
+   :math:`\hat{w}_i` = \frac{w_i}{\sum_j{1(y_j = y_i) w_j}}
+
+the balanced accuracy is defined as:
+
+.. math::
+
+   \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i == y_i) \hat{w}_i
 
 where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
-Under this definition, the balanced accuracy coincides with :func:`roc_auc_score`
-given binary ``y_true`` and ``y_pred``:
-
-  >>> import numpy as np
-  >>> from sklearn.metrics import balanced_accuracy_score, roc_auc_score
-  >>> y_true = [0, 1, 0, 0, 1, 0]
-  >>> y_pred = [0, 1, 0, 0, 0, 1]
-  >>> balanced_accuracy_score(y_true, y_pred)
-  0.625
-  >>> roc_auc_score(y_true, y_pred)
-  0.625
-
-(but in general, :func:`roc_auc_score` takes as its second argument non-binary scores).
+With ``corrected=True``, this is relative gain from
+:math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
+\frac{1}{#\text{classes}}`.
 
 .. note::
 
-    Currently this score function is only defined for binary classification problems, you
-    may need to wrap it by yourself if you want to use it for multilabel problems.
+    The multiclass definition here seems the most reasonable extension of the
+    metric used in binary classification, though there is no certain consensus
+    in the literature:
 
-    There is no clear consensus on the definition of a balanced accuracy for the
-    multiclass setting. Here are some definitions that can be found in the literature:
-
-    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
-      the recall for each class is computed independently and the average is taken over all classes.
-      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
-      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
-      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
+    * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
+      [Guyon2015]_ adopt the corrected version to score chance as 0.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
-    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
-
-    Note that none of these different definitions are currently implemented within
-    the :func:`balanced_accuracy_score` function.
 
 .. topic:: References:
 

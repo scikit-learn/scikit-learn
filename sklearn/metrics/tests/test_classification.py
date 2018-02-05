@@ -1,10 +1,12 @@
 from __future__ import division, print_function
 
-import numpy as np
-from scipy import linalg
 from functools import partial
 from itertools import product
 import warnings
+
+import numpy as np
+from scipy import linalg
+import pytest
 
 from sklearn import datasets
 from sklearn import svm
@@ -28,6 +30,7 @@ from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
@@ -1636,3 +1639,25 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+
+def test_balanced_accuracy_score_unseen():
+    assert_warns_message(UserWarning, 'y_pred contains classes not in y_true',
+                         balanced_accuracy_score, [0, 0, 0], [0, 0, 1])
+
+
+@ignore_warnings  # tested in test_balanced_accuracy_score_unseen
+@pytest.mark.parametrize('y_true,y_pred',
+                         [
+                             (['a', 'b', 'a', 'b'], ['a', 'a', 'a', 'b']),
+                             (['a', 'b', 'c', 'b'], ['a', 'a', 'a', 'b']),
+                             (['a', 'a', 'a', 'b'], ['a', 'b', 'c', 'b']),
+                         ])
+def test_balanced_accuracy_score(y_true, y_pred):
+    macro_recall = recall_score(y_true, y_pred, average='macro',
+                                labels=np.unique(y_true))
+    balanced = balanced_accuracy_score(y_true, y_pred)
+    assert balanced == pytest.approx(macro_recall)
+    corrected = balanced_accuracy_score(y_true, y_pred, corrected=True)
+    chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
+    assert corrected == (balanced - chance) / (1 - chance)

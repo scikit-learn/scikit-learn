@@ -1357,6 +1357,8 @@ functions or non-estimator constructors.
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
         ``n_samples / (n_classes * np.bincount(y))``.
+        **Note** however that this rebalancing does not take the weight of
+        samples in each class into account.
 
         For multioutput classification, a list of dicts is used to specify
         weights for each output. For example, for four-class multilabel
