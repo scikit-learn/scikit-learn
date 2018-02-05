@@ -460,9 +460,10 @@ the balanced accuracy is defined as:
 
 where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
-With ``adjusted=True``, this is relative gain from
+With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{#\text{classes}}`.
+\frac{1}{#\text{classes}}`.  In the binary case, this is also known as
+*Youden's J statistic*, or *informedness*.
 
 .. note::
 
