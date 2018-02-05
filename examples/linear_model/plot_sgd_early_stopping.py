@@ -40,7 +40,6 @@ from __future__ import print_function
 import time
 import sys
 
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -117,14 +116,19 @@ for estimator_name, estimator in estimator_dict.items():
                         train_score, test_score))
     print('')
 
-# Transform the results in a pandas dataframe for easy plotting
-columns = [
-    'Stopping criterion', 'max_iter', 'Fit time (sec)', 'n_iter_',
-    'Train score', 'Test score'
-]
-results_df = pd.DataFrame(results, columns=columns)
+results = np.array(results).T
+results_dict = {
+    'Stopping criterion': results[0],
+    'max_iter': results[1],
+    'Fit time (sec)': results[2],
+    'n_iter_': results[3],
+    'Train score': results[4],
+    'Test score': results[5],
+}
 
-# Define what to plot (index, values), i.e. (x_axis, y_axis)
+# Define what to plot (index, values), i.e. (x_axis, y_axis),
+# for all cases listed in columns.
+columns = 'Stopping criterion'
 plot_list = [
     ('max_iter', 'Train score'),
     ('max_iter', 'Test score'),
@@ -139,12 +143,12 @@ fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols,
 axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
 
 for ax, (index, values) in zip(axes.ravel(), plot_list):
-    table = results_df.pivot_table(index=index, columns='Stopping criterion',
-                                   values=values)
-    if index == 'Fit time (sec)':
-        table = table.interpolate()
-    table.plot(ax=ax)
-    ax.set_title(values)
+    for this_column in np.unique(results_dict[columns]):
+        mask = results_dict[columns] == this_column
+        ax.plot(results_dict[index][mask], results_dict[values][mask],
+                label=this_column)
+    ax.set(title=values, xlabel=index)
+    ax.legend(title='Stopping criterion')
 
 fig.tight_layout()
 plt.show()
