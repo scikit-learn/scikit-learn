@@ -1441,6 +1441,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     if sample_weight is None:
         sample_weight = 1
     sample_weight = class_weight.take(encoded_y_true) * sample_weight
+
     score = accuracy_score(y_true, y_pred, sample_weight=sample_weight)
     if corrected:
         chance = 1 / n_classes
