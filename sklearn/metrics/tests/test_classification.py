@@ -1646,8 +1646,7 @@ def test_balanced_accuracy_score_unseen():
                          balanced_accuracy_score, [0, 0, 0], [0, 0, 1])
 
 
-@ignore_warnings  # tested in test_balanced_accuracy_score_unseen
-@pytest.mark.parametrize(['y_true', 'y_pred'],
+@pytest.mark.parametrize('y_true,y_pred',
                          [
                              (['a', 'b', 'a', 'b'], ['a', 'a', 'a', 'b']),
                              (['a', 'b', 'c', 'b'], ['a', 'a', 'a', 'b']),
@@ -1656,7 +1655,9 @@ def test_balanced_accuracy_score_unseen():
 def test_balanced_accuracy_score(y_true, y_pred):
     macro_recall = recall_score(y_true, y_pred, average='macro',
                                 labels=np.unique(y_true))
-    balanced = balanced_accuracy_score(y_true, y_pred)
+    with ignore_warnings:
+        # Warnings are tested in test_balanced_accuracy_score_unseen
+        balanced = balanced_accuracy_score(y_true, y_pred)
     assert balanced == pytest.approx(macro_recall)
     corrected = balanced_accuracy_score(y_true, y_pred, corrected=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
