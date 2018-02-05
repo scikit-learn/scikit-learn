@@ -237,7 +237,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it consider the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
-        point.
+        point. To avoid training and testing on the different dataset, this
+        method is kept private as well as _predict().
         The decision function on training data is available by considering the
         opposite of the negative_outlier_factor_ attribute.
 
