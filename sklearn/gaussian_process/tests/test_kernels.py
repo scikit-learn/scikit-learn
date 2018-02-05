@@ -14,12 +14,12 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation)
+            Exponentiation, LinearKernel)
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
-                                   assert_array_almost_equal)
+                                   assert_array_almost_equal, assert_true)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
@@ -41,7 +41,9 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            RationalQuadratic(length_scale=0.5, alpha=1.5),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
            DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
-           RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
+           RBF(length_scale=[2.0]), Matern(length_scale=[2.0]),
+           LinearKernel(sigma_b=2.0, sigma_v=2.0, c=2.0),
+           LinearKernel(sigma_b=3.0, sigma_v=4.0, c=[2.0, 3.0])]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -65,7 +67,7 @@ def test_kernel_gradient():
         K_gradient_approx = \
             _approx_fprime(kernel.theta, eval_kernel_for_theta, 1e-10)
 
-        assert_almost_equal(K_gradient, K_gradient_approx, 4)
+        assert_almost_equal(K_gradient, K_gradient_approx, 3)
 
 
 def test_kernel_theta():
@@ -89,13 +91,23 @@ def test_kernel_theta():
 
         # Check that values returned in theta are consistent with
         # hyperparameter values (being their logarithms)
-        for i, hyperparameter in enumerate(kernel.hyperparameters):
-            assert_equal(theta[i],
-                         np.log(getattr(kernel, hyperparameter.name)))
+        i = 0
+        for hyperparameter in kernel.hyperparameters:
+            if hyperparameter.n_elements > 1:
+                assert_array_equal(theta[i:i + hyperparameter.n_elements],
+                                   np.log(getattr(kernel,
+                                                  hyperparameter.name)))
+            else:
+                assert_array_equal(theta[i],
+                                   np.log(getattr(kernel,
+                                                  hyperparameter.name)))
+            i += hyperparameter.n_elements
 
         # Fixed kernel parameters must be excluded from theta and gradient.
-        for i, hyperparameter in enumerate(kernel.hyperparameters):
+        i = 0
+        for hyperparameter in kernel.hyperparameters:
             # create copy with certain hyperparameter fixed
+            n_elements = hyperparameter.n_elements
             params = kernel.get_params()
             params[hyperparameter.name + "_bounds"] = "fixed"
             kernel_class = kernel.__class__
@@ -103,25 +115,44 @@ def test_kernel_theta():
             # Check that theta and K_gradient are identical with the fixed
             # dimension left out
             _, K_gradient_new = new_kernel(X, eval_gradient=True)
-            assert_equal(theta.shape[0], new_kernel.theta.shape[0] + 1)
-            assert_equal(K_gradient.shape[2], K_gradient_new.shape[2] + 1)
+            assert_equal(theta.shape[0],
+                         new_kernel.theta.shape[0] + n_elements)
+            assert_equal(K_gradient.shape[2],
+                         K_gradient_new.shape[2] + n_elements)
             if i > 0:
-                assert_equal(theta[:i], new_kernel.theta[:i])
+                assert_array_equal(theta[:i], new_kernel.theta[:i])
                 assert_array_equal(K_gradient[..., :i],
                                    K_gradient_new[..., :i])
-            if i + 1 < len(kernel.hyperparameters):
-                assert_equal(theta[i + 1:], new_kernel.theta[i:])
-                assert_array_equal(K_gradient[..., i + 1:],
+            if i + n_elements < len(kernel.hyperparameters):
+                assert_array_equal(theta[i + n_elements:],
+                                   new_kernel.theta[i:])
+                assert_array_equal(K_gradient[..., i + n_elements:],
                                    K_gradient_new[..., i:])
+            i += n_elements
 
         # Check that values of theta are modified correctly
-        for i, hyperparameter in enumerate(kernel.hyperparameters):
-            theta[i] = np.log(42)
-            kernel.theta = theta
-            assert_almost_equal(getattr(kernel, hyperparameter.name), 42)
+        i = 0
+        for hyperparameter in kernel.hyperparameters:
+            n_elements = hyperparameter.n_elements
+            if n_elements > 1:
+                theta[i:i + hyperparameter.n_elements] = \
+                     [np.log(42)] * hyperparameter.n_elements
+                kernel.theta = theta
+                assert_almost_equal(getattr(kernel, hyperparameter.name),
+                                    [42] * hyperparameter.n_elements)
 
-            setattr(kernel, hyperparameter.name, 43)
-            assert_almost_equal(kernel.theta[i], np.log(43))
+                setattr(kernel, hyperparameter.name,
+                        [43] * hyperparameter.n_elements)
+                assert_almost_equal(kernel.theta[i],
+                                    [np.log(43)] * hyperparameter.n_elements)
+            else:
+                theta[i] = np.log(42)
+                kernel.theta = theta
+                assert_almost_equal(getattr(kernel, hyperparameter.name), 42)
+
+                setattr(kernel, hyperparameter.name, 43)
+                assert_almost_equal(kernel.theta[i], np.log(43))
+            i += n_elements
 
 
 def test_auto_vs_cross():
@@ -203,7 +234,13 @@ def test_kernel_clone():
         assert_not_equal(id(kernel), id(kernel_cloned))
 
         # Check that all constructor parameters are equal.
-        assert_equal(kernel.get_params(), kernel_cloned.get_params())
+        # Need to iterate as some parameters may have more than one element
+        kernel_params = kernel.get_params()
+        kernel_cloned_params = kernel_cloned.get_params()
+        assert_true(kernel_params.keys() == kernel_cloned_params.keys() and
+                    all(np.array(
+                        kernel_params[key] == kernel_cloned_params[key]).all()
+                    for key in kernel_params))
 
         # Check that all hyperparameters are equal.
         yield check_hyperparameters_equal, kernel, kernel_cloned
