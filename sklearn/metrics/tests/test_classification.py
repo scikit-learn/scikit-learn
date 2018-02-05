@@ -1647,7 +1647,7 @@ def test_balanced_accuracy_score_unseen():
 
 
 @ignore_warnings  # tested in test_balanced_accuracy_score_unseen
-@pytest.mark.parametrize('y_true,y_pred',
+@pytest.mark.parametrize(['y_true', 'y_pred'],
                          [
                              (['a', 'b', 'a', 'b'], ['a', 'a', 'a', 'b']),
                              (['a', 'b', 'c', 'b'], ['a', 'a', 'a', 'b']),
