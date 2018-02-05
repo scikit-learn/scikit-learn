@@ -1428,13 +1428,14 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
         raise ValueError('Balanced accuracy is only meaningful '
                          'for binary and multiclass problems.')
 
-    missing_from_true = np.setdiff1d(y_pred, y_true)
+    unique_classes, encoded_y_true = np.unique(y_true, return_inverse=True)
+
+    missing_from_true = np.setdiff1d(y_pred, unique_classes)
     if len(missing_from_true):
         warnings.warn('y_pred contains classes not in y_true')
 
     # This emulates compute_sample_weight('balanced', y_true),
     # but accounts for sample weight when balancing classes.
-    unique_classes, encoded_y_true = np.unique(y_true, return_inverse=True)
     n_classes = len(unique_classes)
     class_weight = 1 / np.bincount(encoded_y_true, weights=sample_weight,
                                    minlength=n_classes)
