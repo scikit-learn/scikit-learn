@@ -1366,7 +1366,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
 def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
-                            corrected=False):
+                            adjusted=False):
     """Compute the balanced accuracy
 
     The balanced accuracy in binary and muitclass classification problems to
@@ -1388,8 +1388,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    corrected : bool, default=False
-        When true, the result is chance-corrected, so that random
+    adjusted : bool, default=False
+        When true, the result is adjusted for chance, so that random
         performance would score 0, and perfect performance scores 1.
 
     Returns
@@ -1444,7 +1444,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     sample_weight = class_weight.take(encoded_y_true) * sample_weight
 
     score = accuracy_score(y_true, y_pred, sample_weight=sample_weight)
-    if corrected:
+    if adjusted:
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance

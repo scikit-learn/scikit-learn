@@ -1659,6 +1659,6 @@ def test_balanced_accuracy_score(y_true, y_pred):
         # Warnings are tested in test_balanced_accuracy_score_unseen
         balanced = balanced_accuracy_score(y_true, y_pred)
     assert balanced == pytest.approx(macro_recall)
-    corrected = balanced_accuracy_score(y_true, y_pred, corrected=True)
+    adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
-    assert corrected == (balanced - chance) / (1 - chance)
+    assert adjusted == (balanced - chance) / (1 - chance)

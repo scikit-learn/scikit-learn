@@ -440,7 +440,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to 1/(number of classes).
 
-The score ranges from 0 to 1, or when ``corrected=True`` is used, it rescaled
+The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled
 to the range [1 / (1 - number of classes), 1] with performance at random being
 0.
 
@@ -460,7 +460,7 @@ the balanced accuracy is defined as:
 
 where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
-With ``corrected=True``, this is relative gain from
+With ``adjusted=True``, this is relative gain from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
 \frac{1}{#\text{classes}}`.
 
@@ -471,7 +471,7 @@ With ``corrected=True``, this is relative gain from
     in the literature:
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
-      [Guyon2015]_ adopt the corrected version to score chance as 0.
+      [Guyon2015]_ adopt the adjusted version to score chance as 0.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
