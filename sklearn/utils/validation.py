@@ -555,24 +555,25 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     return array
 
 
-def _check_large_sparse(array, accept_large_sparse=False):
+def _check_large_sparse(X, accept_large_sparse=False):
+    """Indices Regulation for CSR Matrices.
+       Only Int32 are supported for now
     """
-    Indices Regulation for CSR Matrices.
-    Only Int32 are supported for now
 
-    """
-    if accept_large_sparse is False and type(array) == sp.csr.csr_matrix:
+    if (not accept_large_sparse and sp.issparse(X)):
         supported_indices = ["int32"]
-        if (hasattr(array, "indices") and hasattr(array.indices, "dtype") and
-                array.indices.dtype not in supported_indices):
-            raise ValueError("Only sparse matrices with 32-bit integer indices"
-                             " are accepted. Got % s indices."
-                             % array.indices.dtype)
-        if (hasattr(array, "indptr") and hasattr(array.indptr, "dtype") and
-                array.indptr.dtype not in supported_indices):
-            raise ValueError("Only sparse matrices with 32-bit integer indices"
-                             " are accepted. Got % s indices."
-                             % array.indices.dtype)
+        if X.getformat() == "coo":
+            index_keys = ['col', 'row']
+        elif X.getformat() in ["csr", "csc"]:
+            index_keys = ['indices', 'indptr']
+        else:
+            return
+        for key in index_keys:
+            indices_datatype = getattr(X, key).dtype
+            if (indices_datatype not in supported_indices):
+                raise ValueError("Only sparse matrices with 32-bit integer"
+                                 " indices are accepted. Got % s indices."
+                                 % indices_datatype)
 
 
 def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
