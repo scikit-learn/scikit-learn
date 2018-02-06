@@ -350,7 +350,7 @@ def _gradient_descent(objective, p0, it, n_iter,
     for i in range(it, n_iter):
         check_convergence = (i + 1) % n_iter_check == 0
         # only compute the error when needed
-        if hasattr(kwargs, 'compute_error'):
+        if 'compute_error' in kwargs:
             kwargs['compute_error'] = check_convergence
 
         error, grad = objective(p, *args, **kwargs)
