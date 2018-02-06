@@ -126,6 +126,10 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- Add :class:`gaussian_process.kernelsLinearKernel` for
+  basic linear kernel functionality.
+  :issue:`10597` by :user:`Aman Dalmia <dalmia>` and `Jacob Boes <jboes>`
+	 
 Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
