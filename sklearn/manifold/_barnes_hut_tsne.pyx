@@ -52,7 +52,8 @@ cdef float compute_gradient(float[:] val_P,
                             float theta,
                             float dof,
                             long start,
-                            long stop) nogil:
+                            long stop,
+                            int compute_error) nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -85,7 +86,7 @@ cdef float compute_gradient(float[:] val_P,
         t1 = clock()
     error = compute_gradient_positive(val_P, pos_reference, neighbors, indptr,
                                       pos_f, n_dimensions, dof, sQ, start,
-                                      qt.verbose)
+                                      qt.verbose, compute_error)
     if take_timing:
         t2 = clock()
         printf("[t-SNE] Computing positive gradient: %e ticks\n", ((float) (t2 - t1)))
@@ -108,7 +109,8 @@ cdef float compute_gradient_positive(float[:] val_P,
                                      float dof,
                                      double sum_Q,
                                      np.int64_t start,
-                                     int verbose) nogil:
+                                     int verbose,
+                                     int compute_error) nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
     # This is equivalent to compute_edge_forces in the authors' code
@@ -140,9 +142,11 @@ cdef float compute_gradient_positive(float[:] val_P,
                 dij += buff[ax] * buff[ax]
             qij = ((1.0 + dij / dof) ** exponent)
             dij = pij * qij
-            qij /= sum_Q
-            C += pij * log(max(pij, FLOAT32_TINY)
-                           / max(qij, FLOAT32_TINY))
+
+            # only compute the error when needed
+            if compute_error:
+                qij /= sum_Q
+                C += pij * log(max(pij, FLOAT32_TINY) / max(qij, FLOAT32_TINY))
             for ax in range(n_dimensions):
                 pos_f[i * n_dimensions + ax] += dij * buff[ax]
     if verbose > 10:
@@ -233,7 +237,8 @@ def gradient(float[:] val_P,
              int n_dimensions,
              int verbose,
              float dof = 1.0,
-             long skip_num_points=0):
+             long skip_num_points=0,
+             int compute_error=1):
     # This function is designed to be called from external Python
     # it passes the 'forces' array by reference and fills thats array
     # up in-place
@@ -259,7 +264,7 @@ def gradient(float[:] val_P,
         # and -Werror=format-security
         printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
     C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
-                         qt, theta, dof, skip_num_points, -1)
+                         qt, theta, dof, skip_num_points, -1, compute_error)
     if verbose > 10:
         # XXX: format hack to workaround lack of `const char *` type
         # in the generated C code
