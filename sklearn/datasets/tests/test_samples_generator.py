@@ -246,7 +246,7 @@ def test_make_blobs():
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
 
-def test_make_blobs_n_features_list():
+def test_make_blobs_n_samples_list():
     n_samples = [50, 30, 20]
     X, y = make_blobs(n_samples=n_samples, n_features=2, random_state=0)
 
@@ -255,7 +255,7 @@ def test_make_blobs_n_features_list():
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
 
 
-def test_make_blobs_n_features_list_with_centers():
+def test_make_blobs_n_samples_list_with_centers():
     n_samples = [20, 20, 20]
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
     cluster_stds = np.array([0.05, 0.2, 0.4])
@@ -273,22 +273,21 @@ def test_make_blobs_error():
     n_samples = [20, 20, 20]
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
     cluster_stds = np.array([0.05, 0.2, 0.4])
-    wrong_centers_msg = "Length of `n_samples` not consistent"\
-                        " with number of centers."
+    wrong_centers_msg = ("Length of `n_samples` not consistent "
+                         "with number of centers.")
     assert_raise_message(ValueError, wrong_centers_msg,
                          make_blobs, n_samples, centers=centers[:-1])
-    wrong_std_msg = "Length of `clusters_std` not consistent"\
-                    " with number of centers."
+    wrong_std_msg = ("Length of `clusters_std` not consistent with "
+                     "number of centers.")
     assert_raise_message(ValueError, wrong_std_msg,
                          make_blobs, n_samples,
                          centers=centers, cluster_std=cluster_stds[:-1])
-    wrong_type_msg = "Parameter `centers` should be a"\
-                     "list or a np.array."
+    wrong_type_msg = "Parameter `centers` must be array-like."
     assert_raise_message(ValueError, wrong_type_msg,
                          make_blobs, n_samples, centers=3)
 
 
-def test_make_blobs_n_features_list_centers_none():
+def test_make_blobs_n_samples_list_centers_none():
     n_samples = [5, 3, 0]
     centers = None
     X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
