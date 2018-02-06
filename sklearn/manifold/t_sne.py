@@ -350,7 +350,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     for i in range(it, n_iter):
         check_convergence = (i + 1) % n_iter_check == 0
         # only compute the error when needed
-        kwargs['compute_error'] = check_convergence
+        if hasattr(kwargs, 'compute_error'):
+            kwargs['compute_error'] = check_convergence
 
         error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
@@ -822,8 +823,10 @@ class TSNE(BaseEstimator):
             opt_args['kwargs']['angle'] = self.angle
             # Repeat verbose argument for _kl_divergence_bh
             opt_args['kwargs']['verbose'] = self.verbose
+            opt_args['kwargs']['compute_error'] = True
         else:
             obj_func = _kl_divergence
+            opt_args['kwargs']['compute_error'] = True
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
         # higher learning rate controlled via the early exageration parameter
