@@ -53,7 +53,7 @@ cdef float compute_gradient(float[:] val_P,
                             float dof,
                             long start,
                             long stop,
-                            int compute_error) nogil:
+                            bint compute_error) nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -110,7 +110,7 @@ cdef float compute_gradient_positive(float[:] val_P,
                                      double sum_Q,
                                      np.int64_t start,
                                      int verbose,
-                                     int compute_error) nogil:
+                                     bint compute_error) nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
     # This is equivalent to compute_edge_forces in the authors' code
@@ -238,7 +238,7 @@ def gradient(float[:] val_P,
              int verbose,
              float dof = 1.0,
              long skip_num_points=0,
-             int compute_error=1):
+             bint compute_error=1):
     # This function is designed to be called from external Python
     # it passes the 'forces' array by reference and fills thats array
     # up in-place
