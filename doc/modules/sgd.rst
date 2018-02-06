@@ -249,7 +249,7 @@ criteria to stop the algorithm when a given level of convergence is reached:
     the input data.
 
 In both cases, the criterion is evaluated once by epoch, and the algorithm stops
-when the criterion does not improve ``n_iter_no_times`` times in a row. The
+when the criterion does not improve ``n_iter_no_change`` times in a row. The
 improvement is evaluated with a tolerance ``tol``, and the algorithm stops in
 any case after a maximum number of iteration ``max_iter``.
 
@@ -396,7 +396,7 @@ For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
 For an adaptively decreasing learning rate, use ``learning_rate='adaptive'``
-and use ``eta0```to specify the starting learning rate. When the stopping
+and use ``eta0`` to specify the starting learning rate. When the stopping
 criterion is reached, the learning rate is divided by 5, and the algorithm
 does not stop. The algorithm stops when the learning rate goes below 1e-6.
 

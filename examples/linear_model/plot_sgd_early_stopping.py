@@ -8,7 +8,7 @@ function in a stochastic fashion, performing a gradient descent step sample by
 sample. In particular, it is a very efficient method to fit linear models.
 
 As a stochastic method, the loss function is not necessarily decreasing at each
-iteration, and convergence is only guarnateed in expectation. For this reason,
+iteration, and convergence is only guaranteed in expectation. For this reason,
 monitoring the convergence on the loss function can be difficult.
 
 Another approach is to monitor convergence on a validation score. In this case,
@@ -16,22 +16,24 @@ the input data is split into a training set and a validation set. The model is
 then fitted on the training set and the stopping criterion is based on the
 prediction score computed on the validation set. This enables us to find the
 least number of iterations which is sufficient to build a model that
-generalizes well to unseen data.
+generalizes well to unseen data and reduces the chance of over-fitting the
+training data.
 
 This early stopping strategy is activated if ``early_stopping=True``; otherwise
-the stopping criterion only uses the training loss on the entire input data.
-To better control the early stopping strategy, we can specify a parameter
+the stopping criterion only uses the training loss on the entire input data. To
+better control the early stopping strategy, we can specify a parameter
 ``validation_fraction`` which set the fraction of the input dataset that we
 keep aside to compute the validation score. The optimization will continue
 until the validation score did not improve by at least ``tol`` during the last
-``n_iter_no_change`` iterations.
-
-The number of iterations is available at the attribute ``n_iter_``.
+``n_iter_no_change`` iterations. The actual number of iterations is available
+at the attribute ``n_iter_``.
 
 This example illustrates how the early stopping can used in the
-:class:`sklearn.linear_model.SGDClassifier` model to achieve
-almost the same accuracy as compared to a model built without early stopping.
-This can significantly reduce training time.
+:class:`sklearn.linear_model.SGDClassifier` model to achieve almost the same
+accuracy as compared to a model built without early stopping. This can
+significantly reduce training time. Note that scores differ between the
+stopping criteria even from early iterations because some of the training data
+is held out with the validation stopping criterion.
 """
 # Authors: Tom Dupre la Tour
 #
@@ -88,8 +90,7 @@ estimator_dict = {
     linear_model.SGDClassifier(tol=None, random_state=0),
     'Training loss':
     linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=5,
-                               tol=0.01, random_state=0,
-                               validation_fraction=0.2),
+                               tol=0.01, random_state=0),
     'Validation score':
     linear_model.SGDClassifier(early_stopping=True, n_iter_no_change=5,
                                tol=0.01, random_state=0,

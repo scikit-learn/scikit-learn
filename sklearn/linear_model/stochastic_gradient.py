@@ -762,15 +762,18 @@ class SGDClassifier(BaseSGDClassifier):
     learning_rate : string, optional
         The learning rate schedule:
 
-        - 'constant': eta = eta0
-        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
-        - 'invscaling': eta = eta0 / pow(t, power_t)
-        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
-        Each time n_iter_no_change consecutive epochs fail to decrease the
-        training loss by tol, or fail to increase validation score by tol if
-        'early_stopping' is on, the current learning rate is divided by 5.
-
-        where t0 is chosen by a heuristic proposed by Leon Bottou.
+        'constant':
+            eta = eta0
+        'optimal': [default]
+            eta = 1.0 / (alpha * (t + t0))
+            where t0 is chosen by a heuristic proposed by Leon Bottou.
+        'invscaling':
+            eta = eta0 / pow(t, power_t)
+        'adaptive':
+            eta = eta0, as long as the training keeps decreasing.
+            Each time n_iter_no_change consecutive epochs fail to decrease the
+            training loss by tol or fail to increase validation score by tol if
+            early_stopping is True, the current learning rate is divided by 5.
 
     eta0 : double
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1366,15 +1369,18 @@ class SGDRegressor(BaseSGDRegressor):
     learning_rate : string, optional
         The learning rate schedule:
 
-        - 'constant': eta = eta0
-        - 'optimal': eta = 1.0 / (alpha * (t + t0))
-        - 'invscaling': eta = eta0 / pow(t, power_t) [default]
-        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
-        Each time n_iter_no_change consecutive epochs fail to decrease the
-        training loss by tol, or fail to increase validation score by tol if
-        'early_stopping' is on, the current learning rate is divided by 5.
-
-        where t0 is chosen by a heuristic proposed by Leon Bottou.
+        'constant':
+            eta = eta0
+        'optimal':
+            eta = 1.0 / (alpha * (t + t0))
+            where t0 is chosen by a heuristic proposed by Leon Bottou.
+        'invscaling': [default]
+            eta = eta0 / pow(t, power_t)
+        'adaptive':
+            eta = eta0, as long as the training keeps decreasing.
+            Each time n_iter_no_change consecutive epochs fail to decrease the
+            training loss by tol or fail to increase validation score by tol if
+            early_stopping is True, the current learning rate is divided by 5.
 
     eta0 : double
         The initial learning rate for the 'constant', 'invscaling' or

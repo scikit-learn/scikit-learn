@@ -48,7 +48,7 @@ cdef class SequentialDataset:
                    int *nnz, double *y, double *sample_weight) nogil:
         """Get the next example ``x`` from the dataset.
 
-        This method get the next sample looping sequentially over all samples.
+        This method gets the next sample looping sequentially over all samples.
         The order can be shuffled with the method ``shuffle``.
         Shuffling once before iterating over all samples corresponds to a
         random draw without replacement. It is used for instance in SGD solver.
@@ -81,8 +81,8 @@ cdef class SequentialDataset:
                     int *nnz, double *y, double *sample_weight) nogil:
         """Get a random example ``x`` from the dataset.
 
-        This method get next sample chosen randomly over a uniform distribution.
-        It corresponds to a random draw with replacement.
+        This method gets next sample chosen randomly over a uniform
+        distribution. It corresponds to a random draw with replacement.
         It is used for instance in SAG solver.
 
         Parameters
