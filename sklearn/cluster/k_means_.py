@@ -176,7 +176,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
-        The observations to cluster. It must be noted that, the data
+        The observations to cluster. It must be noted that the data
         will be converted to C ordering, which will cause a memory copy
         if the given data is in fortran order.
 
@@ -886,7 +886,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster. It must be noted that, the data
+            Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory
             copy if the given data is in fortran order.
 
@@ -1352,7 +1352,7 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster. It must be noted that, the data
+            Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is in fortran order.
 
