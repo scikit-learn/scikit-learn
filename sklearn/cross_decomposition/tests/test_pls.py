@@ -281,6 +281,9 @@ def test_univariate_pls_regression():
 
     clf = pls_.PLSRegression()
     # Compare 1d to column vector
+    model1 = clf.fit(X, Y[:, 0]).coef_
+    model2 = clf.fit(X, Y[:, :1]).coef_
+    assert_array_almost_equal(model1, model2.ravel())
     # issue #8856
     ndim_predict_1d = clf.fit(X, Y[:, 0]).predict(X).ndim
     ndim_predict_2d = clf.fit(X, Y[:, :1]).predict(X).ndim
