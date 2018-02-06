@@ -328,6 +328,11 @@ class CommonTest(object):
                            for n_iter_no_change in [2, 3, 10]]
             assert_array_equal(n_iter_list, sorted(n_iter_list))
 
+    def test_not_enough_sample_for_early_stopping(self):
+        # test an error is raised if the training or validation set is empty
+        clf = self.factory(early_stopping=True, validation_fraction=0.99)
+        assert_raises(ValueError, clf.fit, X3, Y3)
+
 
 ###############################################################################
 # Classification Test Case

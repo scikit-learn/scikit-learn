@@ -246,7 +246,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                dtype=np.float64,
                                                order="C")
 
-    def _train_validation_split(self, X, y, sample_weight):
+    def _make_validation_split(self, X, y, sample_weight):
         """Split the dataset between training set and validation set
 
         Returns
@@ -264,6 +264,14 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                random_state=self.random_state)
         X_train, X_val, y_train, y_val = tmp[:4]
         idx_train, idx_val, sample_weight_train, sample_weight_val = tmp[4:8]
+        if X_train.shape[0] == 0 or X_val.shape[0] == 0:
+            raise ValueError(
+                "Splitting %d samples into a train set and a validation set "
+                "with validation_fraction=%r led to an empty set (%d and %d "
+                "samples). Please either change validation_fraction, increase "
+                "number of samples, or disable early_stopping."
+                % (n_samples, self.validation_fraction, X_train.shape[0],
+                   X_val.shape[0]))
 
         self._X_val = X_val
         self._y_val = y_val
@@ -342,7 +350,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
-    validation_mask = est._train_validation_split(X, y, sample_weight)
+    validation_mask = est._make_validation_split(X, y, sample_weight)
 
     # XXX should have random_state_!
     random_state = check_random_state(est.random_state)
@@ -1206,7 +1214,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
-        validation_mask = self._train_validation_split(X, y, sample_weight)
+        validation_mask = self._make_validation_split(X, y, sample_weight)
 
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
