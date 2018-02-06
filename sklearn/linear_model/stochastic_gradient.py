@@ -51,7 +51,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=2, warm_start=False, average=False,
+                 n_iter_no_change=1, warm_start=False, average=False,
                  n_iter=None):
         self.loss = loss
         self.penalty = penalty
@@ -410,7 +410,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
-                 validation_fraction=0.1, n_iter_no_change=2,
+                 validation_fraction=0.1, n_iter_no_change=1,
                  class_weight=None, warm_start=False, average=False,
                  n_iter=None):
 
@@ -792,7 +792,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default 2
+    n_iter_no_change : int, default 1
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -867,7 +867,7 @@ class SGDClassifier(BaseSGDClassifier):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=None,
-           n_iter=None, n_iter_no_change=2, n_jobs=1, penalty='l2',
+           n_iter=None, n_iter_no_change=1, n_jobs=1, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
 
@@ -885,7 +885,7 @@ class SGDClassifier(BaseSGDClassifier):
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=2, class_weight=None, warm_start=False,
+                 n_iter_no_change=1, class_weight=None, warm_start=False,
                  average=False, n_iter=None):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -1029,7 +1029,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=2, warm_start=False, average=False,
+                 n_iter_no_change=1, warm_start=False, average=False,
                  n_iter=None):
         super(BaseSGDRegressor, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -1399,7 +1399,7 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default 2
+    n_iter_no_change : int, default 1
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -1468,7 +1468,7 @@ class SGDRegressor(BaseSGDRegressor):
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
            learning_rate='invscaling', loss='squared_loss', max_iter=None,
-           n_iter=None, n_iter_no_change=2, penalty='l2', power_t=0.25,
+           n_iter=None, n_iter_no_change=1, penalty='l2', power_t=0.25,
            random_state=None, shuffle=True, tol=None, validation_fraction=0.1,
            verbose=0, warm_start=False)
 
@@ -1482,7 +1482,7 @@ class SGDRegressor(BaseSGDRegressor):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=2, warm_start=False, average=False,
+                 n_iter_no_change=1, warm_start=False, average=False,
                  n_iter=None):
         super(SGDRegressor, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,

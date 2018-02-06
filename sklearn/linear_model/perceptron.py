@@ -68,7 +68,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default 2
+    n_iter_no_change : int, default 1
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -134,7 +134,7 @@ class Perceptron(BaseSGDClassifier):
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  max_iter=None, tol=None, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=1, random_state=0, early_stopping=False,
-                 validation_fraction=0.1, n_iter_no_change=2,
+                 validation_fraction=0.1, n_iter_no_change=1,
                  class_weight=None, warm_start=False, n_iter=None):
         super(Perceptron, self).__init__(
             loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
