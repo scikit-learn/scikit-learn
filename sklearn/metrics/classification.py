@@ -579,6 +579,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         y_true = le.transform(y_true)
         y_pred = le.transform(y_pred)
 
+        Labels = labels
         labels = le.transform(labels)[:n_labels]
         # use 'np.in1d' instead of 'np.isin' (unavailable in version < 1.13.0)
         indices = np.where(np.in1d(y_true, labels, assume_unique=False,
@@ -607,12 +608,12 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             tp_sum = np.zeros(len(labels))
             if len(y_true):
                 true_sum = np.bincount(y_true, weights=sample_weight,
-                                       minlength=len(labels))[labels]
+                                       minlength=len(Labels))[labels]
             else:
                 true_sum = np.zeros(len(labels))
             if len(y_pred):
                 pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                       minlength=len(labels))[labels]
+                                       minlength=len(Labels))[labels]
             else:
                 pred_sum = np.zeros(len(labels))
 

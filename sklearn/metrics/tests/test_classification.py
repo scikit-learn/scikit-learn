@@ -1092,6 +1092,19 @@ def test_multiclass_jaccard_similarity_score():
 
 
 def test_average_binary_jaccard_similarity_score():
+    # tp=0, fp=0, fn=1, tn=0
+    y_true = np.array([1])
+    y_pred = np.array([0])
+    assert_equal(jaccard_similarity_score(y_true, y_pred,
+                                          average='binary'), 0.)
+    # tp=0, fp=0, fn=0, tn=1
+    y_true = np.array([0])
+    y_pred = np.array([0])
+    assert_equal(jaccard_similarity_score(y_true, y_pred,
+                                          average='binary'), 0.)
+    # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
+    assert_equal(jaccard_similarity_score(y_true, y_pred, pos_label=0,
+                                          average='binary'), 1.)
     y_true = np.array([1, 0, 1, 1, 0])
     y_pred = np.array([1, 0, 1, 1, 1])
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
