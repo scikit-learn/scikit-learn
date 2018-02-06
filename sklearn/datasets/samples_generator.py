@@ -785,8 +785,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         try:
             assert len(centers) == n_centers
         except TypeError:
-            raise ValueError("Parameter `centers` should be a"
-                             "list or a np.array.")
+            raise ValueError("Parameter `centers` must be array-like.")
         except AssertionError:
             raise ValueError("Length of `n_samples` not consistent"
                              " with number of centers.")
@@ -796,9 +795,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
-    if ((isinstance(cluster_std, list) or
-            isinstance(cluster_std, np.ndarray)) and
-            len(cluster_std) != n_centers):
+    if (hasattr(cluster_std, "__len__") and len(cluster_std) != n_centers):
         raise ValueError("Length of `clusters_std` not consistent"
                          " with number of centers.")
 
