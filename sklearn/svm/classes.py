@@ -1056,6 +1056,12 @@ class OneClassSVM(BaseLibSVM):
     intercept_ : array, shape = [1,]
         Constant in the decision function.
 
+    offset_ : float
+        Offset used to define the decision function from the raw scores.
+        We have the relation: decision_function = score_samples - offset_.
+        The offset is the opposite of intercept_ and is provided for
+        consistency with other outlier detection algorithms.
+
     """
 
     _impl = 'one_class'
@@ -1099,6 +1105,7 @@ class OneClassSVM(BaseLibSVM):
 
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
+        self.offset_ = -self._intercept_
         return self
 
     def decision_function(self, X):
@@ -1112,11 +1119,25 @@ class OneClassSVM(BaseLibSVM):
 
         Returns
         -------
-        X : array-like, shape (n_samples,)
+        dec : array-like, shape (n_samples,)
             Returns the decision function of the samples.
         """
-        dec = self._decision_function(X)
+        dec = self._decision_function(X).ravel()
         return dec
+
+    def score_samples(self, X):
+        """Raw scoring function of the samples.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        score_samples : array-like, shape (n_samples,)
+            Returns the (unshifted) scoring function of the samples.
+        """
+        return self.decision_function(X) + self.offset_
 
     def predict(self, X):
         """

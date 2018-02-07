@@ -402,7 +402,7 @@ cdef class DistanceMetric:
 # Euclidean Distance
 #  d = sqrt(sum(x_i^2 - y_i^2))
 cdef class EuclideanDistance(DistanceMetric):
-    """Euclidean Distance metric
+    r"""Euclidean Distance metric
 
     .. math::
        D(x, y) = \sqrt{ \sum_i (x_i - y_i) ^ 2 }
@@ -435,7 +435,7 @@ cdef class EuclideanDistance(DistanceMetric):
 # SEuclidean Distance
 #  d = sqrt(sum((x_i - y_i2)^2 / v_i))
 cdef class SEuclideanDistance(DistanceMetric):
-    """Standardized Euclidean Distance metric
+    r"""Standardized Euclidean Distance metric
 
     .. math::
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
@@ -479,7 +479,7 @@ cdef class SEuclideanDistance(DistanceMetric):
 # Manhattan Distance
 #  d = sum(abs(x_i - y_i))
 cdef class ManhattanDistance(DistanceMetric):
-    """Manhattan/City-block Distance metric
+    r"""Manhattan/City-block Distance metric
 
     .. math::
        D(x, y) = \sum_i |x_i - y_i|
@@ -521,7 +521,7 @@ cdef class ChebyshevDistance(DistanceMetric):
 # Minkowski Distance
 #  d = sum(x_i^p - y_i^p) ^ (1/p)
 cdef class MinkowskiDistance(DistanceMetric):
-    """Minkowski Distance
+    r"""Minkowski Distance
 
     .. math::
        D(x, y) = [\sum_i (x_i - y_i)^p] ^ (1/p)
@@ -568,7 +568,7 @@ cdef class MinkowskiDistance(DistanceMetric):
 # W-Minkowski Distance
 #  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
-    """Weighted Minkowski Distance
+    r"""Weighted Minkowski Distance
 
     .. math::
        D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
@@ -700,7 +700,7 @@ cdef class MahalanobisDistance(DistanceMetric):
 # Hamming Distance
 #  d = N_unequal(x, y) / N_tot
 cdef class HammingDistance(DistanceMetric):
-    """Hamming Distance
+    r"""Hamming Distance
 
     Hamming distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
@@ -722,7 +722,7 @@ cdef class HammingDistance(DistanceMetric):
 # Canberra Distance
 #  D(x, y) = sum[ abs(x_i - y_i) / (abs(x_i) + abs(y_i)) ]
 cdef class CanberraDistance(DistanceMetric):
-    """Canberra Distance
+    r"""Canberra Distance
 
     Canberra distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
@@ -745,7 +745,7 @@ cdef class CanberraDistance(DistanceMetric):
 # Bray-Curtis Distance
 #  D(x, y) = sum[abs(x_i - y_i)] / sum[abs(x_i) + abs(y_i)]
 cdef class BrayCurtisDistance(DistanceMetric):
-    """Bray-Curtis Distance
+    r"""Bray-Curtis Distance
 
     Bray-Curtis distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
@@ -770,7 +770,7 @@ cdef class BrayCurtisDistance(DistanceMetric):
 # Jaccard Distance (boolean)
 #  D(x, y) = N_unequal(x, y) / N_nonzero(x, y)
 cdef class JaccardDistance(DistanceMetric):
-    """Jaccard Distance
+    r"""Jaccard Distance
 
     Jaccard Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -795,7 +795,7 @@ cdef class JaccardDistance(DistanceMetric):
 # Matching Distance (boolean)
 #  D(x, y) = n_neq / n
 cdef class MatchingDistance(DistanceMetric):
-    """Matching Distance
+    r"""Matching Distance
 
     Matching Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -819,7 +819,7 @@ cdef class MatchingDistance(DistanceMetric):
 # Dice Distance (boolean)
 #  D(x, y) = n_neq / (2 * ntt + n_neq)
 cdef class DiceDistance(DistanceMetric):
-    """Dice Distance
+    r"""Dice Distance
 
     Dice Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -844,7 +844,7 @@ cdef class DiceDistance(DistanceMetric):
 # Kulsinski Distance (boolean)
 #  D(x, y) = (ntf + nft - ntt + n) / (n_neq + n)
 cdef class KulsinskiDistance(DistanceMetric):
-    """Kulsinski Distance
+    r"""Kulsinski Distance
 
     Kulsinski Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -869,7 +869,7 @@ cdef class KulsinskiDistance(DistanceMetric):
 # Rogers-Tanimoto Distance (boolean)
 #  D(x, y) = 2 * n_neq / (n + n_neq)
 cdef class RogersTanimotoDistance(DistanceMetric):
-    """Rogers-Tanimoto Distance
+    r"""Rogers-Tanimoto Distance
 
     Rogers-Tanimoto Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -893,7 +893,7 @@ cdef class RogersTanimotoDistance(DistanceMetric):
 # Russell-Rao Distance (boolean)
 #  D(x, y) = (n - ntt) / n
 cdef class RussellRaoDistance(DistanceMetric):
-    """Russell-Rao Distance
+    r"""Russell-Rao Distance
 
     Russell-Rao Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -917,7 +917,7 @@ cdef class RussellRaoDistance(DistanceMetric):
 # Sokal-Michener Distance (boolean)
 #  D(x, y) = 2 * n_neq / (n + n_neq)
 cdef class SokalMichenerDistance(DistanceMetric):
-    """Sokal-Michener Distance
+    r"""Sokal-Michener Distance
 
     Sokal-Michener Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -941,7 +941,7 @@ cdef class SokalMichenerDistance(DistanceMetric):
 # Sokal-Sneath Distance (boolean)
 #  D(x, y) = n_neq / (0.5 * n_tt + n_neq)
 cdef class SokalSneathDistance(DistanceMetric):
-    """Sokal-Sneath Distance
+    r"""Sokal-Sneath Distance
 
     Sokal-Sneath Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
