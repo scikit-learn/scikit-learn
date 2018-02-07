@@ -11,6 +11,7 @@ better.
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 #          Gregory Stupp <stuppie@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Lucas Pugens Fernandes <lpfernandes@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -19,9 +20,11 @@ from math import log
 
 import numpy as np
 from scipy import sparse as sp
+from scipy.optimize import linprog
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
+from ...utils.multiclass import unique_labels
 from ...utils.fixes import comb
 
 
@@ -870,3 +873,102 @@ def entropy(labels):
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
     return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+
+
+def max_main_diagonal(A):
+    """Sort matrix A columns to achieve greater main diagonal sum
+    Sorting is done by maximization of the confusion matrix :math:`C`
+    main diagonal sum :math:`\sum{i=0}^{K}C_{i, i}`. Notice the
+    number of cluster has to be equal or smaller than the number
+    of true classes.
+    Parameters
+    ----------
+    A : array, shape = [n,n]
+        Square numerical matrix
+    Returns
+    -------
+    B : array, shape = [n,n]
+        Pivot matrix that sorts A for maximum main diagonal sum
+    References
+    ----------
+    Examples
+    --------
+    >>> from sklearn.metrics.cluster import max_main_diagonal
+    >>> import numpy as np
+    >>> A = np.matrix([[2, 1, 0],
+                       [1, 0, 0],
+                       [0, 2, 0]])
+    >>> max_main_diagonal(A)
+    array([[1., 0., 0.],
+           [0., 0., 1.],
+           [0., 1., 0.]])
+    """
+    n, n = A.shape
+    res = linprog(-A.ravel(),
+                  A_eq=np.r_[np.kron(np.identity(n), np.ones((1, n))),
+                             np.kron(np.ones((1, n)), np.identity(n))],
+                  b_eq=np.ones((2*n,)), bounds=n*n*[(0, None)])
+    assert res.success
+    return res.x.reshape(n, n).T
+
+
+def class_cluster_match(y_true, y_pred, translate=True):
+    """Sort prediction labels in order to maximize the confusion matrix main diagonal sum
+    Sort the prediction labels of a clustering output in order to enable calc
+    of external metrics (eg. accuracy, f1_score, ...). Sorting is done by
+    maximization of the confusion matrix :math:`C` main diagonal sum
+    :math:`\sum{i=0}^{K}C_{i, i}`. Notice the number of cluster has to be equal
+     or smaller than the number of true classes.
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a clustering algorithm.
+    translate : boolean, optional, default True
+        If True, y_pred_sort will be translated from y_pred notation symbols to y_true notation symbols.
+    Returns
+    -------
+    y_pred_sort : array, shape = [n_classes, n_classes]
+        Estimated targets sorted for maximum accuracy with y_true
+    References
+    ----------
+    Examples
+    --------
+    >>> from sklearn.metrics import confusion_matrix
+    >>> from sklearn.metrics.cluster import class_cluster_match
+    >>> y_true = ["class1", "class2", "class3", "class1", "class1", "class3"]
+    >>> y_pred = [0, 0, 2, 2, 0, 2]
+    >>> y_pred_translated = class_cluster_match(y_true, y_pred)
+    >>> y_pred_translated
+    ["class1", "class1", "class3", "class3", "class1", "class3"]
+    >>> confusion_matrix(y_true, y_pred_translated)
+    array([[2., 0., 1.],
+           [1., 0., 0.],
+           [0., 0., 2.]])
+    """
+    classes = list(unique_labels(y_true))
+    n_classes = len(classes)
+    num_classes = [classes.index(y) for y in y_true]
+    clusters = list(unique_labels(y_pred))
+    n_clusters = len(clusters)
+    num_clusters = [clusters.index(y) for y in y_pred]
+
+    if n_clusters > n_classes:
+        raise ValueError("Number of different clusters ("+str(n_clusters) +
+                         ") should be smaller or equal to the number of different classes ("+str(n_classes)+")")
+
+    cm = np.zeros((n_classes, n_classes))
+
+    for y_t, y_p in zip(num_classes, num_clusters):
+        cm[y_t, y_p] += 1
+
+    shuffle = best_perm(cm)
+
+    matching_clusters = [row.tolist().index(1) for row in shuffle]
+
+    y_pred_sort = [matching_clusters[y] for y in num_clusters]
+    if translate:
+        y_pred_sort = [classes[y] for y in y_pred_sort]
+
+    return y_pred_sort
