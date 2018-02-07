@@ -970,8 +970,7 @@ def test_quantile_transform_check_error():
 
 @pytest.mark.parametrize(
     "missing_values, dtype",
-    [(np.nan, np.float64),
-     (100, np.int64)])
+    [(np.nan, np.float64)])
 def test_quantile_transform_missing_values(missing_values, dtype):
     X_some_missing = np.array([[0, 1],
                                [0, 0],
@@ -990,8 +989,7 @@ def test_quantile_transform_missing_values(missing_values, dtype):
     for X, X_expected in zip([X_some_missing, X_all_missing],
                              [X_expected_some_missing,
                               X_expected_all_missing]):
-        transformer = QuantileTransformer(n_quantiles=5,
-                                          missing_values=missing_values)
+        transformer = QuantileTransformer(n_quantiles=5)
 
         X_trans = transformer.fit_transform(X)
         assert_almost_equal(X_expected, X_trans)

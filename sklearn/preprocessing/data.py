@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -2165,13 +2163,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array).
 
-    missing_values : int or "NaN", optional, (default="NaN)
-        The placeholder for the missing values. All occurrences of
-        missing_values will be preserved. For missing values encoded as np.nan,
-        use the string value “NaN”.
-
-        .. versionadded: 0.20
-
     Attributes
     ----------
     quantiles_ : ndarray, shape (n_quantiles, n_features)
@@ -2209,14 +2200,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
-                 random_state=None, copy=True, missing_values='NaN'):
+                 random_state=None, copy=True):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
         self.ignore_implicit_zeros = ignore_implicit_zeros
         self.subsample = subsample
         self.random_state = random_state
         self.copy = copy
-        self.missing_values = missing_values
 
     @staticmethod
     def _nanpercentile_force_finite(a, q):
@@ -2301,26 +2291,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                     self._nanpercentile_force_finite(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
-    @staticmethod
-    def _get_mask(X, value_to_mask):
-        """Compute a boolean mask corresponding to the missing value in a
-        dense array and the data of a sparse matrix."""
-        if sparse.issparse(X):
-            data = X.data
-        else:
-            data = X
-        return np.isclose(data, value_to_mask, equal_nan=True)
-
-    @staticmethod
-    def _apply_mask(X, mask, value):
-        """Apply a value to the masked value to a dense array or the data of
-        a sparse matrix."""
-        if sparse.issparse(X):
-            X.data[mask] = value
-        else:
-            X[mask] = value
-        return X
-
     def fit(self, X, y=None):
         """Compute the quantiles used for transforming.
 
@@ -2352,15 +2322,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              " and {} samples.".format(self.n_quantiles,
                                                        self.subsample))
 
-        if self.missing_values == "NaN":
-            self.missing_values_ = np.nan
-        else:
-            self.missing_values_ = self.missing_values
-
         X = self._check_inputs(X)
-        mask_missing_values = self._get_mask(X, self.missing_values_)
-        X = self._apply_mask(X, mask_missing_values, np.nan)
-
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
@@ -2438,26 +2400,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X_col
 
-    def _assert_finite_or_nan(self, X):
-        """Check that X contain finite or NaN values."""
-        X = np.asanyarray(X)
-        # First try an O(n) time, O(1) space solution for the common case that
-        # everything is finite; fall back to O(n) space np.isfinite to prevent
-        # false positives from overflow in sum method.
-        if (X.dtype.char in np.typecodes['AllFloat']
-                and not np.isfinite(X[~np.isnan(X)].sum())
-                and not np.isfinite(X[~np.isnan(X)]).all()):
-            raise ValueError("Input contains infinity"
-                             " or a value too large for %r." % X.dtype)
-
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
         X = check_array(X, accept_sparse='csc', copy=self.copy,
-                        dtype=[np.float64, np.float32], force_all_finite=False)
-        # FIXME: the following blocks should be removed once #10455 is
-        # addressed.
-        # we accept nan values but not infinite values.
-        self._assert_finite_or_nan(X.data if sparse.issparse(X) else X)
+                        dtype=[np.float64, np.float32],
+                        force_all_finite='allow-nan')
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
         # comparison with NaN will raise a warning which we make silent
@@ -2503,10 +2450,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray, shape (n_samples, n_features)
             Projected data
         """
-
-        mask_missing_values = self._get_mask(X, self.missing_values_)
-        X = self._apply_mask(X, mask_missing_values, np.nan)
-
         if sparse.issparse(X):
             for feature_idx in range(X.shape[1]):
                 column_slice = slice(X.indptr[feature_idx],
@@ -2520,7 +2463,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                     X[:, feature_idx], self.quantiles_[:, feature_idx],
                     inverse)
 
-        return self._apply_mask(X, mask_missing_values, self.missing_values_)
+        return X
 
     def transform(self, X):
         """Feature-wise transformation of the data.
