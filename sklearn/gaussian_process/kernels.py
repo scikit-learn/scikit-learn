@@ -1716,7 +1716,7 @@ class LinearKernel(Kernel):
                         gradient_mat = np.vstack(
                             [(X - self.c)[:, i]] * X.shape[0])
                         c_gradient.append(c * (gradient_mat + gradient_mat.T))
-                    c_gradient = np.array(c_gradient)
+                    c_gradient = -np.array(c_gradient)
                     c_gradient = np.rollaxis(c_gradient, 0, 3)
             return K, c_gradient
         else:
