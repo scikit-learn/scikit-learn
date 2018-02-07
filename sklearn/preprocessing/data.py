@@ -2451,6 +2451,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray, shape (n_samples, n_features)
             Projected data
         """
+
         if sparse.issparse(X):
             for feature_idx in range(X.shape[1]):
                 column_slice = slice(X.indptr[feature_idx],
