@@ -22,7 +22,7 @@ X = iris.data[:, :2]
 Y = iris.target
 
 
-def my_kernel(X, Y):
+def my_kernel(X, Y=None):
     """
     We create a custom kernel:
 
@@ -30,6 +30,8 @@ def my_kernel(X, Y):
     k(X, Y) = X  (    ) Y.T
                  (0  1)
     """
+    if Y is None:
+        Y = X
     M = np.array([[2, 0], [0, 1.0]])
     return np.dot(np.dot(X, M), Y.T)
 
