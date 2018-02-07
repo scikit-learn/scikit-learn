@@ -27,11 +27,25 @@ implemented with objects learning in an unsupervised way from the data::
     estimator.fit(X_train)
 
 new observations can then be sorted as inliers or outliers with a
-`predict` method::
+``predict`` method::
 
     estimator.predict(X_test)
 
-Inliers are labeled 1, while outliers are labeled -1.
+Inliers are labeled 1, while outliers are labeled -1. The predict method
+makes use of a threshold on the raw scoring function computed by the
+estimator. This scoring function is accessible through the ``score_samples``
+method, while the threshold can be controlled by the ``contamination``
+parameter.
+
+The ``decision_function`` method is also defined from the scoring function,
+in such a way that negative values are outliers and non-negative ones are
+inliers::
+
+    estimator.decision_function(X_test)
+
+Note that :class:`neighbors.LocalOutlierFactor` does not support
+``predict`` and ``decision_function`` methods, as this algorithm is
+purely transductive and is thus not designed to deal with new data.
 
 Overview of outlier detection methods
 =====================================

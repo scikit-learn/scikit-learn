@@ -61,7 +61,7 @@ print("Number of clusters: ", np.unique(label).size)
 plt.figure(figsize=(5, 5))
 plt.imshow(face, cmap=plt.cm.gray)
 for l in range(n_clusters):
-    plt.contour(label == l, contours=1,
+    plt.contour(label == l,
                 colors=[plt.cm.spectral(l / float(n_clusters)), ])
 plt.xticks(())
 plt.yticks(())

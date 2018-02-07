@@ -71,7 +71,7 @@ for assign_labels in ('kmeans', 'discretize'):
     plt.figure(figsize=(5, 5))
     plt.imshow(face, cmap=plt.cm.gray)
     for l in range(N_REGIONS):
-        plt.contour(labels == l, contours=1,
+        plt.contour(labels == l,
                     colors=[plt.cm.spectral(l / float(N_REGIONS))])
     plt.xticks(())
     plt.yticks(())

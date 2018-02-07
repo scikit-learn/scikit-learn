@@ -1010,7 +1010,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = multioutput_estimator_convert_y_2d(e, np.array([1, 0, 1]))
-    msg = ("0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
+    msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
            "is required.")
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
