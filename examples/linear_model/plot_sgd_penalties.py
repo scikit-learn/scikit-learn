@@ -40,11 +40,12 @@ ax.spines['right'].set_color('none')
 ax.spines['bottom'].set_position('center')
 ax.spines['top'].set_color('none')
 
-plt.clabel(elastic_net_contour, inline=1, fontsize=10,
+plt.clabel(elastic_net_contour, inline=1, fontsize=18,
            fmt={1.0: 'elastic-net'}, manual=[(-1, -1)])
-plt.clabel(l2_contour, inline=1, fontsize=10,
+plt.clabel(l2_contour, inline=1, fontsize=18,
            fmt={1.0: 'L2'}, manual=[(-1, -1)])
-plt.clabel(l1_contour, inline=1, fontsize=10,
+plt.clabel(l1_contour, inline=1, fontsize=18,
            fmt={1.0: 'L1'}, manual=[(-1, -1)])
 
+plt.tight_layout()
 plt.show()
