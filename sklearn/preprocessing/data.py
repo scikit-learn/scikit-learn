@@ -2368,6 +2368,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
                                 upper_bound_x)
 
+        mask_finite = np.isnan(X_col)
         if not inverse:
             # Interpolate in one direction and in the other and take the
             # mean. This is in case of repeated values in the features
@@ -2376,11 +2377,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             # If we don't do this, only one extreme of the duplicated is
             # used (the upper when we do ascending, and the
             # lower for descending). We take the mean of these two
-            X_col = .5 * (np.interp(X_col, quantiles, self.references_)
-                          - np.interp(-X_col, -quantiles[::-1],
-                                      -self.references_[::-1]))
+            X_col[~mask_finite] = .5 * (
+                np.interp(X_col[~mask_finite], quantiles, self.references_)
+                - np.interp(-X_col[~mask_finite], -quantiles[::-1],
+                            -self.references_[::-1]))
         else:
-            X_col = np.interp(X_col, self.references_, quantiles)
+            X_col[~mask_finite] = np.interp(X_col[~mask_finite],
+                                            self.references_, quantiles)
 
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
