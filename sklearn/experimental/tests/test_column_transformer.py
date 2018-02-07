@@ -14,7 +14,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import SkipTest
 
 from sklearn.base import BaseEstimator
 from sklearn.experimental import ColumnTransformer, make_column_transformer
