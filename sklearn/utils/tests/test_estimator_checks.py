@@ -195,7 +195,7 @@ def test_check_estimator():
                         check_estimator, ChangesWrongAttribute)
     check_estimator(ChangesUnderscoreAttribute)
     # check that `fit` doesn't add any public attribute
-    msg = ('Estimator adds public attribute\(s\) during the fit method.'
+    msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
@@ -286,7 +286,7 @@ def test_check_no_attributes_set_in_init():
     assert_raises_regex(AssertionError,
                         "Estimator estimator_name should not set any"
                         " attribute apart from parameters during init."
-                        " Found attributes \[\'you_should_not_set_this_\'\].",
+                        r" Found attributes \['you_should_not_set_this_'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet())
@@ -294,7 +294,7 @@ def test_check_no_attributes_set_in_init():
                         "Estimator estimator_name should store all "
                         "parameters as an attribute during init. "
                         "Did not find attributes "
-                        "\[\'you_should_set_this_\'\].",
+                        r"\['you_should_set_this_'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet())

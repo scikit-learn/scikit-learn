@@ -29,7 +29,7 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
-
+  
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -82,14 +82,15 @@ Model evaluation
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
-  the target y before fitting a regression model. The predictions are mapped
-  back to the original space via an inverse transform. :issue:`9041` by
-  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
+Clustering
+
+- :class:`cluster.AgglomerativeClustering` now supports Single Linkage
+  clustering via ``linkage='single'``. :issue:`9372` by
+  :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
 
 Enhancements
 ............
@@ -214,6 +215,11 @@ Classifiers and regressors
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
+- Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
+  unicode in Python2, the ``predict_proba`` method was raising an
+  unexpected TypeError given dense inputs.
+  :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -278,6 +284,10 @@ Metrics
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
+- Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
+  :func:`mutual_info_score`.
+  :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
@@ -298,6 +308,16 @@ Feature Extraction
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
+
+Preprocessing
+
+- Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
+  errors when ``transform`` or ``inverse_transform`` was called with empty arrays.
+  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
+
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
 
 API changes summary
 -------------------
@@ -324,6 +344,25 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Outlier Detection models
+
+- More consistent outlier detection API:
+  Add a ``score_samples`` method in :class:`svm.OneClassSVM`,
+  :class:`ensemble.IsolationForest`, :class:`neighbors.LocalOutlierFactor`,
+  :class:`covariance.EllipticEnvelope`. It allows to access raw score
+  functions from original papers. A new ``offset_`` parameter allows to link
+  ``score_samples`` and ``decision_function`` methods.
+  The ``contamination`` parameter of :class:`ensemble.IsolationForest` and
+  :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
+  to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
+  positive) ``decision_function`` values. By default, ``contamination`` is
+  kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to "auto",
+  thus using method-specific score offsets.
+  In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
+  ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
+  will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
+
 
 Changes to estimator checks
 ---------------------------

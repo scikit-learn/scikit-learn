@@ -925,7 +925,7 @@ Class APIs and Estimator Types
 There are further APIs specifically related to a small family of estimators,
 such as:
 
-.. glossary:
+.. glossary::
 
     cross-validation splitter
     CV splitter
