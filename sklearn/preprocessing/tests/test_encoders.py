@@ -76,24 +76,26 @@ def test_one_hot_encoder_sparse():
                            np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
         assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
 
-    # check outcome
-    assert_array_equal(X_trans,
-                       [[0., 1., 0., 1., 1.],
-                        [1., 0., 1., 0., 1.]])
+        # check outcome
+        assert_array_equal(X_trans,
+                           [[0., 1., 0., 1., 1.],
+                            [1., 0., 1., 0., 1.]])
 
     # max value given as 3
-    enc = assert_warns(DeprecationWarning, OneHotEncoder, n_values=4)
-    X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (2, 4 * 3))
+    # enc = assert_warns(DeprecationWarning, OneHotEncoder, n_values=4)
+    enc = OneHotEncoder(n_values=4)
     with ignore_warnings(category=DeprecationWarning):
+        X_trans = enc.fit_transform(X)
+        assert_equal(X_trans.shape, (2, 4 * 3))
         assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
 
     # max value given per feature
-    enc = assert_warns(DeprecationWarning, OneHotEncoder, n_values=[3, 2, 2])
-    X = [[1, 0, 1], [0, 1, 1]]
-    X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (2, 3 + 2 + 2))
+    # enc = assert_warns(DeprecationWarning, OneHotEncoder, n_values=[3, 2, 2])
+    enc = OneHotEncoder(n_values=[3, 2, 2])
     with ignore_warnings(category=DeprecationWarning):
+        X = [[1, 0, 1], [0, 1, 1]]
+        X_trans = enc.fit_transform(X)
+        assert_equal(X_trans.shape, (2, 3 + 2 + 2))
         assert_array_equal(enc.n_values_, [3, 2, 2])
     # check that testing with larger feature works:
     X = np.array([[2, 0, 1], [0, 1, 1]])
@@ -102,27 +104,33 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = "unknown cat"#egorical feature present \[2\] during transform." # TODO
+    error_msg = "unknown cat"  # egorical feature present \[2\] during transform." # TODO
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
-    assert_raises(
-        ValueError,
-        OneHotEncoder(n_values=2).fit_transform, X)
+    with ignore_warnings(category=DeprecationWarning):
+        assert_raises(
+            ValueError,
+            OneHotEncoder(n_values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
+
     # test that error is raised when wrong number of features in fit
     # with prespecified n_values
-    assert_raises(ValueError, enc.fit, X[:, :-1])
+    with ignore_warnings(category=DeprecationWarning):
+        assert_raises(ValueError, enc.fit, X[:, :-1])
     # test exception on wrong init param
-    assert_raises(
-        TypeError, OneHotEncoder(n_values=np.int).fit, X)
+    with ignore_warnings(category=DeprecationWarning):
+        assert_raises(
+            TypeError, OneHotEncoder(n_values=np.int).fit, X)
 
     enc = OneHotEncoder()
     # test negative input to fit
-    assert_raises(ValueError, enc.fit, [[0], [-1]])
+    with ignore_warnings(category=DeprecationWarning):
+        assert_raises(ValueError, enc.fit, [[0], [-1]])
 
     # test negative input to transform
-    enc.fit([[0], [1]])
+    with ignore_warnings(category=DeprecationWarning):
+        enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 
@@ -130,10 +138,10 @@ def test_one_hot_encoder_dense():
     # check for sparse=False
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder(sparse=False)
-    # discover max values automatically
-    X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (2, 5))
     with ignore_warnings(category=DeprecationWarning):
+        # discover max values automatically
+        X_trans = enc.fit_transform(X)
+        assert_equal(X_trans.shape, (2, 5))
         assert_array_equal(enc.active_features_,
                            np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
         assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
@@ -148,25 +156,28 @@ def test_one_hot_encoder_deprecationwarnings():
     for X in [[[3, 2, 1], [0, 1, 1]],
               [[3., 2., 1.], [0., 1., 1.]]]:
         enc = OneHotEncoder()
-        assert_warns_message(DeprecationWarning, "deprecated", enc.fit, X)
+        assert_warns_message(DeprecationWarning, "handling of integer",
+                             enc.fit, X)
         enc = OneHotEncoder()
-        assert_warns_message(DeprecationWarning, "deprecated",
+        assert_warns_message(DeprecationWarning, "handling of integer",
                              enc.fit_transform, X)
 
         # check it still works correctly as well
-        X_trans = enc.fit_transform(X).toarray()
+        with ignore_warnings(category=DeprecationWarning):
+            X_trans = enc.fit_transform(X).toarray()
         assert_array_equal(X_trans, [[0., 1., 0., 1., 1.],
                                      [1., 0., 1., 0., 1.]])
-
-        # TODO
-        # check no warning is raised if keyword is specified
-        # enc = OneHotEncoder(encoded_input=True)
-        # assert_no_warnings(enc.fit, X)
 
         # check deprecated attributes
         assert_warns(DeprecationWarning, lambda: enc.active_features_)
         assert_warns(DeprecationWarning, lambda: enc.feature_indices_)
         assert_warns(DeprecationWarning, lambda: enc.n_values_)
+
+        # check no warning is raised if keyword is specified
+        enc = OneHotEncoder(categories='auto')
+        assert_no_warnings(enc.fit, X)
+        enc = OneHotEncoder(categories='auto')
+        assert_no_warnings(enc.fit_transform, X)
 
 
 def test_one_hot_encoder_force_new_behaviour():
@@ -231,10 +242,12 @@ def test_transform_selected_copy_arg():
 
 
 def _run_one_hot(X, X2, cat):
-    enc = assert_warns(
-        DeprecationWarning,
-        OneHotEncoder, categorical_features=cat)
-    Xtr = enc.fit_transform(X)
+    # enc = assert_warns(
+    #     DeprecationWarning,
+    #     OneHotEncoder, categorical_features=cat)
+    enc = OneHotEncoder(categorical_features=cat)
+    with ignore_warnings(category=DeprecationWarning):
+        Xtr = enc.fit_transform(X)
     X2tr = enc.transform(X2)
     return Xtr, X2tr
 
@@ -270,6 +283,11 @@ def test_one_hot_encoder_categorical_features():
     cat = [True, True, True]
     _check_one_hot(X, X2, cat, 5)
 
+    # check error raised if also specifying categories
+    oh = OneHotEncoder(categories=[range(3)],
+                       categorical_features=[True, False, False])
+    assert_raises(ValueError, oh.fit, X)
+
 
 def test_one_hot_encoder_unknown_transform():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
@@ -278,7 +296,7 @@ def test_one_hot_encoder_unknown_transform():
     # Test that one hot encoder raises error for unknown features
     # present during transform.
     oh = OneHotEncoder(handle_unknown='error')
-    oh.fit(X)
+    assert_warns(DeprecationWarning, oh.fit, X)
     assert_raises(ValueError, oh.transform, y)
 
     # Test the ignore option, ignores unknown features.
@@ -328,7 +346,7 @@ def test_categorical_encoder_onehot_inverse():
         assert_array_equal(enc.inverse_transform(X_tr), exp)
 
         X = [[2, 55], [1, 55], [3, 55]]
-        enc = OneHotEncoder(sparse=sparse_)
+        enc = OneHotEncoder(sparse=sparse_, categories='auto')
         X_tr = enc.fit_transform(X)
         exp = np.array(X)
         assert_array_equal(enc.inverse_transform(X_tr), exp)
@@ -364,7 +382,7 @@ def test_categorical_encoder_handle_unknown():
     X2 = np.array([[7, 5, 3]])
 
     # Test that encoder raises error for unknown features during transform.
-    enc = OneHotEncoder()
+    enc = OneHotEncoder(categories='auto')
     enc.fit(X)
     msg = re.escape('unknown cate') # TODO gories [7] in column 0')
     assert_raises_regex(ValueError, msg, enc.transform, X2)
@@ -472,7 +490,7 @@ def test_categorical_encoder_ordinal_inverse():
 
 def test_categorical_encoder_dtypes():
     # check that dtypes are preserved when determining categories
-    enc = OneHotEncoder()
+    enc = OneHotEncoder(categories='auto')
     exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
 
     for X in [np.array([[1, 2], [3, 4]], dtype='int64'),
@@ -502,7 +520,7 @@ def test_categorical_encoder_dtypes_pandas():
     except ImportError:
         raise SkipTest("pandas is not installed")
 
-    enc = OneHotEncoder()
+    enc = OneHotEncoder(categories='auto')
     exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
 
     X = pd.DataFrame({'A': [1, 2], 'B': [3, 4]}, dtype='int64')

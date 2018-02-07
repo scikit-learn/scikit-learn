@@ -31,14 +31,6 @@ __all__ = [
 ]
 
 
-WARNING_MSG = (
-    "Handling encoded integer data is deprecated as the default behaviour. "
-    "You can specify 'encoded_input=True' to keep the existing behaviour, or "
-    "specify 'encoded_input=False' to silence this warning and get the future "
-    "default behaviour"
-)
-
-
 def _handle_zeros_in_scale(scale, copy=True):
     ''' Makes sure that whenever scale is zero, we handle it correctly.
 
@@ -188,6 +180,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         return X_int, X_mask
 
 
+WARNING_MSG = (
+    "The handling of integer data will change in the future. Currently, the "
+    "categories are determined based on the range [0, max(values)], while "
+    "in the future they will be determined based on the unique values.\n"
+    "If you want the future behaviour, you can specify \"categories='auto'\"."
+)
+
+
 class OneHotEncoder(_BaseEncoder):
     """Encode categorical integer features as a one-hot numeric array.
 
@@ -196,12 +196,12 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array.
+
     By default, the encoder derives the categories based on the unique values
-    in each feature.  Alternatively, the input to this transformer can be a
-    matrix of already encoded integers denoting the values taken on by
-    categorical (discrete) features. In that case you have to specify
-    ``encoded_input=True`` and it is assumed that input features take on
-    values in the range [0, max(values)).
+    in each feature. Alternatively, you can also specify the `categories`
+    manually.
+    The OneHotEncoder previously assumed that the input features take on
+    values in the range [0, max(values)). This behaviour is deprecated.
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
@@ -237,8 +237,6 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
-    Deprecated Parameters
-    ---------------------
     n_values : 'auto', int or array of ints
         Number of values per feature.
 
@@ -249,6 +247,10 @@ class OneHotEncoder(_BaseEncoder):
                   ``X[:, i]``. Each feature value should be
                   in ``range(n_values[i])``
 
+        .. deprecated:: 0.20
+            The `n_values` keyword is deprecated and will be removed in 0.22.
+            Use `categories` instead.
+
     categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
 
@@ -258,17 +260,21 @@ class OneHotEncoder(_BaseEncoder):
 
         Non-categorical features are always stacked to the right of the matrix.
 
+        .. deprecated:: 0.20
+            The `categorical_features` keyword is deprecated and will be
+            removed in 0.22.
+
     Attributes
     ----------
     categories_ : list of arrays
         The categories of each feature determined during fitting
         (in order corresponding with output of ``transform``).
 
-    Deprecated Attributes
-    ---------------------
     active_features_ : array
         Indices for active features, meaning values that actually occur
         in the training set. Only available when n_values is ``'auto'``.
+
+        .. deprecated:: 0.20
 
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
@@ -276,8 +282,12 @@ class OneHotEncoder(_BaseEncoder):
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
         (and then potentially masked by `active_features_` afterwards)
 
+        .. deprecated:: 0.20
+
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
+
+        .. deprecated:: 0.20
 
     Examples
     --------
@@ -290,7 +300,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
     OneHotEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-           encoded_input=False, handle_unknown='ignore', sparse=True)
+           handle_unknown='ignore', sparse=True)
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -300,18 +310,6 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
-
-    When you already have encoded integer features, you can specify the
-    `encoded_input` argument, and the encoder will then use the maximum
-    value per feature to determine the categories:
-
-    >>> enc = OneHotEncoder(encoded_input=True)
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
-[1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-           encoded_input=True, handle_unknown='error', sparse=True)
-    >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
     See also
     --------
@@ -326,9 +324,8 @@ class OneHotEncoder(_BaseEncoder):
     sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
       iterables and a multilabel format, e.g. a (samples x classes) binary
       matrix indicating the presence of a class label.
-    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
-      and n_classes-1.
     """
+
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
@@ -342,13 +339,15 @@ class OneHotEncoder(_BaseEncoder):
         self.handle_unknown = handle_unknown
 
         if n_values is not None:
-            warnings.warn("Deprecated", DeprecationWarning)
+            pass
+            # warnings.warn("Deprecated", DeprecationWarning)
         else:
             n_values = "auto"
         self._deprecated_n_values = n_values
 
         if categorical_features is not None:
-            warnings.warn("Deprecated", DeprecationWarning)
+            pass
+            # warnings.warn("Deprecated", DeprecationWarning)
         else:
             categorical_features = "all"
         self._deprecated_categorical_features = categorical_features
@@ -357,22 +356,26 @@ class OneHotEncoder(_BaseEncoder):
 
     @property
     def n_values(self):
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'n_values' parameter is deprecated.",
+                      DeprecationWarning)
         return self._deprecated_n_values
 
     @n_values.setter
     def n_values(self, value):
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'n_values' parameter is deprecated.",
+                      DeprecationWarning)
         self._deprecated_n_values = value
 
     @property
     def categorical_features(self):
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'categorical_features' parameter is deprecated.",
+                      DeprecationWarning)
         return self._deprecated_categorical_features
 
     @categorical_features.setter
     def categorical_features(self, value):
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'categorical_features' parameter is deprecated.",
+                      DeprecationWarning)
         self._deprecated_categorical_features = value
 
     # Deprecated attributes
@@ -380,28 +383,38 @@ class OneHotEncoder(_BaseEncoder):
     @property
     def active_features_(self):
         check_is_fitted(self, 'categories_')
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'active_features_' attribute is deprecated.",
+                      DeprecationWarning)
         return self._active_features_
 
     @property
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'feature_indices_' attribute is deprecated.",
+                      DeprecationWarning)
         return self._feature_indices_
 
     @property
     def n_values_(self):
         check_is_fitted(self, 'categories_')
-        warnings.warn("Deprecated", DeprecationWarning)
+        warnings.warn("The 'n_values_' attribute is deprecated.",
+                      DeprecationWarning)
         return self._n_values_
 
     def _handle_deprecations(self, X):
 
+        user_set_categories = False
+
         if self._categories is not None:
             self._legacy_mode = False
+            user_set_categories = True
 
         elif self._deprecated_n_values != 'auto':
-            warnings.warn("Deprecated", DeprecationWarning)
+            msg = (
+                "Passing 'n_values' is deprecated and will be removed in a "
+                "future release. You can use the 'categories' keyword instead."
+                " 'n_values=n' corresponds to 'n_values=[range(n)]'.")
+            warnings.warn(msg, DeprecationWarning)
 
             # we internally translate this to the correct categories
             # and don't use legacy mode
@@ -446,7 +459,17 @@ class OneHotEncoder(_BaseEncoder):
                     warnings.warn(WARNING_MSG, DeprecationWarning)
                     self._legacy_mode = True
 
-        if self._deprecated_categorical_features != 'all':
+        if (not isinstance(self._deprecated_categorical_features,
+                           six.string_types)
+                or (isinstance(self._deprecated_categorical_features,
+                               six.string_types)
+                    and self._deprecated_categorical_features != 'all')):
+            if user_set_categories:
+                raise ValueError(
+                    "The 'categorical_features' keyword is deprecated, and "
+                    "cannot be used together with specifying 'categories'.")
+            warnings.warn("The 'categorical_features' keyword is deprecated.",
+                          DeprecationWarning)
             self._legacy_mode = True
 
     def fit(self, X, y=None):
@@ -470,13 +493,13 @@ class OneHotEncoder(_BaseEncoder):
 
         if self._legacy_mode:
             # TODO not with _transform_selected ??
-            self._fit_transform_old(X)
+            self._legacy_fit_transform(X)
             return self
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
             return self
 
-    def _fit_transform_old(self, X):
+    def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
         self_n_values = self._deprecated_n_values
         dtype = getattr(X, 'dtype', None)
@@ -552,13 +575,13 @@ class OneHotEncoder(_BaseEncoder):
         self._handle_deprecations(X)
 
         if self._legacy_mode:
-            return _transform_selected(X, self._fit_transform_old,
+            return _transform_selected(X, self._legacy_fit_transform,
                                        self._deprecated_categorical_features,
                                        copy=True)
         else:
             return self.fit(X).transform(X)
 
-    def _transform_old(self, X):
+    def _legacy_transform(self, X):
         """Assumes X contains only categorical features."""
         self_n_values = self._deprecated_n_values
         X = check_array(X, dtype=np.int)
@@ -645,7 +668,7 @@ class OneHotEncoder(_BaseEncoder):
         if not self._legacy_mode:
             return self._transform_new(X)
         else:
-            return _transform_selected(X, self._transform_old,
+            return _transform_selected(X, self._legacy_transform,
                                        self._deprecated_categorical_features,
                                        copy=True)
 
@@ -773,6 +796,8 @@ class OrdinalEncoder(_BaseEncoder):
     --------
     sklearn.preprocessing.OneHotEncoder : performs a one-hot encoding of
       categorical features.
+    sklearn.preprocessing.LabelEncoder : encodes target labels with values
+      between 0 and n_classes-1.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
