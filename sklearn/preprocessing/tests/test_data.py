@@ -1218,7 +1218,7 @@ def test_robust_scaler_invalid_range():
     ]:
         scaler = RobustScaler(quantile_range=range_)
 
-        assert_raises_regex(ValueError, 'Invalid quantile range: \(',
+        assert_raises_regex(ValueError, r'Invalid quantile range: \(',
                             scaler.fit, iris.data)
 
 

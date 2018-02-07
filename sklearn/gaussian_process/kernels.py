@@ -1505,7 +1505,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    """Exp-Sine-Squared kernel.
+    r"""Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
     parameterized by a length-scale parameter length_scale>0 and a periodicity
@@ -1618,7 +1618,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class DotProduct(Kernel):
-    """Dot-Product kernel.
+    r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
     regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
