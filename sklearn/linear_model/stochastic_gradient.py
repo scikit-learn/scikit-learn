@@ -93,6 +93,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("shuffle must be either True or False")
         if not isinstance(self.early_stopping, bool):
             raise ValueError("early_stopping must be either True or False")
+        if self.early_stopping and for_partial_fit:
+            raise ValueError("early_stopping should be False with partial_fit")
         if self.max_iter is not None and self.max_iter <= 0:
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):

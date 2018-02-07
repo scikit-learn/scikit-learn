@@ -414,6 +414,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_raises(ValueError, self.factory().fit,
                       X, Y, intercept_init=np.zeros((3,)))
 
+    def test_sgd_early_stopping_with_partial_fit(self):
+        # Test parameter validity check
+        assert_raises(ValueError,
+                      self.factory(early_stopping=True).partial_fit, X, Y)
+
     def test_set_intercept_binary(self):
         # Checks intercept_ shape for the warm starts in binary case
         self.factory().fit(X5, Y5, intercept_init=0)
