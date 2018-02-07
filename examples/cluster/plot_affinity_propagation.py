@@ -27,7 +27,7 @@ cluster_centers_indices = af.cluster_centers_indices_
 labels = af.labels_
 
 n_clusters_ = len(cluster_centers_indices)
-translated_labels = metrics.cluster.class_cluster_match(labels_true,labels)
+translated_labels = metrics.cluster.class_cluster_match(labels_true, labels)
 
 print('Estimated number of clusters: %d' % n_clusters_)
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
