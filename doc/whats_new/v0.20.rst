@@ -81,11 +81,14 @@ Model evaluation
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-Clustering
+Decomposition, manifold learning and clustering
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` by `Tom Dupre la Tour`_.
 
 
 Enhancements
