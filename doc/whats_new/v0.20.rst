@@ -29,7 +29,7 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
-  
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -81,11 +81,27 @@ Model evaluation
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-Clustering
+Decomposition, manifold learning and clustering
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
+- :class:`manifold.Isomap`, :class:`manifold.TSNE`,
+  :class:`manifold.SpectralEmbedding`, :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`, -
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_.
+
+Nearest neighbors
+
+- Added :class:`neighbors.KNeighborsTransformer` and
+  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
+  into a sparse neighbors graph. They give finer control on nearest neighbors
+  computations and enable easy caching for multiple use.
+  :issue:`10482` by `Tom Dupre la Tour`_.
 
 
 Enhancements
@@ -335,11 +351,14 @@ Metrics
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-Cluster
+Decomposition, manifold learning and clustering
 
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+- Deprecate ``training_data_`` unused attribute in :class:`manifold.Isomap`
+ :issue:`10482` by `Tom Dupre la Tour`_.
 
 Outlier Detection models
 

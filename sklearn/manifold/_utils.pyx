@@ -12,7 +12,7 @@ cdef float PERPLEXITY_TOLERANCE = 1e-5
 
 @cython.boundscheck(False)
 cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
-        np.ndarray[np.float32_t, ndim=2] distances,
+        np.ndarray[np.float32_t, ndim=2] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -22,7 +22,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
 
     Parameters
     ----------
-    distances : array-like, shape (n_samples, n_neighbors)
+    sqdistances : array-like, shape (n_samples, n_neighbors)
         Distances between training samples and their k nearest neighbors.
         When using the exact method, this is a square (n_samples, n_samples)
         distance matrix. The TSNE default metric is "euclidean" which is
@@ -42,8 +42,8 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     # Maximum number of binary search steps
     cdef long n_steps = 100
 
-    cdef long n_samples = distances.shape[0]
-    cdef long n_neighbors = distances.shape[1]
+    cdef long n_samples = sqdistances.shape[0]
+    cdef long n_neighbors = sqdistances.shape[1]
     cdef int using_neighbors = n_neighbors < n_samples
     # Precisions of conditional Gaussian distributions
     cdef float beta
@@ -78,7 +78,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
             sum_Pi = 0.0
             for j in range(n_neighbors):
                 if j != i or using_neighbors:
-                    P[i, j] = math.exp(-distances[i, j] * beta)
+                    P[i, j] = math.exp(-sqdistances[i, j] * beta)
                     sum_Pi += P[i, j]
 
             if sum_Pi == 0.0:
@@ -87,7 +87,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
 
             for j in range(n_neighbors):
                 P[i, j] /= sum_Pi
-                sum_disti_Pi += distances[i, j] * P[i, j]
+                sum_disti_Pi += sqdistances[i, j] * P[i, j]
 
             entropy = math.log(sum_Pi) + beta * sum_disti_Pi
             entropy_diff = entropy - desired_entropy
