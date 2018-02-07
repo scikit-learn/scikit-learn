@@ -51,18 +51,18 @@ vectors (larger ``C`` values) hence the diagonal of good performing models.
 
 Finally one can also observe that for some intermediate values of ``gamma`` we
 get equally performing models when ``C`` becomes very large: it is not
-necessary to regularize by limiting the number of support vectors. The radius of
-the RBF kernel alone acts as a good structural regularizer. In practice though
-it might still be interesting to limit the number of support vectors with a
-lower value of ``C`` so as to favor models that use less memory and that are
-faster to predict.
+necessary to regularize by limiting the number of support vectors. The radius
+of the RBF kernel alone acts as a good structural regularizer. In practice
+though it might still be interesting to limit the number of support vectors
+with a lower value of ``C`` so as to favor models that use less memory and
+that are faster to predict.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be
 smoothed out by increasing the number of CV iterations ``n_splits`` at the
 expense of compute time. Increasing the value number of ``C_range`` and
-``gamma_range`` steps will increase the resolution of the hyper-parameter heat
-map.
+``gamma_range`` steps will increase the resolution of the hyper-parameter
+heat map.
 
 '''
 print(__doc__)
@@ -95,6 +95,7 @@ class MidpointNormalize(Normalize):
 # Load and prepare data set
 #
 # dataset for grid search
+
 
 iris = load_iris()
 X = iris.data

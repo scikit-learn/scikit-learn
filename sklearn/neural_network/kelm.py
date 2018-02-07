@@ -56,7 +56,8 @@ class KernelELM(BaseEstimator, ClassifierMixin):
         X, y = check_X_y(X, y)
         self.classes_ = unique_labels(y)
 
-        # y must be encoded by zero arrays with 1 in a position assigned to a label
+        # y must be encoded by zero arrays with 1 in a position assigned
+        # to a label
         n = X.shape[0]
         if self.classes_.shape[0] == 1:
             self.n_classes_ = int(self.classes_[0] + 1)
@@ -65,7 +66,8 @@ class KernelELM(BaseEstimator, ClassifierMixin):
             self.n_classes_ = len(self.classes_)
 
         T = np.zeros((n, self.n_classes_), dtype=np.float64)
-        self.class_corr_ = {}  # It is essential in order to adapt it to string labels
+        # It is essential in order to adapt it to string labels
+        self.class_corr_ = {}
         for i in range(n):
             row = [y[i] == self.classes_]
             T[i] = np.array(row, dtype=np.float64)
@@ -95,7 +97,8 @@ class KernelELM(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        """ Predicting method, which lies in applying kernel trick to Extreme Learning Machine.
+        """ Predicting method, which lies in applying kernel
+        trick to Extreme Learning Machine.
 
         Parameters
         ----------
