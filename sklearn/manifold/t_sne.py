@@ -146,7 +146,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
         data where you'd like to keep the old data fixed.
 
     compute_error: bool (optional, default:True)
-        If False, the kl_divergence is not computed and returns 0.
+        If False, the kl_divergence is not computed and returns NaN.
 
     Returns
     -------
@@ -174,7 +174,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
         kl_divergence = 2.0 * np.dot(
             P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
     else:
-        kl_divergence = 0.
+        kl_divergence = np.nan
 
     # Gradient: dC/dY
     # pdist always returns double precision distances. Thus we need to take
@@ -234,7 +234,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         Verbosity level.
 
     compute_error: bool (optional, default:True)
-        If False, the kl_divergence is not computed and returns 0.
+        If False, the kl_divergence is not computed and returns NaN.
 
     Returns
     -------
@@ -811,8 +811,7 @@ class TSNE(BaseEstimator):
             "min_grad_norm": self.min_grad_norm,
             "learning_rate": self.learning_rate,
             "verbose": self.verbose,
-            "kwargs": dict(skip_num_points=skip_num_points,
-                           compute_error=True),
+            "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
             "n_iter_without_progress": self._EXPLORATION_N_ITER,
             "n_iter": self._EXPLORATION_N_ITER,

@@ -272,4 +272,6 @@ def gradient(float[:] val_P,
         printf("[t-SNE] Checking tree consistency\n%s", EMPTY_STRING)
     m = "Tree consistency failed: unexpected number of points on the tree"
     assert qt.cells[0].cumulative_size == qt.n_points, m
+    if not compute_error:
+        C = np.nan
     return C
