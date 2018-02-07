@@ -18,10 +18,6 @@ env:
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
 
-branches:
-  only:
-    - KELM
-
 matrix:
   include:
     # This environment tests that scikit-learn can be built against
