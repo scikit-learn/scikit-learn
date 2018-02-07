@@ -227,6 +227,7 @@ def _yield_all_checks(name, estimator):
         for check in _yield_clustering_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
+    yield check_methods_subset_invariance
     if name != 'GaussianProcess':  # FIXME
         # XXX GaussianProcess deprecated in 0.20
         yield check_fit2d_1sample
@@ -644,6 +645,58 @@ def check_fit2d_predict1d(name, estimator_orig):
                                  getattr(estimator, method), X[0])
 
 
+def _apply_func(func, X):
+    # apply function on the whole set and on mini batches
+    result_full = func(X)
+    n_features = X.shape[1]
+    result_by_batch = [func(batch.reshape(1, n_features))
+                       for batch in X]
+    # func can output tuple (e.g. score_samples)
+    if type(result_full) == tuple:
+        result_full = result_full[0]
+        result_by_batch = list(map(lambda x: x[0], result_by_batch))
+
+    return np.ravel(result_full), np.ravel(result_by_batch)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_methods_subset_invariance(name, estimator_orig):
+    # check that method gives invariant results if applied
+    # on mini bathes or the whole set
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    X = pairwise_estimator_convert_X(X, estimator_orig)
+    y = X[:, 0].astype(np.int)
+    estimator = clone(estimator_orig)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    estimator.fit(X, y)
+
+    for method in ["predict", "transform", "decision_function",
+                   "score_samples", "predict_proba"]:
+
+        msg = ("{method} of {name} is not invariant when applied "
+               "to a subset.").format(method=method, name=name)
+        # TODO remove cases when corrected
+        if (name, method) in [('SVC', 'decision_function'),
+                              ('SparsePCA', 'transform'),
+                              ('MiniBatchSparsePCA', 'transform'),
+                              ('BernoulliRBM', 'score_samples')]:
+            raise SkipTest(msg)
+
+        if hasattr(estimator, method):
+            result_full, result_by_batch = _apply_func(
+                getattr(estimator, method), X)
+            assert_allclose(result_full, result_by_batch,
+                            atol=1e-7, err_msg=msg)
+
+
 @ignore_warnings
 def check_fit2d_1sample(name, estimator_orig):
     # Check that fitting a 2d array with only one sample either works or
@@ -948,7 +1001,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = multioutput_estimator_convert_y_2d(e, np.array([1, 0, 1]))
-    msg = ("0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
+    msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
            "is required.")
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
