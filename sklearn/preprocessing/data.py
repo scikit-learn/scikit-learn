@@ -34,6 +34,7 @@ from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 from .label import LabelEncoder
 
+
 BOUNDS_THRESHOLD = 1e-7
 
 
