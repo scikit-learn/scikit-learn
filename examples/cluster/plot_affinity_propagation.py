@@ -27,6 +27,7 @@ cluster_centers_indices = af.cluster_centers_indices_
 labels = af.labels_
 
 n_clusters_ = len(cluster_centers_indices)
+translated_labels = metrics.cluster.class_cluster_match(labels_true,labels)
 
 print('Estimated number of clusters: %d' % n_clusters_)
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
@@ -38,6 +39,10 @@ print("Adjusted Mutual Information: %0.3f"
       % metrics.adjusted_mutual_info_score(labels_true, labels))
 print("Silhouette Coefficient: %0.3f"
       % metrics.silhouette_score(X, labels, metric='sqeuclidean'))
+print("Accuracy: %0.3f"
+      % metrics.accuracy_score(labels_true, translated_labels))
+print("Confusion Matrix:\n%s"
+      % str(metrics.confusion_matrix(labels_true, translated_labels)))
 
 # #############################################################################
 # Plot result
