@@ -912,9 +912,9 @@ def max_main_diagonal(A):
     return res.x.reshape(n, n).T
 
 
-def class_cluster_match(y_true, y_pred, translate=True):
-    """Sort prediction labels in order to maximize the confusion matrix main diagonal sum
-    Sort the prediction labels of a clustering output in order to enable calc
+def class_cluster_match(y_true, y_pred):
+    """Sort prediction labels to maximize the confusion matrix main diagonal sum
+    Sort the prediction labels of a clustering output to enable calc
     of external metrics (eg. accuracy, f1_score, ...). Sorting is done by
     maximization of the confusion matrix :math:`C` main diagonal sum
     :math:`\sum{i=0}^{K}C_{i, i}`. Notice the number of cluster has to be equal
@@ -925,8 +925,6 @@ def class_cluster_match(y_true, y_pred, translate=True):
         Ground truth (correct) target values.
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a clustering algorithm.
-    translate : boolean, optional, default True
-        If True, y_pred_sort will be translated from y_pred notation symbols to y_true notation symbols.
     Returns
     -------
     y_pred_sort : array, shape = [n_classes, n_classes]
@@ -956,19 +954,20 @@ def class_cluster_match(y_true, y_pred, translate=True):
 
     if n_clusters > n_classes:
         raise ValueError("Number of different clusters ("+str(n_clusters) +
-                         ") should be smaller or equal to the number of different classes ("+str(n_classes)+")")
+                         ") should be smaller or equal to" +
+                         " the number of different" +
+                         " classes ("+str(n_classes)+")")
 
     cm = np.zeros((n_classes, n_classes))
 
     for y_t, y_p in zip(num_classes, num_clusters):
         cm[y_t, y_p] += 1
 
-    shuffle = best_perm(cm)
+    shuffle = max_main_diagonal(cm)
 
     matching_clusters = [row.tolist().index(1) for row in shuffle]
 
     y_pred_sort = [matching_clusters[y] for y in num_clusters]
-    if translate:
-        y_pred_sort = [classes[y] for y in y_pred_sort]
+    y_pred_sort = [classes[y] for y in y_pred_sort]
 
     return y_pred_sort
