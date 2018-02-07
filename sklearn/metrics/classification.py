@@ -447,6 +447,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     --------
     accuracy_score, hamming_loss, zero_one_loss
 
+    Notes
+    -----
+    :func:`jaccard_similarity_score` may be a poor metric if there are no
+    positives for some samples or classes.
+
     References
     ----------
     .. [1] `Wikipedia entry for the Jaccard index
@@ -472,13 +477,21 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average=None)
     array([ 0.,  0.,  1.])
 
+    It may be a poor indicator if there are no positives for some samples
+    or classes:
+
+    >>> jaccard_similarity_score(np.array([0]), np.array([0]),
+    ... average='binary')
+    0.0
+
     In the multiclass case:
 
     >>> jaccard_similarity_score(np.array([0, 2, 1, 3]),
     ... np.array([0, 1, 2, 3]), average='macro')
     0.5
+
     """
-    _validate_prfsj_average(average)
+    _validate_set_wise_average(average)
     y_type, y_true, y_pred, present_labels = _validate_input(y_true, y_pred,
                                                              sample_weight)
     if average == 'binary':
@@ -1055,7 +1068,7 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     return result
 
 
-def _validate_prfsj_average(average):
+def _validate_set_wise_average(average):
     """Validate ``average`` as a valid average option for
     functions :func:`metrics.precision_recall_fscore_support` and
     :func:`metrics.jaccard_similarity_score`.
@@ -1232,7 +1245,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
      array([2, 2, 2]))
 
     """
-    _validate_prfsj_average(average)
+    _validate_set_wise_average(average)
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
     y_type, y_true, y_pred, present_labels = _validate_input(y_true, y_pred,
