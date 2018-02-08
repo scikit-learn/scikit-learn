@@ -895,7 +895,7 @@ def max_assignment_score(A):
     --------
     >>> from sklearn.metrics.cluster import max_assignment_score
     >>> import numpy as np
-    >>> A = np.matrix([[2, 1, 0],
+    >>> A = np.asarray([[2, 1, 0],
     ...                [1, 0, 0],
     ...                [0, 2, 0]])
     >>> max_assignment_score(A)
