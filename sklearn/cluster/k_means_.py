@@ -178,7 +178,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     X : array-like or sparse matrix, shape (n_samples, n_features)
         The observations to cluster. It must be noted that the data
         will be converted to C ordering, which will cause a memory copy
-        if the given data is in fortran order.
+        if the given data is in not C-contiguous.
 
     n_clusters : int
         The number of clusters to form as well as the number of
@@ -233,10 +233,12 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True, then the original data is not
-        modified.  If False, the original data is modified, and put back before
-        the function returns, but small numerical differences may be introduced
-        by subtracting and then adding the data mean.
+        the data first.  If copy_x is True (defualt), then the original data is
+        not modified, ensuring X is C-contiguous.  If False, the original data
+        is modified, and put back before the function returns, but small
+        numerical differences may be introduced by subtracting and then adding
+        the data mean, in this case it will also not ensure that data is
+        C-contiguous which may cause significant slowdown.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
@@ -777,12 +779,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    copy_x : boolean, default True
+    copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True, then the original data is not
-        modified.  If False, the original data is modified, and put back before
-        the function returns, but small numerical differences may be introduced
-        by subtracting and then adding the data mean.
+        the data first.  If copy_x is True (defualt), then the original data is
+        not modified, ensuring X is C-contiguous.  If False, the original data
+        is modified, and put back before the function returns, but small
+        numerical differences may be introduced by subtracting and then adding
+        the data mean, in this case it will also not ensure that data is
+        C-contiguous which may cause significant slowdown.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
@@ -888,7 +892,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory
-            copy if the given data is in fortran order.
+            copy if the given data is not C-contiguous.
 
         y : Ignored
 
@@ -1354,7 +1358,7 @@ class MiniBatchKMeans(KMeans):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
-            if the given data is in fortran order.
+            if the given data is in not C-contiguous.
 
         y : Ignored
 
@@ -1519,7 +1523,8 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Coordinates of the data points to cluster.
+            Coordinates of the data points to cluster. It must be noted that
+            'X' will be copied if it is not C-contiguous.
 
         y : Ignored
 
