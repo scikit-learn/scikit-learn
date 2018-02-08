@@ -941,9 +941,9 @@ def class_cluster_match(y_true, y_pred):
     >>> y_pred_translated
     ['class1', 'class1', 'class3', 'class3', 'class1', 'class3']
     >>> confusion_matrix(y_true, y_pred_translated)
-    array([[ 2.,  0.,  1.],
-           [ 1.,  0.,  0.],
-           [ 0.,  0.,  2.]])
+    array([[2, 0, 1],
+           [1, 0, 0],
+           [0, 0, 2]])
     """
     classes = list(unique_labels(y_true))
     n_classes = len(classes)
