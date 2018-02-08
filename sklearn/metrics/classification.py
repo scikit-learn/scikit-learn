@@ -1394,8 +1394,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
 
     Returns
     -------
-    balanced_accuracy : float.
-        The average of sensitivity and specificity
+    balanced_accuracy : float
 
     See also
     --------
