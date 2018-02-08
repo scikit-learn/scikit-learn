@@ -28,6 +28,7 @@ import numpy as np
 import scipy as sp
 from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
+from skimage import img_as_float
 from skimage.transform import rescale
 
 from sklearn.feature_extraction import image
@@ -37,15 +38,15 @@ from sklearn.cluster import spectral_clustering
 # load the raccoon face as a numpy array
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face
-    orig_face = face(gray=True)
+    orig_face = img_as_float(face(gray=True))
 except ImportError:
-    orig_face = sp.face(gray=True)
+    orig_face = img_as_float(sp.face(gray=True))
 
 # Resize it to 10% of the original size to speed up the processing
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
-smoothened_face = gaussian_filter(orig_face/255., sigma=(1/0.10-1)/2.)
-rescaled_face = rescale(smoothened_face, 0.10, mode="reflect")
+smoothened_face = gaussian_filter(orig_face, sigma=4.5)
+rescaled_face = rescale(smoothened_face, 0.1, mode="reflect")
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
