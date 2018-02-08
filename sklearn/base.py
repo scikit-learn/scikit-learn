@@ -524,6 +524,29 @@ class DensityMixin(object):
         pass
 
 
+class OutlierMixin(object):
+    """Mixin class for all cluster estimators in scikit-learn."""
+    _estimator_type = "detector"
+
+    def fit_predict(self, X, y=None):
+        """Performs outlier detection on X.
+
+        Returns -1 for outliers and 1 for inliers.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            1 for inliers, -1 for outliers.
+        """
+        # override for transductive outlier detectors like LocalOulierFactor
+        return self.fit(X).predict(X)
+
+
 ###############################################################################
 class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""
