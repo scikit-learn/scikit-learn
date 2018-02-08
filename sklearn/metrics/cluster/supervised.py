@@ -875,7 +875,7 @@ def entropy(labels):
     return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
 
 
-def max_main_diagonal(A):
+def max_assignment_score(A):
     """Sort matrix A columns to achieve greater main diagonal sum
     Sorting is done by maximization of the confusion matrix :math:`C`
     main diagonal sum :math:`\sum{i=0}^{K}C_{i, i}`. Notice the
@@ -893,12 +893,12 @@ def max_main_diagonal(A):
     ----------
     Examples
     --------
-    >>> from sklearn.metrics.cluster import max_main_diagonal
+    >>> from sklearn.metrics.cluster import max_assignment_score
     >>> import numpy as np
     >>> A = np.matrix([[2, 1, 0],
-    >>>                [1, 0, 0],
-    >>>                [0, 2, 0]])
-    >>> max_main_diagonal(A)
+    ...                [1, 0, 0],
+    ...                [0, 2, 0]])
+    >>> max_assignment_score(A)
     array([[1., 0., 0.],
            [0., 0., 1.],
            [0., 1., 0.]])
@@ -963,7 +963,7 @@ def class_cluster_match(y_true, y_pred):
     for y_t, y_p in zip(num_classes, num_clusters):
         cm[y_t, y_p] += 1
 
-    shuffle = max_main_diagonal(cm)
+    shuffle = max_assignment_score(cm)
 
     matching_clusters = [row.tolist().index(1) for row in shuffle]
 
