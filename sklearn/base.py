@@ -525,8 +525,8 @@ class DensityMixin(object):
 
 
 class OutlierMixin(object):
-    """Mixin class for all cluster estimators in scikit-learn."""
-    _estimator_type = "detector"
+    """Mixin class for all outlier detection estimators in scikit-learn."""
+    _estimator_type = "OutlierDetector"
 
     def fit_predict(self, X, y=None):
         """Performs outlier detection on X.
