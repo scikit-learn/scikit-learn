@@ -952,13 +952,14 @@ def class_cluster_match(y_true, y_pred):
     n_clusters = len(clusters)
     num_clusters = [clusters.index(y) for y in y_pred]
 
-    if n_clusters > n_classes:
-        raise ValueError("Number of different clusters ("+str(n_clusters) +
-                         ") should be smaller or equal to" +
-                         " the number of different" +
-                         " classes ("+str(n_classes)+")")
-
-    cm = np.zeros((n_classes, n_classes))
+    # if n_clusters > n_classes:
+        # raise ValueError("Number of different clusters ("+str(n_clusters) +
+        #                  ") should be smaller or equal to" +
+        #                  " the number of different" +
+        #                  " classes ("+str(n_classes)+")")
+    dims = max(n_classes, n_clusters)
+    classes += ['non_class'+str(i) for i in range(dims-n_classes)]
+    cm = np.zeros((dims, dims))
 
     for y_t, y_p in zip(num_classes, num_clusters):
         cm[y_t, y_p] += 1
