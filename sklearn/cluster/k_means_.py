@@ -238,7 +238,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         is modified, and put back before the function returns, but small
         numerical differences may be introduced by subtracting and then adding
         the data mean, in this case it will also not ensure that data is
-        C-contiguous which may cause significant slowdown.
+        C-contiguous which may cause a significant slowdown.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
@@ -786,7 +786,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         is modified, and put back before the function returns, but small
         numerical differences may be introduced by subtracting and then adding
         the data mean, in this case it will also not ensure that data is
-        C-contiguous which may cause significant slowdown.
+        C-contiguous which may cause a significant slowdown.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
