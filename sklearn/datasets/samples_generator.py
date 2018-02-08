@@ -11,6 +11,7 @@ import array
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
+from collections import Iterable
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
@@ -807,7 +808,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     X = []
     y = []
 
-    if isinstance(n_samples, list) or isinstance(n_samples, np.ndarray):
+    if isinstance(n_samples, Iterable):
         n_samples_per_center = n_samples
     else:
         n_samples_per_center = [int(n_samples // n_centers)] * n_centers
@@ -824,10 +825,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     y = np.array(y)
 
     if shuffle:
-        if isinstance(n_samples, list):
-            total_n_samples = sum(n_samples)
-        else:
-            total_n_samples = n_samples
+        total_n_samples = np.sum(n_samples)
         indices = np.arange(total_n_samples)
         generator.shuffle(indices)
         X = X[indices]

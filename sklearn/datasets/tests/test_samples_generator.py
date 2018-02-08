@@ -239,8 +239,8 @@ def test_make_blobs():
     X, y = make_blobs(random_state=0, n_samples=50, n_features=2,
                       centers=cluster_centers, cluster_std=cluster_stds)
 
-    assert_equal(X.shape, (50, 2), "X shape mismatch")
-    assert_equal(y.shape, (50,), "y shape mismatch")
+    assert X.shape == (50, 2), "X shape mismatch"
+    assert y.shape == (50,), "y shape mismatch"
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
     for i, (ctr, std) in enumerate(zip(cluster_centers, cluster_stds)):
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
@@ -250,9 +250,9 @@ def test_make_blobs_n_samples_list():
     n_samples = [50, 30, 20]
     X, y = make_blobs(n_samples=n_samples, n_features=2, random_state=0)
 
-    assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
-    assert_equal(y.shape, (sum(n_samples),), "y shape mismatch")
-    assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
+    assert X.shape == (sum(n_samples), 2), "X shape mismatch"
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
+        "Incorrect number of samples per blob"
 
 
 def test_make_blobs_n_samples_list_with_centers():
@@ -262,11 +262,21 @@ def test_make_blobs_n_samples_list_with_centers():
     X, y = make_blobs(n_samples=n_samples, centers=centers,
                       cluster_std=cluster_stds, random_state=0)
 
-    assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
-    assert_equal(y.shape, (sum(n_samples),), "y shape mismatch")
-    assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
+    assert X.shape == (sum(n_samples), 2), "X shape mismatch"
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
+        "Incorrect number of samples per blob"
     for i, (ctr, std) in enumerate(zip(centers, cluster_stds)):
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
+
+
+def test_make_blobs_n_samples_list_centers_none():
+    n_samples = [5, 3, 0]
+    centers = None
+    X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
+
+    assert X.shape == (sum(n_samples), 2), "X shape mismatch"
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
+        "Incorrect number of samples per blob"
 
 
 def test_make_blobs_error():
@@ -288,16 +298,6 @@ def test_make_blobs_error():
                       "Got {!r} instead".format(3))
     assert_raise_message(ValueError, wrong_type_msg,
                          make_blobs, n_samples, centers=3)
-
-
-def test_make_blobs_n_samples_list_centers_none():
-    n_samples = [5, 3, 0]
-    centers = None
-    X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
-
-    assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
-    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
-        "Incorrect number of samples per blob"
 
 
 def test_make_friedman1():
