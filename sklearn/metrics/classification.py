@@ -1421,30 +1421,15 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     0.625
 
     """
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-
-    if y_type.startswith('multilabel'):
-        raise ValueError('Balanced accuracy is only meaningful '
-                         'for binary and multiclass problems.')
-
-    unique_classes, encoded_y_true = np.unique(y_true, return_inverse=True)
-
-    missing_from_true = np.setdiff1d(y_pred, unique_classes)
-    if len(missing_from_true):
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        per_class = np.diag(C) / C.sum(axis=1)
+    if np.any(np.isnan(per_class)):
         warnings.warn('y_pred contains classes not in y_true')
-
-    # This emulates compute_sample_weight('balanced', y_true),
-    # but accounts for sample weight when balancing classes.
-    n_classes = len(unique_classes)
-    class_weight = 1 / np.bincount(encoded_y_true, weights=sample_weight,
-                                   minlength=n_classes)
-    if sample_weight is None:
-        sample_weight = 1
-    sample_weight = class_weight.take(encoded_y_true) * sample_weight
-
-    score = accuracy_score(y_true, y_pred, sample_weight=sample_weight)
+        per_class = per_class[~np.isnan(per_class)]
+    score = np.mean(per_class)
     if adjusted:
+        n_classes = len(per_class)
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance
