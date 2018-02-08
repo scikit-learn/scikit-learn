@@ -6,7 +6,6 @@ import pickle
 from functools import partial
 from itertools import product
 import struct
-import pytest
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -1734,16 +1733,15 @@ def test_criterion_copy():
             assert_equal(n_samples, n_samples_)
 
 
-@pytest.mark.parametrize('data',
-                         np.random.RandomState(0).randn(50, 100, 11) * 2e38)
 def test_empty_leaf_infinite_threshold(data):
     # try to make empty leaf by using near infinite value.
+    data = np.random.RandomState(0).randn(100, 11) * 2e38
     data = np.nan_to_num(data.astype('float32'))
     X_full = data[:, :-1]
     X_sparse = csc_matrix(X_full)
     y = data[:, -1]
     for X in [X_full, X_sparse]:
-        tree = DecisionTreeRegressor().fit(X, y)
+        tree = DecisionTreeRegressor(random_state=0).fit(X, y)
         terminal_regions = tree.apply(X)
         left_leaf = set(np.where(tree.tree_.children_left == TREE_LEAF)[0])
         empty_leaf = left_leaf.difference(terminal_regions)
