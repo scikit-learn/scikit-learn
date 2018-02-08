@@ -2996,7 +2996,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                                      "supported")
 
         X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
@@ -3039,7 +3039,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         """
         X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp

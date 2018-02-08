@@ -308,10 +308,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
+    base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes.
+        Support for sample weighting is required, as well as proper
+        ``classes_`` and ``n_classes_`` attributes. If ``None``, then
+        the base estimator is ``DecisionTreeClassifier(max_depth=1)``
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -358,7 +359,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     See also
     --------
-    AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
+    AdaBoostRegressor, GradientBoostingClassifier,
+    sklearn.tree.DecisionTreeClassifier
 
     References
     ----------
@@ -863,9 +865,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeRegressor)
+    base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required.
+        Support for sample weighting is required. If ``None``, then
+        the base estimator is ``DecisionTreeRegressor(max_depth=3)``
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -902,7 +905,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     See also
     --------
-    AdaBoostClassifier, GradientBoostingRegressor, DecisionTreeRegressor
+    AdaBoostClassifier, GradientBoostingRegressor,
+    sklearn.tree.DecisionTreeRegressor
 
     References
     ----------
