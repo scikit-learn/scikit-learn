@@ -55,7 +55,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : numpy.RandomState
+    random_state : RandomState
         The generator used to initialize the centers.
 
     n_local_trials : integer, optional
@@ -914,7 +914,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
-        u : Ignored
+        y : Ignored
 
         Returns
         -------
@@ -1495,7 +1495,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : array, shap (n_samples,)
+        labels : array, shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float

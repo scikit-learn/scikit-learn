@@ -37,20 +37,29 @@ if [[ "$DISTRIB" == "conda" ]]; then
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
 
-    # Configure the conda environment and put it in the path using the
-    # provided versions
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
+                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+                cython=$CYTHON_VERSION"
+
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip \
-            pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-            mkl cython=$CYTHON_VERSION \
-            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
-            
+        TO_INSTALL="$TO_INSTALL mkl"
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip \
-            pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-            nomkl cython=$CYTHON_VERSION \
-            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
+        TO_INSTALL="$TO_INSTALL nomkl"
     fi
+
+    if [[ -n "$PANDAS_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
+    fi
+
+    if [[ -n "$PYAMG_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
+    fi
+
+    if [[ -n "$PILLOW_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
+    fi
+
+    conda create -n testenv --yes $TO_INSTALL
     source activate testenv
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then

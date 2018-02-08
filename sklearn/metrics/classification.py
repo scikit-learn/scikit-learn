@@ -344,7 +344,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
            doi:10.1177/001316446002000104.
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596.
-           <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
+           <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
@@ -463,10 +463,10 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
-    measure of the quality of binary (two-class) classifications. It takes into
-    account true and false positives and negatives and is generally regarded as
-    a balanced measure which can be used even if the classes are of very
-    different sizes. The MCC is in essence a correlation coefficient value
+    measure of the quality of binary and multiclass classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are of
+    very different sizes. The MCC is in essence a correlation coefficient value
     between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
     an average random prediction and -1 an inverse prediction.  The statistic
     is also known as the phi coefficient. [source: Wikipedia]
@@ -1072,6 +1072,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
+        if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
