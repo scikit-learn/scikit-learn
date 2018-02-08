@@ -896,8 +896,8 @@ def max_main_diagonal(A):
     >>> from sklearn.metrics.cluster import max_main_diagonal
     >>> import numpy as np
     >>> A = np.matrix([[2, 1, 0],
-                       [1, 0, 0],
-                       [0, 2, 0]])
+    >>>                [1, 0, 0],
+    >>>                [0, 2, 0]])
     >>> max_main_diagonal(A)
     array([[1., 0., 0.],
            [0., 0., 1.],
