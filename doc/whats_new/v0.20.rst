@@ -221,6 +221,10 @@ Classifiers and regressors
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
+- Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
+  valued pseudocounts (alpha).
+  :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
+
 - Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
   unicode in Python2, the ``predict_proba`` method was raising an
   unexpected TypeError given dense inputs.
