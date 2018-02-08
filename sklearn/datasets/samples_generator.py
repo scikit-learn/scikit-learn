@@ -761,7 +761,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     generator = check_random_state(random_state)
 
     if isinstance(n_samples, numbers.Integral):
-        # n_centers is figured by the centers arg
+        # Set n_centers by looking at centers arg
         if centers is None:
             centers = 3
 
@@ -776,10 +776,9 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
             n_centers = centers.shape[0]
 
     else:
-        # n_centers is figured by the [n_samples] arg
+        # Set n_centers by looking at [n_samples] arg
         n_centers = len(n_samples)
         if centers is None:
-            # generate centers based on [n_samples]
             centers = generator.uniform(center_box[0], center_box[1],
                                         size=(n_centers, n_features))
         try:
