@@ -1364,8 +1364,8 @@ class MiniBatchKMeans(KMeans):
                         dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
-            raise ValueError("Number of samples smaller than number "
-                             "of clusters.")
+            raise ValueError("n_samples=%d should be >= n_clusters=%d"
+                             % (n_samples, self.n_clusters))
 
         n_init = self.n_init
         if hasattr(self.init, '__array__'):

@@ -169,7 +169,8 @@ def _check_fitted_model(km):
     assert_greater(km.inertia_, 0.0)
 
     # check error on dataset being too small
-    assert_raises(ValueError, km.fit, [[0., 1.]])
+    assert_raise_message(ValueError, "n_samples=1 should be >= n_clusters=%d"
+                         % km.n_clusters, km.fit, [[0., 1.]])
 
 
 def test_k_means_plus_plus_init():
