@@ -219,14 +219,13 @@ def _yield_outliers_checks(name, estimator):
     # score_samples methods.
     NO_TEST_SET = ['LocalOutlierFactor']
 
-    # checks for all outlier detection estimators
+    # checks for all outlier detectors
     yield check_outliers_fit_predict
 
-    # checks for estimators that can be used on a test set and that have public
-    # predict, decision_function and score_samples methods
+    # checks for estimators that can be used on a test set
     if name not in NO_TEST_SET:
         yield check_outliers_train
-        # test outlier detection estimators can handle non-array data
+        # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if scores_samples is a monotonic transformation of
         # decision_function
@@ -1403,9 +1402,6 @@ def check_outliers_train(name, estimator_orig):
     # with lists
     estimator.fit(X.tolist())
 
-    # all outlier detection estimators have a predict, a decision_function
-    # and a score_samples method, except LocalOutlierFactor where they are
-    # private
     y_pred = estimator.predict(X)
     assert_equal(y_pred.shape, (n_samples,))
     # training set performance
@@ -1417,7 +1413,7 @@ def check_outliers_train(name, estimator_orig):
     # decision_function agrees with predict
     decision = estimator.decision_function(X)
     assert_equal(decision.shape, (n_samples,))
-    dec_pred = (decision > 0).astype(np.int)
+    dec_pred = (decision >= 0).astype(np.int)
     assert_array_equal(dec_pred, y_pred == 1)
 
     # raises error on malformed input for decision_function
@@ -2090,7 +2086,7 @@ def check_decision_proba_consistency(name, estimator_orig):
 
 def check_decision_scores_consistency(name, estimator_orig):
     # Check that decision_function and score_samples methods of an outlier
-    # detection estimator have outputs with perfect rank correlation.
+    # detector have outputs with perfect rank correlation.
 
     centers = [(2, 2), (4, 4)]
     X, _ = make_blobs(n_samples=100, random_state=0, n_features=4,
@@ -2106,13 +2102,10 @@ def check_decision_scores_consistency(name, estimator_orig):
 
 
 def check_outliers_output_dtypes(name, estimator_orig):
-    """Check output types of outlier detection estimators.
+    """Check output types of outlier detectors.
 
-    Check that the predict method of outlier detection estimators returns
-    int. Check also that decision_function and score_samples methods return
-    float. Note that all outlier detection estimators have a predict, a
-    decision_function and a score_samples method, except LocalOutlierFactor
-    where they are private.
+    Check that the predict method of outlier detectors returns int. Check also
+    that decision_function and score_samples methods return float.
     """
 
     # Toy sample
@@ -2133,7 +2126,7 @@ def check_outliers_output_dtypes(name, estimator_orig):
 
 
 def check_outliers_fit_predict(name, estimator_orig):
-    # Check fit_predict for outlier detection estimators
+    # Check fit_predict for outlier detectors.
 
     X, _ = make_blobs(n_samples=300, random_state=0)
     X = shuffle(X, random_state=7)
@@ -2145,4 +2138,16 @@ def check_outliers_fit_predict(name, estimator_orig):
     y_pred = estimator.fit_predict(X)
     assert_equal(y_pred.shape, (n_samples,))
     assert_equal(y_pred.dtype, np.dtype('int'))
-    assert_equal(len(np.unique(y_pred)), 2)
+
+    if hasattr(estimator, "contamination"):
+        # proportion of outliers equal to contamination parameter when not
+        # set to 'auto'
+        contamination = 0.1
+        estimator.set_params(contamination=contamination)
+        y_pred = estimator.fit_predict(X)
+        assert_equal(np.mean(y_pred != 1), contamination)
+
+        # raises error when contamination is a scalar and not in [0,1]
+        for contamination in [-0.5, 2.3]:
+            estimator.set_params(contamination=contamination)
+            assert_raises(ValueError, estimator.fit_predict, X)
