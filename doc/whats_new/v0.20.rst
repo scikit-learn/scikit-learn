@@ -118,6 +118,13 @@ Metrics
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
   ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+Model selection
+
+- :func:`model_selection.learning_curve`,
+  :func:`model_selection.validation_curve` and
+  :func:`model_selection.permutation_test_score` now accept ``fit_params``
+  argument to pass parameters to the ``fit`` method of estimator.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the

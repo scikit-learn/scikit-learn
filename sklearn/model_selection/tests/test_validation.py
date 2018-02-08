@@ -24,7 +24,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -1177,10 +1176,10 @@ def test_learning_curve_fit_params():
     l_with_samples_weight = validation_curve(est, X, y, "gamma", gamma_range,
                                              fit_params={'sample_weight': w})
     l_without_sample_weight = validation_curve(est, X, y, "gamma", gamma_range)
-    assert_not_equal(l_with_samples_weight[0].mean(),
-                     l_without_sample_weight[0].mean())
-    assert_not_equal(l_with_samples_weight[1].mean(),
-                     l_without_sample_weight[1].mean())
+    assert not np.isclose(l_with_samples_weight[0].mean(),
+                          l_without_sample_weight[0].mean())
+    assert not np.isclose(l_with_samples_weight[1].mean(),
+                          l_without_sample_weight[1].mean())
 
 
 def test_validation_curve():
@@ -1253,8 +1252,8 @@ def test_validation_curve_fit_params():
     l_with_fit_params = learning_curve(est, X, y,
                                        fit_params={'sample_weight': w})
     l_without_fit_params = learning_curve(est, X, y)
-    assert_not_equal(l_with_fit_params[1].mean(),
-                     l_without_fit_params[1].mean())
+    assert not np.isclose(l_with_fit_params[1].mean(),
+                          l_without_fit_params[1].mean())
 
 
 def test_check_is_permutation():
