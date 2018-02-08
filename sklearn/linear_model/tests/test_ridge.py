@@ -2,7 +2,6 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from itertools import product
-import pytest
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
