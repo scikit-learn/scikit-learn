@@ -823,7 +823,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    """Compute Non-negative Matrix Factorization (NMF)
+    r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -958,8 +958,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2, \
-        init='random', random_state=0)
+    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    ... init='random', random_state=0)
 
     References
     ----------
@@ -1037,7 +1037,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
 
 class NMF(BaseEstimator, TransformerMixin):
-    """Non-Negative Matrix Factorization (NMF)
+    r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for

@@ -81,11 +81,14 @@ Model evaluation
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-Clustering
+Decomposition, manifold learning and clustering
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` by `Tom Dupre la Tour`_.
 
 
 Enhancements
@@ -125,6 +128,13 @@ Classifiers and regressors
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
+Cluster
+
+- :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  row-major ordering, improving runtime.
+  :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
 Preprocessing
 
@@ -215,6 +225,10 @@ Classifiers and regressors
   unicode in Python2, the ``predict_proba`` method was raising an
   unexpected TypeError given dense inputs.
   :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
+
+- Fixed a bug in :class:`tree.BaseDecisionTree` with `splitter="best"`
+  where split threshold could become infinite when values in X were
+  near infinite. :issue:`10536` by :user:`Jonathan Ohayon <Johayon>`.
 
 Decomposition, manifold learning and clustering
 
@@ -359,6 +373,11 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
+Preprocessing
+
+- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
+  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
+  :user:`Hanmin Qin <qinhanmin2014>`.
 
 Changes to estimator checks
 ---------------------------

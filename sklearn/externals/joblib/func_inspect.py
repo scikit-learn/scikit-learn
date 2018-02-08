@@ -50,7 +50,7 @@ def get_func_code(func):
             line_no = 1
             if source_file.startswith('<doctest '):
                 source_file, line_no = re.match(
-                    '\<doctest (.*\.rst)\[(.*)\]\>', source_file).groups()
+                    r'\<doctest (.*\.rst)\[(.*)\]\>', source_file).groups()
                 line_no = int(line_no)
                 source_file = '<doctest %s>' % source_file
             return source_code, source_file, line_no
