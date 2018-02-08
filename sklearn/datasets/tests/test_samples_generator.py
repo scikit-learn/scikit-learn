@@ -293,8 +293,8 @@ def test_make_blobs_n_samples_list_centers_none():
     X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
 
     assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
-    assert_equal(y.shape, (sum(n_samples),), "y shape mismatch")
-    assert_equal(np.unique(y).shape, (2,), "Unexpected number of blobs")
+    assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
+        "Incorrect number of samples per blob"
 
 
 def test_make_friedman1():
