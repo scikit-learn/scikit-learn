@@ -178,7 +178,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     X : array-like or sparse matrix, shape (n_samples, n_features)
         The observations to cluster. It must be noted that the data
         will be converted to C ordering, which will cause a memory copy
-        if the given data are not C-contiguous.
+        if the given data is not C-contiguous.
 
     n_clusters : int
         The number of clusters to form as well as the number of
@@ -892,7 +892,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory
-            copy if the given data are not C-contiguous.
+            copy if the given data is not C-contiguous.
 
         y : Ignored
 
@@ -1358,7 +1358,7 @@ class MiniBatchKMeans(KMeans):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
-            if the given data are not C-contiguous.
+            if the given data is not C-contiguous.
 
         y : Ignored
 
