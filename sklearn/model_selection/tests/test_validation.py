@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -45,6 +46,7 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
+from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
@@ -125,56 +127,13 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
 
 class MockEstimatorWithParameter(BaseEstimator):
     """Dummy classifier to test the validation curve"""
-    def __init__(self, param=0.5, allow_nd=False):
+    def __init__(self, param=0.5):
         self.X_subset = None
         self.param = param
-        self.allow_nd = allow_nd
 
-    def fit(self, X, Y=None, sample_weight=None, class_prior=None,
-            sparse_sample_weight=None, sparse_param=None, dummy_int=None,
-            dummy_str=None, dummy_obj=None, callback=None):
-        """The dummy arguments are to test that this fit function can
-        accept non-array arguments through cross-validation, such as:
-            - int
-            - str (this is actually array-like)
-            - object
-            - function
-        """
-        self.X_subset = X
-        self.train_size = X.shape[0]
-        self.y = y
-        self.dummy_int = dummy_int
-        self.dummy_str = dummy_str
-        self.dummy_obj = dummy_obj
-        if callback is not None:
-            callback(self)
-
-        if self.allow_nd:
-            X = X.reshape(len(X), -1)
-        if X.ndim >= 3 and not self.allow_nd:
-            raise ValueError('X cannot be d')
-        if sample_weight is not None:
-            assert_true(sample_weight.shape[0] == X.shape[0],
-                        'MockEstimatorWithParameter extra fit_param '
-                        'sample_weight.shape[0] is {0}, should be {1}'.
-                        format(sample_weight.shape[0], X.shape[0]))
-        if class_prior is not None:
-            assert_true(class_prior.shape[0] == len(np.unique(y)),
-                    'MockEstimatorWithParameter extra fit_param '
-                    'class_prior.shape[0] is {0}, should be {1}'.
-                    format(class_prior.shape[0], len(np.unique(y))))
-        if sparse_sample_weight is not None:
-            fmt = ('MockEstimatorWithParameter extra fit_param '
-                   'sparse_sample_weight .shape[0] is {0}, should be {1}')
-            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
-                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
-        if sparse_param is not None:
-            fmt = ('MockEstimatorWithParameter extra fit_param '
-                   'sparse_param.shape is ({0}, {1}), should be ({2}, {3})')
-            assert_true(sparse_param.shape == P_sparse.shape,
-                        fmt.format(sparse_param.shape[0],
-                                   sparse_param.shape[1],
-                                   P_sparse.shape[0], P_sparse.shape[1]))
+    def fit(self, X_subset, y_subset):
+        self.X_subset = X_subset
+        self.train_sizes = X_subset.shape[0]
         return self
 
     def predict(self, X):
@@ -642,40 +601,6 @@ def test_cross_val_score_fit_params():
                   'dummy_obj': DUMMY_OBJ,
                   'callback': assert_fit_params}
     cross_val_score(clf, X, y, fit_params=fit_params)
-
-
-def test_validation_curve_fit_params():
-    clf = MockEstimatorWithParameter()
-    n_samples = X.shape[0]
-    n_classes = len(np.unique(y))
-
-    W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
-                          shape=(10, 1))
-    P_sparse = coo_matrix(np.eye(5))
-
-    DUMMY_INT = 42
-    DUMMY_STR = '42'
-    DUMMY_OBJ = object()
-
-    def assert_fit_params(clf):
-        # Function to test that the values are passed correctly to the
-        # classifier arguments for non-array type
-
-        assert_equal(clf.dummy_int, DUMMY_INT)
-        assert_equal(clf.dummy_str, DUMMY_STR)
-        assert_equal(clf.dummy_obj, DUMMY_OBJ)
-
-    fit_params = {'sample_weight': np.ones(n_samples),
-                  'class_prior': np.ones(n_classes) / n_classes,
-                  'sparse_sample_weight': W_sparse,
-                  'sparse_param': P_sparse,
-                  'dummy_int': DUMMY_INT,
-                  'dummy_str': DUMMY_STR,
-                  'dummy_obj': DUMMY_OBJ,
-                  'callback': assert_fit_params}
-    param_range = np.linspace(0, 1, 10)
-    validation_curve(clf, X, y, param_name="param", param_range=param_range,
-                     fit_params=fit_params)
 
 
 def test_cross_val_score_score_func():
@@ -1244,6 +1169,20 @@ def test_learning_curve_with_shuffle():
                               test_scores_batch.mean(axis=1))
 
 
+def test_learning_curve_fit_params():
+    est = SVC(random_state=0)
+    X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
+    w = np.arange(50)
+    gamma_range = np.logspace(-6, -1, 5)
+    l_with_samples_weight = validation_curve(est, X, y, "gamma", gamma_range,
+                                             fit_params={'sample_weight': w})
+    l_without_sample_weight = validation_curve(est, X, y, "gamma", gamma_range)
+    assert_not_equal(l_with_samples_weight[0].mean(),
+                     l_without_sample_weight[0].mean())
+    assert_not_equal(l_with_samples_weight[1].mean(),
+                     l_without_sample_weight[1].mean())
+
+
 def test_validation_curve():
     X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -1305,6 +1244,17 @@ def test_validation_curve_cv_splits_consistency():
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
+
+
+def test_validation_curve_fit_params():
+    est = SVC(random_state=0)
+    X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
+    w = np.arange(50)
+    l_with_fit_params = learning_curve(est, X, y,
+                                       fit_params={'sample_weight': w})
+    l_without_fit_params = learning_curve(est, X, y)
+    assert_not_equal(l_with_fit_params[1].mean(),
+                     l_without_fit_params[1].mean())
 
 
 def test_check_is_permutation():
