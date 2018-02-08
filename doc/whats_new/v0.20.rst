@@ -219,6 +219,10 @@ Classifiers and regressors
   unexpected TypeError given dense inputs.
   :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
 
+- Fixed a bug in :class:`tree.BaseDecisionTree` with `splitter="best"`
+  where split threshold could become infinite when values in X were
+  near infinite. :issue:`10536` by :user:`Jonathan Ohayon <Johayon>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
