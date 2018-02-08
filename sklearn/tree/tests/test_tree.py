@@ -1733,7 +1733,7 @@ def test_criterion_copy():
             assert_equal(n_samples, n_samples_)
 
 
-def test_empty_leaf_infinite_threshold(data):
+def test_empty_leaf_infinite_threshold():
     # try to make empty leaf by using near infinite value.
     data = np.random.RandomState(0).randn(100, 11) * 2e38
     data = np.nan_to_num(data.astype('float32'))
