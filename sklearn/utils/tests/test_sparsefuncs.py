@@ -32,9 +32,7 @@ def test_mean_variance_axis0_nan():
     X_csc = sp.csc_matrix(A)
 
     expected_dtypes = [(np.float32, np.float32),
-                       (np.float64, np.float64),
-                       (np.int32, np.float64),
-                       (np.int64, np.float64)]
+                       (np.float64, np.float64)]
 
     for input_dtype, output_dtype in expected_dtypes:
 
