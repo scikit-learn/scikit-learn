@@ -3,10 +3,10 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-import pytest
 from functools import partial
 from itertools import product
 import struct
+import pytest
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -1739,12 +1739,14 @@ def test_criterion_copy():
 def test_empty_leaf_infinite_threshold(data):
     # try to make empty leaf by using near infinite value.
     data = np.nan_to_num(data.astype('float32'))
-    X = data[:, :-1]
+    X_full = data[:, :-1]
+    X_sparse = csc_matrix(X_full)
     y = data[:, -1]
-    tree = DecisionTreeRegressor().fit(X, y)
-    terminal_regions = tree.apply(X)
-    empty_leaf = set(np.where(tree.tree_.children_left
-                              == TREE_LEAF)[0]).difference(terminal_regions)
-    infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
-    assert (len(infinite_threshold) == 0)
-    assert (len(empty_leaf) == 0)
+    for X in [X_full, X_sparse]:
+        tree = DecisionTreeRegressor().fit(X, y)
+        terminal_regions = tree.apply(X)
+        left_leaf = set(np.where(tree.tree_.children_left == TREE_LEAF)[0])
+        empty_leaf = left_leaf.difference(terminal_regions)
+        infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
+        assert len(infinite_threshold) == 0
+        assert len(empty_leaf) == 0
