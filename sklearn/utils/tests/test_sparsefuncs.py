@@ -4,7 +4,7 @@ import scipy.sparse as sp
 from scipy import linalg
 from numpy.testing import (assert_array_almost_equal,
                            assert_array_equal,
-                           assert_equal)
+                           assert_equal, assert_allclose)
 from numpy.random import RandomState
 
 from sklearn.datasets import make_classification
@@ -22,10 +22,14 @@ from sklearn.utils.testing import assert_raises
 
 
 def test_mean_variance_axis0_nan():
-    X = np.zeros(10).reshape(5, 2) * np.nan
-    X[0, 0] = 1
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
+    A = np.zeros(10).reshape(5, 2) * np.nan
+    A[0, 0] = 1
+    A_means = np.nanmean(A, axis=0)
+    A_means[np.isnan(A_means)] = 0
+    A_vars = np.nanvar(A, axis=0)
+    A_vars[np.isnan(A_vars)] = 0
+    X_csr = sp.csr_matrix(A)
+    X_csc = sp.csc_matrix(A)
 
     expected_dtypes = [(np.float32, np.float32),
                        (np.float64, np.float64),
@@ -39,8 +43,8 @@ def test_mean_variance_axis0_nan():
             X_means, X_vars = mean_variance_axis(X_sparse, axis=0)
             assert_equal(X_means.dtype, output_dtype)
             assert_equal(X_vars.dtype, output_dtype)
-            np.allclose(X_means, np.array([1, np.nan], dtype=output_dtype))
-            np.allclose(X_vars, np.array([0, np.nan], dtype=output_dtype))
+            assert_allclose(X_means, A_means)
+            assert_allclose(X_vars, A_vars)
 
 
 def test_mean_variance_axis0():
@@ -134,13 +138,13 @@ def test_incr_mean_variance_axis_nan():
         X_means_incr, X_vars_incr, n_incr = \
             incr_mean_variance_axis(X_csr, axis, last_mean, last_var,
                                     last_n=0, last_n_feat=last_n)
-        np.allclose(X_means, X_means_incr)
-        np.allclose(X_vars, X_vars_incr)
+        assert_allclose(X_means, X_means_incr)
+        assert_allclose(X_vars, X_vars_incr)
 
         X_csc = sp.csc_matrix(X_lil)
         X_means, X_vars = mean_variance_axis(X_csc, axis)
-        np.allclose(X_means, X_means_incr)
-        np.allclose(X_vars, X_vars_incr)
+        assert_allclose(X_means, X_means_incr)
+        assert_allclose(X_vars, X_vars_incr)
 
         # Test _incremental_mean_and_var with whole data
         X = data_chunk
@@ -163,8 +167,8 @@ def test_incr_mean_variance_axis_nan():
                                             last_n_feat=last_n)
                 assert_equal(X_means_incr.dtype, output_dtype)
                 assert_equal(X_vars_incr.dtype, output_dtype)
-                np.allclose(X_means, X_means_incr)
-                np.allclose(X_vars, X_vars_incr)
+                assert_allclose(X_means, X_means_incr)
+                assert_allclose(X_vars, X_vars_incr)
 
 
 def test_incr_mean_variance_axis():

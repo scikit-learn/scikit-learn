@@ -660,7 +660,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
                 self.mean_ = .0
-                self.n_samples_seen_ = 0
+                self.n_samples_seen_ = np.zeros(X.shape[1])
                 if self.with_std:
                     self.var_ = .0
                 else:
