@@ -855,8 +855,8 @@ def test_cross_val_predict_decision_function_shape():
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
     assert_raises_regex(ValueError,
-                        'Output shape \(599L?, 21L?\) of decision_function '
-                        'does not match number of classes \(7\) in fold. '
+                        r'Output shape \(599L?, 21L?\) of decision_function '
+                        r'does not match number of classes \(7\) in fold. '
                         'Irregular decision_function .*',
                         cross_val_predict, est, X, y,
                         cv=KFold(n_splits=3), method='decision_function')

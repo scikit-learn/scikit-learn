@@ -919,9 +919,6 @@ def test_search_iid_param():
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s_i][0]
                                        for s_i in range(search.n_splits_)))
-        train_cv_scores = np.array(list(search.cv_results_['split%d_train_'
-                                                           'score' % s_i][0]
-                                        for s_i in range(search.n_splits_)))
         test_mean = search.cv_results_['mean_test_score'][0]
         test_std = search.cv_results_['std_test_score'][0]
 

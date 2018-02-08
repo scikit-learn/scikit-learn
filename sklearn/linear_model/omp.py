@@ -274,7 +274,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
-    """Orthogonal Matching Pursuit (OMP)
+    r"""Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
     An instance of the problem has the form:
