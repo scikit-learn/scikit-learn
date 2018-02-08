@@ -71,7 +71,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython==$CYTHON_VERSION
+    pip install pytest pytest-cov cython==$CYTHON_VERSION scipy
 
 elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
