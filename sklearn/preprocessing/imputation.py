@@ -91,7 +91,9 @@ class Imputer(BaseEstimator, TransformerMixin):
         .. deprecated:: 0.20
            Parameter ``axis`` has been deprecated in 0.20 and will be removed
            in 0.22. Future (and default) behavior is equivalent to ``axis=0``
-           (impute along columns).
+           (impute along columns). Row-wise imputation can be performed with
+           FunctionTransformer (e.g.,
+           ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -153,7 +155,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             warnings.warn("Parameter 'axis' has been deprecated in 0.20 and "
                           "will be removed in 0.22. Future (and default) "
                           "behavior is equivalent to 'axis=0' (impute along "
-                          "columns).", DeprecationWarning)
+                          "columns). Row-wise imputation can be performed "
+                          "with FunctionTransformer.", DeprecationWarning)
             self._axis = self.axis
 
         if self._axis not in [0, 1]:

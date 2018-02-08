@@ -373,7 +373,8 @@ def test_imputation_copy():
 def test_deprecated_imputer_axis():
     depr_message = ("Parameter 'axis' has been deprecated in 0.20 and will "
                     "be removed in 0.22. Future (and default) behavior is "
-                    "equivalent to 'axis=0' (impute along columns).")
+                    "equivalent to 'axis=0' (impute along columns). Row-wise "
+                    "imputation can be performed with FunctionTransformer.")
     X = sparse_random_matrix(5, 5, density=0.75, random_state=0)
     imputer = Imputer(missing_values=0, axis=0)
     assert_warns_message(DeprecationWarning, depr_message, imputer.fit, X)
