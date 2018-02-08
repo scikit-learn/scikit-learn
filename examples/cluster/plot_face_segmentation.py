@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.externals._pilutil import imresize
 
 
 # load the raccoon face as a numpy array
@@ -40,7 +41,7 @@ except ImportError:
     face = sp.face(gray=True)
 
 # Resize it to 10% of the original size to speed up the processing
-face = sp.misc.imresize(face, 0.10) / 255.
+face = imresize(face, 0.10) / 255.
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
@@ -63,14 +64,14 @@ N_REGIONS = 25
 for assign_labels in ('kmeans', 'discretize'):
     t0 = time.time()
     labels = spectral_clustering(graph, n_clusters=N_REGIONS,
-                                 assign_labels=assign_labels, random_state=1)
+                                 assign_labels=assign_labels, random_state=42)
     t1 = time.time()
     labels = labels.reshape(face.shape)
 
     plt.figure(figsize=(5, 5))
     plt.imshow(face, cmap=plt.cm.gray)
     for l in range(N_REGIONS):
-        plt.contour(labels == l, contours=1,
+        plt.contour(labels == l,
                     colors=[plt.cm.spectral(l / float(N_REGIONS))])
     plt.xticks(())
     plt.yticks(())

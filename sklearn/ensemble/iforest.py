@@ -6,6 +6,7 @@ from __future__ import division
 
 import numpy as np
 import scipy as sp
+import warnings
 from warnings import warn
 from sklearn.utils.fixes import euler_gamma
 
@@ -15,6 +16,7 @@ import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
+from ..utils.validation import check_is_fitted
 
 from .bagging import BaseBagging
 
@@ -64,7 +66,8 @@ class IsolationForest(BaseBagging):
     contamination : float in (0., 0.5), optional (default=0.1)
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Used when fitting to define the threshold
-        on the decision function.
+        on the decision function. If 'auto', the decision function threshold is
+        determined as in the original paper.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
@@ -103,6 +106,14 @@ class IsolationForest(BaseBagging):
     max_samples_ : integer
         The actual number of samples
 
+    offset_ : float
+        Offset used to define the decision function from the raw scores.
+        We have the relation: decision_function = score_samples - offset_.
+        The offset is set to 0.5 as in the original paper, except when a
+        contamination parameter different than "auto" is provided. In that
+        case, the offset is defined in such a way we obtain the expected
+        number of outliers (samples with decision function < 0) in training.
+
     References
     ----------
     .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
@@ -116,7 +127,7 @@ class IsolationForest(BaseBagging):
     def __init__(self,
                  n_estimators=100,
                  max_samples="auto",
-                 contamination=0.1,
+                 contamination="legacy",
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=1,
@@ -136,6 +147,12 @@ class IsolationForest(BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+        if contamination == "legacy":
+            warnings.warn('default contamination parameter 0.1 will change '
+                          'in version 0.22 to "auto". This will change the '
+                          'predict method behavior.',
+                          DeprecationWarning)
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):
@@ -157,7 +174,6 @@ class IsolationForest(BaseBagging):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
@@ -200,8 +216,19 @@ class IsolationForest(BaseBagging):
                                           max_depth=max_depth,
                                           sample_weight=sample_weight)
 
-        self.threshold_ = -sp.stats.scoreatpercentile(
-            -self.decision_function(X), 100. * (1. - self.contamination))
+        if self.contamination == "auto":
+            # 0.5 plays a special role as described in the original paper.
+            # we take the opposite as we consider the opposite of their score.
+            self.offset_ = -0.5
+            # need to save (depreciated) threshold_ in this case:
+            self._threshold_ = sp.stats.scoreatpercentile(
+                self.score_samples(X), 100. * 0.1)
+        elif self.contamination == "legacy":  # to be rm in 0.22
+            self.offset_ = sp.stats.scoreatpercentile(
+                self.score_samples(X), 100. * 0.1)
+        else:
+            self.offset_ = sp.stats.scoreatpercentile(
+                self.score_samples(X), 100. * self.contamination)
 
         return self
 
@@ -218,12 +245,13 @@ class IsolationForest(BaseBagging):
         Returns
         -------
         is_inlier : array, shape (n_samples,)
-            For each observations, tells whether or not (+1 or -1) it should
+            For each observation, tells whether or not (+1 or -1) it should
             be considered as an inlier according to the fitted model.
         """
+        check_is_fitted(self, ["offset_"])
         X = check_array(X, accept_sparse='csr')
         is_inlier = np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) <= self.threshold_] = -1
+        is_inlier[self.decision_function(X) < 0] = -1
         return is_inlier
 
     def decision_function(self, X):
@@ -246,14 +274,51 @@ class IsolationForest(BaseBagging):
 
         Returns
         -------
-        scores : array of shape (n_samples,)
+        scores : array, shape (n_samples,)
             The anomaly score of the input samples.
-            The lower, the more abnormal.
+            The lower, the more abnormal. Negative scores represent outliers,
+            positive scores represent inliers.
 
         """
+        # We substract self.offset_ to make 0 be the threshold value for being
+        # an outlier:
+
+        return self.score_samples(X) - self.offset_
+
+    def score_samples(self, X):
+        """Opposite of the anomaly score defined in the original paper.
+
+        The anomaly score of an input sample is computed as
+        the mean anomaly score of the trees in the forest.
+
+        The measure of normality of an observation given a tree is the depth
+        of the leaf containing this observation, which is equivalent to
+        the number of splittings required to isolate this point. In case of
+        several observations n_left in the leaf, the average path length of
+        a n_left samples isolation tree is added.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        Returns
+        -------
+        scores : array, shape (n_samples,)
+            The anomaly score of the input samples.
+            The lower, the more abnormal.
+        """
         # code structure from ForestClassifier/predict_proba
+        check_is_fitted(self, ["estimators_"])
+
         # Check data
         X = check_array(X, accept_sparse='csr')
+        if self.n_features_ != X.shape[1]:
+            raise ValueError("Number of features of the model must "
+                             "match the input. Model n_features is {0} and "
+                             "input n_features is {1}."
+                             "".format(self.n_features_, X.shape[1]))
         n_samples = X.shape[0]
 
         n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
@@ -278,12 +343,20 @@ class IsolationForest(BaseBagging):
 
         depths += _average_path_length(n_samples_leaf)
 
-        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
+        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(
+            self.max_samples_))
 
         # Take the opposite of the scores as bigger is better (here less
-        # abnormal) and add 0.5 (this value plays a special role as described
-        # in the original paper) to give a sense to scores = 0:
-        return 0.5 - scores
+        # abnormal)
+        return -scores
+
+    @property
+    def threshold_(self):
+        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
+                      " be removed in 0.22.", DeprecationWarning)
+        if self.contamination == 'auto':
+            return self._threshold_
+        return self.offset_
 
 
 def _average_path_length(n_samples_leaf):
@@ -292,7 +365,7 @@ def _average_path_length(n_samples_leaf):
     latter has the same structure as an isolation tree.
     Parameters
     ----------
-    n_samples_leaf : array-like of shape (n_samples, n_estimators), or int.
+    n_samples_leaf : array-like, shape (n_samples, n_estimators), or int.
         The number of training samples in each test sample leaf, for
         each estimators.
 

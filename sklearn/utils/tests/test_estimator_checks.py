@@ -1,6 +1,10 @@
-import scipy.sparse as sp
-import numpy as np
+import unittest
 import sys
+
+import numpy as np
+
+import scipy.sparse as sp
+
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
 
@@ -11,13 +15,15 @@ from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
-from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -38,8 +44,8 @@ class BaseBadClassifier(BaseEstimator, ClassifierMixin):
 
 
 class ChangesDict(BaseEstimator):
-    def __init__(self):
-        self.key = 0
+    def __init__(self, key=0):
+        self.key = key
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -52,8 +58,8 @@ class ChangesDict(BaseEstimator):
 
 
 class SetsWrongAttribute(BaseEstimator):
-    def __init__(self):
-        self.acceptable_key = 0
+    def __init__(self, acceptable_key=0):
+        self.acceptable_key = acceptable_key
 
     def fit(self, X, y=None):
         self.wrong_attribute = 0
@@ -62,11 +68,18 @@ class SetsWrongAttribute(BaseEstimator):
 
 
 class ChangesWrongAttribute(BaseEstimator):
-    def __init__(self):
-        self.wrong_attribute = 0
+    def __init__(self, wrong_attribute=0):
+        self.wrong_attribute = wrong_attribute
 
     def fit(self, X, y=None):
         self.wrong_attribute = 1
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ChangesUnderscoreAttribute(BaseEstimator):
+    def fit(self, X, y=None):
+        self._good_attribute = 1
         X, y = check_X_y(X, y)
         return self
 
@@ -121,6 +134,23 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class NotInvariantPredict(BaseEstimator):
+    def fit(self, X, y):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+        return self
+
+    def predict(self, X):
+        # return 1 if X has more than one element else return 0
+        X = check_array(X)
+        if X.shape[0] > 1:
+            return np.ones(X.shape[0])
+        return np.zeros(X.shape[0])
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -159,18 +189,25 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
     # check that `fit` only changes attribures that
     # are private (start with an _ or end with a _).
-    msg = ('Estimator changes public attribute\(s\) during the fit method.'
-           ' Estimators are only allowed to change attributes started'
-           ' or ended with _, but wrong_attribute changed')
+    msg = ('Estimator ChangesWrongAttribute should not change or mutate  '
+           'the parameter wrong_attribute from 0 to 1 during fit.')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, ChangesWrongAttribute)
+    check_estimator(ChangesUnderscoreAttribute)
     # check that `fit` doesn't add any public attribute
-    msg = ('Estimator adds public attribute\(s\) during the fit method.'
+    msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, SetsWrongAttribute)
+    # check for invariant method
+    name = NotInvariantPredict.__name__
+    method = 'predict'
+    msg = ("{method} of {name} is not invariant when applied "
+           "to a subset.").format(method=method, name=name)
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantPredict)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
@@ -237,17 +274,59 @@ def test_check_estimators_unfitted():
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())
 
 
-def test_check_no_fit_attributes_set_in_init():
-    class NonConformantEstimator(object):
+def test_check_no_attributes_set_in_init():
+    class NonConformantEstimatorPrivateSet(object):
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    msg = ("By convention, attributes ending with '_'.+"
-           'should not be initialized in the constructor.+'
-           "Attribute 'you_should_not_set_this_' was found.+"
-           'in estimator estimator_name')
+    class NonConformantEstimatorNoParamSet(object):
+        def __init__(self, you_should_set_this_=None):
+            pass
 
-    assert_raises_regex(AssertionError, msg,
-                        check_no_fit_attributes_set_in_init,
+    assert_raises_regex(AssertionError,
+                        "Estimator estimator_name should not set any"
+                        " attribute apart from parameters during init."
+                        r" Found attributes \['you_should_not_set_this_'\].",
+                        check_no_attributes_set_in_init,
                         'estimator_name',
-                        NonConformantEstimator)
+                        NonConformantEstimatorPrivateSet())
+    assert_raises_regex(AssertionError,
+                        "Estimator estimator_name should store all "
+                        "parameters as an attribute during init. "
+                        "Did not find attributes "
+                        r"\['you_should_set_this_'\].",
+                        check_no_attributes_set_in_init,
+                        'estimator_name',
+                        NonConformantEstimatorNoParamSet())
+
+
+def test_check_estimator_pairwise():
+    # check that check_estimator() works on estimator with _pairwise
+    # kernel or  metric
+
+    # test precomputed kernel
+    est = SVC(kernel='precomputed')
+    check_estimator(est)
+
+    # test precomputed metric
+    est = KNeighborsRegressor(metric='precomputed')
+    check_estimator(est)
+
+
+def run_tests_without_pytest():
+    """Runs the tests in this file without using pytest.
+    """
+    main_module = sys.modules['__main__']
+    test_functions = [getattr(main_module, name) for name in dir(main_module)
+                      if name.startswith('test_')]
+    test_cases = [unittest.FunctionTestCase(fn) for fn in test_functions]
+    suite = unittest.TestSuite()
+    suite.addTests(test_cases)
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
+
+
+if __name__ == '__main__':
+    # This module is run as a script to check that we have no dependency on
+    # pytest for estimator checks.
+    run_tests_without_pytest()

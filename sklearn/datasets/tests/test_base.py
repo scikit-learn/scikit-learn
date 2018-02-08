@@ -21,6 +21,7 @@ from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 
 from sklearn.externals.six import b, u
+from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -161,15 +162,7 @@ def test_load_sample_image():
 
 
 def test_load_missing_sample_image_error():
-    have_PIL = True
-    try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread  # noqa
-    except ImportError:
-        have_PIL = False
-    if have_PIL:
+    if pillow_installed:
         assert_raises(AttributeError, load_sample_image,
                       'blop.jpg')
     else:
@@ -197,6 +190,8 @@ def test_load_linnerud():
     assert_equal(res.target.shape, (20, 3))
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.data_filename))
+    assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
     X_y_tuple = load_linnerud(return_X_y=True)
@@ -212,6 +207,7 @@ def test_load_iris():
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
@@ -242,6 +238,7 @@ def test_load_breast_cancer():
     assert_equal(res.target.size, 569)
     assert_equal(res.target_names.size, 2)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_breast_cancer(return_X_y=True)
@@ -257,6 +254,7 @@ def test_load_boston():
     assert_equal(res.target.size, 506)
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_boston(return_X_y=True)

@@ -88,6 +88,7 @@ op.add_option("--filtered",
 def is_interactive():
     return not hasattr(sys.modules['__main__'], '__file__')
 
+
 # work-around for Jupyter notebook and IPython console
 argv = [] if is_interactive() else sys.argv[1:]
 (opts, args) = op.parse_args(argv)
@@ -135,6 +136,7 @@ target_names = data_train.target_names
 
 def size_mb(docs):
     return sum(len(s.encode('utf-8')) for s in docs) / 1e6
+
 
 data_train_size_mb = size_mb(data_train.data)
 data_test_size_mb = size_mb(data_test.data)

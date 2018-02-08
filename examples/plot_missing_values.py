@@ -70,8 +70,7 @@ X_missing = X_full.copy()
 X_missing[np.where(missing_samples)[0], missing_features] = np.nan
 y_missing = y_full.copy()
 estimator = Pipeline([("imputer", Imputer(missing_values=np.nan,
-                                          strategy="mean",
-                                          axis=0)),
+                                          strategy="mean")),
                       ("forest", RandomForestClassifier(random_state=0,
                                                         n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
@@ -82,5 +81,6 @@ estimator = Pipeline([("nmf", NMF(solver='mu', init='random', n_components=19,
                                   random_state=0, max_iter=1000)),
                       ("forest", RandomForestClassifier(random_state=0,
                                                         n_estimators=100))])
+
 score = cross_val_score(estimator, X_missing, y_missing).mean()
 print("Score with NMF representation robust to missing values = %.2f" % score)

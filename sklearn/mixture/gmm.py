@@ -104,8 +104,8 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
         (n_features,) if `1`
         (n_features, n_samples) otherwise
     """
-    _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
-                     random_state=None)
+    return _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                            random_state=None)
 
 
 def _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,

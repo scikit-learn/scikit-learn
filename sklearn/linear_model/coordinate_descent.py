@@ -126,7 +126,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
-    """Compute Lasso path with coordinate descent
+    r"""Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
 
@@ -269,7 +269,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    """Compute elastic net path with coordinate descent
+    r"""Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -640,6 +640,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     See also
     --------
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
     SGDRegressor: implements elastic net regression with incremental training.
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
@@ -1587,7 +1589,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    r"""Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1688,7 +1690,10 @@ class MultiTaskElasticNet(Lasso):
 
     See also
     --------
-    ElasticNet, MultiTaskLasso
+    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+    ElasticNet
+    MultiTaskLasso
 
     Notes
     -----
@@ -1782,7 +1787,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    r"""Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for Lasso is::
 
@@ -1873,7 +1878,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     See also
     --------
-    Lasso, MultiTaskElasticNet
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
+    Lasso
+    MultiTaskElasticNet
 
     Notes
     -----
@@ -1898,7 +1905,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    r"""Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2079,7 +2086,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 Lasso with built-in cross-validation.
+    r"""Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskLasso is::
 

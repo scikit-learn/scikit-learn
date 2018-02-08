@@ -385,15 +385,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
+        regex = (r"class_weight 'balanced' is not supported for "
+                 r"partial_fit\. In order to use 'balanced' weights, "
+                 r"use compute_class_weight\('balanced', classes, y\). "
+                 r"In place of y you can us a large enough sample "
+                 r"of the full training set target to properly "
+                 r"estimate the class frequency distributions\. "
+                 r"Pass the resulting weights as the class_weight "
+                 r"parameter\.")
         assert_raises_regexp(ValueError,
-                             "class_weight 'balanced' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight\('balanced', classes, y\). "
-                             "In place of y you can us a large enough sample "
-                             "of the full training set target to properly "
-                             "estimate the class frequency distributions. "
-                             "Pass the resulting weights as the class_weight "
-                             "parameter.",
+                             regex,
                              self.factory(class_weight='balanced').partial_fit,
                              X, Y, classes=np.unique(Y))
 
@@ -1194,9 +1195,9 @@ def test_tol_parameter():
 def test_future_and_deprecation_warnings():
     # Test that warnings are raised. Will be removed in 0.21
 
-    def init(max_iter=None, tol=None, n_iter=None):
+    def init(max_iter=None, tol=None, n_iter=None, for_partial_fit=False):
         sgd = SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter)
-        sgd._validate_params()
+        sgd._validate_params(for_partial_fit=for_partial_fit)
 
     # When all default values are used
     msg_future = "max_iter and tol parameters have been added in "
@@ -1210,6 +1211,9 @@ def test_future_and_deprecation_warnings():
     assert_no_warnings(init, 100, None, None)
     assert_no_warnings(init, None, 1e-3, None)
     assert_no_warnings(init, 100, 1e-3, None)
+
+    # Test that for_partial_fit will not throw warnings for max_iter or tol
+    assert_no_warnings(init, None, None, None, True)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

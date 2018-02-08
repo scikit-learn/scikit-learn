@@ -1,8 +1,9 @@
+import pytest
+
 import numpy as np
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
 
 from scipy import sparse
+from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
@@ -14,6 +15,8 @@ from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_true, assert_equal, assert_raises
 from sklearn.utils.testing import SkipTest
 
@@ -254,10 +257,29 @@ def test_spectral_embedding_unnormalized():
                                      drop_first=False)
 
     # Verify using manual computation with dense eigh
-    laplacian, dd = sparse.csgraph.laplacian(sims, normed=False,
-                                             return_diag=True)
+    laplacian, dd = csgraph.laplacian(sims, normed=False,
+                                      return_diag=True)
     _, diffusion_map = eigh(laplacian)
-    embedding_2 = diffusion_map.T[:n_components] * dd
+    embedding_2 = diffusion_map.T[:n_components]
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
 
     assert_array_almost_equal(embedding_1, embedding_2)
+
+
+def test_spectral_embedding_first_eigen_vector():
+    # Test that the first eigenvector of spectral_embedding
+    # is constant and that the second is not (for a connected graph)
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 2
+
+    for seed in range(10):
+        embedding = spectral_embedding(sims,
+                                       norm_laplacian=False,
+                                       n_components=n_components,
+                                       drop_first=False,
+                                       random_state=seed)
+
+        assert np.std(embedding[:, 0]) == pytest.approx(0)
+        assert np.std(embedding[:, 1]) > 1e-3

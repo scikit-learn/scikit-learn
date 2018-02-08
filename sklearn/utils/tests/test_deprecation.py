@@ -8,7 +8,9 @@ import pickle
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.deprecation import DeprecationDict
 
 
 @deprecated('qwerty')
@@ -60,3 +62,17 @@ def test_is_deprecated():
 
 def test_pickle():
     pickle.loads(pickle.dumps(mock_function))
+
+
+def test_deprecationdict():
+    dd = DeprecationDict()
+    dd.add_warning('a', 'hello')
+    dd.add_warning('b', 'world', DeprecationWarning)
+    assert 1 == assert_warns_message(UserWarning, 'hello', dd.get, 'a', 1)
+    dd['a'] = 5
+    dd['b'] = 6
+    dd['c'] = 7
+    assert 5 == assert_warns_message(UserWarning, 'hello', dd.__getitem__, 'a')
+    assert 6 == assert_warns_message(DeprecationWarning, 'world',
+                                     dd.__getitem__, 'b')
+    assert 7 == assert_no_warnings(dd.get, 'c')

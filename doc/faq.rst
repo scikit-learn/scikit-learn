@@ -4,6 +4,8 @@
 Frequently Asked Questions
 ===========================
 
+.. currentmodule:: sklearn
+
 Here we try to give some answers to questions that regularly pop up on the mailing list.
 
 What is the project name (a lot of people get it wrong)?
@@ -59,7 +61,7 @@ For bug reports or feature requests, please make use of the
 
 There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found. 
+might be found.
 
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
@@ -80,11 +82,13 @@ How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
 
 Generally, scikit-learn works on any numeric data stored as numpy arrays
-or scipy sparse matrices. Other types that are convertible to numeric 
+or scipy sparse matrices. Other types that are convertible to numeric
 arrays such as pandas DataFrame are also acceptable.
 
-For more information on loading your data files into these usable data 
+For more information on loading your data files into these usable data
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
+
+.. _new_algorithms_inclusion_criteria:
 
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
@@ -103,14 +107,17 @@ numpy array or sparse matrix, are accepted.
 The contributor should support the importance of the proposed addition with
 research papers and/or implementations in other similar packages, demonstrate
 its usefulness via common use-cases/applications and corroborate performance
-improvements, if any, with benchmarks and/or plots. It is expected that the 
+improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
 Also note that your implementation need not be in scikit-learn to be used
-together with scikit-learn tools. You can implement your favorite algorithm in
-a scikit-learn compatible way, upload it to github and let us know. We will
-list it under :ref:`related_projects`.
+together with scikit-learn tools. You can implement your favorite algorithm
+in a scikit-learn compatible way, upload it to GitHub and let us know. We
+will be happy to list it under :ref:`related_projects`. If you already have
+a package on GitHub following the scikit-learn API, you may also be
+interested to look at `scikit-learn-contrib
+<http://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
@@ -123,8 +130,10 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-Also see `this thread on the mailing list
-<https://sourceforge.net/p/scikit-learn/mailman/scikit-learn-general/thread/CAAkaFLWcBG+gtsFQzpTLfZoCsHMDv9UG5WaqT0LwUApte0TVzg@mail.gmail.com/#msg33104380>`_.
+See also :ref:`new_algorithms_inclusion_criteria`. For a great read about
+long-term maintenance issues in open-source software, look at
+`the Executive Summary of Roads and Bridges
+<https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
 Why did you remove HMMs from scikit-learn?
 --------------------------------------------
@@ -273,6 +282,27 @@ program: Insert the following instructions in your main script::
 You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
+.. _faq_mkl_threading:
+
+Why does my job use more cores than specified with n_jobs under OSX or Linux?
+-----------------------------------------------------------------------------
+
+This happens when vectorized numpy operations are handled by libraries such
+as MKL or OpenBLAS.
+
+While scikit-learn adheres to the limit set by ``n_jobs``,
+numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
+threads within each scikit-learn job (thread or process).
+
+The number of threads used by the BLAS library can be set via an environment
+variable. For example, to set the maximum number of threads to some integer
+value ``N``, the following environment variables should be set:
+
+* For MKL: ``export MKL_NUM_THREADS=N``
+
+* For OpenBLAS: ``export OPENBLAS_NUM_THREADS=N``
+
+
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
 --------------------------------------------------------------------------------------------------------------------------------------
 
@@ -323,3 +353,22 @@ However, a global random state is prone to modification by other code during
 execution. Thus, the only way to ensure replicability is to pass ``RandomState``
 instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
+
+Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
+--------------------------------------------------------------------------------
+
+Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices
+of a single numeric dtype. These do not explicitly represent categorical
+variables at present. Thus, unlike R's data.frames or pandas.DataFrame, we
+require explicit conversion of categorical features to numeric values, as
+discussed in :ref:`preprocessing_categorical_features`.
+See also :ref:`sphx_glr_auto_examples_hetero_feature_union.py` for an example of
+working with heterogeneous (e.g. categorical and numeric) data.
+
+Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
+
+The homogeneous NumPy and SciPy data objects currently expected are most
+efficient to process for most operations. Extensive work would also be needed
+to support Pandas categorical types. Restricting input to homogeneous
+types therefore reduces maintenance cost and encourages usage of efficient
+data structures.

@@ -264,7 +264,7 @@ Pros
 :Less sensitivity to the number of parameters: unlike finite models, which will
    almost always use all components as much as they can, and hence will produce
    wildly different solutions for different numbers of components, the
-   variantional inference with a Dirichlet process prior
+   variational inference with a Dirichlet process prior
    (``weight_concentration_prior_type='dirichlet_process'``) won't change much
    with changes to the parameters, leading to more stability and less tuning.
 
@@ -310,7 +310,7 @@ step we break off a portion of the remaining stick. Each time, we associate the
 length of the piece of the stick to the proportion of points that falls into a
 group of the mixture. At the end, to represent the infinite mixture, we
 associate the last remaining piece of the stick to the proportion of points
-that don't fall into all the other groups. The length of each piece is random
+that don't fall into all the other groups. The length of each piece is a random
 variable with probability proportional to the concentration parameter. Smaller
 value of the concentration will divide the unit-length into larger pieces of
 the stick (defining more concentrated distribution). Larger concentration

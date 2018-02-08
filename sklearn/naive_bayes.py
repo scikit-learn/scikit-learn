@@ -186,7 +186,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
@@ -305,7 +304,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._partial_fit(X, y, classes, _refit=False,
                                  sample_weight=sample_weight)
@@ -339,7 +337,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
@@ -374,7 +371,7 @@ class GaussianNB(BaseNB):
                     raise ValueError('Number of priors must match number of'
                                      ' classes.')
                 # Check that the sum is 1
-                if priors.sum() != 1.0:
+                if not np.isclose(priors.sum(), 1.0):
                     raise ValueError('The sum of the priors should be 1.')
                 # Check that the prior are non-negative
                 if (priors < 0).any():
@@ -515,7 +512,6 @@ class BaseDiscreteNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
@@ -581,7 +577,6 @@ class BaseDiscreteNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
@@ -658,7 +653,7 @@ class MultinomialNB(BaseDiscreteNB):
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    intercept_ : property
+    intercept_ : array, shape (n_classes, )
         Mirrors ``class_log_prior_`` for interpreting MultinomialNB
         as a linear model.
 
@@ -666,7 +661,7 @@ class MultinomialNB(BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    coef_ : property
+    coef_ : array, shape (n_classes, n_features)
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
         as a linear model.
 
@@ -753,6 +748,12 @@ class ComplementNB(BaseDiscreteNB):
     class_prior : array-like, size (n_classes,), optional (default=None)
         Prior probabilities of the classes. Not used.
 
+    norm : boolean, optional (default=False)
+        Whether or not a second normalization of the weights is performed. The
+        default behavior mirrors the implementations found in Mahout and Weka,
+        which do not follow the full algorithm described in Table 9 of the
+        paper.
+
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -782,7 +783,7 @@ class ComplementNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True)
+    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True, norm=False)
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -794,10 +795,12 @@ class ComplementNB(BaseDiscreteNB):
     http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+                 norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.norm = norm
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -811,7 +814,12 @@ class ComplementNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
-        self.feature_log_prob_ = logged / logged.sum(axis=1, keepdims=True)
+        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
+        feature_log_prob = -logged
+        if self.norm:
+            summed = logged.sum(axis=1, keepdims=True)
+            feature_log_prob = -feature_log_prob / summed
+        self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""
