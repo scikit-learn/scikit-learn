@@ -73,6 +73,10 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 # Outlier detection estimators
 OUTLIER_DETECTION = ['EllipticEnvelope', 'OneClassSVM',
                      'LocalOutlierFactor', 'IsolationForest']
+# some outlier detectors like LocalOutlierFactor are not meant to be used on
+# a test set and do not have (public) predict, decision_function and
+# score_samples methods.
+NO_TEST_SET_DETECTORS = ['LocalOutlierFactor']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -214,16 +218,12 @@ def _yield_clustering_checks(name, clusterer):
 
 
 def _yield_outliers_checks(name, estimator):
-    # some estimators like LocalOutlierFactor are not meant to be used on
-    # a test set and do not have (public) predict, decision_function and
-    # score_samples methods.
-    NO_TEST_SET = ['LocalOutlierFactor']
 
     # checks for all outlier detectors
     yield check_outliers_fit_predict
 
     # checks for estimators that can be used on a test set
-    if name not in NO_TEST_SET:
+    if name not in NO_TEST_SET_DETECTORS:
         yield check_outliers_train
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
@@ -2151,3 +2151,8 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+    # check fit_predict = fit.predict when possible
+    if name not in NO_TEST_SET_DETECTORS:
+        y_pred_2 = estimator.fit(X).predict(X)
+        assert_array_equal(y_pred, y_pred_2)
