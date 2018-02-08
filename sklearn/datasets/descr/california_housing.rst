@@ -5,12 +5,14 @@ The California Housing dataset
 ================================
 
 
-This data set contains a set of housing information taken in the 1990 Census (in the US). The
-:func:`sklearn.datasets.fetch_california_housing` function is the data
-fetching / caching function that downloads the data
+This data set contains a set of housing information taken 
+in the 1990 Census (in the US). The :func:`sklearn.datasets.fetch_california_housing`
+function is the data fetching / caching function that downloads the data
 archive from AT&T.
 
-.. _This data set from the original source: http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
+.. _This data set from the original source:
+http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
+
 
 As described on the original website:
 
