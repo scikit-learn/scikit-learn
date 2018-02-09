@@ -1,5 +1,6 @@
 """
-Testing for Kernel Extreme Learning Machine module (sklearn.neural_network.kelm)
+Testing for Kernel Extreme Learning Machine module
+(sklearn.neural_network.kelm)
 
 """
 import numpy as np
@@ -69,8 +70,8 @@ def test_precomputed():
 
     # same as before, but using a callable function instead of the kernel
     # matrix. kernel is just a linear kernel
-
-    kfunc = lambda x, y: np.dot(x, y.T)
+    def kfunc(x, y):
+        return np.dot(x, y.T)
     clf = KernelELM(kernel=kfunc)
     clf.fit(X, Y)
     pred = clf.predict(T)

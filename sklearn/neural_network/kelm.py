@@ -12,7 +12,7 @@ kernel_dict = {}
 for k_str in dir(kernels):
     k = getattr(kernels, k_str)
     if isinstance(k, abc.ABCMeta):
-        kernel_dict[k_str.lower()] =  k
+        kernel_dict[k_str.lower()] = k
 kernel_dict['linear'] = kernel_dict['dotproduct']
 
 
@@ -130,7 +130,8 @@ class KernelELM(BaseEstimator, ClassifierMixin):
         try:
             X = check_array(X)
         except TypeError:
-            raise ValueError('Predict with sparse input when trained with dense')
+            raise ValueError('Predict with sparse input '
+                             'when trained with dense')
 
         # Fitting
         if self.kernel == 'precomputed':
