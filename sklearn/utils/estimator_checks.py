@@ -2117,7 +2117,7 @@ def check_outliers_output_dtypes(name, estimator_orig):
     estimator.fit(X)
 
     y_pred = estimator.predict(X)
-    assert_equal(y_pred.dtype, np.dtype('int'))
+    assert_in(y_pred.dtype, [np.dtype('int32'), np.dtype('int64')])
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     decision = estimator.decision_function(X)
@@ -2139,7 +2139,7 @@ def check_outliers_fit_predict(name, estimator_orig):
 
     y_pred = estimator.fit_predict(X)
     assert_equal(y_pred.shape, (n_samples,))
-    assert_equal(y_pred.dtype, np.dtype('int'))
+    assert_in(y_pred.dtype, [np.dtype('int32'), np.dtype('int64')])
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     # check fit_predict = fit.predict when possible
