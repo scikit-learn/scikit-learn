@@ -3,7 +3,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.gaussian_process import kernels
-from sklearn.externals import six
 import abc
 
 # Authors: Carlos Perales <sir.perales@gmail.com>
@@ -95,13 +94,10 @@ class KernelELM(BaseEstimator, ClassifierMixin):
             self.gamma_ = 0.0
             omega_train = X
         else:
-            self.kernel_fun_ = self.kernel
-            if six.PY3:
-                if isinstance(self.kernel, str):
-                    self.kernel_fun_ = kernel_dict[self.kernel](self.gamma_)
-            else:
-                if isinstance(self.kernel, basestring):
-                    self.kernel_fun_ = kernel_dict[self.kernel](self.gamma_)
+            try:  # Compatibility between unicode and str, for Python 2 and 3
+                self.kernel_fun_ = kernel_dict[str(self.kernel)](self.gamma_)
+            except KeyError:
+                self.kernel_fun_ = self.kernel
             omega_train = self.kernel_fun_(X, X)
 
         alpha = np.eye(n) / self.C + omega_train

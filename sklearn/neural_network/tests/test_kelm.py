@@ -2,6 +2,9 @@
 Testing for Kernel Extreme Learning Machine module
 (sklearn.neural_network.kelm)
 
+Authors: Carlos Perales <sir.perales@gmail.com>
+License: BSD 3 clause
+
 """
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
