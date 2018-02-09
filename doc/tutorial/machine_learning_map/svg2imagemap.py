@@ -25,6 +25,8 @@ group1 through groupN are group ids.  If only want particular groups used,
 enter their ids here and all others will be ignored.
 """
 
+from __future__ import print_function
+
 import os
 import re
 import sys
@@ -70,7 +72,7 @@ for e in elements:
         for pointset in points:
             paths.append([e.getAttribute('id'), pointset])
     if e.hasAttribute('transform'):
-        print e.getAttribute('id'), e.getAttribute('transform')
+        print(e.getAttribute('id'), e.getAttribute('transform'))
         for transform in re.findall(r'(\w+)\((-?\d+.?\d*),(-?\d+.?\d*)\)', e.getAttribute('transform')):
             if transform[0] == 'translate':
                 x_shift = float(transform[1])

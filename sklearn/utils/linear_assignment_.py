@@ -29,7 +29,7 @@ def linear_assignment(X):
 
     Returns
     -------
-    indices : array,
+    indices : array
         The pairs of (row, col) indices in the original array giving
         the original ordering.
 

@@ -198,6 +198,23 @@ def test_multinomial_binary():
         assert_greater(np.mean(pred == target), .9)
 
 
+def test_multinomial_binary_probabilities():
+    # Test multinomial LR gives expected probabilities based on the
+    # decision function, for a binary problem.
+    X, y = make_classification()
+    clf = LogisticRegression(multi_class='multinomial', solver='saga')
+    clf.fit(X, y)
+
+    decision = clf.decision_function(X)
+    proba = clf.predict_proba(X)
+
+    expected_proba_class_1 = (np.exp(decision) /
+                              (np.exp(decision) + np.exp(-decision)))
+    expected_proba = np.c_[1-expected_proba_class_1, expected_proba_class_1]
+
+    assert_almost_equal(proba, expected_proba)
+
+
 def test_sparsify():
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape

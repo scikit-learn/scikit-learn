@@ -259,8 +259,7 @@ Conventions
 -----------
 
 scikit-learn estimators follow certain rules to make their behavior more
-predictive.
-
+predictive.  These are described in more detail in the :ref:`glossary`.
 
 Type casting
 ~~~~~~~~~~~~
