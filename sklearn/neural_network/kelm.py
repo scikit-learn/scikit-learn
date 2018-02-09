@@ -94,10 +94,10 @@ class KernelELM(BaseEstimator, ClassifierMixin):
             self.gamma_ = 0.0
             omega_train = X
         else:
-            try:  # Compatibility between unicode and str, for Python 2 and 3
-                self.kernel_fun_ = kernel_dict[str(self.kernel)](self.gamma_)
-            except KeyError:
+            if hasattr(self.kernel, '__call__'):  # It is a function
                 self.kernel_fun_ = self.kernel
+            else:  # It is a string
+                self.kernel_fun_ = kernel_dict[str(self.kernel)](self.gamma_)
             omega_train = self.kernel_fun_(X, X)
 
         alpha = np.eye(n) / self.C + omega_train
