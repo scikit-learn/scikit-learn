@@ -715,23 +715,26 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         new_unnormalized_variance = (new_unnormalized_variance *
                                      new_sample_count)
         for i in xrange(n_features):
-            if updated_sample_count[i] == 0:  # Avoid division by 0
-                continue
-            # Avoid division by 0
-            elif last_sample_count[i] == 0 or new_sample_count[i] == 0:
-                updated_unnormalized_variance = new_unnormalized_variance[i]
-            else:
-                last_over_new_count = (last_sample_count[i] /
-                                       new_sample_count[i])
-                last_unnormalized_variance = (last_variance[i] *
-                                              last_sample_count[i])
-                updated_unnormalized_variance = (
-                    last_unnormalized_variance +
-                    new_unnormalized_variance[i] +
-                    last_over_new_count / updated_sample_count[i] *
-                    (last_sum[i] / last_over_new_count - new_sum[i]) ** 2)
-            updated_variance[i] = (updated_unnormalized_variance /
-                                   updated_sample_count[i])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                if updated_sample_count[i] == 0:  # Avoid division by 0
+                    continue
+                # Avoid division by 0
+                elif last_sample_count[i] == 0 or new_sample_count[i] == 0:
+                    updated_unnormalized_variance = \
+                        new_unnormalized_variance[i]
+                else:
+                    last_over_new_count = (last_sample_count[i] /
+                                           new_sample_count[i])
+                    last_unnormalized_variance = (last_variance[i] *
+                                                  last_sample_count[i])
+                    updated_unnormalized_variance = (
+                        last_unnormalized_variance +
+                        new_unnormalized_variance[i] +
+                        last_over_new_count / updated_sample_count[i] *
+                        (last_sum[i] / last_over_new_count - new_sum[i]) ** 2)
+                updated_variance[i] = (updated_unnormalized_variance /
+                                       updated_sample_count[i])
 
     if flag == 0:  # If n_sample_count was not an array
         updated_sample_count = updated_sample_count[0]
