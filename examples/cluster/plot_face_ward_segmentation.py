@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.externals._pilutil import imresize
 
 
 # #############################################################################
@@ -34,7 +35,7 @@ except ImportError:
     face = sp.face(gray=True)
 
 # Resize it to 10% of the original size to speed up the processing
-face = sp.misc.imresize(face, 0.10) / 255.
+face = imresize(face, 0.10) / 255.
 
 X = np.reshape(face, (-1, 1))
 
@@ -60,7 +61,7 @@ print("Number of clusters: ", np.unique(label).size)
 plt.figure(figsize=(5, 5))
 plt.imshow(face, cmap=plt.cm.gray)
 for l in range(n_clusters):
-    plt.contour(label == l, contours=1,
+    plt.contour(label == l,
                 colors=[plt.cm.spectral(l / float(n_clusters)), ])
 plt.xticks(())
 plt.yticks(())
