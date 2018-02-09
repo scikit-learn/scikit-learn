@@ -217,7 +217,3 @@ def test_unfitted():
     clf = KernelELM()
     assert_raises_regexp(Exception, r"not\b.*\bfitted\b",
                          clf.predict, X)
-
-
-if __name__ == '__main__':
-    test_linear_elm_iris()
