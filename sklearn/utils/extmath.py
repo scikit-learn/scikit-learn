@@ -701,6 +701,8 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     new_sum[np.isnan(new_sum)] = 0
 
     new_sample_count = np.count_nonzero(~np.isnan(X), axis=0)
+    if not isinstance(new_sample_count, np.ndarray):
+        new_sample_count *= np.ones(n_features)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
