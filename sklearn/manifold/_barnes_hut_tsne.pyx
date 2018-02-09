@@ -122,7 +122,7 @@ cdef float compute_gradient_positive(float[:] val_P,
         long n_samples = indptr.shape[0] - 1
         float dij, qij, pij
         float C = 0.0
-        float exponent = (dof + 1.0) / -2.0
+        float exponent = (dof + 1.0) / 2.0
         float[3] buff
         clock_t t1 = 0, t2 = 0
 
@@ -140,7 +140,9 @@ cdef float compute_gradient_positive(float[:] val_P,
             for ax in range(n_dimensions):
                 buff[ax] = pos_reference[i, ax] - pos_reference[j, ax]
                 dij += buff[ax] * buff[ax]
-            qij = ((1.0 + dij / dof) ** exponent)
+            qij = dof / (dof + dij)
+            if exponent != 1:
+                qij **= exponent
             dij = pij * qij
 
             # only compute the error when needed
@@ -202,12 +204,14 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         # for the digits dataset, walking the tree
         # is about 10-15x more expensive than the
         # following for loop
-        exponent = (dof + 1.0) / -2.0
+        exponent = (dof + 1.0) / 2.0
         for j in range(idx // offset):
 
             dist2s = summary[j * offset + n_dimensions]
             size = summary[j * offset + n_dimensions + 1]
-            qijZ = (1.0 + dist2s / dof) ** exponent  # 1/(1+dist)
+            qijZ = dof / (dof + dist2s)  # 1/(1+dist)
+            if exponent != 1:
+                qijZ **= exponent
             sum_Q[0] += size * qijZ   # size of the node * q
             mult = size * qijZ * qijZ
             for ax in range(n_dimensions):
