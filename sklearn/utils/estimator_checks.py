@@ -2142,6 +2142,11 @@ def check_outliers_fit_predict(name, estimator_orig):
     assert_equal(y_pred.dtype, np.dtype('int'))
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
+    # check fit_predict = fit.predict when possible
+    if name not in NO_TEST_SET_DETECTORS:
+        y_pred_2 = estimator.fit(X).predict(X)
+        assert_array_equal(y_pred, y_pred_2)
+
     if hasattr(estimator, "contamination"):
         # proportion of outliers equal to contamination parameter when not
         # set to 'auto'
@@ -2154,8 +2159,3 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
-
-    # check fit_predict = fit.predict when possible
-    if name not in NO_TEST_SET_DETECTORS:
-        y_pred_2 = estimator.fit(X).predict(X)
-        assert_array_equal(y_pred, y_pred_2)
