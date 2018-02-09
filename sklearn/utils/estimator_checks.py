@@ -421,7 +421,7 @@ def _generate_sparse_matrix(X_csr):
     """
 
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
-        yield X_csr.asformat(sparse_format)
+        yield {"format": sparse_format, "X": X_csr.asformat(sparse_format)}
 
     X_coo = X_csr.asformat('coo')
     X_coo.row = X_coo.row.astype('int64')
@@ -431,9 +431,9 @@ def _generate_sparse_matrix(X_csr):
         X = X_csr.asformat(sparse_format)
         X.indices = X.indices.astype('int64')
         X.indptr = X.indptr.astype('int64')
-        yield X
+        yield {"format": sparse_format + "_64", "X": X}
 
-    yield X_coo
+    yield {"format": "coo_64", "X": X_coo}
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -448,7 +448,8 @@ def check_estimator_sparse_data(name, estimator_orig):
     with ignore_warnings(category=DeprecationWarning):
         estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    for X in _generate_sparse_matrix(X_csr):
+    for matrix in _generate_sparse_matrix(X_csr):
+        X = matrix['X']
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             if name in ['Scaler', 'StandardScaler']:
                 estimator = clone(estimator).set_params(with_mean=False)
@@ -466,15 +467,20 @@ def check_estimator_sparse_data(name, estimator_orig):
                 assert_equal(probs.shape, (X.shape[0], 4))
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
-                print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data: error message state explicitly that "
-                      "sparse input is not supported if this is not the case."
-                      % name)
-                raise
-            elif '32-bit integer' in repr(e).lower():
-                print("Estimator %s doesn't seem to support 64bit indices yet"
-                      % name)
+                if "64" in matrix['format']:
+                    raise AssertionError("Estimator % s doesn't seem to "
+                                         "support %s matrix yet, also it has"
+                                         " not been handled gracefully by"
+                                         " accept_large_sparse."
+                                         % (name, matrix['format']))
+                else:
+                    print("Estimator %s doesn't seem to fail gracefully on "
+                          "sparse data: error message state explicitly that "
+                          "sparse input is not supported if this is not"
+                          " the case." % name)
+                    raise
         except Exception as e:
+            print(e)
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)

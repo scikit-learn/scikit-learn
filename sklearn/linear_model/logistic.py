@@ -1216,8 +1216,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = np.float64
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                         order="C", accept_large_sparse=True)
+        if self.solver not in ['sag', 'saga']:
+            X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
+                             order="C", accept_large_sparse=True)
+        else:
+            X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
+                             order="C")
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape

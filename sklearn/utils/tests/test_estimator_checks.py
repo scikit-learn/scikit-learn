@@ -36,6 +36,7 @@ class CorrectNotFittedError(ValueError):
 
 
 class BaseBadClassifier(BaseEstimator, ClassifierMixin):
+
     def fit(self, X, y):
         return self
 
@@ -44,6 +45,7 @@ class BaseBadClassifier(BaseEstimator, ClassifierMixin):
 
 
 class ChangesDict(BaseEstimator):
+
     def __init__(self, key=0):
         self.key = key
 
@@ -58,6 +60,7 @@ class ChangesDict(BaseEstimator):
 
 
 class SetsWrongAttribute(BaseEstimator):
+
     def __init__(self, acceptable_key=0):
         self.acceptable_key = acceptable_key
 
@@ -68,6 +71,7 @@ class SetsWrongAttribute(BaseEstimator):
 
 
 class ChangesWrongAttribute(BaseEstimator):
+
     def __init__(self, wrong_attribute=0):
         self.wrong_attribute = wrong_attribute
 
@@ -78,6 +82,7 @@ class ChangesWrongAttribute(BaseEstimator):
 
 
 class ChangesUnderscoreAttribute(BaseEstimator):
+
     def fit(self, X, y=None):
         self._good_attribute = 1
         X, y = check_X_y(X, y)
@@ -85,12 +90,14 @@ class ChangesUnderscoreAttribute(BaseEstimator):
 
 
 class NoCheckinPredict(BaseBadClassifier):
+
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         return self
 
 
 class NoSparseClassifier(BaseBadClassifier):
+
     def fit(self, X, y):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         if sp.issparse(X):
@@ -103,6 +110,7 @@ class NoSparseClassifier(BaseBadClassifier):
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
+
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         self.coef_ = np.ones(X.shape[1])
@@ -116,6 +124,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 
 
 class NoSampleWeightPandasSeriesType(BaseEstimator):
+
     def fit(self, X, y, sample_weight=None):
         # Convert data
         X, y = check_X_y(X, y,
@@ -135,6 +144,7 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
 
 
 class NotInvariantPredict(BaseEstimator):
+
     def fit(self, X, y):
         # Convert data
         X, y = check_X_y(X, y,
@@ -149,6 +159,27 @@ class NotInvariantPredict(BaseEstimator):
         if X.shape[0] > 1:
             return np.ones(X.shape[0])
         return np.zeros(X.shape[0])
+
+
+class LargeSparseNotSetClassifier(BaseEstimator):
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc", "coo"),
+                         accept_large_sparse=True,
+                         multi_output=True,
+                         y_numeric=True)
+        if sp.issparse(X):
+            if X.getformat() == "coo":
+                if X.col.dtype == "int64" or X.col.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+            elif X.getformat() in ["csc", "csr"]:
+                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+
+        return self
 
 
 def test_check_estimator():
@@ -224,6 +255,12 @@ def test_check_estimator():
     finally:
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
+    msg = ('Estimator LargeSparseNotSetClassifier doesn\'t seem to support '
+           r'\S{3}_64 matrix yet, also it has not been handled gracefully by '
+           'accept_large_sparse.')
+
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        LargeSparseNotSetClassifier)
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
@@ -276,10 +313,12 @@ def test_check_estimators_unfitted():
 
 def test_check_no_attributes_set_in_init():
     class NonConformantEstimatorPrivateSet(object):
+
         def __init__(self):
             self.you_should_not_set_this_ = None
 
     class NonConformantEstimatorNoParamSet(object):
+
         def __init__(self, you_should_set_this_=None):
             pass
 
