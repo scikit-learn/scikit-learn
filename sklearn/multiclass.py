@@ -163,6 +163,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
         used. Thus for n_jobs = -2, all CPUs but one are used.
 
+    normalize_proba : bool, optional, default: True
+        Normalizes the predict_proba result so that the sum of the returned
+        matrix is 1.
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -176,9 +180,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
-    def __init__(self, estimator, n_jobs=1):
+    def __init__(self, estimator, n_jobs=1, normalize_proba=True):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.normalize_proba = normalize_proba
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -325,7 +330,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         labels both have a 90% probability of applying to a given sample.
 
         In the single label multiclass case, the rows of the returned matrix
-        sum to 1.
+        sum to 1 if normalize_proba is True in __init__.
 
         Parameters
         ----------
@@ -347,7 +352,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             # for two classes.
             Y = np.concatenate(((1 - Y), Y), axis=1)
 
-        if not self.multilabel_:
+        if not self.multilabel_ and self.normalize_proba:
             # Then, probabilities should be normalized to 1.
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
