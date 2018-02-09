@@ -835,7 +835,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
-    """Generate the "Friedman \#1" regression problem
+    """Generate the "Friedman #1" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -898,7 +898,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
 
 def make_friedman2(n_samples=100, noise=0.0, random_state=None):
-    """Generate the "Friedman \#2" regression problem
+    """Generate the "Friedman #2" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -964,7 +964,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
 
 def make_friedman3(n_samples=100, noise=0.0, random_state=None):
-    """Generate the "Friedman \#3" regression problem
+    """Generate the "Friedman #3" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -1421,7 +1421,7 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
 def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
                             n_features=2, n_classes=3,
                             shuffle=True, random_state=None):
-    """Generate isotropic Gaussian and label samples by quantile
+    r"""Generate isotropic Gaussian and label samples by quantile
 
     This classification dataset is constructed by taking a multi-dimensional
     standard normal distribution and defining classes separated by nested
