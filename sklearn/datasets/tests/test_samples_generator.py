@@ -4,6 +4,7 @@ from collections import defaultdict
 from functools import partial
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
 from sklearn.externals.six.moves import zip
 
@@ -269,8 +270,13 @@ def test_make_blobs_n_samples_list_with_centers():
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
 
-def test_make_blobs_n_samples_list_centers_none():
-    n_samples = [5, 3, 0]
+@pytest.mark.parametrize(
+    "n_samples",
+    [[5, 3, 0],
+     np.array([5, 3, 0]),
+     tuple([5, 3, 0])]
+)
+def test_make_blobs_n_samples_centers_none(n_samples):
     centers = None
     X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
 
