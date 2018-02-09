@@ -67,9 +67,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         .. deprecated:: 0.19
             This option will be removed in 0.21.
     save_mappings : boolean, default False
-        When True, FeatureHasher will save the mappings between feature names,
-        and the corresponding column. This is disabled by default for
-        performance reasons.
+        When true FeatureHasher will save the mappings between feature seen in
+        training data, and the corresponding column. This is disabled by
+        default for performance reasons.
 
 
     Examples
@@ -128,7 +128,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         indices, indptr, values, feature_to_index_map_ = \
             _hashing.transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign, self.save_mappings)
+                               self.alternate_sign, save_mappings)
 
         if save_mappings:
             self.feature_to_index_map_ = feature_to_index_map_
@@ -158,9 +158,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
 
-        y : this parameter is simply for compatibility and is not used.
+        y : this parameter is ignored.
 
-        fit_params : this paramter is simply for compatibility and is not used.
+        fit_params : this paramter is ignored.
 
         Returns
         -------
@@ -170,8 +170,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         return self._transform(X, self.save_mappings)
 
     def fit(self, X=None, y=None):
-        """This method calls fit_transform and is used when save_mappings
-        is true.
+        """This method calls fit_transform if save_mappings is true. Otherwise,
+        it doesn't do anything.
 
         Parameters
         ----------
@@ -211,7 +211,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
                              " save_mappings=True. Please call"
                              " .fit_transform()")
 
-        return self._transform(raw_X, self.save_mappings)
+        return self._transform(raw_X, False)
 
     def get_feature_names(self):
         """Returns a list of the feature mappings.
