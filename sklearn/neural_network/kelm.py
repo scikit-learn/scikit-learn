@@ -5,11 +5,15 @@ from sklearn.utils.multiclass import unique_labels
 from sklearn.gaussian_process import kernels
 import abc
 
+# Authors: Carlos Perales <sir.perales@gmail.com>
+# License: BSD 3 clause
+
 kernel_dict = {}
 for k_str in dir(kernels):
     k = getattr(kernels, k_str)
     if isinstance(k, abc.ABCMeta):
-        kernel_dict.update({k_str.lower(): k})
+        kernel_dict[k_str.lower()] =  k
+kernel_dict['linear'] = kernel_dict['dotproduct']
 
 
 class KernelELM(BaseEstimator, ClassifierMixin):
@@ -53,6 +57,8 @@ class KernelELM(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
+        if self.C <= 0:
+            raise ValueError('C must be positive')
         X, y = check_X_y(X, y)
         self.classes_ = unique_labels(y)
 
@@ -76,19 +82,27 @@ class KernelELM(BaseEstimator, ClassifierMixin):
         # T is already encoded
 
         # Kernels
-        if self.gamma == 'auto':
-            gamma = 1 / n
+        if self.gamma == 'auto' and self.kernel == 'linear':
+            self.gamma_ = 0.0
+        elif self.gamma == 'auto' and self.kernel != 'linear':
+            self.gamma_ = 1 / n
         else:
-            gamma = self.gamma
-        if isinstance(self.kernel, str):
-            self.kernel_fun_ = kernel_dict[self.kernel](length_scale=gamma)
-        else:
-            self.kernel_fun_ = self.kernel
+            self.gamma_ = self.gamma
 
         # Essential fitting
-        omega_train = self.kernel_fun_(X=X)
+        if self.kernel == 'precomputed':
+            self.gamma_ = 0.0
+            omega_train = X
+        else:
+            if isinstance(self.kernel, str):
+                self.kernel_fun_ = kernel_dict[self.kernel](self.gamma_)
+            else:
+                self.kernel_fun_ = self.kernel
+            omega_train = self.kernel_fun_(X, X)
+
         alpha = np.eye(n) / self.C + omega_train
         self.beta_ = np.linalg.solve(alpha, T)
+        self.h_ = self.beta_.shape[0]
 
         # Saving training data
         self.X_ = X
@@ -113,10 +127,17 @@ class KernelELM(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, ['X_', 'y_'])
 
         # Input validation
-        X = check_array(X)
+        try:
+            X = check_array(X)
+        except TypeError:
+            raise ValueError('Predict with sparse input when trained with dense')
 
         # Fitting
-        omega_test = self.kernel_fun_(X=self.X_, Y=X)
+        if self.kernel == 'precomputed':
+            omega_test = X.T
+        else:
+            omega_test = self.kernel_fun_(self.X_, X)
+
         indicator = np.dot(omega_test.T, self.beta_)
 
         # Decoding
