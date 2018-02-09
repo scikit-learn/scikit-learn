@@ -1414,7 +1414,8 @@ def check_outliers_train(name, estimator_orig):
     decision = estimator.decision_function(X)
     assert_equal(decision.shape, (n_samples,))
     dec_pred = (decision >= 0).astype(np.int)
-    assert_array_equal(dec_pred, y_pred == 1)
+    dec_pred[dec_pred == 0] = -1
+    assert_array_equal(dec_pred, y_pred)
 
     # raises error on malformed input for decision_function
     assert_raises(ValueError, estimator.decision_function, X.T)
@@ -2117,6 +2118,7 @@ def check_outliers_output_dtypes(name, estimator_orig):
 
     y_pred = estimator.predict(X)
     assert_equal(y_pred.dtype, np.dtype('int'))
+    assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     decision = estimator.decision_function(X)
     assert_equal(decision.dtype, np.dtype('float'))
@@ -2138,6 +2140,7 @@ def check_outliers_fit_predict(name, estimator_orig):
     y_pred = estimator.fit_predict(X)
     assert_equal(y_pred.shape, (n_samples,))
     assert_equal(y_pred.dtype, np.dtype('int'))
+    assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     if hasattr(estimator, "contamination"):
         # proportion of outliers equal to contamination parameter when not
