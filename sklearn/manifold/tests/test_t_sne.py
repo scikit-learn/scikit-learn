@@ -49,11 +49,11 @@ def test_gradient_descent_stops():
         def __init__(self):
             self.it = -1
 
-        def __call__(self, _):
+        def __call__(self, _, compute_error=True):
             self.it += 1
             return (10 - self.it) / 10.0, np.array([1e-5])
 
-    def flat_function(_):
+    def flat_function(_, compute_error=True):
         return 0.0, np.ones(1)
 
     # Gradient norm
@@ -607,6 +607,20 @@ def test_64bit():
             # tsne cython code is only single precision, so the output will
             # always be single precision, irrespectively of the input dtype
             assert effective_type == np.float32
+
+
+def test_kl_divergence_not_nan():
+    # Ensure kl_divergence_ is computed at last iteration
+    # even though n_iter % n_iter_check != 0, i.e. 1003 % 50 != 0
+    random_state = check_random_state(0)
+    methods = ['barnes_hut', 'exact']
+    for method in methods:
+        X = random_state.randn(50, 2)
+        tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
+                    random_state=0, method=method, verbose=0, n_iter=1003)
+        tsne.fit_transform(X)
+
+        assert not np.isnan(tsne.kl_divergence_)
 
 
 def test_barnes_hut_angle():

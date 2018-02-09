@@ -118,7 +118,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
 
 
 def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
-                   skip_num_points=0):
+                   skip_num_points=0, compute_error=True):
     """t-SNE objective function: gradient of the KL divergence
     of p_ijs and q_ijs and the absolute error.
 
@@ -144,6 +144,9 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
 
+    compute_error: bool (optional, default:True)
+        If False, the kl_divergence is not computed and returns NaN.
+
     Returns
     -------
     kl_divergence : float
@@ -166,7 +169,11 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     # np.sum(x * y) because it calls BLAS
 
     # Objective: C (Kullback-Leibler divergence of P and Q)
-    kl_divergence = 2.0 * np.dot(P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+    if compute_error:
+        kl_divergence = 2.0 * np.dot(
+            P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+    else:
+        kl_divergence = np.nan
 
     # Gradient: dC/dY
     # pdist always returns double precision distances. Thus we need to take
@@ -183,7 +190,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
 
 def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
-                      angle=0.5, skip_num_points=0, verbose=False):
+                      angle=0.5, skip_num_points=0, verbose=False,
+                      compute_error=True):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
@@ -224,6 +232,9 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     verbose : int
         Verbosity level.
 
+    compute_error: bool (optional, default:True)
+        If False, the kl_divergence is not computed and returns NaN.
+
     Returns
     -------
     kl_divergence : float
@@ -243,7 +254,8 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     grad = np.zeros(X_embedded.shape, dtype=np.float32)
     error = _barnes_hut_tsne.gradient(val_P, X_embedded, neighbors, indptr,
                                       grad, angle, n_components, verbose,
-                                      dof=degrees_of_freedom)
+                                      dof=degrees_of_freedom,
+                                      compute_error=compute_error)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
     grad *= c
@@ -335,6 +347,10 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
+        check_convergence = (i + 1) % n_iter_check == 0
+        # only compute the error when needed
+        kwargs['compute_error'] = check_convergence or i == n_iter - 1
+
         error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
@@ -347,7 +363,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if (i + 1) % n_iter_check == 0:
+        if check_convergence:
             toc = time()
             duration = toc - tic
             tic = toc
