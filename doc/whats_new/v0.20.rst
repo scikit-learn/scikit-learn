@@ -27,7 +27,7 @@ random sampling procedures.
 - :class:`metrics.roc_auc_score` (bug fix)
 - :class:`metrics.roc_curve` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
-- :class:`neural_network.MLPRidgeClassifierCV_store_cv_values_issue_10284Regressor` (bug fix)
+- :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
 
 Details are listed in the changelog below.
