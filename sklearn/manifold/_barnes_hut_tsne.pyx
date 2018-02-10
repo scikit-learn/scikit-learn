@@ -125,6 +125,7 @@ cdef float compute_gradient_positive(float[:] val_P,
         float exponent = (dof + 1.0) / 2.0
         float[3] buff
         clock_t t1 = 0, t2 = 0
+        float dt
 
     if verbose > 10:
         t1 = clock()
@@ -176,13 +177,14 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         long dta = 0
         long dtb = 0
         long offset = n_dimensions + 2
-        long* l
         float size, dist2s, mult
+        float exponent = (dof + 1.0) / 2.0
         double qijZ
         float[1] iQ
         float[3] force, neg_force, pos
         clock_t t1 = 0, t2 = 0, t3 = 0
         int take_timing = 1 if qt.verbose > 20 else 0
+        float* summary
 
     summary = <float*> malloc(sizeof(float) * n * offset)
 
@@ -204,7 +206,6 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         # for the digits dataset, walking the tree
         # is about 10-15x more expensive than the
         # following for loop
-        exponent = (dof + 1.0) / 2.0
         for j in range(idx // offset):
 
             dist2s = summary[j * offset + n_dimensions]
@@ -247,6 +248,8 @@ def gradient(float[:] val_P,
     # it passes the 'forces' array by reference and fills thats array
     # up in-place
     cdef float C
+    cdef int n
+    cdef str m
     n = pos_output.shape[0]
     assert val_P.itemsize == 4
     assert pos_output.itemsize == 4
