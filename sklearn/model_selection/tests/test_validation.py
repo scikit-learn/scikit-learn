@@ -734,6 +734,18 @@ def test_permutation_test_score_allow_nans():
     permutation_test_score(p, X, y, cv=5)
 
 
+def test_permutation_test_score_fit_params():
+    est = SVC(random_state=0)
+    X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
+    w = np.arange(50)
+    l_with_fit_params = permutation_test_score(est, X, y,
+                                               fit_params={'sample_weight': w})
+    l_without_fit_params = permutation_test_score(est, X, y)
+    assert not np.isclose(l_with_fit_params[0], l_without_fit_params[0])
+    assert not np.isclose(l_with_fit_params[1].mean(),
+                          l_without_fit_params[1].mean())
+
+
 def test_cross_val_score_allow_nans():
     # Check that cross_val_score allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
@@ -1173,13 +1185,13 @@ def test_learning_curve_fit_params():
     X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
     w = np.arange(50)
     gamma_range = np.logspace(-6, -1, 5)
-    l_with_samples_weight = validation_curve(est, X, y, "gamma", gamma_range,
+    l_with_fit_params = validation_curve(est, X, y, "gamma", gamma_range,
                                              fit_params={'sample_weight': w})
-    l_without_sample_weight = validation_curve(est, X, y, "gamma", gamma_range)
-    assert not np.isclose(l_with_samples_weight[0].mean(),
-                          l_without_sample_weight[0].mean())
-    assert not np.isclose(l_with_samples_weight[1].mean(),
-                          l_without_sample_weight[1].mean())
+    l_without_fit_params = validation_curve(est, X, y, "gamma", gamma_range)
+    assert not np.isclose(l_with_fit_params[0].mean(),
+                          l_without_fit_params[0].mean())
+    assert not np.isclose(l_with_fit_params[1].mean(),
+                          l_without_fit_params[1].mean())
 
 
 def test_validation_curve():
