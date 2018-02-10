@@ -619,13 +619,18 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
+                        warn_on_dtype=True, estimator=self,
+                        force_all_finite='allow-nan', dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
         if sparse.issparse(X):
+            X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                            warn_on_dtype=True, estimator=self,
+                            dtype=FLOAT_DTYPES)
+
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
