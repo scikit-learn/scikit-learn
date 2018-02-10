@@ -42,8 +42,9 @@ matrix:
     # It also runs tests requiring Pandas and PyAMG
     - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
            NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" PANDAS_VERSION="0.20.3"
-           CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" PILLOW_VERSION="4.3.0"
-           COVERAGE=true CHECK_PYTEST_SOFT_DEPENDENCY="true"
+           CYTHON_VERSION="0.26.1" PYAMG_VERSIONi="3.3.2" PILLOW_VERSION="4.3.0"
+           COVERAGE=true
+           CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
       if: type != cron
     # flake8 linting on diff wrt common ancestor with upstream/master
     - env: RUN_FLAKE8="true" SKIP_TESTS="true"
