@@ -953,7 +953,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
 
 
 def _permutation_test_score(estimator, X, y, groups, cv, scorer,
-                            fit_params=None):
+                            fit_params):
     """Auxiliary function for permutation_test_score"""
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}

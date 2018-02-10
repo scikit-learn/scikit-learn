@@ -1185,9 +1185,9 @@ def test_learning_curve_fit_params():
     X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
     w = np.arange(50)
     gamma_range = np.logspace(-6, -1, 5)
-    l_with_fit_params = validation_curve(est, X, y, "gamma", gamma_range,
-                                             fit_params={'sample_weight': w})
-    l_without_fit_params = validation_curve(est, X, y, "gamma", gamma_range)
+    l_with_fit_params = learning_curve(est, X, y, "gamma", gamma_range,
+                                       fit_params={'sample_weight': w})
+    l_without_fit_params = learning_curve(est, X, y, "gamma", gamma_range)
     assert not np.isclose(l_with_fit_params[0].mean(),
                           l_without_fit_params[0].mean())
     assert not np.isclose(l_with_fit_params[1].mean(),
@@ -1261,9 +1261,9 @@ def test_validation_curve_fit_params():
     est = SVC(random_state=0)
     X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
     w = np.arange(50)
-    l_with_fit_params = learning_curve(est, X, y,
-                                       fit_params={'sample_weight': w})
-    l_without_fit_params = learning_curve(est, X, y)
+    l_with_fit_params = validation_curve(est, X, y,
+                                         fit_params={'sample_weight': w})
+    l_without_fit_params = validation_curve(est, X, y)
     assert not np.isclose(l_with_fit_params[1].mean(),
                           l_without_fit_params[1].mean())
 
