@@ -1,19 +1,31 @@
-
 .. _california_housing:
-
 The California Housing dataset
 ================================
-
-
+Notes
+-----
+Data Set Characteristics:
+    :Number of Instances: 20640
+    :Number of Attributes: 9
+    :Attribute Information:
+        - Median House Value
+        - Median Income
+        - Housing Median Age
+        - Total Rooms
+        - Total Bedrooms
+        - Population
+        - Households
+        - Latitude
+        - Longitude
+    :Missing Attribute Values:
+        None (Missing values were taken out prior
+        to publishing of the dataset)
+               
 This data set contains a set of housing information taken 
 in the 1990 Census (in the US). The :func:`sklearn.datasets.fetch_california_housing`
 function is the data fetching / caching function that downloads the data
 archive from AT&T.
-
-.. _This data set from the original source:
+.. _This data is originally from :
 http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
-
-
 As described on the original website:
 
     We collected information on the variables using all the block 
@@ -29,8 +41,7 @@ As described on the original website:
     housing median age, total rooms,total bedrooms, population, households,
     latitude, and longitude in that order.
 
-The data set can be accessed using Python by importing like this:
-
-
->>> from sklearn.datasets import fetch_california_housing 
->>> cal_housing_data = fetch_california_housing()
+References
+------------------
+ - Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
+   Statistics and Probability Letters, 33 (1997) 291-297.
