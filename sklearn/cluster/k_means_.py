@@ -222,11 +222,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     tol : float, optional
         The relative increment in the results before declaring convergence.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for centroid initialization. It
+        also generates random seeds for the parallel execution.
+        See :term:`random_state <Glossary>`.
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -455,11 +454,9 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
     precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for centroid initialization.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -645,11 +642,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     init : {'k-means++', 'random' or ndarray or callable} optional
         Method for initialization
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for centroid initialization.
+        See :term:`random_state <Glossary>`.
 
     x_squared_norms :  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -762,11 +757,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     verbose : int, default 0
         Verbosity mode.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for centroid initialization.
+        See :term:`random_state <Glossary>`.
 
     copy_x : boolean, default True
         When pre-computing distances it is more numerically accurate to center
@@ -1046,11 +1039,10 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for centroid initialization and to
+        pick new clusters amongst observations with uniform probability
+        See :term:`random_state <Glossary>`.
 
     random_reassign : boolean, optional
         If True, centers with very low counts are randomly reassigned
@@ -1259,11 +1251,9 @@ class MiniBatchKMeans(KMeans):
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for centroid initialization and
+        random reassignment.  See :term:`random_state <Glossary>`.
 
     tol : float, default: 0.0
         Control early stopping based on the relative center changes as
