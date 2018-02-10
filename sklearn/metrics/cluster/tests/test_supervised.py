@@ -12,10 +12,11 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
+from sklearn.metrics.cluster import class_cluster_match
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
-        assert_equal, assert_almost_equal, assert_raise_message,
+    assert_equal, assert_almost_equal, assert_raise_message,
 )
 from numpy.testing import assert_array_almost_equal
 
@@ -175,8 +176,8 @@ def test_expected_mutual_info_overflow():
 
 def test_int_overflow_mutual_info_score():
     # Test overflow in mutual_info_classif
-    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] * (3271 +
-                 204) + [4] * (814 + 39) + [5] * (316 + 20))
+    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3]
+                 * (3271 + 204) + [4] * (814 + 39) + [5] * (316 + 20))
     y = np.array([0] * 52632 + [1] * 2529 + [0] * 14660 + [1] * 793 +
                  [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
                  [1] * 20)
@@ -274,3 +275,86 @@ def test_fowlkes_mallows_score_properties():
     # symmetric and permutation(both together)
     score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)
+
+
+def test_class_cluster_match():
+    # handcrafted example - same number of clusters and classes
+    y_true = ['a'] * 1 + ['b'] * 2 + ['c'] * 20 + ['d'] * 6 + ['e'] * \
+        13 + ['f'] * 2 + ['g'] * 3 + ['h'] * 3 + ['i'] * 2 + ['j'] * 1
+    y_pred = [6] * 1 + [2] * 2 + [0] * 6 + [2] * 10 + [8] * 4 + [1] * 4 + [5] * 2 + [0] * 4 + \
+        [3] * 5 + [6] * 2 + [9] * 2 + [7] * 2 + [0] * 2 + [8] * 1 + [4] * 3 + [3] * 2 + [8] * 1
+    expected = [
+        'a',
+        'c',
+        'c',
+        'g',
+        'g',
+        'g',
+        'g',
+        'g',
+        'g',
+        'c',
+        'c',
+        'c',
+        'c',
+        'c',
+        'c',
+        'c',
+        'c',
+        'c',
+        'c',
+        'j',
+        'j',
+        'j',
+        'j',
+        'd',
+        'd',
+        'd',
+        'd',
+        'i',
+        'i',
+        'g',
+        'g',
+        'g',
+        'g',
+        'e',
+        'e',
+        'e',
+        'e',
+        'e',
+        'a',
+        'a',
+        'b',
+        'b',
+        'f',
+        'f',
+        'g',
+        'g',
+        'j',
+        'h',
+        'h',
+        'h',
+        'e',
+        'e',
+        'j']
+
+    y_pred_translated = class_cluster_match(y_true, y_pred)
+    assert_equal(y_pred_translated, expected)
+
+    # handcrafted example - more clusters than classes
+    y_true = ['a', 'a', 'a', 'b', 'b', 'b']
+    y_pred = [4, 0, 1, 1, 2, 2]
+
+    expected = ['DEF_CLASS1', 'a', 'DEF_CLASS0', 'DEF_CLASS0', 'b', 'b']
+
+    y_pred_translated = class_cluster_match(y_true, y_pred)
+    assert_equal(y_pred_translated, expected)
+
+    # handcrafted example - more clusters than classes
+    y_true = ['a', 'd', 'e', 'b', 'b', 'b']
+    y_pred = [0, 0, 1, 1, 2, 2]
+
+    expected = ['a', 'a', 'e', 'e', 'b', 'b']
+
+    y_pred_translated = class_cluster_match(y_true, y_pred)
+    assert_equal(y_pred_translated, expected)

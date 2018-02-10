@@ -1646,3 +1646,59 @@ Drawbacks
 
  * `Wikipedia entry for contingency matrix
    <https://en.wikipedia.org/wiki/Contingency_table>`_
+
+.. _class_cluster_match:
+
+Class-cluster Match
+-------------------
+
+Class-cluster match
+(:func:`sklearn.metrics.cluster.class_cluster_matching`) provides a
+friendly way for the user to calculate classical classification
+metrics, such as :func:`sklearn.metrics.accuracy_score` and 
+:func:`sklearn.metrics.f1_score`. 
+
+Here is an example::
+
+   >>> from sklearn.metrics.cluster import class_cluster_match
+   >>> x = ["a", "a", "a", "b", "b", "b"]
+   >>> y = [0, 0, 1, 1, 2, 2]
+   >>> contingency_matrix(x, y)
+   array([[2, 1, 0],
+          [0, 1, 2]])
+
+The first row of output array indicates that there are three samples whose
+true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
+and none is in 2. And the second row indicates that there are three samples
+whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
+1 and two are in 2.
+
+A :ref:`confusion matrix <confusion_matrix>` for classification is a square
+contingency matrix where the order of rows and columns correspond to a list
+of classes.
+
+
+Advantages
+~~~~~~~~~~
+
+- Allows to examine the spread of each true cluster across predicted
+  clusters and vice versa.
+
+- The contingency table calculated is typically utilized in the calculation
+  of a similarity statistic (like the others listed in this document) between
+  the two clusterings.
+
+Drawbacks
+~~~~~~~~~
+
+- Contingency matrix is easy to interpret for a small number of clusters, but
+  becomes very hard to interpret for a large number of clusters.
+
+- It doesn't give a single metric to use as an objective for clustering
+  optimisation.
+
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_

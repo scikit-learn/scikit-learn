@@ -20,12 +20,12 @@ from math import log
 
 import numpy as np
 from scipy import sparse as sp
-from scipy.optimize import linprog
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
 from ...utils.multiclass import unique_labels
 from ...utils.fixes import comb
+from ...utils import linear_assignment
 
 
 def comb2(n):
@@ -875,62 +875,30 @@ def entropy(labels):
     return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
 
 
-def max_assignment_score(A):
-    """Sort matrix A columns to achieve greater main diagonal sum
-    Sorting is done by maximization of the confusion matrix :math:`C`
-    main diagonal sum :math:`\sum{i=0}^{K}C_{i, i}`. Notice the
-    number of cluster has to be equal or smaller than the number
-    of true classes.
-    Parameters
-    ----------
-    A : array, shape = [n,n]
-        Square numerical matrix
-    Returns
-    -------
-    B : array, shape = [n,n]
-        Pivot matrix that sorts A for maximum main diagonal sum
-    References
-    ----------
-    Examples
-    --------
-    >>> from sklearn.metrics.cluster import max_assignment_score
-    >>> import numpy as np
-    >>> A = np.asarray([[2, 1, 0],
-    ...                [1, 0, 0],
-    ...                [0, 2, 0]])
-    >>> max_assignment_score(A)
-    array([[ 1.,  0.,  0.],
-           [ 0.,  0.,  1.],
-           [ 0.,  1.,  0.]])
-    """
-    n, n = A.shape
-    res = linprog(-A.ravel(),
-                  A_eq=np.r_[np.kron(np.identity(n), np.ones((1, n))),
-                             np.kron(np.ones((1, n)), np.identity(n))],
-                  b_eq=np.ones((2*n,)), bounds=n*n*[(0, None)])
-    assert res.success
-    return res.x.reshape(n, n).T
-
-
 def class_cluster_match(y_true, y_pred):
-    """Sort prediction labels to maximize the confusion matrix main diagonal sum
-    Sort the prediction labels of a clustering output to enable calc
-    of external metrics (eg. accuracy, f1_score, ...). Sorting is done by
+    """Translate prediction labels to maximize the accuracy.
+
+    Translate the prediction labels of a clustering output to enable calc
+    of external metrics (eg. accuracy, f1_score, ...). Translation is done by
     maximization of the confusion matrix :math:`C` main diagonal sum
     :math:`\sum{i=0}^{K}C_{i, i}`. Notice the number of cluster has to be equal
      or smaller than the number of true classes.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
         Ground truth (correct) target values.
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a clustering algorithm.
+
     Returns
     -------
-    y_pred_sort : array, shape = [n_classes, n_classes]
-        Estimated targets sorted for maximum accuracy with y_true
+    trans : array, shape = [n_classes, n_classes]
+        Mapping of y_pred clusters, such that :math:`trans\subseteq y_true`
+
     References
     ----------
+
     Examples
     --------
     >>> from sklearn.metrics import confusion_matrix
@@ -945,25 +913,28 @@ def class_cluster_match(y_true, y_pred):
            [1, 0, 0],
            [0, 0, 2]])
     """
-    classes = list(unique_labels(y_true))
+
+    classes = unique_labels(y_true).tolist()
     n_classes = len(classes)
-    num_classes = [classes.index(y) for y in y_true]
-    clusters = list(unique_labels(y_pred))
+    clusters = unique_labels(y_pred).tolist()
     n_clusters = len(clusters)
-    num_clusters = [clusters.index(y) for y in y_pred]
 
-    dims = max(n_classes, n_clusters)
-    classes += ['non_class'+str(i) for i in range(dims-n_classes)]
-    cm = np.zeros((dims, dims))
+    if n_clusters > n_classes:
+        classes += ['DEF_CLASS'+str(i) for i in range(n_clusters-n_classes)]
+    elif n_classes > n_clusters:
+        clusters += ['DEF_CLUSTER'+str(i) for i in range(n_classes-n_clusters)]
 
-    for y_t, y_p in zip(num_classes, num_clusters):
-        cm[y_t, y_p] += 1
+    C = contingency_matrix(y_true, y_pred)
+    true_idx, pred_idx = linear_assignment(-C).T
 
-    shuffle = max_assignment_score(cm)
+    true_idx = true_idx.tolist()
+    pred_idx = pred_idx.tolist()
 
-    matching_clusters = [row.tolist().index(1) for row in shuffle]
+    true_idx = [classes[idx] for idx in true_idx]
+    true_idx = true_idx + list(set(classes) - set(true_idx))
+    pred_idx = [clusters[idx] for idx in pred_idx]
+    pred_idx = pred_idx + list(set(clusters) - set(pred_idx))
 
-    y_pred_sort = [matching_clusters[y] for y in num_clusters]
-    y_pred_sort = [classes[y] for y in y_pred_sort]
+    return_list = [true_idx[pred_idx.index(y)] for y in y_pred]
 
-    return y_pred_sort
+    return return_list
