@@ -627,6 +627,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
         if sparse.issparse(X):
+            # FIXME: remove this check statement
             X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                             warn_on_dtype=True, estimator=self,
                             dtype=FLOAT_DTYPES)

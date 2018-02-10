@@ -696,7 +696,8 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
 
     new_sample_count = np.count_nonzero(~np.isnan(X), axis=0)
     if not isinstance(new_sample_count, np.ndarray):
-        new_sample_count *= np.ones(X.shape[1], dtype=np.float)  # If the input array is 1D
+        # If the input array is 1D
+        new_sample_count *= np.ones(X.shape[1], dtype=np.float)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
@@ -709,7 +710,8 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         new_unnormalized_variance = var_func(X, axis=0)
         # To put zero in places where the np.nanvar returned NaN value
         new_unnormalized_variance[np.isnan(new_unnormalized_variance)] = 0
-        new_unnormalized_variance = new_unnormalized_variance * new_sample_count
+        new_unnormalized_variance = (new_unnormalized_variance *
+                                     new_sample_count)
         if (last_sample_count == 0).all():  # Avoid division by 0
             updated_unnormalized_variance = new_unnormalized_variance
         else:
