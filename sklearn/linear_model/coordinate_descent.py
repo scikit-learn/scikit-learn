@@ -761,6 +761,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         self.coef_ = map(np.squeeze, coef_)
         self.dual_gap_ = map(np.squeeze, dual_gaps_)
+        
         self._set_intercept(X_offset, y_offset, X_scale)
 
         # workaround since _set_intercept will cast self.coef_ into X.dtype
