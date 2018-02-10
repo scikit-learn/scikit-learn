@@ -318,6 +318,17 @@ def test_lasso_alpha_warning():
     clf = Lasso(alpha=0)
     assert_warns(UserWarning, clf.fit, X, Y)
 
+def test_lasso_fit_intercept():
+    X = [[-1], [0], [1]]
+    Y = [-1, 0, 1]
+
+    clf = Lasso(fit_intercept=False)
+    clf.fit(X, Y)
+    assert_equal(clf.coef_.shape, (1,))
+
+    clf2 = Lasso(fit_intercept=True)
+    clf2.fit(X, Y)
+    assert_equal(clf.coef_.shape, (1,))
 
 def test_lasso_positive_constraint():
     X = [[-1], [0], [1]]
