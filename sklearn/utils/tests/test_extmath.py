@@ -470,7 +470,6 @@ def test_logistic_sigmoid():
 
 
 def test_incremental_mean_and_var_nan():
-    print "Running test_incremental_mean_and_var"
     # Test mean and variance when an array has floating NaN values
     A = np.array([[600, 470, 170, 430, np.nan],
                   [600, np.nan, 170, 430, 300],
