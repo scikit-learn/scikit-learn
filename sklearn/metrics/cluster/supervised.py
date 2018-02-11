@@ -931,9 +931,9 @@ def class_cluster_match(y_true, y_pred):
     pred_idx = pred_idx.tolist()
 
     true_idx = [classes[idx] for idx in true_idx]
-    true_idx = true_idx + list(set(classes) - set(true_idx))
+    true_idx = true_idx + sorted(set(classes) - set(true_idx))
     pred_idx = [clusters[idx] for idx in pred_idx]
-    pred_idx = pred_idx + list(set(clusters) - set(pred_idx))
+    pred_idx = pred_idx + sorted(set(clusters) - set(pred_idx))
 
     return_list = [true_idx[pred_idx.index(y)] for y in y_pred]
 
