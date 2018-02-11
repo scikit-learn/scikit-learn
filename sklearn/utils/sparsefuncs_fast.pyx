@@ -311,7 +311,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # Update stats
     updated_var = (last_var + new_var + last_over_new_n / updated_n *
                    (last_mean / last_over_new_n - new_mean) ** 2)
-    updated_mean = last_mean + new_mean / updated_n
+    updated_mean = (last_mean + new_mean) / updated_n
     updated_var /= updated_n
 
     return updated_mean, updated_var, updated_n
