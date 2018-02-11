@@ -1465,33 +1465,27 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
             assert_array_equal(dec_exp, y_pred,
                                err_msg="decision_function does not match "
                                "classifier for %r: expected '%s', got '%s'" %
-                               (classifier,
-                               ", ".join(map(str, dec_exp)),
-                               ", ".join(map(str, y_pred))))
+                               (classifier, ", ".join(map(str, dec_exp)), ", "
+                               .join(map(str, y_pred))))
         elif getattr(classifier, 'decision_function_shape', 'ovr') == 'ovr':
             decision_y = np.argmax(decision, axis=1).astype(int)
             y_exp = classifier.classes_[decision_y]
             assert_array_equal(y_exp, y_pred,
                                err_msg="decision_function does not match "
                                "classifier for %r: expected '%s', got '%s'" %
-                               (classifier,
-                               ", ".join(map(str, y_exp)),
-                               ", ".join(map(str, y_pred))))
+                               (classifier, ", ".join(map(str, y_exp)), ", "
+                               .join(map(str, y_pred))))
 
     # training set performance
     if name != "ComplementNB":
         # This is a pathological data set for ComplementNB.
         assert_array_equal(np.unique(y), np.unique(y_pred))
     if np.any(classifier.classes_ != classes):
-        msg = ("Unexpected classes_ attribute for: expected '%s', got '%s'"
-        % (", ".join(map(str, classes)),
-        ", ".join(map(str, classifier.classes_))))
         assert_array_equal(classes, classifier.classes_,
                            err_msg="Unexpected classes_ attribute for %r: "
                            "expected '%s', got '%s'" %
-                           (classifier,
-                           ", ".join(map(str, classes)),
-                           ", ".join(map(str, classifier.classes_))))
+                           (classifier, ", ".join(map(str, classes)), ", "
+                           .join(map(str, classifier.classes_))))
 
 
 def choose_check_classifiers_labels(name, y, y_names):
