@@ -1445,15 +1445,23 @@ Detection error tradeoff (DET)
 ---------------------------------------
 
 The function :func:`detection_error_tradeoff_curve` computes the
-`detection error tradeoff curve, or DET curve <https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_.
+`detection error tradeoff curve (DET) curve
+<https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_.
 Quoting Wikipedia :
 
-  "A detection error tradeoff (DET) graph is a graphical plot of error rates for binary classification systems, plotting false reject rate vs. false accept rate. The x- and y-axes are scaled non-linearly by their standard normal deviates (or just by logarithmic transformation), yielding tradeoff curves that are more linear than ROC curves, and use most of the image area to highlight the differences of importance in the critical operating region."
+  "A detection error tradeoff (DET) graph is a graphical plot of error rates for
+  binary classification systems, plotting false reject rate vs. false accept
+  rate. The x- and y-axes are scaled non-linearly by their standard normal
+  deviates (or just by logarithmic transformation), yielding tradeoff curves
+  that are more linear than ROC curves, and use most of the image area to
+  highlight the differences of importance in the critical operating region."
 
-This function requires the true binary
-value and the target scores, which can either be probability estimates of the
-positive class, confidence values, or binary decisions.
-Here is a small example of how to use the :func:`detection_error_tradeoff_curve` function::
+This function requires the true binary value and the target scores, which can
+either be probability estimates of the positive class, confidence values, or
+binary decisions.
+
+Here is a small example of how to use the
+:func:`detection_error_tradeoff_curve` function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import detection_error_tradeoff_curve
@@ -1473,10 +1481,13 @@ Here is a small example of how to use the :func:`detection_error_tradeoff_curve`
   * `Wikipedia entry for Detection error tradeoff
     <https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_
   * A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
-    `The DET Curve in Assessment of Detection Task Performance <http://www.dtic.mil/docs/citations/ADA530509>`_,
+    `The DET Curve in Assessment of Detection Task Performance
+    <http://www.dtic.mil/docs/citations/ADA530509>`_,
     NIST 1997.
-  * `2008 NIST Speaker Recognition Evaluation Results <https://www.nist.gov/itl/iad/mig/2008-nist-speaker-recognition-evaluation-results>`_
-  * `DET-Curve Plotting software for use with MATLAB <https://www.nist.gov/file/65996>`_
+  * `2008 NIST Speaker Recognition Evaluation Results
+    <https://www.nist.gov/itl/iad/mig/2008-nist-speaker-recognition-evaluation-results>`_
+  * `DET-Curve Plotting software for use with MATLAB
+    <https://www.nist.gov/file/65996>`_
 
 .. _zero_one_loss:
 
