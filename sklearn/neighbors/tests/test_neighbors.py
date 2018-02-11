@@ -154,6 +154,7 @@ def test_precomputed(random_state=42):
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
+        print(Est)
         est = Est(metric='euclidean')
         est.radius = est.n_neighbors = 1
         pred_X = est.fit(X, target).predict(Y)

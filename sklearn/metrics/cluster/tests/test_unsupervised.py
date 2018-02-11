@@ -12,8 +12,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
-from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics import pairwise_distances
+from sklearn.metrics.cluster import calinski_harabaz_score
 
 
 def test_silhouette():
@@ -136,15 +136,15 @@ def test_correct_labelsize():
     # n_labels = n_samples
     y = np.arange(X.shape[0])
     assert_raises_regexp(ValueError,
-                         'Number of labels is %d\. Valid values are 2 '
-                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         r'Number of labels is %d\. Valid values are 2 '
+                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert_raises_regexp(ValueError,
-                         'Number of labels is %d\. Valid values are 2 '
-                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         r'Number of labels is %d\. Valid values are 2 '
+                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
 
