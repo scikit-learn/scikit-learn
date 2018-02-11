@@ -345,7 +345,7 @@ def test_class_cluster_match():
     y_true = ['a', 'a', 'a', 'b', 'b', 'b']
     y_pred = [4, 0, 1, 1, 2, 2]
 
-    expected = ['DEF_CLASS1', 'a', 'DEF_CLASS0', 'DEF_CLASS0', 'b', 'b']
+    expected = ['DEF_CLASS0', 'a', 'DEF_CLASS1', 'DEF_CLASS1', 'b', 'b']
 
     y_pred_translated = class_cluster_match(y_true, y_pred)
     assert_equal(y_pred_translated, expected)
