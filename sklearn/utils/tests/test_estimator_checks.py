@@ -2,8 +2,10 @@ import unittest
 import sys
 
 import numpy as np
+from numpy.lib import NumpyVersion
 
 import scipy.sparse as sp
+from scipy import __version__ as scipy_version
 
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
@@ -269,8 +271,11 @@ def test_check_estimator():
            r'\S{3}_64 matrix yet, also it has not been handled gracefully by '
            'accept_large_sparse.')
 
-    assert_raises_regex(AssertionError, msg, check_estimator,
-                        LargeSparseNotSetClassifier)
+    # Large indices test on bad estimator
+    # only supported by scipy version more than 0.14.0
+    if NumpyVersion(scipy_version) >= "0.14.0":
+        assert_raises_regex(AssertionError, msg, check_estimator,
+                            LargeSparseNotSetClassifier)
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)

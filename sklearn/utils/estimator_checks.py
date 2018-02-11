@@ -9,7 +9,9 @@ from copy import deepcopy
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
+from scipy import __version__ as scipy_version
 import struct
+from numpy.lib import NumpyVersion
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -421,19 +423,18 @@ def _generate_sparse_matrix(X_csr):
     """
 
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
-        yield {"format": sparse_format, "X": X_csr.asformat(sparse_format)}
+        yield (sparse_format, X_csr.asformat(sparse_format))
+    if NumpyVersion(scipy_version) >= '0.14.0':
+        X_coo = X_csr.asformat('coo')
+        X_coo.row = X_coo.row.astype('int64')
+        X_coo.col = X_coo.col.astype('int64')
+        yield ("coo_64", X_coo)
 
-    X_coo = X_csr.asformat('coo')
-    X_coo.row = X_coo.row.astype('int64')
-    X_coo.col = X_coo.col.astype('int64')
-
-    for sparse_format in ['csc', 'csr']:
-        X = X_csr.asformat(sparse_format)
-        X.indices = X.indices.astype('int64')
-        X.indptr = X.indptr.astype('int64')
-        yield {"format": sparse_format + "_64", "X": X}
-
-    yield {"format": "coo_64", "X": X_coo}
+        for sparse_format in ['csc', 'csr']:
+            X = X_csr.asformat(sparse_format)
+            X.indices = X.indices.astype('int64')
+            X.indptr = X.indptr.astype('int64')
+            yield (sparse_format + "_64", X)
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -448,8 +449,8 @@ def check_estimator_sparse_data(name, estimator_orig):
     with ignore_warnings(category=DeprecationWarning):
         estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    for matrix in _generate_sparse_matrix(X_csr):
-        X = matrix['X']
+    for matrix_format, X in _generate_sparse_matrix(X_csr):
+
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             if name in ['Scaler', 'StandardScaler']:
                 estimator = clone(estimator).set_params(with_mean=False)
@@ -467,12 +468,12 @@ def check_estimator_sparse_data(name, estimator_orig):
                 assert_equal(probs.shape, (X.shape[0], 4))
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
-                if "64" in matrix['format']:
+                if "64" in matrix_format:
                     raise AssertionError("Estimator % s doesn't seem to "
                                          "support %s matrix yet, also it has"
                                          " not been handled gracefully by"
                                          " accept_large_sparse."
-                                         % (name, matrix['format']))
+                                         % (name, matrix_format))
                 else:
                     print("Estimator %s doesn't seem to fail gracefully on "
                           "sparse data: error message state explicitly that "
@@ -480,7 +481,6 @@ def check_estimator_sparse_data(name, estimator_orig):
                           " the case." % name)
                     raise
         except Exception as e:
-            print(e)
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
