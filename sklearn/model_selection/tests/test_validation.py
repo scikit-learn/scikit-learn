@@ -9,6 +9,9 @@ from time import sleep
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from sklearn.exceptions import FitFailedWarning
+
+from sklearn.tests.test_grid_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -40,6 +43,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _fit_and_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -850,8 +854,8 @@ def test_cross_val_predict_decision_function_shape():
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
     assert_raises_regex(ValueError,
-                        'Output shape \(599L?, 21L?\) of decision_function '
-                        'does not match number of classes \(7\) in fold. '
+                        r'Output shape \(599L?, 21L?\) of decision_function '
+                        r'does not match number of classes \(7\) in fold. '
                         'Irregular decision_function .*',
                         cross_val_predict, est, X, y,
                         cv=KFold(n_splits=3), method='decision_function')
@@ -1421,3 +1425,27 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_fit_and_score():
+    # Create a failing classifier to deliberately fail
+    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    # dummy X data
+    X = np.arange(1, 10)
+    fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0,
+                          None, None]
+    # passing error score to trigger the warning message
+    fit_and_score_kwargs = {'error_score': 0}
+    # check if the warning message type is as expected
+    assert_warns(FitFailedWarning, _fit_and_score, *fit_and_score_args,
+                 **fit_and_score_kwargs)
+    # since we're using FailingClassfier, our error will be the following
+    error_message = "ValueError: Failing classifier failed as required"
+    # the warning message we're expecting to see
+    warning_message = ("Estimator fit failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                          error_message))
+    # check if the same warning is triggered
+    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+                         *fit_and_score_args, **fit_and_score_kwargs)

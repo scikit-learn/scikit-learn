@@ -149,6 +149,11 @@ General Concepts
         introduces changes that are not backwards compatible, these are known
         as software regressions.
 
+    callable
+        A function, class or an object which implements the ``__call__``
+        method; anything that returns True when the argument of `callable()
+        <https://docs.python.org/3/library/functions.html#callable>`_.
+
     categorical feature
         A categorical or nominal :term:`feature` is one that has a
         finite set of discrete values across the population of data.
@@ -183,7 +188,8 @@ General Concepts
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
         available for external use through
-        :func:`utils.estimator_checks.check_estimator`.
+        :func:`utils.estimator_checks.check_estimator`, with most of the
+        implementation in ``sklearn/utils/estimator_checks.py``.
 
         Note: Some exceptions to the common testing regime are currently
         hard-coded into the library, but we hope to replace this by marking
@@ -427,6 +433,10 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    indexable
+        An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
+        sequence (usually a list).
+
     induction
     inductive
         Inductive (contrasted with :term:`transductive`) machine learning
@@ -439,6 +449,13 @@ General Concepts
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`.
+
+    label indicator matrix
+    multilabel indicator matrix
+        The format used to represent multilabel data, where each row of a 2d
+        array or sparse matrix corresponds to a sample, each column
+        corresponds to a class, and each element is 1 if the sample is labeled
+        with the class and 0 if not.
 
     leakage
     data leakage
@@ -518,6 +535,9 @@ General Concepts
         possible label corresponds to a binary output. Also called *responses*,
         *tasks* or *targets*.
         See :term:`multiclass multioutput` and :term:`continuous multioutput`.
+
+    pair
+        A tuple of length two.
 
     parameter
     parameters
@@ -666,7 +686,8 @@ General Concepts
             The sparse matrix is interpreted as an array with implicit and
             explicit zeros being interpreted as the number 0.  This is the
             interpretation most often adopted, e.g. when sparse matrices
-            are used for feature matrices or multilabel indicator matrices.
+            are used for feature matrices or :term:`multilabel indicator
+            matrices`.
         graph semantics
             As with :mod:`scipy.sparse.csgraph`, explicit zeros are
             interpreted as the number 0, but implicit zeros indicate a masked
@@ -904,10 +925,11 @@ Class APIs and Estimator Types
 There are further APIs specifically related to a small family of estimators,
 such as:
 
-.. glossary:
+.. glossary::
 
-    cross validation splitter
+    cross-validation splitter
     CV splitter
+    cross-validation generator
         A non-estimator family of classes used to split a dataset into a
         sequence of train and test portions (see :ref:`cross_validation`),
         by providing :term:`split` and :term:`get_n_splits` methods.
@@ -1360,7 +1382,7 @@ functions or non-estimator constructors.
           :term:`targets` may represent a binary or multiclass (but not
           multioutput) classification problem (determined by
           :func:`utils.multiclass.type_of_target`).
-        - A :term:`cross validation splitter` instance. Refer to the
+        - A :term:`cross-validation splitter` instance. Refer to the
           :ref:`User Guide <cross_validation>` for splitters available
           within Scikit-learn.
         - An iterable yielding train/test splits.

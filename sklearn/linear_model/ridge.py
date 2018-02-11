@@ -31,6 +31,7 @@ from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
+from ..exceptions import ConvergenceWarning
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
@@ -73,7 +74,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 
         if max_iter is None and info > 0 and verbose:
             warnings.warn("sparse_cg did not converge after %d iterations." %
-                          info)
+                          info, ConvergenceWarning)
 
     return coefs
 
@@ -994,7 +995,7 @@ class _RidgeGCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
@@ -1113,7 +1114,7 @@ class _BaseRidgeCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
@@ -1357,7 +1358,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
-            Returns self.
         """
         check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                   multi_output=True)

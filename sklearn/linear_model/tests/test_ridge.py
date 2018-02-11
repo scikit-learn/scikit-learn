@@ -14,6 +14,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 
+from sklearn.exceptions import ConvergenceWarning
+
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
@@ -135,6 +137,16 @@ def test_ridge_regression_sample_weights():
                     y * np.sqrt(sample_weight),
                     alpha=alpha, solver=solver)
                 assert_array_almost_equal(coefs, coefs2)
+
+
+def test_ridge_regression_convergence_fail():
+    rng = np.random.RandomState(0)
+    y = rng.randn(5)
+    X = rng.randn(5, 10)
+
+    assert_warns(ConvergenceWarning, ridge_regression,
+                 X, y, alpha=1.0, solver="sparse_cg",
+                 tol=0., max_iter=None, verbose=1)
 
 
 def test_ridge_sample_weights():

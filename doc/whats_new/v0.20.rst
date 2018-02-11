@@ -29,7 +29,7 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
-
+  
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -86,10 +86,18 @@ Misc
   :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
-- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
-  the target y before fitting a regression model. The predictions are mapped
-  back to the original space via an inverse transform. :issue:`9041` by
-  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
+Decomposition, manifold learning and clustering
+
+- :class:`cluster.AgglomerativeClustering` now supports Single Linkage
+  clustering via ``linkage='single'``. :issue:`9372` by
+  :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` by `Tom Dupre la Tour`_.
+
 
 Enhancements
 ............
@@ -128,6 +136,18 @@ Classifiers and regressors
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
+Cluster
+
+- :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  row-major ordering, improving runtime.
+  :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
+
+Preprocessing
+
+- :class:`preprocessing.PolynomialFeatures` now supports sparse input.
+  :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
 
 Model evaluation and meta-estimators
 
@@ -209,6 +229,19 @@ Classifiers and regressors
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
+- Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
+  valued pseudocounts (alpha).
+  :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
+
+- Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
+  unicode in Python2, the ``predict_proba`` method was raising an
+  unexpected TypeError given dense inputs.
+  :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
+
+- Fixed a bug in :class:`tree.BaseDecisionTree` with `splitter="best"`
+  where split threshold could become infinite when values in X were
+  near infinite. :issue:`10536` by :user:`Jonathan Ohayon <Johayon>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -260,6 +293,10 @@ Decomposition, manifold learning and clustering
 
 Metrics
 
+- Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
+  when truncated `range(n_labels)` is passed as value for `labels`.
+  :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
+
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
   non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 
@@ -268,6 +305,10 @@ Metrics
   Note that this will not influence the result from :func:`metrics.roc_auc_score`
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
+
+- Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
+  :func:`mutual_info_score`.
+  :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Neighbors
 
@@ -289,6 +330,16 @@ Feature Extraction
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
+
+Preprocessing
+
+- Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
+  errors when ``transform`` or ``inverse_transform`` was called with empty arrays.
+  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
+
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
 
 API changes summary
 -------------------
@@ -322,6 +373,41 @@ Cluster
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
+Outlier Detection models
+
+- More consistent outlier detection API:
+  Add a ``score_samples`` method in :class:`svm.OneClassSVM`,
+  :class:`ensemble.IsolationForest`, :class:`neighbors.LocalOutlierFactor`,
+  :class:`covariance.EllipticEnvelope`. It allows to access raw score
+  functions from original papers. A new ``offset_`` parameter allows to link
+  ``score_samples`` and ``decision_function`` methods.
+  The ``contamination`` parameter of :class:`ensemble.IsolationForest` and
+  :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
+  to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
+  positive) ``decision_function`` values. By default, ``contamination`` is
+  kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to "auto",
+  thus using method-specific score offsets.
+  In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
+  ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
+  will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
+
+Preprocessing
+
+- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
+  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
+  :user:`Hanmin Qin <qinhanmin2014>`.
+
+Misc
+
+- Changed warning type from UserWarning to ConvergenceWarning for failing
+  convergence in :func:`linear_model.logistic_regression_path`,
+  :class:`linear_model.RANSACRegressor`, :func:`linear_model.ridge_regression`,
+  :class:`gaussian_process.GaussianProcessRegressor`,
+  :class:`gaussian_process.GaussianProcessClassifier`,
+  :func:`decomposition.fastica`, :class:`cross_decomposition.PLSCanonical`,
+  :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
+  :issue:`#10306` by :user:`Jonathan Siebert <jotasi>`.
+
 Changes to estimator checks
 ---------------------------
 
@@ -332,3 +418,7 @@ Changes to estimator checks
 - Allow :func:`estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- Add test :func:`estimator_checks.check_methods_subset_invariance` to check
+  that estimators methods are invariant if applied to a data subset.
+  :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
