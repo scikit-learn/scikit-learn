@@ -1,6 +1,8 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from __future__ import division, print_function
+
 from collections import Sequence
 from contextlib import contextmanager
 import time as _time
