@@ -124,6 +124,7 @@ Model selection
   :func:`model_selection.validation_curve` and
   :func:`model_selection.permutation_test_score` now accept ``fit_params``
   argument to pass parameters to the ``fit`` method of estimator.
+  :issue:`10273` by :user:`Gaurav Dhingra <gxyd>`.
 
 Linear, kernelized and related models
 

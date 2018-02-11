@@ -957,12 +957,16 @@ def _permutation_test_score(estimator, X, y, groups, cv, scorer,
     """Auxiliary function for permutation_test_score"""
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
+    fit_params = dict([(k, _index_param_value(X, v, range(len(X))))
+                       for k, v in fit_params.items()])
     avg_score = []
     for train, test in cv.split(X, y, groups):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
-        train_fit_params = {k: v[train] for k, v in fit_params.items()}
-        test_fit_params = {k: v[test] for k, v in fit_params.items()}
+        train_fit_params = dict([(k, _index_param_value(X, v, train))
+                                 for k, v in fit_params.items()])
+        test_fit_params = dict([(k, _index_param_value(X, v, test))
+                                for k, v in fit_params.items()])
         estimator.fit(X_train, y_train, **train_fit_params)
         avg_score.append(scorer(estimator, X_test, y_test, **test_fit_params))
     return np.mean(avg_score)

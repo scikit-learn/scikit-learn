@@ -736,14 +736,25 @@ def test_permutation_test_score_allow_nans():
 
 def test_permutation_test_score_fit_params():
     est = SVC(random_state=0)
-    X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
-    w = np.arange(50)
+    n_samples = 50
+    X, y = make_blobs(n_samples=n_samples, n_features=2, centers=10,
+                      random_state=0)
+    # sample_weight is a list
+    w = [i for i in range(n_samples)]
     l_with_fit_params = permutation_test_score(est, X, y,
                                                fit_params={'sample_weight': w})
     l_without_fit_params = permutation_test_score(est, X, y)
+    l_without_fit_params_m1 = l_without_fit_params[1].mean()
     assert not np.isclose(l_with_fit_params[0], l_without_fit_params[0])
     assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params[1].mean())
+                          l_without_fit_params_m1)
+    # sample_weight is an array
+    W = np.array(w)
+    l_with_fit_params = permutation_test_score(est, X, y,
+                                               fit_params={'sample_weight': W})
+    assert not np.isclose(l_with_fit_params[0], l_without_fit_params[0])
+    assert not np.isclose(l_with_fit_params[1].mean(),
+                          l_without_fit_params_m1)
 
 
 def test_cross_val_score_allow_nans():
@@ -1182,13 +1193,23 @@ def test_learning_curve_with_shuffle():
 
 def test_learning_curve_fit_params():
     est = SVC(random_state=0)
-    X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
-    w = np.arange(50)
+    n_samples = 50
+    X, y = make_blobs(n_samples=n_samples, n_features=2, centers=10,
+                      random_state=0)
+    # sample weight is a list
+    w = [i for i in range(n_samples)]
     l_with_fit_params = learning_curve(est, X, y,
                                        fit_params={'sample_weight': w})
     l_without_fit_params = learning_curve(est, X, y)
+    l_without_fit_params_m1 = l_without_fit_params[1].mean()
     assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params[1].mean())
+                          l_without_fit_params_m1)
+    # sample weight is a numpy array
+    W = np.array(w)
+    l_with_fit_params = learning_curve(est, X, y,
+                                       fit_params={'sample_weight': W})
+    assert not np.isclose(l_with_fit_params[1].mean(),
+                          l_without_fit_params_m1)
 
 
 def test_validation_curve():
@@ -1256,16 +1277,29 @@ def test_validation_curve_cv_splits_consistency():
 
 def test_validation_curve_fit_params():
     est = SVC(random_state=0)
-    X, y = make_blobs(n_samples=50, n_features=2, centers=10, random_state=0)
-    w = np.arange(50)
+    n_samples = 50
+    X, y = make_blobs(n_samples=n_samples, n_features=2, centers=10,
+                      random_state=0)
+    # sample_weight is a list
+    w = [i for i in range(n_samples)]
     gamma_range = np.logspace(-6, -1, 5)
     l_with_fit_params = validation_curve(est, X, y, "gamma", gamma_range,
                                          fit_params={'sample_weight': w})
     l_without_fit_params = validation_curve(est, X, y, "gamma", gamma_range)
+    l_without_fit_params_m0 = l_without_fit_params[0].mean()
+    l_without_fit_params_m1 = l_without_fit_params[1].mean()
     assert not np.isclose(l_with_fit_params[0].mean(),
-                          l_without_fit_params[0].mean())
+                          l_without_fit_params_m0)
     assert not np.isclose(l_with_fit_params[1].mean(),
-                          l_without_fit_params[1].mean())
+                          l_without_fit_params_m1)
+    # sample_weight is a numpy array
+    W = np.array(w)
+    l_with_fit_params = validation_curve(est, X, y, "gamma", gamma_range,
+                                         fit_params={'sample_weight': W})
+    assert not np.isclose(l_with_fit_params[0].mean(),
+                          l_without_fit_params_m0)
+    assert not np.isclose(l_with_fit_params[1].mean(),
+                          l_without_fit_params_m1)
 
 
 def test_check_is_permutation():
