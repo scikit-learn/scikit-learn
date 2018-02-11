@@ -380,8 +380,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
+    #checks if arguments in **params are acceptable
+    if not enet_path(params):
+      raise ValueError("One or more parameters is invalid")
+      
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
+
+      
     if check_input:
         X = check_array(X, 'csc', dtype=[np.float64, np.float32],
                         order='F', copy=copy_X)
