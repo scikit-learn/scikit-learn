@@ -1660,45 +1660,60 @@ metrics, such as :func:`sklearn.metrics.accuracy_score` and
 
 Here is an example::
 
-   >>> from sklearn.metrics.cluster import class_cluster_match
-   >>> x = ["a", "a", "a", "b", "b", "b"]
-   >>> y = [0, 0, 1, 1, 2, 2]
-   >>> contingency_matrix(x, y)
-   array([[2, 1, 0],
-          [0, 1, 2]])
+   >>> from sklearn.metrics.cluster import class_cluster_match, adjusted_rand_score
+   >>> from sklearn.metrics import confusion_matrix, accuracy_score
+   >>> y_true = ['a'] * 1 + ['b'] * 2 + ['c'] * 20 + ['d'] * 6 + ['e'] * \
+   ...  13 + ['f'] * 2 + ['g'] * 3 + ['h'] * 3 + ['i'] * 2 + ['j'] * 1
+   >>> y_pred = [6] * 1 + [2] * 2 + [0] * 6 + [2] * 10 + [8] * 4 + [1] *\
+   ...  4 + [5] * 2 + [0] * 4 + [3] * 5 + [6] * 2 + [9] * 2 + [7] *\
+   ...  2 + [0] * 2 + [8] * 1 + [4] * 3 + [3] * 2 + [8] * 1
+   >>> y_pred = class_cluster_match(x, y)
+   >>> confusion_matrix(y_true, y_pred)
+   [[ 1  0  0  0  0  0  0  0  0  0]
+    [ 0  0  2  0  0  0  0  0  0  0]
+    [ 0  0 10  0  0  0  6  0  0  4]
+    [ 0  0  0  4  0  0  0  0  2  0]
+    [ 2  2  0  0  5  0  4  0  0  0]
+    [ 0  0  0  0  0  2  0  0  0  0]
+    [ 0  0  0  0  0  0  2  0  0  1]
+    [ 0  0  0  0  0  0  0  3  0  0]
+    [ 0  0  0  0  2  0  0  0  0  0]
+    [ 0  0  0  0  0  0  0  0  0  1]]
+  >>> accuracy_score(y_true, y_pred) # doctest: +ELLIPSIS
+  0.52...
+  >>> adjusted_rand_score(y_true, y_pred) # doctest: +ELLIPSIS
+  0.29...
 
-The first row of output array indicates that there are three samples whose
-true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
-and none is in 2. And the second row indicates that there are three samples
-whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
-1 and two are in 2.
+  Notice the confusion matrix above has its main diagonal maximized, meaning
+  the maximum possible value of accuracy score is obtained by such match of 
+  true classes and clusters.
 
-A :ref:`confusion matrix <confusion_matrix>` for classification is a square
-contingency matrix where the order of rows and columns correspond to a list
-of classes.
+  This conversion of clustering labels is also compatible with default
+  clustering metrics, since the change in clusters labels does not
+  affect results of such metrics, such as the ARI above.
 
+  Another example::
+
+   >>> y_true = ['a', 'a', 'a', 'b', 'b', 'b']
+   >>> y_pred = [3, 0, 1, 1, 2, 2]
+   >>> class_cluster_match(y_true, y_pred)
+   ['DEF_CLASS1', 'a', 'DEF_CLASS0', 'DEF_CLASS0', 'b', 'b']
+
+  The above example shows what happens with your clustering method identifies
+  more clusters than true classes. *Such results must be treated carefully*,
+  since not all metrics derived from such mapping are meaningful.
 
 Advantages
 ~~~~~~~~~~
 
-- Allows to examine the spread of each true cluster across predicted
-  clusters and vice versa.
+- Enables calculation of classical classification metrics, such as
+  accuracy and f1_score.
 
-- The contingency table calculated is typically utilized in the calculation
-  of a similarity statistic (like the others listed in this document) between
-  the two clusterings.
+- Allows for a meaningful and easy-to-read clustering output when classes
+  are known.
 
 Drawbacks
 ~~~~~~~~~
 
-- Contingency matrix is easy to interpret for a small number of clusters, but
-  becomes very hard to interpret for a large number of clusters.
-
-- It doesn't give a single metric to use as an objective for clustering
-  optimisation.
-
-
-.. topic:: References
-
- * `Wikipedia entry for contingency matrix
-   <https://en.wikipedia.org/wiki/Contingency_table>`_
+- One should use this tool carefully, since its metrics are not always
+  meaningful for every clustering task.
