@@ -1444,7 +1444,7 @@ def check_supervised_y_2d(name, estimator_orig):
 
 
 @ignore_warnings
-def check_classifiers_classes_helper(X, y, name, classifier_orig):
+def check_classifiers_predictions(X, y, name, classifier_orig):
     classes = np.unique(y)
     classifier = clone(classifier_orig)
     if name == 'BernoulliNB':
@@ -1458,32 +1458,40 @@ def check_classifiers_classes_helper(X, y, name, classifier_orig):
     if hasattr(classifier, "decision_function"):
         decision = classifier.decision_function(X)
         n_samples, n_features = X.shape
-        msg_shape="Predicted shape of `decision_function` mismatches the expected " \
-                  "shape: expected '%s', got '%s'"
+        assert_true(isinstance(decision, np.ndarray))
         if len(classes) == 2:
-            assert_equal(decision.shape, (n_samples, ), msg_shape % \
-                        ((n_samples, ), decision.shape))
             dec_pred = (decision.ravel() > 0).astype(np.int)
             dec_exp = classifier.classes_[dec_pred]
-            msg="Predicted class mismatch for classifier %r: " \
-                "expected '%s', got '%s' " % \
-                (classifier, ", ".join(map(str, dec_exp)), ", ".join(map(str, y_pred)))
-            assert_array_equal(dec_exp, y_pred, err_msg=msg)
+            assert_array_equal(dec_exp, y_pred,
+                               err_msg="decision_function does not match "
+                               "classifier for %r: expected '%s', got '%s'" %
+                               (classifier,
+                               ", ".join(map(str, dec_exp)),
+                               ", ".join(map(str, y_pred))))
         elif getattr(classifier, 'decision_function_shape', 'ovr') == 'ovr':
-            assert_equal(decision.shape, (n_samples, len(classes)), msg_shape % \
-                        ((n_samples, len(classes)), decision.shape))
             decision_y = np.argmax(decision, axis=1).astype(int)
-            assert_array_equal(classifier.classes_[decision_y], y_pred, msg_shape % \
-                              ((n_samples, len(classes)), decision.shape))
+            y_exp = classifier.classes_[decision_y]
+            assert_array_equal(y_exp, y_pred,
+                               err_msg="decision_function does not match "
+                               "classifier for %r: expected '%s', got '%s'" %
+                               (classifier,
+                               ", ".join(map(str, y_exp)),
+                               ", ".join(map(str, y_pred))))
 
     # training set performance
     if name != "ComplementNB":
         # This is a pathological data set for ComplementNB.
         assert_array_equal(np.unique(y), np.unique(y_pred))
     if np.any(classifier.classes_ != classes):
-        msg="Unexpected classes_ attribute for %r: expected '%s', got '%s'" % \
-            (classifier, ", ".join(map(str, classes, classifier.classes_)))
-        assert_array_equal(classes, classifier.classes_, err_msg=msg)
+        msg = ("Unexpected classes_ attribute for: expected '%s', got '%s'"
+        % (", ".join(map(str, classes)),
+        ", ".join(map(str, classifier.classes_))))
+        assert_array_equal(classes, classifier.classes_,
+                           err_msg="Unexpected classes_ attribute for %r: "
+                           "expected '%s', got '%s'" %
+                           (classifier,
+                           ", ".join(map(str, classes)),
+                           ", ".join(map(str, classifier.classes_))))
 
 
 def choose_check_classifiers_labels(name, y, y_names):
@@ -1495,7 +1503,8 @@ def choose_check_classifiers_labels(name, y, y_names):
 
 
 def check_classifiers_classes(name, classifier_orig):
-    X_multiple, y_multiple = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
+    X_multiple, y_multiple = make_blobs(n_samples=30, random_state=0,
+                                        cluster_std=0.1)
     X_multiple, y_multiple = shuffle(X_multiple, y_multiple, random_state=7)
     X_multiple = StandardScaler().fit_transform(X_multiple)
     # We need to make sure that we have non negative data, for things
@@ -1514,16 +1523,16 @@ def check_classifiers_classes(name, classifier_orig):
     y_names_multiple = np.array(labels_multiple)[y_multiple]
     y_names_binary = np.array(labels_binary)[y_binary]
 
-    for (X, y, y_names) in [(X_multiple, y_multiple, y_names_multiple), \
+    for (X, y, y_names) in [(X_multiple, y_multiple, y_names_multiple),
                             (X_binary, y_binary, y_names_binary)]:
         for y_names_i in [y_names, y_names.astype('O')]:
             y_ = choose_check_classifiers_labels(name, y, y_names_i)
-            check_classifiers_classes_helper(X, y_, name, classifier_orig)
+            check_classifiers_predictions(X, y_, name, classifier_orig)
 
     labels_binary = [-1, 1]
     y_names_binary = np.array(labels_binary)[y_binary]
     y_binary = choose_check_classifiers_labels(name, y_binary, y_names_binary)
-    check_classifiers_classes_helper(X_binary, y_binary, name, classifier_orig)
+    check_classifiers_predictions(X_binary, y_binary, name, classifier_orig)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
