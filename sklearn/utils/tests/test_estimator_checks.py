@@ -2,7 +2,7 @@ import unittest
 import sys
 
 import numpy as np
-from numpy.lib import NumpyVersion
+from distutils.version import LooseVersion
 
 import scipy.sparse as sp
 from scipy import __version__ as scipy_version
@@ -273,7 +273,7 @@ def test_check_estimator():
 
     # Large indices test on bad estimator
     # only supported by scipy version more than 0.14.0
-    if NumpyVersion(scipy_version) >= "0.14.0":
+    if LooseVersion(scipy_version) >= "0.14.0":
         assert_raises_regex(AssertionError, msg, check_estimator,
                             LargeSparseNotSetClassifier)
 

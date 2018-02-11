@@ -11,7 +11,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 from scipy import __version__ as scipy_version
 import struct
-from numpy.lib import NumpyVersion
+from distutils.version import LooseVersion
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -423,18 +423,18 @@ def _generate_sparse_matrix(X_csr):
     """
 
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
-        yield (sparse_format, X_csr.asformat(sparse_format))
-    if NumpyVersion(scipy_version) >= '0.14.0':
+        yield sparse_format, X_csr.asformat(sparse_format)
+    if LooseVersion(scipy_version) >= '0.14.0':
         X_coo = X_csr.asformat('coo')
         X_coo.row = X_coo.row.astype('int64')
         X_coo.col = X_coo.col.astype('int64')
-        yield ("coo_64", X_coo)
+        yield "coo_64", X_coo
 
         for sparse_format in ['csc', 'csr']:
             X = X_csr.asformat(sparse_format)
             X.indices = X.indices.astype('int64')
             X.indptr = X.indptr.astype('int64')
-            yield (sparse_format + "_64", X)
+            yield sparse_format + "_64", X
 
 
 def check_estimator_sparse_data(name, estimator_orig):
