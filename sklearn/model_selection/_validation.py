@@ -965,10 +965,8 @@ def _permutation_test_score(estimator, X, y, groups, cv, scorer,
         X_test, y_test = _safe_split(estimator, X, y, test, train)
         train_fit_params = dict([(k, _index_param_value(X, v, train))
                                  for k, v in fit_params.items()])
-        test_fit_params = dict([(k, _index_param_value(X, v, test))
-                                for k, v in fit_params.items()])
         estimator.fit(X_train, y_train, **train_fit_params)
-        avg_score.append(scorer(estimator, X_test, y_test, **test_fit_params))
+        avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
 
 

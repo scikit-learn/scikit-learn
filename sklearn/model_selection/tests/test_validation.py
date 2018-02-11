@@ -745,14 +745,12 @@ def test_permutation_test_score_fit_params():
                                                fit_params={'sample_weight': w})
     l_without_fit_params = permutation_test_score(est, X, y)
     l_without_fit_params_m1 = l_without_fit_params[1].mean()
-    assert not np.isclose(l_with_fit_params[0], l_without_fit_params[0])
     assert not np.isclose(l_with_fit_params[1].mean(),
                           l_without_fit_params_m1)
     # sample_weight is an array
     W = np.array(w)
     l_with_fit_params = permutation_test_score(est, X, y,
                                                fit_params={'sample_weight': W})
-    assert not np.isclose(l_with_fit_params[0], l_without_fit_params[0])
     assert not np.isclose(l_with_fit_params[1].mean(),
                           l_without_fit_params_m1)
 
