@@ -1667,7 +1667,7 @@ Here is an example::
    >>> y_pred = [6] * 1 + [2] * 2 + [0] * 6 + [2] * 10 + [8] * 4 + [1] *\
    ...  4 + [5] * 2 + [0] * 4 + [3] * 5 + [6] * 2 + [9] * 2 + [7] *\
    ...  2 + [0] * 2 + [8] * 1 + [4] * 3 + [3] * 2 + [8] * 1
-   >>> y_pred = class_cluster_match(x, y)
+   >>> y_pred = class_cluster_match(y_true, y_pred)
    >>> confusion_matrix(y_true, y_pred)
    [[ 1  0  0  0  0  0  0  0  0  0]
     [ 0  0  2  0  0  0  0  0  0  0]
