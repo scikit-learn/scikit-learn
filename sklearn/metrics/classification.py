@@ -795,6 +795,11 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         F1 score of the positive class in binary classification or weighted
         average of the F1 scores of each class for the multiclass task.
 
+    See also
+    --------
+    fbeta_score, precision_recall_fscore_support, jaccard_similarity_score,
+    multilabel_confusion_matrix
+
     References
     ----------
     .. [1] `Wikipedia entry for the F1-score
@@ -813,7 +818,6 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([ 0.8,  0. ,  0. ])
-
 
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
@@ -898,6 +902,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         [n_unique_labels]
         F-beta score of the positive class in binary classification or weighted
         average of the F-beta score of each class for the multiclass task.
+
+    See also
+    --------
+    precision_recall_fscore_support, multilabel_confusion_matrix
 
     References
     ----------
@@ -1082,6 +1090,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     support : int (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
+
+    See also
+    --------
+    precision_score, recall_score, f1_score, fbeta_score,
+    jaccard_similarity_score, multilabel_confusion_matrix
 
     References
     ----------
@@ -1277,6 +1290,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
+    See also
+    --------
+    precision_recall_fscore_support, multilabel_confusion_matrix
+
     Examples
     --------
 
@@ -1376,6 +1393,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
+    See also
+    --------
+    precision_recall_fscore_support, balanced_accuracy_score,
+    multilabel_confusion_matrix
+
     Examples
     --------
     >>> from sklearn.metrics import recall_score
@@ -1389,7 +1411,6 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  0.,  0.])
-
 
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1500,6 +1521,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
         "specificity".
+
+    See also
+    --------
+    precision_recall_fscore_support, confusion_matrix,
+    multilabel_confusion_matrix
 
     Examples
     --------
