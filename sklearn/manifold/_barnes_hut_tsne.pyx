@@ -184,7 +184,6 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         float[3] force, neg_force, pos
         clock_t t1 = 0, t2 = 0, t3 = 0
         int take_timing = 1 if qt.verbose > 20 else 0
-        float* summary
 
     summary = <float*> malloc(sizeof(float) * n * offset)
 
@@ -249,7 +248,6 @@ def gradient(float[:] val_P,
     # up in-place
     cdef float C
     cdef int n
-    cdef str m
     n = pos_output.shape[0]
     assert val_P.itemsize == 4
     assert pos_output.itemsize == 4
