@@ -228,23 +228,25 @@ class _CutoffClassifier(object):
         fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
 
         if self.method == 'roc':
-            self.threshold_ = thresholds[np.argmin(
-                euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
-            )]
+            # we find the threshold of the point (fpr, tpr) with the smallest
+            # euclidean distance from the "ideal" corner (0, 1)
+            self.threshold_ = thresholds[np.argmin(fpr**2 + (tpr - 1)**2)]
         elif self.method == 'max_tpr':
             if not self.min_tnr or not isinstance(self.min_tnr, float)\
                     or not self.min_tnr >= 0 or not self.min_tnr <= 1:
                 raise ValueError('max_tnr must be a number in [1, 0]. '
                                  'Got %s instead' % repr(self.min_tnr))
             indices = np.where(1 - fpr >= self.min_tnr)[0]
-            self.threshold_ = thresholds[indices[np.argmax(tpr[indices])]]
+            max_tpr_index = np.argmax(tpr[indices])
+            self.threshold_ = thresholds[indices[max_tpr_index]]
         elif self.method == 'max_tnr':
             if not self.min_tpr or not isinstance(self.min_tpr, float)\
                     or not self.min_tpr >= 0 or not self.min_tpr <= 1:
                 raise ValueError('max_tpr must be a number in [1, 0]. '
                                  'Got %s instead' % repr(self.min_tnr))
             indices = np.where(tpr >= self.min_tpr)[0]
-            self.threshold_ = thresholds[indices[np.argmax(1 - fpr[indices])]]
+            max_tnr_index = np.argmax(1 - fpr[indices])
+            self.threshold_ = thresholds[indices[max_tnr_index]]
         else:
             raise ValueError('method must be "roc" or "max_tpr" or "max_tnr.'
                              'Got %s instead' % self.method)
