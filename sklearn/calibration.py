@@ -158,6 +158,18 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return self
 
     def predict(self, X):
+        """Predict using the calibrated decision threshold
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The samples.
+
+        Returns
+        -------
+        C : array, shape (n_samples,)
+            The predicted class.
+        """
         X = check_array(X)
         check_is_fitted(self, ["label_encoder_", "threshold_"])
 
