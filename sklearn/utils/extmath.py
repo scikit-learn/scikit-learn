@@ -695,6 +695,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     new_sum = sum_func(X, axis=0)
     if not isinstance(new_sum, np.ndarray):
         new_sum *= np.ones(X.shape[1], dtype=np.float)
+    new_sum[np.isnan(new_sum)] = 0
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     if not isinstance(new_sample_count, np.ndarray):
