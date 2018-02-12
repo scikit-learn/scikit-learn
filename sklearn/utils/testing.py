@@ -229,9 +229,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 
 def assert_warns_div0(func, *args, **kw):
-    """Assume that numpy's warning for bad divide is raised
+    """Assume that numpy's warning for divide by zero is raised
 
-    Handles the case that platforms do not support warning on divide by zero
+    Handles the case of platforms that do not support warning on divide by zero
     """
 
     with np.errstate(divide='warn', invalid='warn'):
