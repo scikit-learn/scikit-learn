@@ -3,16 +3,14 @@
 Decision threshold (cutoff point) calibration on breast cancer dataset
 ======================================================================
 
-Most machine learning classifiers that offer probability estimation do so by
-optimizing for accuracy (minimizing the classification error). The class with
-the highest probability, which can also be interpreted as confidence or score,
-is the predicted one. For a binary classification task that sets the decision
-threshold arbitrarily to 0.5.
+Machine learning classifiers often base their predictions on real-valued
+decision functions that don't always have accuracy as their objective. Moreover
+the learning objective of a model can differ from the user's needs hence using
+an arbitrary decision threshold as defined by the model can be not ideal.
 
-Depending on the classification task and the cost of error per class using an
-arbitrary decision threshold of 0.5 can be elusive. Calibrating the decision
-threshold to achieve better true positive rate or better true negative rate
-or both can be a valid way for increasing the classifiers trustworthiness.
+The CutoffClassifier can be used to calibrate the decision threshold of a model
+in order to increase the true positive rate or the true negative rate or their
+sum as a way to improve the classifiers trustworthiness.
 
 In this example the decision threshold calibration is applied on the breast
 cancer dataset to maximize the true positive and true negative rate
