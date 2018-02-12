@@ -27,6 +27,7 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.sparse import issparse
 
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
@@ -290,6 +291,109 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
                     ).toarray()
 
     return CM
+
+
+def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
+                                labels=None, samplewise=False):
+    """Returns a confusion matrix for each output of a multilabel problem
+
+    Multiclass tasks will be treated as if binarised under a one-vs-rest
+    transformation. Returned confusion matrices will be in the order of
+    sorted unique labels in the union of (y_true, y_pred).
+
+    Parameters
+    ----------
+    y_true : array or sparse, shape (n_samples, n_outputs) or (n_samples,)
+    y_pred : array or sparse, shape (n_samples, n_outputs) or (n_samples,)
+    sample_weight : array, (n_samples,), optional
+    labels : array-like
+        A list of classes or column indices to select some (or to force
+        inclusion of classes absent from the data)
+    samplewise : bool, default=False
+        In the multilabel case, this calculates a confusion matrix per sample
+
+    Returns
+    -------
+    multi_confusion : array, shape (n_outputs, 2, 2)
+        A 2x2 confusion matrix corresponding to each output in the input.
+    """
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse=['csr', 'csc'])
+    y_pred = check_array(y_pred, ensure_2d=False, accept_sparse=True)
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if y_true.ndim == 1:
+        if samplewise:
+            raise ValueError("Samplewise confusion is not useful outside of "
+                             "multilabel classification.")
+        present_labels = unique_labels(y_true, y_pred)
+        C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
+                             labels=present_labels)
+        print(C.dtype)
+        if labels is None:
+            label_idx = slice(None)
+        else:
+            present_labels = {l: i for i, l in enumerate(present_labels)}
+            label_idx = np.array([present_labels.get(l, -1) for l in labels])
+
+        tp = np.diag(C)[label_idx]
+        fp = C.sum(axis=0)[label_idx] - tp
+        fn = C.sum(axis=1)[label_idx] - tp
+        if labels is not None:
+            not_present_mask = label_idx == -1
+            tp[not_present_mask] = 0
+            fp[not_present_mask] = 0
+            fn[not_present_mask] = 0
+
+    else:
+        # check labels
+        if labels is None:
+            labels = slice(None)
+        else:
+            max_label = y_true.shape[1] - 1
+            if np.max(labels) > max_label:
+                raise ValueError('All labels must be in [0, n labels). '
+                                 'Got %d > %d' %
+                                 (np.max(labels), max_label))
+            if np.min(labels) < 0:
+                raise ValueError('All labels must be in [0, n labels). '
+                                 'Got %d < 0' % np.min(labels))
+
+        # make sure values are in (0, 1) (but avoid unnecessary copy)
+        if y_true.max() != 1 or y_true.min() != 0:
+            y_true = (y_true == 1)
+        if y_pred.max() != 1 or y_pred.min() != 0:
+            y_pred = (y_pred == 1)
+
+        # account for sample weight
+        if sample_weight is not None:
+            if issparse(y_true):
+                y_true = y_true.multiply(sample_weight)
+            else:
+                y_true = np.multiply(sample_weight, y_true)
+            if issparse(y_pred):
+                y_pred = y_pred.multiply(sample_weight)
+            else:
+                y_pred = np.multiply(sample_weight, y_pred)
+
+        if samplewise:
+            y_true = y_true[:, labels].T
+            y_pred = y_pred[:, labels].T
+            labels = slice(None)
+
+        n_outputs = y_true.shape[1]
+        y_pred_rows, y_pred_cols = y_pred.nonzero()
+        # ravel is needed for sparse matrices
+        tp = np.bincount(y_pred_cols,
+                         weights=np.ravel(y_true[y_pred_rows, y_pred_cols]),
+                         minlength=n_outputs)[labels]
+        if y_true.dtype.kind in {'i', 'u', 'b'}:
+            # bincount returns floats if weights is provided
+            tp = tp.astype(np.int64)
+        fp = np.ravel(y_pred.sum(axis=0))[labels] - tp
+        fn = np.ravel(y_true.sum(axis=0))[labels] - tp
+
+    tn = y_true.shape[0] - tp - fp - fn
+    return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
@@ -1026,7 +1130,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
 
     if average == 'binary':
@@ -1048,87 +1151,20 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                       "labels=[pos_label] to specify a single positive class."
                       % (pos_label, average), UserWarning)
 
-    if labels is None:
-        labels = present_labels
-        n_labels = None
-    else:
-        n_labels = len(labels)
-        labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
-                                                 assume_unique=True)])
-
-    # Calculate tp_sum, pred_sum, true_sum ###
-
-    if y_type.startswith('multilabel'):
-        sum_axis = 1 if average == 'samples' else 0
-
-        # All labels are index integers for multilabel.
-        # Select labels:
-        if not np.all(labels == present_labels):
-            if np.max(labels) > np.max(present_labels):
-                raise ValueError('All labels must be in [0, n labels). '
-                                 'Got %d > %d' %
-                                 (np.max(labels), np.max(present_labels)))
-            if np.min(labels) < 0:
-                raise ValueError('All labels must be in [0, n labels). '
-                                 'Got %d < 0' % np.min(labels))
-
-        if n_labels is not None:
-            y_true = y_true[:, labels[:n_labels]]
-            y_pred = y_pred[:, labels[:n_labels]]
-
-        # calculate weighted counts
-        true_and_pred = y_true.multiply(y_pred)
-        tp_sum = count_nonzero(true_and_pred, axis=sum_axis,
-                               sample_weight=sample_weight)
-        pred_sum = count_nonzero(y_pred, axis=sum_axis,
-                                 sample_weight=sample_weight)
-        true_sum = count_nonzero(y_true, axis=sum_axis,
-                                 sample_weight=sample_weight)
-
-    elif average == 'samples':
-        raise ValueError("Sample-based precision, recall, fscore is "
-                         "not meaningful outside multilabel "
-                         "classification. See the accuracy_score instead.")
-    else:
-        le = LabelEncoder()
-        le.fit(labels)
-        y_true = le.transform(y_true)
-        y_pred = le.transform(y_pred)
-        sorted_labels = le.classes_
-
-        # labels are now from 0 to len(labels) - 1 -> use bincount
-        tp = y_true == y_pred
-        tp_bins = y_true[tp]
-        if sample_weight is not None:
-            tp_bins_weights = np.asarray(sample_weight)[tp]
-        else:
-            tp_bins_weights = None
-
-        if len(tp_bins):
-            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
-                              minlength=len(labels))
-        else:
-            # Pathological case
-            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
-        if len(y_pred):
-            pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                minlength=len(labels))
-        if len(y_true):
-            true_sum = np.bincount(y_true, weights=sample_weight,
-                                minlength=len(labels))
-
-        # Retain only selected labels
-        indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        tp_sum = tp_sum[indices]
-        true_sum = true_sum[indices]
-        pred_sum = pred_sum[indices]
+    # Calculate sufficient statistics: tp_sum, pred_sum, true_sum ###
+    C = multilabel_confusion_matrix(y_true, y_pred,
+                                    sample_weight=sample_weight,
+                                    labels=labels,
+                                    samplewise=average == 'samples')
 
     if average == 'micro':
-        tp_sum = np.array([tp_sum.sum()])
-        pred_sum = np.array([pred_sum.sum()])
-        true_sum = np.array([true_sum.sum()])
+        C = C.sum(axis=0).reshape(1, 2, 2)
 
-    # Finally, we have all our sufficient statistics. Divide! #
+    tp_sum = C[:, 1, 1]
+    pred_sum = C[:, 1, 1] + C[:, 0, 1]
+    true_sum = C[:, 1, 1] + C[:, 1, 0]
+
+    # Divide!
 
     beta2 = beta ** 2
     with np.errstate(divide='ignore', invalid='ignore'):
