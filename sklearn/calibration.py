@@ -27,7 +27,6 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
-from .metrics.pairwise import euclidean_distances
 from .metrics.ranking import roc_curve
 
 
