@@ -699,6 +699,18 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   [0 1 2 3 4] [5]
 
 
+Obtaining estimators for each split
+===================================
+
+While there is no built-in way to obtain the estimators fitted on each split, the following concise piece of code shows how to achieve this while retaining parallel training::
+
+  def fit_estimator(est, X, y):
+      return est.fit(X, y)
+
+  clf_cv = Parallel(n_jobs=-1)(delayed(fit_estimator)(
+      MyEstimator(), X[train], y[train]) for train, _ in SomeCrossValidation().split(X, y))
+
+
 A note on shuffling
 ===================
 
