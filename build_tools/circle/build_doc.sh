@@ -117,7 +117,7 @@ conda update --yes --quiet conda
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" numpy scipy \
   cython pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
-  scikit-image="${SCIKITIMAGE_VERSION:-*}"
+  scikit-image="${SCIKIT_IMAGE_VERSION:-*}"
 
 source activate testenv
 pip install sphinx-gallery
