@@ -175,7 +175,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
-        if self.axis == 0:
+        if self._axis == 0:
             faf = 'allow-nan' if self.missing_values == 'NaN' else True
             X = check_array(X, accept_sparse='csc', dtype=np.float64,
                             force_all_finite=faf)
