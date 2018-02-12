@@ -13,6 +13,9 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import __version__ as scipy_version
+from distutils.version import LooseVersion
+
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
@@ -297,6 +300,10 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if isinstance(accept_sparse, six.string_types):
         accept_sparse = [accept_sparse]
 
+    if LooseVersion(scipy_version) < '0.14.0':
+        _check_large_sparse(spmatrix,
+                            not_supported_scipy_version=scipy_version)
+
     if accept_sparse is False:
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
@@ -555,7 +562,8 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     return array
 
 
-def _check_large_sparse(X, accept_large_sparse=False):
+def _check_large_sparse(X, accept_large_sparse=False,
+                        not_supported_scipy_version=False):
     """Indices Regulation for CSR Matrices.
        Only Int32 are supported for now
     """
@@ -571,6 +579,10 @@ def _check_large_sparse(X, accept_large_sparse=False):
         for key in index_keys:
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
+                if not_supported_scipy_version:
+                    raise ValueError("Scipy Version %s does not support large"
+                                     " indices, please upgrade your scipy"
+                                     " to 0.14.0 or above" % scipy_version)
                 raise ValueError("Only sparse matrices with 32-bit integer"
                                  " indices are accepted. Got % s indices."
                                  % indices_datatype)
