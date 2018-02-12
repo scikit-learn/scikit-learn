@@ -18,30 +18,36 @@ import time as time
 
 import numpy as np
 import scipy as sp
+from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib.pyplot as plt
 
+from skimage import img_as_float
+from skimage.transform import rescale
+
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.externals._pilutil import imresize
 
 
 # #############################################################################
 # Generate data
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face
-    face = face(gray=True)
+    orig_face = img_as_float(face(gray=True))
 except ImportError:
-    face = sp.face(gray=True)
+    orig_face = img_as_float(sp.face(gray=True))
 
 # Resize it to 10% of the original size to speed up the processing
-face = imresize(face, 0.10) / 255.
+# Applying a Gaussian filter for smoothing prior to down-scaling
+# reduces aliasing artifacts.
+smoothened_face = gaussian_filter(orig_face, sigma=4.5)
+rescaled_face = rescale(smoothened_face, 0.1, mode="reflect")
 
-X = np.reshape(face, (-1, 1))
+X = np.reshape(rescaled_face, (-1, 1))
 
 # #############################################################################
 # Define the structure A of the data. Pixels connected to their neighbors.
-connectivity = grid_to_graph(*face.shape)
+connectivity = grid_to_graph(*rescaled_face.shape)
 
 # #############################################################################
 # Compute clustering
@@ -51,7 +57,7 @@ n_clusters = 15  # number of regions
 ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
                                connectivity=connectivity)
 ward.fit(X)
-label = np.reshape(ward.labels_, face.shape)
+label = np.reshape(ward.labels_, rescaled_face.shape)
 print("Elapsed time: ", time.time() - st)
 print("Number of pixels: ", label.size)
 print("Number of clusters: ", np.unique(label).size)
@@ -59,9 +65,9 @@ print("Number of clusters: ", np.unique(label).size)
 # #############################################################################
 # Plot the results on an image
 plt.figure(figsize=(5, 5))
-plt.imshow(face, cmap=plt.cm.gray)
+plt.imshow(rescaled_face, cmap=plt.cm.gray)
 for l in range(n_clusters):
-    plt.contour(label == l, contours=1,
+    plt.contour(label == l,
                 colors=[plt.cm.spectral(l / float(n_clusters)), ])
 plt.xticks(())
 plt.yticks(())
