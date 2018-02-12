@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-from numpy.testing import assert_allclose
 
 from scipy import sparse
 from scipy import linalg
@@ -486,9 +485,9 @@ def test_incremental_mean_and_var_nan():
 
     final_means, final_variances, final_count = \
         _incremental_mean_and_var(X2, X_means, X_variances, X_count)
-    assert_allclose(A_means, final_means, equal_nan=True)
-    assert_allclose(A_variances, final_variances, equal_nan=True)
-    assert_allclose(A_count, final_count, equal_nan=True)
+    assert_almost_equal(A_means, final_means, equal_nan=True)
+    assert_almost_equal(A_variances, final_variances, equal_nan=True)
+    assert_almost_equal(A_count, final_count, equal_nan=True)
 
 
 def test_incremental_variance_update_formulas():
