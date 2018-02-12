@@ -508,12 +508,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
   #are supposed to be there should have been taken out by params.pop
     if 'X_offset' in params:
         params.pop('X_offset')
+    else:
+        pass
     
     if 'X_scale' in params:
         params.pop('X_scale')
+    else:
+        pass
     
     if (len(params) != 0):
         raise ValueError("One or more parameters are invalid")
+    else:
+        pass
 
 ###############################################################################
 # ElasticNet model
