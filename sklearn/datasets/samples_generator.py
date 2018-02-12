@@ -708,7 +708,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     n_samples : int or array-like, optional (default=100)
         If int, it is the the total number of points equally divided among
         clusters.
-        If list, tuple or array, each element of the iterable indicates
+        If array-like, each element of the sequence indicates
         the number of samples per cluster.
 
     n_features : int, optional (default=2)
@@ -718,7 +718,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         (default=None)
         The number of centers to generate, or the fixed center locations.
         If n_samples is an int and centers is None, 3 centers are generated.
-        If n_samples is a list, tuple or array, centers must be
+        If n_samples is array-like, centers must be
         either None or an array of length equal to the length of n_samples.
 
     cluster_std : float or sequence of floats, optional (default=1.0)
