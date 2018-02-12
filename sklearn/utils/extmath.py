@@ -704,6 +704,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
     updated_mean[np.isinf(updated_mean)] = 0
+    updated_mean[np.isnan(updated_mean)] = 0
 
     if last_variance is None:
         updated_variance = None
@@ -729,6 +730,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
                 (last_sum / last_over_new_count - new_sum) ** 2)
         updated_variance = updated_unnormalized_variance / updated_sample_count
         updated_variance[np.isnan(updated_variance)] = 0
+        updated_variance[np.isinf(updated_variance)] = 0
 
     # return vector only when required
     if (updated_sample_count[0] == updated_sample_count).all():
