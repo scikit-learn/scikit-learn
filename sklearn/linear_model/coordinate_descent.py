@@ -498,12 +498,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
-
-    if return_n_iter:
-        return alphas, coefs, dual_gaps, n_iters
-    return alphas, coefs, dual_gaps
-
-  #takes out remaining values in **params, if there are any values left
+                
+ #takes out remaining values in **params, if there are any values left
   #we know that an error should be raised (because all the parameters that
   #are supposed to be there should have been taken out by params.pop
     if 'X_offset' in params:
@@ -520,6 +516,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         raise ValueError("One or more parameters are invalid")
     else:
         pass
+      
+    if return_n_iter:
+        return alphas, coefs, dual_gaps, n_iters
+    return alphas, coefs, dual_gaps
+
+ 
 
 ###############################################################################
 # ElasticNet model
