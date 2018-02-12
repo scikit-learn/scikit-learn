@@ -26,7 +26,8 @@ from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import _argmax
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
-                                      inplace_csr_row_normalize_l2)
+                                      inplace_csr_row_normalize_l2,
+                                      n_samples_count_csc, n_samples_count_csr)
 from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
@@ -619,7 +620,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
+                        warn_on_dtype=True, estimator=self,
+                        force_all_finite='allow-nan', dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -634,14 +636,23 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 # First pass
                 if not hasattr(self, 'n_samples_seen_'):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
-                    self.n_samples_seen_ = X.shape[0]
+                    if isinstance(X, sparse.csc_matrix):
+                        self.n_samples_seen_ = \
+                            n_samples_count_csc(X.data, X.shape,
+                                                X.indices, X.indptr)
+                    else:
+                        self.n_samples_seen_ = \
+                            n_samples_count_csr(X.data, X.shape, X.indices)
+
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
-                        incr_mean_variance_axis(X, axis=0,
-                                                last_mean=self.mean_,
-                                                last_var=self.var_,
-                                                last_n=self.n_samples_seen_)
+                        incr_mean_variance_axis(
+                            X, axis=0,
+                            last_mean=self.mean_,
+                            last_var=self.var_,
+                            last_n=0,
+                            last_n_feat=self.n_samples_seen_)
             else:
                 self.mean_ = None
                 self.var_ = None
@@ -649,7 +660,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
                 self.mean_ = .0
-                self.n_samples_seen_ = 0
+                self.n_samples_seen_ = np.zeros(X.shape[1])
                 if self.with_std:
                     self.var_ = .0
                 else:
@@ -688,7 +699,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_mean:

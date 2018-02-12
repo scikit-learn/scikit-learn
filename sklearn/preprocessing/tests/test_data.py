@@ -203,7 +203,7 @@ def test_standard_scaler_1d():
                                       np.zeros_like(n_features))
             assert_array_almost_equal(X_scaled.mean(axis=0), .0)
             assert_array_almost_equal(X_scaled.std(axis=0), 1.)
-        assert_equal(scaler.n_samples_seen_, X.shape[0])
+        assert_equal(scaler.n_samples_seen_[0], X.shape[0])
 
         # check inverse transform
         X_scaled_back = scaler.inverse_transform(X_scaled)
@@ -283,7 +283,7 @@ def test_scaler_2d_arrays():
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
-    assert_equal(scaler.n_samples_seen_, n_samples)
+    assert_equal(scaler.n_samples_seen_[0], n_samples)
 
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
@@ -399,7 +399,7 @@ def test_standard_scaler_partial_fit():
 
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
         assert_equal(scaler_batch.var_, scaler_incr.var_)  # Nones
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert_equal(scaler_batch.n_samples_seen_[0], scaler_incr.n_samples_seen_[0])
 
         # Test std after 1 step
         batch0 = slice(0, chunk_size)
@@ -423,10 +423,10 @@ def test_standard_scaler_partial_fit():
             assert_correct_incr(i, batch_start=batch.start,
                                 batch_stop=batch.stop, n=n,
                                 chunk_size=chunk_size,
-                                n_samples_seen=scaler_incr.n_samples_seen_)
+                                n_samples_seen=scaler_incr.n_samples_seen_[0])
 
         assert_array_almost_equal(scaler_batch.var_, scaler_incr.var_)
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert_equal(scaler_batch.n_samples_seen_[0], scaler_incr.n_samples_seen_[0])
 
 
 def test_standard_scaler_partial_fit_numerical_stability():
@@ -515,7 +515,7 @@ def test_standard_scaler_trasform_with_partial_fit():
         assert_array_less(zero, scaler_incr.var_ + epsilon)  # as less or equal
         assert_array_less(zero, scaler_incr.scale_ + epsilon)
         # (i+1) because the Scaler has been already fitted
-        assert_equal((i + 1), scaler_incr.n_samples_seen_)
+        assert_equal((i + 1), scaler_incr.n_samples_seen_[0])
 
 
 def test_min_max_scaler_iris():

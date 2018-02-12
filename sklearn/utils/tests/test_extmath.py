@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
@@ -465,6 +466,31 @@ def test_logistic_sigmoid():
 
     extreme_x = np.array([-100., 100.])
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+
+
+def test_incremental_mean_and_var_nan():
+    # Test mean and variance when an array has floating NaN values
+    A = np.array([[600, 470, 170, 430, np.nan],
+                   [600, np.nan, 170, 430, 300],
+                   [np.nan, np.nan, np.nan, np.nan, np.nan],
+                   [np.nan, np.nan, np.nan, np.nan, np.nan]])
+    X1 = A[:2, :]
+    X2 = A[2:, :]
+    X_means = np.nanmean(X1, axis=0)
+    X_variances = np.nanvar(X1, axis=0)
+    X_count = np.count_nonzero(~np.isnan(X1), axis=0)
+    A_means = np.nanmean(A, axis=0)
+    A_variances = np.nanvar(A, axis=0)
+    A_count = np.count_nonzero(~np.isnan(A), axis=0)
+
+    final_means, final_variances, final_count = \
+        _incremental_mean_and_var(X2, X_means, X_variances, X_count)
+    assert_allclose(A_means, final_means, equal_nan=True)
+    print A_variances
+    print X_variances
+    print final_variances
+    assert_allclose(A_variances, final_variances, equal_nan=True)
+    assert_allclose(A_count, final_count, equal_nan=True)
 
 
 def test_incremental_variance_update_formulas():
