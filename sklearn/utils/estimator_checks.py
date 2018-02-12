@@ -1497,7 +1497,7 @@ def choose_check_classifiers_labels(name, y, y_names):
 
 def check_classifiers_classes(name, classifier_orig):
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
-                                        cluster_std=0.1)
+                                            cluster_std=0.1)
     X_multiclass, y_multiclass = shuffle(X_multiclass, y_multiclass,
                                          random_state=7)
     X_multiclass = StandardScaler().fit_transform(X_multiclass)
@@ -1518,7 +1518,7 @@ def check_classifiers_classes(name, classifier_orig):
     y_names_binary = np.take(labels_binary, y_binary)
 
     for X, y, y_names in [(X_multiclass, y_multiclass, y_names_multiclass),
-                            (X_binary, y_binary, y_names_binary)]:
+                          (X_binary, y_binary, y_names_binary)]:
         for y_names_i in [y_names, y_names.astype('O')]:
             y_ = choose_check_classifiers_labels(name, y, y_names_i)
             check_classifiers_predictions(X, y_, name, classifier_orig)
