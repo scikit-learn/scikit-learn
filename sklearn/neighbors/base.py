@@ -164,7 +164,7 @@ def _check_precomputed(X):
             n_samples = graph.shape[0]
             distances = graph.data.reshape(n_samples, -1)
 
-            order = np.argsort(distances)
+            order = np.argsort(distances, kind='mergesort')
             order += np.arange(n_samples)[:, None] * row_nnz[0]
             order = order.ravel()
             graph.data = graph.data[order]
