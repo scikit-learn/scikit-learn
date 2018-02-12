@@ -379,15 +379,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     MultiTaskElasticNetCV
     ElasticNet
     ElasticNetCV
-    """
-    #checks if arguments in **params are acceptable
-    if not enet_path(params):
-      raise ValueError("One or more parameters is invalid")
-      
+    """      
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
-
-      
+    
     if check_input:
         X = check_array(X, 'csc', dtype=[np.float64, np.float32],
                         order='F', copy=copy_X)
@@ -435,13 +430,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
-    tol = params.get('tol', 1e-4)
-    max_iter = params.get('max_iter', 1000)
+    tol = params.pop('tol', 1e-4)
+    max_iter = params.pop('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []
 
-    rng = check_random_state(params.get('random_state', None))
-    selection = params.get('selection', 'cyclic')
+    rng = check_random_state(params.pop('random_state', None))
+    selection = params.pop('selection', 'cyclic')
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
@@ -508,6 +503,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         return alphas, coefs, dual_gaps, n_iters
     return alphas, coefs, dual_gaps
 
+  #takes out remaining values in **params, if there are any values left
+  #we know that an error should be raised (because all the parameters that
+  #are supposed to be there should have been taken out by params.pop
+    params.pop('X_offset')
+    params.pop('X_scale')
+    
+    if (len(params) != 0):
+      raise ValueError("One or more parameters are invalid")
 
 ###############################################################################
 # ElasticNet model
