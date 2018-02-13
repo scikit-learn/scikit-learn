@@ -971,7 +971,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-    
+
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=float, accept_large_sparse=True)
     check_non_negative(X, "NMF (input X)")
