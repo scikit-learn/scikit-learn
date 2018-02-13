@@ -87,10 +87,11 @@ class _IffHasAttrDescriptor(object):
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
-    def __init__(self, fn, delegate_names, attribute_name):
+    def __init__(self, fn, delegate_names, attribute_name, backup_attribute):
         self.fn = fn
         self.delegate_names = delegate_names
         self.attribute_name = attribute_name
+        self.backup_attribute = backup_attribute
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -106,7 +107,12 @@ class _IffHasAttrDescriptor(object):
                 except AttributeError:
                     continue
                 else:
-                    getattr(delegate, self.attribute_name)
+                    try:
+                        getattr(delegate, self.attribute_name)
+                    except AttributeError:
+                        if self.backup_attribute is None:
+                            raise
+                        getattr(delegate, self.backup_attribute)
                     break
             else:
                 attrgetter(self.delegate_names[-1])(obj)
@@ -118,7 +124,7 @@ class _IffHasAttrDescriptor(object):
         return out
 
 
-def if_delegate_has_method(delegate):
+def if_delegate_has_method(delegate, backup_method=None):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
@@ -137,8 +143,9 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate,
-                                            attribute_name=fn.__name__)
+    return lambda fn: _IffHasAttrDescriptor(
+        fn, delegate, attribute_name=fn.__name__,
+        backup_attribute=backup_method)
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):

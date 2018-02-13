@@ -163,10 +163,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
         used. Thus for n_jobs = -2, all CPUs but one are used.
 
-    normalize_proba : bool, optional, default: True
-        Normalizes the predict_proba result so that the sum of the returned
-        matrix is 1.
-
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -180,10 +176,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
-    def __init__(self, estimator, n_jobs=1, normalize_proba=True):
+    def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.normalize_proba = normalize_proba
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -330,7 +325,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         labels both have a 90% probability of applying to a given sample.
 
         In the single label multiclass case, the rows of the returned matrix
-        sum to 1 if normalize_proba is True in __init__.
+        sum to 1.
 
         Parameters
         ----------
@@ -352,16 +347,16 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             # for two classes.
             Y = np.concatenate(((1 - Y), Y), axis=1)
 
-        if not self.multilabel_ and self.normalize_proba:
+        if not self.multilabel_:
             # Then, probabilities should be normalized to 1.
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-    @if_delegate_has_method(['_first_estimator', 'estimator'])
+    @if_delegate_has_method(['_first_estimator', 'estimator'], backup_method='predict_proba')
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
-        each class. This can only be used with estimators which implement the
-        decision_function method.
+        each class. If decision_function is not implemented in the estimator,
+        returns predict_proba result scaled to [-1, 1]
 
         Parameters
         ----------
@@ -372,10 +367,12 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         T : array-like, shape = [n_samples, n_classes]
         """
         check_is_fitted(self, 'estimators_')
-        if len(self.estimators_) == 1:
-            return self.estimators_[0].decision_function(X)
-        return np.array([est.decision_function(X).ravel()
-                         for est in self.estimators_]).T
+        try:
+            T = np.array([est.decision_function(X).ravel()
+                          for est in self.estimators_]).T
+        except AttributeError:
+            T = np.array([e.predict_proba(X)[:, 1] * 2 - 1 for e in self.estimators_]).T
+        return T
 
     @property
     def multilabel_(self):

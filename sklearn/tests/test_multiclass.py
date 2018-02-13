@@ -256,7 +256,7 @@ def test_ovr_binary():
         assert_equal(set(y_pred), set("eggs"))
         if hasattr(base_clf, 'decision_function'):
             dec = clf.decision_function(X)
-            assert_equal(dec.shape, (5,))
+            assert_equal(dec.shape, (5,1))
 
         if test_predict_proba:
             X_test = np.array([[0, 0, 4]])
@@ -413,6 +413,11 @@ def test_ovr_single_label_decision_function():
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
+                       clf.predict(X_test))
+
+    # Test fallback to predict_proba
+    clf = OneVsRestClassifier(DecisionTreeClassifier()).fit(X_train, Y_train)
     assert_array_equal(clf.decision_function(X_test).ravel() > 0,
                        clf.predict(X_test))
 
