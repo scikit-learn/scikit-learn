@@ -33,6 +33,12 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
+# checking whether large sparse are supported by scipy or not
+if LooseVersion(scipy_version) >= '0.14.0':
+    LARGE_SPARSE_SUPPORTED = True
+else:
+    LARGE_SPARSE_SUPPORTED = False
+
 
 def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
@@ -251,7 +257,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
-                          force_all_finite):
+                          force_all_finite, accept_large_sparse):
     """Convert a sparse matrix to a given format.
 
     Checks the sparse format of spmatrix and converts if necessary.
@@ -300,9 +306,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if isinstance(accept_sparse, six.string_types):
         accept_sparse = [accept_sparse]
 
-    if LooseVersion(scipy_version) < '0.14.0':
-        _check_large_sparse(spmatrix,
-                            not_supported_scipy_version=scipy_version)
+    # Indices Datatype regulation
+    _check_large_sparse(spmatrix, accept_large_sparse)
 
     if accept_sparse is False:
         raise TypeError('A sparse matrix was passed, but dense '
@@ -485,7 +490,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     if sp.issparse(array):
         _ensure_no_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
-                                      force_all_finite)
+                                      force_all_finite, accept_large_sparse)
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
         # to an error. This is needed because specifying a non complex
@@ -556,19 +561,14 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning)
 
-    # Indices Datatype regulation
-    _check_large_sparse(array, accept_large_sparse)
-
     return array
 
 
-def _check_large_sparse(X, accept_large_sparse=False,
-                        not_supported_scipy_version=False):
-    """Indices Regulation for CSR Matrices.
-       Only Int32 are supported for now
+def _check_large_sparse(X, accept_large_sparse=False):
+    """Indices Regulation of Sparse Matrices
+       for estimators
     """
-
-    if (not accept_large_sparse and sp.issparse(X)):
+    if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
         supported_indices = ["int32"]
         if X.getformat() == "coo":
             index_keys = ['col', 'row']
@@ -579,8 +579,8 @@ def _check_large_sparse(X, accept_large_sparse=False,
         for key in index_keys:
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
-                if not_supported_scipy_version:
-                    raise ValueError("Scipy Version %s does not support large"
+                if not LARGE_SPARSE_SUPPORTED:
+                    raise ValueError("Scipy version %s does not support large"
                                      " indices, please upgrade your scipy"
                                      " to 0.14.0 or above" % scipy_version)
                 raise ValueError("Only sparse matrices with 32-bit integer"

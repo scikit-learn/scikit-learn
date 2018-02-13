@@ -10,7 +10,6 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 from scipy import __version__ as scipy_version
-from distutils.version import LooseVersion
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
 from sklearn.utils.testing import assert_raises
@@ -37,7 +36,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
-    check_memory
+    check_memory,
+    LARGE_SPARSE_SUPPORTED
 )
 import sklearn
 
@@ -431,7 +431,7 @@ def test_check_array_accept_sparse_no_exception():
 
 def test_check_array_accept_large_sparse_no_exception():
     # When large sparse are allowed
-    if LooseVersion(scipy_version) >= '0.14.0':
+    if LARGE_SPARSE_SUPPORTED:
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
         X.indptr = X.indptr.astype('int64')
@@ -440,7 +440,7 @@ def test_check_array_accept_large_sparse_no_exception():
 
 def test_check_array_accept_large_sparse_raise_exception():
     # When large sparse are not allowed
-    if LooseVersion(scipy_version) >= '0.14.0':
+    if LARGE_SPARSE_SUPPORTED:
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
         X.indptr = X.indptr.astype('int64')
@@ -453,11 +453,11 @@ def test_check_array_accept_large_sparse_raise_exception():
 
 def test_check_array_large_indices_non_supported_scipy_version():
     # Large indices should not be allowed for scipy<0.14.0
-    if LooseVersion(scipy_version) < '0.14.0':
+    if not LARGE_SPARSE_SUPPORTED:
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
         X.indptr = X.indptr.astype('int64')
-        msg = ("Scipy Version %s does not support large"
+        msg = ("Scipy version %s does not support large"
                " indices, please upgrade your scipy"
                " to 0.14.0 or above" % scipy_version)
 

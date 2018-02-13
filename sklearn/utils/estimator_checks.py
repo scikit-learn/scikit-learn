@@ -9,9 +9,7 @@ from copy import deepcopy
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-from scipy import __version__ as scipy_version
 import struct
-from distutils.version import LooseVersion
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -56,7 +54,8 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
-from sklearn.utils.validation import has_fit_parameter, _num_samples
+from sklearn.utils.validation import (has_fit_parameter, _num_samples,
+                                      LARGE_SPARSE_SUPPORTED)
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -406,7 +405,7 @@ def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
 
 def _generate_sparse_matrix(X_csr):
-    """ Generate matrices in multiple formats for CSR,CSC and COO matrices
+    """Generate matrices in multiple formats for CSR,CSC and COO matrices
 
         Parameters
         ----------
@@ -424,7 +423,9 @@ def _generate_sparse_matrix(X_csr):
 
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
         yield sparse_format, X_csr.asformat(sparse_format)
-    if LooseVersion(scipy_version) >= '0.14.0':
+
+    if LARGE_SPARSE_SUPPORTED:
+        # Generate large indices matrix only if its supported by scipy
         X_coo = X_csr.asformat('coo')
         X_coo.row = X_coo.row.astype('int64')
         X_coo.col = X_coo.col.astype('int64')
@@ -470,9 +471,9 @@ def check_estimator_sparse_data(name, estimator_orig):
             if 'sparse' not in repr(e).lower():
                 if "64" in matrix_format:
                     raise AssertionError("Estimator %s doesn't seem to "
-                                         "support %s matrix yet, also it has"
-                                         " not been handled gracefully by"
-                                         " accept_large_sparse."
+                                         "support %s matrix yet, also it "
+                                         "has not been handled gracefully"
+                                         " by accept_large_sparse."
                                          % (name, matrix_format))
                 else:
                     print("Estimator %s doesn't seem to fail gracefully on "
