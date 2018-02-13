@@ -567,8 +567,8 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    All the folds have size ``trunc(n_samples / n_splits)``, the last one has
-    the complementary.
+    Train and test sizes may be different in each fold, with a difference of at
+    most ``n_classes``.
 
     See also
     --------
@@ -2058,6 +2058,9 @@ def train_test_split(*arrays, **options):
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
 
+
+# Tell nose that train_test_split is not a test
+train_test_split.__test__ = False
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

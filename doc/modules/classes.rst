@@ -1,3 +1,5 @@
+.. _api_ref:
+
 =============
 API Reference
 =============
@@ -6,9 +8,8 @@ This is the class and function reference of scikit-learn. Please refer to
 the :ref:`full user guide <user_guide>` for further details, as the class and
 function raw specifications may not be enough to give full guidelines on their
 uses.
+For reference on concepts repeated across the API, see :ref:`glossary`.
 
-
-.. _base_ref:
 
 :mod:`sklearn.base`: Base classes and utility functions
 =======================================================
@@ -767,6 +768,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.check_scoring
    metrics.get_scorer
    metrics.make_scorer
 
@@ -854,6 +856,7 @@ details.
    metrics.adjusted_rand_score
    metrics.calinski_harabaz_score
    metrics.completeness_score
+   metrics.cluster.contingency_matrix
    metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
@@ -903,7 +906,6 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
-   metrics.pairwise.pairwise_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -1063,6 +1065,7 @@ Model validation
     multioutput.ClassifierChain
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.RegressorChain
 
 .. _naive_bayes_ref:
 
@@ -1204,6 +1207,7 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
+   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -1374,6 +1378,7 @@ Low-level methods
    utils.estimator_checks.check_estimator
    utils.extmath.safe_sparse_dot
    utils.indexable
+   utils.multiclass.type_of_target
    utils.resample
    utils.safe_indexing
    utils.shuffle

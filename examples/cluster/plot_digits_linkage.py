@@ -12,8 +12,10 @@ not to find good clusters for the digits. This is why the example works on a
 
 What this example shows us is the behavior "rich getting richer" of
 agglomerative clustering that tends to create uneven cluster sizes.
-This behavior is especially pronounced for the average linkage strategy,
-that ends up with a couple of singleton clusters.
+This behavior is pronounced for the average linkage strategy,
+that ends up with a couple of singleton clusters, while in the case
+of single linkage we get a single central cluster with all other clusters
+being drawn from noise points around the fringes.
 """
 
 # Authors: Gael Varoquaux
@@ -69,7 +71,7 @@ def plot_clustering(X_red, X, labels, title=None):
     if title is not None:
         plt.title(title, size=17)
     plt.axis('off')
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 #----------------------------------------------------------------------
 # 2D embedding of the digits dataset
@@ -79,11 +81,11 @@ print("Done.")
 
 from sklearn.cluster import AgglomerativeClustering
 
-for linkage in ('ward', 'average', 'complete'):
+for linkage in ('ward', 'average', 'complete', 'single'):
     clustering = AgglomerativeClustering(linkage=linkage, n_clusters=10)
     t0 = time()
     clustering.fit(X_red)
-    print("%s : %.2fs" % (linkage, time() - t0))
+    print("%s :\t%.2fs" % (linkage, time() - t0))
 
     plot_clustering(X_red, X, clustering.labels_, "%s linkage" % linkage)
 
