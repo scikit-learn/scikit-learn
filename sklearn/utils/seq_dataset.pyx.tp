@@ -1,10 +1,44 @@
+{{py:
+
+"""
+Dataset abstractions for sequential data access.
+Template file for easily generate fused types consistent code using Tempita
+(https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
+
+Generated file: seq_dataset.pyx
+
+Each class is duplicated for all dtypes (float and double). The keywords
+between double braces are substituted in setup.py.
+
+Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+        Arthur Imbert <arthurimbert05@gmail.com>
+        Joan Massich <mailsik@gmail.com>
+
+License: BSD 3 clause
+"""
+
+# name, c_type, np_type
+dtypes = [('', 'double', 'np.float64'),
+          ('32', 'float', 'np.float32')]
+
+def get_dispatch(dtypes):
+    for name, c_type, np_type in dtypes:
+        yield name, c_type, np_type
+
+}}
+
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
+
+#------------------------------------------------------------------------------
+
+"""
+Dataset abstractions for sequential data access.
+WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
+"""
+
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-#
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#
-# License: BSD 3 clause
 
 cimport cython
 from libc.limits cimport INT_MAX
@@ -14,17 +48,17 @@ import numpy as np
 np.import_array()
 
 
-cdef class SequentialDataset:
+cdef class SequentialDataset{{name}}:
     """Base class for datasets with sequential data access. """
 
-    cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight) nogil:
+    cdef void next(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
+                   int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil:
         """Get the next example ``x`` from the dataset.
 
         Parameters
         ----------
-        x_data_ptr : double**
-            A pointer to the double array which holds the feature
+        x_data_ptr : {{c_type}}**
+            A pointer to the {{c_type}} array which holds the feature
             values of the next example.
 
         x_ind_ptr : np.intc**
@@ -35,24 +69,24 @@ cdef class SequentialDataset:
             A pointer to an int holding the number of non-zero
             values of the next example.
 
-        y : double*
+        y : {{c_type}}*
             The target value of the next example.
 
-        sample_weight : double*
+        sample_weight : {{c_type}}*
             The weight of the next example.
         """
         cdef int current_index = self._get_next_index()
         self._sample(x_data_ptr, x_ind_ptr, nnz, y, sample_weight,
                      current_index)
 
-    cdef int random(self, double **x_data_ptr, int **x_ind_ptr,
-                    int *nnz, double *y, double *sample_weight) nogil:
+    cdef int random(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
+                    int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil:
         """Get a random example ``x`` from the dataset.
 
         Parameters
         ----------
-        x_data_ptr : double**
-            A pointer to the double array which holds the feature
+        x_data_ptr : {{c_type}}**
+            A pointer to the {{c_type}} array which holds the feature
             values of the next example.
 
         x_ind_ptr : np.intc**
@@ -63,10 +97,10 @@ cdef class SequentialDataset:
             A pointer to an int holding the number of non-zero
             values of the next example.
 
-        y : double*
+        y : {{c_type}}*
             The target value of the next example.
 
-        sample_weight : double*
+        sample_weight : {{c_type}}*
             The weight of the next example.
 
         Returns
@@ -104,8 +138,8 @@ cdef class SequentialDataset:
         self.current_index = current_index
         return current_index
 
-    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
-                      int *nnz, double *y, double *sample_weight,
+    cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
                       int current_index) nogil:
         pass
 
@@ -125,17 +159,18 @@ cdef class SequentialDataset:
 
     def _sample_py(self, int current_index):
         """python function used for easy testing"""
-        cdef double* x_data_ptr
+        cdef {{c_type}}* x_data_ptr
         cdef int* x_indices_ptr
         cdef int nnz, j
-        cdef double y, sample_weight
+        cdef {{c_type}} y, sample_weight
 
         # call _sample in cython
         self._sample(&x_data_ptr, &x_indices_ptr, &nnz, &y, &sample_weight,
                      current_index)
 
         # transform the pointed data in numpy CSR array
-        cdef np.ndarray[double, ndim=1] x_data = np.empty(nnz)
+        cdef np.ndarray[{{c_type}}, ndim=1] x_data = np.empty(nnz,
+                                                              dtype={{np_type}})
         cdef np.ndarray[int, ndim=1] x_indices = np.empty(nnz, dtype=np.int32)
         cdef np.ndarray[int, ndim=1] x_indptr = np.asarray([0, nnz],
                                                            dtype=np.int32)
@@ -148,28 +183,29 @@ cdef class SequentialDataset:
 
         return (x_data, x_indices, x_indptr), y, sample_weight, sample_idx
 
-cdef class ArrayDataset(SequentialDataset):
+
+cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
     """Dataset backed by a two-dimensional numpy array.
 
-    The dtype of the numpy array is expected to be ``np.float64`` (double)
+    The dtype of the numpy array is expected to be ``{{np_type}}`` ({{c_type}})
     and C-style memory layout.
     """
 
-    def __cinit__(self, np.ndarray[double, ndim=2, mode='c'] X,
-                  np.ndarray[double, ndim=1, mode='c'] Y,
-                  np.ndarray[double, ndim=1, mode='c'] sample_weights,
+    def __cinit__(self, np.ndarray[{{c_type}}, ndim=2, mode='c'] X,
+                  np.ndarray[{{c_type}}, ndim=1, mode='c'] Y,
+                  np.ndarray[{{c_type}}, ndim=1, mode='c'] sample_weights,
                   np.uint32_t seed=1):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
         Parameters
         ----------
-        X : ndarray, dtype=double, ndim=2, mode='c'
+        X : ndarray, dtype={{c_type}}, ndim=2, mode='c'
             The sample array, of shape(n_samples, n_features)
 
-        Y : ndarray, dtype=double, ndim=1, mode='c'
+        Y : ndarray, dtype={{c_type}}, ndim=1, mode='c'
             The target array, of shape(n_samples, )
 
-        sample_weights : ndarray, dtype=double, ndim=1, mode='c'
+        sample_weights : ndarray, dtype={{c_type}}, ndim=1, mode='c'
             The weight of each sample, of shape(n_samples,)
         """
         if X.shape[0] > INT_MAX or X.shape[1] > INT_MAX:
@@ -192,9 +228,9 @@ cdef class ArrayDataset(SequentialDataset):
 
         self.current_index = -1
         self.X_stride = X.strides[0] / X.itemsize
-        self.X_data_ptr = <double *>X.data
-        self.Y_data_ptr = <double *>Y.data
-        self.sample_weight_data = <double *>sample_weights.data
+        self.X_data_ptr = <{{c_type}} *>X.data
+        self.Y_data_ptr = <{{c_type}} *>Y.data
+        self.sample_weight_data = <{{c_type}} *>sample_weights.data
 
         # Use index array for fast shuffling
         cdef np.ndarray[int, ndim=1, mode='c'] index = \
@@ -204,8 +240,8 @@ cdef class ArrayDataset(SequentialDataset):
         # seed should not be 0 for our_rand_r
         self.seed = max(seed, 1)
 
-    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
-                      int *nnz, double *y, double *sample_weight,
+    cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
                       int current_index) nogil:
         cdef long long sample_idx = self.index_data_ptr[current_index]
         cdef long long offset = sample_idx * self.X_stride
@@ -217,14 +253,14 @@ cdef class ArrayDataset(SequentialDataset):
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
 
-cdef class CSRDataset(SequentialDataset):
+cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
 
-    def __cinit__(self, np.ndarray[double, ndim=1, mode='c'] X_data,
+    def __cinit__(self, np.ndarray[{{c_type}}, ndim=1, mode='c'] X_data,
                   np.ndarray[int, ndim=1, mode='c'] X_indptr,
                   np.ndarray[int, ndim=1, mode='c'] X_indices,
-                  np.ndarray[double, ndim=1, mode='c'] Y,
-                  np.ndarray[double, ndim=1, mode='c'] sample_weights,
+                  np.ndarray[{{c_type}}, ndim=1, mode='c'] Y,
+                  np.ndarray[{{c_type}}, ndim=1, mode='c'] sample_weights,
                   np.uint32_t seed=1):
         """Dataset backed by a scipy sparse CSR matrix.
 
@@ -234,7 +270,7 @@ cdef class CSRDataset(SequentialDataset):
 
         Parameters
         ----------
-        X_data : ndarray, dtype=double, ndim=1, mode='c'
+        X_data : ndarray, dtype={{c_type}}, ndim=1, mode='c'
             The data array of the CSR features matrix.
 
         X_indptr : ndarray, dtype=np.intc, ndim=1, mode='c'
@@ -243,10 +279,10 @@ cdef class CSRDataset(SequentialDataset):
         X_indices : ndarray, dtype=np.intc, ndim=1, mode='c'
             The column indices array of the CSR features matrix.
 
-        Y : ndarray, dtype=double, ndim=1, mode='c'
+        Y : ndarray, dtype={{c_type}}, ndim=1, mode='c'
             The target values.
 
-        sample_weights : ndarray, dtype=double, ndim=1, mode='c'
+        sample_weights : ndarray, dtype={{c_type}}, ndim=1, mode='c'
             The weight of each sample.
         """
         # keep a reference to the data to prevent garbage collection
@@ -258,12 +294,12 @@ cdef class CSRDataset(SequentialDataset):
 
         self.n_samples = Y.shape[0]
         self.current_index = -1
-        self.X_data_ptr = <double *>X_data.data
+        self.X_data_ptr = <{{c_type}} *>X_data.data
         self.X_indptr_ptr = <int *>X_indptr.data
         self.X_indices_ptr = <int *>X_indices.data
 
-        self.Y_data_ptr = <double *>Y.data
-        self.sample_weight_data = <double *>sample_weights.data
+        self.Y_data_ptr = <{{c_type}} *>Y.data
+        self.sample_weight_data = <{{c_type}} *>sample_weights.data
 
         # Use index array for fast shuffling
         cdef np.ndarray[int, ndim=1, mode='c'] idx = np.arange(self.n_samples,
@@ -273,8 +309,8 @@ cdef class CSRDataset(SequentialDataset):
         # seed should not be 0 for our_rand_r
         self.seed = max(seed, 1)
 
-    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
-                      int *nnz, double *y, double *sample_weight,
+    cdef void _sample(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, {{c_type}} *y, {{c_type}} *sample_weight,
                       int current_index) nogil:
         cdef long long sample_idx = self.index_data_ptr[current_index]
         cdef long long offset = self.X_indptr_ptr[sample_idx]
@@ -284,6 +320,8 @@ cdef class CSRDataset(SequentialDataset):
         nnz[0] = self.X_indptr_ptr[sample_idx + 1] - offset
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
+
+{{endfor}}
 
 cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
