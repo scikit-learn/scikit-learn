@@ -392,9 +392,14 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
         n_outputs = y_true.shape[1]
         y_pred_rows, y_pred_cols = y_pred.nonzero()
         # ravel is needed for sparse matrices
-        tp = np.bincount(y_pred_cols,
-                         weights=np.ravel(y_true[y_pred_rows, y_pred_cols]),
-                         minlength=n_outputs)[labels]
+        if not len(y_pred_rows):
+            # the below doesn't work in some older scipy for empty y_pred_cols
+            tp = np.zeros(y_pred.shape[1], dtype=int)[labels]
+        else:
+            tp = np.bincount(y_pred_cols,
+                             weights=np.ravel(y_true[y_pred_rows,
+                                                     y_pred_cols]),
+                             minlength=n_outputs)[labels]
         if y_true.dtype.kind in {'i', 'u', 'b'}:
             # bincount returns floats if weights is provided
             tp = tp.astype(np.int64)
