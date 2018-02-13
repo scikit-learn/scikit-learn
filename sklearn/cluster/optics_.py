@@ -10,9 +10,7 @@ License: BSD 3 clause
 """
 
 import warnings
-
 import numpy as np
-from scipy import iterable
 
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
@@ -281,7 +279,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=1):
 
-        self._init_params(n_neighbors=min_samples, metric=metric, p=p
+        self._init_params(n_neighbors=min_samples, metric=metric, p=p,
                           metric_params=metric_params, algorithm=algorithm,
                           leaf_size=leaf_size, n_jobs=n_jobs)
 
