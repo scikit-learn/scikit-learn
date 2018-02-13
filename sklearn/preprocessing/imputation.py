@@ -173,7 +173,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                              " got axis={0}".format(self._axis))
 
         X = check_array(X, accept_sparse='csc', dtype=np.float64,
-                        force_all_finite='allow_nan'
+                        force_all_finite='allow-nan'
                         if self.missing_values == 'NaN' else True)
 
         # Since two different arrays can be provided in fit(X) and
@@ -275,7 +275,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
-        X = check_array(X, force_all_finite='allow_nan'
+        X = check_array(X, force_all_finite='allow-nan'
                         if self.missing_values == 'NaN' else True)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
@@ -336,7 +336,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         if self._axis == 0:
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite='allow_nan'
+                            force_all_finite='allow-nan'
                             if self.missing_values == 'NaN' else True,
                             copy=self.copy)
             statistics = self.statistics_
@@ -349,7 +349,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # when the imputation is done per sample
         else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                            force_all_finite='allow_nan'
+                            force_all_finite='allow-nan'
                             if self.missing_values == 'NaN' else True,
                             copy=self.copy)
 
@@ -762,7 +762,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             number of samples and "n_features" is the number of features.
         """
         X = check_array(X, dtype=np.float32, order="F",
-                        force_all_finite='allow_nan'
+                        force_all_finite='allow-nan'
                         if self.missing_values == 'NaN' else True)
 
         mask_missing_values = _get_mask(X, self.missing_values)
