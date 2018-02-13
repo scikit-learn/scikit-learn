@@ -172,14 +172,14 @@ class Imputer(BaseEstimator, TransformerMixin):
             raise ValueError("Can only impute missing values on axis 0 and 1, "
                              " got axis={0}".format(self._axis))
 
+        X = check_array(X, accept_sparse='csc', dtype=np.float64,
+                        force_all_finite='allow_nan'
+                        if self.missing_values == 'NaN' else True)
+
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
         if self._axis == 0:
-            faf = 'allow-nan' if self.missing_values == 'NaN' else True
-            X = check_array(X, accept_sparse='csc', dtype=np.float64,
-                            force_all_finite=faf)
-
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
@@ -275,8 +275,8 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
-        faf = 'allow-nan' if self.missing_values == 'NaN' else True
-        X = check_array(X, force_all_finite=faf)
+        X = check_array(X, force_all_finite='allow_nan'
+                        if self.missing_values == 'NaN' else True)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
@@ -335,9 +335,10 @@ class Imputer(BaseEstimator, TransformerMixin):
         """
         if self._axis == 0:
             check_is_fitted(self, 'statistics_')
-            faf = 'allow-nan' if self.missing_values == 'NaN' else True
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=faf, copy=self.copy)
+                            force_all_finite='allow_nan'
+                            if self.missing_values == 'NaN' else True,
+                            copy=self.copy)
             statistics = self.statistics_
             if X.shape[1] != statistics.shape[0]:
                 raise ValueError("X has %d features per sample, expected %d"
@@ -347,9 +348,10 @@ class Imputer(BaseEstimator, TransformerMixin):
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         else:
-            faf = 'allow-nan' if self.missing_values == 'NaN' else True
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                            force_all_finite=faf, copy=self.copy)
+                            force_all_finite='allow_nan'
+                            if self.missing_values == 'NaN' else True,
+                            copy=self.copy)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -443,7 +445,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     predictor : estimator object, default=BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
-        As of now, it must support ``return_std`` in its ``predict`` method.
+        It must support ``return_std`` in its ``predict`` method.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -549,19 +551,19 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X_filled : array-like
+        X_filled : ndarray
             Input data with the most recent imputations.
 
-        mask_missing_values : array-like
+        mask_missing_values : ndarray
             Input data's missing indicator matrix.
 
-        feat_idx : integer
+        feat_idx : int
             Index of the feature currently being imputed.
 
-        neighbor_feat_idx : array-like
+        neighbor_feat_idx : ndarray
             Indices of the features to be used in imputing `feat_idx`.
 
-        predictor : object, default=self._predictor
+        predictor : object
             The predictor to use at this step of the round-robin imputation.
             It must support ``return_std`` in its ``predict`` method.
             If None, it will be cloned from self._predictor.
@@ -571,12 +573,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_filled : array-like
+        X_filled : ndarray
             Input data with `X_filled[missing_row_mask, feat_idx]` updated.
 
         predictor : predictor with sklearn API
             The fitted predictor used to impute
-            `X_filled[missing_row_mask, feat_idx]`.
+            ``X_filled[missing_row_mask, feat_idx]``.
         """
 
         # if nothing is missing, just return the default
@@ -632,13 +634,13 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        n_features : integer
+        n_features : int
             Number of features in `X`.
 
-        feat_idx : integer
+        feat_idx : int
             Index of the feature currently being imputed.
 
-        abs_corr_mat : array-like, shape (n_features, n_features)
+        abs_corr_mat : ndarray, shape (n_features, n_features)
             Absolute correlation matrix of X. The diagonal has been zeroed out
             and each feature has been normalized to sum to 1. Can be None.
 
@@ -676,7 +678,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        ordered_idx : array-line, shape (n_features,)
+        ordered_idx : ndarray, shape (n_features,)
             The order in which to impute the features.
         """
         frac_of_missing_values = mask_missing_values.mean(axis=0)
@@ -699,7 +701,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             raise ValueError("Got an invalid imputation order: '{0}'. It must "
                              "be one of the following: 'roman', 'arabic', "
-                             " 'monotone', 'revmonotone', or "
+                             "'monotone', 'revmonotone', or "
                              "'random'.".format(self.imputation_order))
         return ordered_idx
 
@@ -708,7 +710,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X_filled : array-like, shape (n_samples, n_features)
+        X_filled : ndarray, shape (n_samples, n_features)
             Input data with the most recent imputations.
 
         tolerance : float, optional (default=1e-6)
@@ -717,7 +719,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        abs_corr_mat : array-like, shape (n_features, n_features)
+        abs_corr_mat : ndarray, shape (n_features, n_features)
             Absolute correlation matrix of X at the beginning of the current
             round. The diagonal has been zeroed out and each feature's absolute
             correlations with all others have been normalized to sum to 1.
@@ -742,25 +744,26 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : ndarray, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
 
         Returns
         -------
-        Xt : array-like, shape (n_samples, n_features)
+        Xt : ndarray, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
 
-        X_filled : array-like, shape (n_samples, n_features)
+        X_filled : ndarray, shape (n_samples, n_features)
             Input data with the most recent imputations.
 
-        mask_missing_values : array-like, shape (n_samples, n_features)
+        mask_missing_values : ndarray, shape (n_samples, n_features)
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
-        faf = 'allow-nan' if self.missing_values == 'NaN' else True
-        X = check_array(X, dtype=np.float32, order="F", force_all_finite=faf)
+        X = check_array(X, dtype=np.float32, order="F",
+                        force_all_finite='allow_nan'
+                        if self.missing_values == 'NaN' else True)
 
         mask_missing_values = _get_mask(X, self.missing_values)
         if self.initial_imputer_ is None:
@@ -812,11 +815,14 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # edge case
+        # edge case: in case the user specifies 0 for n_imputations,
+        # then there is no need to do burn in and the result should be
+        # just the initial imputation (before clipping)
         if self.n_imputations < 1:
             return X_filled
 
-        n_samples, n_features = X_filled.shape
+        # clip
+        X_filled = np.clip(X_filled, self._min_value, self._max_value)
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
@@ -830,7 +836,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         # impute data
         n_rounds = self.n_burn_in + self.n_imputations
-        Xt = np.zeros((n_samples, n_features))
+        n_samples, n_features = X_filled.shape
+        Xt = np.zeros((n_samples, n_features), dtype=X.shape)
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
@@ -885,16 +892,21 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # initial imputation
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # edge case
+        # edge case: in case the user specifies 0 for n_imputations,
+        # then there is no need to do burn in and the result should be
+        # just the initial imputation (before clipping)
         if self.n_imputations < 1:
             return X_filled
+
+        # clip
+        X_filled = np.clip(X_filled, self._min_value, self._max_value)
 
         # impute data
         n_rounds = self.n_burn_in + self.n_imputations
         n_imputations = len(self.imputation_sequence_)
         imputations_per_round = n_imputations / n_rounds
         i_rnd = 0
-        Xt = np.zeros(X.shape)
+        Xt = np.zeros(X.shape, dtype=X.dtype)
         if self.verbose > 0:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
         start_t = time()
