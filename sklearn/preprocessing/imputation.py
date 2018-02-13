@@ -172,7 +172,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             raise ValueError("Can only impute missing values on axis 0 and 1, "
                              " got axis={0}".format(self._axis))
 
-        X = check_array(X, accept_sparse='csc', dtype=np.float64,
+        X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan'
                         if self.missing_values == 'NaN' else True)
 
@@ -761,7 +761,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
-        X = check_array(X, dtype=np.float32, order="F",
+        X = check_array(X, dtype=FLOAT_DTYPES, order="F",
                         force_all_finite='allow-nan'
                         if self.missing_values == 'NaN' else True)
 
