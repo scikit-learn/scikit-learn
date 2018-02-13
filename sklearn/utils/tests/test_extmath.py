@@ -475,7 +475,7 @@ def test_incremental_mean_and_var_nan():
                   [np.nan, np.nan, np.nan, np.nan, np.nan],
                   [np.nan, np.nan, np.nan, np.nan, np.nan]])
     X1 = A[:3, :]
-    X2 = A[3:, :]
+    X2 = np.array([np.nan, np.nan, np.nan, np.nan, np.nan])
     X_means, X_variances, X_count = \
         _incremental_mean_and_var(X1, [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
                                   [0, 0, 0, 0, 0])
