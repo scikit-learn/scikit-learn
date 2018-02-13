@@ -837,7 +837,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # impute data
         n_rounds = self.n_burn_in + self.n_imputations
         n_samples, n_features = X_filled.shape
-        Xt = np.zeros((n_samples, n_features), dtype=X.shape)
+        Xt = np.zeros((n_samples, n_features), dtype=X.dtype)
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
