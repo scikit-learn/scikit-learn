@@ -131,7 +131,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -161,7 +161,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     dist = pdist(X_embedded, "sqeuclidean")
-    dist /= degrees_of_freedom
+    dist /= float(degrees_of_freedom)
     dist += 1.
     dist **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(dist / (2.0 * np.sum(dist)), MACHINE_EPSILON)
@@ -207,7 +207,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         Sparse approximate joint probability matrix, computed only for the
         k nearest-neighbors and symmetrized.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -782,7 +782,7 @@ class TSNE(BaseEstimator):
         # degrees_of_freedom = n_components - 1 comes from
         # "Learning a Parametric Embedding by Preserving Local Structure"
         # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        degrees_of_freedom = max(self.n_components - 1, 1)
 
         return self._tsne(P, degrees_of_freedom, n_samples,
                           X_embedded=X_embedded,
