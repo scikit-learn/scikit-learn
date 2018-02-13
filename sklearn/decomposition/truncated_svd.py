@@ -116,7 +116,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
 
     """
-
     def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
         self.algorithm = algorithm
