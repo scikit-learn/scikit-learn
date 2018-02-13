@@ -28,6 +28,7 @@ from .svm import LinearSVC
 from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 from .metrics.ranking import roc_curve
+from .utils.multiclass import type_of_target
 
 
 class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -45,7 +46,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
+    base_estimator : obj
         The classifier whose decision threshold will be adapted according to
         the acquired cutoff point
 
@@ -119,15 +120,29 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self : object
             Instance of self.
         """
-        if not isinstance(self.base_estimator, BaseEstimator):
-            raise AttributeError('Base estimator must be of type BaseEstimator'
-                                 ' got %s instead' % type(self.base_estimator))
+        if self.method not in ['roc', 'max_tpr', 'max_tnr']:
+            raise ValueError('method must be "roc" or "max_tpr" or "max_tnr.'
+                             'Got %s instead' % self.method)
+
+        if self.method == 'max_tpr':
+            if not self.min_tnr or not isinstance(self.min_tnr, float) \
+                    or not self.min_tnr >= 0 or not self.min_tnr <= 1:
+                raise ValueError('max_tnr must be a number in [1, 0]. '
+                                 'Got %s instead' % repr(self.min_tnr))
+
+        elif self.method == 'max_tnr':
+            if not self.min_tpr or not isinstance(self.min_tpr, float) \
+                    or not self.min_tpr >= 0 or not self.min_tpr <= 1:
+                raise ValueError('max_tpr must be a number in [1, 0]. '
+                                 'Got %s instead' % repr(self.min_tnr))
 
         X, y = check_X_y(X, y)
 
+        y_type = type_of_target(y)
+        if y_type is not 'binary':
+            raise ValueError('Expected target of binary type. Got %s ' % y_type)
+
         self.label_encoder_ = LabelEncoder().fit(y)
-        if len(self.label_encoder_.classes_) > 2:
-            raise ValueError('Found more than two distinct values in target y')
 
         y = self.label_encoder_.transform(y)
         self.pos_label = self.label_encoder_.transform([self.pos_label])[0]
@@ -188,7 +203,7 @@ class _CutoffClassifier(object):
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
+    base_estimator : obj
         The classifier whose decision threshold will be adapted according to
         the acquired optimal cutoff point
 
@@ -243,24 +258,13 @@ class _CutoffClassifier(object):
             # euclidean distance from the "ideal" corner (0, 1)
             self.threshold_ = thresholds[np.argmin(fpr**2 + (tpr - 1)**2)]
         elif self.method == 'max_tpr':
-            if not self.min_tnr or not isinstance(self.min_tnr, float)\
-                    or not self.min_tnr >= 0 or not self.min_tnr <= 1:
-                raise ValueError('max_tnr must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.min_tnr))
             indices = np.where(1 - fpr >= self.min_tnr)[0]
             max_tpr_index = np.argmax(tpr[indices])
             self.threshold_ = thresholds[indices[max_tpr_index]]
-        elif self.method == 'max_tnr':
-            if not self.min_tpr or not isinstance(self.min_tpr, float)\
-                    or not self.min_tpr >= 0 or not self.min_tpr <= 1:
-                raise ValueError('max_tpr must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.min_tnr))
+        else:
             indices = np.where(tpr >= self.min_tpr)[0]
             max_tnr_index = np.argmax(1 - fpr[indices])
             self.threshold_ = thresholds[indices[max_tnr_index]]
-        else:
-            raise ValueError('method must be "roc" or "max_tpr" or "max_tnr.'
-                             'Got %s instead' % self.method)
         return self
 
 
