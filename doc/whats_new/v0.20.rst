@@ -234,9 +234,9 @@ Classifiers and regressors
   where split threshold could become infinite when values in X were
   near infinite. :issue:`10536` by :user:`Jonathan Ohayon <Johayon>`.
 
-- Fixed a bug in :class:`linear_model.ElasticNet` which caused the input
-  to be overridden even when using parameter ``copy_X=True``.
-  :issue:`10540` by :user:`Yacine Mazari <ymazari>`.
+- Fixed a bug in :class:`linear_model.ElasticNet` which caused the input to be
+  overridden when using parameter ``copy_X=True`` and ``check_input=False``.
+  :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
 
 Decomposition, manifold learning and clustering
 
