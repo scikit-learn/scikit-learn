@@ -17,11 +17,11 @@ class KernelRidgeClassification(KernelRidge, ClassifierMixin):
     function in the original space.
 
     The form of the model learned by KRC is identical to support vector
-    classification (SVC). However, different loss functions are used: KRR uses
-    squared error loss while support vector classification uses epsilon-insensitive
-    loss, both combined with l2 regularization. In contrast to SVC, fitting a
-    multiclass KRC model can be done at once, without using one-against-one
-    or one-against-rest techniques.
+    classification (SVC). However, different loss functions are used:
+    KRR uses squared error loss while support vector classification uses
+    epsilon-insensitive loss, both combined with l2 regularization.
+    In contrast to SVC, fitting a multiclass KRC model can be done
+    at once, without using one-against-one or one-against-rest techniques.
 
     Read more in the :ref:`User Guide <kernel_ridge>`.
 

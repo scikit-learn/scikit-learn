@@ -96,7 +96,7 @@ class KernelRidgeRegression(KernelRidge):
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = KernelRidgeRegression(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    KernelRidgeRegression(alpha=1.0, coef0=1, degree=3, gamma=None, kernel='linear',
-                kernel_params=None)
+    KernelRidgeRegression(alpha=1.0, coef0=1, degree=3,
+                gamma=None, kernel='rbf', kernel_params=None)
     """
     regression = True

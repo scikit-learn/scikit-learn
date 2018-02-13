@@ -73,8 +73,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         copy = self.kernel == "precomputed"
 
         if self.regression is True:
-            X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
-                             y_numeric=True)
+            X, y = check_X_y(X, y, accept_sparse=("csr", "csc"),
+                             multi_output=True, y_numeric=True)
             ravel = False
             if len(y.shape) == 1:
                 y = y.reshape(-1, 1)
