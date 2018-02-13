@@ -12,7 +12,7 @@ from .kernel_ridge import KernelRidge
 KRC = KernelRidgeClassification
 KRR = KernelRidgeRegression
 
-__all__ = ["KernelRidge"
+__all__ = ["KernelRidge",
            "KernelRidgeRegression",
            "KRR",
            "KernelRidgeClassification",

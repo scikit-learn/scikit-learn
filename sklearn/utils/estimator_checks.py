@@ -64,9 +64,10 @@ CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
                 'GaussianProcessRegressor', 'TransformedTargetRegressor',
-                'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
-                'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
-                'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
+                'KNeighborsRegressor', 'KernelRidge', 'KernelRidgeRegression',
+                'Lars', 'Lasso', 'LassoLars', 'LinearRegression',
+                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
+                'MultiTaskLasso', 'MultiTaskLassoCV',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']

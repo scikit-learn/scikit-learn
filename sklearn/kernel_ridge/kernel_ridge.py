@@ -125,13 +125,6 @@ class KernelRidge(BaseEstimator, RegressorMixin):
             # layer in neural version of Extreme Learning Machine
             self.h_ = self.dual_coef_.shape[0]
 
-            # For measuring loss
-            t = np.dot(self._get_kernel(X, X), self.dual_coef_)
-            idx = t.argmax(axis=1)
-            # out = np.zeros_like(t, dtype=np.float64)
-            # out[np.arange(t.shape[0]), idx] = 1
-            loss = 1.0 - np.mean(idx == y)
-
         self.X_fit_ = X
 
         return self
