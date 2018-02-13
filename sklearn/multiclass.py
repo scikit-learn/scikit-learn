@@ -352,7 +352,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-    @if_delegate_has_method(['_first_estimator', 'estimator'], backup_method='predict_proba')
+    @if_delegate_has_method(['_first_estimator', 'estimator'],
+                            backup_method='predict_proba')
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. If decision_function is not implemented in the estimator,
@@ -371,7 +372,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             T = np.array([est.decision_function(X).ravel()
                           for est in self.estimators_]).T
         except AttributeError:
-            T = np.array([e.predict_proba(X)[:, 1] * 2 - 1 for e in self.estimators_]).T
+            T = np.array([e.predict_proba(X)[:, 1] * 2 - 1
+                          for e in self.estimators_]).T
         return T
 
     @property
