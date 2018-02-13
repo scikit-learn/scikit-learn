@@ -96,14 +96,15 @@ Decomposition, manifold learning and clustering
   :class:`neighbors.RadiusNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsRegressor`, and
   :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
-  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_.
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Nearest neighbors
 
 - Added :class:`neighbors.KNeighborsTransformer` and
   :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
   into a sparse neighbors graph. They give finer control on nearest neighbors
-  computations and enable easy caching for multiple use.
+  computations and enable easy pipeline caching for multiple use.
   :issue:`10482` by `Tom Dupre la Tour`_.
 
 
@@ -376,7 +377,7 @@ Decomposition, manifold learning and clustering
   <thechargedneutron>`.
 
 - Deprecate ``training_data_`` unused attribute in :class:`manifold.Isomap`
- :issue:`10482` by `Tom Dupre la Tour`_.
+  :issue:`10482` by `Tom Dupre la Tour`_.
 
 Outlier Detection models
 
