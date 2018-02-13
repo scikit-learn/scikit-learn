@@ -583,6 +583,33 @@ Kernels:
   gaussian_process.kernels.Sum
   gaussian_process.kernels.WhiteKernel
 
+.. _glvq_ref:
+
+:mod:`sklearn.glvq`: Generalized Learning Vector Quantization
+=============================================================
+
+.. automodule:: sklearn.glvq
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`glvq` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   glvq.GlvqModel
+   glvq.GrlvqModel
+   glvq.GmlvqModel
+   glvq.LgmlvqModel
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
