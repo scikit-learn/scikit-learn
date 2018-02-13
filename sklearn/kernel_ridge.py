@@ -6,15 +6,17 @@
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin
+from .base import BaseEstimator, RegressorMixin, ClassifierMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
+from .utils.multiclass import unique_labels
 
 
-class KernelRidge(BaseEstimator, RegressorMixin):
-    """Kernel ridge regression.
+class KernelRidge(BaseEstimator, RegressorMixin, ClassifierMixin):
+    """Kernel ridge regression and Kernel ridge classification
+    (also known as Kernel Extreme Learning Machine).
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
     squares with l2-norm regularization) with the kernel trick. It thus
@@ -67,9 +69,15 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
+    regression : bool, default=True
+         Behaviour parameter, True if this object works as a
+         regressor, False if as a classifier.
+         When it is working as a classifier, behaviour is identical
+         to Kernel Extreme Learning Machine.
+
     Attributes
     ----------
-    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
+    F : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
@@ -102,13 +110,14 @@ class KernelRidge(BaseEstimator, RegressorMixin):
                 kernel_params=None)
     """
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
-                 kernel_params=None):
+                 kernel_params=None, regression=True):
         self.alpha = alpha
         self.kernel = kernel
         self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
         self.kernel_params = kernel_params
+        self.regression = regression
 
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):
@@ -143,25 +152,60 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
-                         y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False)
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
 
-        ravel = False
-        if len(y.shape) == 1:
-            y = y.reshape(-1, 1)
-            ravel = True
-
         copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha,
-                                                 sample_weight,
-                                                 copy)
-        if ravel:
-            self.dual_coef_ = self.dual_coef_.ravel()
+
+        if self.regression is True:
+            X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
+                             y_numeric=True)
+            ravel = False
+            if len(y.shape) == 1:
+                y = y.reshape(-1, 1)
+                ravel = True
+
+            self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha,
+                                                     sample_weight,
+                                                     copy)
+            if ravel:
+                self.dual_coef_ = self.dual_coef_.ravel()
+
+        else:
+            # Check alpha
+            if self.alpha <= 0:
+                raise ValueError('C must be positive')
+            X, y = check_X_y(X, y)
+            self.classes_ = unique_labels(y)
+
+            # y must be encoded by zero arrays with 1 in a position
+            # assigned to a label
+            n = X.shape[0]
+            if self.classes_.shape[0] == 1:
+                self.n_classes_ = int(self.classes_[0] + 1)
+                self.classes_ = np.arange(self.n_classes_)
+            else:
+                self.n_classes_ = len(self.classes_)
+
+            T = np.zeros((n, self.n_classes_), dtype=np.float64)
+            # It is essential in order to adapt it to string labels
+            self.class_corr_ = {}
+            for i in range(n):
+                row = [y[i] == self.classes_]
+                T[i] = np.array(row, dtype=np.float64)
+                pos = np.argmax(row)
+                self.class_corr_[str(pos)] = self.classes_[pos]
+                # T is already encoded
+
+            self.dual_coef_ = _solve_cholesky_kernel(K, T, alpha,
+                                                     sample_weight,
+                                                     copy)
+            # This value is similar to number of neurons in hidden
+            # layer in neural version of Extreme Learning Machine
+            self.h_ = self.dual_coef_.shape[0]
 
         self.X_fit_ = X
 
@@ -181,5 +225,23 @@ class KernelRidge(BaseEstimator, RegressorMixin):
             Returns predicted values.
         """
         check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        # Input validation
+        try:
+            X = check_array(X)
+        except TypeError:
+            raise ValueError('Predict with sparse input '
+                             'when trained with dense')
         K = self._get_kernel(X, self.X_fit_)
-        return np.dot(K, self.dual_coef_)
+        indicator = np.dot(K, self.dual_coef_)
+
+        if self.regression is True:
+            y = indicator
+        else:
+            # Decoding
+            y = []
+            for y_i in indicator:
+                pos = np.argmax(y_i)
+                y.append(self.class_corr_[str(pos)])
+            y = np.array(y)
+
+        return y
