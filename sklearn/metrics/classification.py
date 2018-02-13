@@ -385,7 +385,6 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                 y_pred = np.multiply(sample_weight, y_pred)
 
         if samplewise:
-            # TODO: avoid tocsc. It seems that `multiply` may return COO :(
             y_true = y_true[:, labels].T
             y_pred = y_pred[:, labels].T
             labels = slice(None)
