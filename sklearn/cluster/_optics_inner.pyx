@@ -7,6 +7,9 @@ ctypedef np.int_t DTYPE
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+# Checks for smallest reachability distance
+# In case of tie, preserves order and returns first instance
+# as sorted by distance
 cpdef quick_scan(double[:] rdists, double[:] dists):
     cdef Py_ssize_t n
     cdef int idx

@@ -24,11 +24,11 @@ from ._optics_inner import quick_scan
 
 
 def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
-           algorithm='ball_tree', leaf_size=30, p=2,
-           metric_params=None, maxima_ratio=.75,
+           p=2, metric_params=None, maxima_ratio=.75,
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
-           min_maxima_ratio=0.001, n_jobs=1):
+           min_maxima_ratio=0.001, algorithm='ball_tree',
+           leaf_size=30, n_jobs=1):
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -59,6 +59,47 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are
         also valid with an additional argument.
 
+    p : integer, optional (default=2)
+        Parameter for the Minkowski metric from
+        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, optional (default=None)
+        Additional keyword arguments for the metric function.
+
+    maxima_ratio : float, optional
+        The maximum ratio we allow of average height of clusters on the
+        right and left to the local maxima in question. The higher the
+        ratio, the more generous the algorithm is to preserving local
+        minima, and the more cuts the resulting tree will have.
+
+    rejection_ratio : float, optional
+        Adjusts the fitness of the clustering. When the maxima_ratio is
+        exceeded, determine which of the clusters to the left and right to
+        reject based on rejection_ratio. Higher values will result in points
+        being more readily classified as noise; conversely, lower values will
+        result in more points being clustered.
+
+    similarity_threshold : float, optional
+        Used to check if nodes can be moved up one level, that is, if the
+        new cluster created is too "similar" to its parent, given the
+        similarity threshold. Similarity can be determined by 1) the size
+        of the new cluster relative to the size of the parent node or
+        2) the average of the reachability values of the new cluster
+        relative to the average of the reachability values of the parent
+        node. A lower value for the similarity threshold means less levels
+        in the tree.
+
+    significant_min : float, optional
+        Sets a lower threshold on how small a significant maxima can be.
+
+    min_cluster_size_ratio : float, optional
+        Minimum percentage of dataset expected for cluster membership.
+
+    min_maxima_ratio : float, optional
+        Used to determine neighborhood size for minimum cluster membership.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
         - 'ball_tree' will use :class:`BallTree`
@@ -76,51 +117,10 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default=2)
-        Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric_params : dict, optional (default=None)
-        Additional keyword arguments for the metric function.
-
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
-
-    maxima_ratio : float, optional
-        The maximum ratio we allow of average height of clusters on the
-        right and left to the local maxima in question. The higher the
-        ratio, the more generous the algorithm is to preserving local
-        minima, and the more cuts the resulting tree will have.
-
-    rejection_ratio : float, optional
-        Adjusts the fitness of the clustering. When the maxima_ratio is
-        exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio. Higher values will result in points
-        being more readily classified as noise; conversely, lower values will
-        result in more points being classified.
-
-    similarity_threshold : float, optional
-        Used to check if nodes can be moved up one level, that is, if the
-        new cluster created is too "similar" to its parent, given the
-        similarity threshold. Similarity can be determined by 1) the size
-        of the new cluster relative to the size of the parent node or
-        2) the average of the reachability values of the new cluster
-        relative to the average of the reachability values of the parent
-        node. A lower value for the similarity threshold means less levels
-        in the tree.
-
-    significant_min : float, optional
-        Sets a lower threshold on how small a significant maxima can be
-
-    min_cluster_size_ratio : float, optional
-        Minimum percentage of dataset expected for cluster membership.
-
-    min_maxima_ratio : float, optional
-        Used to determine neighborhood size for minimum cluster membership.
 
     Returns
     -------
@@ -137,10 +137,11 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     Record 28, no. 2 (1999): 49-60.
     """
 
-    clust = OPTICS(min_samples, max_bound, metric, algorithm, leaf_size,
-                   p, metric_params, n_jobs, maxima_ratio, rejection_ratio,
+    clust = OPTICS(min_samples, max_bound, metric, p, metric_params,
+                   maxima_ratio, rejection_ratio,
                    similarity_threshold, significant_min,
-                   min_cluster_size_ratio, min_maxima_ratio)
+                   min_cluster_size_ratio, min_maxima_ratio,
+                   algorithm, leaf_size, n_jobs)
     clust.fit(X)
     return clust.core_sample_indices_, clust.labels_
 
@@ -152,7 +153,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
     OPTICS: Ordering Points To Identify the Clustering Structure
     Equivalent to DBSCAN, finds core sample of high density and expands
     clusters from them. Unlike DBSCAN, keeps cluster hierarchy for varying
-    epsilon values. Optimized for usage on large point datasets.
+    neighborhood radius. Optimized for usage on large point datasets.
 
     Parameters
     ----------
@@ -174,6 +175,47 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are
         also valid with an additional argument.
 
+    p : integer, optional (default=2)
+        Parameter for the Minkowski metric from
+        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, optional (default=None)
+        Additional keyword arguments for the metric function.
+
+    maxima_ratio : float, optional
+        The maximum ratio we allow of average height of clusters on the
+        right and left to the local maxima in question. The higher the
+        ratio, the more generous the algorithm is to preserving local
+        minima, and the more cuts the resulting tree will have.
+
+    rejection_ratio : float, optional
+        Adjusts the fitness of the clustering. When the maxima_ratio is
+        exceeded, determine which of the clusters to the left and right to
+        reject based on rejection_ratio. Higher values will result in points
+        being more readily classified as noise; conversely, lower values will
+        result in more points being clustered.
+
+    similarity_threshold : float, optional
+        Used to check if nodes can be moved up one level, that is, if the
+        new cluster created is too "similar" to its parent, given the
+        similarity threshold. Similarity can be determined by 1) the size
+        of the new cluster relative to the size of the parent node or
+        2) the average of the reachability values of the new cluster
+        relative to the average of the reachability values of the parent
+        node. A lower value for the similarity threshold means less levels
+        in the tree.
+
+    significant_min : float, optional
+        Sets a lower threshold on how small a significant maxima can be.
+
+    min_cluster_size_ratio : float, optional
+        Minimum percentage of dataset expected for cluster membership.
+
+    min_maxima_ratio : float, optional
+        Used to determine neighborhood size for minimum cluster membership.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
         - 'ball_tree' will use :class:`BallTree`
@@ -191,70 +233,39 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default=2)
-        Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric_params : dict, optional (default=None)
-        Additional keyword arguments for the metric function.
-
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
-    maxima_ratio : float, optional
-        The maximum ratio we allow of average height of clusters on the
-        right and left to the local maxima in question. The higher the
-        ratio, the more generous the algorithm is to preserving local
-        minima, and the more cuts the resulting tree will have.
-
-    rejection_ratio : float, optional
-        Adjusts the fitness of the clustering. When the maxima_ratio is
-        exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio. Higher values will result in points
-        being more readily classified as noise; conversely, lower values will
-        result in more points being classified.
-
-    similarity_threshold : float, optional
-        Used to check if nodes can be moved up one level, that is, if the
-        new cluster created is too "similar" to its parent, given the
-        similarity threshold. Similarity can be determined by 1) the size
-        of the new cluster relative to the size of the parent node or
-        2) the average of the reachability values of the new cluster
-        relative to the average of the reachability values of the parent
-        node. A lower value for the similarity threshold means less levels
-        in the tree.
-
-    significant_min : float, optional
-        Sets a lower threshold on how small a significant maxima can be
-
-    min_cluster_size_ratio : float, optional
-        Minimum percentage of dataset expected for cluster membership.
-
-    min_maxima_ratio : float, optional
-        Used to determine neighborhood size for minimum cluster membership.
-
     Attributes
     ----------
-    `core_sample_indices_` : array, shape (n_core_samples,)
+    core_sample_indices_ : array, shape (n_core_samples,)
         Indices of core samples.
 
-    `labels_` : array, shape (n_samples,)
+    labels_ : array, shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
-    `reachability_` : array, shape (n_samples,)
+    reachability_ : array, shape (n_samples,)
         Reachability distances per sample.
 
-    `ordering_` : array, shape (n_samples,)
+    ordering_ : array, shape (n_samples,)
         The cluster ordered list of sample indices
 
-    `core_dists_` : array, shape (n_samples,)
+    core_dists_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point.
         Points which will never be core have a distance of inf.
+
+    See also
+    --------
+
+    DBSCAN
+        CPU optimized algorithm that clusters at specified neighborhood
+        radius (eps).
+    HDBSCAN
+        Related clustering algorithm that calculates the minimum spanning tree
+        across mutual reachability space.
 
     References
     ----------
@@ -264,16 +275,15 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, min_samples=5, max_bound=np.inf, metric='euclidean',
-                 algorithm='ball_tree', leaf_size=30, p=2,
-                 metric_params=None, maxima_ratio=.75,
+                 p=2, metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
-                 min_maxima_ratio=0.001, n_jobs=1):
+                 min_maxima_ratio=0.001, algorithm='ball_tree',
+                 leaf_size=30, n_jobs=1):
 
-        self._init_params(n_neighbors=min_samples,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, n_jobs=n_jobs)
+        self._init_params(n_neighbors=min_samples, metric=metric, p=p
+                          metric_params=metric_params, algorithm=algorithm,
+                          leaf_size=leaf_size, n_jobs=n_jobs)
 
         self.max_bound = max_bound
         # min_samples is set via n_neighbors attribute in init params
@@ -303,6 +313,8 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         ----------
         X : array, shape (n_samples, n_features)
             The data.
+
+        y : ignored
 
         Returns
         -------
@@ -359,8 +371,8 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                 self._processed[point] = True
                 self.ordering_.append(point)
                 point = self._set_reach_dist(point, X)
-        else:
-            self.ordering_.append(point)  # For very noisy points
+        else:  # For very noisy points
+            self.ordering_.append(point)
             self._processed[point] = True
 
     def _set_reach_dist(self, point_index, X):
@@ -368,31 +380,26 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         indices = self.radius_neighbors(P, radius=self.max_bound,
                                         return_distance=False)[0]
 
-        # Checks to see if there more than one member in the neighborhood
-        if iterable(indices):
-            # Masking processed values; n_pr is 'not processed'
-            n_pr = np.compress((np.take(self._processed,
-                                        indices, axis=0) < 1).ravel(),
-                               indices, axis=0)
-            # n_pr = indices[(self._processed[indices] < 1).ravel()]
-            # Keep n_jobs = 1 in the following lines...please
-            if len(n_pr) > 0:
-                dists = pairwise_distances(P, np.take(X, n_pr, axis=0),
-                                           self.metric, n_jobs=1).ravel()
+        # Getting indices of neighbors that have not been processed
+        unproc = np.compress((~np.take(self._processed, indices)).ravel(),
+                             indices, axis=0)
+        # Keep n_jobs = 1 in the following lines...please
+        if len(unproc) > 0:
+            dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+                                       self.metric, n_jobs=1).ravel()
 
-                rdists = np.maximum(dists, self.core_dists_[point_index])
-                new_reach = np.minimum(np.take(self.reachability_,
-                                               n_pr, axis=0), rdists)
-                self.reachability_[n_pr] = new_reach
+            rdists = np.maximum(dists, self.core_dists_[point_index])
+            new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
+            self.reachability_[unproc] = new_reach
 
-            # Checks to see if everything is already processed;
-            # if so, return control to main loop
-            if n_pr.size > 0:
-                # Define return order based on reachability distance
-                return(n_pr[quick_scan(np.take(self.reachability_,
-                                               n_pr, axis=0), dists)])
-            else:
-                return point_index
+        # Checks to see if everything is already processed;
+        # if so, return control to main loop
+        if unproc.size > 0:
+            # Define return order based on reachability distance
+            return(unproc[quick_scan(np.take(self.reachability_, unproc),
+                                     dists)])
+        else:
+            return point_index
 
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
@@ -445,7 +452,7 @@ def _extract_dbscan(ordering, core_dists, reachability, eps):
         Distances at which points become core (`core_dists_`)
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
-    epsilon_prime : float or int
+    eps : float or int
         DBSCAN `eps` parameter
 
     Returns
@@ -505,7 +512,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
-        result in more points being classified.
+        result in more points being clustered.
 
     similarity_threshold : float, optional
         Used to check if nodes can be moved up one level, that is, if the
@@ -518,7 +525,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
         in the tree.
 
     significant_min : float, optional
-        Sets a lower threshold on how small a significant maxima can be
+        Sets a lower threshold on how small a significant maxima can be.
 
     min_cluster_size_ratio : float, optional
         Minimum percentage of dataset expected for cluster membership.
