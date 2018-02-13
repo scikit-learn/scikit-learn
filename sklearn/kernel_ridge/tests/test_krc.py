@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raises
 from sklearn.externals import six
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.kernel_ridge import KernelRidge
+from sklearn.kernel_ridge import KRC
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -35,12 +35,12 @@ iris.target = iris.target[perm]
 
 
 def test_check_estimator():
-    check_estimator(KernelRidge)
+    check_estimator(KRC)
 
 
-def test_kelm_parameters():
+def test_krc_parameters():
     # Test parameters.
-    clf = KernelRidge(kernel='linear', regression=False).fit(X, Y)
+    clf = KRC(kernel='linear').fit(X, Y)
     assert_array_equal(clf.predict(X), Y)
 
 
@@ -49,16 +49,16 @@ def test_iris():
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
-        clf = KernelRidge(kernel=k, regression=False).fit(iris.data, iris.target)
+        clf = KRC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.75)
 
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
 
 def test_precomputed():
-    # KELM with a precomputed kernel.
+    # KRC with a precomputed kernel.
     # We test it with a toy dataset and with iris.
-    clf = KernelRidge(kernel='precomputed', regression=False)
+    clf = KRC(kernel='precomputed')
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
@@ -75,16 +75,16 @@ def test_precomputed():
     # matrix. kernel is just a linear kernel
     def kfunc(x, y):
         return np.dot(x, y.T)
-    clf = KernelRidge(kernel=kfunc, regression=False)
+    clf = KRC(kernel=kfunc)
     clf.fit(X, Y)
     pred = clf.predict(T)
 
     assert_array_equal(pred, true_result)
 
     # test a precomputed kernel with the iris dataset
-    # and check parameters against a linear KELM
-    clf = KernelRidge(kernel='precomputed', regression=False)
-    clf2 = KernelRidge(kernel='linear', regression=False)
+    # and check parameters against a linear KRC
+    clf = KRC(kernel='precomputed')
+    clf2 = KRC(kernel='linear')
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     clf2.fit(iris.data, iris.target)
@@ -103,14 +103,14 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .8, decimal=2)
 
-    clf = KernelRidge(kernel=kfunc, regression=False)
+    clf = KRC(kernel=kfunc)
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .8, decimal=2)
 
 
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
-    clf = KernelRidge(kernel='linear', gamma=0.0, alpha=0.5, regression=False)
+    clf = KRC(kernel='linear', gamma=0.0, alpha=0.5)
     clf.fit(X, Y)
     # dual_coef = np.array([[0.47826087, 0.52173913],
     #                       [0.65217391, 0.34782609],
@@ -140,25 +140,25 @@ def test_bad_input():
     # Test that it gives proper exception on deficient input
     # impossible value of C
 
-    assert_raises(ValueError, KernelRidge(alpha=-0.5, regression=False).fit, X, Y)
+    assert_raises(ValueError, KRC(alpha=-0.5).fit, X, Y)
 
-    clf = KernelRidge(regression=False)
+    clf = KRC()
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # error for precomputed kernels
-    clf = KernelRidge(kernel='precomputed', regression=False)
+    clf = KRC(kernel='precomputed')
     assert_raises(ValueError, clf.fit, X, Y)
 
     # predict with sparse input when trained with dense
-    clf = KernelRidge(regression=False).fit(X, Y)
+    clf = KRC().fit(X, Y)
     assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
     assert_raises(ValueError, clf.predict, X)
 
-    clf = KernelRidge(regression=False)
+    clf = KRC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
@@ -167,18 +167,18 @@ def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
         # Test unicode (same as str on python3)
-        clf = KernelRidge(kernel=u'linear', regression=False)
+        clf = KRC(kernel=u'linear')
         clf.fit(X, Y)
         clf.predict(T)
 
     # Test default behavior on both versions
-    clf = KernelRidge(kernel='linear', regression=False)
+    clf = KRC(kernel='linear')
     clf.fit(X, Y)
     clf.predict(T)
 
 
 def test_linear_elm():
-    clf = KernelRidge(kernel='linear', regression=False).fit(X, Y)
+    clf = KRC(kernel='linear').fit(X, Y)
 
     # by default should have dual_coef
     assert_true(clf.dual_coef_.all())
@@ -191,53 +191,38 @@ def test_linear_elm_iris():
     # gives plausible predictions on the iris dataset
     # Also, test symbolic class names (classes_).
     target = iris.target_names[iris.target]
-    clf = KernelRidge(kernel='linear', regression=False).fit(iris.data, target)
+    clf = KRC(kernel='linear').fit(iris.data, target)
     assert_equal(set(clf.classes_), set(iris.target_names))
     assert_greater(np.mean(clf.predict(iris.data) == target), 0.79)
 
 
-def test_kelm_clone_with_callable_kernel():
-    # create KELM with callable linear kernel, check that results are the same
+def test_krc_clone_with_callable_kernel():
+    # create KRC with callable linear kernel, check that results are the same
     # as with built-in linear kernel
-    kelm_callable = KernelRidge(kernel=lambda x, y: np.dot(x, y.T), regression=False)
+    krc_callable = KRC(kernel=lambda x, y: np.dot(x, y.T))
     # clone for checking clonability with lambda functions..
-    kelm_cloned = base.clone(kelm_callable)
-    kelm_cloned.fit(iris.data, iris.target)
+    krc_cloned = base.clone(krc_callable)
+    krc_cloned.fit(iris.data, iris.target)
 
-    kelm_builtin = KernelRidge(kernel='linear', regression=False)
-    kelm_builtin.fit(iris.data, iris.target)
+    krc_builtin = KRC(kernel='linear')
+    krc_builtin.fit(iris.data, iris.target)
 
-    assert_array_almost_equal(kelm_cloned.dual_coef_,
-                              kelm_builtin.dual_coef_)
-    assert_array_equal(kelm_cloned.predict(iris.data),
-                       kelm_builtin.predict(iris.data))
-    assert_array_almost_equal(kelm_cloned.predict(iris.data),
-                              kelm_builtin.predict(iris.data))
+    assert_array_almost_equal(krc_cloned.dual_coef_,
+                              krc_builtin.dual_coef_)
+    assert_array_equal(krc_cloned.predict(iris.data),
+                       krc_builtin.predict(iris.data))
+    assert_array_almost_equal(krc_cloned.predict(iris.data),
+                              krc_builtin.predict(iris.data))
 
 
-def test_kelm_bad_kernel():
-    kelm = KernelRidge(kernel=lambda x, y: x, regression=False)
-    assert_raises(ValueError, kelm.fit, X, Y)
+def test_krc_bad_kernel():
+    krc = KRC(kernel=lambda x, y: x)
+    assert_raises(ValueError, krc.fit, X, Y)
 
 
 def test_unfitted():
-    X = "foo!"  # input validation not required when KELM is not fitted
+    X = "foo!"  # input validation not required when KRC is not fitted
 
-    clf = KernelRidge(regression=False)
+    clf = KRC()
     assert_raises_regexp(Exception, r"not\b.*\bfitted\b",
                          clf.predict, X)
-
-
-if __name__ == '__main__':
-    test_check_estimator()
-    test_kelm_parameters()
-    test_iris()
-    test_precomputed()
-    test_tweak_params()
-    test_bad_input()
-    test_unicode_kernel()
-    test_linear_elm()
-    test_linear_elm_iris()
-    test_kelm_clone_with_callable_kernel()
-    test_kelm_bad_kernel()
-    test_unfitted()

@@ -10,9 +10,6 @@ from .rbm import BernoulliRBM
 from .multilayer_perceptron import MLPClassifier
 from .multilayer_perceptron import MLPRegressor
 
-from .kelm import KernelELM
-
 __all__ = ["BernoulliRBM",
            "MLPClassifier",
-           "MLPRegressor",
-           "KernelELM"]
+           "MLPRegressor"]
