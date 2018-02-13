@@ -317,8 +317,10 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     multi_confusion : array, shape (n_outputs, 2, 2)
         A 2x2 confusion matrix corresponding to each output in the input.
     """
-    y_true = check_array(y_true, ensure_2d=False, accept_sparse=['csr', 'csc'])
-    y_pred = check_array(y_pred, ensure_2d=False, accept_sparse=True)
+    y_true = check_array(y_true, ensure_2d=False, dtype=None,
+                         accept_sparse=['csr', 'csc'])
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=None,
+                         accept_sparse=['csr', 'csc'])
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_true.ndim == 1:
@@ -328,7 +330,6 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
         present_labels = unique_labels(y_true, y_pred)
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                              labels=present_labels)
-        print(C.dtype)
         if labels is None:
             label_idx = slice(None)
         else:
@@ -360,22 +361,31 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
         # make sure values are in (0, 1) (but avoid unnecessary copy)
         if y_true.max() != 1 or y_true.min() != 0:
-            y_true = (y_true == 1)
+            if issparse(y_true):
+                y_true = y_true._with_data(y_true.data == 1)
+            else:
+                y_true = (y_true == 1)
         if y_pred.max() != 1 or y_pred.min() != 0:
-            y_pred = (y_pred == 1)
+            if issparse(y_pred):
+                y_pred = y_pred._with_data(y_pred.data == 1)
+            else:
+                y_pred = (y_pred == 1)
 
         # account for sample weight
         if sample_weight is not None:
             if issparse(y_true):
-                y_true = y_true.multiply(sample_weight)
+                y_true = y_true.multiply(np.reshape(sample_weight, (-1, 1)))
+                y_true = y_true.tocsc()
             else:
                 y_true = np.multiply(sample_weight, y_true)
             if issparse(y_pred):
-                y_pred = y_pred.multiply(sample_weight)
+                y_pred = y_pred.multiply(np.reshape(sample_weight, (-1, 1)))
+                y_pred = y_pred.tocsc()
             else:
                 y_pred = np.multiply(sample_weight, y_pred)
 
         if samplewise:
+            # TODO: avoid tocsc. It seems that `multiply` may return COO :(
             y_true = y_true[:, labels].T
             y_pred = y_pred[:, labels].T
             labels = slice(None)
