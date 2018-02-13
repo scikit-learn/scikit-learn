@@ -430,9 +430,7 @@ def test_check_array_accept_sparse_no_exception():
 
 
 def test_check_array_accept_large_sparse_no_exception():
-
     # When large sparse are allowed
-
     if LooseVersion(scipy_version) >= '0.14.0':
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
@@ -441,9 +439,7 @@ def test_check_array_accept_large_sparse_no_exception():
 
 
 def test_check_array_accept_large_sparse_raise_exception():
-
     # When large sparse are not allowed
-
     if LooseVersion(scipy_version) >= '0.14.0':
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
@@ -456,9 +452,7 @@ def test_check_array_accept_large_sparse_raise_exception():
 
 
 def test_check_array_large_indices_non_supported_scipy_version():
-
     # Large indices should not be allowed for scipy<0.14.0
-
     if LooseVersion(scipy_version) < '0.14.0':
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
@@ -673,7 +667,6 @@ def test_suppress_validation():
 
 
 class DummyMemory(object):
-
     def cache(self, func):
         return func
 

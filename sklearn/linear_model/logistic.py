@@ -214,8 +214,8 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     # The mat-vec product of the Hessian
     d = sample_weight * z * (1 - z)
     if sparse.issparse(X):
-        dX = safe_sparse_dot(
-            sparse.dia_matrix((d, 0), shape=(n_samples, n_samples)), X)
+        dX = safe_sparse_dot(sparse.dia_matrix((d, 0),
+                             shape=(n_samples, n_samples)), X)
     else:
         # Precompute as much as possible
         dX = d[:, np.newaxis] * X

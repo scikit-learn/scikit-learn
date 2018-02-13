@@ -450,7 +450,7 @@ def check_estimator_sparse_data(name, estimator_orig):
         estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     for matrix_format, X in _generate_sparse_matrix(X_csr):
-
+        # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             if name in ['Scaler', 'StandardScaler']:
                 estimator = clone(estimator).set_params(with_mean=False)
@@ -469,7 +469,7 @@ def check_estimator_sparse_data(name, estimator_orig):
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
                 if "64" in matrix_format:
-                    raise AssertionError("Estimator % s doesn't seem to "
+                    raise AssertionError("Estimator %s doesn't seem to "
                                          "support %s matrix yet, also it has"
                                          " not been handled gracefully by"
                                          " accept_large_sparse."

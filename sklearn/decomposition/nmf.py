@@ -1013,6 +1013,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
+
     if solver == 'cd':
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
                                                l1_reg_W, l1_reg_H,
@@ -1029,6 +1030,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
+
     if n_iter == max_iter and tol > 0:
         warnings.warn("Maximum number of iteration %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)

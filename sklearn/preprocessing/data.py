@@ -1263,7 +1263,6 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1975,7 +1974,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
-
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
@@ -2673,7 +2671,6 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-
     def __init__(self, method='box-cox', standardize=True, copy=True):
         self.method = method
         self.standardize = standardize

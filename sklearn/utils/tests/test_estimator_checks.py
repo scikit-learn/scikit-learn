@@ -38,7 +38,6 @@ class CorrectNotFittedError(ValueError):
 
 
 class BaseBadClassifier(BaseEstimator, ClassifierMixin):
-
     def fit(self, X, y):
         return self
 
@@ -47,7 +46,6 @@ class BaseBadClassifier(BaseEstimator, ClassifierMixin):
 
 
 class ChangesDict(BaseEstimator):
-
     def __init__(self, key=0):
         self.key = key
 
@@ -62,7 +60,6 @@ class ChangesDict(BaseEstimator):
 
 
 class SetsWrongAttribute(BaseEstimator):
-
     def __init__(self, acceptable_key=0):
         self.acceptable_key = acceptable_key
 
@@ -73,7 +70,6 @@ class SetsWrongAttribute(BaseEstimator):
 
 
 class ChangesWrongAttribute(BaseEstimator):
-
     def __init__(self, wrong_attribute=0):
         self.wrong_attribute = wrong_attribute
 
@@ -84,7 +80,6 @@ class ChangesWrongAttribute(BaseEstimator):
 
 
 class ChangesUnderscoreAttribute(BaseEstimator):
-
     def fit(self, X, y=None):
         self._good_attribute = 1
         X, y = check_X_y(X, y)
@@ -92,14 +87,12 @@ class ChangesUnderscoreAttribute(BaseEstimator):
 
 
 class NoCheckinPredict(BaseBadClassifier):
-
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         return self
 
 
 class NoSparseClassifier(BaseBadClassifier):
-
     def fit(self, X, y):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         if sp.issparse(X):
@@ -112,7 +105,6 @@ class NoSparseClassifier(BaseBadClassifier):
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
-
     def fit(self, X, y):
         X, y = check_X_y(X, y)
         self.coef_ = np.ones(X.shape[1])
@@ -126,7 +118,6 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 
 
 class NoSampleWeightPandasSeriesType(BaseEstimator):
-
     def fit(self, X, y, sample_weight=None):
         # Convert data
         X, y = check_X_y(X, y,
@@ -156,7 +147,6 @@ class BadTransformerWithoutMixin(BaseEstimator):
 
 
 class NotInvariantPredict(BaseEstimator):
-
     def fit(self, X, y):
         # Convert data
         X, y = check_X_y(X, y,
@@ -174,7 +164,6 @@ class NotInvariantPredict(BaseEstimator):
 
 
 class LargeSparseNotSetClassifier(BaseEstimator):
-
     def fit(self, X, y):
         X, y = check_X_y(X, y,
                          accept_sparse=("csr", "csc", "coo"),
@@ -334,12 +323,10 @@ def test_check_estimators_unfitted():
 
 def test_check_no_attributes_set_in_init():
     class NonConformantEstimatorPrivateSet(object):
-
         def __init__(self):
             self.you_should_not_set_this_ = None
 
     class NonConformantEstimatorNoParamSet(object):
-
         def __init__(self, you_should_set_this_=None):
             pass
 
