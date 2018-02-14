@@ -371,6 +371,12 @@ Cluster
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
+Imputer
+
+- Deprecate :class:`preprocessing.Imputer` and move the corresponding module to
+  :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
+  <thechargedneutron>`.
+
 Outlier Detection models
 
 - More consistent outlier detection API:
