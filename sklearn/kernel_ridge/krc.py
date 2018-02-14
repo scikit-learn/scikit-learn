@@ -1,4 +1,4 @@
-# Authors: Carlos Perales <sir.perales@gmail.com>
+# Author: Carlos Perales <sir.perales@gmail.com>
 # License: BSD 3 clause
 
 from .kernel_ridge import KernelRidge

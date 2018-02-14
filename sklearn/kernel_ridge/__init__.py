@@ -1,8 +1,8 @@
-"""
-The :mod:`sklearn.kernel_ridge` module includes models based on
-Kernel Ridge.
-"""
+# -*- coding: utf-8 -*-
 
+# Authors: Mathieu Blondel <mathieu@mblondel.org>
+#          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#          Carlos Perales <sir.perales@gmail.com>
 # License: BSD 3 clause
 
 from .krc import KernelRidgeClassification
