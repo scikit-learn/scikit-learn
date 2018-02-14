@@ -29,7 +29,7 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
-  
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -88,7 +88,8 @@ Decomposition, manifold learning and clustering
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
-  :class:`manifold.TSNE`. :issue:`10593` by `Tom Dupre la Tour`_.
+  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
+  `Tom Dupre la Tour`_.
 
 
 Enhancements
@@ -135,6 +136,13 @@ Cluster
   :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
+
+Datasets
+
+- In :func:`datasets.make_blobs`, one can now pass a list to the `n_samples`
+  parameter to indicate the number of samples to generate per cluster.
+  :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>`
+  and :user:`Konstantinos Katrioplas <kkatrio>`.
 
 Preprocessing
 
@@ -233,6 +241,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`tree.BaseDecisionTree` with `splitter="best"`
   where split threshold could become infinite when values in X were
   near infinite. :issue:`10536` by :user:`Jonathan Ohayon <Johayon>`.
+
+- Fixed a bug in :class:`linear_model.ElasticNet` which caused the input to be
+  overridden when using parameter ``copy_X=True`` and ``check_input=False``.
+  :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
 
 Decomposition, manifold learning and clustering
 
@@ -376,12 +388,6 @@ Outlier Detection models
   In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
-
-Preprocessing
-
-- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
-  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
-  :user:`Hanmin Qin <qinhanmin2014>`.
 
 Misc
 
