@@ -2210,13 +2210,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     @staticmethod
-    def _nanpercentile_force_finite(a, q):
+    def _nanpercentile_force_finite(column_data, percentiles):
         """Force the output of nanpercentile to be finite."""
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore')
-            percentile = nanpercentile(a, q)
+        percentile = nanpercentile(column_data, percentiles)
+        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             if np.all(np.isclose(percentile, np.nan, equal_nan=True)):
-                return np.zeros(len(q), dtype=a.dtype)
+                warnings.warn("All samples in a column of X are NaN.")
+                return np.zeros(len(percentiles), dtype=column_data.dtype)
             else:
                 return percentile
 
@@ -2360,9 +2360,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             #  for inverse transform, match a uniform PDF
             X_col = output_distribution.cdf(X_col)
         # find index for lower and higher bounds
-        # comparison with NaN will raise a warning which we make silent
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
                                 lower_bound_x)
             upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
@@ -2390,9 +2388,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X_col[lower_bounds_idx] = lower_bound_y
         # for forward transform, match the output PDF
         if not inverse:
-            # comparison with NaN will raise a warning which we make silent
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
                 X_col = output_distribution.ppf(X_col)
             # find the value to clip the data to avoid mapping to
             # infinity. Clip such that the inverse transform will be
@@ -2412,9 +2408,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                         force_all_finite='allow-nan')
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
-        # comparison with NaN will raise a warning which we make silent
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore')
+        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             if (not accept_sparse_negative and not self.ignore_implicit_zeros
                     and (sparse.issparse(X) and np.any(X.data < 0))):
                 raise ValueError('QuantileTransformer only accepts'

@@ -987,16 +987,27 @@ def test_quantile_transform_missing_value(missing_value, dtype):
                                         [0, 0.5]])
     X_expected_all_missing = X_all_missing.copy()
 
-    for X, X_expected in zip([X_some_missing, X_all_missing],
-                             [X_expected_some_missing,
-                              X_expected_all_missing]):
+    for X, X_expected, all_nan in zip([X_some_missing, X_all_missing],
+                                      [X_expected_some_missing,
+                                       X_expected_all_missing],
+                                      [False, True]):
         transformer = QuantileTransformer(n_quantiles=5)
 
-        X_trans = transformer.fit_transform(X)
+        if all_nan:
+            X_trans = assert_warns_message(UserWarning,
+                                           "samples in a column of X are NaN",
+                                           transformer.fit_transform, X)
+        else:
+            X_trans = assert_no_warnings(transformer.fit_transform, X)
         assert_almost_equal(X_expected, X_trans)
 
         X_sparse = sparse.csc_matrix(X)
-        X_trans = transformer.fit_transform(X_sparse)
+        if all_nan:
+            X_trans = assert_warns_message(UserWarning,
+                                           "samples in a column of X are NaN",
+                                           transformer.fit_transform, X_sparse)
+        else:
+            X_trans = assert_no_warnings(transformer.fit_transform, X_sparse)
         assert_almost_equal(X_expected, X_trans.A)
 
         assert X_trans.dtype == dtype
