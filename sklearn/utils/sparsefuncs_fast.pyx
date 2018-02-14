@@ -297,27 +297,22 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # First pass
     if last_n == 0:
         return new_mean, new_var, new_n
+
     # Next passes
-    else:
-        updated_n = last_n + new_n
-        last_over_new_n = last_n / new_n
+    updated_n = last_n + new_n
+    last_over_new_n = last_n / new_n
 
-    for i in xrange(n_features):
-        # Unnormalized old stats
-        last_mean[i] *= last_n
-        last_var[i] *= last_n
+    # Unnormalized stats
+    last_mean *= last_n
+    last_var *= last_n
+    new_mean *= new_n
+    new_var *= new_n
 
-        # Unnormalized new stats
-        new_mean[i] *= new_n
-        new_var[i] *= new_n
-
-        # Update stats
-        updated_var[i] = (last_var[i] + new_var[i] +
-                          last_over_new_n / updated_n *
-                          (last_mean[i] / last_over_new_n - new_mean[i]) ** 2)
-
-        updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n
-        updated_var[i] = updated_var[i] / updated_n
+    # Update stats
+    updated_var = (last_var + new_var + last_over_new_n / updated_n *
+                   (last_mean / last_over_new_n - new_mean) ** 2)
+    updated_mean = (last_mean + new_mean) / updated_n
+    updated_var /= updated_n
 
     return updated_mean, updated_var, updated_n
 

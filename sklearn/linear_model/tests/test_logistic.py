@@ -312,6 +312,15 @@ def test_consistency_path():
                                   err_msg="with solver = %s" % solver)
 
 
+def test_logistic_regression_path_convergence_fail():
+    rng = np.random.RandomState(0)
+    X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
+    y = [1] * 100 + [-1] * 100
+    Cs = [1e3]
+    assert_warns(ConvergenceWarning, logistic_regression_path,
+                 X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
+
+
 def test_liblinear_dual_random_state():
     # random_state is relevant for liblinear solver only if dual=True
     X, y = make_classification(n_samples=20, random_state=0)
