@@ -14,7 +14,6 @@ from sklearn import datasets, base
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal, assert_true
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raises
 from sklearn.externals import six
 from sklearn.utils.estimator_checks import check_estimator
@@ -138,10 +137,6 @@ def test_bad_input():
     # error for precomputed kernels
     clf = KRC(kernel='precomputed')
     assert_raises(ValueError, clf.fit, X, Y)
-
-    # predict with sparse input when trained with dense
-    clf = KRC().fit(X, Y)
-    assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)

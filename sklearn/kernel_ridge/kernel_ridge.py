@@ -7,16 +7,15 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin
+from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from ..metrics.pairwise import pairwise_kernels
 from ..linear_model.ridge import _solve_cholesky_kernel
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_is_fitted
-from ..utils.multiclass import unique_labels
 from ..preprocessing import LabelBinarizer
 
 
-class KernelRidge(BaseEstimator, RegressorMixin):
+class KernelRidge(BaseEstimator, RegressorMixin, ClassifierMixin):
     """Kernel ridge regression and Kernel ridge classification.
 
     Parameters
@@ -135,7 +134,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         ravel = False
         if self.regression is True:
             X, y_ = check_X_y(X, y, accept_sparse=("csr", "csc"),
-                             multi_output=True, y_numeric=True)
+                              multi_output=True, y_numeric=True)
             if len(y_.shape) == 1:
                 y_ = y_.reshape(-1, 1)
                 ravel = True
@@ -180,11 +179,6 @@ class KernelRidge(BaseEstimator, RegressorMixin):
             Returns predicted values.
         """
         check_is_fitted(self, ["X_fit_", "dual_coef_"])
-        try:
-            X = check_array(X)
-        except TypeError:
-            raise ValueError('Predict with sparse input '
-                             'when trained with dense')
         # Input validation
         K = self._get_kernel(X, self.X_fit_)
         y = np.dot(K, self.dual_coef_)
