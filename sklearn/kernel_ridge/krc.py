@@ -69,13 +69,19 @@ class KernelRidgeClassification(KernelRidge, ClassifierMixin):
       "Machine Learning: A Probabilistic Perspective", The MIT Press
       chapter 14.4.3, pp. 492-493
 
+    * An, Senjian, Wanquan Liu, and Svetha Venkatesh.
+      "Face recognition using kernel ridge regression." Computer Vision
+      and Pattern Recognition, 2007. CVPR'07. IEEE Conference on. IEEE,
+      2007.
+
     See also
     --------
     sklearn.linear_model.Ridge:
         Linear ridge regression.
+    sklearn.svm.SVR:
+        Support Vector Regression implemented using libsvm.
     sklearn.svm.SVC:
         Support Vector Classification implemented using libsvm.
-
     """
     _estimator_type = "classifier"
     regression = False

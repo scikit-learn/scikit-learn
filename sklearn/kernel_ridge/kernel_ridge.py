@@ -16,8 +16,67 @@ from ..utils.multiclass import unique_labels
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
-    """Kernel ridge regression and Kernel ridge classification
-    (also known as Kernel Extreme Learning Machine).
+    """Kernel ridge regression and Kernel ridge classification.
+
+    Parameters
+    ----------
+    alpha : {float, array-like}, shape = [n_targets]
+        Small positive values of alpha improve the conditioning of the problem
+        and reduce the variance of the estimates.  Alpha corresponds to
+        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        LinearSVC. If an array is passed, penalties are assumed to be specific
+        to the targets. Hence they must correspond in number.
+
+    kernel : string or callable, default="linear"
+        Kernel mapping used internally. A callable should accept two arguments
+        and the keyword arguments passed to this object as kernel_params, and
+        should return a floating point number.
+
+    gamma : float, default=None
+        Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
+        and sigmoid kernels. Interpretation of the default value is left to
+        the kernel; see the documentation for sklearn.metrics.pairwise.
+        Ignored by other kernels.
+
+    degree : float, default=3
+        Degree of the polynomial kernel. Ignored by other kernels.
+
+    coef0 : float, default=1
+        Zero coefficient for polynomial and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any, optional
+        Additional parameters (keyword arguments) for kernel function passed
+        as callable object.
+
+    Attributes
+    ----------
+    F : array, shape = [n_samples] or [n_samples, n_targets]
+        Representation of weight vector(s) in kernel space
+
+    X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Training data, which is also required for prediction
+
+    References
+    ----------
+    * Kevin P. Murphy
+      "Machine Learning: A Probabilistic Perspective", The MIT Press
+      chapter 14.4.3, pp. 492-493
+
+    * An, Senjian, Wanquan Liu, and Svetha Venkatesh.
+      "Face recognition using kernel ridge regression." Computer Vision
+      and Pattern Recognition, 2007. CVPR'07. IEEE Conference on. IEEE,
+      2007.
+
+    See also
+    --------
+    sklearn.linear_model.Ridge:
+        Linear ridge regression.
+    sklearn.svm.SVR:
+        Support Vector Regression implemented using libsvm.
+    sklearn.svm.SVC:
+        Support Vector Classification implemented using libsvm.
+
     """
     # By default, it works as a regressor
     regression = True
