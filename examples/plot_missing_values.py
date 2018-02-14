@@ -65,7 +65,8 @@ X_missing = X_full.copy()
 X_missing[np.where(missing_samples)[0], missing_features] = 0
 y_missing = y_full.copy()
 estimator = Pipeline([("imputer", Imputer(missing_values=0,
-                                          strategy="mean")),
+                                          strategy="mean",
+                                          axis=0)),
                       ("forest", RandomForestRegressor(random_state=0,
                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()

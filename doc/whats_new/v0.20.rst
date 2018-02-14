@@ -382,12 +382,6 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
-Preprocessing
-
-- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
-  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
-  :user:`Hanmin Qin <qinhanmin2014>`.
-
 Misc
 
 - Changed warning type from UserWarning to ConvergenceWarning for failing
