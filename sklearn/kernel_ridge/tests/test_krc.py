@@ -40,19 +40,8 @@ def test_check_estimator():
 
 def test_krc_parameters():
     # Test parameters.
-    clf = KRC(kernel='linear').fit(X, Y)
+    clf = KRC(kernel='rbf').fit(X, Y)
     assert_array_equal(clf.predict(X), Y)
-
-
-def test_iris():
-    # Check consistency on dataset iris.
-
-    # shuffle the dataset so that labels are not ordered
-    for k in ('linear', 'rbf'):
-        clf = KRC(kernel=k).fit(iris.data, iris.target)
-        assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.75)
-
-    assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
 
 def test_precomputed():
@@ -118,20 +107,20 @@ def test_tweak_params():
     #                       [0.34782609, 0.65217391],
     #                       [0.52173913, 0.47826087],
     #                       [0.52173913, 0.47826087]])
-    dual_coef = np.array([[0.93333333, 1.06666667],
-                          [1.28888889, 0.71111111],
-                          [0.93333333, 1.06666667],
-                          [0.71111111, 1.28888889],
-                          [1.06666667, 0.93333333],
-                          [1.06666667, 0.93333333]])
+    dual_coef = np.array([[1.06666667],
+                          [0.71111111],
+                          [1.06666667],
+                          [1.28888889],
+                          [0.93333333],
+                          [0.93333333]])
     assert_almost_equal(clf.dual_coef_, dual_coef, decimal=8)
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    dual_coef = np.array([[0.47826087, 0.52173913],
-                          [0.52173913, 0.47826087],
-                          [0.34782609, 0.65217391],
-                          [0.47826087, 0.52173913],
-                          [0.65217391, 0.34782609],
-                          [0.52173913, 0.47826087]])
+    dual_coef = np.array([[-1.06666667],
+                          [-0.71111111],
+                          [-1.06666667],
+                          [-1.28888889],
+                          [-3.93333333],
+                          [-0.93333333]])
     clf.dual_coef_ = dual_coef
     assert_almost_equal(clf.predict([[-.1, -.1]]), [2])
 
@@ -218,11 +207,3 @@ def test_krc_clone_with_callable_kernel():
 def test_krc_bad_kernel():
     krc = KRC(kernel=lambda x, y: x)
     assert_raises(ValueError, krc.fit, X, Y)
-
-
-def test_unfitted():
-    X = "foo!"  # input validation not required when KRC is not fitted
-
-    clf = KRC()
-    assert_raises_regexp(Exception, r"not\b.*\bfitted\b",
-                         clf.predict, X)

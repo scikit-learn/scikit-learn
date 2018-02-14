@@ -13,6 +13,7 @@ from ..linear_model.ridge import _solve_cholesky_kernel
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import unique_labels
+from ..preprocessing import LabelBinarizer
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
@@ -126,63 +127,40 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False)
 
+        # Check alpha
+        if self.alpha <= 0:
+            raise ValueError('alpha must be positive')
+
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
 
         copy = self.kernel == "precomputed"
 
+        ravel = False
         if self.regression is True:
-            X, y = check_X_y(X, y, accept_sparse=("csr", "csc"),
+            X, y_ = check_X_y(X, y, accept_sparse=("csr", "csc"),
                              multi_output=True, y_numeric=True)
-            ravel = False
-            if len(y.shape) == 1:
-                y = y.reshape(-1, 1)
+            if len(y_.shape) == 1:
+                y_ = y_.reshape(-1, 1)
                 ravel = True
-
-            self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha,
-                                                     sample_weight,
-                                                     copy)
-            if ravel:
-                self.dual_coef_ = self.dual_coef_.ravel()
-
-        else:
-            # Check alpha
-            if self.alpha <= 0:
-                raise ValueError('C must be positive')
+        else:  # Multilabel classification
             X, y = check_X_y(X, y)
-            self.classes_ = unique_labels(y)
-
-            # y must be encoded by zero arrays with 1 in a position
-            # assigned to a label
-            n = X.shape[0]
-            if self.classes_.shape[0] == 1:
-                self.n_classes_ = int(self.classes_[0] + 1)
-                self.classes_ = np.arange(self.n_classes_)
-            else:
-                self.n_classes_ = len(self.classes_)
-
-            T = np.zeros((n, self.n_classes_), dtype=np.float64)
-            # It is essential in order to adapt it to string labels
-            self.class_corr_ = {}
-            for i in range(n):
-                row = [y[i] == self.classes_]
-                T[i] = np.array(row, dtype=np.float64)
-                pos = np.argmax(row)
-                self.class_corr_[str(pos)] = self.classes_[pos]
-                # T is already encoded
-
-            # # ELM
-            # alpha = np.eye(n) * 2 * self.alpha + K
-            # self.dual_coef_ = np.linalg.solve(alpha, T)
-
-            # Ridge
-            self.dual_coef_ = _solve_cholesky_kernel(K, T, alpha,
-                                                     sample_weight,
-                                                     copy)
+            # y is going to be encoded by zero arrays
+            # with 1 in a position assigned to a label
+            self.label_encoder_ = LabelBinarizer()
+            y_ = self.label_encoder_.fit_transform(y)
+            self.classes_ = self.label_encoder_.classes_
 
             # This value is similar to number of neurons in hidden
             # layer in neural version of Extreme Learning Machine
-            self.h_ = self.dual_coef_.shape[0]
+            self.h_ = K.shape[1]
+
+        self.dual_coef_ = _solve_cholesky_kernel(K, y_, alpha,
+                                                 sample_weight,
+                                                 copy)
+
+        if ravel:
+            self.dual_coef_ = self.dual_coef_.ravel()
 
         self.X_fit_ = X
 
@@ -202,23 +180,17 @@ class KernelRidge(BaseEstimator, RegressorMixin):
             Returns predicted values.
         """
         check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        try:
+            X = check_array(X)
+        except TypeError:
+            raise ValueError('Predict with sparse input '
+                             'when trained with dense')
         # Input validation
         K = self._get_kernel(X, self.X_fit_)
-        indicator = np.dot(K, self.dual_coef_)
+        y = np.dot(K, self.dual_coef_)
 
-        if self.regression is True:
-            y = indicator
-        else:
-            try:
-                X = check_array(X)
-            except TypeError:
-                raise ValueError('Predict with sparse input '
-                                 'when trained with dense')
+        if self.regression is False:  # Multilabel classification
             # Decoding
-            y = []
-            for y_i in indicator:
-                pos = np.argmax(y_i)
-                y.append(self.class_corr_[str(pos)])
-            y = np.array(y)
+            y = self.label_encoder_.inverse_transform(y)
 
         return y
