@@ -221,9 +221,6 @@ def _yield_outliers_checks(name, estimator):
         yield check_outliers_train
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
-        # test if scores_samples is a monotonic transformation of
-        # decision_function
-        yield check_decision_scores_consistency
         # test if NotFittedError is raised
         yield check_estimators_unfitted
 
@@ -1396,9 +1393,6 @@ def check_outliers_train(name, estimator_orig):
     y_pred = estimator.predict(X)
     assert y_pred.shape == (n_samples,)
     assert y_pred.dtype.kind == 'i'
-
-    y_pred = estimator.predict(X)
-    assert y_pred.dtype.kind == 'i'
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     decision = estimator.decision_function(X)
@@ -1412,7 +1406,7 @@ def check_outliers_train(name, estimator_orig):
 
     # decision_function agrees with predict
     decision = estimator.decision_function(X)
-    assert_equal(decision.shape, (n_samples,))
+    assert decision.shape == (n_samples,)
     dec_pred = (decision >= 0).astype(np.int)
     dec_pred[dec_pred == 0] = -1
     assert_array_equal(dec_pred, y_pred)
@@ -1422,7 +1416,7 @@ def check_outliers_train(name, estimator_orig):
 
     # decision_function is a translation of score_samples
     y_scores = estimator.score_samples(X)
-    assert_equal(y_scores.shape, (n_samples,))
+    assert y_scores.shape == (n_samples,)
     y_dec = y_scores - estimator.offset_
     assert_array_equal(y_dec, decision)
 
@@ -1437,7 +1431,7 @@ def check_outliers_train(name, estimator_orig):
         estimator.set_params(contamination=contamination)
         estimator.fit(X)
         y_pred = estimator.predict(X)
-        assert_equal(np.mean(y_pred != 1), contamination)
+        assert np.mean(y_pred != 1) == contamination
 
         # raises error when contamination is a scalar and not in [0,1]
         for contamination in [-0.5, 2.3]:
@@ -2084,23 +2078,6 @@ def check_decision_proba_consistency(name, estimator_orig):
         assert_array_equal(rankdata(a), rankdata(b))
 
 
-def check_decision_scores_consistency(name, estimator_orig):
-    # Check that decision_function and score_samples methods of an outlier
-    # detector have outputs with perfect rank correlation.
-
-    centers = [(2, 2), (4, 4)]
-    X, _ = make_blobs(n_samples=100, random_state=0, n_features=4,
-                      centers=centers, cluster_std=1.0, shuffle=True)
-    X_test = np.random.randn(20, 2) + 4
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-
-    estimator.fit(X)
-    a = estimator.score_samples(X_test)
-    b = estimator.decision_function(X_test)
-    assert_array_equal(rankdata(a), rankdata(b))
-
-
 def check_outliers_fit_predict(name, estimator_orig):
     # Check fit_predict for outlier detectors.
 
@@ -2112,8 +2089,8 @@ def check_outliers_fit_predict(name, estimator_orig):
     set_random_state(estimator)
 
     y_pred = estimator.fit_predict(X)
-    assert_equal(y_pred.shape, (n_samples,))
-    assert_in(y_pred.dtype, [np.dtype('int32'), np.dtype('int64')])
+    assert y_pred.shape == (n_samples,)
+    assert y_pred.dtype.kind == 'i'
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     # check fit_predict = fit.predict when possible
@@ -2127,7 +2104,7 @@ def check_outliers_fit_predict(name, estimator_orig):
         contamination = 0.1
         estimator.set_params(contamination=contamination)
         y_pred = estimator.fit_predict(X)
-        assert_equal(np.mean(y_pred != 1), contamination)
+        assert np.mean(y_pred != 1) == contamination
 
         # raises error when contamination is a scalar and not in [0,1]
         for contamination in [-0.5, 2.3]:
