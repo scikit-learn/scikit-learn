@@ -137,6 +137,13 @@ Cluster
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
+Datasets
+
+- In :func:`datasets.make_blobs`, one can now pass a list to the `n_samples`
+  parameter to indicate the number of samples to generate per cluster.
+  :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>`
+  and :user:`Konstantinos Katrioplas <kkatrio>`.
+
 Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
@@ -381,12 +388,6 @@ Outlier Detection models
   In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
-
-Preprocessing
-
-- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
-  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
-  :user:`Hanmin Qin <qinhanmin2014>`.
 
 Misc
 
