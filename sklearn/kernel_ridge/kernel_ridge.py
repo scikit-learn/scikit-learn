@@ -127,10 +127,6 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False)
 
-        # Check alpha
-        if self.alpha <= 0:
-            raise ValueError('alpha must be positive')
-
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
 
@@ -145,6 +141,10 @@ class KernelRidge(BaseEstimator, RegressorMixin):
                 ravel = True
         else:  # Multilabel classification
             X, y = check_X_y(X, y)
+            # Check alpha
+            if self.alpha <= 0:
+                raise ValueError('alpha must be positive')
+
             # y is going to be encoded by zero arrays
             # with 1 in a position assigned to a label
             self.label_encoder_ = LabelBinarizer()
