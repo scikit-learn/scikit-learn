@@ -528,15 +528,3 @@ def test_mice_additive_matrix():
                           random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_array_almost_equal(X_test_filled, X_test_est, decimal=2)
-
-
-def test_deprecated_imputer_axis():
-    depr_message = ("Parameter 'axis' has been deprecated in 0.20 and will "
-                    "be removed in 0.22. Future (and default) behavior is "
-                    "equivalent to 'axis=0' (impute along columns). Row-wise "
-                    "imputation can be performed with FunctionTransformer.")
-    X = sparse_random_matrix(5, 5, density=0.75, random_state=0)
-    imputer = Imputer(missing_values=0, axis=0)
-    assert_warns_message(DeprecationWarning, depr_message, imputer.fit, X)
-    imputer = Imputer(missing_values=0, axis=1)
-    assert_warns_message(DeprecationWarning, depr_message, imputer.fit, X)
