@@ -14,9 +14,8 @@ import numpy as np
 
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..neighbors.base import NeighborsBase, UnsupervisedMixin
-from ..neighbors.base import KNeighborsMixin, RadiusNeighborsMixin
-from ..base import ClusterMixin
+from ..neighbors import NearestNeighbors
+from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
 from ._optics_inner import quick_scan
 
@@ -144,8 +143,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     return clust.core_sample_indices_, clust.labels_
 
 
-class OPTICS(NeighborsBase, KNeighborsMixin,
-             RadiusNeighborsMixin, ClusterMixin, UnsupervisedMixin):
+class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -279,26 +277,26 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=1):
 
-        self._init_params(n_neighbors=min_samples, metric=metric, p=p,
-                          metric_params=metric_params, algorithm=algorithm,
-                          leaf_size=leaf_size, n_jobs=n_jobs)
+        self.nbrs = NearestNeighbors(n_neighbors=min_samples,
+                                     algorithm=algorithm, leaf_size=leaf_size,
+                                     metric=metric,
+                                     metric_params=metric_params, p=p,
+                                     n_jobs=n_jobs)
 
         self.max_bound = max_bound
-        # min_samples is set via n_neighbors attribute in init params
+        self.min_samples = min_samples
         self.maxima_ratio = maxima_ratio
         self.rejection_ratio = rejection_ratio
         self.similarity_threshold = similarity_threshold
         self.significant_min = significant_min
         self.min_cluster_size_ratio = min_cluster_size_ratio
         self.min_maxima_ratio = min_maxima_ratio
-
-    @property
-    def n_neighbors(self):
-        return self.min_samples
-
-    @n_neighbors.setter
-    def n_neighbors(self, value):
-        self.min_samples = value
+        self.algorithm = algorithm
+        self.metric = metric
+        self.metric_params = metric_params
+        self.p = p
+        self.leaf_size = leaf_size
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         """Perform OPTICS clustering
@@ -337,9 +335,9 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                              "used for clustering." %
                              (n_samples, self.min_samples))
 
-        super(OPTICS, self).fit(X)
-
-        self.core_dists_[:] = self.kneighbors(X, self.min_samples)[0][:, -1]
+        self.nbrs.fit(X)
+        self.core_dists_[:] = self.nbrs.kneighbors(X,
+                                                   self.min_samples)[0][:, -1]
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
@@ -375,8 +373,8 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
     def _set_reach_dist(self, point_index, X):
         P = np.array(X[point_index]).reshape(1, -1)
-        indices = self.radius_neighbors(P, radius=self.max_bound,
-                                        return_distance=False)[0]
+        indices = self.nbrs.radius_neighbors(P, radius=self.max_bound,
+                                             return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
