@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
@@ -15,6 +16,7 @@ from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
 
 
+@ignore_warnings
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
@@ -305,6 +307,7 @@ def test_imputation_pickle():
         )
 
 
+@ignore_warnings
 def test_imputation_copy():
     # Test imputation with copy
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
