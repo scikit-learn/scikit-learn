@@ -155,16 +155,13 @@ class Imputer(BaseEstimator, TransformerMixin):
             raise ValueError("Can only impute missing values on axis 0 and 1, "
                              " got axis={0}".format(self.axis))
 
-        X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan'
-                        if self.missing_values == 'NaN' else True)
-
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
         if self._axis == 0:
-            X = check_array(X, accept_sparse='csc', dtype=np.float64,
-                            force_all_finite=False)
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite='allow-nan'
+                            if self.missing_values == 'NaN' else True)
       
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
