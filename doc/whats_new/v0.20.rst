@@ -137,6 +137,13 @@ Cluster
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
+Datasets
+
+- In :func:`datasets.make_blobs`, one can now pass a list to the `n_samples`
+  parameter to indicate the number of samples to generate per cluster.
+  :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>`
+  and :user:`Konstantinos Katrioplas <kkatrio>`.
+
 Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
