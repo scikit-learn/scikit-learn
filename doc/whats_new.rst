@@ -1,13 +1,12 @@
 .. currentmodule:: sklearn
 .. include:: includes/big_toc_css.rst
 .. include:: whats_new/_contributors.rst
-===============
+
 Release History
 ===============
 .. include:: whats_new/v0.20.rst
 .. include:: whats_new/v0.19.rst
 
-=================
 Previous Releases
 =================
 .. toctree::
