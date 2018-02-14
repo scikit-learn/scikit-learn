@@ -6,8 +6,7 @@ from ..base import ClassifierMixin
 
 
 class KernelRidgeClassification(KernelRidge, ClassifierMixin):
-    """Kernel ridge classification (also known as Kernel
-    Extreme Learning Machine).
+    """Kernel ridge classification.
 
     Kernel ridge classification (KRC) combines ridge
     regression (linear least squares with l2-norm regularization), special
@@ -55,12 +54,6 @@ class KernelRidgeClassification(KernelRidge, ClassifierMixin):
     kernel_params : mapping of string to any, optional
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
-
-    regression : bool, default=True
-         Behaviour parameter, True if this object works as a
-         regressor, False if as a classifier.
-         When it is working as a classifier, behaviour is identical
-         to Kernel Extreme Learning Machine.
 
     Attributes
     ----------

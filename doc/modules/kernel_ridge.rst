@@ -50,8 +50,17 @@ prediction time depends on the parameters :math:`\epsilon` and :math:`C` of the
    :target: ../auto_examples/plot_kernel_ridge_regression.html
    :align: center
 
+Following same mathematical formulation, with
+a label encoding Kernel Ridge can be used for classification
+[V2007]_. :class:`KernelRidgeClassification` uses same logic as
+:class:`KernelRidge` and it is implemented for multilabel classification.
 
 .. topic:: References:
 
     .. [M2012] "Machine Learning: A Probabilistic Perspective"
       Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012
+
+    .. [V2007] An, Senjian, Wanquan Liu, and Svetha Venkatesh.
+      "Face recognition using kernel ridge regression." Computer Vision
+      and Pattern Recognition, 2007. CVPR'07. IEEE Conference on. IEEE,
+      2007.

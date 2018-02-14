@@ -59,12 +59,6 @@ class KernelRidgeRegression(KernelRidge):
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
-    regression : bool, default=True
-         Behaviour parameter, True if this object works as a
-         regressor, False if as a classifier.
-         When it is working as a classifier, behaviour is identical
-         to Kernel Extreme Learning Machine.
-
     Attributes
     ----------
     F : array, shape = [n_samples] or [n_samples, n_targets]
