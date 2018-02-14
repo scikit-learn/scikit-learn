@@ -36,7 +36,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, TransformerMixin, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor)
+                          BaseEstimator, is_classifier, is_regressor,
+                          is_outlier_detector)
 
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -70,13 +71,6 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-# Outlier detection estimators
-OUTLIER_DETECTION = ['EllipticEnvelope', 'OneClassSVM',
-                     'LocalOutlierFactor', 'IsolationForest']
-# some outlier detectors like LocalOutlierFactor are not meant to be used on
-# a test set and do not have (public) predict, decision_function and
-# score_samples methods.
-NO_TEST_SET_DETECTORS = ['LocalOutlierFactor']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -223,16 +217,13 @@ def _yield_outliers_checks(name, estimator):
     yield check_outliers_fit_predict
 
     # checks for estimators that can be used on a test set
-    if name not in NO_TEST_SET_DETECTORS:
+    if hasattr(estimator, 'predict'):
         yield check_outliers_train
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if scores_samples is a monotonic transformation of
         # decision_function
         yield check_decision_scores_consistency
-        # test that predict returns int and decision_function and score_samples
-        # return float
-        yield check_outliers_output_dtypes
         # test if NotFittedError is raised
         yield check_estimators_unfitted
 
@@ -252,7 +243,7 @@ def _yield_all_checks(name, estimator):
     if isinstance(estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, estimator):
             yield check
-    if name in OUTLIER_DETECTION:
+    if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
@@ -1403,9 +1394,18 @@ def check_outliers_train(name, estimator_orig):
     estimator.fit(X.tolist())
 
     y_pred = estimator.predict(X)
-    assert_equal(y_pred.shape, (n_samples,))
-    # training set performance
-    # TODO
+    assert y_pred.shape == (n_samples,)
+    assert y_pred.dtype.kind == 'i'
+
+    y_pred = estimator.predict(X)
+    assert y_pred.dtype.kind == 'i'
+    assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
+
+    decision = estimator.decision_function(X)
+    assert decision.dtype == np.dtype('float')
+
+    score = estimator.score_samples(X)
+    assert score.dtype == np.dtype('float')
 
     # raises error on malformed input for predict
     assert_raises(ValueError, estimator.predict, X.T)
@@ -1425,7 +1425,6 @@ def check_outliers_train(name, estimator_orig):
     assert_equal(y_scores.shape, (n_samples,))
     y_dec = y_scores - estimator.offset_
     assert_array_equal(y_dec, decision)
-    assert_array_equal(np.argsort(y_scores), np.argsort(decision))
 
     # raises error on malformed input for score_samples
     assert_raises(ValueError, estimator.score_samples, X.T)
@@ -2102,31 +2101,6 @@ def check_decision_scores_consistency(name, estimator_orig):
     assert_array_equal(rankdata(a), rankdata(b))
 
 
-def check_outliers_output_dtypes(name, estimator_orig):
-    """Check output types of outlier detectors.
-
-    Check that the predict method of outlier detectors returns int. Check also
-    that decision_function and score_samples methods return float.
-    """
-
-    # Toy sample
-    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
-
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-    estimator.fit(X)
-
-    y_pred = estimator.predict(X)
-    assert_in(y_pred.dtype, [np.dtype('int32'), np.dtype('int64')])
-    assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
-
-    decision = estimator.decision_function(X)
-    assert_equal(decision.dtype, np.dtype('float'))
-
-    score = estimator.score_samples(X)
-    assert_equal(score.dtype, np.dtype('float'))
-
-
 def check_outliers_fit_predict(name, estimator_orig):
     # Check fit_predict for outlier detectors.
 
@@ -2143,7 +2117,7 @@ def check_outliers_fit_predict(name, estimator_orig):
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     # check fit_predict = fit.predict when possible
-    if name not in NO_TEST_SET_DETECTORS:
+    if hasattr(estimator, 'predict'):
         y_pred_2 = estimator.fit(X).predict(X)
         assert_array_equal(y_pred, y_pred_2)
 

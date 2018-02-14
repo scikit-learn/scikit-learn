@@ -526,7 +526,7 @@ class DensityMixin(object):
 
 class OutlierMixin(object):
     """Mixin class for all outlier detection estimators in scikit-learn."""
-    _estimator_type = "OutlierDetector"
+    _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
         """Performs outlier detection on X.
@@ -585,3 +585,19 @@ def is_regressor(estimator):
         True if estimator is a regressor and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+def is_outlier_detector(estimator):
+    """Returns True if the given estimator is (probably) an outlier detector.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is an outlier detector and False otherwise.
+    """
+    return getattr(estimator, "_estimator_type", None) == "outlier_detector"
