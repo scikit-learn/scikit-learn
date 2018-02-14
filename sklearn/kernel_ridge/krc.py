@@ -2,9 +2,10 @@
 # License: BSD 3 clause
 
 from .kernel_ridge import KernelRidge
+from ..base import ClassifierMixin
 
 
-class KernelRidgeClassification(KernelRidge):
+class KernelRidgeClassification(ClassifierMixin, KernelRidge):
     """Kernel ridge classification.
 
     Kernel ridge classification (KRC) combines ridge
@@ -82,5 +83,4 @@ class KernelRidgeClassification(KernelRidge):
     sklearn.svm.SVC:
         Support Vector Classification implemented using libsvm.
     """
-    _estimator_type = "classifier"
     regression = False
