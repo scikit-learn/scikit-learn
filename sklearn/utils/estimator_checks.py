@@ -91,7 +91,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ['Imputer', 'MICEImputer']:
+    if name not in ['SimpleImputer', 'Imputer', 'MICEImputer']:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 

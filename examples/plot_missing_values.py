@@ -4,7 +4,7 @@ Imputing missing values before building an estimator
 ====================================================
 
 Missing values can be replaced by the mean, the median or the most frequent
-value using the basic ``Imputer``.
+value using the basic ``SimpleImputer``.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
@@ -21,7 +21,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MICEImputer
 from sklearn.model_selection import cross_val_score
 
@@ -61,9 +61,8 @@ def get_results(dataset):
     X_missing = X_full.copy()
     X_missing[np.where(missing_samples)[0], missing_features] = 0
     y_missing = y_full.copy()
-    estimator = Pipeline([("imputer", Imputer(missing_values=0,
-                                              strategy="mean",
-                                              axis=0)),
+    estimator = Pipeline([("imputer", SimpleImputer(missing_values=0,
+                                                    strategy="mean")),
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
     mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
