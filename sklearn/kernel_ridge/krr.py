@@ -2,11 +2,11 @@
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-from ..base import RegressorMixin
+from ..base import RegressorMixin, BaseEstimator
 from .kernel_ridge import BaseKernelRidge
 
 
-class KernelRidge(RegressorMixin, BaseKernelRidge):
+class KernelRidge(BaseKernelRidge, BaseEstimator, RegressorMixin):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least

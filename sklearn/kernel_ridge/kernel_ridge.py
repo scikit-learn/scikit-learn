@@ -7,7 +7,6 @@
 
 import numpy as np
 
-from ..base import BaseEstimator
 from ..metrics.pairwise import pairwise_kernels
 from ..linear_model.ridge import _solve_cholesky_kernel
 from ..utils import check_array, check_X_y
@@ -15,7 +14,7 @@ from ..utils.validation import check_is_fitted
 from ..preprocessing import LabelBinarizer
 
 
-class BaseKernelRidge(BaseEstimator):
+class BaseKernelRidge(object):
     """Kernel ridge regression and Kernel Ridge Classifier.
 
     Parameters
