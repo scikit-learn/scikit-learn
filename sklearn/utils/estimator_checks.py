@@ -1478,8 +1478,9 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
     # training set performance
     if name != "ComplementNB":
         # This is a pathological data set for ComplementNB.
+        # For some specific cases 'ComplementNB' predicts less classes
+        # than expected
         assert_array_equal(np.unique(y), np.unique(y_pred))
-    #if np.any(classifier.classes_ != classes):
     assert_array_equal(classes, classifier.classes_,
                        err_msg="Unexpected classes_ attribute for %r: "
                        "expected '%s', got '%s'" %
