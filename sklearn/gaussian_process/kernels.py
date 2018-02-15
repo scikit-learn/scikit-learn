@@ -80,7 +80,6 @@ class Hyperparameter(namedtuple('Hyperparameter',
         derived based on the given bounds.
 
     """
-
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
     # does not copy the string for the keys on each instance.
@@ -200,7 +199,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return self
 
     def clone_with_theta(self, theta):
-        """Returns a clone of self with given hyperparameters theta."""
+        """Returns a clone of self with given hyperparameters theta. """
         cloned = clone(self)
         cloned.theta = theta
         return cloned
@@ -352,7 +351,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
 
 
 class NormalizedKernelMixin(object):
@@ -388,7 +387,7 @@ class StationaryKernelMixin(object):
     """
 
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
         return True
 
 
@@ -505,7 +504,7 @@ class CompoundKernel(Kernel):
                        for i in range(len(self.kernels))])
 
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
 
     def diag(self, X):
@@ -628,7 +627,7 @@ class KernelOperator(Kernel):
             or (self.k1 == b.k2 and self.k2 == b.k1)
 
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
 
@@ -934,7 +933,7 @@ class Exponentiation(Kernel):
         return "{0} ** {1}".format(self.kernel, self.exponent)
 
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
 
@@ -1244,7 +1243,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class Matern(RBF):
-    """Matern kernel.
+    """ Matern kernel.
 
     The class of Matern kernels is a generalization of the RBF and the
     absolute exponential kernel parameterized by an additional parameter
@@ -1845,7 +1844,7 @@ class DotProduct(Kernel):
         return np.einsum('ij,ij->i', X, X) + self.sigma_0 ** 2
 
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
         return False
 
     def __repr__(self):
@@ -1983,7 +1982,7 @@ class PairwiseKernel(Kernel):
         return np.apply_along_axis(self, 1, X).ravel()
 
     def is_stationary(self):
-        """Returns whether the kernel is stationary."""
+        """Returns whether the kernel is stationary. """
         return self.metric in ["rbf"]
 
     def __repr__(self):
