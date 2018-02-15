@@ -123,13 +123,13 @@ class BaseKernelRidge(object):
         copy = self.kernel == "precomputed"
 
         ravel = False
-        if self._estimator_type is "regressor":
+        if self._estimator_type == "regressor":
             X, y_ = check_X_y(X, y, accept_sparse=("csr", "csc"),
                               multi_output=True, y_numeric=True)
             if len(y_.shape) == 1:
                 y_ = y_.reshape(-1, 1)
                 ravel = True
-        elif self._estimator_type is "classifier":  # Multiclass classification
+        elif self._estimator_type == "classifier":  # Multiclass classification
             X, y = check_X_y(X, y)
             # Check alpha
             if self.alpha <= 0:
@@ -173,7 +173,7 @@ class BaseKernelRidge(object):
         K = self._get_kernel(X, self.X_fit_)
         y = np.dot(K, self.dual_coef_)
 
-        if self._estimator_type is "classifier":
+        if self._estimator_type == "classifier":
             # Decoding
             y = self.label_encoder_.inverse_transform(y)
 
