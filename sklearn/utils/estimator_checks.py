@@ -1457,7 +1457,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
     if hasattr(classifier, "decision_function"):
         decision = classifier.decision_function(X)
         n_samples, n_features = X.shape
-        assert(isinstance(decision, np.ndarray))
+        assert isinstance(decision, np.ndarray)
         if len(classes) == 2:
             dec_pred = (decision.ravel() > 0).astype(np.int)
             dec_exp = classifier.classes_[dec_pred]
@@ -1479,21 +1479,16 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
     if name != "ComplementNB":
         # This is a pathological data set for ComplementNB.
         assert_array_equal(np.unique(y), np.unique(y_pred))
-    if np.any(classifier.classes_ != classes):
-        assert_array_equal(classes, classifier.classes_,
-                           err_msg="Unexpected classes_ attribute for %r: "
-                           "expected '%s', got '%s'" %
-                           (classifier, ", ".join(map(str, classes)),
-                            ", ".join(map(str, classifier.classes_))))
+    #if np.any(classifier.classes_ != classes):
+    assert_array_equal(classes, classifier.classes_,
+                       err_msg="Unexpected classes_ attribute for %r: "
+                       "expected '%s', got '%s'" %
+                       (classifier, ", ".join(map(str, classes)),
+                       ", ".join(map(str, classifier.classes_))))
 
 
 def choose_check_classifiers_labels(name, y, y_names):
-    if name in ["LabelPropagation", "LabelSpreading"]:
-        # TODO some complication with -1 label
-        return y
-
-    return y_names
-
+    return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
 def check_classifiers_classes(name, classifier_orig):
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
