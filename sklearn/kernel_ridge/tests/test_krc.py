@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.externals import six
 from sklearn.kernel_ridge import KernelRidgeClassifier
-from sklearn.utils.estimator_checks import check_estimator
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -178,9 +177,10 @@ def test_linear_elm_iris():
 
 
 def test_KernelRidgeClassifier_clone_with_callable_kernel():
-    # create KernelRidgeClassifier with callable linear kernel, check that results are the same
-    # as with built-in linear kernel
-    KernelRidgeClassifier_callable = KernelRidgeClassifier(kernel=lambda x, y: np.dot(x, y.T))
+    # create KernelRidgeClassifier with callable linear kernel,
+    # check that results are the same as with built-in linear kernel
+    KernelRidgeClassifier_callable = \
+        KernelRidgeClassifier(kernel=lambda x, y: np.dot(x, y.T))
     # clone for checking clonability with lambda functions..
     KernelRidgeClassifier_cloned = base.clone(KernelRidgeClassifier_callable)
     KernelRidgeClassifier_cloned.fit(iris.data, iris.target)
@@ -199,16 +199,3 @@ def test_KernelRidgeClassifier_clone_with_callable_kernel():
 def test_krc_bad_kernel():
     clf = KernelRidgeClassifier(kernel=lambda x, y: x)
     assert_raises(ValueError, clf.fit, X, Y)
-
-
-if __name__ == '__main__':
-    check_estimator(KernelRidgeClassifier)
-    test_KernelRidgeClassifier_parameters()
-    test_precomputed()
-    test_tweak_params()
-    test_bad_input()
-    test_unicode_kernel()
-    test_linear_elm()
-    test_linear_elm_iris()
-    test_KernelRidgeClassifier_clone_with_callable_kernel()
-    test_krc_bad_kernel()
