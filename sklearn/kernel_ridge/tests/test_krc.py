@@ -1,5 +1,5 @@
 """
-Testing for Kernel Ridge Classification
+Testing for Kernel Ridge Classifier
 (sklearn.kernel_ridge)
 
 Authors: Carlos Perales <sir.perales@gmail.com>

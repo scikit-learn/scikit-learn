@@ -1,7 +1,7 @@
 """
-=============================================
-Kernel Ridge Classification with custom kernel
-=============================================
+===============================================
+Kernel Ridge Classifier with custom kernel
+===============================================
 
 Simple usage of KRC to classify a sample. It will
 plot the decision surface and the support vectors.
@@ -12,7 +12,7 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
-from sklearn.kernel_ridge import KernelRidgeClassification
+from sklearn.kernel_ridge import KernelRidgeClassifier
 
 # Import some data to play with
 iris = datasets.load_iris()
@@ -38,8 +38,8 @@ def my_kernel(X, Y=None):
 
 h = .02  # step size in the mesh
 
-# we create an instance of Kernel Ridge Classification and fit out data.
-clf = KernelRidgeClassification(kernel=my_kernel)
+# we create an instance of Kernel Ridge Classifier and fit out data.
+clf = KernelRidgeClassifier(kernel=my_kernel)
 clf.fit(X, Y)
 
 # Plot the decision boundary. For that, we will assign a color to each

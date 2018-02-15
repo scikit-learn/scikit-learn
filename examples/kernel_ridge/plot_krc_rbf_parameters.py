@@ -1,10 +1,10 @@
 '''
 ===============================================
-RBF Kernel Ridge Classification parameters
+RBF Kernel Ridge Classifier parameters
 ==================================================
 
 This example illustrates the effect of the parameters ``gamma`` and ``C`` of
-the Radial Basis Function (RBF) Kernel Ridge Classification.
+the Radial Basis Function (RBF) Kernel Ridge Classifier.
 
 Intuitively, the ``gamma`` parameter defines how far the influence of a single
 training example reaches, with low values meaning 'far' and high values meaning
@@ -71,7 +71,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 
-from sklearn.kernel_ridge import KernelRidgeClassification
+from sklearn.kernel_ridge import KernelRidgeClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -130,7 +130,7 @@ C_range = np.logspace(-2, 10, 13)
 gamma_range = np.logspace(-9, 3, 13)
 param_grid = dict(gamma=gamma_range, alpha=C_range)
 cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
-grid = GridSearchCV(KernelRidgeClassification(), param_grid=param_grid, cv=cv)
+grid = GridSearchCV(KernelRidgeClassifier(), param_grid=param_grid, cv=cv)
 grid.fit(X, y)
 
 print("The best parameters are %s with a score of %0.2f"
@@ -144,7 +144,7 @@ gamma_2d_range = [1e-1, 1, 1e1]
 classifiers = []
 for C in C_2d_range:
     for gamma in gamma_2d_range:
-        clf = KernelRidgeClassification(alpha=C, gamma=gamma)
+        clf = KernelRidgeClassifier(alpha=C, gamma=gamma)
         clf.fit(X_2d, y_2d)
         classifiers.append((C, gamma, clf))
 

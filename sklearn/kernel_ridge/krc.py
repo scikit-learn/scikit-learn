@@ -5,10 +5,10 @@ from ..base import ClassifierMixin
 from .kernel_ridge import BaseKernelRidge
 
 
-class KernelRidgeClassification(ClassifierMixin, BaseKernelRidge):
-    """Kernel ridge classification.
+class KernelRidgeClassifier(ClassifierMixin, BaseKernelRidge):
+    """Kernel Ridge Classifier.
 
-    Kernel ridge classification (KRC) combines ridge
+    Kernel Ridge Classifier (KRC) combines ridge
     regression (linear least squares with l2-norm regularization), special
     encoding for target and the kernel trick. It thus
     learns a linear function in the space induced by the respective kernel and

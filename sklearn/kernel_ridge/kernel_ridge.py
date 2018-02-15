@@ -16,7 +16,7 @@ from ..preprocessing import LabelBinarizer
 
 
 class BaseKernelRidge(BaseEstimator):
-    """Kernel ridge regression and Kernel ridge classification.
+    """Kernel ridge regression and Kernel Ridge Classifier.
 
     Parameters
     ----------

@@ -52,7 +52,7 @@ prediction time depends on the parameters :math:`\epsilon` and :math:`C` of the
 
 Following same mathematical formulation, with
 a label encoding Kernel Ridge can be used for classification
-[V2007]_. :class:`KernelRidgeClassification` uses same logic as
+[V2007]_. :class:`` uses same logic as
 :class:`KernelRidge` and it is implemented for multilabel classification.
 
 .. topic:: References:

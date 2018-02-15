@@ -5,15 +5,15 @@
 #          Carlos Perales <sir.perales@gmail.com>
 # License: BSD 3 clause
 
-from .krc import KernelRidgeClassification
+from .krc import KernelRidgeClassifier
 from .krr import KernelRidgeRegression
 
 KernelRidge = KernelRidgeRegression
 KRR = KernelRidgeRegression
-KRC = KernelRidgeClassification
+KRC = KernelRidgeClassifier
 
 __all__ = ["KernelRidge",
            "KernelRidgeRegression",
            "KRR",
-           "KernelRidgeClassification",
+           "KernelRidgeClassifier",
            "KRC"]
