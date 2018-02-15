@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.externals import six
 from sklearn.kernel_ridge import KernelRidgeClassifier
+from sklearn.utils.estimator_checks import check_estimator
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -195,11 +196,10 @@ def test_KernelRidgeClassifier_clone_with_callable_kernel():
                               KernelRidgeClassifier_builtin.predict(iris.data))
 
 
-def test_KernelRidgeClassifier_bad_kernel():
-    KernelRidgeClassifier = KernelRidgeClassifier(kernel=lambda x, y: x)
-    assert_raises(ValueError, KernelRidgeClassifier.fit, X, Y)
+def test_krc_bad_kernel():
+    clf = KernelRidgeClassifier(kernel=lambda x, y: x)
+    assert_raises(ValueError, clf.fit, X, Y)
 
 
 if __name__ == '__main__':
-    from sklearn.utils.estimator_checks import check_estimator
     check_estimator(KernelRidgeClassifier)
