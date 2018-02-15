@@ -15,7 +15,7 @@ from ..utils.validation import check_is_fitted
 from ..preprocessing import LabelBinarizer
 
 
-class KernelRidgeBase(BaseEstimator):
+class BaseKernelRidge(BaseEstimator):
     """Kernel ridge regression and Kernel ridge classification.
 
     Parameters

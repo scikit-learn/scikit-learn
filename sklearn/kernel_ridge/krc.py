@@ -2,10 +2,10 @@
 # License: BSD 3 clause
 
 from ..base import ClassifierMixin
-from .kernel_ridge import KernelRidgeBase
+from .kernel_ridge import BaseKernelRidge
 
 
-class KernelRidgeClassification(ClassifierMixin, KernelRidgeBase):
+class KernelRidgeClassification(ClassifierMixin, BaseKernelRidge):
     """Kernel ridge classification.
 
     Kernel ridge classification (KRC) combines ridge
