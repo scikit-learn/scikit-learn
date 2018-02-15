@@ -1485,7 +1485,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                        err_msg="Unexpected classes_ attribute for %r: "
                        "expected '%s', got '%s'" %
                        (classifier, ", ".join(map(str, classes)),
-                       ", ".join(map(str, classifier.classes_))))
+                        ", ".join(map(str, classifier.classes_))))
 
 
 def choose_check_classifiers_labels(name, y, y_names):
