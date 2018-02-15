@@ -57,7 +57,7 @@ class KernelRidgeClassifier(ClassifierMixin, BaseKernelRidge):
 
     Attributes
     ----------
-    F : array, shape = [n_samples] or [n_samples, n_targets]
+    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
@@ -78,9 +78,8 @@ class KernelRidgeClassifier(ClassifierMixin, BaseKernelRidge):
     --------
     sklearn.linear_model.Ridge:
         Linear ridge regression.
-    sklearn.svm.SVR:
-        Support Vector Regression implemented using libsvm.
-    sklearn.svm.SVC:
-        Support Vector Classification implemented using libsvm.
+    sklearn.kernel_ridge.KernelRidge:
+        Kernel Ridge implemented for regressions.
+
     """
-    regression = False
+    pass

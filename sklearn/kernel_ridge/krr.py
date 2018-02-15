@@ -62,7 +62,7 @@ class KernelRidge(RegressorMixin, BaseKernelRidge):
 
     Attributes
     ----------
-    F : array, shape = [n_samples] or [n_samples, n_targets]
+    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
@@ -74,19 +74,14 @@ class KernelRidge(RegressorMixin, BaseKernelRidge):
       "Machine Learning: A Probabilistic Perspective", The MIT Press
       chapter 14.4.3, pp. 492-493
 
-    * An, Senjian, Wanquan Liu, and Svetha Venkatesh.
-      "Face recognition using kernel ridge regression." Computer Vision
-      and Pattern Recognition, 2007. CVPR'07. IEEE Conference on. IEEE,
-      2007.
-
     See also
     --------
     sklearn.linear_model.Ridge:
         Linear ridge regression.
     sklearn.svm.SVR:
         Support Vector Regression implemented using libsvm.
-    sklearn.svm.SVC:
-        Support Vector Classification implemented using libsvm.
+    sklearn.kernel_ridge.KernelRidgeClassifier:
+        Kernel Ridge implemented for multiclass clasifications.
 
     Examples
     --------
@@ -101,4 +96,4 @@ class KernelRidge(RegressorMixin, BaseKernelRidge):
     KernelRidge(alpha=1.0, coef0=1, degree=3,
                 gamma=None, kernel='rbf', kernel_params=None)
     """
-    regression = True
+    pass

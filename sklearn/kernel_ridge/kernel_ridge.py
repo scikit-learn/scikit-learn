@@ -63,25 +63,19 @@ class BaseKernelRidge(BaseEstimator):
       "Machine Learning: A Probabilistic Perspective", The MIT Press
       chapter 14.4.3, pp. 492-493
 
-    * An, Senjian, Wanquan Liu, and Svetha Venkatesh.
-      "Face recognition using kernel ridge regression." Computer Vision
-      and Pattern Recognition, 2007. CVPR'07. IEEE Conference on. IEEE,
-      2007.
-
     See also
     --------
     sklearn.linear_model.Ridge:
         Linear ridge regression.
     sklearn.svm.SVR:
         Support Vector Regression implemented using libsvm.
-    sklearn.svm.SVC:
-        Support Vector Classification implemented using libsvm.
+    sklearn.kernel_ridge.KernelRidgeClassifier:
+        Kernel Ridge implemented for multiclass clasifications.
 
     """
-    # By default, it works as a regressor
-    regression = True
+    _estimator_type = None
 
-    def __init__(self, alpha=1, kernel="rbf", gamma=None, degree=3, coef0=1,
+    def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
         self.alpha = alpha
         self.kernel = kernel
@@ -132,13 +126,13 @@ class BaseKernelRidge(BaseEstimator):
         copy = self.kernel == "precomputed"
 
         ravel = False
-        if self.regression is True:
+        if self._estimator_type is "regressor":
             X, y_ = check_X_y(X, y, accept_sparse=("csr", "csc"),
                               multi_output=True, y_numeric=True)
             if len(y_.shape) == 1:
                 y_ = y_.reshape(-1, 1)
                 ravel = True
-        else:  # Multiclass classification
+        elif self._estimator_type is "classifier":  # Multiclass classification
             X, y = check_X_y(X, y)
             # Check alpha
             if self.alpha <= 0:
@@ -149,10 +143,9 @@ class BaseKernelRidge(BaseEstimator):
             self.label_encoder_ = LabelBinarizer()
             y_ = self.label_encoder_.fit_transform(y)
             self.classes_ = self.label_encoder_.classes_
-
-            # This value is similar to number of neurons in hidden
-            # layer in neural version of Extreme Learning Machine
-            self.h_ = K.shape[1]
+        else:
+            raise ValueError('BaseKernelRidge cannot be used as'
+                             ' a estimator')
 
         self.dual_coef_ = _solve_cholesky_kernel(K, y_, alpha,
                                                  sample_weight,
@@ -183,7 +176,7 @@ class BaseKernelRidge(BaseEstimator):
         K = self._get_kernel(X, self.X_fit_)
         y = np.dot(K, self.dual_coef_)
 
-        if self.regression is False:  # Multiclass classification
+        if self._estimator_type is "classifier":
             # Decoding
             y = self.label_encoder_.inverse_transform(y)
 
