@@ -249,7 +249,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     ordering_ : array, shape (n_samples,)
         The cluster ordered list of sample indices
 
-    core_dists_ : array, shape (n_samples,)
+    core_distances_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point.
         Points which will never be core have a distance of inf.
 
@@ -276,12 +276,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
                  leaf_size=30, n_jobs=1):
-
-        self.nbrs = NearestNeighbors(n_neighbors=min_samples,
-                                     algorithm=algorithm, leaf_size=leaf_size,
-                                     metric=metric,
-                                     metric_params=metric_params, p=p,
-                                     n_jobs=n_jobs)
 
         self.max_bound = max_bound
         self.min_samples = min_samples
@@ -323,7 +317,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Start all points as 'unprocessed' ##
         self._processed = np.zeros((n_samples, 1), dtype=bool)
         self.reachability_ = np.ones(n_samples) * np.inf
-        self.core_dists_ = np.ones(n_samples) * np.nan
+        self.core_distances_ = np.ones(n_samples) * np.nan
         # Start all points as noise ##
         self.labels_ = -np.ones(n_samples, dtype=int)
         self.ordering_ = []
@@ -335,9 +329,16 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              "used for clustering." %
                              (n_samples, self.min_samples))
 
-        self.nbrs.fit(X)
-        self.core_dists_[:] = self.nbrs.kneighbors(X,
-                                                   self.min_samples)[0][:, -1]
+        nbrs = NearestNeighbors(n_neighbors=self.min_samples,
+                                algorithm=self.algorithm,
+                                leaf_size=self.leaf_size, metric=self.metric,
+                                metric_params=self.metric_params, p=self.p,
+                                n_jobs=self.n_jobs)
+
+        nbrs.fit(X)
+        self.core_distances_[:] = nbrs.kneighbors(X,
+                                                  self.min_samples)[0][:, -1]
+        self._nbrs = nbrs
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
@@ -362,7 +363,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def _expand_cluster_order(self, point, X):
         # As above, not parallelizable. Parallelizing would allow items in
         # the 'unprocessed' list to switch to 'processed'
-        if self.core_dists_[point] <= self.max_bound:
+        if self.core_distances_[point] <= self.max_bound:
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
@@ -373,8 +374,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def _set_reach_dist(self, point_index, X):
         P = np.array(X[point_index]).reshape(1, -1)
-        indices = self.nbrs.radius_neighbors(P, radius=self.max_bound,
-                                             return_distance=False)[0]
+        indices = self._nbrs.radius_neighbors(P, radius=self.max_bound,
+                                              return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
@@ -384,7 +385,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
                                        self.metric, n_jobs=1).ravel()
 
-            rdists = np.maximum(dists, self.core_dists_[point_index])
+            rdists = np.maximum(dists, self.core_distances_[point_index])
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
             self.reachability_[unproc] = new_reach
 
@@ -433,19 +434,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 RuntimeWarning, stacklevel=2)
         # Stability warning is documented in _extract_dbscan method...
 
-        return _extract_dbscan(self.ordering_, self.core_dists_,
+        return _extract_dbscan(self.ordering_, self.core_distances_,
                                self.reachability_, eps)
 
 
-def _extract_dbscan(ordering, core_dists, reachability, eps):
+def _extract_dbscan(ordering, core_distances, reachability, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon (`eps`).
 
     Parameters
     ----------
     ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
-    core_dists : array, shape (n_samples,)
-        Distances at which points become core (`core_dists_`)
+    core_distances : array, shape (n_samples,)
+        Distances at which points become core (`core_distances_`)
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
     eps : float or int
@@ -460,14 +461,14 @@ def _extract_dbscan(ordering, core_dists, reachability, eps):
         The estimated labels.
     """
 
-    n_samples = len(core_dists)
+    n_samples = len(core_distances)
     is_core = np.zeros(n_samples, dtype=bool)
     labels = np.ones(n_samples, dtype=int) * -1
     cluster_id = 0
 
     for entry in ordering:
         if reachability[entry] > eps:
-            if core_dists[entry] <= eps:
+            if core_distances[entry] <= eps:
                 cluster_id += 1
                 labels[entry] = cluster_id
             else:
@@ -476,7 +477,7 @@ def _extract_dbscan(ordering, core_dists, reachability, eps):
                 is_core[entry] = 0
         else:
             labels[entry] = cluster_id
-            if core_dists[entry] <= eps:
+            if core_distances[entry] <= eps:
                 is_core[entry] = 1   # True
             else:
                 is_core[entry] = 0   # False
