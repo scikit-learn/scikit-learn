@@ -6,7 +6,7 @@
 # License: BSD 3 clause
 
 from .krc import KernelRidgeClassifier
-from .krr import KernelRidgeRegressor as KernelRidge
+from .krr import KernelRidge
 
 __all__ = ["KernelRidge",
            "KernelRidgeClassifier"]
