@@ -166,7 +166,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                             force_all_finite='allow-nan'
                             if self.missing_values == 'NaN' else True)
-      
+
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
