@@ -6,7 +6,7 @@ from ..base import RegressorMixin
 from .kernel_ridge import BaseKernelRidge
 
 
-class KernelRidgeRegression(RegressorMixin, BaseKernelRidge):
+class KernelRidgeRegressor(RegressorMixin, BaseKernelRidge):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -90,15 +90,15 @@ class KernelRidgeRegression(RegressorMixin, BaseKernelRidge):
 
     Examples
     --------
-    >>> from sklearn.kernel_ridge import KernelRidgeRegression
+    >>> from sklearn.kernel_ridge import KernelRidgeRegressor
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = KernelRidgeRegression(alpha=1.0)
+    >>> clf = KernelRidgeRegressor(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    KernelRidgeRegression(alpha=1.0, coef0=1, degree=3,
+    KernelRidgeRegressor(alpha=1.0, coef0=1, degree=3,
                 gamma=None, kernel='rbf', kernel_params=None)
     """
     regression = True

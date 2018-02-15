@@ -6,14 +6,7 @@
 # License: BSD 3 clause
 
 from .krc import KernelRidgeClassifier
-from .krr import KernelRidgeRegression
-
-KernelRidge = KernelRidgeRegression
-KRR = KernelRidgeRegression
-KRC = KernelRidgeClassifier
+from .krr import KernelRidgeRegressor as KernelRidge
 
 __all__ = ["KernelRidge",
-           "KernelRidgeRegression",
-           "KRR",
-           "KernelRidgeClassifier",
-           "KRC"]
+           "KernelRidgeClassifier"]
