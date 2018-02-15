@@ -476,15 +476,15 @@ def test_incremental_mean_and_var_nan():
                   [np.nan, np.nan, np.nan, np.nan, np.nan]])
     X1 = A[:3, :]
     X2 = A[3:, :]
-    X_means, X_variances, X_count = \
-        _incremental_mean_and_var(X1, [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
-                                  [0, 0, 0, 0, 0])
+    X_means, X_variances, X_count = _incremental_mean_and_var(
+        X1, np.array([0, 0, 0, 0, 0]), np.array([0, 0, 0, 0, 0]),
+        np.array([0, 0, 0, 0, 0]))
     A_means = np.nanmean(A, axis=0)
     A_variances = np.nanvar(A, axis=0)
-    A_count = [2, 1, 2, 2, 1]
+    A_count = np.array([2, 1, 2, 2, 1])
 
-    final_means, final_variances, final_count = \
-        _incremental_mean_and_var(X2, X_means, X_variances, X_count)
+    final_means, final_variances, final_count = _incremental_mean_and_var(
+        X2, X_means, X_variances, X_count)
     assert_almost_equal(A_means, final_means)
     assert_almost_equal(A_variances, final_variances)
     assert_almost_equal(A_count, final_count)

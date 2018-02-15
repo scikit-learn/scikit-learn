@@ -710,18 +710,19 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         var_func = np.nanvar if ignore_nan else np.var
         new_unnormalized_variance = var_func(X, axis=0)
         new_unnormalized_variance[np.isnan(new_unnormalized_variance)] = 0
-        new_unnormalized_variance = (new_unnormalized_variance *
-                                     new_sample_count)
-        if (last_sample_count == 0).all():  # Avoid division by 0
-            updated_unnormalized_variance = new_unnormalized_variance
-        else:
-            last_over_new_count = last_sample_count / new_sample_count
-            last_unnormalized_variance = last_variance * last_sample_count
-            updated_unnormalized_variance = (
-                last_unnormalized_variance +
-                new_unnormalized_variance +
-                last_over_new_count / updated_sample_count *
-                (last_sum / last_over_new_count - new_sum) ** 2)
+        new_unnormalized_variance *= new_sample_count
+        last_over_new_count = last_sample_count / new_sample_count
+        last_unnormalized_variance = last_variance * last_sample_count
+        updated_unnormalized_variance = (
+            last_over_new_count / updated_sample_count *
+            (last_sum / last_over_new_count - new_sum) ** 2)
+        # updated_unnormalized_variance can be both NaN or Inf
+        updated_unnormalized_variance[np.isnan(
+            updated_unnormalized_variance)] = 0
+        updated_unnormalized_variance[np.isinf(
+            updated_unnormalized_variance)] = 0
+        updated_unnormalized_variance += (last_unnormalized_variance +
+                                          new_unnormalized_variance)
         updated_variance = updated_unnormalized_variance / updated_sample_count
         # As division by Zero might happen
         updated_variance[np.isnan(updated_variance)] = 0
