@@ -554,6 +554,8 @@ metric used for the merge strategy:
   observations of pairs of clusters.
 - **Average linkage** minimizes the average of the distances between all
   observations of pairs of clusters.
+- **Single linkage** minimizes the distance between the closest
+  observations of pairs of clusters.
 
 :class:`AgglomerativeClustering` can also scale to large number of samples
 when it is used jointly with a connectivity matrix, but is computationally

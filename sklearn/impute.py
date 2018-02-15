@@ -1,3 +1,4 @@
+"""Transformers for missing value imputation"""
 # Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
 # License: BSD 3 clause
 
@@ -8,20 +9,19 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
-from ..utils import deprecated
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
+from .base import BaseEstimator, TransformerMixin
+from .utils import check_array
+from .utils.sparsefuncs import _get_median
+from .utils.validation import check_is_fitted
+from .utils.validation import FLOAT_DTYPES
 
-from ..externals import six
+from .externals import six
 
 zip = six.moves.zip
 map = six.moves.map
 
 __all__ = [
-    'Imputer',
+    'SimpleImputer',
 ]
 
 
@@ -61,13 +61,10 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-@deprecated("Imputer was deprecated in version 0.20 and will be "
-            "removed in 0.22. Import impute.SimpleImputer from "
-            "sklearn instead.")
-class Imputer(BaseEstimator, TransformerMixin):
+class SimpleImputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
-    Read more in the :ref:`User Guide <imputation>`.
+    Read more in the :ref:`User Guide <impute>`.
 
     Parameters
     ----------
@@ -137,7 +134,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : Imputer
+        self : SimpleImputer
         """
         # Check parameters
         allowed_strategies = ["mean", "median", "most_frequent"]
@@ -167,10 +164,6 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.strategy,
                                                    self.missing_values,
                                                    self.axis)
-
-            invalid_mask = np.isnan(self.statistics_)
-            valid_mask = np.logical_not(invalid_mask)
-            self._valid_statistics_indexes = np.where(valid_mask)[0]
 
         return self
 
@@ -345,13 +338,14 @@ class Imputer(BaseEstimator, TransformerMixin):
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
+        valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
-            X = X[:, self._valid_statistics_indexes]
+            X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
                              "missing values: %s" % missing)
