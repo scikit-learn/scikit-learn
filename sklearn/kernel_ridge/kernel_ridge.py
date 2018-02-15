@@ -138,7 +138,7 @@ class KernelRidgeBase(BaseEstimator):
             if len(y_.shape) == 1:
                 y_ = y_.reshape(-1, 1)
                 ravel = True
-        else:  # Multilabel classification
+        else:  # Multiclass classification
             X, y = check_X_y(X, y)
             # Check alpha
             if self.alpha <= 0:
@@ -183,7 +183,7 @@ class KernelRidgeBase(BaseEstimator):
         K = self._get_kernel(X, self.X_fit_)
         y = np.dot(K, self.dual_coef_)
 
-        if self.regression is False:  # Multilabel classification
+        if self.regression is False:  # Multiclass classification
             # Decoding
             y = self.label_encoder_.inverse_transform(y)
 
