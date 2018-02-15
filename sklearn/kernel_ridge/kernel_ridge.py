@@ -51,7 +51,7 @@ class BaseKernelRidge(BaseEstimator):
 
     Attributes
     ----------
-    F : array, shape = [n_samples] or [n_samples, n_targets]
+    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
