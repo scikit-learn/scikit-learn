@@ -53,10 +53,8 @@ X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
 
-def DENSE_FILTER(X): return X
-
-
-def SPARSE_FILTER(X): return sp.csr_matrix(X)
+DENSE_FILTER = lambda X: X
+SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 
 def test_ridge():
@@ -368,7 +366,7 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
-    def func(x, y): return -mean_squared_error(x, y)
+    func = lambda x, y: -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
