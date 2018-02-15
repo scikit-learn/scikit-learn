@@ -243,9 +243,10 @@ class IncrementalPCA(_BasePCA):
 
         # Update stats - they are 0 if this is the fisrt step
         col_mean, col_var, n_total_samples = \
-            _incremental_mean_and_var(X, last_mean=self.mean_,
-                                      last_variance=self.var_,
-                                      last_sample_count=self.n_samples_seen_)
+            _incremental_mean_and_var(
+                X, last_mean=self.mean_, last_variance=self.var_,
+                last_sample_count=self.n_samples_seen_ * np.ones(n_features))
+        n_total_samples = n_total_samples[0]
 
         # Whitening
         if self.n_samples_seen_ == 0:

@@ -662,8 +662,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     self.var_ = None
 
             self.mean_, self.var_, self.n_samples_seen_ = \
-                _incremental_mean_and_var(X, self.mean_, self.var_,
-                                          self.n_samples_seen_)
+                _incremental_mean_and_var(
+                    X, self.mean_, self.var_,
+                    self.n_samples_seen_ * np.ones(X.shape[1]))
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))

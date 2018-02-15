@@ -664,7 +664,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
 
     last_variance : array-like, shape: (n_features,)
 
-    last_sample_count : int
+    last_sample_count : array-like, shape: (n_features,)
 
     Returns
     -------
@@ -673,7 +673,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     updated_variance : array, shape (n_features,)
         If None, only mean is computed
 
-    updated_sample_count : int
+    updated_sample_count : array shape (n_features,)
 
     References
     ----------
@@ -688,9 +688,6 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
-    if not isinstance(last_sample_count, np.ndarray):
-        # when the index is -1 it will pick the last value in shape array
-        last_sample_count *= np.ones(X.shape[-1])
     last_sum = last_mean * last_sample_count
     sum_func = np.nansum if ignore_nan else np.sum
     new_sum = sum_func(X, axis=0)
@@ -728,9 +725,6 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         updated_variance[np.isnan(updated_variance)] = 0
         updated_variance[np.isinf(updated_variance)] = 0
 
-    # return vector only when required
-    if (updated_sample_count[0] == updated_sample_count).all():
-        updated_sample_count = updated_sample_count[0]
     return updated_mean, updated_variance, updated_sample_count
 
 
