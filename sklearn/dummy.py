@@ -475,7 +475,4 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y = np.ravel(y)
             y_std = np.ravel(y_std)
 
-        if return_std:
-            return y, y_std
-        else:
-            return y
+        return (y, y_std) if return_std else y
