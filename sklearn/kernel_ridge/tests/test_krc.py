@@ -31,7 +31,7 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-def test_KernelRidgeClassifier_parameters():
+def test_kernel_ridge_classifier_parameters():
     # Test parameters.
     clf = KernelRidgeClassifier(kernel='rbf').fit(X, Y)
     assert_array_equal(clf.predict(X), Y)

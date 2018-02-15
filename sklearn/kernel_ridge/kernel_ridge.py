@@ -72,8 +72,6 @@ class BaseKernelRidge(object):
         Kernel Ridge implemented for multiclass clasifications.
 
     """
-    _estimator_type = None
-
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
         self.alpha = alpha
