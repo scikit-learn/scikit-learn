@@ -63,6 +63,10 @@ class KernelRidgeClassifier(ClassifierMixin, BaseKernelRidge):
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training data, which is also required for prediction
 
+    classes_ : array of shape = [n_classes] or a list of such arrays
+        The classes labels (single output problem),
+        or a list of arrays of class labels (multi-output problem).
+
     References
     ----------
     * Kevin P. Murphy
