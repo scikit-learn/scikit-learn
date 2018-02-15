@@ -694,16 +694,12 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     last_sum = last_mean * last_sample_count
     sum_func = np.nansum if ignore_nan else np.sum
     new_sum = sum_func(X, axis=0)
-    if not isinstance(new_sum, np.ndarray):
-        new_sum *= np.ones(X.shape[-1])
     new_sum[np.isnan(new_sum)] = 0
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
-    if not isinstance(new_sample_count, np.ndarray):
-        # If the input array is 1D
-        new_sample_count *= np.ones(X.shape[-1])
     updated_sample_count = last_sample_count + new_sample_count
 
+    warnings.filterwarnings('ignore') # as division by 0 might happen
     updated_mean = (last_sum + new_sum) / updated_sample_count
     updated_mean[np.isinf(updated_mean)] = 0
     updated_mean[np.isnan(updated_mean)] = 0
@@ -713,16 +709,12 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     else:
         var_func = np.nanvar if ignore_nan else np.var
         new_unnormalized_variance = var_func(X, axis=0)
-        if not isinstance(new_unnormalized_variance, np.ndarray):
-            new_unnormalized_variance *= np.ones(X.shape[-1])
-        # To put zero in places where the np.nanvar returned NaN value
         new_unnormalized_variance[np.isnan(new_unnormalized_variance)] = 0
         new_unnormalized_variance = (new_unnormalized_variance *
                                      new_sample_count)
         if (last_sample_count == 0).all():  # Avoid division by 0
             updated_unnormalized_variance = new_unnormalized_variance
         else:
-            warnings.filterwarnings('ignore')  # as division by 0 might happen
             last_over_new_count = last_sample_count / new_sample_count
             last_unnormalized_variance = last_variance * last_sample_count
             updated_unnormalized_variance = (
