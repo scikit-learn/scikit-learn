@@ -82,4 +82,11 @@ class KernelRidgeClassifier(ClassifierMixin, BaseKernelRidge):
         Kernel Ridge implemented for regressions.
 
     """
-    pass
+    def __init__(self, alpha=0.1, kernel="rbf", gamma=None, degree=3, coef0=1,
+                 kernel_params=None):
+        self.alpha = alpha
+        self.kernel = kernel
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
+        self.kernel_params = kernel_params

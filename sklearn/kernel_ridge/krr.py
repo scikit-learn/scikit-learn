@@ -94,6 +94,6 @@ class KernelRidge(RegressorMixin, BaseKernelRidge):
     >>> clf = KernelRidge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     KernelRidge(alpha=1.0, coef0=1, degree=3,
-                gamma=None, kernel='rbf', kernel_params=None)
+                gamma=None, kernel='linear', kernel_params=None)
     """
     pass
