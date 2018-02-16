@@ -176,8 +176,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         return self._transform(X, self.save_mappings is not None)
 
     def fit(self, X=None, y=None):
-        """This method calls fit_transform if save_mappings is true. Otherwise,
-        it doesn't do anything.
+        """This method calls fit_transform if save_mappings is not None.
+        Otherwise, it doesn't do anything.
 
         Parameters
         ----------
