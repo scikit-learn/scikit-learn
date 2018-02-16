@@ -29,8 +29,7 @@ To get started with this tutorial, you must first install
 Please refer to the :ref:`installation instructions <installation-instructions>`
 page for more information and for system-specific instructions.
 
-The source of this tutorial can be found within your scikit-learn installation,
-in the following folder::
+The source of this tutorial can be found within your scikit-learn folder::
 
     scikit-learn/doc/tutorial/text_analytics/
 
@@ -188,12 +187,12 @@ The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
 larger than 100,000.
 
-If ``n_samples = 10000``, storing ``X`` as a NumPy array of type
+If ``n_samples == 10000``, storing ``X`` as a NumPy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
 is barely manageable on today's computers.
 
 Fortunately, **most values in X will be zeros** since for a given
-document less than a couple thousand of distinct words will be
+document less than a few thousand distinct words will be
 used. For this reason we say that bags of words are typically
 **high-dimensional sparse datasets**. We can save a lot of memory by
 only storing the non-zero parts of the feature vectors in memory.
@@ -316,7 +315,7 @@ Building a pipeline
 -------------------
 
 In order to make the vectorizer => transformer => classifier easier
-to work with, ``scikit-learn`` provides a :class:`Pipeline` class that behaves
+to work with, ``scikit-learn`` provides a :class:`~sklearn.pipeline.Pipeline` class that behaves
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
