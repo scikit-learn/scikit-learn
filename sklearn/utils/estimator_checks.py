@@ -1443,41 +1443,86 @@ def check_supervised_y_2d(name, estimator_orig):
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@ignore_warnings
+def check_classifiers_predictions(X, y, name, classifier_orig):
+    classes = np.unique(y)
+    classifier = clone(classifier_orig)
+    if name == 'BernoulliNB':
+        X = X > X.mean()
+    set_random_state(classifier)
+
+    classifier.fit(X, y)
+    y_pred = classifier.predict(X)
+
+    if hasattr(classifier, "decision_function"):
+        decision = classifier.decision_function(X)
+        n_samples, n_features = X.shape
+        assert isinstance(decision, np.ndarray)
+        if len(classes) == 2:
+            dec_pred = (decision.ravel() > 0).astype(np.int)
+            dec_exp = classifier.classes_[dec_pred]
+            assert_array_equal(dec_exp, y_pred,
+                               err_msg="decision_function does not match "
+                               "classifier for %r: expected '%s', got '%s'" %
+                               (classifier, ", ".join(map(str, dec_exp)),
+                                ", ".join(map(str, y_pred))))
+        elif getattr(classifier, 'decision_function_shape', 'ovr') == 'ovr':
+            decision_y = np.argmax(decision, axis=1).astype(int)
+            y_exp = classifier.classes_[decision_y]
+            assert_array_equal(y_exp, y_pred,
+                               err_msg="decision_function does not match "
+                               "classifier for %r: expected '%s', got '%s'" %
+                               (classifier, ", ".join(map(str, y_exp)),
+                                ", ".join(map(str, y_pred))))
+
+    # training set performance
+    if name != "ComplementNB":
+        # This is a pathological data set for ComplementNB.
+        # For some specific cases 'ComplementNB' predicts less classes
+        # than expected
+        assert_array_equal(np.unique(y), np.unique(y_pred))
+    assert_array_equal(classes, classifier.classes_,
+                       err_msg="Unexpected classes_ attribute for %r: "
+                       "expected '%s', got '%s'" %
+                       (classifier, ", ".join(map(str, classes)),
+                        ", ".join(map(str, classifier.classes_))))
+
+
+def choose_check_classifiers_labels(name, y, y_names):
+    return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
+
 def check_classifiers_classes(name, classifier_orig):
-    X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
-    X, y = shuffle(X, y, random_state=7)
-    X = StandardScaler().fit_transform(X)
+    X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
+                                            cluster_std=0.1)
+    X_multiclass, y_multiclass = shuffle(X_multiclass, y_multiclass,
+                                         random_state=7)
+    X_multiclass = StandardScaler().fit_transform(X_multiclass)
     # We need to make sure that we have non negative data, for things
     # like NMF
-    X -= X.min() - .1
-    X = pairwise_estimator_convert_X(X, classifier_orig)
-    y_names = np.array(["one", "two", "three"])[y]
+    X_multiclass -= X_multiclass.min() - .1
 
-    for y_names in [y_names, y_names.astype('O')]:
-        if name in ["LabelPropagation", "LabelSpreading"]:
-            # TODO some complication with -1 label
-            y_ = y
-        else:
-            y_ = y_names
+    X_binary = X_multiclass[y_multiclass != 2]
+    y_binary = y_multiclass[y_multiclass != 2]
 
-        classes = np.unique(y_)
-        classifier = clone(classifier_orig)
-        if name == 'BernoulliNB':
-            X = X > X.mean()
-        set_random_state(classifier)
-        # fit
-        classifier.fit(X, y_)
+    X_multiclass = pairwise_estimator_convert_X(X_multiclass, classifier_orig)
+    X_binary = pairwise_estimator_convert_X(X_binary, classifier_orig)
 
-        y_pred = classifier.predict(X)
-        # training set performance
-        if name != "ComplementNB":
-            # This is a pathological data set for ComplementNB.
-            assert_array_equal(np.unique(y_), np.unique(y_pred))
-        if np.any(classifier.classes_ != classes):
-            print("Unexpected classes_ attribute for %r: "
-                  "expected %s, got %s" %
-                  (classifier, classes, classifier.classes_))
+    labels_multiclass = ["one", "two", "three"]
+    labels_binary = ["one", "two"]
+
+    y_names_multiclass = np.take(labels_multiclass, y_multiclass)
+    y_names_binary = np.take(labels_binary, y_binary)
+
+    for X, y, y_names in [(X_multiclass, y_multiclass, y_names_multiclass),
+                          (X_binary, y_binary, y_names_binary)]:
+        for y_names_i in [y_names, y_names.astype('O')]:
+            y_ = choose_check_classifiers_labels(name, y, y_names_i)
+            check_classifiers_predictions(X, y_, name, classifier_orig)
+
+    labels_binary = [-1, 1]
+    y_names_binary = np.take(labels_binary, y_binary)
+    y_binary = choose_check_classifiers_labels(name, y_binary, y_names_binary)
+    check_classifiers_predictions(X_binary, y_binary, name, classifier_orig)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
