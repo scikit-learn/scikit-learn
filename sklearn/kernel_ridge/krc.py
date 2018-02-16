@@ -2,10 +2,10 @@
 # License: BSD 3 clause
 
 from ..base import ClassifierMixin, BaseEstimator
-from .kernel_ridge import BaseKernelRidge
+from .kernel_ridge import _BaseKernelRidge
 
 
-class KernelRidgeClassifier(BaseKernelRidge, BaseEstimator, ClassifierMixin):
+class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
     """Kernel Ridge Classifier.
 
     Kernel Ridge Classifier (KRC) combines ridge
