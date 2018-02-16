@@ -40,7 +40,6 @@ def test_kernel_ridge_classifier_parameters():
 def test_precomputed():
     # KernelRidgeClassifier with a precomputed kernel.
     # # We test it with check_estimator first.
-    # check_estimator(KernelRidgeClassifier(kernel='precomputed'))
     # Then we test it with a toy dataset and with iris.
     clf = KernelRidgeClassifier(kernel='precomputed')
     # Gram matrix for train data (square matrix)
@@ -176,7 +175,7 @@ def test_linear_elm_iris():
     assert_greater(np.mean(clf.predict(iris.data) == target), 0.79)
 
 
-def test_KernelRidgeClassifier_clone_with_callable_kernel():
+def test_krc_clone_with_callable_kernel():
     # create KernelRidgeClassifier with callable linear kernel,
     # check that results are the same as with built-in linear kernel
     KernelRidgeClassifier_callable = \
