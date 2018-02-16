@@ -469,9 +469,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.scores_ = list()
         coef_old_ = None
 
-        # Iterative procedure of ARDRegression
-        for iter_ in range(self.n_iter):
-            # Compute mu and sigma (using Woodbury matrix identity)
+        # Compute sigma and mu (using Woodbury matrix identity)
+        def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *
                            np.reshape(1. / lambda_[keep_lambda], [1, -1]),
@@ -481,8 +480,17 @@ class ARDRegression(LinearModel, RegressorMixin):
             sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
                               X[:, keep_lambda].T, sigma_)
             sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
+            return sigma_
+
+        def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
             coef_[keep_lambda] = alpha_ * np.dot(
                 sigma_, np.dot(X[:, keep_lambda].T, y))
+            return coef_
+
+        # Iterative procedure of ARDRegression
+        for iter_ in range(self.n_iter):
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
             # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
@@ -512,6 +520,10 @@ class ARDRegression(LinearModel, RegressorMixin):
                     print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
+
+        # update sigma and mu using updated parameters from the last iteration
+        sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+        coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
         self.coef_ = coef_
         self.alpha_ = alpha_

@@ -49,11 +49,12 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.3)
+- Python (>= 2.7 or >= 3.4)
 - NumPy (>= 1.8.2)
 - SciPy (>= 0.13.3)
 
-For running the examples Matplotlib >= 1.1.1 is required.
+For running the examples Matplotlib >= 1.3.1 is required. A few examples
+require scikit-image >= 0.9.3 as well.
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -114,7 +115,7 @@ source directory (you will need to have the ``pytest`` package installed)::
 
     pytest sklearn
 
-See the web page http://scikit-learn.org/stable/developers/advanced_installation.html#testing
+See the web page http://scikit-learn.org/dev/developers/advanced_installation.html#testing
 for more information.
 
     Random number generation can be controlled during testing by setting

@@ -31,6 +31,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.utils.validation import check_random_state
 
@@ -134,10 +135,12 @@ random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
     random_state=0, n_samples=30, n_features=10)
 
+# NB: despite their names X_sparse_* are numpy arrays (and not sparse matrices)
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25, random_state=0)
+X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
+                                    random_state=0).toarray()
 
 
 DATASETS = {
@@ -502,7 +505,6 @@ def test_error():
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
-        # Invalid values for parameters
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
@@ -523,8 +525,10 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
-                      X, y)
+        # min_impurity_split warning
+        with ignore_warnings(category=DeprecationWarning):
+            assert_raises(ValueError,
+                          TreeEstimator(min_impurity_split=-1.0).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_impurity_decrease=-1.0).fit, X, y)
 
@@ -1237,7 +1241,8 @@ def test_arrays_persist():
     # non-regression for #2726
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
-        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_, attr)
+        value = getattr(DecisionTreeClassifier().fit([[0], [1]],
+                                                     [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-3 <= value.flat[0] < 3,
                     'Array points to arbitrary memory')
@@ -1621,6 +1626,18 @@ def test_presort_sparse():
         yield check_presort_sparse, est, sparse_matrix(X), y
 
 
+def test_invalid_presort():
+    classes = (DecisionTreeRegressor, DecisionTreeClassifier)
+    allowed_presort = ('auto', True, False)
+    invalid_presort = 'invalid'
+    msg = ("'presort' should be in {}. "
+           "Got {!r} instead.".format(allowed_presort, invalid_presort))
+    for cls in classes:
+        est = cls(presort=invalid_presort)
+        assert_raise_message(ValueError, msg,
+                             est.fit, X, y)
+
+
 def test_decision_path_hardcoded():
     X = iris.data
     y = iris.target
@@ -1714,3 +1731,20 @@ def test_criterion_copy():
             assert_equal(typename, typename_)
             assert_equal(n_outputs, n_outputs_)
             assert_equal(n_samples, n_samples_)
+
+
+def test_empty_leaf_infinite_threshold():
+    # try to make empty leaf by using near infinite value.
+    data = np.random.RandomState(0).randn(100, 11) * 2e38
+    data = np.nan_to_num(data.astype('float32'))
+    X_full = data[:, :-1]
+    X_sparse = csc_matrix(X_full)
+    y = data[:, -1]
+    for X in [X_full, X_sparse]:
+        tree = DecisionTreeRegressor(random_state=0).fit(X, y)
+        terminal_regions = tree.apply(X)
+        left_leaf = set(np.where(tree.tree_.children_left == TREE_LEAF)[0])
+        empty_leaf = left_leaf.difference(terminal_regions)
+        infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
+        assert len(infinite_threshold) == 0
+        assert len(empty_leaf) == 0

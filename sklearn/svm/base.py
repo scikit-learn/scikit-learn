@@ -71,20 +71,19 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
-    def __init__(self, impl, kernel, degree, gamma, coef0,
+    def __init__(self, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if impl not in LIBSVM_IMPL:  # pragma: no cover
+        if self._impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
-                LIBSVM_IMPL, impl))
+                LIBSVM_IMPL, self._impl))
 
         if gamma == 0:
             msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
                    " gamma to a value of 1 / n_features.")
             raise ValueError(msg)
 
-        self._impl = impl
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -128,7 +127,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         ------
@@ -229,15 +227,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
-
-        if six.PY2:
-            # In python2 ensure kernel is ascii bytes to prevent a TypeError
-            if isinstance(kernel, six.types.UnicodeType):
-                kernel = str(kernel)
-        if six.PY3:
-            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
-            if isinstance(kernel, bytes):
-                kernel = str(kernel, 'utf8')
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -484,13 +473,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
-    def __init__(self, impl, kernel, degree, gamma, coef0, tol, C, nu,
+    def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
                  max_iter, decision_function_shape, random_state):
         self.decision_function_shape = decision_function_shape
         super(BaseSVC, self).__init__(
-            impl=impl, kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
-            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
+            kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             random_state=random_state)

@@ -14,14 +14,7 @@ import shutil
 import tempfile
 import numpy as np
 from sklearn.externals import six
-try:
-    try:
-        from scipy.misc import imsave
-    except ImportError:
-        from scipy.misc.pilutil import imsave
-except ImportError:
-    imsave = None
-
+from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
@@ -48,7 +41,7 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if imsave is None:
+    if not pillow_installed:
         raise SkipTest("PIL not installed.")
 
     if not os.path.exists(LFW_HOME):
