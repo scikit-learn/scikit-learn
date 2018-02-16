@@ -66,10 +66,12 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         .. deprecated:: 0.19
             This option will be removed in 0.21.
-    save_mappings : boolean, default False
-        When true FeatureHasher will save the mappings between feature seen in
-        training data, and the corresponding column. This is disabled by
-        default for performance reasons.
+    save_mappings : string, optional, default None
+        Possible values are : "fit" or "both". When "fit", FeatureHasher will
+        save the mappings between feature seen in training data, and the
+        corresponding column only once. When "both", mappings will be continued
+        to be stored even during the consequent transform calls.
+        By default, no mappings will be stored for performance reasons.
 
 
     Examples
@@ -91,8 +93,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
                  dtype=np.float64, alternate_sign=True, non_negative=False,
-                 save_mappings=False):
-        self._validate_params(n_features, input_type)
+                 save_mappings=None):
+        self._validate_params(n_features, input_type, save_mappings)
         if non_negative:
             warnings.warn("the option non_negative=True has been deprecated"
                           " in 0.19 and will be removed"
@@ -106,7 +108,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.save_mappings = save_mappings
 
     @staticmethod
-    def _validate_params(n_features, input_type):
+    def _validate_params(n_features, input_type, save_mappings):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
         if not isinstance(n_features, (numbers.Integral, np.integer)):
@@ -118,6 +120,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if input_type not in ("dict", "pair", "string"):
             raise ValueError("input_type must be 'dict', 'pair' or 'string',"
                              " got %r." % input_type)
+        if save_mappings not in (None, "both", "fit"):
+            raise ValueError("Unknown parameter passed to save_mappings: '{0}'"
+                             ". Valid parameters are 'fit', 'both' or None"
+                             .format(save_mappings))
 
     def _transform(self, raw_X, save_mappings):
         raw_X = iter(raw_X)
@@ -160,14 +166,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         y : this parameter is ignored.
 
-        fit_params : this paramter is ignored.
+        fit_params : this parameter is ignored.
 
         Returns
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Feature matrix, for use with estimators or further transformers"""
 
-        return self._transform(X, self.save_mappings)
+        return self._transform(X, self.save_mappings is not None)
 
     def fit(self, X=None, y=None):
         """This method calls fit_transform if save_mappings is true. Otherwise,
@@ -183,7 +189,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         # repeat input validation for grid search (which calls set_params)
-        self._validate_params(self.n_features, self.input_type)
+        self._validate_params(self.n_features, self.input_type,
+                              self.save_mappings)
         if self.save_mappings:
             self.fit_transform(X)
         return self
@@ -206,12 +213,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        if self.save_mappings:
-            raise ValueError("Transform cannot be called directly when"
-                             " save_mappings=True. Please call"
-                             " .fit_transform()")
-
-        return self._transform(raw_X, False)
+        if self.save_mappings == "both":
+            return self._transform(raw_X, save_mappings=True)
+        else:
+            return self._transform(raw_X, save_mappings=False)
 
     def get_feature_names(self):
         """Returns a list of the feature mappings.

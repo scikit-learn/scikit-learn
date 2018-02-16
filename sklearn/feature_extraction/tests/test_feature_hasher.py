@@ -179,7 +179,7 @@ def test_hasher_negative():
         'string')
 ])
 def test_hasher_order(X, expected_output, input_type):
-    hasher = FeatureHasher(n_features=5, save_mappings=True,
+    hasher = FeatureHasher(n_features=5, save_mappings="fit",
                            input_type=input_type)
     hasher.fit_transform(X)
     actual = hasher.get_feature_names()
@@ -189,7 +189,7 @@ def test_hasher_order(X, expected_output, input_type):
 
 
 def test_hasher_get_feature_without_transform():
-    hasher = FeatureHasher(n_features=5, save_mappings=True)
+    hasher = FeatureHasher(n_features=5, save_mappings="fit")
     exception_message = ("FeatureHasher has not transformed yet. Please"
                          " call .fit_transform() first.")
     assert_raises(ValueError, hasher.get_feature_names)
@@ -209,13 +209,42 @@ def test_hasher_get_feature_without_save_mappings():
                          hasher.get_feature_names)
 
 
-def test_hasher_get_feature_without_fit():
-    X = ["uzumaki", "naruto", "dattebayoo"]
-    hasher = FeatureHasher(n_features=2, input_type='string',
-                           save_mappings=True)
+def test_hasher_get_feature_fit():
+    X = ["a", "b", "c"]
+    X2 = ["d", "e", "f"]
+    expected_feature_names = [['a'], ['b'], ['c'], [], []]
+    hasher = FeatureHasher(n_features=5, input_type="string",
+                           save_mappings="fit")
     hasher.fit_transform(X)
-    X = ["uchiha", "sasuke"]
-    message = ("Transform cannot be called directly when"
-               " save_mappings=True. Please call"
-               " .fit_transform()")
-    assert_raise_message(ValueError, message, hasher.transform, X)
+    assert hasher.get_feature_names() == expected_feature_names
+    hasher.transform(X2)
+    assert hasher.get_feature_names() == expected_feature_names
+
+
+def test_hasher_get_feature_both():
+    X = ["a", "b", "c"]
+    X2 = ["d", "e", "f"]
+    expected_feature_names_X = [['a'], ['b'], ['c'], [], []]
+    expected_feature_names_X2 = [[], [], [], ['f'], ['e', 'd']]
+    hasher = FeatureHasher(n_features=5, input_type="string",
+                           save_mappings="both")
+    hasher.fit_transform(X)
+    actual_X = hasher.get_feature_names()
+    hasher.transform(X2)
+    actual_X2 = hasher.get_feature_names()
+    # orderings in the list are not always the same, hence
+    # create a set for matching ['x', 'y'] with ['y', 'x']
+    assert all(set(x) == set(y) for x, y in zip(expected_feature_names_X,
+                                                actual_X))
+    assert all(set(x) == set(y) for x, y in zip(expected_feature_names_X2,
+                                                actual_X2))
+
+
+def test_feature_hasher_save_mappings_arg():
+    def make_hasher():
+        FeatureHasher(n_features=5, input_type="string",
+                      save_mappings="naruto")
+    msg = ("Unknown parameter passed to save_mappings: '{0}'"
+           ". Valid parameters are 'fit', 'both' or None"
+           .format("naruto"))
+    assert_raise_message(ValueError, msg, make_hasher)
