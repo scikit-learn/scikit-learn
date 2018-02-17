@@ -480,7 +480,7 @@ General Concepts
 
     missing values
         Most Scikit-learn estimators do not work with missing values. When they
-        do (e.g. in :class:`preprocessing.Imputer`), NaN is the preferred
+        do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
         specifying another ``missing_values`` value when imputation or

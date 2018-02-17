@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 
@@ -667,6 +668,30 @@ def test_check_input_false():
     # computation
     X = check_array(X, order='C', dtype='float64')
     assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_copy_X_True(check_input):
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=True)
+    enet.fit(X, y, check_input=check_input)
+
+    assert_array_equal(original_X, X)
+
+
+def test_enet_copy_X_False_check_input_False():
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=False)
+    enet.fit(X, y, check_input=False)
+
+    # No copying, X is overwritten
+    assert_true(np.any(np.not_equal(original_X, X)))
 
 
 def test_overrided_gram_matrix():

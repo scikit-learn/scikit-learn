@@ -700,19 +700,23 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
+        # Remember if X is copied
+        X_copied = False
         # We expect X and y to be float64 or float32 Fortran ordered arrays
         # when bypassing checks
         if check_input:
+            X_copied = self.copy_X and self.fit_intercept
             X, y = check_X_y(X, y, accept_sparse='csc',
                              order='F', dtype=[np.float64, np.float32],
-                             copy=self.copy_X and self.fit_intercept,
-                             multi_output=True, y_numeric=True)
+                             copy=X_copied, multi_output=True, y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
+        # Ensure copying happens only once, don't do it again if done above
+        should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=False)
+                     self.fit_intercept, copy=should_copy)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
