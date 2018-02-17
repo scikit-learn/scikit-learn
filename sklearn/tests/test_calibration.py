@@ -22,6 +22,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
 from sklearn.metrics import brier_score_loss, log_loss, confusion_matrix
 from sklearn.calibration import CalibratedClassifierCV, CutoffClassifier
+from sklearn.calibration import _get_binary_score
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
@@ -137,6 +138,50 @@ def test_cutoff_cv():
 
     # check that the sum of tpr + tnr has improved
     assert_greater(tpr_roc + tnr_roc, tpr + tnr)
+
+
+def test_get_binary_score():
+    X, y = make_classification(n_samples=200, n_features=6, random_state=42,
+                               n_classes=2)
+
+    X_train, X_test, y_train, _ = train_test_split(X, y, train_size=0.6,
+                                                   random_state=42)
+    lr = LogisticRegression().fit(X_train, y_train)
+    y_pred_proba = lr.predict_proba(X_test)
+    y_pred_score = lr.decision_function(X_test)
+
+    assert_array_equal(
+        y_pred_score,
+        _get_binary_score(lr, X_test, pos_label=1, scoring='decision_function')
+    )
+
+    assert_array_equal(
+        - y_pred_score,
+        _get_binary_score(lr, X_test, pos_label=0, scoring='decision_function')
+    )
+
+    assert_array_equal(
+        y_pred_proba[:, 1],
+        _get_binary_score(lr, X_test, pos_label=1, scoring='predict_proba')
+    )
+
+    assert_array_equal(
+        y_pred_proba[:, 0],
+        _get_binary_score(lr, X_test, pos_label=0, scoring='predict_proba')
+    )
+
+    assert_array_equal(
+        y_pred_score,
+        _get_binary_score(lr, X_test, pos_label=1, scoring=None)
+    )
+
+    # classifier that does not have a decision_function
+    rf = RandomForestClassifier().fit(X_train, y_train)
+    y_pred_proba_rf = rf.predict_proba(X_test)
+    assert_array_equal(
+        y_pred_proba_rf[:, 1],
+        _get_binary_score(rf, X_test, pos_label=1, scoring=None)
+    )
 
 
 @ignore_warnings
