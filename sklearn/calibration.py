@@ -77,15 +77,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         - None. base_estimator.decision_function will be used first and if not
         available base_estimator.predict_proba.
 
-    pos_label : object
+    pos_label : object, optional (default=1)
         Object representing the positive label
-        (default value: 1)
 
-    cv : int, cross-validation generator, iterable or "prefit" (optional)
-        Determines the cross-validation splitting strategy. If cv="prefit" the
-        base estimator is assumed to be fitted and all data will be used for
-        the calibration of the probability threshold
-        (default value: "prefit")
+    cv : int, cross-validation generator, iterable or 'prefit', optional
+        (default='prefit'). Determines the cross-validation splitting strategy.
+        If cv='prefit' the base estimator is assumed to be fitted and all data
+        will be used for the calibration of the probability threshold.
 
     min_tnr : float in [0, 1]
         In case method = 'max_tpr' this value must be set to specify the
