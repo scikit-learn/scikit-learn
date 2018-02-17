@@ -29,9 +29,8 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils import deprecated
-from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -133,12 +132,24 @@ class VectorizerMixin(object):
         min_n, max_n = self.ngram_range
         if max_n != 1:
             original_tokens = tokens
-            tokens = []
+            if min_n == 1:
+                # no need to do any slicing for unigrams
+                # just iterate through the original tokens
+                tokens = list(original_tokens)
+                min_n += 1
+            else:
+                tokens = []
+
             n_original_tokens = len(original_tokens)
+
+            # bind method outside of loop to reduce overhead
+            tokens_append = tokens.append
+            space_join = " ".join
+
             for n in xrange(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tokens_append(space_join(original_tokens[i: i + n]))
 
         return tokens
 
@@ -148,32 +159,47 @@ class VectorizerMixin(object):
         text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
-        ngrams = []
         min_n, max_n = self.ngram_range
+        if min_n == 1:
+            # no need to do any slicing for unigrams
+            # iterate through the string
+            ngrams = list(text_document)
+            min_n += 1
+        else:
+            ngrams = []
+
+        # bind method outside of loop to reduce overhead
+        ngrams_append = ngrams.append
+
         for n in xrange(min_n, min(max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
-                ngrams.append(text_document[i: i + n])
+                ngrams_append(text_document[i: i + n])
         return ngrams
 
     def _char_wb_ngrams(self, text_document):
         """Whitespace sensitive char-n-gram tokenization.
 
         Tokenize text_document into a sequence of character n-grams
-        excluding any whitespace (operating only inside word boundaries)"""
+        operating only inside word boundaries. n-grams at the edges
+        of words are padded with space."""
         # normalize white spaces
         text_document = self._white_spaces.sub(" ", text_document)
 
         min_n, max_n = self.ngram_range
         ngrams = []
+
+        # bind method outside of loop to reduce overhead
+        ngrams_append = ngrams.append
+
         for w in text_document.split():
             w = ' ' + w + ' '
             w_len = len(w)
             for n in xrange(min_n, max_n + 1):
                 offset = 0
-                ngrams.append(w[offset:offset + n])
+                ngrams_append(w[offset:offset + n])
                 while offset + n < w_len:
                     offset += 1
-                    ngrams.append(w[offset:offset + n])
+                    ngrams_append(w[offset:offset + n])
                 if offset == 0:   # count a short word (w_len < n) only once
                     break
         return ngrams
@@ -281,7 +307,7 @@ class VectorizerMixin(object):
             raise ValueError("Vocabulary is empty")
 
 
-class HashingVectorizer(BaseEstimator, VectorizerMixin):
+class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -354,7 +380,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -397,19 +423,28 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    binary: boolean, default=False.
+    binary : boolean, default=False.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
 
-    dtype: type, optional
+    dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    non_negative : boolean, default=False
-        Whether output matrices should contain non-negative values only;
-        effectively calls abs on the matrix prior to returning it.
-        When True, output values can be interpreted as frequencies.
-        When False, output values will have expected value zero.
+    alternate_sign : boolean, optional, default True
+        When True, an alternating sign is added to the features as to
+        approximately conserve the inner product in the hashed space even for
+        small n_features. This approach is similar to sparse random projection.
+
+        .. versionadded:: 0.19
+
+    non_negative : boolean, optional, default False
+        When True, an absolute value is applied to the features matrix prior to
+        returning it. When used in conjunction with alternate_sign=True, this
+        significantly reduces the inner product preservation property.
+
+        .. deprecated:: 0.19
+            This option will be removed in 0.21.
 
     See also
     --------
@@ -421,8 +456,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
-                 binary=False, norm='l2', non_negative=False,
-                 dtype=np.float64):
+                 binary=False, norm='l2', alternate_sign=True,
+                 non_negative=False, dtype=np.float64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -437,6 +472,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.ngram_range = ngram_range
         self.binary = binary
         self.norm = norm
+        self.alternate_sign = alternate_sign
         self.non_negative = non_negative
         self.dtype = dtype
 
@@ -452,10 +488,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def fit(self, X, y=None):
         """Does nothing: this transformer is stateless."""
         # triggers a parameter validation
+        if isinstance(X, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         self._get_hasher().fit(X, y=y)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform a sequence of documents to a document-term matrix.
 
         Parameters
@@ -465,14 +506,16 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             unicode strings, file name or file object depending on the
             constructor argument) which will be tokenized and hashed.
 
-        y : (ignored)
-
         Returns
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Document-term matrix.
-
         """
+        if isinstance(X, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
@@ -481,19 +524,17 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             X = normalize(X, norm=self.norm, copy=False)
         return X
 
-    # Alias transform to fit_transform for convenience
-    fit_transform = transform
-
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
+                             alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
-        return bincount(X.indices, minlength=X.shape[1])
+        return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
@@ -502,7 +543,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
-    scipy.sparse.coo_matrix.
+    scipy.sparse.csr_matrix.
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
@@ -543,7 +584,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -685,9 +726,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         sorted_features = sorted(six.iteritems(vocabulary))
         map_index = np.empty(len(sorted_features), dtype=np.int32)
         for new_val, (term, old_val) in enumerate(sorted_features):
-            map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return X[:, map_index]
+            map_index[old_val] = new_val
+
+        X.indices = map_index.take(X.indices, mode='clip')
+        return X
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
@@ -741,16 +784,26 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
-        indptr = _make_int_array()
+        j_indices = []
+        indptr = []
+
+        values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
+            feature_counter = {}
             for feature in analyze(doc):
                 try:
-                    j_indices.append(vocabulary[feature])
+                    feature_idx = vocabulary[feature]
+                    if feature_idx not in feature_counter:
+                        feature_counter[feature_idx] = 1
+                    else:
+                        feature_counter[feature_idx] += 1
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
+
+            j_indices.extend(feature_counter.keys())
+            values.extend(feature_counter.values())
             indptr.append(len(j_indices))
 
         if not fixed_vocab:
@@ -760,14 +813,26 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+        if indptr[-1] > 2147483648:  # = 2**31 - 1
+            if sp_version >= (0, 14):
+                indices_dtype = np.int64
+            else:
+                raise ValueError(('sparse CSR array has {} non-zero '
+                                  'elements and requires 64 bit indexing, '
+                                  ' which is unsupported with scipy {}. '
+                                  'Please upgrade to scipy >=0.14')
+                                 .format(indptr[-1], '.'.join(sp_version)))
+
+        else:
+            indices_dtype = np.int32
+        j_indices = np.asarray(j_indices, dtype=indices_dtype)
+        indptr = np.asarray(indptr, dtype=indices_dtype)
+        values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
-        X.sum_duplicates()
+        X.sort_indices()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
@@ -804,6 +869,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -853,6 +923,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
 
@@ -935,7 +1010,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
     containing every term in the collection exactly once, which prevents
-    zero divisions: idf(d, t) = log [ (1 + n) / 1 + df(d, t) ] + 1.
+    zero divisions: idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
 
     Furthermore, the formulas used to compute tf and idf depend
     on parameter settings that correspond to the SMART notation used in IR
@@ -1004,7 +1079,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
@@ -1025,7 +1100,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.float):
+        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.floating):
             # preserve float family dtype
             X = sp.csr_matrix(X, copy=copy)
         else:
@@ -1056,10 +1131,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        if hasattr(self, "_idf_diag"):
-            return np.ravel(self._idf_diag.sum(axis=0))
-        else:
-            return None
+        # if _idf_diag is not set, this will raise an attribute error,
+        # which means hasattr(self, "idf_") is False
+        return np.ravel(self._idf_diag.sum(axis=0))
 
 
 class TfidfVectorizer(CountVectorizer):

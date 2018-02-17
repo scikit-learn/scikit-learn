@@ -40,9 +40,7 @@ ul.horizontal, ul.horizontal li {
 
 
 div.header {
-    /* for the logo to correctly expand when showing results
-       but remain cut when not */
-       height: 60px;
+    /* Don't leave a fixed height. It won't allow the header to expand when search results appear. */
 }
 
 
@@ -107,6 +105,9 @@ div.navbar div.nav-icon {
 }
 /* Nav bar collapses for mobile phones and shows the hamburger */
 @media screen and (max-width: 680px) {
+    div.header {
+      height: 60px;
+    }
     div.navbar div.nav-icon {
         position: absolute;
         display: inline-block;
@@ -129,7 +130,7 @@ div.navbar div.nav-icon {
         margin-left: 6px;
     }
     div.navbar.responsive > ul li.btn-li + li {
-        margin-top: -5px;   
+        margin-top: -5px;
     }
     div.navbar.responsive > ul {
         visiblity: visible;
@@ -206,20 +207,40 @@ div.navbar div.nav-icon {
 }
 
 .search_form {
-    margin-top: -23px;
-    /*The min-height is added here, to prevent the element from shrinking
-    too much, while the scripts are still loading the search-bar.
-    Without it, layout glitches occur, as the element keeps dynamically
-    changing its size while its loading-contents adjusts into position.*/
+    margin-top: -40px;
     min-height: 42px;
 }
 
 #cse .gsc-clear-button {
     width: 50px;
+    position: relative;
+    top: -2px;
 }
 
 .gsc-branding {
-    display: none;
+    display: none !important;
+}
+
+form.gsc-search-box {
+    padding: 0 !important;
+}
+
+input.gsc-search-button {
+    position: relative;
+    top: -4px;
+    border-radius: 5px !important;
+    border-color: #FFFFFF !important;
+    background-color: #ff9c34 !important;
+}
+
+a.gs-title, a.gs-title > b{
+    color: blue !important;
+}
+
+.gsc-results .gsc-cursor-box .gsc-cursor-current-page {
+    border-color: white !important;
+    background-color: #ff9c34 !important;
+    color: white !important;
 }
 
 /*---------------------------------------------------------------*/
@@ -538,7 +559,7 @@ div.body p, div.body dd, div.body li {
     line-height: 1.5em;
 }
 
-div.admonition p.admonition-title + p {
+div.admonition p.admonition-title + p, div.deprecated p {
     display: inline;
 }
 
@@ -549,6 +570,30 @@ div.highlight{
 div.highlight a {
     text-decoration: underline;
 }
+
+div.highlight:hover span.copybutton {
+    background-color: #3F556B;
+}
+
+div.highlight:hover span.copybutton:hover {
+    background-color: #20252B;
+}
+
+@media (min-width: 1060px) {
+    div.highlight:hover span.copybutton:after{
+	background: #3F556B;
+	border-radius: 5px;
+	color: white;
+	content: attr(title);
+	left: 110%;
+	padding: 5px 15px;
+	position: absolute;
+	z-index: 98;
+	width: 140px;
+	top: -10px;
+    }
+}
+
 
 div.note {
     background-color: #eee;
@@ -570,7 +615,7 @@ div.topic {
     -moz-border-radius: 4px;
 }
 
-div.admonition {
+div.admonition, div.deprecated {
     margin-bottom: 10px;
     margin-top: 10px;
     padding: 7px;
@@ -578,7 +623,7 @@ div.admonition {
     -moz-border-radius: 4px;
 }
 
-div.warning {
+div.warning, div.deprecated {
     color: #b94a48;
     background-color: #F3E5E5;
     border: 1px solid #eed3d7;
@@ -776,6 +821,8 @@ div.sprint-wrapper:hover {
 }
 
 /*-----------------------The Examples Gallery-------------------------------*/
+
+div.sphx-glr-footer .container  {width: auto;}
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {

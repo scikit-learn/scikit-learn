@@ -191,7 +191,7 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
@@ -301,7 +301,9 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor*.
+used, and the *damping factor* which damps the responsibility and
+availability messages to avoid numerical oscillations when updating these
+messages.
 
 The main drawback of Affinity Propagation is its complexity. The
 algorithm has a time complexity of the order :math:`O(N^2 T)`, where :math:`N`
@@ -338,7 +340,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -346,10 +348,17 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i', k)}]
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
+As discussed above, in order to avoid numerical oscillations when updating the
+messages, the damping factor :math:`\lambda` is introduced to iteration process:
+
+.. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
+.. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
+
+where :math:`t` indicates the iteration times.
 
 .. _mean_shift:
 
@@ -418,7 +427,7 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
 SpectralClustering requires the number of clusters to be specified. It
 works well for a small number of clusters but is not advised when using
 many clusters.
@@ -472,7 +481,7 @@ function of the gradient of the image.
     :scale: 65
 
 Different label assignment strategies
----------------------------------------
+-------------------------------------
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
@@ -489,6 +498,17 @@ geometrical shape.
 |face_kmeans|                          |face_discretize|
 =====================================  =====================================
 
+Spectral Clustering Graphs
+--------------------------
+
+Spectral Clustering can also be used to cluster graphs by their spectral
+embeddings.  In this case, the affinity matrix is the adjacency matrix of the
+graph, and SpectralClustering is initialized with `affinity='precomputed'`::
+
+    >>> from sklearn.cluster import SpectralClustering
+    >>> sc = SpectralClustering(3, affinity='precomputed', n_init=100,
+    ...                         assign_labels='discretize')
+    >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
 .. topic:: References:
 
@@ -534,6 +554,8 @@ metric used for the merge strategy:
   observations of pairs of clusters.
 - **Average linkage** minimizes the average of the distances between all
   observations of pairs of clusters.
+- **Single linkage** minimizes the distance between the closest
+  observations of pairs of clusters.
 
 :class:`AgglomerativeClustering` can also scale to large number of samples
 when it is used jointly with a connectivity matrix, but is computationally
@@ -547,30 +569,24 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
-Different linkage type: Ward, complete and average linkage
------------------------------------------------------------
+Different linkage type: Ward, complete, average, and single linkage
+-------------------------------------------------------------------
 
-:class:`AgglomerativeClustering` supports Ward, average, and complete
+:class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_linkage_comparison_001.png
+    :target: ../auto_examples/cluster/plot_linkage_comparison.html
     :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
 
 Agglomerative cluster has a "rich get richer" behavior that leads to
-uneven cluster sizes. In this regard, complete linkage is the worst
+uneven cluster sizes. In this regard, single linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
-Euclidean metrics, average linkage is a good alternative.
+Euclidean metrics, average linkage is a good alternative. Single linkage,
+while not robust to noisy data, can be computed very efficiently and can
+therefore be useful to provide hierarchical clustering of larger datasets.
+Single linkage can also perform well on non-globular data.
 
 .. topic:: Examples:
 
@@ -632,15 +648,16 @@ enable only merging of neighboring pixels on an image, as in the
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
-.. warning:: **Connectivity constraints with average and complete linkage**
+.. warning:: **Connectivity constraints with single, average and complete linkage**
 
-    Connectivity constraints and complete or average linkage can enhance
+    Connectivity constraints and single, complete or average linkage can enhance
     the 'rich getting richer' aspect of agglomerative clustering,
     particularly so if they are built with
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
     :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    Single linkage is the most brittle linkage option with regard to this issue.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
@@ -662,13 +679,13 @@ enable only merging of neighboring pixels on an image, as in the
 Varying the metric
 -------------------
 
-Average and complete linkage can be used with a variety of distances (or
+Single, average and complete linkage can be used with a variety of distances (or
 affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
 
-* *l1* distance is often good for sparse features, or sparse noise: ie
-  many of the features are zero, as in text mining using occurences of
+* *l1* distance is often good for sparse features, or sparse noise: i.e.
+  many of the features are zero, as in text mining using occurrences of
   rare words.
 
 * *cosine* distance is interesting because it is invariant to global
@@ -718,15 +735,15 @@ More formally, we define a core sample as being a sample in the dataset such
 that there exist ``min_samples`` other samples within a distance of
 ``eps``, which are defined as *neighbors* of the core sample. This tells
 us that the core sample is in a dense area of the vector space. A cluster
-is a set of core samples, that can be built by recursively by taking a core
+is a set of core samples that can be built by recursively taking a core
 sample, finding all of its neighbors that are core samples, finding all of
 *their* neighbors that are core samples, and so on. A cluster also has a
 set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Any sample that is not a 
-core sample, and is at least ``eps`` in distance from any core sample, is 
+Any core sample is part of a cluster, by definition. Any sample that is not a
+core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 In the figure below, the color indicates cluster membership, with large circles
@@ -746,17 +763,18 @@ by black points below.
 
 .. topic:: Implementation
 
-    The algorithm is non-deterministic, but the core samples will
-    always belong to the same clusters (although the labels may be
-    different). The non-determinism comes from deciding to which cluster a
-    non-core sample belongs. A non-core sample can have a distance lower
-    than ``eps`` to two core samples in different clusters. By the
+    The DBSCAN algorithm is deterministic, always generating the same clusters
+    when given the same data in the same order.  However, the results can differ when
+    data is provided in a different order. First, even though the core samples
+    will always be assigned to the same clusters, the labels of those clusters
+    will depend on the order in which those samples are encountered in the data.
+    Second and more importantly, the clusters to which non-core samples are assigned
+    can differ depending on the data order.  This would happen when a non-core sample
+    has a distance lower than ``eps`` to two core samples in different clusters. By the
     triangular inequality, those two core samples must be more distant than
     ``eps`` from each other, or they would be in the same cluster. The non-core
-    sample is assigned to whichever cluster is generated first, where
-    the order is determined randomly. Other than the ordering of
-    the dataset, the algorithm is deterministic, making the results relatively
-    stable between runs on the same data.
+    sample is assigned to whichever cluster is generated first in a pass
+    through the data, and so the results will depend on the data ordering.
 
     The current implementation uses ball trees and kd-trees
     to determine the neighborhood of points,
@@ -862,7 +880,7 @@ the user is advised
  2. Train all data by multiple calls to partial_fit.
  3. Set ``n_clusters`` to a required value using
     ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+ 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
     which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
@@ -1118,12 +1136,12 @@ Mathematical formulation
 Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
 Their entropy is the amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{|U|}P(i)\log(P(i))
+.. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
 
 where :math:`P(i) = |U_i| / N` is the probability that an object picked at
 random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|V|}P'(j)\log(P'(j))
+.. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
 With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
@@ -1132,6 +1150,10 @@ and :math:`V` is calculated by:
 
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
+
+It also can be expressed in set cardinality formulation:
+
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 
@@ -1329,7 +1351,7 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
+ * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
@@ -1568,3 +1590,59 @@ Drawbacks
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
     `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+
+.. _contingency_matrix:
+
+Contingency Matrix
+------------------
+
+Contingency matrix (:func:`sklearn.metrics.cluster.contingency_matrix`)
+reports the intersection cardinality for every true/predicted cluster pair.
+The contingency matrix provides sufficient statistics for all clustering
+metrics where the samples are independent and identically distributed and
+one doesn't need to account for some instances not being clustered.
+
+Here is an example::
+
+   >>> from sklearn.metrics.cluster import contingency_matrix
+   >>> x = ["a", "a", "a", "b", "b", "b"]
+   >>> y = [0, 0, 1, 1, 2, 2]
+   >>> contingency_matrix(x, y)
+   array([[2, 1, 0],
+          [0, 1, 2]])
+
+The first row of output array indicates that there are three samples whose
+true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
+and none is in 2. And the second row indicates that there are three samples
+whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
+1 and two are in 2.
+
+A :ref:`confusion matrix <confusion_matrix>` for classification is a square
+contingency matrix where the order of rows and columns correspond to a list
+of classes.
+
+
+Advantages
+~~~~~~~~~~
+
+- Allows to examine the spread of each true cluster across predicted
+  clusters and vice versa.
+
+- The contingency table calculated is typically utilized in the calculation
+  of a similarity statistic (like the others listed in this document) between
+  the two clusterings.
+
+Drawbacks
+~~~~~~~~~
+
+- Contingency matrix is easy to interpret for a small number of clusters, but
+  becomes very hard to interpret for a large number of clusters.
+
+- It doesn't give a single metric to use as an objective for clustering
+  optimisation.
+
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_

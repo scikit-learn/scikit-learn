@@ -5,13 +5,15 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import calinski_harabaz_score
+from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
+from sklearn.metrics.cluster import calinski_harabaz_score
 
 
 def test_silhouette():
@@ -56,16 +58,74 @@ def test_silhouette():
             assert_almost_equal(score_euclidean, score_dense_with_sampling)
 
 
-def test_no_nan():
-    # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-    # This tests for the condition that caused issue 960.
-    # Note that there is only one sample in cluster 0. This used to cause the
-    # silhouette_score to return nan (see bug #960).
-    labels = np.array([1, 0, 1, 1, 1])
-    # The distance matrix doesn't actually matter.
-    D = np.random.RandomState(0).rand(len(labels), len(labels))
-    silhouette = silhouette_score(D, labels, metric='precomputed')
+def test_cluster_size_1():
+    # Assert Silhouette Coefficient == 0 when there is 1 sample in a cluster
+    # (cluster 0). We also test the case where there are identical samples
+    # as the only members of a cluster (cluster 2). To our knowledge, this case
+    # is not discussed in reference material, and we choose for it a sample
+    # score of 1.
+    X = [[0.], [1.], [1.], [2.], [3.], [3.]]
+    labels = np.array([0, 1, 1, 1, 2, 2])
+
+    # Cluster 0: 1 sample -> score of 0 by Rousseeuw's convention
+    # Cluster 1: intra-cluster = [.5, .5, 1]
+    #            inter-cluster = [1, 1, 1]
+    #            silhouette    = [.5, .5, 0]
+    # Cluster 2: intra-cluster = [0, 0]
+    #            inter-cluster = [arbitrary, arbitrary]
+    #            silhouette    = [1., 1.]
+
+    silhouette = silhouette_score(X, labels)
     assert_false(np.isnan(silhouette))
+    ss = silhouette_samples(X, labels)
+    assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
+
+
+def test_silhouette_paper_example():
+    # Explicitly check per-sample results against Rousseeuw (1987)
+    # Data from Table 1
+    lower = [5.58,
+             7.00, 6.50,
+             7.08, 7.00, 3.83,
+             4.83, 5.08, 8.17, 5.83,
+             2.17, 5.75, 6.67, 6.92, 4.92,
+             6.42, 5.00, 5.58, 6.00, 4.67, 6.42,
+             3.42, 5.50, 6.42, 6.42, 5.00, 3.92, 6.17,
+             2.50, 4.92, 6.25, 7.33, 4.50, 2.25, 6.33, 2.75,
+             6.08, 6.67, 4.25, 2.67, 6.00, 6.17, 6.17, 6.92, 6.17,
+             5.25, 6.83, 4.50, 3.75, 5.75, 5.42, 6.08, 5.83, 6.67, 3.67,
+             4.75, 3.00, 6.08, 6.67, 5.00, 5.58, 4.83, 6.17, 5.67, 6.50, 6.92]
+    D = np.zeros((12, 12))
+    D[np.tril_indices(12, -1)] = lower
+    D += D.T
+
+    names = ['BEL', 'BRA', 'CHI', 'CUB', 'EGY', 'FRA', 'IND', 'ISR', 'USA',
+             'USS', 'YUG', 'ZAI']
+
+    # Data from Figure 2
+    labels1 = [1, 1, 2, 2, 1, 1, 2, 1, 1, 2, 2, 1]
+    expected1 = {'USA': .43, 'BEL': .39, 'FRA': .35, 'ISR': .30, 'BRA': .22,
+                 'EGY': .20, 'ZAI': .19, 'CUB': .40, 'USS': .34, 'CHI': .33,
+                 'YUG': .26, 'IND': -.04}
+    score1 = .28
+
+    # Data from Figure 3
+    labels2 = [1, 2, 3, 3, 1, 1, 2, 1, 1, 3, 3, 2]
+    expected2 = {'USA': .47, 'FRA': .44, 'BEL': .42, 'ISR': .37, 'EGY': .02,
+                 'ZAI': .28, 'BRA': .25, 'IND': .17, 'CUB': .48, 'USS': .44,
+                 'YUG': .31, 'CHI': .31}
+    score2 = .33
+
+    for labels, expected, score in [(labels1, expected1, score1),
+                                    (labels2, expected2, score2)]:
+        expected = [expected[name] for name in names]
+        # we check to 2dp because that's what's in the paper
+        assert_almost_equal(expected, silhouette_samples(D, np.array(labels),
+                                                         metric='precomputed'),
+                            decimal=2)
+        assert_almost_equal(score, silhouette_score(D, np.array(labels),
+                                                    metric='precomputed'),
+                            decimal=2)
 
 
 def test_correct_labelsize():
@@ -76,15 +136,15 @@ def test_correct_labelsize():
     # n_labels = n_samples
     y = np.arange(X.shape[0])
     assert_raises_regexp(ValueError,
-                         'Number of labels is %d\. Valid values are 2 '
-                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         r'Number of labels is %d\. Valid values are 2 '
+                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert_raises_regexp(ValueError,
-                         'Number of labels is %d\. Valid values are 2 '
-                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         r'Number of labels is %d\. Valid values are 2 '
+                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
 
@@ -93,7 +153,9 @@ def test_non_encoded_labels():
     X = dataset.data
     labels = dataset.target
     assert_equal(
-        silhouette_score(X, labels + 10), silhouette_score(X, labels))
+        silhouette_score(X, labels * 2 + 10), silhouette_score(X, labels))
+    assert_array_equal(
+        silhouette_samples(X, labels * 2 + 10), silhouette_samples(X, labels))
 
 
 def test_non_numpy_labels():

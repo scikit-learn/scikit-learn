@@ -51,35 +51,38 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
 
         Parameters
         ----------
-        y: array-like, dtype=DOUBLE_t
+        y : array-like, dtype=DOUBLE_t
             y is a buffer that can store values for n_outputs target variables
-        y_stride: SIZE_t
+        y_stride : SIZE_t
             y_stride is used to index the kth output value as follows:
             y[i, k] = y[i * y_stride + k]
-        sample_weight: array-like, dtype=DOUBLE_t
+        sample_weight : array-like, dtype=DOUBLE_t
             The weight of each sample
-        weighted_n_samples: DOUBLE_t
+        weighted_n_samples : DOUBLE_t
             The total weight of the samples being considered
-        samples: array-like, dtype=DOUBLE_t
+        samples : array-like, dtype=DOUBLE_t
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
-        start: SIZE_t
+        start : SIZE_t
             The first sample to be used on this node
-        end: SIZE_t
+        end : SIZE_t
             The last sample used on this node
 
         """
 
         pass
 
-    cdef void reset(self) nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
 
         This method must be implemented by the subclass.
@@ -87,14 +90,14 @@ cdef class Criterion:
 
         pass
 
-    cdef void reverse_reset(self) nogil:
+    cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef void update(self, SIZE_t new_pos) nogil:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
         This updates the collected statistics by moving samples[pos:new_pos]
@@ -103,7 +106,7 @@ cdef class Criterion:
 
         Parameters
         ----------
-        new_pos: SIZE_t
+        new_pos : SIZE_t
             New starting index position of the samples in the right child
         """
 
@@ -129,10 +132,10 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity_left: double pointer
+        impurity_left : double pointer
             The memory address where the impurity of the left child should be
             stored.
-        impurity_right: double pointer
+        impurity_right : double pointer
             The memory address where the impurity of the right child should be
             stored
         """
@@ -147,7 +150,7 @@ cdef class Criterion:
 
         Parameters
         ----------
-        dest: double pointer
+        dest : double pointer
             The memory address where the node value should be stored.
         """
 
@@ -172,11 +175,10 @@ cdef class Criterion:
                 - self.weighted_n_left * impurity_left)
 
     cdef double impurity_improvement(self, double impurity) nogil:
-        """Placeholder for improvement in impurity after a split.
+        """Compute the improvement in impurity
 
-        Placeholder for a method which computes the improvement
-        in impurity when a split occurs. The weighted impurity improvement
-        equation is the following:
+        This method computes the improvement in impurity when a split occurs.
+        The weighted impurity improvement equation is the following:
 
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
@@ -187,12 +189,12 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity: double
+        impurity : double
             The initial impurity of the node before the split
 
         Return
         ------
-        double: improvement in impurity after the split occurs
+        double : improvement in impurity after the split occurs
         """
 
         cdef double impurity_left
@@ -210,18 +212,15 @@ cdef class Criterion:
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    cdef SIZE_t* n_classes
-    cdef SIZE_t sum_stride
-
     def __cinit__(self, SIZE_t n_outputs,
                   np.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
 
         Parameters
         ----------
-        n_outputs: SIZE_t
+        n_outputs : SIZE_t
             The number of targets, the dimensionality of the prediction
-        n_classes: numpy.ndarray, dtype=SIZE_t
+        n_classes : numpy.ndarray, dtype=SIZE_t
             The number of unique classes in each target
         """
 
@@ -235,6 +234,7 @@ cdef class ClassificationCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = 0
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -266,44 +266,46 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = <double*> calloc(n_elements, sizeof(double))
         self.sum_right = <double*> calloc(n_elements, sizeof(double))
 
-        if (self.sum_total == NULL or 
+        if (self.sum_total == NULL or
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
 
     def __dealloc__(self):
         """Destructor."""
-
         free(self.n_classes)
 
     def __reduce__(self):
-        return (ClassificationCriterion,
+        return (type(self),
                 (self.n_outputs,
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
-                   DOUBLE_t* sample_weight, double weighted_n_samples,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride,
+                  DOUBLE_t* sample_weight, double weighted_n_samples,
+                  SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
 
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
         Parameters
         ----------
-        y: array-like, dtype=DOUBLE_t
+        y : array-like, dtype=DOUBLE_t
             The target stored as a buffer for memory efficiency
-        y_stride: SIZE_t
+        y_stride : SIZE_t
             The stride between elements in the buffer, important if there
             are multiple targets (multi-output)
-        sample_weight: array-like, dtype=DTYPE_t
+        sample_weight : array-like, dtype=DTYPE_t
             The weight of each sample
-        weighted_n_samples: SIZE_t
+        weighted_n_samples : SIZE_t
             The total weight of all samples
-        samples: array-like, dtype=SIZE_t
+        samples : array-like, dtype=SIZE_t
             A mask on the samples, showing which ones we want to use
-        start: SIZE_t
+        start : SIZE_t
             The first sample to use in the mask
-        end: SIZE_t
+        end : SIZE_t
             The last sample to use in the mask
         """
 
@@ -348,10 +350,14 @@ cdef class ClassificationCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+        return 0
 
-    cdef void reset(self) nogil:
-        """Reset the criterion at pos=start."""
+    cdef int reset(self) nogil except -1:
+        """Reset the criterion at pos=start
 
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         self.pos = self.start
 
         self.weighted_n_left = 0.0
@@ -371,9 +377,14 @@ cdef class ClassificationCriterion(Criterion):
             sum_total += self.sum_stride
             sum_left += self.sum_stride
             sum_right += self.sum_stride
+        return 0
 
-    cdef void reverse_reset(self) nogil:
-        """Reset the criterion at pos=end."""
+    cdef int reverse_reset(self) nogil except -1:
+        """Reset the criterion at pos=end
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         self.pos = self.end
 
         self.weighted_n_left = self.weighted_n_node_samples
@@ -393,13 +404,17 @@ cdef class ClassificationCriterion(Criterion):
             sum_total += self.sum_stride
             sum_left += self.sum_stride
             sum_right += self.sum_stride
+        return 0
 
-    cdef void update(self, SIZE_t new_pos) nogil:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
 
         Parameters
         ----------
-        new_pos: SIZE_t
+        new_pos : SIZE_t
             The new ending position for which to move samples from the right
             child to the left child.
         """
@@ -471,6 +486,7 @@ cdef class ClassificationCriterion(Criterion):
             sum_total += self.sum_stride
 
         self.pos = new_pos
+        return 0
 
     cdef double node_impurity(self) nogil:
         pass
@@ -484,7 +500,7 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        dest: double pointer
+        dest : double pointer
             The memory address which we will save the node value into.
         """
 
@@ -499,7 +515,7 @@ cdef class ClassificationCriterion(Criterion):
 
 
 cdef class Entropy(ClassificationCriterion):
-    """Cross Entropy impurity criterion.
+    r"""Cross Entropy impurity criterion.
 
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
@@ -545,9 +561,9 @@ cdef class Entropy(ClassificationCriterion):
 
         Parameters
         ----------
-        impurity_left: double pointer
+        impurity_left : double pointer
             The memory address to save the impurity of the left node
-        impurity_right: double pointer
+        impurity_right : double pointer
             The memory address to save the impurity of the right node
         """
 
@@ -580,7 +596,7 @@ cdef class Entropy(ClassificationCriterion):
 
 
 cdef class Gini(ClassificationCriterion):
-    """Gini Index impurity criterion.
+    r"""Gini Index impurity criterion.
 
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
@@ -632,9 +648,9 @@ cdef class Gini(ClassificationCriterion):
 
         Parameters
         ----------
-        impurity_left: DTYPE_t
+        impurity_left : DTYPE_t
             The memory address to save the impurity of the left node to
-        impurity_right: DTYPE_t
+        impurity_right : DTYPE_t
             The memory address to save the impurity of the right node to
         """
 
@@ -674,7 +690,7 @@ cdef class Gini(ClassificationCriterion):
 
 
 cdef class RegressionCriterion(Criterion):
-    """Abstract regression criterion.
+    r"""Abstract regression criterion.
 
     This handles cases where the target is a continuous value, and is
     evaluated by computing the variance of the target values left and right
@@ -685,17 +701,15 @@ cdef class RegressionCriterion(Criterion):
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
 
-    cdef double sq_sum_total
-
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
-        n_outputs: SIZE_t
+        n_outputs : SIZE_t
             The number of targets to be predicted
 
-        n_samples: SIZE_t
+        n_samples : SIZE_t
             The total number of samples to fit on
         """
 
@@ -710,6 +724,7 @@ cdef class RegressionCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -734,11 +749,11 @@ cdef class RegressionCriterion(Criterion):
             raise MemoryError()
 
     def __reduce__(self):
-        return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -778,8 +793,9 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+        return 0
 
-    cdef void reset(self) nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
         memset(self.sum_left, 0, n_bytes)
@@ -788,8 +804,9 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
+        return 0
 
-    cdef void reverse_reset(self) nogil:
+    cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
         memset(self.sum_right, 0, n_bytes)
@@ -798,8 +815,9 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_right = 0.0
         self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
+        return 0
 
-    cdef void update(self, SIZE_t new_pos) nogil:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
 
         cdef double* sum_left = self.sum_left
@@ -853,12 +871,13 @@ cdef class RegressionCriterion(Criterion):
 
                 self.weighted_n_left -= w
 
-        self.weighted_n_right = (self.weighted_n_node_samples - 
+        self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
             sum_right[k] = sum_total[k] - sum_left[k]
 
         self.pos = new_pos
+        return 0
 
     cdef double node_impurity(self) nogil:
         pass
@@ -881,6 +900,7 @@ cdef class MSE(RegressionCriterion):
 
         MSE = var_left + var_right
     """
+
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
@@ -963,13 +983,13 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
 
 cdef class MAE(RegressionCriterion):
-    """Mean absolute error impurity criterion
+    r"""Mean absolute error impurity criterion
 
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""
@@ -986,10 +1006,10 @@ cdef class MAE(RegressionCriterion):
 
         Parameters
         ----------
-        n_outputs: SIZE_t
+        n_outputs : SIZE_t
             The number of targets to be predicted
 
-        n_samples: SIZE_t
+        n_samples : SIZE_t
             The total number of samples to fit on
         """
 
@@ -1004,6 +1024,7 @@ cdef class MAE(RegressionCriterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -1016,9 +1037,6 @@ cdef class MAE(RegressionCriterion):
         # Allocate memory for the accumulators
         safe_realloc(&self.node_medians, n_outputs)
 
-        if (self.node_medians == NULL):
-            raise MemoryError()
-
         self.left_child = np.empty(n_outputs, dtype='object')
         self.right_child = np.empty(n_outputs, dtype='object')
         # initialize WeightedMedianCalculators
@@ -1026,9 +1044,9 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
 
@@ -1066,6 +1084,7 @@ cdef class MAE(RegressionCriterion):
             for k in range(self.n_outputs):
                 y_ik = y[i * y_stride + k]
 
+                # push method ends up calling safe_realloc, hence `except -1`
                 # push all values to the right side,
                 # since pos = start initially anyway
                 (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
@@ -1077,9 +1096,14 @@ cdef class MAE(RegressionCriterion):
 
         # Reset to pos=start
         self.reset()
+        return 0
 
-    cdef void reset(self) nogil:
-        """Reset the criterion at pos=start."""
+    cdef int reset(self) nogil except -1:
+        """Reset the criterion at pos=start
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
 
         cdef SIZE_t i, k
         cdef DOUBLE_t value
@@ -1101,11 +1125,17 @@ cdef class MAE(RegressionCriterion):
                 # remove everything from left and put it into right
                 (<WeightedMedianCalculator> left_child[k]).pop(&value,
                                                                &weight)
+                # push method ends up calling safe_realloc, hence `except -1`
                 (<WeightedMedianCalculator> right_child[k]).push(value,
                                                                  weight)
+        return 0
 
-    cdef void reverse_reset(self) nogil:
-        """Reset the criterion at pos=end."""
+    cdef int reverse_reset(self) nogil except -1:
+        """Reset the criterion at pos=end
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
 
         self.weighted_n_right = 0.0
         self.weighted_n_left = self.weighted_n_node_samples
@@ -1124,11 +1154,17 @@ cdef class MAE(RegressionCriterion):
                 # remove everything from right and put it into left
                 (<WeightedMedianCalculator> right_child[k]).pop(&value,
                                                                 &weight)
+                # push method ends up calling safe_realloc, hence `except -1`
                 (<WeightedMedianCalculator> left_child[k]).push(value,
                                                                 weight)
+        return 0
 
-    cdef void update(self, SIZE_t new_pos) nogil:
-        """Updated statistics by moving samples[pos:new_pos] to the left."""
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
+        """Updated statistics by moving samples[pos:new_pos] to the left
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
 
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
@@ -1160,6 +1196,7 @@ cdef class MAE(RegressionCriterion):
                     y_ik = y[i * self.y_stride + k]
                     # remove y_ik and its weight w from right and add to left
                     (<WeightedMedianCalculator> right_child[k]).remove(y_ik, w)
+                    # push method ends up calling safe_realloc, hence except -1
                     (<WeightedMedianCalculator> left_child[k]).push(y_ik, w)
 
                 self.weighted_n_left += w
@@ -1183,6 +1220,7 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         self.pos = new_pos
+        return 0
 
     cdef void node_value(self, double* dest) nogil:
         """Computes the node value of samples[start:end] into dest."""
@@ -1265,7 +1303,7 @@ cdef class MAE(RegressionCriterion):
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman
 
-    Uses the formula (35) in Friedmans original Gradient Boosting paper:
+    Uses the formula (35) in Friedman's original Gradient Boosting paper:
 
         diff = mean_left - mean_right
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
@@ -1318,5 +1356,5 @@ cdef class FriedmanMSE(MSE):
         diff = (self.weighted_n_right * total_sum_left -
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right * 
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
                                self.weighted_n_node_samples))

@@ -5,9 +5,9 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -31,18 +31,18 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     kernel : "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
         Kernel. Default="linear".
 
+    gamma : float, default=1/n_features
+        Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
+        kernels.
+
     degree : int, default=3
         Degree for poly kernels. Ignored by other kernels.
 
-    gamma : float, optional
-        Kernel coefficient for rbf and poly kernels. Default: 1/n_features.
-        Ignored by other kernels.
-
-    coef0 : float, optional
+    coef0 : float, default=1
         Independent term in poly and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, optional
+    kernel_params : mapping of string to any, default=None
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
@@ -54,18 +54,18 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : string ['auto'|'dense'|'arpack']
+    eigen_solver : string ['auto'|'dense'|'arpack'], default='auto'
         Select eigensolver to use. If n_components is much less than
         the number of training samples, arpack may be more efficient
         than the dense eigensolver.
 
     tol : float, default=0
-        Convergence tolerance for arpack. If zero, optimal value will be
-        chosen by arpack.
+        Convergence tolerance for arpack.
+        If 0, optimal value will be chosen by arpack.
 
     max_iter : int, default=None
-        Maximum number of iterations for arpack. If None, optimal value will
-        be chosen by arpack.
+        Maximum number of iterations for arpack.
+        If None, optimal value will be chosen by arpack.
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
@@ -74,18 +74,26 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int seed, RandomState instance, or None, default=None
-        A pseudo random number generator used for the initialization of the
-        residuals when eigen_solver == 'arpack'.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
-    n_jobs : int, default=1
-        The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
+        .. versionadded:: 0.18
 
     copy_X : boolean, default=True
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
+
+        .. versionadded:: 0.18
+
+    n_jobs : int, default=1
+        The number of parallel jobs to run.
+        If `-1`, then the number of jobs is set to the number of CPU cores.
+
+        .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -99,15 +107,14 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         `remove_zero_eig` are not set, then all components are stored.
 
     dual_coef_ : array, (n_samples, n_features)
-        Inverse transform matrix. If `fit_inverse_transform=False`,
-        dual_coef_ is not present.
+        Inverse transform matrix. Set if `fit_inverse_transform` is True.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
 
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
-        a reference.
+        a reference. This attribute is used for the calls to transform.
 
     References
     ----------
@@ -138,7 +145,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
-        self._centerer = KernelCenterer()
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
@@ -218,7 +224,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -228,6 +234,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
 
@@ -244,13 +251,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self.fit(X, **params)
 
@@ -266,11 +273,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self, 'X_fit_')
 
@@ -282,11 +289,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_features)
+        X_new : array-like, shape (n_samples, n_features)
 
         References
         ----------

@@ -9,6 +9,7 @@
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -30,6 +31,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features], y_test, scorer)).scores_
 
+
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
@@ -37,8 +39,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
     sets of features. First, the estimator is trained on the initial set of
-    features and weights are assigned to each one of them. Then, features whose
-    absolute weights are the smallest are pruned from the current set features.
+    features and the importance of each feature is obtained either through a
+    ``coef_`` attribute or through a ``feature_importances_`` attribute.
+    Then, the least important features are pruned from current set of features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
 
@@ -47,13 +50,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. Important features
-        must correspond to high absolute values in the `coef_` array.
-
-        For instance, this is the case for most supervised learning
-        algorithms such as Support Vector Classifiers and Generalized
-        Linear Models from the `svm` and `linear_model` modules.
+        A supervised learning estimator with a ``fit`` method that provides
+        information about feature importance either through a ``coef_``
+        attribute or through a ``feature_importances_`` attribute.
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
@@ -102,6 +101,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
+    See also
+    --------
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features
+
     References
     ----------
 
@@ -135,6 +139,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self._fit(X, y)
 
     def _fit(self, X, y, step_score=None):
+        # Parameter step_score controls the calculation of self.scores_
+        # step_score is not exposed to users
+        # and is used when implementing RFECV
+        # self.scores_ will not be calculated when calling _fit through fit
+
         X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
@@ -171,9 +180,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             # Get coefs
             if hasattr(estimator, 'coef_'):
                 coefs = estimator.coef_
-            elif hasattr(estimator, 'feature_importances_'):
-                coefs = estimator.feature_importances_
             else:
+                coefs = getattr(estimator, 'feature_importances_', None)
+            if coefs is None:
                 raise RuntimeError('The classifier does not expose '
                                    '"coef_" or "feature_importances_" '
                                    'attributes')
@@ -227,6 +236,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -242,21 +252,26 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The target values.
         """
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.score(self.transform(X), y)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'support_')
         return self.support_
 
     @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.decision_function(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_proba(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_log_proba(self.transform(X))
 
 
@@ -269,13 +284,9 @@ class RFECV(RFE, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. Important features
-        must correspond to high absolute values in the `coef_` array.
-
-        For instance, this is the case for most supervised learning
-        algorithms such as Support Vector Classifiers and Generalized
-        Linear Models from the `svm` and `linear_model` modules.
+        A supervised learning estimator with a ``fit`` method that provides
+        information about feature importance either through a ``coef_``
+        attribute or through a ``feature_importances_`` attribute.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then `step` corresponds to the (integer)
@@ -293,8 +304,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If the 
-        estimator is a classifier or if ``y`` is neither binary nor multiclass, 
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If the
+        estimator is a classifier or if ``y`` is neither binary nor multiclass,
         :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -359,6 +370,10 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
+    See also
+    --------
+    RFE : Recursive feature elimination
+
     References
     ----------
 
@@ -375,7 +390,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -388,6 +403,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             Target values (integers for classification, real numbers for
             regression).
+
+        groups : array-like, shape = [n_samples], optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
         X, y = check_X_y(X, y, "csr")
 
@@ -396,10 +415,17 @@ class RFECV(RFE, MetaEstimatorMixin):
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
+
+        if 0.0 < self.step < 1.0:
+            step = int(max(1, self.step * n_features))
+        else:
+            step = int(self.step)
+        if step <= 0:
+            raise ValueError("Step must be >0")
+
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select,
-                  step=self.step, verbose=self.verbose - 1)
-
+                  step=self.step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -420,16 +446,17 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y))
+            for train, test in cv.split(X, y, groups))
 
         scores = np.sum(scores, axis=0)
         n_features_to_select = max(
-            n_features - (np.argmax(scores) * self.step),
+            n_features - (np.argmax(scores) * step),
             n_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step)
+                  n_features_to_select=n_features_to_select, step=self.step,
+                  verbose=self.verbose)
 
         rfe.fit(X, y)
 
@@ -442,5 +469,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y)
+        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
         return self

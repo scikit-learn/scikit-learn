@@ -1,5 +1,3 @@
-from nose.tools import assert_raises, assert_true, assert_false
-
 import numpy as np
 from scipy import sparse
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
@@ -10,7 +8,8 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.testing import (assert_warns, assert_raise_message,
+from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
+                                   assert_warns, assert_raise_message,
                                    ignore_warnings)
 
 # test sample 1
@@ -50,12 +49,14 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     assert_true(sparse.issparse(sparse_svm.dual_coef_))
     assert_array_almost_equal(dense_svm.support_vectors_,
                               sparse_svm.support_vectors_.toarray())
-    assert_array_almost_equal(dense_svm.dual_coef_, sparse_svm.dual_coef_.toarray())
+    assert_array_almost_equal(dense_svm.dual_coef_,
+                              sparse_svm.dual_coef_.toarray())
     if dense_svm.kernel == "linear":
         assert_true(sparse.issparse(sparse_svm.coef_))
         assert_array_almost_equal(dense_svm.coef_, sparse_svm.coef_.toarray())
     assert_array_almost_equal(dense_svm.support_, sparse_svm.support_)
-    assert_array_almost_equal(dense_svm.predict(X_test_dense), sparse_svm.predict(X_test))
+    assert_array_almost_equal(dense_svm.predict(X_test_dense),
+                              sparse_svm.predict(X_test))
     assert_array_almost_equal(dense_svm.decision_function(X_test_dense),
                               sparse_svm.decision_function(X_test))
     assert_array_almost_equal(dense_svm.decision_function(X_test_dense),
@@ -123,7 +124,8 @@ def test_unsorted_indices():
 
 
 def test_svc_with_custom_kernel():
-    kfunc = lambda x, y: safe_sparse_dot(x, y.T)
+    def kfunc(x, y):
+        return safe_sparse_dot(x, y.T)
     clf_lin = svm.SVC(kernel='linear').fit(X_sp, Y)
     clf_mylin = svm.SVC(kernel=kfunc).fit(X_sp, Y)
     assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
@@ -145,10 +147,10 @@ def test_svc_iris():
 
 
 def test_sparse_decision_function():
-    #Test decision_function
+    # Test decision_function
 
-    #Sanity check, test that decision_function implemented in python
-    #returns the same as the one in libsvm
+    # Sanity check, test that decision_function implemented in python
+    # returns the same as the one in libsvm
 
     # multi class:
     svc = svm.SVC(kernel='linear', C=0.1, decision_function_shape='ovo')
@@ -263,7 +265,7 @@ def test_sparse_liblinear_intercept_handling():
 
 
 def test_sparse_oneclasssvm():
-    """Check that sparse OneClassSVM gives the same result as dense OneClassSVM"""
+    # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
     # many class dataset:
     X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
     X_blobs = sparse.csr_matrix(X_blobs)
@@ -274,8 +276,8 @@ def test_sparse_oneclasssvm():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.OneClassSVM(kernel=kernel, random_state=0)
-            sp_clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+            clf = svm.OneClassSVM(kernel=kernel)
+            sp_clf = svm.OneClassSVM(kernel=kernel)
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 

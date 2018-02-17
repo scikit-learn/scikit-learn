@@ -4,17 +4,20 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Michael Eickenberg <michael.eickenberg@inria.fr>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #
 # License: BSD 3 clause
 
 from math import log, sqrt
+import numbers
 
 import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
+from scipy.sparse import issparse
+from scipy.sparse.linalg import svds
 
 from ..externals import six
 
@@ -23,9 +26,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
-from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils.arpack import svds
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -36,18 +39,18 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
 
     Parameters
     ----------
-    spectrum: array of shape (n)
+    spectrum : array of shape (n)
         Data spectrum.
-    rank: int
+    rank : int
         Tested rank value.
-    n_samples: int
+    n_samples : int
         Number of samples.
-    n_features: int
+    n_features : int
         Number of features.
 
     Returns
     -------
-    ll: float,
+    ll : float,
         The log-likelihood
 
     Notes
@@ -108,9 +111,15 @@ class PCA(_BasePCA):
     Linear dimensionality reduction using Singular Value Decomposition of the
     data to project it to a lower dimensional space.
 
-    It uses the scipy.linalg ARPACK implementation of the SVD or a randomized
-    SVD by the method of Halko et al. 2009, depending on which is the most
-    efficient.
+    It uses the LAPACK implementation of the full SVD or a randomized truncated
+    SVD by the method of Halko et al. 2009, depending on the shape of the input
+    data and the number of components to extract.
+
+    It can also use the scipy.sparse.linalg ARPACK implementation of the
+    truncated SVD.
+
+    Notice that this class does not support sparse input. See
+    :class:`TruncatedSVD` for an alternative with sparse data.
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -122,12 +131,20 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features)
 
-        if n_components == 'mle' and svd_solver == 'full', Minka\'s MLE is used
-        to guess the dimension
-        if ``0 < n_components < 1`` and svd_solver == 'full', select the number
-        of components such that the amount of variance that needs to be
-        explained is greater than the percentage specified by n_components
-        n_components cannot be equal to n_features for svd_solver == 'arpack'.
+        If ``n_components == 'mle'`` and ``svd_solver == 'full'``, Minka\'s
+        MLE is used to guess the dimension. Use of ``n_components == 'mle'``
+        will interpret ``svd_solver == 'auto'`` as ``svd_solver == 'full'``.
+
+        If ``0 < n_components < 1`` and ``svd_solver == 'full'``, select the
+        number of components such that the amount of variance that needs to be
+        explained is greater than the percentage specified by n_components.
+
+        If ``svd_solver == 'arpack'``, the number of components must be
+        strictly less than the minimum of n_features and n_samples.
+
+        Hence, the None case results in::
+
+            n_components == min(n_samples, n_features) - 1
 
     copy : bool (default True)
         If False, data passed to fit are overwritten and running
@@ -147,15 +164,18 @@ class PCA(_BasePCA):
     svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
         auto :
             the solver is selected by a default policy based on `X.shape` and
-            `n_components` which favors 'randomized' when the problem is
-            computationally demanding for 'full' PCA
+            `n_components`: if the input data is larger than 500x500 and the
+            number of components to extract is lower than 80% of the smallest
+            dimension of the data, then the more efficient 'randomized'
+            method is enabled. Otherwise the exact full SVD is computed and
+            optionally truncated afterwards.
         full :
-            run exact SVD calling ARPACK solver via
+            run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
         arpack :
             run SVD truncated to n_components calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
-            0 < n_components < X.shape[1]
+            0 < n_components < min(X.shape)
         randomized :
             run randomized SVD by the method of Halko et al.
 
@@ -172,38 +192,51 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int or RandomState instance or None (default None)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton. Used by svd_solver == 'arpack' or 'randomized'.
+    random_state : int, RandomState instance or None, optional (default None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
 
         .. versionadded:: 0.18.0
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
-        explained_variance_.
+        ``explained_variance_``.
 
-    explained_variance_ : array, [n_components]
+    explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
 
-    explained_variance_ratio_ : array, [n_components]
+        Equal to n_components largest eigenvalues
+        of the covariance matrix of X.
+
+        .. versionadded:: 0.18
+
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
         If ``n_components`` is not set then all components are stored and the
-        sum of explained variances is equal to 1.0.
+        sum of the ratios is equal to 1.0.
 
-    mean_ : array, [n_features]
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
+
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-        Equal to `X.mean(axis=1)`.
+        Equal to `X.mean(axis=0)`.
 
     n_components_ : int
         The estimated number of components. When n_components is set
         to 'mle' or a number between 0 and 1 (with svd_solver == 'full') this
         number is estimated from input data. Otherwise it equals the parameter
-        n_components, or n_features if n_components is None.
+        n_components, or the lesser value of n_features and n_samples
+        if n_components is None.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
@@ -211,6 +244,9 @@ class PCA(_BasePCA):
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
         computed the estimated data covariance and score samples.
+
+        Equal to the average of (min(n_features, n_samples) - n_components)
+        smallest eigenvalues of the covariance matrix of X.
 
     References
     ----------
@@ -242,22 +278,28 @@ class PCA(_BasePCA):
     >>> pca.fit(X)
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...  0.54980...]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='full', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...  0.54980...]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
     PCA(copy=True, iterated_power='auto', n_components=1, random_state=None,
       svd_solver='arpack', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...]
 
     See also
     --------
@@ -283,9 +325,11 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -304,6 +348,8 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
@@ -314,7 +360,7 @@ class PCA(_BasePCA):
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0])
+            U *= sqrt(X.shape[0] - 1)
         else:
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components_]
@@ -323,20 +369,30 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
-        X = check_array(X, dtype=[np.float64], ensure_2d=True,
+
+        # Raise an error for sparse input.
+        # This is more informative than the generic one raised by check_array.
+        if issparse(X):
+            raise TypeError('PCA does not support sparse input. See '
+                            'TruncatedSVD for a possible alternative.')
+
+        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
                         copy=self.copy)
 
         # Handle n_components==None
         if self.n_components is None:
-            n_components = X.shape[1]
+            if self.svd_solver != 'arpack':
+                n_components = min(X.shape)
+            else:
+                n_components = min(X.shape) - 1
         else:
             n_components = self.n_components
 
         # Handle svd_solver
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
-            # Small problem, just call full PCA
-            if max(X.shape) <= 500:
+            # Small problem or n_components == 'mle', just call full PCA
+            if max(X.shape) <= 500 or n_components == 'mle':
                 svd_solver = 'full'
             elif n_components >= 1 and n_components < .8 * min(X.shape):
                 svd_solver = 'randomized'
@@ -349,6 +405,9 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components)
         elif svd_solver in ['arpack', 'randomized']:
             return self._fit_truncated(X, n_components, svd_solver)
+        else:
+            raise ValueError("Unrecognized svd_solver='{0}'"
+                             "".format(svd_solver))
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X"""
@@ -358,10 +417,17 @@ class PCA(_BasePCA):
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
-        elif not 0 <= n_components <= n_features:
+        elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError("n_components=%r must be between 0 and "
-                             "n_features=%r with svd_solver='full'"
-                             % (n_components, n_features))
+                             "min(n_samples, n_features)=%r with "
+                             "svd_solver='full'"
+                             % (n_components, min(n_samples, n_features)))
+        elif n_components >= 1:
+            if not isinstance(n_components, (numbers.Integral, np.integer)):
+                raise ValueError("n_components=%r must be of type int "
+                                 "when greater than or equal to 1, "
+                                 "was of type=%r"
+                                 % (n_components, type(n_components)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -374,9 +440,10 @@ class PCA(_BasePCA):
         components_ = V
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / n_samples
+        explained_variance_ = (S ** 2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
+        singular_values_ = S.copy()  # Store the singular values.
 
         # Postprocess the number of components required
         if n_components == 'mle':
@@ -385,7 +452,7 @@ class PCA(_BasePCA):
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
-            ratio_cumsum = explained_variance_ratio_.cumsum()
+            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
             n_components = np.searchsorted(ratio_cumsum, n_components) + 1
 
         # Compute noise covariance using Probabilistic PCA model
@@ -401,6 +468,7 @@ class PCA(_BasePCA):
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = \
             explained_variance_ratio_[:n_components]
+        self.singular_values_ = singular_values_[:n_components]
 
         return U, S, V
 
@@ -414,14 +482,23 @@ class PCA(_BasePCA):
             raise ValueError("n_components=%r cannot be a string "
                              "with svd_solver='%s'"
                              % (n_components, svd_solver))
-        elif not 1 <= n_components <= n_features:
+        elif not 1 <= n_components <= min(n_samples, n_features):
             raise ValueError("n_components=%r must be between 1 and "
-                             "n_features=%r with svd_solver='%s'"
-                             % (n_components, n_features, svd_solver))
-        elif svd_solver == 'arpack' and n_components == n_features:
-            raise ValueError("n_components=%r must be stricly less than "
-                             "n_features=%r with svd_solver='%s'"
-                             % (n_components, n_features, svd_solver))
+                             "min(n_samples, n_features)=%r with "
+                             "svd_solver='%s'"
+                             % (n_components, min(n_samples, n_features),
+                                svd_solver))
+        elif not isinstance(n_components, (numbers.Integral, np.integer)):
+            raise ValueError("n_components=%r must be of type int "
+                             "when greater than or equal to 1, was of type=%r"
+                             % (n_components, type(n_components)))
+        elif svd_solver == 'arpack' and n_components == min(n_samples,
+                                                            n_features):
+            raise ValueError("n_components=%r must be strictly less than "
+                             "min(n_samples, n_features)=%r with "
+                             "svd_solver='%s'"
+                             % (n_components, min(n_samples, n_features),
+                                svd_solver))
 
         random_state = check_random_state(self.random_state)
 
@@ -451,13 +528,16 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / n_samples
-        total_var = np.var(X, axis=0)
+        self.explained_variance_ = (S ** 2) / (n_samples - 1)
+        total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
-        if self.n_components_ < n_features:
+        self.singular_values_ = S.copy()  # Store the singular values.
+
+        if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
+            self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.
 
@@ -472,12 +552,12 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X: array, shape(n_samples, n_features)
+        X : array, shape(n_samples, n_features)
             The data.
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'mean_')
@@ -485,7 +565,6 @@ class PCA(_BasePCA):
         X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
         precision = self.get_precision()
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
@@ -501,22 +580,32 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X: array, shape(n_samples, n_features)
+        X : array, shape(n_samples, n_features)
             The data.
+
+        y : Ignored
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
 
 
-@deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in 0.20. "
+@deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in "
+            "0.20. "
             "Use PCA(svd_solver='randomized') instead. The new implementation "
-            "DOES NOT store whiten components_. Apply transform to get them.")
+            "DOES NOT store whiten ``components_``. Apply transform to get "
+            "them.")
 class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
+
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use :class:`PCA` with parameter svd_solver 'randomized' instead.
+        The new implementation DOES NOT store whiten ``components_``.
+        Apply transform to get them.
 
     Linear dimensionality reduction using approximated Singular Value
     Decomposition of the data and keeping only the most significant
@@ -541,8 +630,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         .. versionchanged:: 0.18
 
     whiten : bool, optional
-        When True (False by default) the `components_` vectors are multiplied by
-        the square root of (n_samples) and divided by the singular values to
+        When True (False by default) the `components_` vectors are multiplied
+        by the square root of (n_samples) and divided by the singular values to
         ensure uncorrelated outputs with unit component-wise variances.
 
         Whitening will remove some information from the transformed signal
@@ -550,21 +639,28 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    random_state : int or RandomState instance or None (default)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Components with maximum variance.
 
-    explained_variance_ratio_ : array, [n_components]
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
-        k is not set then all components are stored and the sum of explained
-        variances is equal to 1.0
+        If k is not set then all components are stored and the sum of explained
+        variances is equal to 1.0.
 
-    mean_ : array, [n_features]
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
+
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
     Examples
@@ -576,8 +672,10 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=2, n_components=2,
            random_state=None, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...  0.54980...]
 
     See also
     --------
@@ -609,9 +707,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -626,7 +726,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
@@ -652,9 +752,10 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  n_iter=self.iterated_power,
                                  random_state=random_state)
 
-        self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        full_var = np.var(X, axis=0).sum()
+        self.explained_variance_ = exp_var = (S ** 2) / (n_samples - 1)
+        full_var = np.var(X, ddof=1, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
+        self.singular_values_ = S  # Store the singular values.
 
         if self.whiten:
             self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
@@ -663,7 +764,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         return X
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply dimensionality reduction on X.
 
         X is projected on the first principal components previous extracted
@@ -686,7 +787,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         if self.mean_ is not None:
             X = X - self.mean_
 
-        X = fast_dot(X, self.components_.T)
+        X = np.dot(X, self.components_.T)
         return X
 
     def fit_transform(self, X, y=None):
@@ -698,6 +799,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
@@ -705,9 +808,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         X = check_array(X)
         X = self._fit(X)
-        return fast_dot(X, self.components_.T)
+        return np.dot(X, self.components_.T)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         Returns an array X_original whose transform would be X.
@@ -729,7 +832,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mean_')
 
-        X_original = fast_dot(X, self.components_)
+        X_original = np.dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
         return X_original

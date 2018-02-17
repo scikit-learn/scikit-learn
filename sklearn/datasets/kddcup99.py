@@ -11,41 +11,48 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 import sys
 import errno
 from gzip import GzipFile
-from io import BytesIO
 import logging
 import os
 from os.path import exists, join
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 import numpy as np
 
+
+from .base import _fetch_remote
 from .base import get_data_home
-from .base import Bunch
+from .base import RemoteFileMetadata
+from ..utils import Bunch
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
+ARCHIVE = RemoteFileMetadata(
+    filename='kddcup99_data',
+    url='https://ndownloader.figshare.com/files/5976045',
+    checksum=('3b6c942aa0356c0ca35b7b595a26c89d'
+              '343652c9db428893e7494f837b274292'))
 
-URL10 = ('http://archive.ics.uci.edu/ml/'
-         'machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz')
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
+ARCHIVE_10_PERCENT = RemoteFileMetadata(
+    filename='kddcup99_10_data',
+    url='https://ndownloader.figshare.com/files/5976042',
+    checksum=('8045aca0d84e70e622d1148d7df78249'
+              '6f6333bf6eb979a1b0837c42a9fd9561'))
 
-URL = ('http://archive.ics.uci.edu/ml/'
-       'machine-learning-databases/kddcup99-mld/kddcup.data.gz')
+logger = logging.getLogger(__name__)
 
 
-logger = logging.getLogger()
-
-
-def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
+def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
+                   random_state=None,
                    percent10=True, download_if_missing=True):
     """Load and return the kddcup 99 dataset (classification).
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
     of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-    created by MIT Lincoln Lab [1] . The artificial data was generated using
+    created by MIT Lincoln Lab [1]. The artificial data was generated using
     a closed network and hand-injected attacks to produce a large number of
     different types of attack with normal activity in the background.
     As the initial goal was to produce a large training set for supervised
@@ -116,23 +123,32 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     subset : None, 'SA', 'SF', 'http', 'smtp'
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
+    data_home : string, optional
+        Specify another download and cache folder for the datasets. By default
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        .. versionadded:: 0.19
+
+    shuffle : bool, default=False
+        Whether to shuffle dataset.
+
     random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
+        Random state for shuffling the dataset. If subset='SA', this random
+        state is also used to randomly select the small proportion of abnormal
+        samples.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    shuffle : bool, default=False
-        Whether to shuffle dataset.
-
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     download_if_missing : bool, default=True
@@ -153,11 +169,16 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            Detection Evaluation Richard Lippmann, Joshua W. Haines,
            David J. Fried, Jonathan Korba, Kumar Das
 
-    .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
-           Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
-           Michael Prerau, Leonid Portnoy, Sal Stolfo
+    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+           unsupervised outlier detection using finite mixtures with
+           discounting learning algorithms. In Proceedings of the sixth
+           ACM SIGKDD international conference on Knowledge discovery
+           and data mining, pages 320-324. ACM Press, 2000.
+
     """
-    kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
+    data_home = get_data_home(data_home=data_home)
+    kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
+                                     percent10=percent10,
                                      download_if_missing=download_if_missing)
 
     data = kddcup99.data
@@ -206,40 +227,28 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
         if subset == 'SF':
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
 
+    if shuffle:
+        data, target = shuffle_method(data, target, random_state=random_state)
+
     return Bunch(data=data, target=target)
 
 
-def _fetch_brute_kddcup99(subset=None, data_home=None,
-                          download_if_missing=True, random_state=None,
-                          shuffle=False, percent10=False):
+def _fetch_brute_kddcup99(data_home=None,
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
     Parameters
     ----------
-    subset : None, 'SA', 'SF', 'http', 'smtp'
-        To return the corresponding classical subsets of kddcup 99.
-        If None, return the entire kddcup 99 dataset.
-
     data_home : string, optional
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    shuffle : bool, default=False
-        Whether to shuffle dataset.
-
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     Returns
@@ -264,20 +273,22 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     else:
         # Backward compat for Python 2 users
         dir_suffix = ""
+
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
+        archive = ARCHIVE_10_PERCENT
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
+        archive = ARCHIVE
+
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        URL_ = URL10 if percent10 else URL
-        logger.warning("Downloading %s" % URL_)
-        f = BytesIO(urlopen(URL_).read())
-
+        logger.info("Downloading %s" % archive.url)
+        _fetch_remote(archive, dirname=kddcup_dir)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -321,15 +332,18 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
         DT = np.dtype(dt)
-
-        file_ = GzipFile(fileobj=f, mode='r')
+        logger.debug("extracting archive")
+        archive_path = join(kddcup_dir, archive.filename)
+        file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
             if six.PY3:
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        print('extraction done')
+        logger.debug('extraction done')
+        os.remove(archive_path)
+
         Xy = np.asarray(Xy, dtype=object)
         for j in range(42):
             Xy[:, j] = Xy[:, j].astype(DT[j])
@@ -342,15 +356,15 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
+    elif not available:
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-
-    if shuffle:
-        X, y = shuffle_method(X, y, random_state=random_state)
 
     return Bunch(data=X, target=y, DESCR=__doc__)
 

@@ -4,17 +4,19 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
- 
 
+
+@ignore_warnings
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
@@ -30,12 +32,16 @@ def _check_statistics(X, X_true,
     err_msg = "Parameters: strategy = %s, missing_values = %s, " \
               "axis = {0}, sparse = {1}" % (strategy, missing_values)
 
+    assert_ae = assert_array_equal
+    if X.dtype.kind == 'f' or X_true.dtype.kind == 'f':
+        assert_ae = assert_array_almost_equal
+
     # Normal matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
     X_trans = imputer.fit(X).transform(X.copy())
-    assert_array_equal(imputer.statistics_, statistics,
-                       err_msg.format(0, False))
-    assert_array_equal(X_trans, X_true, err_msg.format(0, False))
+    assert_ae(imputer.statistics_, statistics,
+              err_msg=err_msg.format(0, False))
+    assert_ae(X_trans, X_true, err_msg=err_msg.format(0, False))
 
     # Normal matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
@@ -44,8 +50,8 @@ def _check_statistics(X, X_true,
         assert_raises(ValueError, imputer.transform, X.copy().transpose())
     else:
         X_trans = imputer.transform(X.copy().transpose())
-        assert_array_equal(X_trans, X_true.transpose(),
-                           err_msg.format(1, False))
+        assert_ae(X_trans, X_true.transpose(),
+                  err_msg=err_msg.format(1, False))
 
     # Sparse matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
@@ -55,9 +61,9 @@ def _check_statistics(X, X_true,
     if sparse.issparse(X_trans):
         X_trans = X_trans.toarray()
 
-    assert_array_equal(imputer.statistics_, statistics,
-                       err_msg.format(0, True))
-    assert_array_equal(X_trans, X_true, err_msg.format(0, True))
+    assert_ae(imputer.statistics_, statistics,
+              err_msg=err_msg.format(0, True))
+    assert_ae(X_trans, X_true, err_msg=err_msg.format(0, True))
 
     # Sparse matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
@@ -71,10 +77,11 @@ def _check_statistics(X, X_true,
         if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
 
-        assert_array_equal(X_trans, X_true.transpose(),
-                           err_msg.format(1, True))
+        assert_ae(X_trans, X_true.transpose(),
+                  err_msg=err_msg.format(1, True))
 
 
+@ignore_warnings
 def test_imputation_shape():
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
@@ -88,20 +95,21 @@ def test_imputation_shape():
         assert_equal(X_imputed.shape, (10, 2))
 
 
+@ignore_warnings
 def test_imputation_mean_median_only_zero():
     # Test imputation using the mean and median strategies, when
     # missing_values == 0.
     X = np.array([
-        [np.nan, 0, 0,  0,  5],
-        [np.nan, 1, 0,  np.nan,  3],
-        [np.nan, 2, 0,  0, 0],
-        [np.nan, 6, 0,  5,  13],
+        [np.nan, 0, 0, 0, 5],
+        [np.nan, 1, 0, np.nan, 3],
+        [np.nan, 2, 0, 0, 0],
+        [np.nan, 6, 0, 5, 13],
     ])
 
     X_imputed_mean = np.array([
-        [3,  5],
-        [1,  3],
-        [2,  7],
+        [3, 5],
+        [1, 3],
+        [2, 7],
         [6, 13],
     ])
     statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
@@ -134,6 +142,7 @@ def safe_mean(arr, *args, **kwargs):
     return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
 
 
+@ignore_warnings
 def test_imputation_mean_median():
     # Test imputation using the mean and median strategies, when
     # missing_values != 0.
@@ -144,7 +153,7 @@ def test_imputation_mean_median():
     shape = (dim * dim, dim + dec)
 
     zeros = np.zeros(shape[0])
-    values = np.arange(1, shape[0]+1)
+    values = np.arange(1, shape[0] + 1)
     values[4::2] = - values[4::2]
 
     tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
@@ -204,6 +213,7 @@ def test_imputation_mean_median():
                           true_statistics, test_missing_values)
 
 
+@ignore_warnings
 def test_imputation_median_special_cases():
     # Test median imputation with sparse boundary cases
     X = np.array([
@@ -233,20 +243,21 @@ def test_imputation_median_special_cases():
                       statistics_median, 'NaN')
 
 
+@ignore_warnings
 def test_imputation_most_frequent():
     # Test imputation using the most-frequent strategy.
     X = np.array([
-        [-1, -1,  0,  5],
-        [-1,  2, -1,  3],
-        [-1,  1,  3, -1],
-        [-1,  2,  3,  7],
+        [-1, -1, 0, 5],
+        [-1, 2, -1, 3],
+        [-1, 1, 3, -1],
+        [-1, 2, 3, 7],
     ])
 
     X_true = np.array([
-        [2,  0,  5],
-        [2,  3,  3],
-        [1,  3,  3],
-        [2,  3,  7],
+        [2, 0, 5],
+        [2, 3, 3],
+        [1, 3, 3],
+        [2, 3, 7],
     ])
 
     # scipy.stats.mode, used in Imputer, doesn't return the first most
@@ -256,6 +267,7 @@ def test_imputation_most_frequent():
     _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
 
 
+@ignore_warnings
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     pipeline = Pipeline([('imputer', Imputer(missing_values=0)),
@@ -273,6 +285,7 @@ def test_imputation_pipeline_grid_search():
     gs.fit(X, Y)
 
 
+@ignore_warnings
 def test_imputation_pickle():
     # Test for pickling imputers.
     import pickle
@@ -286,12 +299,15 @@ def test_imputation_pickle():
 
         imputer_pickled = pickle.loads(pickle.dumps(imputer))
 
-        assert_array_equal(imputer.transform(X.copy()),
-                           imputer_pickled.transform(X.copy()),
-                           "Fail to transform the data after pickling "
-                           "(strategy = %s)" % (strategy))
+        assert_array_almost_equal(
+            imputer.transform(X.copy()),
+            imputer_pickled.transform(X.copy()),
+            err_msg="Fail to transform the data after pickling "
+            "(strategy = %s)" % (strategy)
+        )
 
 
+@ignore_warnings
 def test_imputation_copy():
     # Test imputation with copy
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
@@ -315,7 +331,7 @@ def test_imputation_copy():
     imputer = Imputer(missing_values=0, strategy="mean", copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
-    assert_true(np.all(X == Xt))
+    assert_array_almost_equal(X, Xt)
 
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
@@ -323,7 +339,7 @@ def test_imputation_copy():
                       copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert_true(np.all(X.data == Xt.data))
+    assert_array_almost_equal(X.data, Xt.data)
 
     # copy=False, sparse csc, axis=0 => no copy
     X = X_orig.copy().tocsc()
@@ -331,7 +347,7 @@ def test_imputation_copy():
                       copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert_true(np.all(X.data == Xt.data))
+    assert_array_almost_equal(X.data, Xt.data)
 
     # copy=False, sparse csr, axis=0 => copy
     X = X_orig.copy()

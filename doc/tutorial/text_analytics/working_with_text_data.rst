@@ -251,7 +251,7 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf-idf
 
 
 Both **tf** and **tf–idf** can be computed as follows::
@@ -324,7 +324,8 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> text_clf = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
 
 
 Evaluation of the performance on the test set
@@ -351,9 +352,11 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
+  ...                                            alpha=1e-3, random_state=42,
+  ...                                            max_iter=5, tol=None)),
   ... ])
-  >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
   0.912...
@@ -458,9 +461,9 @@ mean score and the parameters setting corresponding to that score::
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-A more detailed summary of the search is available at ``gs_clf.results_``.
+A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 
-The ``results_`` parameter can be easily imported into pandas as a
+The ``cv_results_`` parameter can be easily imported into pandas as a
 ``DataFrame`` for further inspection.
 
 .. note:
@@ -492,7 +495,7 @@ Refine the implementation and iterate until the exercise is solved.
 
 **For each exercise, the skeleton file provides all the necessary import
 statements, boilerplate code to load the data and sample code to evaluate
-the predictive accurracy of the model.**
+the predictive accuracy of the model.**
 
 
 Exercise 1: Language identification
@@ -563,4 +566,3 @@ upon the completion of this tutorial:
 
 * Have a look at the :ref:`Hashing Vectorizer <hashing_vectorizer>`
   as a memory efficient alternative to :class:`CountVectorizer`.
-

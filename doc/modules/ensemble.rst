@@ -202,9 +202,9 @@ bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). Good results are often achieved when setting ``max_depth=None``
-in combination with ``min_samples_split=1`` (i.e., when fully developing the
+in combination with ``min_samples_split=2`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
-might result in models that consume a lot of ram. The best parameter values
+might result in models that consume a lot of RAM. The best parameter values
 should always be cross-validated. In addition, note that in random forests,
 bootstrap samples are used by default (``bootstrap=True``)
 while the default strategy for extra-trees is to use the whole dataset
@@ -212,6 +212,13 @@ while the default strategy for extra-trees is to use the whole dataset
 When using bootstrap sampling the generalization accuracy can be estimated
 on the left out or out-of-bag samples. This can be enabled by
 setting ``oob_score=True``.
+
+.. note::
+
+    The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
+    where :math:`M` is the number of trees and :math:`N` is the number of samples.
+    In order to reduce the size of the model, you can change these parameters:
+    ``min_samples_split``, ``min_samples_leaf``, ``max_leaf_nodes`` and ``max_depth``.
 
 Parallelization
 ---------------
@@ -239,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+ * P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 .. _random_forest_feature_importance:
@@ -591,7 +598,7 @@ minimize the loss function :math:`L` given the current model
   .. math::
 
     F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) - h(x))
+    F_{m-1}(x_i) + h(x))
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -607,7 +614,7 @@ loss function:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
+    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
 Where the step length :math:`\gamma_m` is chosen using line search:
@@ -908,10 +915,10 @@ averaged.
 
  .. _voting_classifier:
 
-VotingClassifier
+Voting Classifier
 ========================
 
-The idea behind the voting classifier implementation is to combine
+The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model

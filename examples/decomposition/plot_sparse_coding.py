@@ -44,13 +44,13 @@ def ricker_matrix(width, resolution, n_components):
 resolution = 1024
 subsampling = 3  # subsampling factor
 width = 100
-n_components = resolution / subsampling
+n_components = resolution // subsampling
 
 # Compute a wavelet dictionary
 D_fixed = ricker_matrix(width=width, resolution=resolution,
                         n_components=n_components)
 D_multi = np.r_[tuple(ricker_matrix(width=w, resolution=resolution,
-                                    n_components=np.floor(n_components / 5))
+                      n_components=n_components // 5)
                 for w in (10, 50, 100, 500, 1000))]
 
 # Generate a signal

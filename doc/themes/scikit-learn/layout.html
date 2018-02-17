@@ -12,7 +12,6 @@
     :license: BSD
 #}
 {% extends "basic/layout.html" %}
-{% set css_files = css_files + ["_static/gallery.css"] %}
 
 {% block htmltitle %}
   {{ super() }}
@@ -27,6 +26,11 @@
   {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
+  <script>
+     VERSION_SUBDIR = (function(groups) {
+         return groups ? groups[1] : null;
+     })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
+  </script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
   <script type="text/javascript">
@@ -79,17 +83,18 @@
                  <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-            <li class="link-title">Scikit-learn 0.18 (development)</li>
+            <li class="link-title">Scikit-learn <script>document.write(DOCUMENTATION_OPTIONS.VERSION + (VERSION_SUBDIR ? " (" + VERSION_SUBDIR + ")" : ""));</script></li>
             <li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
             <li><a href="{{ pathto('user_guide') }}">User guide</a></li>
             <li><a href="{{ pathto('modules/classes') }}">API</a></li>
+            <li><a href="{{ pathto('glossary') }}">Glossary</a></li>
             <li><a href="{{ pathto('faq') }}">FAQ</a></li>
             <li><a href="{{ pathto('developers/contributing') }}">Contributing</a></li>
             <li class="divider"></li>
-                <li><a href="http://scikit-learn.org/stable/documentation.html">Scikit-learn 0.17 (stable)</a></li>
-                <li><a href="http://scikit-learn.org/0.16/documentation.html">Scikit-learn 0.16</a></li>
-                <li><a href="http://scikit-learn.org/0.15/documentation.html">Scikit-learn 0.15</a></li>
-				<li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
+                <script>if (VERSION_SUBDIR != "stable") document.write('<li><a href="http://scikit-learn.org/stable/documentation.html">Stable version</a></li>')</script>
+                <script>if (VERSION_SUBDIR != "dev") document.write('<li><a href="http://scikit-learn.org/dev/documentation.html">Development version</a></li>')</script>
+                <li><a href="http://scikit-learn.org/dev/versions.html">All available versions</a></li>
+                <li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
               </ul>
             </div>
         </li>
@@ -103,7 +108,7 @@
                 </div>
             </a>
             <div class="search_form">
-                <div id="cse" style="width: 100%;"></div>
+                <div class="gcse-search" id="cse" style="width: 100%;"></div>
             </div>
         </div> <!-- end navbar -->
 
@@ -143,7 +148,7 @@
 			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{pathto('auto_examples/covariance/plot_outlier_detection.html') }}">
+		    <a href="{{pathto('auto_examples/covariance/plot_outlier_detection') }}">
 		      <img src="_images/sphx_glr_plot_outlier_detection_003_carousel.png"></a>
 		  </div>
 		  <div class="item">
@@ -204,7 +209,7 @@
 {% endblock %}
 
 {% block content %}
-<!-- Github "fork me" ribbon -->
+<!-- GitHub "fork me" ribbon -->
 <a href="https://github.com/scikit-learn/scikit-learn">
   <img class="fork-me"
        style="position: absolute; top: 0; right: 0; border: 0;"
@@ -218,7 +223,7 @@
     <div class="sphinxsidebar">
     <div class="sphinxsidebarwrapper">
 
-    {%- if rellinks[1:] %}
+    {%- if rellinks %}
 
     {%- if parents %}
         <div class="rel">
@@ -226,10 +231,7 @@
         <div class="rel rellarge">
     {% endif %}
 
-  <!-- rellinks[1:] is an ugly hack to avoid link to module
-  index -->
-
-    {%- for rellink in rellinks[1:]|reverse %}
+    {%- for rellink in rellinks|reverse %}
         <div class="rellink">
         <a href="{{ pathto(rellink[0]) }}"
         {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
@@ -276,9 +278,10 @@
     {% endif %}
 
     {%- if pagename != "install" %}
-      <p class="doc-version">This documentation is for {{project}} <strong>version {{ release|e }}</strong> &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+      <p class="doc-version"><b>{{project}} v{{ release|e }}</b><br/>
+      <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {%- endif %}
-    <p class="citing">If you use the software, please consider <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
+    <p class="citing">Please <b><a href="{{ pathto('about').replace('#', '') }}#citing-scikit-learn" style="font-size: 110%;">cite us </a></b>if you use the software.</p>
     {{ toc }}
     </div>
 </div>
@@ -327,7 +330,7 @@
     {% else %}
      <div class="rel rellarge">
     {% endif %}
-    {%- for rellink in rellinks[1:]|reverse %}
+    {%- for rellink in rellinks|reverse %}
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">{{ loop.cycle('Previous', 'Next') }}
       </a>
@@ -349,15 +352,12 @@
       })();
     </script>
     {% endif %}
-
-    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-    <script type="text/javascript"> google.load('search', '1',
-        {language : 'en'}); google.setOnLoadCallback(function() {
-            var customSearchControl = new
-            google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
-            customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-            var options = new google.search.DrawOptions();
-            options.setAutoComplete(true);
-            customSearchControl.draw('cse', options); }, true);
+    <script>
+      (function() {
+        var cx = '016639176250731907682:tjtqbvtvij0';
+        var gcse = document.createElement('script'); gcse.type = 'text/javascript'; gcse.async = true;
+        gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(gcse, s);
+      })();
     </script>
 {%- endblock %}

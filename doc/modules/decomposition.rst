@@ -98,8 +98,8 @@ number of samples to be processed in the dataset.
 
 .. _RandomizedPCA:
 
-Approximate PCA
----------------
+PCA using randomized SVD
+------------------------
 
 It is often interesting to project data to a lower-dimensional
 space that preserves most of the variance, by dropping the singular vector
@@ -116,10 +116,11 @@ dimension (say around 200 for instance). The PCA algorithm can be used
 to linearly transform the data while both reducing the dimensionality
 and preserve most of the explained variance at the same time.
 
-The class :class:`RandomizedPCA` is very useful in that case: since we
-are going to drop most of the singular vectors it is much more efficient
-to limit the computation to an approximated estimate of the singular
-vectors we will keep to actually perform the transform.
+The class :class:`PCA` used with the optional parameter
+``svd_solver='randomized'`` is very useful in that case: since we are going
+to drop most of the singular vectors it is much more efficient to limit the
+computation to an approximated estimate of the singular vectors we will keep
+to actually perform the transform.
 
 For instance, the following shows 16 sample portraits (centered around
 0.0) from the Olivetti dataset. On the right hand side are the first 16
@@ -138,28 +139,28 @@ less than 1s:
 
 .. centered:: |orig_img| |pca_img|
 
-:class:`RandomizedPCA` can hence be used as a drop in replacement for
-:class:`PCA` with the exception that we need to give it the size of
-the lower-dimensional space ``n_components`` as a mandatory input parameter.
+Note: with the optional parameter ``svd_solver='randomized'``, we also
+need to give :class:`PCA` the size of the lower-dimensional space
+``n_components`` as a mandatory input parameter.
 
-If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
-:math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
-of :class:`RandomizedPCA` is :math:`O(n_{max}^2 \cdot n_{components})`
-instead of :math:`O(n_{max}^2 \cdot n_{min})` for the exact method
+If we note :math:`n_{\max} = \max(n_{\mathrm{samples}}, n_{\mathrm{features}})` and
+:math:`n_{\min} = \min(n_{\mathrm{samples}}, n_{\mathrm{features}})`, the time complexity
+of the randomized :class:`PCA` is :math:`O(n_{\max}^2 \cdot n_{\mathrm{components}})`
+instead of :math:`O(n_{\max}^2 \cdot n_{\min})` for the exact method
 implemented in :class:`PCA`.
 
-The memory footprint of :class:`RandomizedPCA` is also proportional to
-:math:`2 \cdot n_{max} \cdot n_{components}` instead of :math:`n_{max}
-\cdot n_{min}` for the exact method.
+The memory footprint of randomized :class:`PCA` is also proportional to
+:math:`2 \cdot n_{\max} \cdot n_{\mathrm{components}}` instead of :math:`n_{\max}
+\cdot n_{\min}` for the exact method.
 
-Note: the implementation of ``inverse_transform`` in :class:`RandomizedPCA`
-is not the exact inverse transform of ``transform`` even when
-``whiten=False`` (default).
+Note: the implementation of ``inverse_transform`` in :class:`PCA` with
+``svd_solver='randomized'`` is not the exact inverse transform of
+``transform`` even when ``whiten=False`` (default).
 
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_applications_face_recognition.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
@@ -432,7 +433,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||U||_1 \\
                 \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{atoms}
+                0 \leq k < n_{\mathrm{atoms}}
 
 
 .. |pca_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
@@ -554,7 +555,7 @@ structure of the error covariance :math:`\Psi`:
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
   the probabilistic model of :class:`PCA`.
 
-* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
+* :math:`\Psi = \mathrm{diag}(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
   :class:`FactorAnalysis`, a classical statistical model. The matrix W is
   sometimes called the "factor loading matrix".
 
@@ -647,27 +648,26 @@ components with some sparsity:
 Non-negative matrix factorization (NMF or NNMF)
 ===============================================
 
-:class:`NMF` is an alternative approach to decomposition that assumes that the
+NMF with the Frobenius norm
+---------------------------
+
+:class:`NMF` [1]_ is an alternative approach to decomposition that assumes that the
 data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
-does not contain negative values.
-It finds a decomposition of samples :math:`X`
-into two matrices :math:`W` and :math:`H` of non-negative elements,
-by optimizing for the squared Frobenius norm:
+does not contain negative values. It finds a decomposition of samples
+:math:`X` into two matrices :math:`W` and :math:`H` of non-negative elements,
+by optimizing the distance :math:`d` between :math:`X` and the matrix product
+:math:`WH`. The most widely used distance function is the squared Frobenius
+norm, which is an obvious extension of the Euclidean norm to matrices:
 
 .. math::
-    \arg\min_{W,H} \frac{1}{2} ||X - WH||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {WH}_{ij})^2
-
-This norm is an obvious extension of the Euclidean norm to matrices. (Other
-optimization objectives have been suggested in the NMF literature, in
-particular Kullback-Leibler divergence, but these are not currently
-implemented.)
+    d_{\mathrm{Fro}}(X, Y) = \frac{1}{2} ||X - Y||_{\mathrm{Fro}}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
 models are efficient for representing images and text.
 
-It has been observed in [Hoyer, 04] that, when carefully constrained,
+It has been observed in [Hoyer, 2004] [2]_ that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
@@ -685,8 +685,8 @@ faces dataset, in comparison with the PCA eigenfaces.
 
 
 The :attr:`init` attribute determines the initialization method applied, which
-has a great impact on the performance of the method. :class:`NMF` implements
-the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
+has a great impact on the performance of the method. :class:`NMF` implements the
+method Nonnegative Double Singular Value Decomposition. NNDSVD [4]_ is based on
 two SVD processes, one approximating the data matrix, the other approximating
 positive sections of the resulting partial SVD factors utilizing an algebraic
 property of unit rank matrices. The basic NNDSVD algorithm is better fit for
@@ -694,6 +694,11 @@ sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to
 the mean of all elements of the data), and NNDSVDar (in which the zeros are set
 to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
+
+Note that the Multiplicative Update ('mu') solver cannot update zeros present in
+the initialization, so it leads to poorer results when used jointly with the
+basic NNDSVD algorithm which introduces a lot of zeros; in this case, NNDSVDa or
+NNDSVDar should be preferred.
 
 :class:`NMF` can also be initialized with correctly scaled random non-negative
 matrices by setting :attr:`init="random"`. An integer seed or a
@@ -709,49 +714,114 @@ and the intensity of the regularization with the :attr:`alpha`
 
 .. math::
     \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
 and the regularized objective function is:
 
 .. math::
-    \frac{1}{2}||X - WH||_{Fro}^2
+    d_{\mathrm{Fro}}(X, WH)
     + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
 :class:`NMF` regularizes both W and H. The public function
 :func:`non_negative_factorization` allows a finer control through the
 :attr:`regularization` attribute, and may regularize only W, only H, or both.
 
+NMF with a beta-divergence
+--------------------------
+
+As described previously, the most widely used distance function is the squared
+Frobenius norm, which is an obvious extension of the Euclidean norm to
+matrices:
+
+.. math::
+    d_{\mathrm{Fro}}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
+
+Other distance functions can be used in NMF as, for example, the (generalized)
+Kullback-Leibler (KL) divergence, also referred as I-divergence:
+
+.. math::
+    d_{KL}(X, Y) = \sum_{i,j} (X_{ij} \log(\frac{X_{ij}}{Y_{ij}}) - X_{ij} + Y_{ij})
+
+Or, the Itakura-Saito (IS) divergence:
+
+.. math::
+    d_{IS}(X, Y) = \sum_{i,j} (\frac{X_{ij}}{Y_{ij}} - \log(\frac{X_{ij}}{Y_{ij}}) - 1)
+
+These three distances are special cases of the beta-divergence family, with
+:math:`\beta = 2, 1, 0` respectively [6]_. The beta-divergence are
+defined by :
+
+.. math::
+    d_{\beta}(X, Y) = \sum_{i,j} \frac{1}{\beta(\beta - 1)}(X_{ij}^\beta + (\beta-1)Y_{ij}^\beta - \beta X_{ij} Y_{ij}^{\beta - 1})
+
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_beta_divergence_001.png
+    :target: ../auto_examples/decomposition/plot_beta_divergence.html
+    :align: center
+    :scale: 75%
+
+Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
+be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
+respectively.
+
+:class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
+Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
+beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
+(generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
+Itakura-Saito divergence (:math:`\beta=0`). Note that for
+:math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster than for other
+values of :math:`\beta`. Note also that with a negative (or 0, i.e.
+'itakura-saito') :math:`\beta`, the input matrix cannot contain zero values.
+
+The 'cd' solver can only optimize the Frobenius norm. Due to the
+underlying non-convexity of NMF, the different solvers may converge to
+different minima, even when optimizing the same distance function.
+
+NMF is best used with the ``fit_transform`` method, which returns the matrix W.
+The matrix H is stored into the fitted model in the ``components_`` attribute;
+the method ``transform`` will decompose a new matrix X_new based on these
+stored components::
+
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import NMF
+    >>> model = NMF(n_components=2, init='random', random_state=0)
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
+    >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
+    >>> W_new = model.transform(X_new)
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
-    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
 .. topic:: References:
 
-    * `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
+    .. [1] `"Learning the parts of objects by non-negative matrix factorization"
+      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
-    * `"Non-negative Matrix Factorization with Sparseness Constraints"
+    .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
       <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
-    * `"Projected gradient methods for non-negative matrix factorization"
-      <http://www.csie.ntu.edu.tw/~cjlin/nmf/>`_
-      C.-J. Lin, 2007
-
-    * `"SVD based initialization: A head start for nonnegative
+    .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 
-    * `"Fast local algorithms for large scale nonnegative matrix and tensor
+    .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
       A. Cichocki, P. Anh-Huy, 2009
+
+    .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
+      <https://arxiv.org/pdf/1010.1763.pdf>`_
+      C. Fevotte, J. Idier, 2011
 
 
 .. _LatentDirichletAllocation:
@@ -771,14 +841,14 @@ The graphical model of LDA is a three-level Bayesian model:
 When modeling text corpora, the model assumes the following generative process for
 a corpus with :math:`D` documents and :math:`K` topics:
 
-  1. For each topic :math:`k`, draw :math:`\beta_k \sim Dirichlet(\eta),\: k =1...K`
+  1. For each topic :math:`k`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta),\: k =1...K`
 
-  2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
+  2. For each document :math:`d`, draw :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha), \: d=1...D`
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
+    a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(beta_{z_{di}}.)`
 
 For parameter estimation, the posterior distribution is:
 
@@ -792,8 +862,8 @@ to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi
 :math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
 
 .. math::
-  log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
-    E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
+  \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
+    E_{q}[\log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[\log\:q(z, \theta, \beta)]
 
 Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
@@ -802,8 +872,7 @@ between :math:`q(z,\theta,\beta)` and the true posterior
 :class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
 both online and batch update method.
 While batch method updates variational variables after each full pass through the data,
-online method updates variational variables from mini-batch data points. Therefore,
-online method usually converges faster than batch method.
+online method updates variational variables from mini-batch data points.
 
 .. note::
 
@@ -821,16 +890,16 @@ when data can be fetched sequentially.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”
-      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
       M. Hoffman, D. Blei, F. Bach, 2010
 
     * `"Stochastic Variational Inference"

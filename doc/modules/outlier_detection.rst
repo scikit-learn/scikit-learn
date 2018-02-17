@@ -27,11 +27,36 @@ implemented with objects learning in an unsupervised way from the data::
     estimator.fit(X_train)
 
 new observations can then be sorted as inliers or outliers with a
-`predict` method::
+``predict`` method::
 
     estimator.predict(X_test)
 
-Inliers are labeled 1, while outliers are labeled -1.
+Inliers are labeled 1, while outliers are labeled -1. The predict method
+makes use of a threshold on the raw scoring function computed by the
+estimator. This scoring function is accessible through the ``score_samples``
+method, while the threshold can be controlled by the ``contamination``
+parameter.
+
+The ``decision_function`` method is also defined from the scoring function,
+in such a way that negative values are outliers and non-negative ones are
+inliers::
+
+    estimator.decision_function(X_test)
+
+Note that :class:`neighbors.LocalOutlierFactor` does not support
+``predict`` and ``decision_function`` methods, as this algorithm is
+purely transductive and is thus not designed to deal with new data.
+
+Overview of outlier detection methods
+=====================================
+
+.. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
+   :target: ../auto_examples/plot_anomaly_comparison.html
+   :align: center
+   :scale: 50
+
+   A comparison of the outlier detection algorithms in scikit-learn
+
 
 Novelty Detection
 =================
@@ -107,7 +132,7 @@ points, ignoring points outside the central mode.
 
 For instance, assuming that the inlier data are Gaussian distributed, it
 will estimate the inlier location and covariance in a robust way (i.e.
-whithout being influenced by outliers). The Mahalanobis distances
+without being influenced by outliers). The Mahalanobis distances
 obtained from this estimate is used to derive a measure of outlyingness.
 This strategy is illustrated below.
 
@@ -126,8 +151,8 @@ This strategy is illustrated below.
 
 .. topic:: References:
 
-    ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
-        covariance determinant estimator" Technometrics 41(3), 212 (1999)
+    * Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
+      covariance determinant estimator" Technometrics 41(3), 212 (1999)
 
 .. _isolation_forest:
 
@@ -145,7 +170,7 @@ number of splittings required to isolate a sample is equivalent to the path
 length from the root node to the terminating node.
 
 This path length, averaged over a forest of such random trees, is a
-measure of abnormality and our decision function.
+measure of normality and our decision function.
 
 Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
@@ -165,18 +190,76 @@ This strategy is illustrated below.
 
    * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
      comparison of :class:`ensemble.IsolationForest` with
+     :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
      method) and a covariance-based outlier detection with
-     :class:`covariance.MinCovDet`.
+     :class:`covariance.EllipticEnvelope`.
 
 .. topic:: References:
 
-    .. [LTZ2008] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-           Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+    * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
+      Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
 
-One-class SVM versus Elliptic Envelope versus Isolation Forest
---------------------------------------------------------------
+Local Outlier Factor
+--------------------
+Another efficient way to perform outlier detection on moderately high dimensional
+datasets is to use the Local Outlier Factor (LOF) algorithm.
+
+The :class:`neighbors.LocalOutlierFactor` (LOF) algorithm computes a score
+(called local outlier factor) reflecting the degree of abnormality of the
+observations.
+It measures the local density deviation of a given data point with respect to
+its neighbors. The idea is to detect the samples that have a substantially
+lower density than their neighbors.
+
+In practice the local density is obtained from the k-nearest neighbors.
+The LOF score of an observation is equal to the ratio of the
+average local density of his k-nearest neighbors, and its own local density:
+a normal instance is expected to have a local density similar to that of its
+neighbors, while abnormal data are expected to have much smaller local density.
+
+The number k of neighbors considered, (alias parameter n_neighbors) is typically
+chosen 1) greater than the minimum number of objects a cluster has to contain,
+so that other objects can be local outliers relative to this cluster, and 2)
+smaller than the maximum number of close by objects that can potentially be
+local outliers.
+In practice, such informations are generally not available, and taking
+n_neighbors=20 appears to work well in general.
+When the proportion of outliers is high (i.e. greater than 10 \%, as in the
+example below), n_neighbors should be greater (n_neighbors=35 in the example
+below).
+
+The strength of the LOF algorithm is that it takes both local and global
+properties of datasets into consideration: it can perform well even in datasets
+where abnormal samples have different underlying densities.
+The question is not, how isolated the sample is, but how isolated it is
+with respect to the surrounding neighborhood.
+
+This strategy is illustrated below.
+
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_001.png
+   :target: ../auto_examples/neighbors/plot_lof.html
+   :align: center
+   :scale: 75%
+
+.. topic:: Examples:
+
+   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof.py` for
+     an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
+     comparison with other anomaly detection methods.
+
+.. topic:: References:
+
+   *  Breunig, Kriegel, Ng, and Sander (2000)
+      `LOF: identifying density-based local outliers.
+      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      Proc. ACM SIGMOD
+
+One-class SVM versus Elliptic Envelope versus Isolation Forest versus LOF
+-------------------------------------------------------------------------
 
 Strictly-speaking, the One-class SVM is not an outlier-detection method,
 but a novelty-detection method: its training set should not be
@@ -188,7 +271,8 @@ results in these situations.
 The examples below illustrate how the performance of the
 :class:`covariance.EllipticEnvelope` degrades as the data is less and
 less unimodal. The :class:`svm.OneClassSVM` works better on data with
-multiple modes and :class:`ensemble.IsolationForest` performs well in every cases.
+multiple modes and :class:`ensemble.IsolationForest` and
+:class:`neighbors.LocalOutlierFactor` perform well in every cases.
 
 .. |outlier1| image:: ../auto_examples/covariance/images/sphx_glr_plot_outlier_detection_001.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
@@ -202,7 +286,7 @@ multiple modes and :class:`ensemble.IsolationForest` performs well in every case
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. list-table:: **Comparing One-class SVM approach, and elliptic envelope**
+.. list-table:: **Comparing One-class SVM, Isolation Forest, LOF, and Elliptic Envelope**
    :widths: 40 60
 
    *
@@ -213,16 +297,17 @@ multiple modes and :class:`ensemble.IsolationForest` performs well in every case
         opposite, the decision rule based on fitting an
         :class:`covariance.EllipticEnvelope` learns an ellipse, which
         fits well the inlier distribution. The :class:`ensemble.IsolationForest`
-	performs as well.
-      - |outlier1|
+        and :class:`neighbors.LocalOutlierFactor` perform as well.
+      - |outlier1| 
 
    *
       - As the inlier distribution becomes bimodal, the
         :class:`covariance.EllipticEnvelope` does not fit well the
-        inliers. However, we can see that both :class:`ensemble.IsolationForest`
-	and :class:`svm.OneClassSVM` have difficulties to detect the two modes,
-	and that the :class:`svm.OneClassSVM`
-        tends to overfit: because it has not model of inliers, it
+        inliers. However, we can see that :class:`ensemble.IsolationForest`,
+        :class:`svm.OneClassSVM` and :class:`neighbors.LocalOutlierFactor`
+        have difficulties to detect the two modes,
+        and that the :class:`svm.OneClassSVM`
+        tends to overfit: because it has no model of inliers, it
         interprets a region where, by chance some outliers are
         clustered, as inliers.
       - |outlier2|
@@ -230,14 +315,15 @@ multiple modes and :class:`ensemble.IsolationForest` performs well in every case
    *
       - If the inlier distribution is strongly non Gaussian, the
         :class:`svm.OneClassSVM` is able to recover a reasonable
-        approximation as well as :class:`ensemble.IsolationForest`,
-	whereas the :class:`covariance.EllipticEnvelope` completely fails.
+        approximation as well as :class:`ensemble.IsolationForest`
+        and :class:`neighbors.LocalOutlierFactor`,
+        whereas the :class:`covariance.EllipticEnvelope` completely fails.
       - |outlier3|
 
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
      comparison of the :class:`svm.OneClassSVM` (tuned to perform like
-     an outlier detection method), the :class:`ensemble.IsolationForest`
-     and a covariance-based outlier
-     detection with :class:`covariance.MinCovDet`.
+     an outlier detection method), the :class:`ensemble.IsolationForest`,
+     the :class:`neighbors.LocalOutlierFactor`
+     and a covariance-based outlier detection :class:`covariance.EllipticEnvelope`.

@@ -9,13 +9,20 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+from time import time
+
 import numpy as np
 from scipy import linalg
-from time import time
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp
+from ..utils.fixes import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -65,6 +72,9 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
         X, means, covars)
 
 
+@deprecated("The function sample_gaussian is deprecated in 0.18"
+            " and will be removed in 0.20."
+            " Use numpy.random.multivariate_normal instead.")
 def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
                     random_state=None):
     """Generate random samples from a Gaussian distribution.
@@ -74,7 +84,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     mean : array_like, shape (n_features,)
         Mean of the distribution.
 
-    covar : array_like, optional
+    covar : array_like
         Covariance of the distribution. The shape depends on `covariance_type`:
             scalar if 'spherical',
             (n_features) if 'diag',
@@ -89,9 +99,17 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
 
     Returns
     -------
-    X : array, shape (n_features, n_samples)
-        Randomly generated sample
+    X : array
+        Randomly generated sample. The shape depends on `n_samples`:
+        (n_features,) if `1`
+        (n_features, n_samples) otherwise
     """
+    return _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                            random_state=None)
+
+
+def _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None):
     rng = check_random_state(random_state)
     n_dim = len(mean)
     rand = rng.randn(n_dim, n_samples)
@@ -134,8 +152,11 @@ class _GMMBase(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    random_state: RandomState or an int seed (None by default)
-        A random number generator instance
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent
@@ -257,12 +278,6 @@ class _GMMBase(BaseEstimator):
         if n_init < 1:
             raise ValueError('GMM estimation requires at least one run')
 
-        self.weights_ = np.ones(self.n_components) / self.n_components
-
-        # flag to indicate exit status of fit() method: converged (True) or
-        # n_iter reached (False)
-        self.converged_ = False
-
     def _get_covars(self):
         """Covariance parameters for each mixture component.
 
@@ -298,7 +313,7 @@ class _GMMBase(BaseEstimator):
 
         Parameters
         ----------
-        X: array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -413,7 +428,7 @@ class _GMMBase(BaseEstimator):
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
-                X[comp_in_X] = sample_gaussian(
+                X[comp_in_X] = _sample_gaussian(
                     self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
@@ -629,7 +644,7 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        bic: float (the lower the better)
+        bic : float (the lower the better)
         """
         return (-2 * self.score(X).sum() +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -644,7 +659,7 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        aic: float (the lower the better)
+        aic : float (the lower the better)
         """
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
 
@@ -652,6 +667,15 @@ class _GMMBase(BaseEstimator):
 @deprecated("The class GMM is deprecated in 0.18 and will be "
             " removed in 0.20. Use class GaussianMixture instead.")
 class GMM(_GMMBase):
+    """
+    Legacy Gaussian Mixture Model
+
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use :class:`sklearn.mixture.GaussianMixture` instead.
+
+    """
+
     def __init__(self, n_components=1, covariance_type='diag',
                  random_state=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc',
@@ -757,7 +781,7 @@ def _validate_covars(covars, covariance_type, n_components):
                          "'spherical', 'tied', 'diag', 'full'")
 
 
-@deprecated("The functon distribute_covar_matrix_to_match_covariance_type"
+@deprecated("The function distribute_covar_matrix_to_match_covariance_type"
             "is deprecated in 0.18 and will be removed in 0.20.")
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):

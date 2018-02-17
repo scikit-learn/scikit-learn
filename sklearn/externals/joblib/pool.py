@@ -28,7 +28,7 @@ from time import sleep
 try:
     WindowsError
 except NameError:
-    WindowsError = None
+    WindowsError = type(None)
 
 from pickle import whichmodule
 try:
@@ -61,7 +61,7 @@ except ImportError:
 from .numpy_pickle import load
 from .numpy_pickle import dump
 from .hashing import hash
-
+from .backports import make_memmap
 # Some system have a ramdisk mounted by default, we can use it instead of /tmp
 # as the default folder to dump big arrays to share with subprocesses
 SYSTEM_SHARED_MEM_FS = '/dev/shm'
@@ -107,13 +107,13 @@ def _strided_from_memmap(filename, dtype, mode, offset, order, shape, strides,
 
     if strides is None:
         # Simple, contiguous memmap
-        return np.memmap(filename, dtype=dtype, shape=shape, mode=mode,
-                         offset=offset, order=order)
+        return make_memmap(filename, dtype=dtype, shape=shape, mode=mode,
+                           offset=offset, order=order)
     else:
         # For non-contiguous data, memmap the total enclosing buffer and then
         # extract the non-contiguous view with the stride-tricks API
-        base = np.memmap(filename, dtype=dtype, shape=total_buffer_len,
-                         mode=mode, offset=offset, order=order)
+        base = make_memmap(filename, dtype=dtype, shape=total_buffer_len,
+                           mode=mode, offset=offset, order=order)
         return as_strided(base, shape=shape, strides=strides)
 
 
@@ -279,7 +279,7 @@ class CustomizablePickler(Pickler):
     """
 
     # We override the pure Python pickler as its the only way to be able to
-    # customize the dispatch table without side effects in Python 2.6
+    # customize the dispatch table without side effects in Python 2.7
     # to 3.2. For Python 3.3+ leverage the new dispatch_table
     # feature from http://bugs.python.org/issue14166 that makes it possible
     # to use the C implementation of the Pickler which is faster.
@@ -539,7 +539,7 @@ class MemmapingPool(PicklingPool):
                         os.makedirs(pool_folder)
                     use_shared_mem = True
                 except IOError:
-                    # Missing rights in the the /dev/shm partition,
+                    # Missing rights in the /dev/shm partition,
                     # fallback to regular temp folder.
                     temp_folder = None
         if temp_folder is None:
@@ -605,11 +605,12 @@ class MemmapingPool(PicklingPool):
             try:
                 super(MemmapingPool, self).terminate()
                 break
-            except WindowsError as e:
-                # Workaround  occasional "[Error 5] Access is denied" issue
-                # when trying to terminate a process under windows.
-                sleep(0.1)
-                if i + 1 == n_retries:
-                    warnings.warn("Failed to terminate worker processes in "
-                                  " multiprocessing pool: %r" % e)
+            except OSError as e:
+                if isinstance(e, WindowsError):
+                    # Workaround  occasional "[Error 5] Access is denied" issue
+                    # when trying to terminate a process under windows.
+                    sleep(0.1)
+                    if i + 1 == n_retries:
+                        warnings.warn("Failed to terminate worker processes in"
+                                      " multiprocessing pool: %r" % e)
         delete_folder(self._temp_folder)

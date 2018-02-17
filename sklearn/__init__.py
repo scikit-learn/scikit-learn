@@ -15,11 +15,18 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import re
 import warnings
+import logging
+
+from ._config import get_config, set_config, config_context
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.INFO)
 
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,
-                        module='^{0}\.'.format(re.escape(__name__)))
+                        module=r'^{0}\.'.format(re.escape(__name__)))
 
 # PEP0440 compatible formatted version, see:
 # https://www.python.org/dev/peps/pep-0440/
@@ -37,7 +44,7 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.18.dev0'
+__version__ = '0.20.dev0'
 
 
 try:
@@ -50,7 +57,7 @@ except NameError:
 
 if __SKLEARN_SETUP__:
     sys.stderr.write('Partial import of sklearn during the build process.\n')
-    # We are not importing the rest of the scikit during the build
+    # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
     from . import __check_build
@@ -62,13 +69,14 @@ else:
                'ensemble', 'exceptions', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search',
                'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'lda', 'learning_curve', 'linear_model', 'manifold', 'metrics',
+               'learning_curve', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'multiclass', 'multioutput',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'qda', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis',
+               'preprocessing', 'random_projection', 'semi_supervised',
+               'svm', 'tree', 'discriminant_analysis', 'impute',
                # Non-modules:
-               'clone']
+               'clone', 'get_config', 'set_config', 'config_context']
+
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""

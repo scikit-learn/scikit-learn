@@ -4,17 +4,20 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
 
+import numpy as np
+
+from .base import make_dataset
+from .sag_fast import sag
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from ..utils.extmath import row_norms
-from .base import make_dataset
-from .sag_fast import sag
 
 
-def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
+def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
+                       n_samples=None,
+                       is_saga=False):
     """Compute automatic step size for SAG solver
 
     The step size is set to 1 / (alpha_scaled + L + fit_intercept) where L is
@@ -36,6 +39,13 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
         Specifies if a constant (a.k.a. bias or intercept) will be
         added to the decision function.
 
+    n_samples : int, optional
+        Number of rows in X. Useful if is_saga=True.
+
+    is_saga : boolean, optional
+        Whether to return step size for the SAGA algorithm or the SAG
+        algorithm.
+
     Returns
     -------
     step_size : float
@@ -45,24 +55,39 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
     ----------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
+
+    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives
+    https://arxiv.org/abs/1407.0202
     """
     if loss in ('log', 'multinomial'):
-        # inverse Lipschitz constant for log loss
-        return 4.0 / (max_squared_sum + int(fit_intercept)
-                      + 4.0 * alpha_scaled)
+        L = (0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled)
     elif loss == 'squared':
         # inverse Lipschitz constant for squared loss
-        return 1.0 / (max_squared_sum + int(fit_intercept) + alpha_scaled)
+        L = max_squared_sum + int(fit_intercept) + alpha_scaled
     else:
         raise ValueError("Unknown loss function for SAG solver, got %s "
                          "instead of 'log' or 'squared'" % loss)
+    if is_saga:
+        # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
+        # See Defazio et al. 2014
+        mun = min(2 * n_samples * alpha_scaled, L)
+        step = 1. / (2 * L + mun)
+    else:
+        # SAG theoretical step size is 1/16L but it is recommended to use 1 / L
+        # see http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf,
+        # slide 65
+        step = 1. / L
+    return step
 
 
-def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
+def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                max_iter=1000, tol=0.001, verbose=0, random_state=None,
                check_input=True, max_squared_sum=None,
-               warm_start_mem=None):
+               warm_start_mem=None,
+               is_saga=False):
     """SAG solver for Ridge and LogisticRegression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -106,22 +131,31 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
            *loss='multinomial'*
 
     alpha : float, optional
-        Constant that multiplies the regularization term. Defaults to 1.
+        L2 regularization term in the objective function
+        ``(0.5 * alpha * || W ||_F^2)``. Defaults to 1.
 
-    max_iter: int, optional
+    beta : float, optional
+        L1 regularization term in the objective function
+        ``(beta * || W ||_1)``. Only applied if ``is_saga`` is set to True.
+        Defaults to 0.
+
+    max_iter : int, optional
         The max number of passes over the training data if the stopping
         criteria is not reached. Defaults to 1000.
 
-    tol: double, optional
+    tol : double, optional
         The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -131,7 +165,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
-    warm_start_mem: dict, optional
+    warm_start_mem : dict, optional
         The initialization parameters used for warm starting. Warm starting is
         currently used in LogisticRegression but not in Ridge.
         It contains:
@@ -144,6 +178,10 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
                 samples, for the intercept.
             - 'seen': array of boolean describing the seen samples.
             - 'num_seen': the number of seen samples.
+
+    is_saga : boolean, optional
+        Whether to use the SAGA algorithm or the SAG algorithm. SAGA behaves
+        better in the first epochs, and allow for l1 regularisation.
 
     Returns
     -------
@@ -186,7 +224,12 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     ----------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
+
+    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives
+    https://arxiv.org/abs/1407.0202
 
     See also
     --------
@@ -206,6 +249,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     n_samples, n_features = X.shape[0], X.shape[1]
     # As in SGD, the alpha is scaled by n_samples.
     alpha_scaled = float(alpha) / n_samples
+    beta_scaled = float(beta) / n_samples
 
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == 'multinomial' else 1
@@ -261,8 +305,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     if max_squared_sum is None:
         max_squared_sum = row_norms(X, squared=True).max()
     step_size = get_auto_step_size(max_squared_sum, alpha_scaled, loss,
-                                   fit_intercept)
-
+                                   fit_intercept, n_samples=n_samples,
+                                   is_saga=is_saga)
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha_scaled == 1")
@@ -273,6 +317,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
                             max_iter,
                             loss,
                             step_size, alpha_scaled,
+                            beta_scaled,
                             sum_gradient_init,
                             gradient_memory_init,
                             seen_init,
@@ -280,6 +325,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
                             fit_intercept,
                             intercept_sum_gradient,
                             intercept_decay,
+                            is_saga,
                             verbose)
     if n_iter_ == max_iter:
         warnings.warn("The max_iter was reached which means "

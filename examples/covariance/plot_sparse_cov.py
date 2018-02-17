@@ -59,7 +59,7 @@ from sklearn.datasets import make_sparse_spd_matrix
 from sklearn.covariance import GraphLassoCV, ledoit_wolf
 import matplotlib.pyplot as plt
 
-##############################################################################
+# #############################################################################
 # Generate the data
 n_samples = 60
 n_features = 20
@@ -79,7 +79,7 @@ X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
 X -= X.mean(axis=0)
 X /= X.std(axis=0)
 
-##############################################################################
+# #############################################################################
 # Estimate the covariance
 emp_cov = np.dot(X.T, X) / n_samples
 
@@ -91,7 +91,7 @@ prec_ = model.precision_
 lw_cov_, _ = ledoit_wolf(X)
 lw_prec_ = linalg.inv(lw_cov_)
 
-##############################################################################
+# #############################################################################
 # Plot the results
 plt.figure(figsize=(10, 6))
 plt.subplots_adjust(left=0.02, right=0.98)
@@ -126,7 +126,7 @@ for i, (name, this_prec) in enumerate(precs):
 # plot the model selection metric
 plt.figure(figsize=(4, 3))
 plt.axes([.2, .15, .75, .7])
-plt.plot(model.cv_alphas_, np.mean(model.grid_scores, axis=1), 'o-')
+plt.plot(model.cv_alphas_, np.mean(model.grid_scores_, axis=1), 'o-')
 plt.axvline(model.alpha_, color='.5')
 plt.title('Model selection')
 plt.ylabel('Cross-validation score')

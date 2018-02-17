@@ -12,10 +12,13 @@ from scipy.sparse import coo_matrix
 
 from sklearn import datasets
 from sklearn.base import clone
+from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
+from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -24,8 +27,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
@@ -76,9 +81,8 @@ def test_classification_toy():
         yield check_classification_toy, presort, loss
 
 
-def test_parameter_checks():
-    # Check input parameter validation.
-
+def test_classifier_parameter_checks():
+    # Check input parameter validation for GradientBoostingClassifier.
     assert_raises(ValueError,
                   GradientBoostingClassifier(n_estimators=0).fit, X, y)
     assert_raises(ValueError,
@@ -135,6 +139,38 @@ def test_parameter_checks():
                   lambda X, y: GradientBoostingClassifier(
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
+
+    allowed_presort = ('auto', True, False)
+    assert_raise_message(ValueError,
+                         "'presort' should be in {}. "
+                         "Got 'invalid' instead.".format(allowed_presort),
+                         GradientBoostingClassifier(presort='invalid')
+                         .fit, X, y)
+
+
+def test_regressor_parameter_checks():
+    # Check input parameter validation for GradientBoostingRegressor
+    assert_raise_message(ValueError, "alpha must be in (0.0, 1.0) but was 1.2",
+                         GradientBoostingRegressor(loss='huber', alpha=1.2)
+                         .fit, X, y)
+    assert_raise_message(ValueError, "alpha must be in (0.0, 1.0) but was 1.2",
+                         GradientBoostingRegressor(loss='quantile', alpha=1.2)
+                         .fit, X, y)
+    assert_raise_message(ValueError, "Invalid value for max_features: "
+                         "'invalid'. Allowed string values are 'auto', 'sqrt'"
+                         " or 'log2'.",
+                         GradientBoostingRegressor(max_features='invalid').fit,
+                         X, y)
+    assert_raise_message(ValueError, "n_iter_no_change should either be None"
+                         " or an integer. 'invalid' was passed",
+                         GradientBoostingRegressor(n_iter_no_change='invalid')
+                         .fit, X, y)
+    allowed_presort = ('auto', True, False)
+    assert_raise_message(ValueError,
+                         "'presort' should be in {}. "
+                         "Got 'invalid' instead.".format(allowed_presort),
+                         GradientBoostingRegressor(presort='invalid')
+                         .fit, X, y)
 
 
 def test_loss_function():
@@ -299,15 +335,6 @@ def test_feature_importances():
         clf.fit(X, y)
         assert_true(hasattr(clf, 'feature_importances_'))
 
-        # XXX: Remove this test in 0.19 after transform support to estimators
-        # is removed.
-        X_new = assert_warns(
-            DeprecationWarning, clf.transform, X, threshold="mean")
-        assert_less(X_new.shape[1], X.shape[1])
-        feature_mask = (
-            clf.feature_importances_ > clf.feature_importances_.mean())
-        assert_array_almost_equal(X_new, X[:, feature_mask])
-
 
 def test_probability_log():
     # Predict probabilities.
@@ -337,6 +364,12 @@ def test_check_inputs():
     assert_raises(ValueError, clf.fit, X, y,
                   sample_weight=([1] * len(y)) + [0, 1])
 
+    weight = [0, 0, 0, 1, 1, 1]
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    msg = ("y contains 1 class after sample_weight trimmed classes with "
+           "zero weights, while a minimum of 2 classes are required.")
+    assert_raise_message(ValueError, msg, clf.fit, X, y, sample_weight=weight)
+
 
 def test_check_inputs_predict():
     # X has wrong shape
@@ -363,6 +396,25 @@ def test_check_inputs_predict():
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
+
+
+def test_check_inputs_predict_stages():
+    # check that predict_stages through an error if the type of X is not
+    # supported
+    x, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    x_sparse_csc = csc_matrix(x)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(x, y)
+    score = np.zeros((y.shape)).reshape(-1, 1)
+    assert_raise_message(ValueError,
+                         "When X is a sparse matrix, a CSR format is expected",
+                         predict_stages, clf.estimators_, x_sparse_csc,
+                         clf.learning_rate, score)
+    x_fortran = np.asfortranarray(x)
+    assert_raise_message(ValueError,
+                         "X should be C-ordered np.ndarray",
+                         predict_stages, clf.estimators_, x_fortran,
+                         clf.learning_rate, score)
 
 
 def test_check_max_features():
@@ -448,7 +500,7 @@ def test_staged_predict():
     for y in clf.staged_predict(X_test):
         assert_equal(y.shape, y_pred.shape)
 
-    assert_array_equal(y_pred, y)
+    assert_array_almost_equal(y_pred, y)
 
 
 def test_staged_predict_proba():
@@ -476,7 +528,7 @@ def test_staged_predict_proba():
         assert_equal(y_test.shape[0], staged_proba.shape[0])
         assert_equal(2, staged_proba.shape[1])
 
-    assert_array_equal(clf.predict_proba(X_test), staged_proba)
+    assert_array_almost_equal(clf.predict_proba(X_test), staged_proba)
 
 
 def test_staged_functions_defensive():
@@ -713,7 +765,14 @@ def test_warm_start():
         est_ws.set_params(n_estimators=200)
         est_ws.fit(X, y)
 
-        assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        if Cls is GradientBoostingRegressor:
+            assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        else:
+            # Random state is preserved and hence predict_proba must also be
+            # same
+            assert_array_equal(est_ws.predict(X), est.predict(X))
+            assert_array_almost_equal(est_ws.predict_proba(X),
+                                      est.predict_proba(X))
 
 
 def test_warm_start_n_estimators():
@@ -826,6 +885,56 @@ def test_warm_start_oob():
 
         assert_array_almost_equal(est_ws.oob_improvement_[:100],
                                   est.oob_improvement_[:100])
+
+
+def test_warm_start_sparse():
+    # Test that all sparse matrix types are supported
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    sparse_matrix_type = [csr_matrix, csc_matrix, coo_matrix]
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est_dense = Cls(n_estimators=100, max_depth=1, subsample=0.5,
+                        random_state=1, warm_start=True)
+        est_dense.fit(X, y)
+        est_dense.predict(X)
+        est_dense.set_params(n_estimators=200)
+        est_dense.fit(X, y)
+        y_pred_dense = est_dense.predict(X)
+
+        for sparse_constructor in sparse_matrix_type:
+            X_sparse = sparse_constructor(X)
+
+            est_sparse = Cls(n_estimators=100, max_depth=1, subsample=0.5,
+                             random_state=1, warm_start=True)
+            est_sparse.fit(X_sparse, y)
+            est_sparse.predict(X)
+            est_sparse.set_params(n_estimators=200)
+            est_sparse.fit(X_sparse, y)
+            y_pred_sparse = est_sparse.predict(X)
+
+            assert_array_almost_equal(est_dense.oob_improvement_[:100],
+                                      est_sparse.oob_improvement_[:100])
+            assert_array_almost_equal(y_pred_dense, y_pred_sparse)
+
+
+def test_warm_start_fortran():
+    # Test that feeding a X in Fortran-ordered is giving the same results as
+    # in C-ordered
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est_c = Cls(n_estimators=1, random_state=1, warm_start=True)
+        est_fortran = Cls(n_estimators=1, random_state=1, warm_start=True)
+
+        est_c.fit(X, y)
+        est_c.set_params(n_estimators=11)
+        est_c.fit(X, y)
+
+        X_fortran = np.asfortranarray(X)
+        est_fortran.fit(X_fortran, y)
+        est_fortran.set_params(n_estimators=11)
+        est_fortran.fit(X_fortran, y)
+
+        assert_array_almost_equal(est_c.predict(X),
+                                  est_fortran.predict(X))
 
 
 def early_stopping_monitor(i, est, locals):
@@ -970,6 +1079,33 @@ def test_max_leaf_nodes_max_depth():
         assert_equal(tree.max_depth, 1)
 
 
+def test_min_impurity_split():
+    # Test if min_impurity_split of base estimators is set
+    # Regression test for #8006
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor, GradientBoostingClassifier]
+
+    for GBEstimator in all_estimators:
+        est = GBEstimator(min_impurity_split=0.1)
+        est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+                                   est.fit, X, y)
+        for tree in est.estimators_.flat:
+            assert_equal(tree.min_impurity_split, 0.1)
+
+
+def test_min_impurity_decrease():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor, GradientBoostingClassifier]
+
+    for GBEstimator in all_estimators:
+        est = GBEstimator(min_impurity_decrease=0.1)
+        est.fit(X, y)
+        for tree in est.estimators_.flat:
+            # Simply check if the parameter is passed on correctly. Tree tests
+            # will suffice for the actual working of this param
+            assert_equal(tree.min_impurity_decrease, 0.1)
+
+
 def test_warm_start_wo_nestimators_change():
     # Test if warm_start does nothing if n_estimators is not changed.
     # Regression test for #3513.
@@ -1027,7 +1163,7 @@ def test_non_uniform_weights_toy_edge_case_clf():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     for loss in ('deviance', 'exponential'):
-        gb = GradientBoostingClassifier(n_estimators=5)
+        gb = GradientBoostingClassifier(n_estimators=5, loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
@@ -1050,6 +1186,9 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
     assert_array_almost_equal(sparse.feature_importances_,
                               auto.feature_importances_)
 
+    assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
+    assert_array_almost_equal(dense.predict(X_sparse), sparse.predict(X))
+
     if isinstance(EstimatorClass, GradientBoostingClassifier):
         assert_array_almost_equal(sparse.predict_proba(X),
                                   dense.predict_proba(X))
@@ -1060,6 +1199,15 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                                   auto.predict_proba(X))
         assert_array_almost_equal(sparse.predict_log_proba(X),
                                   auto.predict_log_proba(X))
+
+        assert_array_almost_equal(sparse.decision_function(X_sparse),
+                                  sparse.decision_function(X))
+        assert_array_almost_equal(dense.decision_function(X_sparse),
+                                  sparse.decision_function(X))
+
+        assert_array_almost_equal(
+            np.array(sparse.staged_decision_function(X_sparse)),
+            np.array(sparse.staged_decision_function(X)))
 
 
 @skip_if_32bit
@@ -1075,3 +1223,74 @@ def test_sparse_input():
 
     for EstimatorClass, sparse_matrix in product(ests, sparse_matrices):
         yield check_sparse_input, EstimatorClass, X, sparse_matrix(X), y
+
+
+def test_gradient_boosting_early_stopping():
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    gbc = GradientBoostingClassifier(n_estimators=1000,
+                                     n_iter_no_change=10,
+                                     learning_rate=0.1, max_depth=3,
+                                     random_state=42)
+
+    gbr = GradientBoostingRegressor(n_estimators=1000, n_iter_no_change=10,
+                                    learning_rate=0.1, max_depth=3,
+                                    random_state=42)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=42)
+    # Check if early_stopping works as expected
+    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 24), (gbr, 1e-1, 13),
+                                              (gbc, 1e-3, 36),
+                                              (gbr, 1e-3, 28)):
+        est.set_params(tol=tol)
+        est.fit(X_train, y_train)
+        assert_equal(est.n_estimators_, early_stop_n_estimators)
+        assert est.score(X_test, y_test) > 0.7
+
+    # Without early stopping
+    gbc = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
+                                     max_depth=3, random_state=42)
+    gbc.fit(X, y)
+    gbr = GradientBoostingRegressor(n_estimators=200, learning_rate=0.1,
+                                    max_depth=3, random_state=42)
+    gbr.fit(X, y)
+
+    assert gbc.n_estimators_ == 100
+    assert gbr.n_estimators_ == 200
+
+
+def test_gradient_boosting_validation_fraction():
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    gbc = GradientBoostingClassifier(n_estimators=100,
+                                     n_iter_no_change=10,
+                                     validation_fraction=0.1,
+                                     learning_rate=0.1, max_depth=3,
+                                     random_state=42)
+    gbc2 = clone(gbc).set_params(validation_fraction=0.3)
+    gbc3 = clone(gbc).set_params(n_iter_no_change=20)
+
+    gbr = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=10,
+                                    learning_rate=0.1, max_depth=3,
+                                    validation_fraction=0.1,
+                                    random_state=42)
+    gbr2 = clone(gbr).set_params(validation_fraction=0.3)
+    gbr3 = clone(gbr).set_params(n_iter_no_change=20)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    # Check if validation_fraction has an effect
+    gbc.fit(X_train, y_train)
+    gbc2.fit(X_train, y_train)
+    assert gbc.n_estimators_ != gbc2.n_estimators_
+
+    gbr.fit(X_train, y_train)
+    gbr2.fit(X_train, y_train)
+    assert gbr.n_estimators_ != gbr2.n_estimators_
+
+    # Check if n_estimators_ increase monotonically with n_iter_no_change
+    # Set validation
+    gbc3.fit(X_train, y_train)
+    gbr3.fit(X_train, y_train)
+    assert gbr.n_estimators_ < gbr3.n_estimators_
+    assert gbc.n_estimators_ < gbc3.n_estimators_

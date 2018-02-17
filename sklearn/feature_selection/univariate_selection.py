@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
-from ..utils.extmath import norm, safe_sparse_dot, row_norms
+from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
@@ -230,17 +230,18 @@ def chi2(X, y):
 def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
-    Quick linear model for testing the effect of a single regressor,
-    sequentially for many regressors.
+    Linear model for testing the individual effect of each of many regressors.
+    This is a scoring function to be used in a feature seletion procedure, not
+    a free standing feature selection procedure.
 
     This is done in 2 steps:
 
-    1. The cross correlation between each regressor and the target is computed,
+    1. The correlation between each regressor and the target is computed,
        that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
        std(y)).
     2. It is converted to an F score then to a p-value.
 
-    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+    For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -261,23 +262,41 @@ def f_regression(X, y, center=True):
     pval : array, shape=(n_features,)
         p-values of F-scores.
 
+
     See also
     --------
+    mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     """
-    if issparse(X) and center:
-        raise ValueError("center=True only allowed for dense data")
     X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
+    n_samples = X.shape[0]
+
+    # compute centered values
+    # note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
+    # need not center X
     if center:
         y = y - np.mean(y)
-        X = X.copy('F')  # faster in fortran
-        X -= X.mean(axis=0)
+        if issparse(X):
+            X_means = X.mean(axis=0).getA1()
+        else:
+            X_means = X.mean(axis=0)
+        # compute the scaled standard deviations via moments
+        X_norms = np.sqrt(row_norms(X.T, squared=True) -
+                          n_samples * X_means ** 2)
+    else:
+        X_norms = row_norms(X.T)
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
-    corr /= row_norms(X.T)
-    corr /= norm(y)
+    corr /= X_norms
+    corr /= np.linalg.norm(y)
 
     # convert to p-value
     degrees_of_freedom = y.size - (2 if center else 1)
@@ -317,9 +336,8 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -455,7 +473,7 @@ class SelectKBest(_BaseFilter):
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a continious target.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -469,9 +487,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
-            raise ValueError("k should be >=0, <= n_features; got %r."
+            raise ValueError("k should be >=0, <= n_features = %d; got %r. "
                              "Use k='all' to return all features."
-                             % self.k)
+                             % (X.shape[1], self.k))
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
@@ -596,8 +614,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()

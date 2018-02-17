@@ -9,15 +9,14 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..multiclass import _ovr_decision_function
+from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
-from ..utils import compute_class_weight, deprecated
+from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
-from ..exceptions import ChangedBehaviorWarning
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -72,20 +71,19 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
-    def __init__(self, impl, kernel, degree, gamma, coef0,
+    def __init__(self, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if impl not in LIBSVM_IMPL:  # pragma: no cover
+        if self._impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
-                LIBSVM_IMPL, impl))
+                LIBSVM_IMPL, self._impl))
 
         if gamma == 0:
             msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
                    " gamma to a value of 1 / n_features.")
             raise ValueError(msg)
 
-        self._impl = impl
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -105,8 +103,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @property
     def _pairwise(self):
         # Used by cross_val_score.
-        kernel = self.kernel
-        return kernel == "precomputed" or callable(kernel)
+        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -130,7 +127,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         ------
@@ -232,15 +228,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         libsvm.set_verbosity_wrap(self.verbose)
 
-        if six.PY2:
-            # In python2 ensure kernel is ascii bytes to prevent a TypeError
-            if isinstance(kernel, six.types.UnicodeType):
-                kernel = str(kernel)
-        if six.PY3:
-            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
-            if isinstance(kernel, bytes):
-                kernel = str(kernel, 'utf8')
-
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
@@ -295,7 +282,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     def predict(self, X):
         """Perform regression on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For an one-class model, +1 (inlier) or -1 (outlier) is returned.
 
         Parameters
         ----------
@@ -367,24 +354,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 kernel = kernel.toarray()
             X = np.asarray(kernel, dtype=np.float64, order='C')
         return X
-
-    @deprecated(" and will be removed in 0.19")
-    def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train].
-
-        Returns
-        -------
-        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
-            Returns the decision function of the sample for each class
-            in the model.
-        """
-        return self._decision_function(X)
 
     def _decision_function(self, X):
         """Distance of the samples X to the separating hyperplane.
@@ -482,8 +451,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise ValueError('coef_ is only available when using a '
-                             'linear kernel')
+            raise AttributeError('coef_ is only available when using a '
+                                 'linear kernel')
 
         coef = self._get_coef()
 
@@ -504,13 +473,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
-    def __init__(self, impl, kernel, degree, gamma, coef0, tol, C, nu,
+    def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
                  max_iter, decision_function_shape, random_state):
         self.decision_function_shape = decision_function_shape
         super(BaseSVC, self).__init__(
-            impl=impl, kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
-            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
+            kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             random_state=random_state)
@@ -523,7 +492,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                % len(cls))
+                " class" % len(cls))
 
         self.classes_ = cls
 
@@ -545,13 +514,8 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             n_classes)
         """
         dec = self._decision_function(X)
-        if self.decision_function_shape is None and len(self.classes_) > 2:
-            warnings.warn("The decision_function_shape default value will "
-                          "change from 'ovo' to 'ovr' in 0.19. This will change "
-                          "the shape of the decision function returned by "
-                          "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
-            return _ovr_decision_function(dec < 0, dec, len(self.classes_))
+            return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec
 
     def predict(self, X):
@@ -829,9 +793,12 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     multi_class : str, {'ovr', 'crammer_singer'}
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
@@ -851,7 +818,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight: array-like, optional
+    sample_weight : array-like, optional
         Weights assigned to each sample.
 
     Returns

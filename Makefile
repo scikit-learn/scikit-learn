@@ -4,16 +4,11 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-NOSETESTS ?= nosetests
+PYTEST ?= pytest
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
-
-ifeq ($(BITS),32)
-  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
-endif
-
 
 all: clean inplace test
 
@@ -26,25 +21,20 @@ clean: clean-ctags
 
 in: inplace # just a shortcut
 inplace:
-	# to avoid errors in 0.15 upgrade
-	rm -f sklearn/utils/sparsefuncs*.so
-	rm -f sklearn/utils/random*.so
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(NOSETESTS) -s -v sklearn
+	$(PYTEST) --showlocals -v sklearn
 test-sphinxext:
-	$(NOSETESTS) -s -v doc/sphinxext/
+	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
-	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
-	doc/tutorial/text_analytics
+	$(PYTEST) $(shell find doc -name '*.rst' | sort)
 endif
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(NOSETESTS) -s -v --with-coverage sklearn
+	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
@@ -52,7 +42,7 @@ trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	python build_tools/cythonize.py sklearn
+	python setup.py build_src
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim

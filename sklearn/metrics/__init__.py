@@ -14,6 +14,7 @@ from .ranking import roc_auc_score
 from .ranking import roc_curve
 
 from .classification import accuracy_score
+from .classification import balanced_accuracy_score
 from .classification import classification_report
 from .classification import cohen_kappa_score
 from .classification import confusion_matrix
@@ -54,9 +55,11 @@ from .pairwise import pairwise_kernels
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
+from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
 
+from .scorer import check_scoring
 from .scorer import make_scorer
 from .scorer import SCORERS
 from .scorer import get_scorer
@@ -67,8 +70,12 @@ __all__ = [
     'adjusted_rand_score',
     'auc',
     'average_precision_score',
+    'balanced_accuracy_score',
+    'calinski_harabaz_score',
+    'check_scoring',
     'classification_report',
     'cluster',
+    'cohen_kappa_score',
     'completeness_score',
     'confusion_matrix',
     'consensus_score',
@@ -77,6 +84,7 @@ __all__ = [
     'explained_variance_score',
     'f1_score',
     'fbeta_score',
+    'fowlkes_mallows_score',
     'get_scorer',
     'hamming_loss',
     'hinge_loss',
@@ -90,6 +98,7 @@ __all__ = [
     'matthews_corrcoef',
     'mean_absolute_error',
     'mean_squared_error',
+    'mean_squared_log_error',
     'median_absolute_error',
     'mutual_info_score',
     'normalized_mutual_info_score',

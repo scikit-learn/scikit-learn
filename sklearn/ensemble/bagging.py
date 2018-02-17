@@ -20,8 +20,7 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
-from ..utils import indices_to_mask
-from ..utils.fixes import bincount
+from ..utils import indices_to_mask, check_consistent_length
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 
@@ -82,16 +81,12 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     for i in range(n_estimators):
         if verbose > 1:
-            print("Building estimator %d of %d for this parallel run (total %d)..." %
-                  (i + 1, n_estimators, total_n_estimators))
+            print("Building estimator %d of %d for this parallel run "
+                  "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
 
         random_state = np.random.RandomState(seeds[i])
-        estimator = ensemble._make_estimator(append=False)
-
-        try:  # Not all estimators accept a random_state
-            estimator.set_params(random_state=seeds[i])
-        except ValueError:
-            pass
+        estimator = ensemble._make_estimator(append=False,
+                                             random_state=random_state)
 
         # Draw random feature, sample indices
         features, indices = _generate_bagging_indices(random_state,
@@ -108,7 +103,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight = sample_weight.copy()
 
             if bootstrap:
-                sample_counts = bincount(indices, minlength=n_samples)
+                sample_counts = np.bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
             else:
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
@@ -247,7 +242,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -280,12 +274,14 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         random_state = check_random_state(self.random_state)
 
         # Convert data
         X, y = check_X_y(X, y, ['csr', 'csc'])
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            check_consistent_length(y, sample_weight)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -334,7 +330,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if hasattr(self, "oob_score_") and self.warm_start:
             del self.oob_score_
 
-        if not self.warm_start or len(self.estimators_) == 0:
+        if not self.warm_start or not hasattr(self, 'estimators_'):
             # Free allocated memory, if any
             self.estimators_ = []
             self.estimators_features_ = []
@@ -413,7 +409,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of boolean masks identifying
-        the samples used for for fitting each member of the ensemble, i.e.,
+        the samples used for fitting each member of the ensemble, i.e.,
         the in-bag samples.
 
         Note: the list is re-created at each call to the property in order
@@ -461,13 +457,15 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
@@ -610,8 +608,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         oob_decision_function = (predictions /
                                  predictions.sum(axis=1)[:, np.newaxis])
-        oob_score = accuracy_score(y, classes_.take(np.argmax(predictions,
-                                                              axis=1)))
+        oob_score = accuracy_score(y, np.argmax(predictions, axis=1))
 
         self.oob_decision_function_ = oob_decision_function
         self.oob_score_ = oob_score
@@ -776,8 +773,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {1} and "
-                             "input n_features is {2} "
+                             "match the input. Model n_features is {0} and "
+                             "input n_features is {1} "
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
@@ -830,13 +827,15 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.

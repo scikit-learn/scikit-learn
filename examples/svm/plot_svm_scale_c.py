@@ -106,8 +106,8 @@ X_1, y_1 = datasets.make_classification(n_samples=n_samples,
 
 # l2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
-X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
-X_2 += 5 * rnd.randn(n_samples, n_features / 5)
+X_2 = rnd.randn(n_samples, n_features // 5) + y_2[:, np.newaxis]
+X_2 += 5 * rnd.randn(n_samples, n_features // 5)
 
 clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-3),
@@ -131,7 +131,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
                             cv=ShuffleSplit(train_size=train_size,
                                             n_splits=250, random_state=1))
         grid.fit(X, y)
-        scores = grid.results_['test_mean_score']
+        scores = grid.cv_results_['mean_test_score']
 
         scales = [(1, 'No scaling'),
                   ((n_samples * train_size), '1/n_samples'),

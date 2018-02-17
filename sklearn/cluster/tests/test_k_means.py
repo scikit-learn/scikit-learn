@@ -15,9 +15,10 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
-
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
@@ -27,7 +28,6 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -169,7 +169,8 @@ def _check_fitted_model(km):
     assert_greater(km.inertia_, 0.0)
 
     # check error on dataset being too small
-    assert_raises(ValueError, km.fit, [[0., 1.]])
+    assert_raise_message(ValueError, "n_samples=1 should be >= n_clusters=%d"
+                         % km.n_clusters, km.fit, [[0., 1.]])
 
 
 def test_k_means_plus_plus_init():
@@ -301,7 +302,7 @@ def test_k_means_fortran_aligned_data():
     km = KMeans(n_init=1, init=centers, precompute_distances=False,
                 random_state=42, n_clusters=2)
     km.fit(X)
-    assert_array_equal(km.cluster_centers_, centers)
+    assert_array_almost_equal(km.cluster_centers_, centers)
     assert_array_equal(km.labels_, labels)
 
 
@@ -404,7 +405,7 @@ def test_minibatch_sensible_reassign_partial_fit():
 def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
-    # should not longer be good
+    # should no longer be good
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)
@@ -661,7 +662,7 @@ def test_int_input():
         expected_labels = [0, 1, 1, 0, 0, 1]
         scores = np.array([v_measure_score(expected_labels, km.labels_)
                            for km in fitted_models])
-        assert_array_equal(scores, np.ones(scores.shape[0]))
+        assert_array_almost_equal(scores, np.ones(scores.shape[0]))
 
 
 def test_transform():
@@ -679,7 +680,7 @@ def test_transform():
 def test_fit_transform():
     X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
     X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
-    assert_array_equal(X1, X2)
+    assert_array_almost_equal(X1, X2)
 
 
 def test_predict_equal_labels():
@@ -750,6 +751,11 @@ def test_k_means_function():
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)
 
+    # kmeans for algorithm='elkan' raises TypeError on sparse matrix
+    assert_raise_message(TypeError, "algorithm='elkan' not supported for "
+                         "sparse input X", k_means, X=X_csr, n_clusters=2,
+                         algorithm="elkan")
+
 
 def test_x_squared_norms_init_centroids():
     """Test that x_squared_norms can be None in _init_centroids"""
@@ -758,7 +764,7 @@ def test_x_squared_norms_init_centroids():
     X_norms = np.sum(X**2, axis=1)
     precompute = _init_centroids(
         X, 3, "k-means++", random_state=0, x_squared_norms=X_norms)
-    assert_array_equal(
+    assert_array_almost_equal(
         precompute,
         _init_centroids(X, 3, "k-means++", random_state=0))
 
@@ -812,7 +818,7 @@ def test_float_precision():
                                       decimal=4)
 
 
-def test_KMeans_init_centers():
+def test_k_means_init_centers():
     # This test is used to check KMeans won't mutate the user provided input
     # array silently even if input data and init centers have the same type
     X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
@@ -824,3 +830,66 @@ def test_KMeans_init_centers():
         km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
         km.fit(X_test)
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
+
+
+def test_sparse_k_means_init_centers():
+    from sklearn.datasets import load_iris
+
+    iris = load_iris()
+    X = iris.data
+
+    # Get a local optimum
+    centers = KMeans(n_clusters=3).fit(X).cluster_centers_
+
+    # Fit starting from a local optimum shouldn't change the solution
+    np.testing.assert_allclose(
+        centers,
+        KMeans(n_clusters=3,
+               init=centers,
+               n_init=1).fit(X).cluster_centers_
+    )
+
+    # The same should be true when X is sparse
+    X_sparse = sp.csr_matrix(X)
+    np.testing.assert_allclose(
+        centers,
+        KMeans(n_clusters=3,
+               init=centers,
+               n_init=1).fit(X_sparse).cluster_centers_
+    )
+
+
+def test_sparse_validate_centers():
+    from sklearn.datasets import load_iris
+
+    iris = load_iris()
+    X = iris.data
+
+    # Get a local optimum
+    centers = KMeans(n_clusters=4).fit(X).cluster_centers_
+
+    # Test that a ValueError is raised for validate_center_shape
+    classifier = KMeans(n_clusters=3, init=centers, n_init=1)
+
+    msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
+          "does not match the number of clusters 3"
+    assert_raises_regex(ValueError, msg, classifier.fit, X)
+
+
+def test_less_centers_than_unique_points():
+    X = np.asarray([[0, 0],
+                    [0, 1],
+                    [1, 0],
+                    [1, 0]])  # last point is duplicated
+
+    km = KMeans(n_clusters=4).fit(X)
+
+    # only three distinct points, so only three clusters
+    # can have points assigned to them
+    assert_equal(set(km.labels_), set(range(3)))
+
+    # k_means should warn that fewer labels than cluster
+    # centers have been used
+    msg = ("Number of distinct clusters (3) found smaller than "
+           "n_clusters (4). Possibly due to duplicate points in X.")
+    assert_warns_message(ConvergenceWarning, msg, k_means, X, n_clusters=4)

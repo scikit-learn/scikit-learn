@@ -66,7 +66,7 @@ teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
 <http://lear.inrialpes.fr/>`_ for computer vision, `Visages
 <https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
-tool to address difficult applications of machine learing in an academic
+tool to address difficult applications of machine learning in an academic
 environment as it is performant and versatile, but all easy-to-use and well
 documented, which makes it well suited to grad students.
 
@@ -104,15 +104,50 @@ digg and Scale Model. Consistently the betaworks data science team uses
 Scikit-learn for a variety of tasks. From exploratory analysis, to product
 development, it is an essential part of our toolkit. Recent uses are included
 in `digg’s new video recommender system
-<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3#.g5kk2u89v>`_,
+<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
 and Poncho’s `dynamic heuristic subspace clustering
-<http://data.betaworks.com/a-data-driven-approach-to-verbalize-weather-forecasts-at-scale/>`_. 
+<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_. 
 
 .. raw:: html
 
    <span class="testimonial-author">
 
 Gilad Lotan, Chief Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
+`Hugging Face <https://huggingface.co>`_
+------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/huggingface.png
+    :width: 120pt
+    :target: https://huggingface.co
+
+.. raw:: html
+
+  </div>
+
+At Hugging Face we're using NLP and probabilistic models to generate
+conversational Artificial intelligences that are fun to chat with. Despite using
+deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_ 
+of our `NLP tasks <https://huggingface.co/coref/>`_, scikit-learn is still the bread-and-butter of
+our daily machine learning routine. The ease of use and predictability of the
+interface, as well as the straightforward mathematical explanations that are
+here when you need them, is the killer feature. We use a variety of scikit-learn
+models in production and they are also operationally very pleasant to work with.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Julien Chaumond, Chief Technology Officer
 
 .. raw:: html
 
@@ -292,7 +327,9 @@ Greg Lamp, Co-founder Yhat
 .. raw:: html
 
    </span>
-------------------------------------------
+
+`Rangespan <http://www.rangespan.com>`_
+----------------------------------------
 
 .. raw:: html
 
@@ -300,7 +337,7 @@ Greg Lamp, Co-founder Yhat
 
 .. image:: images/rangespan.png
     :width: 120pt
-    :target: https://www.rangespan.com
+    :target: http://www.rangespan.com
 
 .. raw:: html
 
@@ -827,6 +864,40 @@ scikit-learn based services.
   <span class="testimonial-author">
 
 Christian Rammig, Head of Data Science, Otto Group
+
+.. raw:: html
+
+  </span>
+
+`Zopa <https://zopa.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/zopa.png
+    :width: 120pt
+    :target: https://zopa.com
+
+.. raw:: html
+
+   </div>
+
+
+At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
+to run the business and optimize our users' experience. It powers our 
+Machine Learning models involved in credit risk, fraud risk, marketing, and pricing, 
+and has been used for originating at least 1 billion GBP worth of Zopa loans.
+It is very well documented, powerful, and simple to use. We are grateful for the 
+capabilities it has provided, and for allowing us to deliver on our mission of making
+money simple and fair.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Vlasios Vasileiou, Head of Data Science, Zopa
 
 .. raw:: html
 

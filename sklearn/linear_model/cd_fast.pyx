@@ -122,14 +122,25 @@ cdef extern from "cblas.h":
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
                            double *X, int incX, double *Y, int incY,
                            double *A, int lda) nogil
+    void sger "cblas_sger"(CBLAS_ORDER Order, int M, int N, float alpha,
+                           float *X, int incX, float *Y, int incY,
+                           float *A, int lda) nogil
     void dgemv "cblas_dgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
                              int M, int N, double alpha, double *A, int lda,
                              double *X, int incX, double beta,
                              double *Y, int incY) nogil
+    void sgemv "cblas_sgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
+                             int M, int N, float alpha, float *A, int lda,
+                             float *X, int incX, float beta,
+                             float *Y, int incY) nogil
     double dnrm2 "cblas_dnrm2"(int N, double *X, int incX) nogil
+    float snrm2 "cblas_snrm2"(int N, float *X, int incX) nogil
     void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y,
                              int incY) nogil
+    void scopy "cblas_scopy"(int N, float *X, int incX, float *Y,
+                            int incY) nogil
     void dscal "cblas_dscal"(int N, double alpha, double *X, int incX) nogil
+    void sscal "cblas_sscal"(int N, float alpha, float *X, int incX) nogil
 
 
 @cython.boundscheck(False)
@@ -206,8 +217,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef floating *R_data = <floating*> R.data
     cdef floating *XtA_data = <floating*> XtA.data
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if alpha == 0 and beta == 0:
+        warnings.warn("Coordinate descent with no regularization may lead to unexpected"
             " results and is discouraged.")
 
     with nogil:
@@ -686,11 +697,11 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
-                                       double l2_reg,
-                                       np.ndarray[double, ndim=2, mode='fortran'] X,
-                                       np.ndarray[double, ndim=2] Y,
-                                       int max_iter, double tol, object rng,
+def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
+                                       floating l2_reg,
+                                       np.ndarray[floating, ndim=2, mode='fortran'] X,
+                                       np.ndarray[floating, ndim=2] Y,
+                                       int max_iter, floating tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
@@ -700,31 +711,57 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         (1/2) * norm(y - X w, 2)^2 + l1_reg ||w||_21 + (1/2) * l2_reg norm(w, 2)^2
 
     """
+    # fused types version of BLAS functions
+    cdef DOT dot
+    cdef AXPY axpy
+    cdef ASUM asum
+
+    if floating is float:
+        dtype = np.float32
+        dot = sdot
+        nrm2 = snrm2
+        asum = sasum
+        copy = scopy
+        scal = sscal
+        ger = sger
+        gemv = sgemv
+    else:
+        dtype = np.float64
+        dot = ddot
+        nrm2 = dnrm2
+        asum = dasum
+        copy = dcopy
+        scal = dscal
+        ger = dger
+        gemv = dgemv
+
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
     # to store XtA
-    cdef double[:, ::1] XtA = np.zeros((n_features, n_tasks))
-    cdef double XtA_axis1norm
-    cdef double dual_norm_XtA
+    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
+    cdef floating XtA_axis1norm
+    cdef floating dual_norm_XtA
 
     # initial value of the residuals
-    cdef double[:, ::1] R = np.zeros((n_samples, n_tasks))
+    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype)
 
-    cdef double[:] norm_cols_X = np.zeros(n_features)
-    cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)
-    cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)
-    cdef double d_w_max
-    cdef double w_max
-    cdef double d_w_ii
-    cdef double nn
-    cdef double W_ii_abs_max
-    cdef double gap = tol + 1.0
-    cdef double d_w_tol = tol
-    cdef double ry_sum
-    cdef double l21_norm
+    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
+    cdef floating[:] w_ii = np.zeros(n_tasks, dtype=dtype)
+    cdef floating d_w_max
+    cdef floating w_max
+    cdef floating d_w_ii
+    cdef floating nn
+    cdef floating W_ii_abs_max
+    cdef floating gap = tol + 1.0
+    cdef floating d_w_tol = tol
+    cdef floating R_norm
+    cdef floating w_norm
+    cdef floating ry_sum
+    cdef floating l21_norm
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
@@ -732,10 +769,10 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
-    cdef double* X_ptr = &X[0, 0]
-    cdef double* W_ptr = &W[0, 0]
-    cdef double* Y_ptr = &Y[0, 0]
-    cdef double* wii_ptr = &w_ii[0]
+    cdef floating* X_ptr = &X[0, 0]
+    cdef floating* W_ptr = &W[0, 0]
+    cdef floating* Y_ptr = &Y[0, 0]
+    cdef floating* wii_ptr = &w_ii[0]
 
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
@@ -751,11 +788,11 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         for ii in range(n_samples):
             for jj in range(n_tasks):
                 R[ii, jj] = Y[ii, jj] - (
-                    ddot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
+                    dot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
                     )
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
-        tol = tol * dnrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
+        tol = tol * nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -770,33 +807,33 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                dcopy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
+                copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                if dnrm2(n_tasks, wii_ptr, 1) != 0.0:
+                if nrm2(n_tasks, wii_ptr, 1) != 0.0:
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
-                    dger(CblasRowMajor, n_samples, n_tasks, 1.0,
+                    ger(CblasRowMajor, n_samples, n_tasks, 1.0,
                          X_ptr + ii * n_samples, 1,
                          wii_ptr, 1, &R[0, 0], n_tasks)
 
                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
-                dgemv(CblasRowMajor, CblasTrans,
+                gemv(CblasRowMajor, CblasTrans,
                       n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,
                       X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
 
                 # nn = sqrt(np.sum(tmp ** 2))
-                nn = dnrm2(n_tasks, &tmp[0], 1)
+                nn = nrm2(n_tasks, &tmp[0], 1)
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-                dcopy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
-                dscal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
+                copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
+                scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
                           W_ptr + ii * n_tasks, 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if dnrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
+                if nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
-                    dger(CblasRowMajor, n_samples, n_tasks, -1.0,
+                    ger(CblasRowMajor, n_samples, n_tasks, -1.0,
                          X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
                          &R[0, 0], n_tasks)
 
@@ -818,7 +855,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 # XtA = np.dot(X.T, R) - l2_reg * W.T
                 for ii in range(n_features):
                     for jj in range(n_tasks):
-                        XtA[ii, jj] = ddot(
+                        XtA[ii, jj] = dot(
                             n_samples, X_ptr + ii * n_samples, 1,
                             &R[0, 0] + jj, n_tasks
                             ) - l2_reg * W[jj, ii]
@@ -827,15 +864,15 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 dual_norm_XtA = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(XtA ** 2, axis=1))
-                    XtA_axis1norm = dnrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
+                    XtA_axis1norm = nrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
                 # TODO: use squared L2 norm directly
                 # R_norm = linalg.norm(R, ord='fro')
                 # w_norm = linalg.norm(W, ord='fro')
-                R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
-                w_norm = dnrm2(n_features * n_tasks, W_ptr, 1)
+                R_norm = nrm2(n_samples * n_tasks, &R[0, 0], 1)
+                w_norm = nrm2(n_features * n_tasks, W_ptr, 1)
                 if (dual_norm_XtA > l1_reg):
                     const =  l1_reg / dual_norm_XtA
                     A_norm = R_norm * const
@@ -854,7 +891,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 l21_norm = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(W ** 2, axis=0))
-                    l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+                    l21_norm += nrm2(n_tasks, W_ptr + n_tasks * ii, 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)

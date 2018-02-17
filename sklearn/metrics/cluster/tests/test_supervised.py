@@ -1,21 +1,22 @@
 import numpy as np
 
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import expected_mutual_information
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import contingency_matrix
-from sklearn.metrics.cluster import fowlkes_mallows_score
 from sklearn.metrics.cluster import entropy
+from sklearn.metrics.cluster import expected_mutual_information
+from sklearn.metrics.cluster import fowlkes_mallows_score
+from sklearn.metrics.cluster import homogeneity_completeness_v_measure
+from sklearn.metrics.cluster import homogeneity_score
+from sklearn.metrics.cluster import mutual_info_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics.cluster import v_measure_score
 
-from sklearn.utils.testing import assert_raise_message
-from nose.tools import assert_almost_equal
-from nose.tools import assert_equal
+from sklearn.utils import assert_all_finite
+from sklearn.utils.testing import (
+        assert_equal, assert_almost_equal, assert_raise_message,
+)
 from numpy.testing import assert_array_almost_equal
 
 
@@ -141,9 +142,16 @@ def test_adjusted_mutual_info_score():
     # Mutual information
     mi = mutual_info_score(labels_a, labels_b)
     assert_almost_equal(mi, 0.41022, 5)
-    # Expected mutual information
+    # with provided sparse contingency
+    C = contingency_matrix(labels_a, labels_b, sparse=True)
+    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    assert_almost_equal(mi, 0.41022, 5)
+    # with provided dense contingency
     C = contingency_matrix(labels_a, labels_b)
-    n_samples = np.sum(C)
+    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    assert_almost_equal(mi, 0.41022, 5)
+    # Expected mutual information
+    n_samples = C.sum()
     emi = expected_mutual_information(C, n_samples)
     assert_almost_equal(emi, 0.15042, 5)
     # Adjusted mutual information
@@ -165,6 +173,17 @@ def test_expected_mutual_info_overflow():
     assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
 
 
+def test_int_overflow_mutual_info_score():
+    # Test overflow in mutual_info_classif
+    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] * (3271 +
+                 204) + [4] * (814 + 39) + [5] * (316 + 20))
+    y = np.array([0] * 52632 + [1] * 2529 + [0] * 14660 + [1] * 793 +
+                 [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
+                 [1] * 20)
+
+    assert_all_finite(mutual_info_score(x.ravel(), y.ravel()))
+
+
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
@@ -183,53 +202,38 @@ def test_contingency_matrix():
     assert_array_almost_equal(C, C2 + .1)
 
 
+def test_contingency_matrix_sparse():
+    labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+    labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
+    C = contingency_matrix(labels_a, labels_b)
+    C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
+    assert_array_almost_equal(C, C_sparse)
+    C_sparse = assert_raise_message(ValueError,
+                                    "Cannot set 'eps' when sparse=True",
+                                    contingency_matrix, labels_a, labels_b,
+                                    eps=1e-10, sparse=True)
+
+
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):
-        labels_a, labels_b = np.ones(i, dtype=np.int),\
-            np.arange(i, dtype=np.int)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
-                                                  max_n_classes=1e4), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b,
-                                     max_n_classes=1e4), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b,
-                                                max_n_classes=1e4), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
-                                                  max_n_classes=1e4), 0.0)
+        labels_a, labels_b = (np.ones(i, dtype=np.int),
+                              np.arange(i, dtype=np.int))
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
     # Check relation between v_measure, entropy and mutual information
     for i in np.logspace(1, 4, 4).astype(np.int):
         random_state = np.random.RandomState(seed)
-        labels_a, labels_b = random_state.randint(0, 10, i),\
-            random_state.randint(0, 10, i)
+        labels_a, labels_b = (random_state.randint(0, 10, i),
+                              random_state.randint(0, 10, i))
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
-
-
-def test_max_n_classes():
-    rng = np.random.RandomState(seed=0)
-    labels_true = rng.rand(53)
-    labels_pred = rng.rand(53)
-    labels_zero = np.zeros(53)
-    labels_true[:2] = 0
-    labels_zero[:3] = 1
-    labels_pred[:2] = 0
-    for score_func in score_funcs:
-        expected = ("Too many classes for a clustering metric. If you "
-                    "want to increase the limit, pass parameter "
-                    "max_n_classes to the scoring function")
-        assert_raise_message(ValueError, expected, score_func,
-                             labels_true, labels_pred,
-                             max_n_classes=50)
-        expected = ("Too many clusters for a clustering metric. If you "
-                    "want to increase the limit, pass parameter "
-                    "max_n_classes to the scoring function")
-        assert_raise_message(ValueError, expected, score_func,
-                             labels_zero, labels_pred,
-                             max_n_classes=50)
 
 
 def test_fowlkes_mallows_score():
@@ -247,3 +251,26 @@ def test_fowlkes_mallows_score():
     worst_score = fowlkes_mallows_score([0, 0, 0, 0, 0, 0],
                                         [0, 1, 2, 3, 4, 5])
     assert_almost_equal(worst_score, 0.)
+
+
+def test_fowlkes_mallows_score_properties():
+    # handcrafted example
+    labels_a = np.array([0, 0, 0, 1, 1, 2])
+    labels_b = np.array([1, 1, 2, 2, 0, 0])
+    expected = 1. / np.sqrt((1. + 3.) * (1. + 2.))
+    # FMI = TP / sqrt((TP + FP) * (TP + FN))
+
+    score_original = fowlkes_mallows_score(labels_a, labels_b)
+    assert_almost_equal(score_original, expected)
+
+    # symmetric property
+    score_symmetric = fowlkes_mallows_score(labels_b, labels_a)
+    assert_almost_equal(score_symmetric, expected)
+
+    # permutation property
+    score_permuted = fowlkes_mallows_score((labels_a + 1) % 3, labels_b)
+    assert_almost_equal(score_permuted, expected)
+
+    # symmetric and permutation(both together)
+    score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
+    assert_almost_equal(score_both, expected)
