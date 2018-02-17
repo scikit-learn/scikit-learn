@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
@@ -36,7 +37,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, TransformerMixin, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor)
+                          BaseEstimator, is_classifier, is_regressor,
+                          is_outlier_detector)
 
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -210,6 +212,20 @@ def _yield_clustering_checks(name, clusterer):
     yield check_non_transformer_estimators_n_iter
 
 
+def _yield_outliers_checks(name, estimator):
+
+    # checks for all outlier detectors
+    yield check_outliers_fit_predict
+
+    # checks for estimators that can be used on a test set
+    if hasattr(estimator, 'predict'):
+        yield check_outliers_train
+        # test outlier detectors can handle non-array data
+        yield check_classifier_data_not_an_array
+        # test if NotFittedError is raised
+        yield check_estimators_unfitted
+
+
 def _yield_all_checks(name, estimator):
     for check in _yield_non_meta_checks(name, estimator):
         yield check
@@ -224,6 +240,9 @@ def _yield_all_checks(name, estimator):
             yield check
     if isinstance(estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, estimator):
+            yield check
+    if is_outlier_detector(estimator):
+        for check in _yield_outliers_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
@@ -1360,6 +1379,67 @@ def check_classifiers_train(name, classifier_orig):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
+def check_outliers_train(name, estimator_orig):
+    X, _ = make_blobs(n_samples=300, random_state=0)
+    X = shuffle(X, random_state=7)
+    n_samples, n_features = X.shape
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    # fit
+    estimator.fit(X)
+    # with lists
+    estimator.fit(X.tolist())
+
+    y_pred = estimator.predict(X)
+    assert y_pred.shape == (n_samples,)
+    assert y_pred.dtype.kind == 'i'
+    assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
+
+    decision = estimator.decision_function(X)
+    assert decision.dtype == np.dtype('float')
+
+    score = estimator.score_samples(X)
+    assert score.dtype == np.dtype('float')
+
+    # raises error on malformed input for predict
+    assert_raises(ValueError, estimator.predict, X.T)
+
+    # decision_function agrees with predict
+    decision = estimator.decision_function(X)
+    assert decision.shape == (n_samples,)
+    dec_pred = (decision >= 0).astype(np.int)
+    dec_pred[dec_pred == 0] = -1
+    assert_array_equal(dec_pred, y_pred)
+
+    # raises error on malformed input for decision_function
+    assert_raises(ValueError, estimator.decision_function, X.T)
+
+    # decision_function is a translation of score_samples
+    y_scores = estimator.score_samples(X)
+    assert y_scores.shape == (n_samples,)
+    y_dec = y_scores - estimator.offset_
+    assert_array_equal(y_dec, decision)
+
+    # raises error on malformed input for score_samples
+    assert_raises(ValueError, estimator.score_samples, X.T)
+
+    # contamination parameter (not for OneClassSVM which has the nu parameter)
+    if hasattr(estimator, "contamination"):
+        # proportion of outliers equal to contamination parameter when not
+        # set to 'auto'
+        contamination = 0.1
+        estimator.set_params(contamination=contamination)
+        estimator.fit(X)
+        y_pred = estimator.predict(X)
+        assert_almost_equal(np.mean(y_pred != 1), contamination)
+
+        # raises error when contamination is a scalar and not in [0,1]
+        for contamination in [-0.5, 2.3]:
+            estimator.set_params(contamination=contamination)
+            assert_raises(ValueError, estimator.fit, X)
+
+
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit"""
@@ -1388,7 +1468,7 @@ def check_estimators_unfitted(name, estimator_orig):
     therefore be adequately raised for that purpose.
     """
 
-    # Common test for Regressors as well as Classifiers
+    # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
     est = clone(estimator_orig)
@@ -2042,3 +2122,37 @@ def check_decision_proba_consistency(name, estimator_orig):
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
+
+
+def check_outliers_fit_predict(name, estimator_orig):
+    # Check fit_predict for outlier detectors.
+
+    X, _ = make_blobs(n_samples=300, random_state=0)
+    X = shuffle(X, random_state=7)
+    n_samples, n_features = X.shape
+    estimator = clone(estimator_orig)
+
+    set_random_state(estimator)
+
+    y_pred = estimator.fit_predict(X)
+    assert y_pred.shape == (n_samples,)
+    assert y_pred.dtype.kind == 'i'
+    assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
+
+    # check fit_predict = fit.predict when possible
+    if hasattr(estimator, 'predict'):
+        y_pred_2 = estimator.fit(X).predict(X)
+        assert_array_equal(y_pred, y_pred_2)
+
+    if hasattr(estimator, "contamination"):
+        # proportion of outliers equal to contamination parameter when not
+        # set to 'auto'
+        contamination = 0.1
+        estimator.set_params(contamination=contamination)
+        y_pred = estimator.fit_predict(X)
+        assert_almost_equal(np.mean(y_pred != 1), contamination)
+
+        # raises error when contamination is a scalar and not in [0,1]
+        for contamination in [-0.5, 2.3]:
+            estimator.set_params(contamination=contamination)
+            assert_raises(ValueError, estimator.fit_predict, X)
