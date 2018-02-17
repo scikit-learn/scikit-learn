@@ -156,7 +156,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X, y = check_X_y(X, y)
 
         y_type = type_of_target(y)
-        if y_type is not 'binary':
+        if y_type != 'binary':
             raise ValueError('Expected target of binary type. Got %s ' %
                              y_type)
 
