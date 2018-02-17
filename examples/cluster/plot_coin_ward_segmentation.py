@@ -17,7 +17,6 @@ print(__doc__)
 import time as time
 
 import numpy as np
-import scipy as sp
 from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib.pyplot as plt
