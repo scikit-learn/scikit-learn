@@ -93,8 +93,8 @@ def test_cutoff_prefit():
     assert_greater_equal(tpr_clf_max_tnr, 0.3)
 
     # check error cases
-    clf_non_base_estimator = CutoffClassifier([])
-    assert_raises(AttributeError, clf_non_base_estimator.fit, X_train, y_train)
+    clf_bad_base_estimator = CutoffClassifier([])
+    assert_raises(TypeError, clf_bad_base_estimator.fit, X_train, y_train)
 
     X_non_binary, y_non_binary = make_classification(
         n_samples=20, n_features=6, random_state=42, n_classes=4,
