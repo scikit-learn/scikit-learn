@@ -157,7 +157,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         y_type = type_of_target(y)
         if y_type is not 'binary':
-            raise ValueError('Expected target of binary type. Got %s ' % y_type)
+            raise ValueError('Expected target of binary type. Got %s ' %
+                             y_type)
 
         self.label_encoder_ = LabelEncoder().fit(y)
 
