@@ -509,7 +509,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         params.pop('X_scale')
 
     if (len(params) != 0):
-        raise ValueError('One or more parameters are unrecognized')
+        raise TypeError('One or more parameters are unrecognized')
         
     if return_n_iter:
         return alphas, coefs, dual_gaps, n_iters
