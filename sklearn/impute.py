@@ -103,9 +103,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    - The sklearn.preprocessing.Imputer has been renamed to 
-    sklearn.impute.SimpleImputer, and its axis parameter 
-    is no longer available.
+    - When ``axis=0``, columns which only contained missing values at `fit`
+      are discarded upon `transform`.
+    - When ``axis=1``, an exception is raised if there are rows for which it is
+      not possible to fill in the missing values (e.g., because they only
+      contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
                  verbose=0, copy=True):
