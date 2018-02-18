@@ -143,11 +143,11 @@ tools:
   $ pytest --cov sklearn path/to/tests_for_package
   ```
 
--  No pyflakes warnings, check with:
+-  No flake8 warnings, check with:
 
   ```bash
-  $ pip install pyflakes
-  $ pyflakes path/to/module.py
+  $ pip install flake8
+  $ flake8 path/to/module.py
   ```
 
 Bonus points for contributions that include a performance analysis with
