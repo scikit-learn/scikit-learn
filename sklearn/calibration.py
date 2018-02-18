@@ -134,12 +134,17 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         if not hasattr(self.base_estimator, 'decision_function') and \
                 not hasattr(self.base_estimator, 'predict_proba'):
-            raise TypeError('The base_estimator needs to have either a '
+            raise TypeError('The base_estimator needs to implement either a '
                             'decision_function or a predict_proba method')
 
         if self.method not in ['roc', 'max_tpr', 'max_tnr']:
-            raise ValueError('method must be "roc" or "max_tpr" or "max_tnr.'
-                             'Got %s instead' % self.method)
+            raise ValueError('method can either be "roc" or "max_tpr" or '
+                             '"max_tnr. Got %s instead' % self.method)
+
+        if self.scoring not in [None, 'decision_function', 'predict_proba']:
+            raise ValueError('scoring param can either be "decision_function" '
+                             'or "predict_proba" or None. Got %s instead' %
+                             self.scoring)
 
         if self.method == 'max_tpr':
             if not self.min_tnr or not isinstance(self.min_tnr, float) \
