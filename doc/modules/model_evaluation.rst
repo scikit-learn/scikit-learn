@@ -178,20 +178,19 @@ Here is an example of building custom scorers, and of using the
     ...     diff = np.abs(y_true - y_pred).max()
     ...     return np.log(1 + diff)
     ...
-    >>> # loss_func will negate the return value of my_custom_loss_func,
-    >>> #  which will be np.log(2), 0.693, given the values for ground_truth
-    >>> #  and predictions defined below.
-    >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
+    >>> # score will negate the return value of my_custom_loss_func,
+    >>> # which will be np.log(2), 0.693, given the values for X
+    >>> # and y defined below.
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> X = [[1], [1]]
     >>> y  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> loss(clf, X, y) # doctest: +ELLIPSIS
-    -0.69...
-    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
     0.69...
+    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    -0.69...
 
 
 .. _diy_scoring:
