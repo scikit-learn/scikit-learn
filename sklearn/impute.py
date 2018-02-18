@@ -259,7 +259,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 # recent versions of numpy, which we want to mimic
                 masked_X.mask = np.logical_or(masked_X.mask,
                                               np.isnan(X))
-            median_masked = np.ma.median(masked_X)
+            median_masked = np.ma.median(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
             median[np.ma.getmaskarray(median_masked)] = np.nan
