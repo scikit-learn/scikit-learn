@@ -596,40 +596,6 @@ Imputation of missing values
 
 Tools for imputing missing values are discussed at :ref:`impute`.
 
-.. _missing_indicator:
-
-Imputation of missing values
-=====================================
-
-The :class:`MissingIndicator` transformer is useful to transform a dataset into corresponding
-binary matrix indicating the presence of missing values in the dataset.
-This transformation is useful in conjunction with imputation. When using imputation,
-preserving the information about which values had been missing can be informative.
-
-The ``features`` parameter is used to choose the features for which the mask is constructed.
-By default, it is 'auto' which means the binary matrix has features with missing values
-during fit time. When it is 'all' the matrix has all the features.
-
-    >>> from sklearn.preprocessing import MissingIndicator
-    >>> import numpy as np
-    >>> X1 = np.array([
-    ...   [-1, -1,  1,  3],
-    ...   [ 4, -1,  0, -1],
-    ...   [ 8, -1,  1,  0],
-    ... ])
-    >>> indicator = MissingIndicator(missing_values=-1)
-    >>> X1_tr = indicator.fit_transform(X1)
-    >>> X1_tr
-    array([[1, 1, 0],
-           [0, 1, 1],
-           [0, 1, 0]])
-    >>> indicator = MissingIndicator(missing_values=-1, features="all")
-    >>> X1_tr = indicator.fit_transform(X1)
-    >>> X1_tr
-    array([[1, 1, 0, 0],
-           [0, 1, 0, 1],
-           [0, 1, 0, 0]])
-
 .. _polynomial_features:
 
 Generating polynomial features

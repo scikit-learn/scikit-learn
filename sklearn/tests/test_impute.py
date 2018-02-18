@@ -2,13 +2,18 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.base import clone
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.impute import _get_mask
 
 from sklearn.impute import SimpleImputer
+from sklearn.impute import MissingIndicator
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -257,3 +262,144 @@ def test_imputation_copy():
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
+
+    # copy=False, sparse csr, axis=1, missing_values=0 => copy
+    X = X_orig.copy()
+    imputer = SimpleImputer(missing_values=0, strategy="mean",
+                            copy=False, axis=1)
+    Xt = imputer.fit(X).transform(X)
+    assert_false(sparse.issparse(Xt))
+
+    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
+    # made, even if copy=False.
+
+
+def test_missing_indicator():
+    X1_orig = np.array([
+        [np.nan,  np.nan,   1,   3],
+        [4,  np.nan,   0,  np.nan],
+        [8,  np.nan,   1,  0],
+        [0,  np.nan,   0,  15],
+        [16,  np.nan,   1,  19]
+    ])
+    X2_orig = np.array([
+        [5,  1,   1,   np.nan],
+        [np.nan,  np.nan,   2,  3],
+        [2,  3,   4,  0],
+        [0,  np.nan,   5,  np.nan],
+        [11,  np.nan,   1,  1]
+    ])
+
+    def assert_type(actual, X_is_sparse, sparse_param, missing_values):
+        if sparse_param is True:
+            assert_equal(actual, sparse.csc_matrix)
+        elif (sparse_param == "auto" and missing_values == 0):
+            assert_equal(actual, np.ndarray)
+        elif sparse_param is False:
+            assert_equal(actual, np.ndarray)
+        else:
+            if X_is_sparse:
+                assert_equal(actual, sparse.csc_matrix)
+            else:
+                assert_equal(actual, np.ndarray)
+
+    def assert_mask(actual, expected):
+        if hasattr(actual, 'toarray'):
+            assert_array_equal(actual.toarray(), expected)
+        else:
+            assert_array_equal(actual, expected)
+
+    def _check_missing_indicator(X1, X2, retype, sparse_param, missing_values):
+        mask_X2 = _get_mask(X2, missing_values)
+        mask_X1 = _get_mask(X1, missing_values)
+
+        expect_feat_missing = np.where(np.any(mask_X1, axis=0))[0]
+
+        X1_in = retype(X1)
+        X2_in = retype(X2)
+        # features = "auto":
+        indicator = MissingIndicator(missing_values=missing_values,
+                                     sparse=sparse_param)
+        X1_tr = indicator.fit_transform(X1_in)
+        X2_tr = indicator.transform(X2_in)
+        features = indicator.features_
+        assert_array_equal(expect_feat_missing, features)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
+                    missing_values)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
+                    missing_values)
+        if len(features) != 0:
+            assert_mask(X2_tr, mask_X2[:, features])
+            assert_mask(X1_tr, mask_X1[:, features])
+        else:
+            assert_mask(X2_tr, mask_X2)
+            assert_mask(X1_tr, mask_X1)
+
+        # features = "all"
+        indicator = clone(indicator).set_params(features="all")
+        X1_tr = indicator.fit_transform(X1_in)
+        X2_tr = indicator.transform(X2_in)
+        features = np.arange(X2.shape[1])
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
+                    missing_values)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
+                    missing_values)
+        assert_mask(X2_tr, mask_X2[:, features])
+        assert_mask(X1_tr, mask_X1[:, features])
+
+        features = [1, 2]
+        indicator = clone(indicator).set_params(features=features)
+        X1_tr = indicator.fit_transform(X1_in)
+        X2_tr = indicator.transform(X2_in)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
+                    missing_values)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
+                    missing_values)
+        assert_mask(X2_tr, mask_X2[:, features])
+        assert_mask(X1_tr, mask_X1[:, features])
+
+    for X1, X2, missing_values in [(X1_orig, X2_orig, np.nan),
+                                   (X1_orig + 1, X2_orig + 1, 0)]:
+        for retype in [lambda x: x.tolist(), np.array, sparse.csr_matrix,
+                       sparse.csc_matrix, sparse.lil_matrix]:
+            for sparse_param in [True, False, 'auto']:
+                _check_missing_indicator(X1, X2, retype, sparse_param,
+                                         missing_values)
+
+
+def test_missing_indicator_error():
+    X1 = np.array([
+          [-1,  1,  3],
+          [4,  0, -1],
+          [8,  1,  0]
+    ])
+    X2 = np.array([
+          [5, -1, -1],
+          [-1,  2,  3],
+          [2,  4,  0]
+    ])
+    indicator = MissingIndicator(missing_values=-1)
+    indicator.fit(X1)
+    missing_features_fit = np.sum(X1 == -1, axis=0).nonzero()[0]
+    missing_features_tr = np.where(np.any(X2 == -1, axis=0))[0]
+    extra_missing_features = np.setdiff1d(missing_features_tr,
+                                          missing_features_fit)
+    err_msg = ("The features \{0} have missing values "
+               "in transform but have no missing values "
+               "in fit".format(extra_missing_features))
+    assert_raises_regex(ValueError, err_msg, indicator.transform, X2)
+
+    # features is incorrect keyword
+    features = "temp"
+    indicator = clone(indicator).set_params(features=features)
+    err_msg = ("Can only use these options: 'auto', 'all' got %s" % features)
+    assert_raises_regex(ValueError, err_msg, indicator.fit, X1)
+
+    indicator = clone(indicator).set_params(features=[1.0, 2.0, 3.0])
+    err_msg = ("Features should be an array of integers")
+    assert_raises_regex(ValueError, err_msg, indicator.fit, X1)
+
+    sparse = "temp"
+    indicator = clone(indicator).set_params(features="auto", sparse=sparse)
+    err_msg = ("sparse can only boolean or 'auto' got {0}".format(sparse))
+    assert_raises_regex(ValueError, err_msg, indicator.fit, X1)

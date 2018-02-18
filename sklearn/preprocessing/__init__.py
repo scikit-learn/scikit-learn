@@ -33,8 +33,6 @@ from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
-from .imputation import MissingIndicator
-
 
 __all__ = [
     'Binarizer',
@@ -43,7 +41,6 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
-    'MissingIndicator',
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',
