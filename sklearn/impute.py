@@ -244,7 +244,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Mean
         if strategy == "mean":
-            mean_masked = np.ma.mean(masked_X)
+            mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
             mean[np.ma.getmask(mean_masked)] = np.nan
