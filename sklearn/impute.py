@@ -185,7 +185,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 new_data[mask_missing_values] = 0
                 X = sparse.csc_matrix((new_data, X.indices, X.indptr),
                                       copy=False)
-                sums = X.sum()
+                sums = X.sum(axis=0)
 
                 # Count the elements != 0
                 mask_non_zeros = sparse.csc_matrix(
@@ -196,7 +196,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 n_non_missing = np.add(n_non_missing, s)
 
             else:
-                sums = X.sum()
+                sums = X.sum(axis=0)
                 n_non_missing = np.diff(X.indptr)
 
             # Ignore the error, columns with a np.nan statistics_
