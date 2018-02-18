@@ -152,27 +152,27 @@ def test_get_binary_score():
 
     assert_array_equal(
         y_pred_score,
-        _get_binary_score(lr, X_test, pos_label=1, scoring='decision_function')
+        _get_binary_score(lr, X_test, scoring='decision_function', pos_label=1)
     )
 
     assert_array_equal(
         - y_pred_score,
-        _get_binary_score(lr, X_test, pos_label=0, scoring='decision_function')
+        _get_binary_score(lr, X_test, scoring='decision_function', pos_label=0)
     )
 
     assert_array_equal(
         y_pred_proba[:, 1],
-        _get_binary_score(lr, X_test, pos_label=1, scoring='predict_proba')
+        _get_binary_score(lr, X_test, scoring='predict_proba', pos_label=1)
     )
 
     assert_array_equal(
         y_pred_proba[:, 0],
-        _get_binary_score(lr, X_test, pos_label=0, scoring='predict_proba')
+        _get_binary_score(lr, X_test, scoring='predict_proba', pos_label=0)
     )
 
     assert_array_equal(
         y_pred_score,
-        _get_binary_score(lr, X_test, pos_label=1, scoring=None)
+        _get_binary_score(lr, X_test, scoring=None, pos_label=1)
     )
 
     # classifier that does not have a decision_function
@@ -180,7 +180,7 @@ def test_get_binary_score():
     y_pred_proba_rf = rf.predict_proba(X_test)
     assert_array_equal(
         y_pred_proba_rf[:, 1],
-        _get_binary_score(rf, X_test, pos_label=1, scoring=None)
+        _get_binary_score(rf, X_test, scoring=None, pos_label=1)
     )
 
 

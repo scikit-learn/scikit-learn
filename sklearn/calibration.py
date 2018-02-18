@@ -211,8 +211,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X = check_array(X)
         check_is_fitted(self, ["label_encoder_", "threshold_"])
 
-        y_score = _get_binary_score(self.base_estimator, X, self.pos_label,
-                                    self.scoring)
+        y_score = _get_binary_score(self.base_estimator, X, self.scoring,
+                                    self.pos_label)
         return self.label_encoder_.inverse_transform(
             (y_score > self.threshold_).astype(int)
         )
@@ -284,8 +284,8 @@ class _CutoffClassifier(object):
         self : object
             Instance of self.
         """
-        y_score = _get_binary_score(self.base_estimator, X, self.pos_label,
-                                    self.scoring)
+        y_score = _get_binary_score(self.base_estimator, X, self.scoring,
+                                    self.pos_label)
         fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
 
         if self.method == 'roc':
@@ -303,7 +303,7 @@ class _CutoffClassifier(object):
         return self
 
 
-def _get_binary_score(clf, X, pos_label=1, scoring=None):
+def _get_binary_score(clf, X, scoring=None, pos_label=1):
     """Binary classification score for the positive label (0 or 1)
 
     Returns the score that a binary classifier outputs for the positive label
