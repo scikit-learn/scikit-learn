@@ -349,8 +349,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         missing values in transform but have no missing values in fit
         This is applicable only when ``features`` = "auto"
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.impute import MissingIndicator
     >>> import numpy as np
     >>> X1 = np.array([
