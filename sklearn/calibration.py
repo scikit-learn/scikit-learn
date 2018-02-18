@@ -306,8 +306,8 @@ class _CutoffClassifier(object):
 def _get_binary_score(clf, X, pos_label=1, scoring=None):
     """Binary classification score for the positive label (0 or 1)
 
-    Returns the score that a binary classifier for the positive label acquired
-    either from decision_function or predict_proba
+    Returns the score that a binary classifier outputs for the positive label
+    acquired either from decision_function or predict_proba
 
     Parameters
     ----------
