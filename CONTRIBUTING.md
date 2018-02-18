@@ -143,25 +143,11 @@ tools:
   $ pytest --cov sklearn path/to/tests_for_package
   ```
 
--  No pyflakes warnings, check with:
+-  No flake8 warnings, check with:
 
   ```bash
-  $ pip install pyflakes
-  $ pyflakes path/to/module.py
-  ```
-
--  No PEP8 warnings, check with:
-
-  ```bash
-  $ pip install pep8
-  $ pep8 path/to/module.py
-  ```
-
--  AutoPEP8 can help you fix some of the easy redundant errors:
-
-  ```bash
-  $ pip install autopep8
-  $ autopep8 path/to/pep8.py
+  $ pip install flake8
+  $ flake8 path/to/module.py
   ```
 
 Bonus points for contributions that include a performance analysis with

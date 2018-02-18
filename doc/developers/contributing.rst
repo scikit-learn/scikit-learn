@@ -285,20 +285,10 @@ You can also check for common programming errors with the following tools:
 
   see also :ref:`testing_coverage`
 
-* No pyflakes warnings, check with::
+* No flake8 warnings, check with::
 
-    $ pip install pyflakes
-    $ pyflakes path/to/module.py
-
-* No PEP8 warnings, check with::
-
-    $ pip install pep8
-    $ pep8 path/to/module.py
-
-* AutoPEP8 can help you fix some of the easy redundant errors::
-
-    $ pip install autopep8
-    $ autopep8 path/to/pep8.py
+    $ pip install flake8
+    $ flake8 path/to/module.py
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
