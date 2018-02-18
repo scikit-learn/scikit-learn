@@ -135,6 +135,28 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             raise ValueError("Can only use these strategies: {0} "
                              " got strategy={1}".format(allowed_strategies,
                                                         self.strategy))
+        if self.axis:
+            raise ValueError("Can only impute missing values on axis 0 and 1, "
+                             " got axis={0}".format(self.axis))
+
+        # Since two different arrays can be provided in fit(X) and
+        # transform(X), the imputation data will be computed in transform()
+        # when the imputation is done per sample (i.e., when axis=1).
+        if self.axis == 0:
+            X = check_array(X, accept_sparse='csc', dtype=np.float64,
+                            force_all_finite=False)
+
+            if sparse.issparse(X):
+                self.statistics_ = self._sparse_fit(X,
+                                                    self.strategy,
+                                                    self.missing_values,
+                                                    self.axis)
+            else:
+                self.statistics_ = self._dense_fit(X,
+                                                   self.strategy,
+                                                   self.missing_values,
+                                                   self.axis)
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, axis):
