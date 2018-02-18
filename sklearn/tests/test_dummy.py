@@ -631,5 +631,5 @@ def test_dummy_regressor_return_std():
     y_pred_list = cls.predict(X, return_std=True)
     # there should be two elements when return_std is True
     assert_equal(len(y_pred_list), 2)
-    # the second element should be all azeros
+    # the second element should be all zeros
     assert_array_equal(y_pred_list[1], y_std_expected)
