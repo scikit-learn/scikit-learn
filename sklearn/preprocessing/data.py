@@ -619,7 +619,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
+                        warn_on_dtype=True, estimator=self,
+                        force_all_finite='allow-nan', dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -646,6 +647,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 self.mean_ = None
                 self.var_ = None
         else:
+            X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                            warn_on_dtype=True, estimator=self,
+                            dtype=FLOAT_DTYPES)
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
                 self.mean_ = .0

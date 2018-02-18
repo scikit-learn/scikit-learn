@@ -15,6 +15,8 @@ import numpy as np
 import scipy.sparse as sp
 cimport cython
 from cython cimport floating
+from numpy.math cimport isnan
+import warnings
 
 np.import_array()
 
@@ -54,7 +56,7 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
     return norms
 
 
-def csr_mean_variance_axis0(X):
+def csr_mean_variance_axis0(X, ignore_nan=True):
     """Compute mean and variance along axis 0 on a CSR matrix
 
     Parameters
@@ -74,12 +76,13 @@ def csr_mean_variance_axis0(X):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    return _csr_mean_variance_axis0(X.data, X.shape, X.indices)
+    return _csr_mean_variance_axis0(X.data, X.shape, X.indices, ignore_nan)
 
 
 def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
                              shape,
-                             np.ndarray[int, ndim=1] X_indices):
+                             np.ndarray[int, ndim=1] X_indices,
+                             ignore_nan=True):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef unsigned int n_samples = shape[0]
@@ -94,6 +97,8 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     cdef np.ndarray[floating, ndim=1] means
     # variances[j] contains the variance of feature j
     cdef np.ndarray[floating, ndim=1] variances
+    # n_samples_feat[j] contains the n_samples of feature j
+    cdef np.ndarray[floating, ndim=1] n_samples_feat
 
     if floating is float:
         dtype = np.float32
@@ -102,6 +107,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     means = np.zeros(n_features, dtype=dtype)
     variances = np.zeros_like(means, dtype=dtype)
+    n_samples_feat = np.ones(n_features, dtype=dtype) * n_samples
 
     # counts[j] contains the number of samples where feature j is non-zero
     cdef np.ndarray[int, ndim=1] counts = np.zeros(n_features,
@@ -109,24 +115,40 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
-        means[col_ind] += X_data[i]
+        x_i = X_data[i]
+        if ignore_nan and isnan(x_i):
+            n_samples_feat[col_ind] -= 1
+            continue
+        means[col_ind] += x_i
 
-    means /= n_samples
+    with warnings.catch_warnings():
+        # as division by 0 might happen
+        warnings.simplefilter('ignore')
+        means /= n_samples_feat
+        means[np.isnan(means)] = 0
+        means[np.isinf(means)] = 0
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
-        diff = X_data[i] - means[col_ind]
+        x_i = X_data[i]
+        if ignore_nan and isnan(x_i):
+            continue
+        diff = x_i - means[col_ind]
         variances[col_ind] += diff * diff
         counts[col_ind] += 1
 
-    for i in xrange(n_features):
-        variances[i] += (n_samples - counts[i]) * means[i] ** 2
-        variances[i] /= n_samples
+    variances += (n_samples_feat - counts) * means ** 2
+    with warnings.catch_warnings():
+        # as division by 0 might happen
+        warnings.simplefilter('ignore')
+        variances /= n_samples_feat
+        variances[np.isnan(variances)] = 0
+        variances[np.isinf(variances)] = 0
 
     return means, variances
 
 
-def csc_mean_variance_axis0(X):
+def csc_mean_variance_axis0(X, ignore_nan=True):
     """Compute mean and variance along axis 0 on a CSC matrix
 
     Parameters
@@ -146,13 +168,14 @@ def csc_mean_variance_axis0(X):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    return _csc_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr)
+    return _csc_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr,
+                                    ignore_nan)
 
 
 def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                              shape,
                              np.ndarray[int, ndim=1] X_indices,
-                             np.ndarray[int, ndim=1] X_indptr):
+                             np.ndarray[int, ndim=1] X_indptr, ignore_nan=True):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef unsigned int n_samples = shape[0]
@@ -164,6 +187,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     cdef unsigned int startptr
     cdef unsigned int endptr
     cdef floating diff
+    cdef floating n_samples_feat
 
     # means[j] contains the mean of feature j
     cdef np.ndarray[floating, ndim=1] means
@@ -182,17 +206,28 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         startptr = X_indptr[i]
         endptr = X_indptr[i + 1]
         counts = endptr - startptr
+        n_samples_feat = n_samples
 
         for j in xrange(startptr, endptr):
-            means[i] += X_data[j]
-        means[i] /= n_samples
+            x_i = X_data[j]
+            if ignore_nan and isnan(x_i):
+                n_samples_feat -= 1
+                continue
+            means[i] += x_i
+        if n_samples_feat != 0:
+            means[i] /= n_samples
+        else:
+            means[i] = 0
 
         for j in xrange(startptr, endptr):
             diff = X_data[j] - means[i]
             variances[i] += diff * diff
 
         variances[i] += (n_samples - counts) * means[i] * means[i]
-        variances[i] /= n_samples
+        if n_samples_feat != 0:
+            variances[i] /= n_samples
+        else:
+            variances[i] = 0
 
     return means, variances
 
