@@ -192,7 +192,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                     (mask_valids.astype(np.float64),
                      X.indices,
                      X.indptr), copy=False)
-                s = mask_non_zeros.sum()
+                s = mask_non_zeros.sum(axis=0)
                 n_non_missing = np.add(n_non_missing, s)
 
             else:
