@@ -1442,7 +1442,7 @@ to the given limit.
 .. _det_curve:
 
 Detection error tradeoff (DET)
----------------------------------------
+------------------------------
 
 The function :func:`detection_error_tradeoff_curve` computes the
 `detection error tradeoff curve (DET) curve
@@ -1456,37 +1456,71 @@ Quoting Wikipedia :
   that are more linear than ROC curves, and use most of the image area to
   highlight the differences of importance in the critical operating region."
 
-This function requires the true binary value and the target scores, which can
-either be probability estimates of the positive class, confidence values, or
-binary decisions.
+DET curves are a variation of receiver operating characteristic (ROC) curves
+where False Negative Rate is plotted on the ordinate instead of True Positive
+Rate.
+DET curves are commonly plotted in normal deviate scale by transformation with
+:math:`\phi^{-1}` (with :math:`\phi` being the cumulative distribution function)
+.
+The resulting performance curves explicitly visualize the tradeoff of error
+types for given classification algorithms.
 
-Here is a small example of how to use the
-:func:`detection_error_tradeoff_curve` function::
+This figure compares the ROC and DET curves of two example classifiers on the
+same classification task:
 
-    >>> import numpy as np
-    >>> from sklearn.metrics import detection_error_tradeoff_curve
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, fnr, thresholds = detection_error_tradeoff_curve(y_true, y_scores)
-    >>> fpr
-    array([ 0.5,  0.5,  0. ])
-    >>> fnr
-    array([ 0. ,  0.5,  0.5])
-    >>> thresholds
-    array([ 0.35,  0.4 ,  0.8 ])
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_det_001.png
+   :target: ../auto_examples/model_selection/plot_det.html
+   :scale: 75
+   :align: center
 
+**Properties:**
+
+* DET curves form a linear curve in normal deviate scale if the detection
+  scores are normally (or close-to normally) distributed.
+  It was shown by [4]_ that the reverse it not necessarily true and even more
+  general distributions are able produce linear DET curves.
+
+* The normal deviate scale transformation spreads out the points such that a
+  comparatively larger space of plot is occupied.
+  Therefor curves with similar classification performance might be easier to
+  distinguish on a DET plot.
+
+* With False Negative Rate being "inverse" to True Positive Rate the point
+  of perfection for DET curves is the origin (in contrast to the top left corner
+  for ROC curves).
+
+**Applications and limitations:**
+
+DET curves are intuitive to read and hence allow quick visual assessment of a
+classifiers performance.
+Additionally DET curves can be consulted for threshold and operating point
+analysis if an comparison error types is required.
+
+One the other hand DET curves do not provide their metric as a single number.
+Therefor for either automated evaluation or comparison to other
+classification tasks metrics like the derived area under ROC curve might be
+better suited.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
+    for an example comparison between receiver operating characteristic (ROC)
+    curves and Detection error tradeoff (DET) curves.
 
 .. topic:: References:
 
-  * `Wikipedia entry for Detection error tradeoff
+  .. [1] `Wikipedia entry for Detection error tradeoff
     <https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_
-  * A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+  .. [2] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
     `The DET Curve in Assessment of Detection Task Performance
     <http://www.dtic.mil/docs/citations/ADA530509>`_,
     NIST 1997.
-  * `2008 NIST Speaker Recognition Evaluation Results
+  .. [3] `2008 NIST Speaker Recognition Evaluation Results
     <https://www.nist.gov/itl/iad/mig/2008-nist-speaker-recognition-evaluation-results>`_
-  * `DET-Curve Plotting software for use with MATLAB
+  .. [4] Navratil, Jiri & Klusacek, Dalibor. (2007). On Linear DETs.
+    Acoustics, Speech, and Signal Processing, 1988. ICASSP-88.,
+    1988 International Conference on. 4. IV-229 . 10.1109/ICASSP.2007.367205.
+  .. [5] `DET-Curve Plotting software for use with MATLAB
     <https://www.nist.gov/file/65996>`_
 
 .. _zero_one_loss:
