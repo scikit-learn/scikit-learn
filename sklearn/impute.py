@@ -346,7 +346,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 X = X.toarray()
 
             mask = _get_mask(X, self.missing_values)
-            n_missing = np.sum(mask)
+            n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
 
             coordinates = np.where(mask.transpose())[::-1]
