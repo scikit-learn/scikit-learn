@@ -319,21 +319,3 @@ def test_imputation_copy():
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
-
-    # copy=False, sparse csc => copy
-    X = X_orig.copy().tocsc()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = -1
-    assert_false(np.all(X.data == Xt.data))
-
-    # copy=False, sparse csr, missing_values=0 => copy
-    X = X_orig.copy()
-    imputer = SimpleImputer(missing_values=0, strategy="mean",
-                            copy=False)
-    Xt = imputer.fit(X).transform(X)
-    assert_false(sparse.issparse(Xt))
-
-    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
-    # made, even if copy=False.
