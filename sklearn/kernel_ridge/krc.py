@@ -88,9 +88,10 @@ class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
     """
     def __init__(self, alpha=0.1, kernel="rbf", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
-        super(KernelRidgeClassifier, self).__init__(alpha=alpha,
-                                                    kernel=kernel,
-                                                    gamma=gamma,
-                                                    degree=degree,
-                                                    coef0=coef0,
-                                                    kernel_params=kernel_params)
+        super(KernelRidgeClassifier,
+              self).__init__(alpha=alpha,
+                             kernel=kernel,
+                             gamma=gamma,
+                             degree=degree,
+                             coef0=coef0,
+                             kernel_params=kernel_params)
