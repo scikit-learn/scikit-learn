@@ -667,6 +667,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
+        if X.shape[1] != self.n_inputs_:
+            raise ValueError("The size of the passed feature vector does not "
+                             "match the number of neurons of the input layer, "
+                             "got %s instead of %s." % (X.shape[1],
+                                                        self.n_inputs_))
+
         # Initialize layers:
         activations = [X]
         for i in range(self.n_layers_ - 1):
