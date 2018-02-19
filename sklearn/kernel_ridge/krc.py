@@ -1,8 +1,10 @@
 # Author: Carlos Perales <sir.perales@gmail.com>
 # License: BSD 3 clause
 
-from ..base import ClassifierMixin, BaseEstimator
 from .kernel_ridge import _BaseKernelRidge
+from ..base import ClassifierMixin, BaseEstimator
+from ..utils.validation import check_is_fitted
+import numpy as np
 
 
 class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
@@ -85,6 +87,16 @@ class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
     sklearn.kernel_ridge.KernelRidge:
         Kernel Ridge implemented for regressions.
 
+    Examples
+    --------
+    >>> from sklearn.kernel_ridge import KernelRidgeClassifier
+    >>> X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    >>> y = [1, 1, 1, 2, 2, 2]
+    >>> clf = KernelRidgeClassifier()
+    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
+    KernelRidgeClassifier(alpha=0.1, coef0=1, degree=3,
+                          gamma=None, kernel='rbf',
+                          kernel_params=None)
     """
     def __init__(self, alpha=0.1, kernel="rbf", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
@@ -95,3 +107,26 @@ class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
                              degree=degree,
                              coef0=coef0,
                              kernel_params=kernel_params)
+
+    def decision_function(self, X):
+        """Predict confidence scores for samples.
+
+        The confidence score for a sample is the signed distance of that
+        sample to the hyperplane.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
+            Confidence scores per (sample, class) combination. In the binary
+            case, confidence score for self.classes_[1] where >0 means this
+            class would be predicted.
+        """
+        check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        K = self._get_kernel(X, self.X_fit_)
+        y = np.dot(K, self.dual_coef_)
+        return y
