@@ -33,7 +33,7 @@ class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
         LinearSVC. If an array is passed, penalties are assumed to be specific
         to the targets. Hence they must correspond in number.
 
-    kernel : string or callable, default="linear"
+    kernel : string or callable, default="rbf"
         Kernel mapping used internally. A callable should accept two arguments
         and the keyword arguments passed to this object as kernel_params, and
         should return a floating point number.
@@ -88,9 +88,9 @@ class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
     """
     def __init__(self, alpha=0.1, kernel="rbf", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
-        self.alpha = alpha
-        self.kernel = kernel
-        self.gamma = gamma
-        self.degree = degree
-        self.coef0 = coef0
-        self.kernel_params = kernel_params
+        super(KernelRidgeClassifier, self).__init__(alpha=alpha,
+                                                    kernel=kernel,
+                                                    gamma=gamma,
+                                                    degree=degree,
+                                                    coef0=coef0,
+                                                    kernel_params=kernel_params)
