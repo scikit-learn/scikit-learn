@@ -31,66 +31,6 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-def test_kernel_ridge_classifier_parameters():
-    # Test parameters.
-    clf = KernelRidgeClassifier(kernel='rbf').fit(X, Y)
-    assert_array_equal(clf.predict(X), Y)
-
-
-def test_precomputed():
-    # KernelRidgeClassifier with a precomputed kernel.
-    # # We test it with check_estimator first.
-    # Then we test it with a toy dataset and with iris.
-    clf = KernelRidgeClassifier(kernel='precomputed')
-    # Gram matrix for train data (square matrix)
-    # (we use just a linear kernel)
-    K = np.dot(X, np.array(X).T)
-    clf.fit(K, Y)
-    # Gram matrix for test data (rectangular matrix)
-    KT = np.dot(T, np.array(X).T)
-    pred = clf.predict(KT)
-    assert_raises(ValueError, clf.predict, KT.T)
-
-    pred = clf.predict(KT)
-    assert_array_equal(pred, true_result)
-
-    # same as before, but using a callable function instead of the kernel
-    # matrix. kernel is just a linear kernel
-    def kfunc(x, y):
-        return np.dot(x, y.T)
-    clf = KernelRidgeClassifier(kernel=kfunc)
-    clf.fit(X, Y)
-    pred = clf.predict(T)
-
-    assert_array_equal(pred, true_result)
-
-    # test a precomputed kernel with the iris dataset
-    # and check parameters against a linear KernelRidgeClassifier
-    clf = KernelRidgeClassifier(kernel='precomputed')
-    clf2 = KernelRidgeClassifier(kernel='linear')
-    K = np.dot(iris.data, iris.data.T)
-    clf.fit(K, iris.target)
-    clf2.fit(iris.data, iris.target)
-    pred = clf.predict(K)
-    assert_array_almost_equal(clf.dual_coef_, clf2.dual_coef_)
-    assert clf.gamma == clf2.gamma
-    assert_almost_equal(np.mean(pred == iris.target), .82, decimal=2)
-
-    # Gram matrix for test data but compute KT[i,j]
-    # for support vectors j only.
-    K = np.zeros_like(K)
-    for i in range(len(iris.data)):
-        for j in range(clf.dual_coef_.shape[0]):
-            K[i, j] = np.dot(iris.data[i], iris.data[j])
-
-    pred = clf.predict(K)
-    assert_almost_equal(np.mean(pred == iris.target), .82, decimal=2)
-
-    clf = KernelRidgeClassifier(kernel=kfunc)
-    clf.fit(iris.data, iris.target)
-    assert_almost_equal(np.mean(pred == iris.target), .82, decimal=2)
-
-
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
     clf = KernelRidgeClassifier(kernel='linear', gamma=0.0, alpha=0.5)
@@ -140,25 +80,6 @@ def test_unicode_kernel():
     clf = KernelRidgeClassifier(kernel='linear')
     clf.fit(X, Y)
     clf.predict(T)
-
-
-def test_linear_elm():
-    clf = KernelRidgeClassifier(kernel='linear').fit(X, Y)
-
-    # by default should have dual_coef
-    assert_true(clf.dual_coef_.all())
-
-    assert_array_equal(clf.predict(T), true_result)
-
-
-def test_linear_elm_iris():
-    # Test that Kernel ELM with linear kernel
-    # gives plausible predictions on the iris dataset
-    # Also, test symbolic class names (classes_).
-    target = iris.target_names[iris.target]
-    clf = KernelRidgeClassifier(kernel='linear').fit(iris.data, target)
-    assert_equal(set(clf.classes_), set(iris.target_names))
-    assert_greater(np.mean(clf.predict(iris.data) == target), 0.79)
 
 
 def test_krc_clone_with_callable_kernel():
