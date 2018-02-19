@@ -198,3 +198,11 @@ def test_krc_clone_with_callable_kernel():
 def test_krc_bad_kernel():
     clf = KernelRidgeClassifier(kernel=lambda x, y: x)
     assert_raises(ValueError, clf.fit, X, Y)
+
+
+def test_decision_function():
+    # Test decision_function
+    krc = KernelRidgeClassifier(kernel='linear', alpha=1)
+    clf = krc.fit(iris.data, iris.target)
+    dec = np.dot(np.dot(iris.data, clf.X_fit_.T), clf.dual_coef_)
+    assert_array_almost_equal(dec, clf.decision_function(iris.data))
