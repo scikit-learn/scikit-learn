@@ -315,6 +315,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
+        X, y = self._validate_input(X, y, incremental)
+
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -327,7 +329,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
 
-        X, y = self._validate_input(X, y, incremental)
         n_samples, n_features = X.shape
 
         # Ensure y is 2D
