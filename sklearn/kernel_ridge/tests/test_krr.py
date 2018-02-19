@@ -4,7 +4,6 @@ import scipy.sparse as sp
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 

@@ -2,7 +2,7 @@
 Testing for Kernel Ridge Classifier
 (sklearn.kernel_ridge)
 
-Authors: Carlos Perales <sir.perales@gmail.com>
+Author: Carlos Perales <sir.perales@gmail.com>
 License: BSD 3 clause
 
 """
@@ -11,8 +11,6 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from sklearn import datasets, base
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal, assert_true
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.externals import six
 from sklearn.kernel_ridge import KernelRidgeClassifier
