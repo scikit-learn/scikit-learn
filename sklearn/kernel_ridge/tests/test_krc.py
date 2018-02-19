@@ -95,8 +95,8 @@ def test_tweak_params():
     # Make sure some tweaking of parameters works.
     clf = KernelRidgeClassifier(kernel='linear', gamma=0.0, alpha=0.5)
     clf.fit(X, Y)
-    dual_coef = np.array([1.06666667, 0.71111111, 1.06666667,
-                          1.28888889, 0.93333333, 0.93333333])
+    dual_coef = np.array([0.13333333, -0.57777778, 0.13333333,
+                          0.57777778, -0.13333333, -0.13333333])
     assert_almost_equal(clf.dual_coef_, dual_coef, decimal=8)
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
     dual_coef = np.array([-1.06666667, -0.71111111, -1.06666667,
