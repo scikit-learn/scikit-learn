@@ -1445,9 +1445,8 @@ Detection error tradeoff (DET)
 ------------------------------
 
 The function :func:`detection_error_tradeoff_curve` computes the
-`detection error tradeoff curve (DET) curve
-<https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_.
-Quoting Wikipedia :
+detection error tradeoff curve (DET) curve [WikipediaDET2017]_.
+Quoting Wikipedia:
 
   "A detection error tradeoff (DET) graph is a graphical plot of error rates for
   binary classification systems, plotting false reject rate vs. false accept
@@ -1477,12 +1476,12 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [4]_ that the reverse it not necessarily true and even more
+  It was shown by [Navratil2007]_ that the reverse it not necessarily true and even more
   general distributions are able produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
-  Therefor curves with similar classification performance might be easier to
+  Therefore curves with similar classification performance might be easier to
   distinguish on a DET plot.
 
 * With False Negative Rate being "inverse" to True Positive Rate the point
@@ -1493,11 +1492,12 @@ same classification task:
 
 DET curves are intuitive to read and hence allow quick visual assessment of a
 classifiers performance.
-Additionally DET curves can be consulted for threshold and operating point
-analysis if an comparison error types is required.
+Additionally DET curves can be consulted for threshold analysis and operating
+point selection.
+This is particularly helpful if a comparison of error types is required.
 
 One the other hand DET curves do not provide their metric as a single number.
-Therefor for either automated evaluation or comparison to other
+Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
 
@@ -1509,19 +1509,20 @@ better suited.
 
 .. topic:: References:
 
-  .. [1] `Wikipedia entry for Detection error tradeoff
-    <https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_
-  .. [2] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
-    `The DET Curve in Assessment of Detection Task Performance
-    <http://www.dtic.mil/docs/citations/ADA530509>`_,
-    NIST 1997.
-  .. [3] `2008 NIST Speaker Recognition Evaluation Results
-    <https://www.nist.gov/itl/iad/mig/2008-nist-speaker-recognition-evaluation-results>`_
-  .. [4] Navratil, Jiri & Klusacek, Dalibor. (2007). On Linear DETs.
-    Acoustics, Speech, and Signal Processing, 1988. ICASSP-88.,
-    1988 International Conference on. 4. IV-229 . 10.1109/ICASSP.2007.367205.
-  .. [5] `DET-Curve Plotting software for use with MATLAB
-    <https://www.nist.gov/file/65996>`_
+  .. [WikipediaDET2017] Wikipedia contributors. Detection error tradeoff.
+     Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
+     Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
+     Accessed February 19, 2018.
+  .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+     `The DET Curve in Assessment of Detection Task Performance
+     <http://www.dtic.mil/docs/citations/ADA530509>`_,
+     NIST 1997.
+  .. [Navratil2007] J. Navractil and D. Klusacek,
+     "`On Linear DETs,
+     <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
+     2007 IEEE International Conference on Acoustics,
+     Speech and Signal Processing - ICASSP '07, Honolulu,
+     HI, 2007, pp. IV-229-IV-232.
 
 .. _zero_one_loss:
 
