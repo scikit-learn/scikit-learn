@@ -283,12 +283,22 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     p_count = tps[-1]
     n_count = fps[-1]
 
-    # start with false positives is zero and stop with false negatives zero
-    # and reverse the outputs so list of false positives is decreasing
+    # start with false positives zero
+    first_ind = (
+        fps.searchsorted(fps[0], side='right') - 1
+        if fps.searchsorted(fps[0], side='right') > 0
+        else None
+    )
+    # stop with false negatives zero
     last_ind = tps.searchsorted(tps[-1]) + 1
-    first_ind = fps[::-1].searchsorted(fps[0])
-    sl = range(first_ind, last_ind)[::-1]
-    return fps[sl] / n_count, fns[sl] / p_count, thresholds[sl]
+    sl = slice(first_ind, last_ind)
+
+    # reverse the output such that list of false positives is decreasing
+    return (
+        fps[sl][::-1] / n_count,
+        fns[sl][::-1] / p_count,
+        thresholds[sl][::-1]
+    )
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
