@@ -862,8 +862,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     n_outputs_ : int
         Number of outputs.
 
-    layers_ : list, length >= 3
-        List of all layers with used neurons, e.g. [10, 30, 3].
+    layers_ : list, length n_layers (>=3)
+        List of all layers with number of used neurons, e.g. [10, 30, 3].
 
     out_activation_ : string
         Name of the output activation function.
@@ -1243,8 +1243,14 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     n_layers_ : int
         Number of layers.
 
+    n_inputs_ : int
+        Number of inputs.
+
     n_outputs_ : int
         Number of outputs.
+
+    layers_ : list, length n_layers (>=3)
+        List of all layers with number of used neurons, e.g. [10, 30, 3].
 
     out_activation_ : string
         Name of the output activation function.
