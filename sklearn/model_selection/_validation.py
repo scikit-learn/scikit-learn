@@ -15,6 +15,7 @@ from __future__ import division
 import warnings
 import numbers
 import time
+from traceback import format_exception_only
 
 import numpy as np
 import scipy.sparse as sp
@@ -474,9 +475,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-            warnings.warn("Classifier fit failed. The score on this train-test"
+            warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
-                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+                          "Details: \n%s" %
+                          (error_score, format_exception_only(type(e), e)[0]),
+                          FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
@@ -946,9 +949,6 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue
-
-
-permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 
 
 def _permutation_test_score(estimator, X, y, groups, cv, scorer):

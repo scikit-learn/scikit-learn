@@ -280,6 +280,13 @@ def test_oneclass_decision_function():
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
 
+def test_oneclass_score_samples():
+    X_train = [[1, 1], [1, 2], [2, 1]]
+    clf = svm.OneClassSVM().fit(X_train)
+    assert_array_equal(clf.score_samples([[2., 2.]]),
+                       clf.decision_function([[2., 2.]]) + clf.offset_)
+
+
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
     # We change clf.dual_coef_ at run time and expect .predict() to change
@@ -505,27 +512,25 @@ def test_bad_input():
 
 
 def test_unicode_kernel():
-    # Test that a unicode kernel name does not cause a TypeError on clf.fit
+    # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
         # Test unicode (same as str on python3)
-        clf = svm.SVC(kernel=unicode('linear'))
+        clf = svm.SVC(kernel=u'linear', probability=True)
         clf.fit(X, Y)
-
-        # Test ascii bytes (str is bytes in python2)
-        clf = svm.SVC(kernel=str('linear'))
-        clf.fit(X, Y)
-    else:
-        # Test unicode (str is unicode in python3)
-        clf = svm.SVC(kernel=str('linear'))
-        clf.fit(X, Y)
-
-        # Test ascii bytes (same as str on python2)
-        clf = svm.SVC(kernel=bytes('linear', 'ascii'))
-        clf.fit(X, Y)
+        clf.predict_proba(T)
+        svm.libsvm.cross_validation(iris.data,
+                                    iris.target.astype(np.float64), 5,
+                                    kernel=u'linear',
+                                    random_seed=0)
 
     # Test default behavior on both versions
-    clf = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='linear', probability=True)
     clf.fit(X, Y)
+    clf.predict_proba(T)
+    svm.libsvm.cross_validation(iris.data,
+                                iris.target.astype(np.float64), 5,
+                                kernel='linear',
+                                random_seed=0)
 
 
 def test_sparse_precomputed():

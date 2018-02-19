@@ -389,7 +389,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
-                 fit_params=None, n_jobs=1, iid=True,
+                 fit_params=None, n_jobs=1, iid='warn',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise', return_train_score=True):
 
@@ -577,6 +577,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
+
         if self.fit_params is not None:
             warnings.warn('"fit_params" as a constructor argument was '
                           'deprecated in version 0.19 and will be removed '
@@ -703,11 +704,21 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
+        iid = self.iid
+        if self.iid == 'warn':
+            if len(np.unique(test_sample_counts)) > 1:
+                warnings.warn("The default of the `iid` parameter will change "
+                              "from True to False in version 0.22 and will be"
+                              " removed in 0.24. This will change numeric"
+                              " results when test-set sizes are unequal.",
+                              DeprecationWarning)
+            iid = True
+
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,
-                   weights=test_sample_counts if self.iid else None)
+                   weights=test_sample_counts if iid else None)
             if self.return_train_score:
                 prev_keys = set(results.keys())
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
@@ -847,10 +858,18 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=True
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
+    iid : boolean, default='warn'
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds. If
+        False, return the average score across folds. Default is True, but
+        will change to False in version 0.21, to correspond to the standard
+        definition of cross-validation.
+
+        ..versionchanged:: 0.20
+            Parameter ``iid`` will change from True to False by default in
+            version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -949,13 +968,13 @@ class GridSearchCV(BaseSearchCV):
         +------------+-----------+------------+-----------------+---+---------+
         |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_t...|
         +============+===========+============+=================+===+=========+
-        |  'poly'    |     --    |      2     |        0.8      |...|    2    |
+        |  'poly'    |     --    |      2     |       0.80      |...|    2    |
         +------------+-----------+------------+-----------------+---+---------+
-        |  'poly'    |     --    |      3     |        0.7      |...|    4    |
+        |  'poly'    |     --    |      3     |       0.70      |...|    4    |
         +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.1   |     --     |        0.8      |...|    3    |
+        |  'rbf'     |     0.1   |     --     |       0.80      |...|    3    |
         +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.2   |     --     |        0.9      |...|    1    |
+        |  'rbf'     |     0.2   |     --     |       0.93      |...|    1    |
         +------------+-----------+------------+-----------------+---+---------+
 
         will be represented by a ``cv_results_`` dict of::
@@ -967,19 +986,19 @@ class GridSearchCV(BaseSearchCV):
                                         mask = [ True  True False False]...),
             'param_degree': masked_array(data = [2.0 3.0 -- --],
                                          mask = [False False  True  True]...),
-            'split0_test_score'  : [0.8, 0.7, 0.8, 0.9],
-            'split1_test_score'  : [0.82, 0.5, 0.7, 0.78],
-            'mean_test_score'    : [0.81, 0.60, 0.75, 0.82],
-            'std_test_score'     : [0.02, 0.01, 0.03, 0.03],
+            'split0_test_score'  : [0.80, 0.70, 0.80, 0.93],
+            'split1_test_score'  : [0.82, 0.50, 0.70, 0.78],
+            'mean_test_score'    : [0.81, 0.60, 0.75, 0.85],
+            'std_test_score'     : [0.01, 0.10, 0.05, 0.08],
             'rank_test_score'    : [2, 4, 3, 1],
-            'split0_train_score' : [0.8, 0.9, 0.7],
-            'split1_train_score' : [0.82, 0.5, 0.7],
-            'mean_train_score'   : [0.81, 0.7, 0.7],
-            'std_train_score'    : [0.03, 0.03, 0.04],
+            'split0_train_score' : [0.80, 0.92, 0.70, 0.93],
+            'split1_train_score' : [0.82, 0.55, 0.70, 0.87],
+            'mean_train_score'   : [0.81, 0.74, 0.70, 0.90],
+            'std_train_score'    : [0.01, 0.19, 0.00, 0.03],
             'mean_fit_time'      : [0.73, 0.63, 0.43, 0.49],
             'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
-            'mean_score_time'    : [0.007, 0.06, 0.04, 0.04],
-            'std_score_time'     : [0.001, 0.002, 0.003, 0.005],
+            'mean_score_time'    : [0.01, 0.06, 0.04, 0.04],
+            'std_score_time'     : [0.00, 0.00, 0.00, 0.01],
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
@@ -1065,7 +1084,7 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+                 n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score="warn"):
         super(GridSearchCV, self).__init__(
@@ -1166,10 +1185,18 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=True
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
+    iid : boolean, default='warn'
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds. If
+        False, return the average score across folds. Default is True, but
+        will change to False in version 0.21, to correspond to the standard
+        definition of cross-validation.
+
+        ..versionchanged:: 0.20
+            Parameter ``iid`` will change from True to False by default in
+            version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1247,11 +1274,11 @@ class RandomizedSearchCV(BaseSearchCV):
         +--------------+-------------+-------------------+---+---------------+
         | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
         +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |        0.8        |...|       2       |
+        |    'rbf'     |     0.1     |       0.80        |...|       2       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |        0.9        |...|       1       |
+        |    'rbf'     |     0.2     |       0.90        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |        0.7        |...|       1       |
+        |    'rbf'     |     0.3     |       0.70        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
 
         will be represented by a ``cv_results_`` dict of::
@@ -1260,19 +1287,19 @@ class RandomizedSearchCV(BaseSearchCV):
             'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.8, 0.9, 0.7],
-            'split1_test_score'  : [0.82, 0.5, 0.7],
-            'mean_test_score'    : [0.81, 0.7, 0.7],
-            'std_test_score'     : [0.02, 0.2, 0.],
+            'split0_test_score'  : [0.80, 0.90, 0.70],
+            'split1_test_score'  : [0.82, 0.50, 0.70],
+            'mean_test_score'    : [0.81, 0.70, 0.70],
+            'std_test_score'     : [0.01, 0.20, 0.00],
             'rank_test_score'    : [3, 1, 1],
-            'split0_train_score' : [0.8, 0.9, 0.7],
-            'split1_train_score' : [0.82, 0.5, 0.7],
-            'mean_train_score'   : [0.81, 0.7, 0.7],
-            'std_train_score'    : [0.03, 0.03, 0.04],
-            'mean_fit_time'      : [0.73, 0.63, 0.43, 0.49],
-            'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
-            'mean_score_time'    : [0.007, 0.06, 0.04, 0.04],
-            'std_score_time'     : [0.001, 0.002, 0.003, 0.005],
+            'split0_train_score' : [0.80, 0.92, 0.70],
+            'split1_train_score' : [0.82, 0.55, 0.70],
+            'mean_train_score'   : [0.81, 0.74, 0.70],
+            'std_train_score'    : [0.01, 0.19, 0.00],
+            'mean_fit_time'      : [0.73, 0.63, 0.43],
+            'std_fit_time'       : [0.01, 0.02, 0.01],
+            'mean_score_time'    : [0.01, 0.06, 0.04],
+            'std_score_time'     : [0.00, 0.00, 0.00],
             'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
@@ -1357,17 +1384,17 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
+                 fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score="warn"):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""

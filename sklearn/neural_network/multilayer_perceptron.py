@@ -300,17 +300,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self.best_loss_ = np.inf
 
     def _init_coef(self, fan_in, fan_out):
+        # Use the initialization method recommended by
+        # Glorot et al.
+        factor = 6.
         if self.activation == 'logistic':
-            # Use the initialization method recommended by
-            # Glorot et al.
-            init_bound = np.sqrt(2. / (fan_in + fan_out))
-        elif self.activation in ('identity', 'tanh', 'relu'):
-            init_bound = np.sqrt(6. / (fan_in + fan_out))
-        else:
-            # this was caught earlier, just to make sure
-            raise ValueError("Unknown activation function %s" %
-                             self.activation)
+            factor = 2.
+        init_bound = np.sqrt(factor / (fan_in + fan_out))
 
+        # Generate weights and bias:
         coef_init = self._random_state.uniform(-init_bound, init_bound,
                                                (fan_in, fan_out))
         intercept_init = self._random_state.uniform(-init_bound, init_bound,

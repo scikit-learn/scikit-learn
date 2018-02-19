@@ -14,8 +14,7 @@ from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
 from .robust_covariance import fast_mcd, MinCovDet
 from .graph_lasso_ import graph_lasso, GraphLasso, GraphLassoCV,\
     graphical_lasso, GraphicalLasso, GraphicalLassoCV
-
-from .outlier_detection import EllipticEnvelope
+from .elliptic_envelope import EllipticEnvelope
 
 
 __all__ = ['EllipticEnvelope',

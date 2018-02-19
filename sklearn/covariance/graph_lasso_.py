@@ -520,7 +520,7 @@ class GraphicalLassoCV(GraphicalLasso):
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
 
-    assume_centered : Boolean
+    assume_centered : boolean
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.

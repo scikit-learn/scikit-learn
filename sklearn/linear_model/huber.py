@@ -222,7 +222,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True)

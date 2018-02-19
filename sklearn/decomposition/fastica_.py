@@ -15,6 +15,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..externals.six import moves
 from ..externals.six import string_types
@@ -116,7 +117,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
             break
     else:
         warnings.warn('FastICA did not converge. Consider increasing '
-                      'tolerance or the maximum number of iterations.')
+                      'tolerance or the maximum number of iterations.',
+                      ConvergenceWarning)
 
     return W, ii + 1
 

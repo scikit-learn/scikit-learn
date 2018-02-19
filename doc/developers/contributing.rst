@@ -209,96 +209,86 @@ Contributing pull requests
 It is recommended to check that your contribution complies with the following
 rules before submitting a pull request:
 
-    * Follow the `coding-guidelines`_ (see below). To make sure that
-      your PR does not add PEP8 violations you can run
-      `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
-      Unix-like system.
+* Follow the `coding-guidelines`_ (see below). To make sure that
+  your PR does not add PEP8 violations you can run
+  `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+  Unix-like system.
 
-    * When applicable, use the validation tools and other code in the
-      ``sklearn.utils`` submodule.  A list of utility routines available
-      for developers can be found in the :ref:`developers-utils` page.
+* When applicable, use the validation tools and other code in the
+  ``sklearn.utils`` submodule.  A list of utility routines available
+  for developers can be found in the :ref:`developers-utils` page.
 
-    * Give your pull request a helpful title that summarises what your
-      contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
-      "Fix #<ISSUE NUMBER>" is not enough.
+* Give your pull request a helpful title that summarises what your
+  contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
+  "Fix #<ISSUE NUMBER>" is not enough.
 
-    * Often pull requests resolve one or more other issues (or pull requests).
-      If merging your pull request means that some other issues/PRs should
-      be closed, you should `use keywords to create link to them
-      <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-      (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-      one is preceded by a keyword). Upon merging, those issues/PRs will
-      automatically be closed by GitHub. If your pull request is simply
-      related to some other issues/PRs, create a link to them without using
-      the keywords (e.g., ``See also #1234``).
-    
-    * All public methods should have informative docstrings with sample
-      usage presented as doctests when appropriate.
+* Often pull requests resolve one or more other issues (or pull requests).
+  If merging your pull request means that some other issues/PRs should
+  be closed, you should `use keywords to create link to them
+  <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+  (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+  one is preceded by a keyword). Upon merging, those issues/PRs will
+  automatically be closed by GitHub. If your pull request is simply
+  related to some other issues/PRs, create a link to them without using
+  the keywords (e.g., ``See also #1234``).
 
-    * Please prefix the title of your pull request with ``[MRG]`` if the
-      contribution is complete and should be subjected to a detailed review.
-      Two core developers will review your code and change the prefix of the pull
-      request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
-      for merging. An incomplete contribution -- where you expect to do more
-      work before receiving a full review -- should be prefixed ``[WIP]`` (to
-      indicate a work in progress) and changed to ``[MRG]`` when it matures.
-      WIPs may be useful to: indicate you are working on something to avoid
-      duplicated work, request broad review of functionality or API, or seek
-      collaborators. WIPs often benefit from the inclusion of a
-      `task list
-      <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
-      in the PR description.
+* All public methods should have informative docstrings with sample
+  usage presented as doctests when appropriate.
 
-    * All other tests pass when everything is rebuilt from scratch. On
-      Unix-like systems, check with (from the toplevel source folder)::
+* Please prefix the title of your pull request with ``[MRG]`` if the
+  contribution is complete and should be subjected to a detailed review.
+  Two core developers will review your code and change the prefix of the pull
+  request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
+  for merging. An incomplete contribution -- where you expect to do more
+  work before receiving a full review -- should be prefixed ``[WIP]`` (to
+  indicate a work in progress) and changed to ``[MRG]`` when it matures.
+  WIPs may be useful to: indicate you are working on something to avoid
+  duplicated work, request broad review of functionality or API, or seek
+  collaborators. WIPs often benefit from the inclusion of a
+  `task list
+  <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
+  in the PR description.
 
-        $ make
+* All other tests pass when everything is rebuilt from scratch. On
+  Unix-like systems, check with (from the toplevel source folder)::
 
-    * When adding additional functionality, provide at least one example script
-      in the ``examples/`` folder. Have a look at other examples for reference.
-      Examples should demonstrate why the new functionality is useful in
-      practice and, if possible, compare it to other methods available in
-      scikit-learn.
+    $ make
 
-    * Documentation and high-coverage tests are necessary for enhancements to be
-      accepted. Bug-fixes or new features should be provided with
-      `non-regression tests
-      <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-      verify the correct behavior of the fix or feature. In this manner, further
-      modifications on the code base are granted to be consistent with the
-      desired behavior. For the case of bug fixes, at the time of the PR, the
-      non-regression tests should fail for the code base in the master branch
-      and pass for the PR code.
+* When adding additional functionality, provide at least one example script
+  in the ``examples/`` folder. Have a look at other examples for reference.
+  Examples should demonstrate why the new functionality is useful in
+  practice and, if possible, compare it to other methods available in
+  scikit-learn.
 
-    * At least one paragraph of narrative documentation with links to
-      references in the literature (with PDF links when possible) and
-      the example. For more details on writing and building the
-      documentation, see the :ref:`contribute_documentation` section.
+* Documentation and high-coverage tests are necessary for enhancements to be
+  accepted. Bug-fixes or new features should be provided with
+  `non-regression tests
+  <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+  verify the correct behavior of the fix or feature. In this manner, further
+  modifications on the code base are granted to be consistent with the
+  desired behavior. For the case of bug fixes, at the time of the PR, the
+  non-regression tests should fail for the code base in the master branch
+  and pass for the PR code.
+
+* At least one paragraph of narrative documentation with links to
+  references in the literature (with PDF links when possible) and
+  the example. For more details on writing and building the
+  documentation, see the :ref:`contribute_documentation` section.
 
 You can also check for common programming errors with the following tools:
 
-    * Code with a good unittest coverage (at least 90%, better 100%), check
-      with::
+* Code with a good unittest coverage (at least 90%, better 100%), check
+  with::
 
-        $ pip install nose coverage
-        $ nosetests --with-coverage path/to/tests_for_package
+    $ pip install pytest pytest-cov
+    $ pytest --cov sklearn path/to/tests_for_package
 
-      see also :ref:`testing_coverage`
+  see also :ref:`testing_coverage`
 
-    * No pyflakes warnings, check with::
+* No flake8 warnings, check with::
 
-        $ pip install pyflakes
-        $ pyflakes path/to/module.py
-
-    * No PEP8 warnings, check with::
-
-        $ pip install pep8
-        $ pep8 path/to/module.py
-
-    * AutoPEP8 can help you fix some of the easy redundant errors::
-
-        $ pip install autopep8
-        $ autopep8 path/to/pep8.py
+    $ pip install flake8
+    $ flake8 path/to/module.py
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -359,7 +349,7 @@ following rules before submitting:
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
    `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published>`_.
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -428,19 +418,39 @@ Documentation
 
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc. reStructuredText
-documents live in the source code repository under the doc/ directory.
-
+documents live in the source code repository under the ``doc/`` directory.
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make html`` from the doc/ directory. Alternatively,
-``make html-noplot`` can be used to quickly generate the documentation without
-the example gallery. The resulting HTML files will be placed in _build/html/
-and are viewable in a web browser. See the README file in the doc/ directory
-for more information.
+HTML output by building the documentation website.
 
-For building the documentation, you will need `sphinx
-<http://www.sphinx-doc.org/en/stable/>`_,
-`matplotlib <http://matplotlib.org>`_ and
-`pillow <http://pillow.readthedocs.io/en/latest/>`_.
+**Building the documentation**
+
+Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
+``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
+
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
+
+It also requires having the version of scikit-learn installed that corresponds
+to the documentation, e.g.::
+
+    pip install --editable ..
+
+To generate the full web site, including the example gallery::
+
+    make html
+
+Generating the example gallery will run all our examples which takes a
+while. To save some time, you can use:
+    - ``make html-noplot``: this will generate the documentation without the
+      example gallery. This is useful when changing a docstring for example.
+    - ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
+      matching ``your_regex_goes_here`` will be run. This is particularly
+      useful if you are modifying a few examples.
+
+That should create all the documentation in the ``_build/html/stable`` directory.
+
+To build the PDF manual, run::
+
+    make latexpdf
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -469,38 +479,40 @@ documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
-You may also be asked to show your changes when it's built. When you create
-a pull request or make changes in an existing one modifying the docs, CircleCI
-automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following URL:
+When you change the documentation in a pull request, CircleCI automatically
+builds it. To view the documentation generated by CircleCI:
 
-``http://scikit-learn.org/circle?{BUILD_NUMBER}``
+* navigate to the bottom of your pull request page to see the CI
+  statuses. You may need to click on "Show all checks" to see all the CI
+  statuses.
+* click on the CircleCI status with "python3" in the title.
+* add ``#artifacts`` at the end of the URL. Note: you need to wait for the
+  CircleCI build to finish before being able to look at the artifacts.
+* once the artifacts are visible, navigate to ``doc/_changed.html`` to see a
+  list of documentation pages that are likely to be affected by your pull
+  request. Navigate to ``doc/index.html`` to see the full generated html
+  documentation.
 
-We attempt to assemble a more precise set of changed files in the
-documentation at:
-
-``http://scikit-learn.org/circle?{BUILD_NUMBER}/_changed.html``
-
-Note: When you visit the details page of the CircleCI tests, you can find your
-BUILD_NUMBER mentioned as 'build #' which is different from your pull request
-number, which is presented as 'pull/#'.
+If you often need to look at the documentation generated by CircleCI, e.g. when
+reviewing pull requests, you may find :ref:`this tip
+<viewing_rendered_html_documentation>` very handy.
 
 Finally, follow the formatting rules below to make it consistently good:
 
-    * Add "See also" in docstrings for related classes/functions.
+* Add "See also" in docstrings for related classes/functions.
 
-    * "See also" in docstrings should be one line per reference,
-      with a colon and an explanation, for example::
+* "See also" in docstrings should be one line per reference,
+  with a colon and an explanation, for example::
 
-        See also
-        --------
-        SelectKBest : Select features based on the k highest scores.
-        SelectFpr : Select features based on a false positive rate test.
+    See also
+    --------
+    SelectKBest : Select features based on the k highest scores.
+    SelectFpr : Select features based on a false positive rate test.
 
-    * For unwritten formatting rules, try to follow existing good works:
+* For unwritten formatting rules, try to follow existing good works:
 
-        * For "References" in docstrings, see the Silhouette Coefficient
-          (:func:`sklearn.metrics.silhouette_score`).
+    * For "References" in docstrings, see the Silhouette Coefficient
+      (:func:`sklearn.metrics.silhouette_score`).
 
 .. warning:: **Sphinx version**
 
@@ -519,13 +531,13 @@ Testing and improving test coverage
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
+purpose, we use the `pytest <https://docs.pytest.org>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
-Alternatively, running 'nosetests' in a folder will run all the tests of
+Alternatively, running 'pytest' in a folder will run all the tests of
 the corresponding subpackages.
 
 We expect code coverage of new features to be at least around 90%.
@@ -533,7 +545,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <https://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+   <https://pypi.python.org/pypi/coverage>`_ package in addition to pytest.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -611,32 +623,32 @@ follow it.
 
 In addition, we add the following guidelines:
 
-    * Use underscores to separate words in non class names: ``n_samples``
-      rather than ``nsamples``.
+* Use underscores to separate words in non class names: ``n_samples``
+  rather than ``nsamples``.
 
-    * Avoid multiple statements on one line. Prefer a line return after
-      a control flow statement (``if``/``for``).
+* Avoid multiple statements on one line. Prefer a line return after
+  a control flow statement (``if``/``for``).
 
-    * Use relative imports for references inside scikit-learn.
+* Use relative imports for references inside scikit-learn.
 
-    * Unit tests are an exception to the previous rule;
-      they should use absolute imports, exactly as client code would.
-      A corollary is that, if ``sklearn.foo`` exports a class or function
-      that is implemented in ``sklearn.foo.bar.baz``,
-      the test should import it from ``sklearn.foo``.
+* Unit tests are an exception to the previous rule;
+  they should use absolute imports, exactly as client code would.
+  A corollary is that, if ``sklearn.foo`` exports a class or function
+  that is implemented in ``sklearn.foo.bar.baz``,
+  the test should import it from ``sklearn.foo``.
 
-    * **Please don't use** ``import *`` **in any case**. It is considered harmful
-      by the `official Python recommendations
-      <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
-      It makes the code harder to read as the origin of symbols is no
-      longer explicitly referenced, but most important, it prevents
-      using a static analysis tool like `pyflakes
-      <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
-      find bugs in scikit-learn.
+* **Please don't use** ``import *`` **in any case**. It is considered harmful
+  by the `official Python recommendations
+  <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
+  It makes the code harder to read as the origin of symbols is no
+  longer explicitly referenced, but most important, it prevents
+  using a static analysis tool like `pyflakes
+  <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
+  find bugs in scikit-learn.
 
-    * Use the `numpy docstring standard
-      <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
-      in all your docstrings.
+* Use the `numpy docstring standard
+  <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
+  in all your docstrings.
 
 
 A good example of code that we like can be found `here
@@ -731,6 +743,8 @@ The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
+
+.. _contributing_deprecation:
 
 Deprecation
 -----------
@@ -871,6 +885,9 @@ from high-level questions to a more detailed check-list.
   :ref:`contribute_documentation` section for more details), and are the plots
   instructive?
 
+:ref:`saved_replies` includes some frequent comments that reviewers may make.
+
+.. _api_overview:
 
 APIs of scikit-learn objects
 ============================
@@ -879,6 +896,9 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object must implement.
+
+Elements of the scikit-learn API are described more definitively in the
+:ref:`glossary`.
 
 Different objects
 -----------------
@@ -1103,7 +1123,7 @@ the correct interface more easily.
 
 .. topic:: ``BaseEstimator`` and mixins:
 
-    We tend to use use "duck typing", so building an estimator which follows
+    We tend to use "duck typing", so building an estimator which follows
     the API suffices for compatibility, without needing to inherit from or
     even import any scikit-learn classes.
 
@@ -1238,7 +1258,9 @@ is implemented using the ``_estimator_type`` attribute, which takes a string val
 It should be ``"classifier"`` for classifiers and ``"regressor"`` for
 regressors and ``"clusterer"`` for clustering methods, to work as expected.
 Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
-will set the attribute automatically.
+will set the attribute automatically.  When a meta-estimator needs to distinguish
+among estimator types, instead of checking ``_estimator_type`` directly, helpers
+like :func:`base.is_classifier` should be used.
 
 Working notes
 -------------

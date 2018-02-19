@@ -1,6 +1,5 @@
 
 ..
-
     This file maps contributor names to their URLs. It should mostly be used
     for core contributors, and occasionally for contributors who do not want
     their github page to be their URL target. Historically it was used to
@@ -107,7 +106,7 @@
 
 .. _Eric Martin: http://www.ericmart.in
 
-.. _Nicolas Goix: https://perso.telecom-paristech.fr/~goix/
+.. _Nicolas Goix: http://ngoix.github.io
 
 .. _Sebastian Raschka: http://sebastianraschka.com
 
@@ -150,3 +149,7 @@
 .. _Neeraj Gangwar: http://neerajgangwar.in
 
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Joris Van den Bossche: https://github.com/jorisvandenbossche
+
+.. _Roman Yurchak: https://github.com/rth

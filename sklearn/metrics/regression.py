@@ -45,9 +45,9 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     Parameters
     ----------
-    y_true : array-like,
+    y_true : array-like
 
-    y_pred : array-like,
+    y_pred : array-like
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None

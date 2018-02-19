@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin
+from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
@@ -208,7 +208,6 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
-            Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
@@ -393,7 +392,6 @@ class LinearSVR(LinearModel, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
@@ -573,6 +571,8 @@ class SVC(BaseSVC):
 
     """
 
+    _impl = 'c_svc'
+
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
@@ -580,7 +580,7 @@ class SVC(BaseSVC):
                  random_state=None):
 
         super(SVC, self).__init__(
-            impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -727,13 +727,15 @@ class NuSVC(BaseSVC):
         liblinear.
     """
 
+    _impl = 'nu_svc'
+
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  shrinking=True, probability=False, tol=1e-3, cache_size=200,
                  class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
-            impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -844,12 +846,15 @@ class SVR(BaseLibSVM, RegressorMixin):
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
     """
+
+    _impl = 'epsilon_svr'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
-            'epsilon_svr', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
@@ -957,18 +962,20 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         epsilon Support Vector Machine for regression implemented with libsvm.
     """
 
+    _impl = 'nu_svr'
+
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='auto', coef0=0.0, shrinking=True, tol=1e-3,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
-            'nu_svr', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
 
 
-class OneClassSVM(BaseLibSVM):
+class OneClassSVM(BaseLibSVM, OutlierMixin):
     """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.
@@ -1049,13 +1056,22 @@ class OneClassSVM(BaseLibSVM):
     intercept_ : array, shape = [1,]
         Constant in the decision function.
 
+    offset_ : float
+        Offset used to define the decision function from the raw scores.
+        We have the relation: decision_function = score_samples - offset_.
+        The offset is the opposite of intercept_ and is provided for
+        consistency with other outlier detection algorithms.
+
     """
+
+    _impl = 'one_class'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
-            'one_class', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
+            kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
@@ -1076,7 +1092,6 @@ class OneClassSVM(BaseLibSVM):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         -----
@@ -1090,6 +1105,7 @@ class OneClassSVM(BaseLibSVM):
 
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
+        self.offset_ = -self._intercept_
         return self
 
     def decision_function(self, X):
@@ -1103,11 +1119,25 @@ class OneClassSVM(BaseLibSVM):
 
         Returns
         -------
-        X : array-like, shape (n_samples,)
+        dec : array-like, shape (n_samples,)
             Returns the decision function of the samples.
         """
-        dec = self._decision_function(X)
+        dec = self._decision_function(X).ravel()
         return dec
+
+    def score_samples(self, X):
+        """Raw scoring function of the samples.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        score_samples : array-like, shape (n_samples,)
+            Returns the (unshifted) scoring function of the samples.
+        """
+        return self.decision_function(X) + self.offset_
 
     def predict(self, X):
         """
