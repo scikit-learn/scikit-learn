@@ -315,38 +315,36 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
+        # Validate the passed input data:
         X, y = self._validate_input(X, y, incremental)
 
-        # Make sure self.hidden_layer_sizes is a list
-        hidden_layer_sizes = self.hidden_layer_sizes
-        if not hasattr(hidden_layer_sizes, "__iter__"):
-            hidden_layer_sizes = [hidden_layer_sizes]
-        hidden_layer_sizes = list(hidden_layer_sizes)
-
-        # Validate input parameters.
-        self._validate_hyperparameters()
-        if np.any(np.array(hidden_layer_sizes) <= 0):
-            raise ValueError("hidden_layer_sizes must be > 0, got %s." %
-                             hidden_layer_sizes)
-
-        n_samples, n_features = X.shape
-
-        # Ensure y is 2D
-        if y.ndim == 1:
-            y = y.reshape((-1, 1))
-
-        self.n_outputs_ = y.shape[1]
-
-        layer_units = ([n_features] + hidden_layer_sizes +
-                       [self.n_outputs_])
-
-        # check random state
+        # Check random state:
         self._random_state = check_random_state(self.random_state)
 
-        if not hasattr(self, 'coefs_') or (not self.warm_start and not
-                                           incremental):
-            # First time training the model
-            self._initialize(y, layer_units)
+        # Prepare the passed input data:
+        if y.ndim == 1:
+            y = y.reshape((-1, 1))
+        if y.shape[1] <= 0:
+            raise ValueError("Output layer must be > 0"
+                             ", got %s." % y.shape[1])
+
+        # Validate the hyperparameters:
+        self._validate_hyperparameters()
+
+        layers = self.hidden_layer_sizes
+        layers = [layers] if not hasattr(layers, "__iter__") else layers
+        layers = list(layers)
+
+        # Extract meta data:
+        n_samples, n_features = X.shape
+        self.n_inputs_ = n_features
+        self.n_outputs_ = y.shape[1]
+        self.layers_ = [self.n_inputs_] + layers + [self.n_outputs_]
+
+        is_initialized = hasattr(self, 'coefs_')
+        if not is_initialized or (not self.warm_start and not incremental):
+            # First time training the model:
+            self._initialize(y, self.layers_)
 
         # lbfgs does not support mini-batches
         if self.solver == 'lbfgs':
@@ -359,31 +357,38 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                               "sample size. It is going to be clipped")
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
-        # Initialize lists
+        # Initialize lists:
         activations = [X]
         activations.extend(np.empty((batch_size, n_fan_out))
-                           for n_fan_out in layer_units[1:])
+                           for n_fan_out in self.layers_[1:])
         deltas = [np.empty_like(a_layer) for a_layer in activations]
 
         coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
-                      n_fan_out_ in zip(layer_units[:-1],
-                                        layer_units[1:])]
+                      n_fan_out_ in zip(self.layers_[:-1],
+                                        self.layers_[1:])]
 
         intercept_grads = [np.empty(n_fan_out_) for n_fan_out_ in
-                           layer_units[1:]]
+                           self.layers_[1:]]
 
-        # Run the Stochastic optimization solver
+        # Run the Stochastic optimization solver:
         if self.solver in _STOCHASTIC_SOLVERS:
             self._fit_stochastic(X, y, activations, deltas, coef_grads,
-                                 intercept_grads, layer_units, incremental)
+                                 intercept_grads, self.layers_, incremental)
 
-        # Run the LBFGS solver
+        # Run the LBFGS solver:
         elif self.solver == 'lbfgs':
             self._fit_lbfgs(X, y, activations, deltas, coef_grads,
-                            intercept_grads, layer_units)
+                            intercept_grads, self.layers_)
         return self
 
     def _validate_hyperparameters(self):
+        hidden_layer_sizes = self.hidden_layer_sizes
+        if not hasattr(hidden_layer_sizes, "__iter__"):
+            hidden_layer_sizes = [hidden_layer_sizes]
+        hidden_layer_sizes = list(hidden_layer_sizes)
+        if np.any(np.array(hidden_layer_sizes) <= 0):
+            raise ValueError("hidden_layer_sizes must be > 0, got %s." %
+                             hidden_layer_sizes)
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False, got %s." %
                              self.shuffle)
@@ -418,8 +423,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.n_iter_no_change <= 0:
             raise ValueError("n_iter_no_change must be > 0, got %s."
                              % self.n_iter_no_change)
-
-        # raise ValueError if not registered
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
         if self.activation not in supported_activations:
             raise ValueError("The activation '%s' is not supported. Supported "
@@ -664,22 +667,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
-        # Make sure self.hidden_layer_sizes is a list
-        hidden_layer_sizes = self.hidden_layer_sizes
-        if not hasattr(hidden_layer_sizes, "__iter__"):
-            hidden_layer_sizes = [hidden_layer_sizes]
-        hidden_layer_sizes = list(hidden_layer_sizes)
-
-        layer_units = [X.shape[1]] + hidden_layer_sizes + \
-            [self.n_outputs_]
-
-        # Initialize layers
+        # Initialize layers:
         activations = [X]
-
         for i in range(self.n_layers_ - 1):
-            activations.append(np.empty((X.shape[0],
-                                         layer_units[i + 1])))
-        # forward propagate
+            activations.append(np.empty((X.shape[0], self.layers_[i + 1])))
+
+        # Forward propagate:
         self._forward_pass(activations)
         y_pred = activations[-1]
 
@@ -857,8 +850,14 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     n_layers_ : int
         Number of layers.
 
+    n_inputs_ : int
+        Number of inputs.
+
     n_outputs_ : int
         Number of outputs.
+
+    layers_ : list, length >= 3
+        List of all layers with used neurons, e.g. [10, 30, 3].
 
     out_activation_ : string
         Name of the output activation function.
