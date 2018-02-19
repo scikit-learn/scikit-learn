@@ -313,12 +313,14 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
                                               self.strategy,
-                                              self.missing_values)
+                                              self.missing_values,
+                                              self.axis)
 
             else:
                 statistics = self._dense_fit(X,
                                              self.strategy,
-                                             self.missing_values)
+                                             self.missing_values,
+                                             self.axis)
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
