@@ -135,7 +135,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             raise ValueError("Can only use these strategies: {0} "
                              " got strategy={1}".format(allowed_strategies,
                                                         self.strategy))
-        if self.axis:
+        if self.axis not in [0, 1]:
             raise ValueError("Can only impute missing values on axis 0 and 1, "
                              " got axis={0}".format(self.axis))
 
