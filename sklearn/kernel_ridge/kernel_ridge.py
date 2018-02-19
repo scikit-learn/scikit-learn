@@ -140,6 +140,8 @@ class _BaseKernelRidge(object):
             self.label_encoder_ = LabelBinarizer()
             y_ = self.label_encoder_.fit_transform(y)
             self.classes_ = self.label_encoder_.classes_
+            if len(self.classes_) == 2:
+                ravel = True
         else:
             raise ValueError('BaseKernelRidge cannot be used as'
                              ' a estimator')

@@ -95,26 +95,12 @@ def test_tweak_params():
     # Make sure some tweaking of parameters works.
     clf = KernelRidgeClassifier(kernel='linear', gamma=0.0, alpha=0.5)
     clf.fit(X, Y)
-    # dual_coef = np.array([[0.47826087, 0.52173913],
-    #                       [0.65217391, 0.34782609],
-    #                       [0.47826087, 0.52173913],
-    #                       [0.34782609, 0.65217391],
-    #                       [0.52173913, 0.47826087],
-    #                       [0.52173913, 0.47826087]])
-    dual_coef = np.array([[1.06666667],
-                          [0.71111111],
-                          [1.06666667],
-                          [1.28888889],
-                          [0.93333333],
-                          [0.93333333]])
+    dual_coef = np.array([1.06666667, 0.71111111, 1.06666667,
+                          1.28888889, 0.93333333, 0.93333333])
     assert_almost_equal(clf.dual_coef_, dual_coef, decimal=8)
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    dual_coef = np.array([[-1.06666667],
-                          [-0.71111111],
-                          [-1.06666667],
-                          [-1.28888889],
-                          [-3.93333333],
-                          [-0.93333333]])
+    dual_coef = np.array([-1.06666667, -0.71111111, -1.06666667,
+                          -1.28888889, -3.93333333, -0.93333333])
     clf.dual_coef_ = dual_coef
     assert_almost_equal(clf.predict([[-.1, -.1]]), [2])
 
@@ -198,11 +184,3 @@ def test_krc_clone_with_callable_kernel():
 def test_krc_bad_kernel():
     clf = KernelRidgeClassifier(kernel=lambda x, y: x)
     assert_raises(ValueError, clf.fit, X, Y)
-
-
-def test_decision_function():
-    # Test decision_function
-    krc = KernelRidgeClassifier(kernel='linear', alpha=1)
-    clf = krc.fit(iris.data, iris.target)
-    dec = np.dot(np.dot(iris.data, clf.X_fit_.T), clf.dual_coef_)
-    assert_array_almost_equal(dec, clf.decision_function(iris.data))

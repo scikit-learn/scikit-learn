@@ -108,25 +108,27 @@ class KernelRidgeClassifier(_BaseKernelRidge, BaseEstimator, ClassifierMixin):
                              coef0=coef0,
                              kernel_params=kernel_params)
 
-    def decision_function(self, X):
-        """Predict confidence scores for samples.
-
-        The confidence score for a sample is the signed distance of that
-        sample to the hyperplane.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
-            Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for self.classes_[1] where >0 means this
-            class would be predicted.
-        """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
-        K = self._get_kernel(X, self.X_fit_)
-        y = np.dot(K, self.dual_coef_)
-        return y
+    # def decision_function(self, X):
+    #     """Predict confidence scores for samples.
+    #
+    #     The confidence score for a sample is the signed distance of that
+    #     sample to the hyperplane.
+    #
+    #     Parameters
+    #     ----------
+    #     X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+    #         Samples.
+    #
+    #     Returns
+    #     -------
+    #     array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
+    #         Confidence scores per (sample, class) combination. In the binary
+    #         case, confidence score for self.classes_[1] where >0 means this
+    #         class would be predicted.
+    #     """
+    #     check_is_fitted(self, ["X_fit_", "dual_coef_"])
+    #     K = self._get_kernel(X, self.X_fit_)
+    #     y = np.dot(K, self.dual_coef_)
+    #     # if y.shape[1] == 1:
+    #     #     y = y.ravel()
+    #     return y
