@@ -517,11 +517,17 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
         # in the future np.flexible dtypes will be handled like object dtypes
-        if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
-            warnings.warn(
-                "Beginning in version 0.22, arrays of strings will be "
-                "interpreted as decimal numbers if parameter 'dtype' is "
-                "'numeric'.", DeprecationWarning)
+        if dtype_numeric:
+            if np.issubdtype(array.dtype, np.bytes_):
+                warnings.warn(
+                    "Beginning in version 0.22, byte arrays will be "
+                    "rejected if parameter 'dtype' is 'numeric'.",
+                    DeprecationWarning)
+            elif np.issubdtype(array.dtype, np.flexible):
+                warnings.warn(
+                    "Beginning in version 0.22, arrays of strings will be "
+                    "interpreted as decimal numbers if parameter 'dtype' is "
+                    "'numeric'.", DeprecationWarning)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":

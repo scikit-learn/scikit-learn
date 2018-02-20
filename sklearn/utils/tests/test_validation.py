@@ -302,8 +302,7 @@ def test_check_array():
     X_byte = [[b'a', b'b'], [b'c', b'd']]
     assert_warns_message(
         DeprecationWarning,
-        "arrays of strings will be interpreted as decimal numbers "
-        "if parameter 'dtype' is 'numeric'.",
+        "byte arrays will be rejected if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_byte, dtype='S1'), "numeric")
     assert_warns_message(
         DeprecationWarning,
