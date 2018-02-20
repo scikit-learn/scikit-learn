@@ -135,8 +135,6 @@ class _BaseKernelRidge(object):
             if self.alpha <= 0:
                 raise ValueError('alpha must be positive')
 
-            # y is going to be encoded by zero arrays
-            # with 1 in a position assigned to a label
             self.label_encoder_ = LabelBinarizer(neg_label=-1, pos_label=1)
             y_ = self.label_encoder_.fit_transform(y)
             self.classes_ = self.label_encoder_.classes_
