@@ -6,15 +6,18 @@
 # License: BSD 3 clause
 
 import numpy as np
+from abc import ABCMeta
 
+from ..base import BaseEstimator
 from ..metrics.pairwise import pairwise_kernels
 from ..linear_model.ridge import _solve_cholesky_kernel
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_is_fitted
 from ..preprocessing import LabelBinarizer
+from ..externals import six
 
 
-class _BaseKernelRidge(object):
+class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Kernel ridge regression and Kernel Ridge Classifier.
 
     Parameters
@@ -72,6 +75,8 @@ class _BaseKernelRidge(object):
         Kernel Ridge implemented for multiclass clasifications.
 
     """
+    _estimator_type = None
+
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
         self.alpha = alpha
