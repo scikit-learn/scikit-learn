@@ -369,18 +369,14 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             n_classes == 1
         """
         check_is_fitted(self, 'estimators_')
+        try:
+            T = np.array([est.decision_function(X).ravel()
+                          for est in self.estimators_]).T
+        except AttributeError:
+            T = np.array([e.predict_proba(X)[:, 1] * 2 - 1
+                          for e in self.estimators_]).T
         if len(self.estimators_) == 1:
-            try:
-                T = self.estimators_[0].decision_function(X)
-            except AttributeError:
-                T = self.estimators_[0].predict_proba(X)[:, 1] * 2 - 1
-        else:
-            try:
-                T = np.array([est.decision_function(X).ravel()
-                              for est in self.estimators_]).T
-            except AttributeError:
-                T = np.array([e.predict_proba(X)[:, 1] * 2 - 1
-                              for e in self.estimators_]).T
+            T = T.ravel()
         return T
 
     @property
