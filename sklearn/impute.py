@@ -145,17 +145,15 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             self.statistics_ = self._sparse_fit(X,
                                                 self.strategy,
-                                                self.missing_values,
-                                                self.axis)
+                                                self.missing_values)
         else:
             self.statistics_ = self._dense_fit(X,
                                                self.strategy,
-                                               self.missing_values,
-                                               self.axis)
+                                               self.missing_values)
 
         return self
 
-    def _sparse_fit(self, X, strategy, missing_values, axis):
+    def _sparse_fit(self, X, strategy, missing_values):
         """Fit the transformer on sparse data."""
         # Imputation is done "by column", so if we want to do it
         # by row we only need to convert the matrix to csr format.
@@ -232,7 +230,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
                 return most_frequent
 
-    def _dense_fit(self, X, strategy, missing_values, axis):
+    def _dense_fit(self, X, strategy, missing_values):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite=False)
         mask = _get_mask(X, missing_values)
@@ -270,9 +268,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             # See https://github.com/scipy/scipy/issues/2636
 
             # To be able access the elements by columns
-            if axis == 0:
-                X = X.transpose()
-                mask = mask.transpose()
+            X = X.transpose()
+            mask = mask.transpose()
 
             most_frequent = np.empty(X.shape[0])
 
@@ -309,14 +306,12 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
                                               self.strategy,
-                                              self.missing_values,
-                                              self.axis)
+                                              self.missing_values)
 
             else:
                 statistics = self._dense_fit(X,
                                              self.strategy,
-                                             self.missing_values,
-                                             self.axis)
+                                             self.missing_values)
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
