@@ -79,8 +79,9 @@ def test_krc_bad_kernel():
 
 
 def test_bad_input():
-    # Test that it gives proper exception on deficient input
-    # impossible value of C
+    # Test that it gives proper exception on negative alpha
+    # alpha cannot be negative because Kernel Ridge come from
+    # a minimization problem where all the terms must be positive
     assert_raises(ValueError, KernelRidgeClassifier(alpha=-0.5).fit, X, Y)
 
 
