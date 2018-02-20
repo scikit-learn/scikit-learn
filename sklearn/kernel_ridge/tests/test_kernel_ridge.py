@@ -1,8 +1,10 @@
 """
-Testing for Kernel Ridge Classifier
+Testing for Kernel Ridge
 (sklearn.kernel_ridge)
 
-Author: Carlos Perales <sir.perales@gmail.com>
+Authors: Mathieu Blondel <mathieu@mblondel.org>
+         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+         Carlos Perales <sir.perales@gmail.com>
 License: BSD 3 clause
 
 """
@@ -55,21 +57,20 @@ def test_unicode_kernel():
 def test_krc_clone_with_callable_kernel():
     # create KernelRidgeClassifier with callable linear kernel,
     # check that results are the same as with built-in linear kernel
-    KernelRidgeClassifier_callable = \
-        KernelRidgeClassifier(kernel=lambda x, y: np.dot(x, y.T))
+    krc_callable = KernelRidgeClassifier(kernel=lambda x, y: np.dot(x, y.T))
     # clone for checking clonability with lambda functions..
-    KernelRidgeClassifier_cloned = base.clone(KernelRidgeClassifier_callable)
-    KernelRidgeClassifier_cloned.fit(iris.data, iris.target)
+    krc_cloned = base.clone(krc_callable)
+    krc_cloned.fit(iris.data, iris.target)
 
-    KernelRidgeClassifier_builtin = KernelRidgeClassifier(kernel='linear')
-    KernelRidgeClassifier_builtin.fit(iris.data, iris.target)
+    krc_builtin = KernelRidgeClassifier(kernel='linear')
+    krc_builtin.fit(iris.data, iris.target)
 
-    assert_array_almost_equal(KernelRidgeClassifier_cloned.dual_coef_,
-                              KernelRidgeClassifier_builtin.dual_coef_)
-    assert_array_equal(KernelRidgeClassifier_cloned.predict(iris.data),
-                       KernelRidgeClassifier_builtin.predict(iris.data))
-    assert_array_almost_equal(KernelRidgeClassifier_cloned.predict(iris.data),
-                              KernelRidgeClassifier_builtin.predict(iris.data))
+    assert_array_almost_equal(krc_cloned.dual_coef_,
+                              krc_builtin.dual_coef_)
+    assert_array_equal(krc_cloned.predict(iris.data),
+                       krc_builtin.predict(iris.data))
+    assert_array_almost_equal(krc_cloned.predict(iris.data),
+                              krc_builtin.predict(iris.data))
 
 
 def test_krc_bad_kernel():
