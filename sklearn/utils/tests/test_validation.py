@@ -289,9 +289,11 @@ def test_check_array():
     X_str = [['a', 'b'], ['c', 'd']]
     assert_warns_message(
         DeprecationWarning,
+        lambda message:   # np may convert to dtype U or S so message can vary
         "arrays of strings will be interpreted as decimal numbers "
-        "if parameter 'dtype' is 'numeric'.",
-        check_array, X_str, "numeric")
+        "if parameter 'dtype' is 'numeric'." in message or
+        "byte arrays will be rejected if parameter 'dtype' is 'numeric'."
+        in message, check_array, X_str, "numeric")
     assert_warns_message(
         DeprecationWarning,
         "arrays of strings will be interpreted as decimal numbers "
