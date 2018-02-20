@@ -126,7 +126,21 @@ class KernelRidgeClassifier(ClassifierMixin, _BaseKernelRidge):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
-        K = self._get_kernel(X, self.X_fit_)
-        y = np.dot(K, self.dual_coef_)
-        return y
+        return super(KernelRidgeClassifier, self).predict(X=X)
+
+    def predict(self, X):
+        """Predict using the kernel ridge model,
+        from decision function.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Samples.
+
+        Returns
+        -------
+        C : array, shape = [n_samples] or [n_samples, n_targets]
+            Returns predicted values.
+        """
+        y = self.decision_function(X=X)
+        return self.label_encoder_.inverse_transform(y)

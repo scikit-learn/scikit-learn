@@ -175,10 +175,4 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         check_is_fitted(self, ["X_fit_", "dual_coef_"])
         K = self._get_kernel(X, self.X_fit_)
-        y = np.dot(K, self.dual_coef_)
-
-        if self._estimator_type == "classifier":
-            # Decoding
-            y = self.label_encoder_.inverse_transform(y)
-
-        return y
+        return np.dot(K, self.dual_coef_)
