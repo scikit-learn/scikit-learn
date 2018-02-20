@@ -74,6 +74,25 @@ def relu(X):
     np.clip(X, 0, np.finfo(X.dtype).max, out=X)
     return X
 
+def leaky_relu(X, alpha=0.01):
+    """Compute the leaky rectified linear unit function inplace.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    
+    alpha : float
+        The slope of the function when x < 0, default value is 0.01
+
+    Returns
+    -------
+    X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The transformed data.
+    """
+    np.clip(X, alpha*X, np.finfo(X.dtype).max, out=X)
+    return X
+
 
 def softmax(X):
     """Compute the K-way softmax function inplace.
@@ -96,7 +115,7 @@ def softmax(X):
 
 
 ACTIVATIONS = {'identity': identity, 'tanh': tanh, 'logistic': logistic,
-               'relu': relu, 'softmax': softmax}
+               'relu': relu, 'leaky_relu': leaky_relu, 'softmax': softmax}
 
 
 def inplace_identity_derivative(Z, delta):
@@ -168,11 +187,29 @@ def inplace_relu_derivative(Z, delta):
     """
     delta[Z == 0] = 0
 
+def inplace_leaky_relu_derivative(Z, delta, alpha=0.01):
+    """Apply the derivative of the leaky relu function.
+
+    It exploits the fact that the derivative is a simple function of the output
+    value from leaky rectified linear units activation function.
+
+    Parameters
+    ----------
+    Z : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The data which was output from the rectified linear units activation
+        function during the forward pass.
+
+    delta : {array-like}, shape (n_samples, n_features)
+         The backpropagated error signal to be modified inplace.
+    """
+    delta[Z < 0] = alpha
+
 
 DERIVATIVES = {'identity': inplace_identity_derivative,
                'tanh': inplace_tanh_derivative,
                'logistic': inplace_logistic_derivative,
-               'relu': inplace_relu_derivative}
+               'relu': inplace_relu_derivative,
+               'leaky_relu': inplace_leaky_relu_derivative}
 
 
 def squared_loss(y_true, y_pred):
