@@ -580,7 +580,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
-
+        See :term:`the Glossary <warm_start>`.
+        
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
