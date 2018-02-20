@@ -87,7 +87,8 @@ def test_bad_input():
 # Test for regression
 def test_kernel_ridge():
     pred = Ridge(alpha=1, fit_intercept=False).fit(X_reg, y_reg).predict(X_reg)
-    pred2 = KernelRidge(kernel="linear", alpha=1).fit(X_reg, y_reg).predict(X_reg)
+    pred2 = KernelRidge(kernel="linear",
+                        alpha=1).fit(X_reg, y_reg).predict(X_reg)
     assert_array_almost_equal(pred, pred2)
 
 
