@@ -3,8 +3,6 @@
 
 from .kernel_ridge import _BaseKernelRidge
 from ..base import ClassifierMixin
-from ..utils.validation import check_is_fitted
-import numpy as np
 
 
 class KernelRidgeClassifier(ClassifierMixin, _BaseKernelRidge):
