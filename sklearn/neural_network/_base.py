@@ -74,6 +74,7 @@ def relu(X):
     np.clip(X, 0, np.finfo(X.dtype).max, out=X)
     return X
 
+
 def leaky_relu(X, alpha=0.01):
     """Compute the leaky rectified linear unit function inplace.
 
@@ -186,6 +187,7 @@ def inplace_relu_derivative(Z, delta):
          The backpropagated error signal to be modified inplace.
     """
     delta[Z == 0] = 0
+
 
 def inplace_leaky_relu_derivative(Z, delta, alpha=0.01):
     """Apply the derivative of the leaky relu function.
