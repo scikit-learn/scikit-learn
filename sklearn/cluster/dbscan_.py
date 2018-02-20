@@ -43,7 +43,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by ``metrics.pairwise.pairwise_distances`` for its
+        the options allowed by :func:`metrics.pairwise_distances` for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
@@ -182,7 +182,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by ``metrics.pairwise.pairwise_distances`` for its
+        the options allowed by :func:`metrics.pairwise_distances` for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
