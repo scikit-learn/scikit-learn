@@ -130,7 +130,7 @@ class _BaseKernelRidge(object):
                 y_ = y_.reshape(-1, 1)
                 ravel = True
         elif self._estimator_type == "classifier":  # Multiclass classification
-            X, y = check_X_y(X, y)
+            X, y = check_X_y(X, y, accept_sparse=("csr", "csc"))
             # Check alpha
             if self.alpha <= 0:
                 raise ValueError('alpha must be positive')
