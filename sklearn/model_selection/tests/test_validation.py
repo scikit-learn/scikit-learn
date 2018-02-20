@@ -64,7 +64,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
@@ -731,7 +732,7 @@ def test_permutation_test_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     permutation_test_score(p, X, y, cv=5)
@@ -743,7 +744,7 @@ def test_cross_val_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     cross_val_score(p, X, y, cv=5)
@@ -854,8 +855,8 @@ def test_cross_val_predict_decision_function_shape():
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
     assert_raises_regex(ValueError,
-                        'Output shape \(599L?, 21L?\) of decision_function '
-                        'does not match number of classes \(7\) in fold. '
+                        r'Output shape \(599L?, 21L?\) of decision_function '
+                        r'does not match number of classes \(7\) in fold. '
                         'Irregular decision_function .*',
                         cross_val_predict, est, X, y,
                         cv=KFold(n_splits=3), method='decision_function')

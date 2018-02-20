@@ -7,6 +7,7 @@
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+from __future__ import division
 
 from time import time
 import numpy as np
@@ -119,7 +120,7 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
 
 
 def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
-                   skip_num_points=0):
+                   skip_num_points=0, compute_error=True):
     """t-SNE objective function: gradient of the KL divergence
     of p_ijs and q_ijs and the absolute error.
 
@@ -131,7 +132,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -144,6 +145,9 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
         This does not compute the gradient for points with indices below
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
+
+    compute_error: bool (optional, default:True)
+        If False, the kl_divergence is not computed and returns NaN.
 
     Returns
     -------
@@ -167,7 +171,11 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     # np.sum(x * y) because it calls BLAS
 
     # Objective: C (Kullback-Leibler divergence of P and Q)
-    kl_divergence = 2.0 * np.dot(P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+    if compute_error:
+        kl_divergence = 2.0 * np.dot(
+            P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+    else:
+        kl_divergence = np.nan
 
     # Gradient: dC/dY
     # pdist always returns double precision distances. Thus we need to take
@@ -184,7 +192,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
 
 def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
-                      angle=0.5, skip_num_points=0, verbose=False):
+                      angle=0.5, skip_num_points=0, verbose=False,
+                      compute_error=True):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
@@ -199,7 +208,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         Sparse approximate joint probability matrix, computed only for the
         k nearest-neighbors and symmetrized.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -225,6 +234,9 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     verbose : int
         Verbosity level.
 
+    compute_error: bool (optional, default:True)
+        If False, the kl_divergence is not computed and returns NaN.
+
     Returns
     -------
     kl_divergence : float
@@ -244,7 +256,8 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     grad = np.zeros(X_embedded.shape, dtype=np.float32)
     error = _barnes_hut_tsne.gradient(val_P, X_embedded, neighbors, indptr,
                                       grad, angle, n_components, verbose,
-                                      dof=degrees_of_freedom)
+                                      dof=degrees_of_freedom,
+                                      compute_error=compute_error)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
     grad *= c
@@ -336,6 +349,10 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
+        check_convergence = (i + 1) % n_iter_check == 0
+        # only compute the error when needed
+        kwargs['compute_error'] = check_convergence or i == n_iter - 1
+
         error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
@@ -348,7 +365,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if (i + 1) % n_iter_check == 0:
+        if check_convergence:
             toc = time()
             duration = toc - tic
             tic = toc
@@ -378,7 +395,7 @@ def _gradient_descent(objective, p0, it, n_iter,
 
 
 def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
-    """Expresses to what extent the local structure is retained.
+    r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
 
@@ -766,7 +783,7 @@ class TSNE(BaseEstimator):
         # degrees_of_freedom = n_components - 1 comes from
         # "Learning a Parametric Embedding by Preserving Local Structure"
         # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        degrees_of_freedom = max(self.n_components - 1, 1)
 
         return self._tsne(P, degrees_of_freedom, n_samples,
                           X_embedded=X_embedded,
