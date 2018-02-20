@@ -121,10 +121,12 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Convert data
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False)
+        # Check alpha
+        if self.alpha < 0:
+            raise ValueError('alpha must be positive')
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
-
         copy = self.kernel == "precomputed"
 
         ravel = False
@@ -136,10 +138,6 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
                 ravel = True
         elif self._estimator_type == "classifier":  # Multiclass classification
             X, y = check_X_y(X, y, accept_sparse=("csr", "csc"))
-            # Check alpha
-            if self.alpha <= 0:
-                raise ValueError('alpha must be positive')
-
             self.label_encoder_ = LabelBinarizer(neg_label=-1, pos_label=1)
             y_ = self.label_encoder_.fit_transform(y)
             self.classes_ = self.label_encoder_.classes_

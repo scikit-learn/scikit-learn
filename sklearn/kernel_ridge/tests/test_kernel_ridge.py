@@ -7,13 +7,16 @@ License: BSD 3 clause
 
 """
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from numpy.testing import assert_almost_equal
+import scipy.sparse as sp
+from numpy.testing import assert_array_equal,\
+    assert_array_almost_equal, assert_almost_equal
 from sklearn import datasets, base
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, ignore_warnings
 from sklearn.externals import six
 from sklearn.kernel_ridge import KernelRidgeClassifier
+from sklearn.linear_model import Ridge
+from sklearn.kernel_ridge import KernelRidge
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -28,44 +31,14 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-
-def test_tweak_params():
-    # Make sure some tweaking of parameters works.
-    clf = KernelRidgeClassifier(kernel='linear', gamma=0.0, alpha=0.5)
-    clf.fit(X, Y)
-    dual_coef = np.array([0.13333333, -0.57777778, 0.13333333,
-                          0.57777778, -0.13333333, -0.13333333])
-    assert_almost_equal(clf.dual_coef_, dual_coef, decimal=8)
-    assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    dual_coef = np.array([-1.06666667, -0.71111111, -1.06666667,
-                          -1.28888889, -3.93333333, -0.93333333])
-    clf.dual_coef_ = dual_coef
-    assert_almost_equal(clf.predict([[-.1, -.1]]), [2])
+# regression data
+X_reg, y_reg = datasets.make_regression(n_features=10, random_state=0)
+X_reg_csr = sp.csr_matrix(X_reg)
+X_reg_csc = sp.csc_matrix(X_reg)
+Y_reg = np.array([y_reg, y_reg]).T
 
 
-def test_bad_input():
-    # Test that it gives proper exception on deficient input
-    # impossible value of C
-
-    assert_raises(ValueError, KernelRidgeClassifier(alpha=-0.5).fit, X, Y)
-
-    clf = KernelRidgeClassifier()
-    Y2 = Y[:-1]  # wrong dimensions for labels
-    assert_raises(ValueError, clf.fit, X, Y2)
-
-    # error for precomputed kernels
-    clf = KernelRidgeClassifier(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
-
-    Xt = np.array(X).T
-    clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
-
-    clf = KernelRidgeClassifier()
-    clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
-
-
+# Tests for classification
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
@@ -103,3 +76,48 @@ def test_krc_clone_with_callable_kernel():
 def test_krc_bad_kernel():
     clf = KernelRidgeClassifier(kernel=lambda x, y: x)
     assert_raises(ValueError, clf.fit, X, Y)
+
+
+def test_bad_input():
+    # Test that it gives proper exception on deficient input
+    # impossible value of C
+    assert_raises(ValueError, KernelRidgeClassifier(alpha=-0.5).fit, X, Y)
+
+
+# Test for regression
+def test_kernel_ridge_csr():
+    pred = Ridge(alpha=1, fit_intercept=False,
+                 solver="cholesky").fit(X_reg_csr, y_reg).predict(X_reg_csr)
+    pred2 = KernelRidge(kernel="linear",
+                        alpha=1).fit(X_reg_csr, y_reg).predict(X_reg_csr)
+    assert_array_almost_equal(pred, pred2)
+
+
+def test_kernel_ridge_csc():
+    pred = Ridge(alpha=1, fit_intercept=False,
+                 solver="cholesky").fit(X_reg_csr, y_reg).predict(X_reg_csr)
+    pred2 = KernelRidge(kernel="linear",
+                        alpha=1).fit(X_reg_csr, y_reg).predict(X_reg_csr)
+    assert_array_almost_equal(pred, pred2)
+
+
+def test_kernel_ridge_singular_kernel():
+    # alpha=0 causes a LinAlgError in computing the dual coefficients,
+    # which causes a fallback to a lstsq solver. This is tested here.
+    pred = Ridge(alpha=0, fit_intercept=False).fit(X_reg, y_reg).predict(X_reg)
+    kr = KernelRidge(kernel="linear", alpha=0)
+    ignore_warnings(kr.fit)(X_reg, y_reg)
+    pred2 = kr.predict(X_reg)
+    assert_array_almost_equal(pred, pred2)
+
+
+def test_kernel_ridge_multi_output():
+    pred = Ridge(alpha=1, fit_intercept=False).fit(X_reg, Y_reg).predict(X_reg)
+    pred2 = KernelRidge(kernel="linear",
+                        alpha=1).fit(X_reg, Y_reg).predict(X_reg)
+    assert_array_almost_equal(pred, pred2)
+
+    pred3 = KernelRidge(kernel="linear",
+                        alpha=1).fit(X_reg, y_reg).predict(X_reg)
+    pred3 = np.array([pred3, pred3]).T
+    assert_array_almost_equal(pred2, pred3)
