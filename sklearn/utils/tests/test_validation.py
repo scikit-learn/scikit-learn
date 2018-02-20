@@ -43,6 +43,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import TempMemmap
 
 
 def test_as_float_array():
@@ -690,3 +691,15 @@ def test_check_memory():
                         " have the same interface as "
                         "sklearn.externals.joblib.Memory. Got memory='{}' "
                         "instead.".format(dummy), check_memory, dummy)
+
+
+def test_check_array_memmap():
+    X = np.ones((4, 4))
+    # Let memmap passed
+    with TempMemmap(X, mmap_mode='r') as X:
+        Z = check_array(X, copy=False)
+        assert_true(np.may_share_memory(X, Z))
+        assert_false(Z.flags['WRITEABLE'])
+        Z = check_array(X, copy=True)
+        assert_false(np.may_share_memory(X, Z))
+        assert_true(Z.flags['WRITEABLE'])

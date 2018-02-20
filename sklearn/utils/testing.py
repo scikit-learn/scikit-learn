@@ -772,13 +772,19 @@ class TempMemmap(object):
 
     def __enter__(self):
         fpath = op.join(self.temp_folder, 'data.pkl')
-        joblib.dump(self.data, fpath)
-        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
+        data_read_only = create_memmap_backed_data(self.data, filename=fpath)
         atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
         return data_read_only
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
+
+
+def create_memmap_backed_data(data, mmap_mode='r', filename=None):
+    if filename is None:
+        filename = tempfile.NamedTemporaryFile(suffix='.mmap').name
+    joblib.dump(data, filename)
+    return joblib.load(filename, mmap_mode=mmap_mode)
 
 
 # Utils to test docstrings
