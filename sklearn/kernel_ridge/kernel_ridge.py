@@ -75,7 +75,6 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
         Kernel Ridge implemented for multiclass clasifications.
 
     """
-    _estimator_type = None
 
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
@@ -130,13 +129,14 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
         copy = self.kernel == "precomputed"
 
         ravel = False
-        if self._estimator_type == "regressor":
+        estimator_type = getattr(self, '_estimator_type', None)
+        if estimator_type == "regressor":
             X, y_ = check_X_y(X, y, accept_sparse=("csr", "csc"),
                               multi_output=True, y_numeric=True)
             if len(y_.shape) == 1:
                 y_ = y_.reshape(-1, 1)
                 ravel = True
-        elif self._estimator_type == "classifier":  # Multiclass classification
+        elif estimator_type == "classifier":  # Multiclass classification
             X, y = check_X_y(X, y, accept_sparse=("csr", "csc"))
             self.label_encoder_ = LabelBinarizer(neg_label=-1, pos_label=1)
             y_ = self.label_encoder_.fit_transform(y)
@@ -144,7 +144,7 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
             if len(self.classes_) == 2:
                 ravel = True
         else:
-            raise ValueError('BaseKernelRidge cannot be used as'
+            raise ValueError('_BaseKernelRidge cannot be used as'
                              ' a estimator')
 
         self.dual_coef_ = _solve_cholesky_kernel(K, y_, alpha,
