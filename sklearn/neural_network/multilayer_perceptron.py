@@ -94,11 +94,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         ----------
         activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
-
-        with_output_activation : bool, default True
-            If True, the output passes through the output activation
-            function, which is either the softmax function or the
-            logistic function
         """
         hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
@@ -143,7 +138,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        packed_parameters : array-like
+        packed_coef_inter : array-like
             A vector comprising the flattened coefficients and intercepts.
 
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -162,7 +157,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             in each layer, where z = wx + b is the value of a particular layer
             before passing through the activation function
 
-        coef_grad : list, length = n_layers - 1
+        coef_grads : list, length = n_layers - 1
             The ith element contains the amount of change used to update the
             coefficient parameters of the ith layer in an iteration.
 
@@ -174,7 +169,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         loss : float
         grad : array-like, shape (number of nodes of all layers,)
-
         """
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
@@ -206,7 +200,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             in each layer, where z = wx + b is the value of a particular layer
             before passing through the activation function
 
-        coef_grad : list, length = n_layers - 1
+        coef_grads : list, length = n_layers - 1
             The ith element contains the amount of change used to update the
             coefficient parameters of the ith layer in an iteration.
 
@@ -890,7 +884,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
-
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -995,7 +988,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y : array-like, shape (n_samples,)
             The target values.
 
-        classes : array, shape (n_classes)
+        classes : array, shape (n_classes), default None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -1271,7 +1264,6 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
-
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
