@@ -138,7 +138,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
-        # when the imputation is done per sample. 
+        # when the imputation is done per sample.
         X = check_array(X, accept_sparse='csc', dtype=np.float64,
                         force_all_finite=False)
 
@@ -161,9 +161,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Count the zeros
         if missing_values == 0:
-            n_zeros_axis = np.zeros(X.shape[not axis], dtype=int)
+            n_zeros_axis = np.zeros(X.shape[0], dtype=int)
         else:
-            n_zeros_axis = X.shape[axis] - np.diff(X.indptr)
+            n_zeros_axis = X.shape[0] - np.diff(X.indptr)
 
         # Mean
         if strategy == "mean":
