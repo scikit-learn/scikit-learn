@@ -138,21 +138,20 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
-        # when the imputation is done per sample (i.e., when axis=1).
-        if self.axis == 0:
-            X = check_array(X, accept_sparse='csc', dtype=np.float64,
-                            force_all_finite=False)
+        # when the imputation is done per sample. 
+        X = check_array(X, accept_sparse='csc', dtype=np.float64,
+                        force_all_finite=False)
 
-            if sparse.issparse(X):
-                self.statistics_ = self._sparse_fit(X,
-                                                    self.strategy,
-                                                    self.missing_values,
-                                                    self.axis)
-            else:
-                self.statistics_ = self._dense_fit(X,
-                                                   self.strategy,
-                                                   self.missing_values,
-                                                   self.axis)
+        if sparse.issparse(X):
+            self.statistics_ = self._sparse_fit(X,
+                                                self.strategy,
+                                                self.missing_values,
+                                                self.axis)
+        else:
+            self.statistics_ = self._dense_fit(X,
+                                               self.strategy,
+                                               self.missing_values,
+                                               self.axis)
 
         return self
 
@@ -298,7 +297,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         statistics = self.statistics_
         if X.shape[1] != statistics.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
-                              % (X.shape[1], self.statistics_.shape[0]))
+                             % (X.shape[1], self.statistics_.shape[0]))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
