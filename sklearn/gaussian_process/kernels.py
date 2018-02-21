@@ -1682,27 +1682,32 @@ class LinearKernel(Kernel):
         """
         X = np.atleast_2d(X)
         self.c = _check_length_scale(X, self.c)
+        if self.c is 0:
+            Xsub = X
+        else:
+            Xsub = X - self.c
+
         if Y is None:
-            K = np.inner(X - self.c, X - self.c)
+            K = np.inner(Xsub, Xsub)
         else:
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
-            K = np.inner(X - self.c, Y - self.c)
+            K = np.inner(Xsub, Y - self.c)
 
         if eval_gradient:
             if self.hyperparameter_c.fixed:
                 c_gradient = np.empty((X.shape[0], X.shape[0], 0))
             else:
                 if not self.non_uniform_offset:
-                    gradient_mat = np.inner(np.ones(X.shape), X - self.c)
+                    gradient_mat = np.inner(np.ones(X.shape), Xsub)
                     c_gradient = - self.c * (gradient_mat + gradient_mat.T)
                     c_gradient = c_gradient[:, :, np.newaxis]
                 else:
                     c_gradient = []
                     for i, c in enumerate(self.c):
                         gradient_mat = np.vstack(
-                            [(X - self.c)[:, i]] * X.shape[0])
+                            [Xsub[:, i]] * X.shape[0])
                         c_gradient.append(c * (gradient_mat + gradient_mat.T))
                     c_gradient = -np.array(c_gradient)
                     c_gradient = np.rollaxis(c_gradient, 0, 3)
