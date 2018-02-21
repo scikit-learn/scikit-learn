@@ -223,8 +223,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         The relative increment in the results before declaring convergence.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for centroid initialization. It
-        also generates random seeds for the parallel execution.
+        Determines random number generation for centroid initialization.
         See :term:`random_state <Glossary>`.
 
     copy_x : boolean, optional
@@ -1041,7 +1040,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization and to
-        pick new clusters amongst observations with uniform probability
+        pick new clusters amongst observations with uniform probability.
         See :term:`random_state <Glossary>`.
 
     random_reassign : boolean, optional
