@@ -62,11 +62,12 @@ Learning problems fall into a few categories:
 .. topic:: Training set and testing set
 
     Machine learning is about learning some properties of a data set
-    and then testing those properties against another data set. A common practice in
-    machine learning is to evaluate an algorithm by splitting a data set
-    into two. We call one of those sets the **training set**, on which
-    we learn some properties; we call the other set the **testing set**,
-    on which we test the learned properties.
+    and then testing those properties against another data set. A common
+    practice in machine learning is to evaluate an algorithm by splitting a data
+    set into two. We call one of those sets the **training set**, on which we
+    learn some properties; we call the other set the **testing set**, on which
+    we test the learned properties.
+
 
 .. _loading_example_dataset:
 
@@ -174,8 +175,8 @@ The ``clf`` (for classifier) estimator instance is first
 fitted to the model; that is, it must *learn* from the model. This is
 done by passing our training set to the ``fit`` method. For the training
 set, we'll use all the images from our dataset, except for the last
-image, which we'll reserve for our predicting. We select the training set with the ``[:-1]`` Python syntax,
-which produces a new array that contains all but
+image, which we'll reserve for our predicting. We select the training set with
+the ``[:-1]`` Python syntax, which produces a new array that contains all but
 the last item from ``digits.data``::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
