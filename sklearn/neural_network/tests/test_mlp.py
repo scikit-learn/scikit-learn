@@ -440,6 +440,7 @@ def test_params_errors():
 
 
 def test_predict_errors():
+    # Test invalid input data length.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     X_mismatch = [[1, 2, 3], [4, 5, 6]]
