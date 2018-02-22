@@ -419,7 +419,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                              % self.n_iter_no_change)
 
         # raise ValueError if not registered
-        supported_activations = ('identity', 'logistic', 'tanh', 
+        supported_activations = ('identity', 'logistic', 'tanh',
                                  'relu', 'leaky_relu')
         if self.activation not in supported_activations:
             raise ValueError("The activation '%s' is not supported. Supported "
