@@ -521,7 +521,9 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             warnings.warn(
                 "Beginning in version 0.22, arrays of strings will be "
                 "interpreted as decimal numbers if parameter 'dtype' is "
-                "'numeric'.", FutureWarning)
+                "'numeric'. It is recommended that you convert the array to "
+                "type np.float64 before passing it to check_array.",
+                FutureWarning)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":

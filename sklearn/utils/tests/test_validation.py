@@ -289,26 +289,30 @@ def test_check_array():
     X_str = [['a', 'b'], ['c', 'd']]
     assert_warns_message(
         FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers "
-        "if parameter 'dtype' is 'numeric'.",
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
         check_array, X_str, "numeric")
     assert_warns_message(
         FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers "
-        "if parameter 'dtype' is 'numeric'.",
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
         check_array, np.array(X_str, dtype='U1'), "numeric")
 
     # deprecation warning if byte-like array with dtype="numeric"
     X_byte = [[b'a', b'b'], [b'c', b'd']]
     assert_warns_message(
         FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers "
-        "if parameter 'dtype' is 'numeric'.",
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
         check_array, np.array(X_byte, dtype='S1'), "numeric")
     assert_warns_message(
         FutureWarning,
-        "arrays of strings will be interpreted as decimal numbers "
-        "if parameter 'dtype' is 'numeric'.",
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
         check_array, np.array(X_byte, dtype='V1'), "numeric")
 
 
