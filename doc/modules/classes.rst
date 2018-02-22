@@ -159,8 +159,8 @@ Classes
 
    covariance.EmpiricalCovariance
    covariance.EllipticEnvelope
-   covariance.GraphLasso
-   covariance.GraphLassoCV
+   covariance.GraphicalLasso
+   covariance.GraphicalLassoCV
    covariance.LedoitWolf
    covariance.MinCovDet
    covariance.OAS
@@ -171,7 +171,7 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.graph_lasso
+   covariance.graphical_lasso
    covariance.ledoit_wolf
    covariance.oas
    covariance.shrunk_covariance
@@ -1424,7 +1424,15 @@ To be removed in 0.22
    :toctree: generated/
    :template: deprecated_class.rst
 
+   covariance.GraphLasso
+   covariance.GraphLassoCV
    preprocessing.Imputer
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   covariance.graph_lasso
 
 
 To be removed in 0.21

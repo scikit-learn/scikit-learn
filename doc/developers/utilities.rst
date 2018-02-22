@@ -250,4 +250,4 @@ Warnings and Exceptions
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
 - :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
-  convergence problems. Used in ``sklearn.covariance.graph_lasso``.
+  convergence problems. Used in ``sklearn.covariance.graphical_lasso``.
