@@ -395,6 +395,14 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
+Covariance
+
+- The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and 
+  :class:`covariance.GraphLassoCV` have been renamed to 
+  :func:`covariance.graphical_lasso`, :class:`covariance.GraphicalLasso` and
+  :class:`covariance.GraphicalLassoCV` respectively and will be removed in version 0.22.
+  :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
+
 Misc
 
 - Changed warning type from UserWarning to ConvergenceWarning for failing
