@@ -337,9 +337,9 @@ Feature Extraction
 
 Utils
 
-- Fixed a bug in :func:`utils.validation.check_array` to raise a ``FutureWarning``
-  indicating that arrays of type ``np.flexible`` will be interpreted as decimal
-  numbers beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
+- :func:`utils.validation.check_array` yield a ``FutureWarning`` indicating
+  that arrays of bytes/strings will be interpreted as decimal numbers
+  beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
 Preprocessing
 
