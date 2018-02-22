@@ -398,6 +398,18 @@ def test_partial_fit_errors():
     assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
 
 
+def test_layer_units():
+    # Test the compound layers of the fitted network.
+    X = iris.data
+    y = iris.target
+    clf = MLPClassifier(hidden_layer_sizes=[5, 10]).fit(X, y)
+
+    assert_equal(clf.n_inputs_, 4)
+    assert_equal(clf.n_outputs_, 3)
+    assert_equal(len(clf.layers_), 4)
+    assert_equal(clf.layers_, [4, 5, 10, 3])
+
+
 def test_params_errors():
     # Test that invalid parameters raise value error
     X = [[3, 2], [1, 6]]
