@@ -130,6 +130,63 @@ def test_imputation_mean_median_only_zero():
                       statistics_median, 0)
 
 
+def test_handle_unknown():
+    # Test replacing nan columns.
+    X = [
+        [5, np.NaN],
+        [5, np.NaN]
+    ]
+    X_default = [
+        [5],
+        [5]
+    ]
+    inputer = Imputer()
+    assert_array_almost_equal(inputer.fit_transform(X), X_default)
+
+    X_replaced = [
+        [5, 1],
+        [5, 1]
+    ]
+    inputer = Imputer(handle_unknown=1)
+    assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
+
+    X_replaced = [
+        [5, True],
+        [5, True]
+    ]
+    inputer = Imputer(handle_unknown=True)
+    assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
+
+    X_replaced = [
+        [5, False],
+        [5, False]
+    ]
+    inputer = Imputer(handle_unknown=False)
+    assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
+
+    X_complex = [
+        [5, np.NaN, 15, np.NaN],
+        [5, np.NaN, 15, np.NaN]
+    ]
+    X_replaced = [
+        [5, 1, 15, 1],
+        [5, 1, 15, 1]
+    ]
+    inputer = Imputer(handle_unknown=1)
+    assert_array_almost_equal(inputer.fit_transform(X_complex), X_replaced)
+
+    X_complex = [
+        [5, np.NaN, 15, np.NaN],
+        [5, np.NaN, 15, 10]
+    ]
+    X_replaced = [
+        [5, False, 15, 10],
+        [5, False, 15, 10]
+    ]
+    inputer = Imputer(handle_unknown=False)
+    assert_array_almost_equal(inputer.fit_transform(X_complex), X_replaced)
+
+
 def safe_median(arr, *args, **kwargs):
     # np.median([]) raises a TypeError for numpy >= 1.10.1
     length = arr.size if hasattr(arr, 'size') else len(arr)
