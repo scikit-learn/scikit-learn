@@ -935,7 +935,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                                  (self.classes_, classes))
         else:
             classes = unique_labels(y)
-            if np.setdiff1d(classes, self.classes_, assume_unique=True):
+            if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
