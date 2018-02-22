@@ -56,7 +56,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         Squared Euclidean norm of each data point.
 
     random_state : RandomState
-        The generator used to initialize the centers.
+        The generator used to initialize the centers. Pass an int for
+        reproducing the random values.
 
     n_local_trials : integer, optional
         The number of seeding trials for each center (except the first),
@@ -454,7 +455,8 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
         Precompute distances (faster but takes more memory).
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for centroid initialization.
+        Determines random number generation for centroid initialization. Pass
+        an int for reproducing the random values.
         See :term:`random_state <Glossary>`.
 
     Returns
@@ -642,7 +644,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         Method for initialization
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for centroid initialization.
+        Determines random number generation for centroid initialization. Pass
+        an int for reproducing the random values.
         See :term:`random_state <Glossary>`.
 
     x_squared_norms :  array, shape (n_samples,), optional
@@ -757,7 +760,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Verbosity mode.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for centroid initialization.
+        Determines random number generation for centroid initialization. Pass
+        an int for reproducing the random values.
         See :term:`random_state <Glossary>`.
 
     copy_x : boolean, default True
@@ -1040,7 +1044,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization and to
-        pick new clusters amongst observations with uniform probability.
+        pick new clusters amongst observations with uniform probability. Pass
+        an int for reproducing the random values.
         See :term:`random_state <Glossary>`.
 
     random_reassign : boolean, optional
@@ -1252,7 +1257,8 @@ class MiniBatchKMeans(KMeans):
 
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization and
-        random reassignment.  See :term:`random_state <Glossary>`.
+        random reassignment. Pass an int for reproducing the random values.
+        See :term:`random_state <Glossary>`.
 
     tol : float, default: 0.0
         Control early stopping based on the relative center changes as
