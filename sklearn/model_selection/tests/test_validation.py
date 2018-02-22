@@ -1461,3 +1461,22 @@ def test_fit_and_score():
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
+
+    # check if exception was raised, with default error_score argument
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args)
+
+    # check if warning was raised, with default error_score argument
+    warning_message = ("Estimator fit failed. From version 0.22 "
+                       "the default value will be error_score=np.nan")
+    try:
+        assert_warns_message(FutureWarning, warning_message, _fit_and_score,
+                             *fit_and_score_args)
+    except ValueError:
+        pass
+
+    fit_and_score_kwargs = {'error_score': 'raise'}
+    # check if exception was raised, with default error_score='raise'
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args,
+                         **fit_and_score_kwargs)

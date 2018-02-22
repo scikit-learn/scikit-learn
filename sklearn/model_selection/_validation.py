@@ -361,7 +361,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise'):
+                   error_score='raise-deprecating'):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -395,11 +395,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. From version 0.22 the default
+        will be np.nan
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -459,7 +460,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
-    test_scores = {}
     train_scores = {}
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -483,6 +483,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         fit_time = time.time() - start_time
         score_time = 0.0
         if error_score == 'raise':
+            raise
+        elif error_score == 'raise-deprecating':
+            warnings.warn("Estimator fit failed. From version 0.22 "
+                          "the default value will be error_score=np.nan",
+                          FutureWarning)
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
