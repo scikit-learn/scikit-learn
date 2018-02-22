@@ -427,6 +427,13 @@ def test_params_errors():
     assert_raises(ValueError, clf(activation='cloak').fit, X, y)
 
 
+def test_predict_errors():
+    X = [[3, 2], [1, 6]]
+    y = [1, 0]
+    X_mismatch = [[1, 2, 3], [4, 5, 6]]
+    assert_raises(ValueError, MLPClassifier().fit(X, y).predict, X_mismatch)
+
+
 def test_predict_proba_binary():
     # Test that predict_proba works as expected for binary class.
     X = X_digits_binary[:50]
