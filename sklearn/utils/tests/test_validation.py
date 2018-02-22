@@ -288,12 +288,12 @@ def test_check_array():
     # deprecation warning if string-like array with dtype="numeric"
     X_str = [['a', 'b'], ['c', 'd']]
     assert_warns_message(
-        DeprecationWarning,
+        FutureWarning,
         "arrays of strings will be interpreted as decimal numbers "
         "if parameter 'dtype' is 'numeric'.",
         check_array, X_str, "numeric")
     assert_warns_message(
-        DeprecationWarning,
+        FutureWarning,
         "arrays of strings will be interpreted as decimal numbers "
         "if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_str, dtype='U1'), "numeric")
@@ -301,12 +301,12 @@ def test_check_array():
     # deprecation warning if byte-like array with dtype="numeric"
     X_byte = [[b'a', b'b'], [b'c', b'd']]
     assert_warns_message(
-        DeprecationWarning,
+        FutureWarning,
         "arrays of strings will be interpreted as decimal numbers "
         "if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_byte, dtype='S1'), "numeric")
     assert_warns_message(
-        DeprecationWarning,
+        FutureWarning,
         "arrays of strings will be interpreted as decimal numbers "
         "if parameter 'dtype' is 'numeric'.",
         check_array, np.array(X_byte, dtype='V1'), "numeric")
