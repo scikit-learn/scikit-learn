@@ -335,6 +335,12 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
+Utils
+
+- :func:`utils.validation.check_array` yield a ``FutureWarning`` indicating
+  that arrays of bytes/strings will be interpreted as decimal numbers
+  beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
+
 Preprocessing
 
 - Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
