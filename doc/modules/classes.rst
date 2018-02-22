@@ -159,8 +159,8 @@ Classes
 
    covariance.EmpiricalCovariance
    covariance.EllipticEnvelope
-   covariance.GraphLasso
-   covariance.GraphLassoCV
+   covariance.GraphicalLasso
+   covariance.GraphicalLassoCV
    covariance.LedoitWolf
    covariance.MinCovDet
    covariance.OAS
@@ -171,7 +171,7 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.graph_lasso
+   covariance.graphical_lasso
    covariance.ledoit_wolf
    covariance.oas
    covariance.shrunk_covariance
@@ -609,6 +609,25 @@ Kernels:
    isotonic.check_increasing
    isotonic.isotonic_regression
 
+.. _impute_ref:
+
+:mod:`sklearn.impute`: Impute
+=============================
+
+.. automodule:: sklearn.impute
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`Impute` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   impute.SimpleImputer
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -906,7 +925,6 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
-   metrics.pairwise.pairwise_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -1397,6 +1415,24 @@ Low-level methods
 
 Recently deprecated
 ===================
+
+
+To be removed in 0.22
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   covariance.GraphLasso
+   covariance.GraphLassoCV
+   preprocessing.Imputer
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   covariance.graph_lasso
 
 
 To be removed in 0.21

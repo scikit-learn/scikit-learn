@@ -37,8 +37,8 @@ def test_transform_target_regressor_error():
     sample_weight = np.ones((y.shape[0],))
     regr = TransformedTargetRegressor(regressor=Lasso(),
                                       transformer=StandardScaler())
-    assert_raises_regex(TypeError, "fit\(\) got an unexpected keyword argument"
-                        " 'sample_weight'", regr.fit, X, y,
+    assert_raises_regex(TypeError, r"fit\(\) got an unexpected keyword "
+                        "argument 'sample_weight'", regr.fit, X, y,
                         sample_weight=sample_weight)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)

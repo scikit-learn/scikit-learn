@@ -78,14 +78,19 @@ Model evaluation
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
-  the target y before fitting a regression model. The predictions are mapped
-  back to the original space via an inverse transform. :issue:`9041` by
-  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
+Decomposition, manifold learning and clustering
+
+- :class:`cluster.AgglomerativeClustering` now supports Single Linkage
+  clustering via ``linkage='single'``. :issue:`9372` by
+  :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
+  `Tom Dupre la Tour`_.
+
 
 Enhancements
 ............
@@ -124,6 +129,20 @@ Classifiers and regressors
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
+Cluster
+
+- :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
+  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  row-major ordering, improving runtime.
+  :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
+
+Datasets
+
+- In :func:`datasets.make_blobs`, one can now pass a list to the `n_samples`
+  parameter to indicate the number of samples to generate per cluster.
+  :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>`
+  and :user:`Konstantinos Katrioplas <kkatrio>`.
 
 Preprocessing
 
@@ -210,10 +229,22 @@ Classifiers and regressors
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
+- Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
+  valued pseudocounts (alpha).
+  :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
+
 - Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
   unicode in Python2, the ``predict_proba`` method was raising an
   unexpected TypeError given dense inputs.
   :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
+
+- Fixed a bug in :class:`tree.BaseDecisionTree` with `splitter="best"`
+  where split threshold could become infinite when values in X were
+  near infinite. :issue:`10536` by :user:`Jonathan Ohayon <Johayon>`.
+
+- Fixed a bug in :class:`linear_model.ElasticNet` which caused the input to be
+  overridden when using parameter ``copy_X=True`` and ``check_input=False``.
+  :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
 
 Decomposition, manifold learning and clustering
 
@@ -310,6 +341,15 @@ Utils
   indicating that arrays of type ``np.flexible`` will be interpreted as decimal
   numbers beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
+Preprocessing
+
+- Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
+  errors when ``transform`` or ``inverse_transform`` was called with empty arrays.
+  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
+
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
 
 API changes summary
 -------------------
@@ -336,6 +376,41 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Imputer
+
+- Deprecate :class:`preprocessing.Imputer` and move the corresponding module to
+  :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
+  <thechargedneutron>`.
+
+Outlier Detection models
+
+- More consistent outlier detection API:
+  Add a ``score_samples`` method in :class:`svm.OneClassSVM`,
+  :class:`ensemble.IsolationForest`, :class:`neighbors.LocalOutlierFactor`,
+  :class:`covariance.EllipticEnvelope`. It allows to access raw score
+  functions from original papers. A new ``offset_`` parameter allows to link
+  ``score_samples`` and ``decision_function`` methods.
+  The ``contamination`` parameter of :class:`ensemble.IsolationForest` and
+  :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
+  to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
+  positive) ``decision_function`` values. By default, ``contamination`` is
+  kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to "auto",
+  thus using method-specific score offsets.
+  In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
+  ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
+  will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
+
+Misc
+
+- Changed warning type from UserWarning to ConvergenceWarning for failing
+  convergence in :func:`linear_model.logistic_regression_path`,
+  :class:`linear_model.RANSACRegressor`, :func:`linear_model.ridge_regression`,
+  :class:`gaussian_process.GaussianProcessRegressor`,
+  :class:`gaussian_process.GaussianProcessClassifier`,
+  :func:`decomposition.fastica`, :class:`cross_decomposition.PLSCanonical`,
+  :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
+  :issue:`#10306` by :user:`Jonathan Siebert <jotasi>`.
 
 Changes to estimator checks
 ---------------------------

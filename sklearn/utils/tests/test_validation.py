@@ -625,9 +625,9 @@ def test_check_consistent_length():
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
     assert_raises_regex(ValueError, 'inconsistent numbers of samples',
                         check_consistent_length, [1, 2], [1])
-    assert_raises_regex(TypeError, 'got <\w+ \'int\'>',
+    assert_raises_regex(TypeError, r"got <\w+ 'int'>",
                         check_consistent_length, [1, 2], 1)
-    assert_raises_regex(TypeError, 'got <\w+ \'object\'>',
+    assert_raises_regex(TypeError, r"got <\w+ 'object'>",
                         check_consistent_length, [1, 2], object())
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
