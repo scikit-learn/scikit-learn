@@ -1822,7 +1822,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         }
 
 
-class SVDD(BaseLibSVM):
+class SVDD(BaseLibSVM, OutlierMixin):
     """Support Vector Data Description (SVDD) for Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution by finding the
@@ -1914,12 +1914,15 @@ class SVDD(BaseLibSVM):
            Report, Department of Computer Science, National Taiwan
            University.
     """
+
+    _impl = 'svdd_l1'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 
         super(SVDD, self).__init__(
-            'svdd_l1', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=0., nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
