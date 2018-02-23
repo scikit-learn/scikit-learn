@@ -95,6 +95,10 @@ class Imputer(BaseEstimator, TransformerMixin):
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
 
+    default_value : numeric or boolean, optional (default=None)
+        The default_value for columns where all elements are NaN.
+        If `default_value` is None the column will be dropped.
+
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
