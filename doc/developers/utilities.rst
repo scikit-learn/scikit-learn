@@ -120,7 +120,7 @@ Efficient Linear Algebra & Array Operations
   used in :func:`shuffle`, below.
 
 - :func:`shuffle`: Shuffle arrays or sparse matrices in a consistent way.
-  Used in ``sklearn.cluster.k_means``.
+  Used in :func:`sklearn.cluster.k_means`.
 
 
 Efficient Random Sampling
