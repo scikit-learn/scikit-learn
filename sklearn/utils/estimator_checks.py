@@ -1698,11 +1698,6 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False):
                        "labels. Perhaps use check_X_y in fit.".format(name)):
         regressor.fit(X, y[:-1])
     # fit
-    if name == 'LinearSVR':
-        # XXX: segmentation fault when fitting LinearSVR on read-only memmap
-        # data
-        return
-
     set_random_state(regressor)
     regressor.fit(X, y_)
     regressor.fit(X.tolist(), y_.tolist())
