@@ -39,7 +39,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                         n_redundant=2, n_repeated=0, n_classes=2,
                         n_clusters_per_class=2, weights=None, flip_y=0.01,
                         class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
-                        shuffle=True, random_state=None):
+                        shuffle=True, useful_indices=False, random_state=None):
     """Generate a random n-class classification problem.
 
     This initially creates clusters of points normally distributed (std=1)
@@ -120,6 +120,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
 
+    useful_indices : boolean, optional (default=False)
+        If True, a boolean array indicating useful features is returned
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -133,6 +136,12 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     y : array of shape [n_samples]
         The integer labels for class membership of each sample.
+
+    useful_indices : array of shape [n_features], optional
+        A boolean array indicating the usefulness of each feature. An element
+        in this array is True if the corresponding feature is either
+        informative, redundant, or repeated. It is returned only if indices
+        is True.
 
     Notes
     -----
@@ -239,16 +248,20 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         scale = 1 + 100 * generator.rand(n_features)
     X *= scale
 
+    indices = np.arange(n_features)
     if shuffle:
         # Randomly permute samples
         X, y = util_shuffle(X, y, random_state=generator)
 
         # Randomly permute features
-        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
-    return X, y
+    if useful_indices:
+        n_useful = n_informative + n_redundant + n_repeated
+        return X, y, indices < n_useful
+    else:
+        return X, y
 
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
