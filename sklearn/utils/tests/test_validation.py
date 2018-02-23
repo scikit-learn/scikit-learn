@@ -693,13 +693,10 @@ def test_check_memory():
                         "instead.".format(dummy), check_memory, dummy)
 
 
-def test_check_array_memmap():
+@pytest.mark.parametrize('copy', [True, False])
+def test_check_array_memmap(copy):
     X = np.ones((4, 4))
-    # Let memmap passed
-    with TempMemmap(X, mmap_mode='r') as X:
-        Z = check_array(X, copy=False)
-        assert_true(np.may_share_memory(X, Z))
-        assert_false(Z.flags['WRITEABLE'])
-        Z = check_array(X, copy=True)
-        assert_false(np.may_share_memory(X, Z))
-        assert_true(Z.flags['WRITEABLE'])
+    with TempMemmap(X, mmap_mode='r') as X_memmap:
+        X_checked = check_array(X_memmap, copy=copy)
+        assert np.may_share_memory(X_memmap, X_checked) == (not copy)
+        assert X_checked.flags['WRITEABLE'] == copy

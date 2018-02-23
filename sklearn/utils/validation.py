@@ -491,7 +491,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter('error', ComplexWarning)
-                array = np.array(array, dtype=dtype, order=order, copy=copy)
+                array = np.asarray(array, dtype=dtype, order=order)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
@@ -517,8 +517,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
-            # To ensure that array flags are maintained
-            array = np.asarray(array, dtype=dtype, order=order)
 
         # in the future np.flexible dtypes will be handled like object dtypes
         if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
