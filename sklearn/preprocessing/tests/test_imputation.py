@@ -140,29 +140,36 @@ def test_handle_unknown():
         [5],
         [5]
     ]
-    inputer = Imputer()
-    assert_array_almost_equal(inputer.fit_transform(X), X_default)
+    imputer = Imputer()
+    assert_array_almost_equal(imputer.fit_transform(X), X_default)
 
     X_replaced = [
         [5, 1],
         [5, 1]
     ]
-    inputer = Imputer(default_value=1)
-    assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
+    imputer = Imputer(default_value=1)
+    assert_array_almost_equal(imputer.fit_transform(X), X_replaced)
+
+    X_replaced = [
+        [5, 1.],
+        [5, 1.]
+    ]
+    imputer = Imputer(default_value=1.)
+    assert_array_almost_equal(imputer.fit_transform(X), X_replaced)
 
     X_replaced = [
         [5, True],
         [5, True]
     ]
-    inputer = Imputer(default_value=True)
-    assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
+    imputer = Imputer(default_value=True)
+    assert_array_almost_equal(imputer.fit_transform(X), X_replaced)
 
     X_replaced = [
         [5, False],
         [5, False]
     ]
-    inputer = Imputer(default_value=False)
-    assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
+    imputer = Imputer(default_value=False)
+    assert_array_almost_equal(imputer.fit_transform(X), X_replaced)
 
     X_complex = [
         [5, np.NaN, 15, np.NaN],
@@ -172,8 +179,8 @@ def test_handle_unknown():
         [5, 1, 15, 1],
         [5, 1, 15, 1]
     ]
-    inputer = Imputer(default_value=1)
-    assert_array_almost_equal(inputer.fit_transform(X_complex), X_replaced)
+    imputer = Imputer(default_value=1)
+    assert_array_almost_equal(imputer.fit_transform(X_complex), X_replaced)
 
     X_complex = [
         [5, np.NaN, 15, np.NaN],
@@ -183,8 +190,19 @@ def test_handle_unknown():
         [5, False, 15, 10],
         [5, False, 15, 10]
     ]
-    inputer = Imputer(default_value=False)
-    assert_array_almost_equal(inputer.fit_transform(X_complex), X_replaced)
+    imputer = Imputer(default_value=False)
+    assert_array_almost_equal(imputer.fit_transform(X_complex), X_replaced)
+
+    X_complex = [
+        [-1, np.NaN, -1, 5],
+        [-1, np.NaN, -1, np.NaN]
+    ]
+    X_replaced = [
+        [False, np.nan, 0, 5],
+        [False, np.nan, 0, np.nan]
+    ]
+    imputer = Imputer(missing_values=-1, default_value=False)
+    assert_array_almost_equal(imputer.fit_transform(X_complex), X_replaced)
 
 
 def safe_median(arr, *args, **kwargs):
