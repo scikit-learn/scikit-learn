@@ -41,11 +41,11 @@ from sklearn.utils.validation import assert_all_finite
 
 def test_make_classification():
     weights = [0.1, 0.25]
-    X, y = make_classification(n_samples=100, n_features=20, n_informative=5,
-                               n_redundant=1, n_repeated=1, n_classes=3,
-                               n_clusters_per_class=1, hypercube=False,
-                               shift=None, scale=None, weights=weights,
-                               random_state=0)
+    X, y, i = make_classification(n_samples=100, n_features=20, n_informative=5,
+                                  n_redundant=1, n_repeated=1, n_classes=3,
+                                  n_clusters_per_class=1, hypercube=False,
+                                  shift=None, scale=None, weights=weights,
+                                  useful_indices=True, random_state=0)
 
     assert_equal(weights, [0.1, 0.25])
     assert_equal(X.shape, (100, 20), "X shape mismatch")
@@ -54,6 +54,8 @@ def test_make_classification():
     assert_equal(sum(y == 0), 10, "Unexpected number of samples in class #0")
     assert_equal(sum(y == 1), 25, "Unexpected number of samples in class #1")
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
+    assert_equal(i.shape, (20,), "indices shape mismatch")
+    assert_equal(sum(i), 7, "Unexpected number of informative features")
 
     # Test for n_features > 30
     X, y = make_classification(n_samples=2000, n_features=31, n_informative=31,
