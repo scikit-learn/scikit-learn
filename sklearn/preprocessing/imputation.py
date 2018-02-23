@@ -162,14 +162,6 @@ class Imputer(BaseEstimator, TransformerMixin):
             X = check_array(X, accept_sparse='csc', dtype=np.float64,
                             force_all_finite=False)
 
-            # Replace nan columns with the passed `default_value`.
-            if self.default_value is not None:
-                _isnan = np.vectorize(Imputer._isnan)
-                is_col_nan = np.all(_isnan(X), axis=0)
-                if np.any(is_col_nan):
-                    nan_indexes = np.where(is_col_nan)[0]
-                    X[:, nan_indexes] = self.default_value
-
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
@@ -180,6 +172,13 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.strategy,
                                                    self.missing_values,
                                                    self.axis)
+
+        # Replace nan columns with the passed `default_value`.
+        if hasattr(self, 'statistics_') and self.default_value is not None:
+            is_nan = np.isnan(self.statistics_)
+            if np.any(is_nan):
+                nan_indexes = np.where(is_nan)[0]
+                self.statistics_[nan_indexes] = self.default_value
 
         return self
 
@@ -390,8 +389,3 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
-
-    @staticmethod
-    def _isnan(x):
-        """Check whether x is nan or not."""
-        return np.isnan(x) if isinstance(x, type(np.nan)) else False
