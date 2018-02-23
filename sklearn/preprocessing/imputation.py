@@ -160,9 +160,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             # Replace nan columns with the passed `default_value`.
             if self.default_value is not None:
-                _isnan = lambda x: np.isnan(x) if \
-                    isinstance(x, type(np.nan)) else False
-                _isnan = np.vectorize(_isnan)
+                _isnan = np.vectorize(Imputer._isnan)
                 is_col_nan = np.all(_isnan(X), axis=0)
                 if np.any(is_col_nan):
                     nan_indexes = np.where(is_col_nan)[0]
@@ -388,3 +386,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+    @staticmethod
+    def _isnan(x):
+        """Check whether x is nan or not."""
+        return np.isnan(x) if isinstance(x, type(np.nan)) else False
