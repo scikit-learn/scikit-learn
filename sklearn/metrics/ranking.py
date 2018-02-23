@@ -202,6 +202,11 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
     0.83...
 
+    Notes
+    -----
+    .. versionchanged:: 0.19
+      Instead of linearly interpolating between operating points, precisions
+      are weighted by the change in recall since the last operating point.
     """
     def _binary_uninterpolated_average_precision(
             y_true, y_score, sample_weight=None):
