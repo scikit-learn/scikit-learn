@@ -119,11 +119,11 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, handle_unknown=None, verbose=0, copy=True):
+                 axis=0, default_value=None, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
-        self.handle_unknown = handle_unknown
+        self.default_value = default_value
         self.verbose = verbose
         self.copy = copy
 
@@ -158,15 +158,15 @@ class Imputer(BaseEstimator, TransformerMixin):
             X = check_array(X, accept_sparse='csc', dtype=np.float64,
                             force_all_finite=False)
 
-            # Replace nan columns with handle_unknown.
-            if self.handle_unknown is not None:
+            # Replace nan columns with the passed `default_value`.
+            if self.default_value is not None:
                 _isnan = lambda x: np.isnan(x) if \
                     isinstance(x, type(np.nan)) else False
                 _isnan = np.vectorize(_isnan)
                 is_col_nan = np.all(_isnan(X), axis=0)
                 if np.any(is_col_nan):
                     nan_indexes = np.where(is_col_nan)[0]
-                    X[:, nan_indexes] = self.handle_unknown
+                    X[:, nan_indexes] = self.default_value
 
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,

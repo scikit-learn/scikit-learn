@@ -147,21 +147,21 @@ def test_handle_unknown():
         [5, 1],
         [5, 1]
     ]
-    inputer = Imputer(handle_unknown=1)
+    inputer = Imputer(default_value=1)
     assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
 
     X_replaced = [
         [5, True],
         [5, True]
     ]
-    inputer = Imputer(handle_unknown=True)
+    inputer = Imputer(default_value=True)
     assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
 
     X_replaced = [
         [5, False],
         [5, False]
     ]
-    inputer = Imputer(handle_unknown=False)
+    inputer = Imputer(default_value=False)
     assert_array_almost_equal(inputer.fit_transform(X), X_replaced)
 
     X_complex = [
@@ -172,7 +172,7 @@ def test_handle_unknown():
         [5, 1, 15, 1],
         [5, 1, 15, 1]
     ]
-    inputer = Imputer(handle_unknown=1)
+    inputer = Imputer(default_value=1)
     assert_array_almost_equal(inputer.fit_transform(X_complex), X_replaced)
 
     X_complex = [
@@ -183,7 +183,7 @@ def test_handle_unknown():
         [5, False, 15, 10],
         [5, False, 15, 10]
     ]
-    inputer = Imputer(handle_unknown=False)
+    inputer = Imputer(default_value=False)
     assert_array_almost_equal(inputer.fit_transform(X_complex), X_replaced)
 
 
