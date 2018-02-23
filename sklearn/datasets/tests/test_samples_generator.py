@@ -41,8 +41,9 @@ from sklearn.utils.validation import assert_all_finite
 
 def test_make_classification():
     weights = [0.1, 0.25]
-    X, y, i = make_classification(n_samples=100, n_features=20, n_informative=5,
-                                  n_redundant=1, n_repeated=1, n_classes=3,
+    X, y, i = make_classification(n_samples=100, n_features=20,
+                                  n_informative=5, n_redundant=1,
+                                  n_repeated=1, n_classes=3,
                                   n_clusters_per_class=1, hypercube=False,
                                   shift=None, scale=None, weights=weights,
                                   useful_indices=True, random_state=0)
