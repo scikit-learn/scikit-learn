@@ -97,7 +97,7 @@ Efficient Linear Algebra & Array Operations
   number of components.
 
 - :func:`arrayfuncs.cholesky_delete`:
-  (used in :func:`sklearn.linear_model.least_angle.lars_path`)  Remove an
+  (used in :func:`sklearn.linear_model.lars_path`)  Remove an
   item from a cholesky factorization.
 
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
@@ -140,10 +140,10 @@ efficiently process ``scipy.sparse`` data.
 - :func:`sparsefuncs.mean_variance_axis`: compute the means and
   variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
-  :class:`sklearn.cluster.k_means_.KMeans`.
+  :class:`sklearn.cluster.KMeans`.
 
-- :func:`sparsefuncs.inplace_csr_row_normalize_l1` and
-  :func:`sparsefuncs.inplace_csr_row_normalize_l2`: can be used to normalize
+- :func:`sparsefuncs_fast.inplace_csr_row_normalize_l1` and
+  :func:`sparsefuncs_fast.inplace_csr_row_normalize_l2`: can be used to normalize
   individual sparse samples to unit L1 or L2 norm as done in
   :class:`sklearn.preprocessing.Normalizer`.
 
@@ -200,9 +200,6 @@ Multiclass and multilabel utility function
 - :func:`multiclass.is_multilabel`: Helper function to check if the task
   is a multi-label classification one.
 
-- :func:`multiclass.is_label_indicator_matrix`: Helper function to check if
-  a classification output is in label indicator matrix format.
-
 - :func:`multiclass.unique_labels`: Helper function to extract an ordered
   array of unique labels from different formats of target.
 
@@ -211,8 +208,8 @@ Helper Functions
 ================
 
 - :class:`gen_even_slices`: generator to create ``n``-packs of slices going up
-  to ``n``.  Used in ``sklearn.decomposition.dict_learning`` and
-  ``sklearn.cluster.k_means``.
+  to ``n``.  Used in :func:`sklearn.decomposition.dict_learning` and
+  :func:`sklearn.cluster.k_means`.
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
