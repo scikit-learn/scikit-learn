@@ -342,16 +342,14 @@ class Imputer(BaseEstimator, TransformerMixin):
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
-        missing = np.arange(X.shape[0])[invalid_mask]
-
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
-                              "observed values: %s" % missing)
+                              "observed values")
             X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
-                             "missing values: %s" % missing)
+                             "missing values")
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
