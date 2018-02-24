@@ -264,25 +264,25 @@ class EmpiricalCovariance(BaseEstimator):
 
         return result
 
-    def mahalanobis(self, observations):
+    def mahalanobis(self, X):
         """Computes the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
-        observations : array-like, shape = [n_observations, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
             distribution than the data used in fit.
 
         Returns
         -------
-        dist : array, shape = [n_observations,]
+        dist : array, shape = [n_samples,]
             Squared Mahalanobis distances of the observations.
 
         """
         precision = self.get_precision()
         # compute mahalanobis distances
-        dist = pairwise_distances(observations, self.location_[np.newaxis, :],
+        dist = pairwise_distances(X, self.location_[np.newaxis, :],
                                   metric='mahalanobis', VI=precision)
 
-        return np.reshape(dist, (len(observations),)) ** 2
+        return np.reshape(dist, (len(X),)) ** 2
