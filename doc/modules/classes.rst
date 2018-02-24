@@ -1397,6 +1397,7 @@ Low-level methods
    utils.check_random_state
    utils.class_weight.compute_class_weight
    utils.class_weight.compute_sample_weight
+   utils.deprecated
    utils.estimator_checks.check_estimator
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
