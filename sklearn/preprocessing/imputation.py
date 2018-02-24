@@ -342,7 +342,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
-        missing = np.arange(X.shape)[invalid_mask]
+        missing = np.arange(X.shape[not 0])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
