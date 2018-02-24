@@ -1211,7 +1211,6 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
-   preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
