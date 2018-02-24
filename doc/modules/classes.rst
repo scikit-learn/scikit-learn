@@ -1384,6 +1384,12 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.testing.mock_mldata_urlopen
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.cholesky_delete
@@ -1437,7 +1443,6 @@ Low-level methods
    utils.testing.assert_not_in
    utils.testing.assert_raise_message
    utils.testing.all_estimators
-   utils.testing.mock_mldata_urlopen
 
 Recently deprecated
 ===================
