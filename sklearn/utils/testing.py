@@ -494,10 +494,10 @@ class mock_mldata_urlopen(object):
     ----------
     mock_datasets : dict
         A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a dictionary
-        of {column_name: data_array}, and `ordering` is a list of column_names
-        to determine the ordering in the data set (see :func:`fake_mldata` for
-        details).
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a
+        dictionary of {column_name: data_array}, and `ordering` is a list of
+        column_names to determine the ordering in the data set (see
+        :func:`fake_mldata` for details).
     """
     def __init__(self, mock_datasets):
         self.mock_datasets = mock_datasets
