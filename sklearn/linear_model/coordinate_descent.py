@@ -764,6 +764,9 @@ class ElasticNet(LinearModel, RegressorMixin):
             self.n_iter_ = self.n_iter_[0]
             self.coef_ = coef_[0]
             self.dual_gap_ = dual_gaps_[0]
+        else:
+            self.coef_ = coef_
+            self.dual_gap_ = dual_gaps_
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
