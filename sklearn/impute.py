@@ -318,7 +318,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
-        missing = np.arange(X.shape[1])[invalid_mask]
+        missing = np.arange(X.shape[0])[invalid_mask]
 
         if invalid_mask.any():
             if self.verbose:
