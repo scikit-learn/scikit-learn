@@ -803,3 +803,9 @@ def test_enet_l1_ratio():
         est.fit(X, y[:, None])
         est_desired.fit(X, y[:, None])
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+
+def test_coef_shape_not_zero():
+    est_no_intercept = Lasso(fit_intercept=False)
+    est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
+    assert est_no_intercept.coef_.shape  == (1,)
