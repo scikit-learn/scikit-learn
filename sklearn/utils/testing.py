@@ -484,20 +484,22 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
 
 class mock_mldata_urlopen(object):
+    """Object that mocks the urlopen function to fake requests to mldata.
 
+    When requesting a dataset with a name that is in mock_datasets, this object
+    creates a fake dataset in a StringIO object and returns it. Otherwise, it
+    raises an HTTPError.
+
+    Parameters
+    ----------
+    mock_datasets : dict
+        A dictionary of {dataset_name: data_dict}, or
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a dictionary
+        of {column_name: data_array}, and `ordering` is a list of column_names
+        to determine the ordering in the data set (see :func:`fake_mldata` for
+        details).
+    """
     def __init__(self, mock_datasets):
-        """Object that mocks the urlopen function to fake requests to mldata.
-
-        `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering).
-        `data_dict` itself is a dictionary of {column_name: data_array},
-        and `ordering` is a list of column_names to determine the ordering
-        in the data set (see `fake_mldata` for details).
-
-        When requesting a dataset with a name that is in mock_datasets,
-        this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an HTTPError.
-        """
         self.mock_datasets = mock_datasets
 
     def __call__(self, urlname):
