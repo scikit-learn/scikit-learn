@@ -347,7 +347,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         """
         self.outlier_label = _check_outlier_label(self.outlier_label)
-        super(SupervisedIntegerMixin, self).fit(X, y)
+        RadiusNeighborsClassifier.fit(self, X, y)
 
 
     def predict(self, X):
