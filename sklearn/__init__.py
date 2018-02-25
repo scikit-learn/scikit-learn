@@ -66,7 +66,7 @@ else:
 
     __check_build  # avoid flakes unused variable error
 
-    visible_modules = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
+    _visible_modules = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                        'cross_validation', 'datasets', 'decomposition', 'dummy',
                        'ensemble', 'exceptions', 'externals', 'feature_extraction',
                        'feature_selection', 'gaussian_process', 'grid_search',
@@ -77,12 +77,12 @@ else:
                        'preprocessing', 'random_projection', 'semi_supervised',
                        'svm', 'tree', 'discriminant_analysis', 'impute']
     # import all the modules specified in __all__
-    for module in visible_modules:
+    for module in _visible_modules:
         importlib.import_module('.' + module, package='sklearn')
 
     # Non-modules:
-    visible_non_modules = ['clone', 'get_config', 'set_config', 'config_context']
-    __all__ = visible_modules + visible_non_modules
+    _visible_non_modules = ['clone', 'get_config', 'set_config', 'config_context']
+    __all__ = _visible_modules + _visible_non_modules
 
 
 def setup_module(module):
