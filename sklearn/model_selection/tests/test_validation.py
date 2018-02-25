@@ -1467,11 +1467,11 @@ def test_fit_and_score():
                          _fit_and_score, *fit_and_score_args)
 
     # check if warning was raised, with default error_score argument
-    warning_message = ("Estimator failed to fit train-test for this "
-                       "parameters, the error will be raised. If you want "
-                       "value to be assigned to the score in such case, "
-                       "then specify error_score parameter. From version "
-                       "0.22 the default value will be error_score=np.nan")
+    warning_message = ("Estimator failed to fit for these parameters; the "
+                       "error will be raised. If you want value to be "
+                       "assigned to the score in such case, then specify "
+                       "error_score parameter. From version 0.22 the "
+                       "default value will be error_score=np.nan")
     try:
         assert_warns_message(FutureWarning, warning_message, _fit_and_score,
                              *fit_and_score_args)
