@@ -60,22 +60,29 @@ if __SKLEARN_SETUP__:
     # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
+    import importlib
     from . import __check_build
     from .base import clone
+
     __check_build  # avoid flakes unused variable error
 
-    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
-               'cross_validation', 'datasets', 'decomposition', 'dummy',
-               'ensemble', 'exceptions', 'externals', 'feature_extraction',
-               'feature_selection', 'gaussian_process', 'grid_search',
-               'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'learning_curve', 'linear_model', 'manifold', 'metrics',
-               'mixture', 'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute',
-               # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context']
+    _visible_modules = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
+                       'cross_validation', 'datasets', 'decomposition', 'dummy',
+                       'ensemble', 'exceptions', 'externals', 'feature_extraction',
+                       'feature_selection', 'gaussian_process', 'grid_search',
+                       'isotonic', 'kernel_approximation', 'kernel_ridge',
+                       'learning_curve', 'linear_model', 'manifold', 'metrics',
+                       'mixture', 'model_selection', 'multiclass', 'multioutput',
+                       'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
+                       'preprocessing', 'random_projection', 'semi_supervised',
+                       'svm', 'tree', 'discriminant_analysis', 'impute']
+    # import all the modules specified in __all__
+    for module in _visible_modules:
+        importlib.import_module('.' + module, package='sklearn')
+
+    # Non-modules:
+    _visible_non_modules = ['clone', 'get_config', 'set_config', 'config_context']
+    __all__ = _visible_modules + _visible_non_modules
 
 
 def setup_module(module):
