@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 from scipy.sparse import csr_matrix
 
+import pytest
+
 from sklearn import datasets
 from sklearn import svm
 
@@ -926,72 +928,79 @@ def test_score_scale_invariance():
     assert pr_auc == pr_auc_shifted
 
 
-def check_detection_error_tradeoff_curve(test_case):
-    # Test detection_error_tradeoff_curve on an array of:
-    # [y_true, y_score, correct_fpr ,correct_fnr]
-    fpr, fnr, _ = detection_error_tradeoff_curve(
-            test_case[0], test_case[1])
-
-    assert_array_almost_equal(fpr, test_case[2])
-    assert_array_almost_equal(fnr, test_case[3])
-
-
-def test_detection_error_tradeoff_curve_toydata():
+@pytest.mark.parametrize("y_true,y_score,expected_fpr,expected_fnr", [
+    ([0, 0, 1], [0, 0.5, 1], [0], [0]),
+    ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),
+    ([0, 0, 1], [0.5, 0.75, 1], [0], [0]),
+    ([0, 0, 1], [0.25, 0.5, 0.75], [0], [0]),
+    ([0, 1, 0], [0, 0.5, 1], [0.5], [0]),
+    ([0, 1, 0], [0, 0.25, 0.5], [0.5], [0]),
+    ([0, 1, 0], [0.5, 0.75, 1], [0.5], [0]),
+    ([0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]),
+    ([0, 1, 1], [0, 0.5, 1], [0.0], [0]),
+    ([0, 1, 1], [0, 0.25, 0.5], [0], [0]),
+    ([0, 1, 1], [0.5, 0.75, 1], [0], [0]),
+    ([0, 1, 1], [0.25, 0.5, 0.75], [0], [0]),
+    ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]),
+    ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]),
+    ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]),
+    ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
+    ([1, 0, 1], [0.25, 0.5, 0.75], [1, 1, 0], [0, 0.5, 0.5]),
+])
+def test_detection_error_tradeoff_curve_toydata(
+    y_true, y_score, expected_fpr, expected_fnr
+):
     # Check on a batch of small examples.
-    test_cases = [
-        [[0, 0, 1], [0, 0.5, 1], [0], [0]],
-        [[0, 0, 1], [0, 0.25, 0.5], [0], [0]],
-        [[0, 0, 1], [0.5, 0.75, 1], [0], [0]],
-        [[0, 0, 1], [0.25, 0.5, 0.75], [0], [0]],
-        [[0, 1, 0], [0, 0.5, 1], [0.5], [0]],
-        [[0, 1, 0], [0, 0.25, 0.5], [0.5], [0]],
-        [[0, 1, 0], [0.5, 0.75, 1], [0.5], [0]],
-        [[0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]],
-        [[0, 1, 1], [0, 0.5, 1], [0.0], [0]],
-        [[0, 1, 1], [0, 0.25, 0.5], [0], [0]],
-        [[0, 1, 1], [0.5, 0.75, 1], [0], [0]],
-        [[0, 1, 1], [0.25, 0.5, 0.75], [0], [0]],
-        [[1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]],
-        [[1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]],
-        [[1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]],
-        [[1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]],
-        [[1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]],
-        [[1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]],
-        [[1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]],
-        [[1, 0, 1], [0.25, 0.5, 0.75], [1, 1, 0], [0, 0.5, 0.5]],
-    ]
+    fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
 
-    for test_case in test_cases:
-        check_detection_error_tradeoff_curve(test_case)
+    assert_array_almost_equal(fpr, expected_fpr)
+    assert_array_almost_equal(fnr, expected_fnr)
 
 
-def test_detection_error_tradeoff_curve_tie_handling():
-    test_cases = [
-        [[1, 0], [0.5, 0.5], [1], [0]],
-        [[0, 1], [0.5, 0.5], [1], [0]],
-        [[0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]],
-        [[0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]],
-        [[0, 1, 1], [0.25, 0.5, 0.5], [0], [0]],
-        [[1, 0, 0], [0.25, 0.5, 0.5], [1], [0]],
-        [[1, 0, 1], [0.25, 0.5, 0.5], [1], [0]],
-        [[1, 1, 0], [0.25, 0.5, 0.5], [1], [0]],
-    ]
+@pytest.mark.parametrize("y_true,y_score,expected_fpr,expected_fnr", [
+    ([1, 0], [0.5, 0.5], [1], [0]),
+    ([0, 1], [0.5, 0.5], [1], [0]),
+    ([0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]),
+    ([0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]),
+    ([0, 1, 1], [0.25, 0.5, 0.5], [0], [0]),
+    ([1, 0, 0], [0.25, 0.5, 0.5], [1], [0]),
+    ([1, 0, 1], [0.25, 0.5, 0.5], [1], [0]),
+    ([1, 1, 0], [0.25, 0.5, 0.5], [1], [0]),
+])
+def test_detection_error_tradeoff_curve_tie_handling(
+    y_true, y_score, expected_fpr, expected_fnr
+):
+    fpr, fnr, _ = detection_error_tradeoff_curve(y_true, y_score)
 
-    for test_case in test_cases:
-        check_detection_error_tradeoff_curve(test_case)
+    assert_array_almost_equal(fpr, expected_fpr)
+    assert_array_almost_equal(fnr, expected_fnr)
 
-    # Special case: exactly duplicated inputs yield the same result.
+
+def test_detection_error_tradeoff_curve_sanity_check():
+    # Exactly duplicated inputs yield the same result.
     assert_array_almost_equal(
         detection_error_tradeoff_curve([0, 0, 1], [0, 0.5, 1]),
         detection_error_tradeoff_curve(
             [0, 0, 0, 0, 1, 1], [0, 0, 0.5, 0.5, 1, 1])
     )
 
+
+@pytest.mark.parametrize("y_score", [
+    (0), (0.25), (0.5), (0.75), (1)
+])
+def test_detection_error_tradeoff_curve_constant_scores(y_score):
     # Check computation with perfect and constant scores.
-    for score in [0, 0.25, 0.5, 0.75, 1]:
-        check_detection_error_tradeoff_curve([
-            [0, 1, 0, 1, 0, 1], score * np.ones(6), [1], [0]
-        ])
+    fpr, fnr, threshold = detection_error_tradeoff_curve(
+        y_true=[0, 1, 0, 1, 0, 1],
+        y_score=y_score * np.ones(6)
+    )
+
+    assert_array_almost_equal(fpr, [1])
+    assert_array_almost_equal(fnr, [0])
+    assert_array_almost_equal(threshold, [y_score])
 
 
 def test_detection_error_tradeoff_curve_bad_input():
@@ -1007,7 +1016,7 @@ def test_detection_error_tradeoff_curve_bad_input():
         [0, 1, 1], [0, 0.5]
     )
 
-    # When the true_y values are all the same a detection error tradeoff cannot
+    # When the y_true values are all the same a detection error tradeoff cannot
     # be computed.
     with np.errstate(all="raise"):
         assert_raises(
