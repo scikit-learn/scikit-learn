@@ -1468,8 +1468,8 @@ def test_fit_and_score():
 
     # check if warning was raised, with default error_score argument
     warning_message = ("Estimator failed to fit for these parameters; the "
-                       "error will be raised. If you want value to be "
-                       "assigned to the score in such case, then specify "
+                       "error will be raised. If you want a value to be "
+                       "assigned to the score in such cases, then specify "
                        "error_score parameter. From version 0.22 the "
                        "default value will be error_score=np.nan")
     try:
