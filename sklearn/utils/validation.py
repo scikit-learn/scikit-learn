@@ -340,6 +340,14 @@ def _ensure_no_complex_data(array):
             and hasattr(array.dtype, 'kind') and array.dtype.kind == "c":
         raise ValueError("Complex data not supported\n"
                          "{}\n".format(array))
+        
+def add_dimension(input_array):
+    output_array = []
+    for i in range(len(input_array)):
+        cur = []
+        cur.append(array[i])
+        output_array.append(cur)
+    return output_array
 
 
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
@@ -501,18 +509,24 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         if ensure_2d:
             # If input is scalar raise error
             if array.ndim == 0:
-                raise ValueError(
+                array = add_dimension(array)
+                # warn: "that dimension has been added"
+                """raise ValueError(
                     "Expected 2D array, got scalar array instead:\narray={}.\n"
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
             # If input is 1D raise error
+                """
+                array.ndim = 1
             if array.ndim == 1:
-                raise ValueError(
+                array = add_dimension(array)
+                # warn: "that dimension has been added"
+                """raise ValueError(
                     "Expected 2D array, got 1D array instead:\narray={}.\n"
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array))
+                    "if it contains a single sample.".format(array))"""
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
