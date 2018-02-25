@@ -21,6 +21,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
+from sklearn.metrics import detection_error_tradeoff_curve
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
@@ -923,6 +924,100 @@ def test_score_scale_invariance():
     assert pr_auc == pr_auc_scaled_up
     assert pr_auc == pr_auc_scaled_down
     assert pr_auc == pr_auc_shifted
+
+
+def check_detection_error_tradeoff_curve(test_case):
+    # Test detection_error_tradeoff_curve on an array of:
+    # [y_true, y_score, correct_fpr ,correct_fnr]
+    fpr, fnr, _ = detection_error_tradeoff_curve(
+            test_case[0], test_case[1])
+
+    assert_array_almost_equal(fpr, test_case[2])
+    assert_array_almost_equal(fnr, test_case[3])
+
+
+def test_detection_error_tradeoff_curve_toydata():
+    # Check on a batch of small examples.
+    test_cases = [
+        [[0, 0, 1], [0, 0.5, 1], [0], [0]],
+        [[0, 0, 1], [0, 0.25, 0.5], [0], [0]],
+        [[0, 0, 1], [0.5, 0.75, 1], [0], [0]],
+        [[0, 0, 1], [0.25, 0.5, 0.75], [0], [0]],
+        [[0, 1, 0], [0, 0.5, 1], [0.5], [0]],
+        [[0, 1, 0], [0, 0.25, 0.5], [0.5], [0]],
+        [[0, 1, 0], [0.5, 0.75, 1], [0.5], [0]],
+        [[0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]],
+        [[0, 1, 1], [0, 0.5, 1], [0.0], [0]],
+        [[0, 1, 1], [0, 0.25, 0.5], [0], [0]],
+        [[0, 1, 1], [0.5, 0.75, 1], [0], [0]],
+        [[0, 1, 1], [0.25, 0.5, 0.75], [0], [0]],
+        [[1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]],
+        [[1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]],
+        [[1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]],
+        [[1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]],
+        [[1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]],
+        [[1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]],
+        [[1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]],
+        [[1, 0, 1], [0.25, 0.5, 0.75], [1, 1, 0], [0, 0.5, 0.5]],
+    ]
+
+    for test_case in test_cases:
+        check_detection_error_tradeoff_curve(test_case)
+
+
+def test_detection_error_tradeoff_curve_tie_handling():
+    test_cases = [
+        [[1, 0], [0.5, 0.5], [1], [0]],
+        [[0, 1], [0.5, 0.5], [1], [0]],
+        [[0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]],
+        [[0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]],
+        [[0, 1, 1], [0.25, 0.5, 0.5], [0], [0]],
+        [[1, 0, 0], [0.25, 0.5, 0.5], [1], [0]],
+        [[1, 0, 1], [0.25, 0.5, 0.5], [1], [0]],
+        [[1, 1, 0], [0.25, 0.5, 0.5], [1], [0]],
+    ]
+
+    for test_case in test_cases:
+        check_detection_error_tradeoff_curve(test_case)
+
+    # Special case: exactly duplicated inputs yield the same result.
+    assert_array_almost_equal(
+        detection_error_tradeoff_curve([0, 0, 1], [0, 0.5, 1]),
+        detection_error_tradeoff_curve(
+            [0, 0, 0, 0, 1, 1], [0, 0, 0.5, 0.5, 1, 1])
+    )
+
+    # Check computation with perfect and constant scores.
+    for score in [0, 0.25, 0.5, 0.75, 1]:
+        check_detection_error_tradeoff_curve([
+            [0, 1, 0, 1, 0, 1], score * np.ones(6), [1], [0]
+        ])
+
+
+def test_detection_error_tradeoff_curve_bad_input():
+    # input variables with inconsistent numbers of samples
+    assert_raises(
+        ValueError,
+        detection_error_tradeoff_curve,
+        [0, 1], [0, 0.5, 1]
+    )
+    assert_raises(
+        ValueError,
+        detection_error_tradeoff_curve,
+        [0, 1, 1], [0, 0.5]
+    )
+
+    # When the true_y values are all the same a detection error tradeoff cannot
+    # be computed.
+    with np.errstate(all="raise"):
+        assert_raises(
+            FloatingPointError,
+            detection_error_tradeoff_curve, [0, 0, 0], [0, 0.5, 1]
+        )
+        assert_raises(
+            FloatingPointError,
+            detection_error_tradeoff_curve, [1, 1, 1], [0, 0.5, 1]
+        )
 
 
 def check_lrap_toy(lrap_score):
