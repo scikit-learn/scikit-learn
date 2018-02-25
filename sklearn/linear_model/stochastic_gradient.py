@@ -732,6 +732,8 @@ class SGDClassifier(BaseSGDClassifier):
         depending on the number of samples already seen. Calling ``fit`` resets
         this counter, while ``partial_fit`` will result in increasing the
         existing counter.
+        
+        See :term:`the Glossary <warm_start>`.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
@@ -1289,6 +1291,8 @@ class SGDRegressor(BaseSGDRegressor):
         depending on the number of samples already seen. Calling ``fit`` resets
         this counter, while ``partial_fit``  will result in increasing the
         existing counter.
+        
+        See :term:`the Glossary <warm_start>`.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
