@@ -749,12 +749,6 @@ class TimeSeriesSplit(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
