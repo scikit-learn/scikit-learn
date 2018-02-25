@@ -866,7 +866,7 @@ class RandomForestClassifier(ForestClassifier):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced",
         "balanced_subsample" or None, optional (default=None)
@@ -1144,7 +1144,7 @@ class RandomForestRegressor(ForestRegressor):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     Attributes
     ----------
@@ -1375,7 +1375,7 @@ class ExtraTreesClassifier(ForestClassifier):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1623,7 +1623,7 @@ class ExtraTreesRegressor(ForestRegressor):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     Attributes
     ----------
@@ -1814,7 +1814,7 @@ class RandomTreesEmbedding(BaseForest):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     Attributes
     ----------
