@@ -7,31 +7,28 @@ Advanced installation instructions
 
 There are different ways to get scikit-learn installed:
 
+  * :ref:`Install an official release <install_official_release>`. This
+    is the best approach for most users. It will provide a stable version and pre-build packages are available for most platforms.
+
   * Install the version of scikit-learn provided by your
     :ref:`operating system or Python distribution <install_by_distribution>`.
-    This is the quickest option for those who have operating systems that
-    distribute scikit-learn.
+    This is a quick option for those who have operating systems
+    that distribute scikit-learn. It might not provide the latest release version.
 
-  * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for users who want a stable version number
-    and aren't concerned about running a slightly older version of
-    scikit-learn.
-
-  * :ref:`Install the latest development version
+  * :ref:`Building the package from source
     <install_bleeding_edge>`. This is best for users who want the
     latest-and-greatest features and aren't afraid of running
-    brand-new code.
+    brand-new code. This document describes how to build from source 
 
 .. note::
 
     If you wish to contribute to the project, you need to
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+.. _install_bleeding_edge:
 
-.. _install_official_release:
-
-Installing an official release
-==============================
+Building from source
+=====================
 
 Scikit-learn requires:
 
@@ -39,26 +36,73 @@ Scikit-learn requires:
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
+Building Scikit-learn also requires
 
-Mac OSX
--------
+- Cython >=0.23 
 
-Scikit-learn and its dependencies are all available as wheel packages for OSX::
+Running tests requires
 
-    pip install -U numpy scipy scikit-learn
+- pytest
 
+.. _git_repo:
+
+Retrieving the latest code
+--------------------------
+
+We use `Git <https://git-scm.com/>`_ for version control and
+`GitHub <https://github.com/>`_ for hosting our main repository.
+
+You can check out the latest sources with the command::
+
+    git clone git://github.com/scikit-learn/scikit-learn.git
+
+or if you have write privileges::
+
+    git clone git@github.com:scikit-learn/scikit-learn.git
+
+If you want to build a stable version, you can ``git checkout <VERSION>`` to get the code for that particular version, or download an zip archive of the version from github.
+
+Building from source
+--------------------
+If you have all the build requirements installed (see below for details), you can build and install the package in the following way.
+
+If you run the development version, it is cumbersome to reinstall the
+package each time you update the sources. It is thus preferred that
+you add the scikit-learn directory to your ``PYTHONPATH`` and build the
+extension in place::
+
+    python setup.py build_ext --inplace
+
+
+Another option is to install the package in editable mode if you change your
+code a lot and do not want to have to reinstall every time. This basically
+builds the extension in place and creates a link to the development directory
+(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
+
+    pip install --editable .
+
+.. note::
+
+    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+
+.. note::
+
+    If you decide to do an editable install you have to rerun::
+
+        python setup.py build_ext --inplace
+
+    every time the source code of a compiled extension is
+    changed (for instance when switching branches or pulling changes from upstream).
+
+On Unix-like systems, you can simply type ``make`` in the top-level folder to
+build in-place and launch all the tests. Have a look at the ``Makefile`` for
+additional utilities.
+
+Installing build dependencies
+=============================
 
 Linux
 -----
-
-At this time scikit-learn does not provide official binary packages for Linux
-so you have to build from source if you want the latest version.
-If you don't need the newest version, consider using your package manager to
-install scikit-learn. It is usually the easiest way, but might not provide the
-newest version.
-
-Installing build dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
@@ -118,144 +162,8 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
     sudo yum -y install gcc gcc-c++ numpy python-devel scipy
 
 
-Building scikit-learn with pip
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is usually the fastest way to install or upgrade to the latest stable
-release::
-
-    pip install --user --install-option="--prefix=" -U scikit-learn
-
-The ``--user`` flag asks pip to install scikit-learn in the ``$HOME/.local``
-folder therefore not requiring root permission. This flag should make pip
-ignore any old version of scikit-learn previously installed on the system while
-benefiting from system packages for numpy and scipy. Those dependencies can
-be long and complex to build correctly from source.
-
-The ``--install-option="--prefix="`` flag is only required if Python has a
-``distutils.cfg`` configuration with a predefined ``prefix=`` entry.
-
-
-From source package
-~~~~~~~~~~~~~~~~~~~
-
-download the source package from
-`pypi <https://pypi.python.org/pypi/scikit-learn>`_, unpack the sources and
-cd into the source directory.
-
-This packages uses distutils, which is the default way of installing
-python modules. The install command is::
-
-    python setup.py install
-
-or alternatively (also from within the scikit-learn source folder)::
-
-    pip install .
-
-.. warning::
-
-   Packages installed with the ``python setup.py install`` command cannot
-   be uninstalled nor upgraded by ``pip`` later. To properly uninstall
-   scikit-learn in that case it is necessary to delete the ``sklearn`` folder
-   from your Python ``site-packages`` directory.
-
-
 Windows
 -------
-
-First, you need to install `numpy <http://www.numpy.org/>`_ and `scipy
-<http://www.scipy.org/>`_ from their own official installers.
-
-Wheel packages (.whl files) for scikit-learn from `pypi
-<https://pypi.python.org/pypi/scikit-learn/>`_ can be installed with the `pip
-<https://pip.readthedocs.io/en/stable/installing/>`_ utility.
-Open a console and type the following to install or upgrade scikit-learn to the
-latest stable release::
-
-    pip install -U scikit-learn
-
-If there are no binary packages matching your python, version you might
-to try to install scikit-learn and its dependencies from `christoph gohlke
-unofficial windows installers
-<https://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
-or from a :ref:`python distribution <install_by_distribution>` instead.
-
-
-.. _install_by_distribution:
-
-Third party distributions of scikit-learn
-=========================================
-
-Some third-party distributions are now providing versions of
-scikit-learn integrated with their package-management systems.
-
-These can make installation and upgrading much easier for users since
-the integration includes the ability to automatically install
-dependencies (numpy, scipy) that scikit-learn requires.
-
-The following is an incomplete list of python and os distributions
-that provide their own version of scikit-learn.
-
-
-MacPorts for Mac OSX
---------------------
-
-The MacPorts package is named ``py<XY>-scikits-learn``,
-where ``XY`` denotes the Python version.
-It can be installed by typing the following
-command::
-
-    sudo port install py26-scikit-learn
-
-or::
-
-    sudo port install py27-scikit-learn
-
-
-Arch Linux
-----------
-
-Arch Linux's package is provided through the `official repositories
-<https://www.archlinux.org/packages/?q=scikit-learn>`_ as
-``python-scikit-learn`` for Python 3 and ``python2-scikit-learn`` for Python 2.
-It can be installed by typing the following command:
-
-.. code-block:: none
-
-     # pacman -S python-scikit-learn
-
-or:
-
-.. code-block:: none
-
-     # pacman -S python2-scikit-learn
-
-depending on the version of Python you use.
-
-
-NetBSD
-------
-
-scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
-
-    http://pkgsrc.se/wip/py-scikit_learn
-
-Fedora
-------
-
-The Fedora package is called ``python-scikit-learn`` for the Python 2 version
-and ``python3-scikit-learn`` for the Python 3 version. Both versions can
-be installed using ``yum``::
-
-    $ sudo yum install python-scikit-learn
-
-or::
-
-    $ sudo yum install python3-scikit-learn
-
-
-Building on windows
--------------------
 
 To build scikit-learn on Windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
@@ -356,16 +264,6 @@ build step::
     python setup.py build --compiler=my_compiler install
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
-
-
-.. _install_bleeding_edge:
-
-Bleeding Edge
-=============
-
-See section :ref:`git_repo` on how to get the development version. Then follow
-the previous instructions to build from source depending on your platform.
-You will also require Cython >=0.23 in order to build the development version.
 
 
 .. _testing:
