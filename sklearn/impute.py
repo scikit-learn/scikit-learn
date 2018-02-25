@@ -161,7 +161,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Count the zeros
         if missing_values == 0:
-            n_zeros_axis = np.zeros(X.shape[0], dtype=int)
+            n_zeros_axis = np.zeros(X.shape[1], dtype=int)
         else:
             n_zeros_axis = X.shape[0] - np.diff(X.indptr)
 

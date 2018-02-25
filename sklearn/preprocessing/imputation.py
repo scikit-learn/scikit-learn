@@ -63,7 +63,7 @@ def _most_frequent(array, extra_value, n_repeat):
 
 @deprecated("Imputer was deprecated in version 0.20 and will be "
             "removed in 0.22. Import impute.SimpleImputer from "
-            "sklearn instead.")
+            "sklearn instead. The axis parameter was also deprecated")
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
