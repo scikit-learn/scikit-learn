@@ -100,15 +100,15 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-def _check_outlier_handler(outlier_handler, kind):
+def _check_outlier_label(outlier_label):
     """Check to make sure outlier_handler is valid"""
-    if outlier_handler in [None, 'uniform', 'prior']:
-        return outlier_handler
-    elif isinstance(outlier_handler, (numbers.Integral, np.integer)):
-        return outlier_handler
+    if outlier_label in ['raise', 'most_frequent']:
+        return outlier_label
+    elif isinstance(outlier_label, (numbers.Integral, np.integer)):
+        return outlier_label
     else:
-        raise ValueError("outlier_%s not recognized, should be int "
-                         "'uniform', 'prior' or None." % kind)
+        raise ValueError("outlier_label not recognized, should be int "
+                         "'raise', or 'most_frequent'.")
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
