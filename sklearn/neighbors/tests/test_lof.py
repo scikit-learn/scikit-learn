@@ -58,11 +58,11 @@ def test_lof_performance():
     X_test = np.r_[X[100:], X_outliers]
     y_test = np.array([0] * 20 + [1] * 20)
 
-    # fit the model
-    clf = neighbors.LocalOutlierFactor().fit(X_train)
+    # fit the model for novelty detection
+    clf = neighbors.LocalOutlierFactor(novelty=True).fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = -clf._decision_function(X_test)
+    y_pred = -clf.decision_function(X_test)
 
     # check that roc_auc is good
     assert_greater(roc_auc_score(y_test, y_pred), .99)
@@ -72,19 +72,21 @@ def test_lof_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = neighbors.LocalOutlierFactor(n_neighbors=2,
-                                        contamination=0.1).fit(X_train)
-    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X_train)
+                                        contamination=0.1,
+                                        novelty=True).fit(X_train)
+    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2,
+                                        novelty=True).fit(X_train)
     s_0 = 2. * sqrt(2.) / (1. + sqrt(2.))
     s_1 = (1. + sqrt(2)) * (1. / (4. * sqrt(2.)) + 1. / (2. + 2. * sqrt(2)))
     # check predict()
     assert_array_almost_equal(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
     assert_array_almost_equal(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf1._score_samples([[2., 2.]]), [s_0])
-    assert_array_almost_equal(-clf2._score_samples([[2., 2.]]), [s_0])
+    assert_array_almost_equal(-clf1.score_samples([[2., 2.]]), [s_0])
+    assert_array_almost_equal(-clf2.score_samples([[2., 2.]]), [s_0])
     # check predict(one sample already in train)
-    assert_array_almost_equal(-clf1._score_samples([[1., 1.]]), [s_1])
-    assert_array_almost_equal(-clf2._score_samples([[1., 1.]]), [s_1])
+    assert_array_almost_equal(-clf1.score_samples([[1., 1.]]), [s_1])
+    assert_array_almost_equal(-clf2.score_samples([[1., 1.]]), [s_1])
 
 
 def test_lof_precomputed(random_state=42):
@@ -96,17 +98,17 @@ def test_lof_precomputed(random_state=42):
     DXX = metrics.pairwise_distances(X, metric='euclidean')
     DYX = metrics.pairwise_distances(Y, X, metric='euclidean')
     # As a feature matrix (n_samples by n_features)
-    lof_X = neighbors.LocalOutlierFactor(n_neighbors=3)
+    lof_X = neighbors.LocalOutlierFactor(n_neighbors=3, novelty=True)
     lof_X.fit(X)
     pred_X_X = lof_X._predict()
-    pred_X_Y = lof_X._predict(Y)
+    pred_X_Y = lof_X.predict(Y)
 
     # As a dense distance matrix (n_samples by n_samples)
     lof_D = neighbors.LocalOutlierFactor(n_neighbors=3, algorithm='brute',
-                                         metric='precomputed')
+                                         metric='precomputed', novelty=True)
     lof_D.fit(DXX)
     pred_D_X = lof_D._predict()
-    pred_D_Y = lof_D._predict(DYX)
+    pred_D_Y = lof_D.predict(DYX)
 
     assert_array_almost_equal(pred_X_X, pred_D_X)
     assert_array_almost_equal(pred_X_Y, pred_D_Y)
@@ -127,14 +129,16 @@ def test_n_neighbors_attribute():
 def test_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = neighbors.LocalOutlierFactor(n_neighbors=2,
-                                        contamination=0.1).fit(X_train)
-    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X_train)
-    assert_array_equal(clf1._score_samples([[2., 2.]]),
-                       clf1._decision_function([[2., 2.]]) + clf1.offset_)
-    assert_array_equal(clf2._score_samples([[2., 2.]]),
-                       clf2._decision_function([[2., 2.]]) + clf2.offset_)
-    assert_array_equal(clf1._score_samples([[2., 2.]]),
-                       clf2._score_samples([[2., 2.]]))
+                                        contamination=0.1,
+                                        novelty=True).fit(X_train)
+    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2,
+                                        novelty=True).fit(X_train)
+    assert_array_equal(clf1.score_samples([[2., 2.]]),
+                       clf1.decision_function([[2., 2.]]) + clf1.offset_)
+    assert_array_equal(clf2.score_samples([[2., 2.]]),
+                       clf2.decision_function([[2., 2.]]) + clf2.offset_)
+    assert_array_equal(clf1.score_samples([[2., 2.]]),
+                       clf2.score_samples([[2., 2.]]))
 
 
 def test_contamination():
