@@ -808,4 +808,4 @@ def test_enet_l1_ratio():
 def test_coef_shape_not_zero():
     est_no_intercept = Lasso(fit_intercept=False)
     est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
-    assert est_no_intercept.coef_.shape  == (1,)
+    assert est_no_intercept.coef_.shape == (1,)
