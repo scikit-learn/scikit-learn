@@ -509,6 +509,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
         problems as in hyperparameter optimization.
+        
         See :term:`the Glossary <warm_start>`.
 
     copy_X_train : bool, optional (default: True)
