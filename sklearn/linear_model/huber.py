@@ -158,7 +158,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         This is useful if the stored attributes of a previously used model
         has to be reused. If set to False, then the coefficients will
         be rewritten for every call to fit.
-        
         See :term:`the Glossary <warm_start>`.
 
     fit_intercept : bool, default True
