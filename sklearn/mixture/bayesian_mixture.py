@@ -173,7 +173,6 @@ class BayesianGaussianMixture(BaseMixture):
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
-
         See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
