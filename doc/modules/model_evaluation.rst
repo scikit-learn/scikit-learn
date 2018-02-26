@@ -85,6 +85,7 @@ Scoring                           Function                                      
 **Regression**
 'explained_variance'              :func:`metrics.explained_variance_score`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
+'neg_mean_absolute_percentage_error' :func:`metrics.mean_absolute_percentage_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
@@ -104,7 +105,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_absolute_percentage_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -1550,6 +1551,32 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
   ... # doctest: +ELLIPSIS
   0.849...
+
+.. _mean_absolute_percentage_error:
+
+Mean absolute error
+-------------------
+
+The :func:`mean_absolute_percentage_error` function computes `mean absolute
+percentage error <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_, a risk
+metric corresponding to the expected value of the absolute percentage error loss or
+:math:`l1`-norm of percentage loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean absolute percentage error
+(MAPE) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{MAPE}(y, \hat{y}) = \frac{100}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| \frac{y_i - \hat{y}_i}{y_i} \right|.
+
+Here is a small example of usage of the :func:`mean_absolute_percentage_error` function::
+
+  >>> from sklearn.metrics import mean_absolute_percentage_error
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> mean_absolute_percentage_error(y_true, y_pred)
+  32.738...
 
 .. _mean_squared_error:
 
