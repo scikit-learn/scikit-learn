@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
@@ -28,6 +29,7 @@ def test_regression_metrics(n_samples=50):
                         mean_squared_error(np.log(1 + y_true),
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
+    assert_almost_equal(mean_absolute_percentage_error(y_true, y_pred), 98.0)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
@@ -70,7 +72,6 @@ def test_regression_metrics_at_limits():
     assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
                         "used when targets contain negative values.",
                         mean_squared_log_error, [1., -2., 3.], [1., 2., 3.])
-
 
 
 def test__check_reg_targets():
