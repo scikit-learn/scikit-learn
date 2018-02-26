@@ -32,9 +32,9 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
     Parameters
     ----------
     estimator : scikit-learn Classifier or Regressor
-        Invoking the ``fit`` method on the `SequentialFeatureSelector`
+        Invoking the ``fit`` method on the ``SequentialFeatureSelector``
         will fit a clone of the original estimator that
-        will be stored in the class attribute `self.estimators_`.
+        will be stored in the class attribute ``self.estimators_``.
 
     n_features_to_select : int or tuple (default=1)
         An integer arguments specifies the number of features to select,
@@ -44,11 +44,11 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         with min <= n_features <= max that scored highest in the evaluation.
         For example, the tuple (1, 4) will return any combination from
         1 up to 4 features instead of a fixed number
-        of features `n_features_to_select`.
+        of features ``n_features_to_select``.
 
     scoring : str, callable, or None (default=None)
         A string (see model evaluation documentation) or a scorer
-        callable object / function with signature `scorer(estimator, X, y)`.
+        callable object / function with signature ``scorer(estimator, X, y)``.
 
     forward : bool (default=True)
         Performs forward selection if True and backward selection, otherwise.
@@ -61,8 +61,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         - An object to be used as a cross-validation generator.
         - An iterable yielding train, test splits.
         For integer/None inputs, if the estimator is a classifier
-        and `y` is either binary or multiclass, `StratifiedKFold` is used.
-        In all other cases, `KFold` is used.
+        and ```y`` is either binary or multiclass, ``StratifiedKFold`` is used.
+        In all other cases, ``KFold`` is used.
 
     n_jobs : int (default=1)
         The number of CPUs to use for cross validation.
@@ -78,7 +78,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
           to avoid delays due to on-demand spawning of the jobs
         - An int, giving the exact number of total jobs that are spawned
         - A string, giving an expression as a function
-            of `n_jobs`, as in `2*n_jobs`
+            of ``n_jobs``, as in ``2*n_jobs``
 
     Attributes
     ----------
@@ -104,7 +104,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
     with default settings to select a feature subset, consisting of
     1 to 3 features, from iris. The selection criteria for this
     feature subset is the average cross-validation performance
-    (cv=5 by default) of the `estimator` (here: KNN)
+    (cv=5 by default) of the ``estimator`` (here: KNN)
     during the greedy forward selection search.
 
         >>> from sklearn.feature_selection import SequentialFeatureSelector
