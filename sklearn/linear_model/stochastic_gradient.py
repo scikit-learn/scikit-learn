@@ -724,6 +724,7 @@ class SGDClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -732,8 +733,6 @@ class SGDClassifier(BaseSGDClassifier):
         depending on the number of samples already seen. Calling ``fit`` resets
         this counter, while ``partial_fit`` will result in increasing the
         existing counter.
-        
-        See :term:`the Glossary <warm_start>`.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
@@ -1283,6 +1282,7 @@ class SGDRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -1291,8 +1291,6 @@ class SGDRegressor(BaseSGDRegressor):
         depending on the number of samples already seen. Calling ``fit`` resets
         this counter, while ``partial_fit``  will result in increasing the
         existing counter.
-        
-        See :term:`the Glossary <warm_start>`.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
