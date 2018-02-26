@@ -42,6 +42,7 @@ from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import precision_score
@@ -93,6 +94,7 @@ from sklearn.metrics.base import _average_binary_score
 
 REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
+    "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
@@ -346,7 +348,8 @@ SYMMETRIC_METRICS = [
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
 
-    "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
+    "matthews_corrcoef_score", "mean_absolute_error", 
+    "mean_absolute_percentage_error", "mean_squared_error",
     "median_absolute_error",
 
     "cohen_kappa_score",
@@ -378,6 +381,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
                         # confusion_matrix with sample_weight is in
                         # test_classification.py
     "median_absolute_error",
+    "mean_absolute_percentage_error"
 ]
 
 
