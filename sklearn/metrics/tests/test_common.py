@@ -348,7 +348,7 @@ SYMMETRIC_METRICS = [
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
 
-    "matthews_corrcoef_score", "mean_absolute_error", 
+    "matthews_corrcoef_score", "mean_absolute_error",
     "mean_absolute_percentage_error", "mean_squared_error",
     "median_absolute_error",
 
