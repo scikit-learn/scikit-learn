@@ -41,9 +41,9 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
 
 
-REGRESSION_SCORERS = ['explained_variance', 'r2',
-                      'neg_mean_absolute_error', 'neg_mean_squared_error',
-                      'neg_mean_squared_log_error',
+REGRESSION_SCORERS = ['explained_variance', 'r2', 'neg_mean_absolute_error',
+                      'neg_mean_absolute_percentage_error',
+                      'neg_mean_squared_error', 'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error']
 
