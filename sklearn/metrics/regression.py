@@ -203,7 +203,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
     Examples
     --------
-    >>> from sklearn.metrics import median_absolute_error
+    >>> from sklearn.metrics import mean_absolute_percentage_error
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
