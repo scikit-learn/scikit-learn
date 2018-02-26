@@ -19,6 +19,7 @@ the lower the better
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
+#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -32,6 +33,7 @@ from ..externals.six import string_types
 
 __ALL__ = [
     "mean_absolute_error",
+    "mean_absolute_percentage_error",
     "mean_squared_error",
     "mean_squared_log_error",
     "median_absolute_error",
@@ -179,6 +181,41 @@ def mean_absolute_error(y_true, y_pred,
             multioutput = None
 
     return np.average(output_errors, weights=multioutput)
+
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    """Mean absolute percentage error regression loss
+
+    Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples)
+        Estimated target values.
+
+    Returns
+    -------
+    loss : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import median_absolute_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    32.738...
+
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
+                                                   'uniform_average')
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported " 
+                         "in mean_absolute_percentage_error")
+    return np.average(np.abs((y_true - y_pred)/y_true))*100
 
 
 def mean_squared_error(y_true, y_pred,
