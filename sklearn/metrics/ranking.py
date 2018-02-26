@@ -276,6 +276,10 @@ def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
     array([ 0.35,  0.4 ,  0.8 ])
 
     """
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. Detection error "
+                         "tradeoff curve is not defined in that case.")
+
     fps, tps, thresholds = _binary_clf_curve(y_true, y_score,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
