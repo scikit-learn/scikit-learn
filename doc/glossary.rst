@@ -1547,9 +1547,15 @@ functions or non-estimator constructors.
         their number.
 
         :term:`partial_fit` also retains the model between calls, but differs:
-        with ``warm_start`` the parameters change and the data is constant
-        across calls to ``fit``; with ``partial_fit``, the mini-batch of data
-        changes and model parameters stay fixed.
+        with ``warm_start`` the parameters change and the data is
+        (more-or-less) constant across calls to ``fit``; with ``partial_fit``,
+        the mini-batch of data changes and model parameters stay fixed.
+
+        There are cases where you want to use ``warm_start`` to fit on
+        different, but closely related data. For example, one may initially fit
+        to a subset of the data, then fine-tune the parameter search on the
+        full dataset. For classification, all data in a sequence of
+        ``warm_start`` calls to ``fit`` must include samples from each class.
 
 .. _glossary_attributes:
 
