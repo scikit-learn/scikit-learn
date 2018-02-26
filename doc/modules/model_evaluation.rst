@@ -860,9 +860,9 @@ specified by the ``average`` argument to the
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
-with all labels included will produce equal precision, recall and :math:`F`,
-while "weighted" averaging may produce an F-score that is not between
-precision and recall.
+with all labels included precision, recall and :math:`F` are all equal, and
+identical to accuracy, while "weighted" averaging may produce an F-score that
+is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 
