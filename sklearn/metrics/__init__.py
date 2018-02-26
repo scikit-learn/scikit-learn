@@ -54,6 +54,7 @@ from .pairwise import pairwise_kernels
 
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
+from .regression import mean_absolute_percentage_error
 from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
@@ -97,6 +98,7 @@ __all__ = [
     'make_scorer',
     'matthews_corrcoef',
     'mean_absolute_error',
+    'mean_absolute_percentage_error'
     'mean_squared_error',
     'mean_squared_log_error',
     'median_absolute_error',
