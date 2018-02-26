@@ -178,8 +178,6 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                 samples, for the intercept.
             - 'seen': array of boolean describing the seen samples.
             - 'num_seen': the number of seen samples.
-        
-        See :term:`the Glossary <warm_start>`. 
 
     is_saga : boolean, optional
         Whether to use the SAGA algorithm or the SAG algorithm. SAGA behaves
