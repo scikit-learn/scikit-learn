@@ -99,7 +99,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
-        problems as in hyperparameter optimization. 
+        problems as in hyperparameter optimization.
         
         See :term:`the Glossary <warm_start>`.
 
