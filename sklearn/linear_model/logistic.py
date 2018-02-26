@@ -1084,7 +1084,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     warm_start : bool, default: False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
-        Useless for liblinear solver.
+        Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
 
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
