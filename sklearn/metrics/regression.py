@@ -215,7 +215,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported "
                          "in mean_absolute_percentage_error")
-    return np.average(np.abs((y_true - y_pred)/y_true))*100
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
 def mean_squared_error(y_true, y_pred,
