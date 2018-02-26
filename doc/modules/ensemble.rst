@@ -530,7 +530,7 @@ Fitting additional weak-learners
 
 Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
 support ``warm_start=True`` which allows you to add more estimators to an already
-fitted model.
+fitted model. See :term:`the Glossary <warm_start>`.
 
 ::
 

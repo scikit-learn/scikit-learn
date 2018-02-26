@@ -318,6 +318,7 @@ writing data in that format.
     covtype
     rcv1
     kddcup99
+    california_housing
 
 
 .. include:: olivetti_faces.rst
@@ -357,3 +358,7 @@ writing data in that format.
 .. _linnerud:
 
 .. include:: ../../sklearn/datasets/descr/linnerud.rst
+
+.. _california_housing:
+
+.. include:: ../../sklearn/datasets/descr/california_housing.rst
