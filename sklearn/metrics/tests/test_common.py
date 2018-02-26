@@ -58,7 +58,17 @@ from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
 
+<<<<<<< HEAD
 from sklearn.metrics._base import _average_binary_score
+=======
+# TODO Curve are currently not covered by invariance test
+# from sklearn.metrics import precision_recall_curve
+# from sklearn.metrics import roc_curve
+# from sklearn.metrics import detection_error_tradeoff_curve
+
+
+from sklearn.metrics.base import _average_binary_score
+>>>>>>> Add reference for DET curves in invariance test
 
 
 # Note toward developers about metric testing
