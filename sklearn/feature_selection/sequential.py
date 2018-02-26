@@ -82,18 +82,19 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
     Attributes
     ----------
-    feature_subset_idx_ : array-like, shape = [n_predictions]
-        Feature Indices of the selected feature subsets.
+    support_ : array of shape [n_features]
+        The mask of selected features.
 
     score_ : float
         Cross validation average score of the selected subset.
 
     subsets_ : dict
-        A dictionary of selected feature subsets during the
-        sequential selection, where the dictionary keys are
-        the lengths k of these feature subsets. The dictionary
-        values are dictionaries themselves with the following
-        keys: 'feature_subset_idx' (tuple of indices of the feature subset)
+        A dictionary containing the best selected feature subset
+        for each feature subset size selected by the
+        sequential feature selection algorithm.
+        Here the dictionary keys are the lengths k of these feature subsets.
+        The dictionary values are dictionaries themselves with the following
+        keys: 'support' (tuple of indices of the feature subset)
               'cv_scores' (list individual cross-validation scores)
               'avg_score' (average cross-validation score)
 
@@ -116,10 +117,21 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         >>> sfs = sfs.fit(X, y)
         >>> sfs.score_  # doctest: +ELLIPSIS
         0.9733...
-        >>> sfs.feature_subset_idx_
-        (0, 2, 3)
+        >>> sfs.support_
+        array([ True, False,  True,  True], dtype=bool)
         >>> sfs.transform(X).shape
         (150, 3)
+
+    See also
+    --------
+    RFE : Recursive feature elimination selection of the best
+    number of features
+
+    References
+    ----------
+    .. [1] Ferri, F. J., Pudil P., Hatef, M., Kittler, J., "Comparative
+           study of techniques for large-scale feature selection,"
+           Pattern Recognition in Practice IV : 403-413, 1994
 
     """
     def __init__(self, estimator, n_features_to_select=1,
@@ -151,10 +163,9 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         self : object
 
         """
-        self._scorer = check_scoring(self.estimator, scoring=self.scoring)
 
-        if not isinstance(self.n_features_to_select, int) and\
-                not isinstance(self.n_features_to_select, tuple):
+        if not (isinstance(self.n_features_to_select, int) or
+                isinstance(self.n_features_to_select, tuple)):
             raise ValueError('n_features_to_select must be a positive integer'
                              ' or tuple')
 
@@ -189,6 +200,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             select_in_range = False
             k_to_select = self.n_features_to_select
 
+        self._scorer = check_scoring(self.estimator, scoring=self.scoring)
+
         cloned_estimator = clone(self.estimator)
 
         self._n_features = X.shape[1]
@@ -206,9 +219,9 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             k = len(k_idx)
             k_score = self._calc_score(X, y, k_idx, cloned_estimator)
             self.subsets_[k] = {
-                'feature_subset_idx': k_idx,
+                'support': k_idx,
                 'cv_scores': k_score,
-                'avg_score': np.nanmean(k_score)
+                'avg_score': np.mean(k_score)
                 }
 
         best_subset = None
@@ -221,20 +234,22 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                     orig_set=orig_set,
                     subset=prev_subset,
                     X=X,
-                    y=y
+                    y=y,
+                    estimator=cloned_estimator
                 )
             else:
                 k_idx, k_score, cv_scores = self._exclusion(
                     feature_set=prev_subset,
                     X=X,
-                    y=y
+                    y=y,
+                    estimator=cloned_estimator
                 )
 
             k = len(k_idx)
             if k not in self.subsets_ or (self.subsets_[k]['avg_score'] <
                                           k_score):
                 self.subsets_[k] = {
-                    'feature_subset_idx': k_idx,
+                    'support': k_idx,
                     'cv_scores': cv_scores,
                     'avg_score': k_score
                 }
@@ -249,9 +264,10 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                     max_score = self.subsets_[k]['avg_score']
                     best_subset = k
             k_score = max_score
-            k_idx = self.subsets_[best_subset]['feature_subset_idx']
+            k_idx = self.subsets_[best_subset]['support']
 
-        self.feature_subset_idx_ = k_idx
+        self.support_ = k_idx
+        self.support_ = self._get_support_mask()
         self.score_ = k_score
         return self
 
@@ -308,13 +324,9 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                    all_cv_scores[best])
         return res
 
-    @property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     def _get_support_mask(self):
-        check_is_fitted(self, 'feature_subset_idx_')
+        check_is_fitted(self, 'support_')
         mask = np.zeros((self._n_features,), dtype=np.bool)
         # list to avoid IndexError in old NumPy versions
-        mask[list(self.feature_subset_idx_)] = True
+        mask[list(self.support_)] = True
         return mask
