@@ -532,12 +532,12 @@ def load(filename, mmap_mode=None):
 
     Parameters
     -----------
-    filename: str or pathlib.Path
-        The path of the file from which to load the object
+    filename: str or pathlib.Path or .read()-supporting file-like object
+        The path of the file or a file-like object from which to load the object
     mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, the arrays are memory-mapped from the disk. This
         mode has no effect for compressed files. Note that in this
-        case the reconstructed object might not longer match exactly
+        case the reconstructed object may no longer match exactly
         the originally pickled object.
 
     Returns
@@ -561,7 +561,7 @@ def load(filename, mmap_mode=None):
     if Path is not None and isinstance(filename, Path):
         filename = str(filename)
 
-    if hasattr(filename, "read"):
+    if hasattr(filename, 'read'):
         fobj = filename
         filename = getattr(fobj, 'name', '')
         with _read_fileobject(fobj, filename, mmap_mode) as fobj:
@@ -571,8 +571,8 @@ def load(filename, mmap_mode=None):
             with _read_fileobject(f, filename, mmap_mode) as fobj:
                 if isinstance(fobj, _basestring):
                     # if the returned file object is a string, this means we
-                    # try to load a pickle file generated with an version of
-                    # Joblib so we load it with joblib compatibility function.
+                    # try to load a pickle file generated with a version of
+                    # joblib so we load it with joblib compatibility function.
                     return load_compatibility(fobj)
 
                 obj = _unpickle(fobj, filename, mmap_mode)
