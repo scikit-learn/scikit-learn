@@ -47,8 +47,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
 
 # TODO Curve are currently not covered by invariance test
-# from sklearn.metrics import precision_recall_curve
-# from sklearn.metrics import roc_curve
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_curve
 
 
 from sklearn.metrics.base import _average_binary_score
@@ -144,6 +144,12 @@ CLASSIFICATION_METRICS = {
     "cohen_kappa_score": cohen_kappa_score,
 }
 
+CURVE_METRICS = {
+    "roc_curve": lambda *args, **kwargs: roc_curve(*args, **kwargs)[:2],
+    "precision_recall_curve":
+        lambda *args, **kwargs: precision_recall_curve(*args, **kwargs)[:2],
+}
+
 THRESHOLDED_METRICS = {
     "coverage_error": coverage_error,
     "label_ranking_loss": label_ranking_loss,
@@ -177,6 +183,7 @@ ALL_METRICS = dict()
 ALL_METRICS.update(THRESHOLDED_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
+ALL_METRICS.update(CURVE_METRICS)
 
 # Lists of metrics with common properties
 # ---------------------------------------
@@ -223,6 +230,10 @@ METRIC_UNDEFINED_MULTICLASS = [
     "f1_score",
     "f2_score",
     "f0.5_score",
+
+    # curves
+    "roc_curve",
+    "precision_recall_curve",
 ]
 
 # Metric undefined with "binary" or "multiclass" input
@@ -242,6 +253,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = [
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = [
     "roc_curve",
+    "precision_recall_curve",
 
     "brier_score_loss",
 
@@ -263,6 +275,8 @@ METRICS_WITH_POS_LABEL = [
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
+    "roc_curve",
+    "precision_recall_curve",
 
     "hamming_loss",
 
@@ -355,6 +369,8 @@ NOT_SYMMETRIC_METRICS = [
     "explained_variance_score",
     "r2_score",
     "confusion_matrix",
+    "roc_curve",
+    "precision_recall_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
