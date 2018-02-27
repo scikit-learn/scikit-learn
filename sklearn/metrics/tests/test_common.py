@@ -13,15 +13,11 @@ from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
@@ -389,27 +385,30 @@ def test_symmetry():
     y_pred = random_state.randint(0, 2, size=(20, ))
 
     # We shouldn't forget any metrics
-    assert_equal(set(SYMMETRIC_METRICS).union(
+    assert_array_equal(set(SYMMETRIC_METRICS).union(
         NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
         METRIC_UNDEFINED_BINARY_MULTICLASS),
         set(ALL_METRICS))
 
-    assert_equal(
+    assert_array_equal(
         set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
         set([]))
 
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_pred, y_true),
-                            err_msg="%s is not symmetric" % name)
+        assert_array_almost_equal(metric(y_true, y_pred),
+                                  metric(y_pred, y_true),
+                                  err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
-                    msg="%s seems to be symmetric" % name)
+        assert_raises(
+            AssertionError,
+            assert_array_equal, metric(y_true, y_pred), metric(y_pred, y_true),
+            err_msg="%s seems to be symmetric" % name
+        )
 
 
 @ignore_warnings
@@ -423,10 +422,10 @@ def test_sample_order_invariance():
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_true_shuffle, y_pred_shuffle),
-                            err_msg="%s is not sample order invariant"
-                                    % name)
+        assert_array_almost_equal(metric(y_true, y_pred),
+                                  metric(y_true_shuffle, y_pred_shuffle),
+                                  err_msg="%s is not sample order invariant"
+                                          % name)
 
 
 @ignore_warnings
@@ -445,28 +444,28 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_true_shuffle, y_pred_shuffle),
-                            err_msg="%s is not sample order invariant"
-                                    % name)
+        assert_array_almost_equal(metric(y_true, y_pred),
+                                  metric(y_true_shuffle, y_pred_shuffle),
+                                  err_msg="%s is not sample order invariant"
+                                          % name)
 
     for name in THRESHOLDED_MULTILABEL_METRICS:
         metric = ALL_METRICS[name]
-        assert_almost_equal(metric(y_true, y_score),
-                            metric(y_true_shuffle, y_score_shuffle),
-                            err_msg="%s is not sample order invariant"
-                                    % name)
+        assert_array_almost_equal(metric(y_true, y_score),
+                                  metric(y_true_shuffle, y_score_shuffle),
+                                  err_msg="%s is not sample order invariant"
+                                          % name)
 
     for name in MULTIOUTPUT_METRICS:
         metric = ALL_METRICS[name]
-        assert_almost_equal(metric(y_true, y_score),
-                            metric(y_true_shuffle, y_score_shuffle),
-                            err_msg="%s is not sample order invariant"
-                                    % name)
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_true_shuffle, y_pred_shuffle),
-                            err_msg="%s is not sample order invariant"
-                                    % name)
+        assert_array_almost_equal(metric(y_true, y_score),
+                                  metric(y_true_shuffle, y_score_shuffle),
+                                  err_msg="%s is not sample order invariant"
+                                          % name)
+        assert_array_almost_equal(metric(y_true, y_pred),
+                                  metric(y_true_shuffle, y_pred_shuffle),
+                                  err_msg="%s is not sample order invariant"
+                                          % name)
 
 
 @ignore_warnings
@@ -479,8 +478,8 @@ def test_format_invariance_with_1d_vectors():
     y2_list = list(y2)
 
     y1_1d, y2_1d = np.array(y1), np.array(y2)
-    assert_equal(y1_1d.ndim, 1)
-    assert_equal(y2_1d.ndim, 1)
+    assert_array_equal(y1_1d.ndim, 1)
+    assert_array_equal(y2_1d.ndim, 1)
     y1_column = np.reshape(y1_1d, (-1, 1))
     y2_column = np.reshape(y2_1d, (-1, 1))
     y1_row = np.reshape(y1_1d, (1, -1))
@@ -492,46 +491,50 @@ def test_format_invariance_with_1d_vectors():
 
         measure = metric(y1, y2)
 
-        assert_almost_equal(metric(y1_list, y2_list), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with list" % name)
+        assert_array_almost_equal(metric(y1_list, y2_list), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with list" % name)
 
-        assert_almost_equal(metric(y1_1d, y2_1d), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with np-array-1d" % name)
+        assert_array_almost_equal(metric(y1_1d, y2_1d), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with np-array-1d" % name)
 
-        assert_almost_equal(metric(y1_column, y2_column), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with np-array-column" % name)
+        assert_array_almost_equal(metric(y1_column, y2_column), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with np-array-column" % name)
 
         # Mix format support
-        assert_almost_equal(metric(y1_1d, y2_list), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and list" % name)
+        assert_array_almost_equal(metric(y1_1d, y2_list), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with mix np-array-1d and list"
+                                          % name)
 
-        assert_almost_equal(metric(y1_list, y2_1d), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and list" % name)
+        assert_array_almost_equal(metric(y1_list, y2_1d), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with mix np-array-1d and list"
+                                          % name)
 
-        assert_almost_equal(metric(y1_1d, y2_column), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and np-array-column"
-                                    % name)
+        assert_array_almost_equal(metric(y1_1d, y2_column), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with mix np-array-1d and "
+                                          "np-array-column"
+                                          % name)
 
-        assert_almost_equal(metric(y1_column, y2_1d), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and np-array-column"
-                                    % name)
+        assert_array_almost_equal(metric(y1_column, y2_1d), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with mix np-array-1d and "
+                                          "np-array-column"
+                                          % name)
 
-        assert_almost_equal(metric(y1_list, y2_column), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix list and np-array-column"
-                                    % name)
+        assert_array_almost_equal(metric(y1_list, y2_column), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with mix list and np-array-column"
+                                          % name)
 
-        assert_almost_equal(metric(y1_column, y2_list), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix list and np-array-column"
-                                    % name)
+        assert_array_almost_equal(metric(y1_column, y2_list), measure,
+                                  err_msg="%s is not representation invariant "
+                                          "with mix list and np-array-column"
+                                          % name)
 
         # These mix representations aren't allowed
         assert_raises(ValueError, metric, y1_1d, y2_row)
@@ -699,10 +702,10 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
         for _ in range(3):
             perm = random_state.permutation(y_true.shape[1])
-            assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
-                                error,
-                                err_msg="%s is not dimension shuffling "
-                                        "invariant" % name)
+            assert_array_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
+                                      error,
+                                      err_msg="%s is not dimension shuffling "
+                                              "invariant" % name)
 
 
 @ignore_warnings
@@ -736,12 +739,12 @@ def test_multilabel_representation_invariance():
         measure = metric(y1, y2)
 
         # Check representation invariance
-        assert_almost_equal(metric(y1_sparse_indicator,
-                                   y2_sparse_indicator),
-                            measure,
-                            err_msg="%s failed representation invariance  "
-                                    "between dense and sparse indicator "
-                                    "formats." % name)
+        assert_array_almost_equal(metric(y1_sparse_indicator,
+                                         y2_sparse_indicator),
+                                  measure,
+                                  err_msg="%s failed representation invariance"
+                                          " between dense and sparse indicator"
+                                          " formats." % name)
 
 
 def test_raise_value_error_multilabel_sequences():
@@ -769,10 +772,11 @@ def test_normalize_option_binary_classification(n_samples=20):
     for name in METRICS_WITH_NORMALIZE_OPTION:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
-        assert_greater(measure, 0,
-                       msg="We failed to test correctly the normalize option")
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                            / n_samples, measure)
+        assert_array_less(-1.0 * measure, 0,
+                          err_msg="We failed to test correctly the normalize "
+                                  "option")
+        assert_array_almost_equal(metrics(y_true, y_pred, normalize=False)
+                                  / n_samples, measure)
 
 
 def test_normalize_option_multiclass_classification():
@@ -785,10 +789,11 @@ def test_normalize_option_multiclass_classification():
     for name in METRICS_WITH_NORMALIZE_OPTION:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
-        assert_greater(measure, 0,
-                       msg="We failed to test correctly the normalize option")
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                            / n_samples, measure)
+        assert_array_less(-1.0 * measure, 0,
+                          err_msg="We failed to test correctly the normalize "
+                                  "option")
+        assert_array_almost_equal(metrics(y_true, y_pred, normalize=False)
+                                  / n_samples, measure)
 
 
 def test_normalize_option_multilabel_classification():
@@ -816,11 +821,12 @@ def test_normalize_option_multilabel_classification():
     for name in METRICS_WITH_NORMALIZE_OPTION:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
-        assert_greater(measure, 0,
-                       msg="We failed to test correctly the normalize option")
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                            / n_samples, measure,
-                            err_msg="Failed with %s" % name)
+        assert_array_less(-1.0 * measure, 0,
+                          err_msg="We failed to test correctly the normalize "
+                                  "option")
+        assert_array_almost_equal(metrics(y_true, y_pred, normalize=False)
+                                  / n_samples, measure,
+                                  err_msg="Failed with %s" % name)
 
 
 @ignore_warnings
@@ -837,31 +843,32 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
 
     # Micro measure
     micro_measure = metric(y_true, y_pred, average="micro")
-    assert_almost_equal(micro_measure, metric(y_true_binarize.ravel(),
-                                              y_pred_binarize.ravel()))
+    assert_array_almost_equal(micro_measure, metric(y_true_binarize.ravel(),
+                                                    y_pred_binarize.ravel()))
 
     # Macro measure
     macro_measure = metric(y_true, y_pred, average="macro")
-    assert_almost_equal(macro_measure, np.mean(label_measure))
+    assert_array_almost_equal(macro_measure, np.mean(label_measure))
 
     # Weighted measure
     weights = np.sum(y_true_binarize, axis=0, dtype=int)
 
     if np.sum(weights) != 0:
         weighted_measure = metric(y_true, y_pred, average="weighted")
-        assert_almost_equal(weighted_measure, np.average(label_measure,
-                                                         weights=weights))
+        assert_array_almost_equal(weighted_measure, np.average(label_measure,
+                                                               weights=weights
+                                                               ))
     else:
         weighted_measure = metric(y_true, y_pred, average="weighted")
-        assert_almost_equal(weighted_measure, 0)
+        assert_array_almost_equal(weighted_measure, 0)
 
     # Sample measure
     if is_multilabel:
         sample_measure = metric(y_true, y_pred, average="samples")
-        assert_almost_equal(sample_measure,
-                            np.mean([metric(y_true_binarize[i],
-                                            y_pred_binarize[i])
-                                     for i in range(n_samples)]))
+        assert_array_almost_equal(sample_measure,
+                                  np.mean([metric(y_true_binarize[i],
+                                                  y_pred_binarize[i])
+                                           for i in range(n_samples)]))
 
     assert_raises(ValueError, metric, y_true, y_pred, average="unknown")
     assert_raises(ValueError, metric, y_true, y_pred, average="garbage")
@@ -951,7 +958,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
-    assert_almost_equal(
+
+    assert_array_almost_equal(
         unweighted_score,
         metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
         err_msg="For %s sample_weight=None is not equivalent to "
@@ -959,25 +967,27 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
-    assert_not_equal(
-        unweighted_score, weighted_score,
-        msg="Unweighted and weighted scores are unexpectedly "
-            "equal (%f) for %s" % (weighted_score, name))
+    assert_raises(
+        AssertionError,
+        assert_array_equal, unweighted_score, weighted_score,
+        err_msg="Unweighted and weighted scores are unexpectedly "
+                "equal (%s) for %s" % (weighted_score, name)
+    )
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
                                  sample_weight=sample_weight.tolist())
-    assert_almost_equal(
+    assert_array_almost_equal(
         weighted_score, weighted_score_list,
         err_msg=("Weighted scores for array and list "
-                 "sample_weight input are not equal (%f != %f) for %s") % (
+                 "sample_weight input are not equal (%s != %s) for %s") % (
                      weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(
         np.repeat(y1, sample_weight, axis=0),
         np.repeat(y2, sample_weight, axis=0), sample_weight=None)
-    assert_almost_equal(
+    assert_array_almost_equal(
         weighted_score, repeat_weighted_score,
         err_msg="Weighting %s is not equal to repeating samples" % name)
 
@@ -992,17 +1002,17 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                                    sample_weight=sample_weight_subset)
     weighted_score_zeroed = metric(y1, y2,
                                    sample_weight=sample_weight_zeroed)
-    assert_almost_equal(
+    assert_array_almost_equal(
         weighted_score_subset, weighted_score_zeroed,
         err_msg=("Zeroing weights does not give the same result as "
-                 "removing the corresponding samples (%f != %f) for %s" %
+                 "removing the corresponding samples (%s != %s) for %s" %
                  (weighted_score_zeroed, weighted_score_subset, name)))
 
     if not name.startswith('unnormalized'):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
-            assert_almost_equal(
+            assert_array_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
                 err_msg="%s sample_weight is not invariant "
