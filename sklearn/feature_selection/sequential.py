@@ -49,7 +49,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         of features ``n_features``.
 
     scoring : str, callable, or None (default=None)
-        A string (see model evaluation documentation) or a scorer
+        A string (see :term:`scoring`) or a scorer
         callable object / function with signature ``scorer(estimator, X, y)``.
 
     forward : bool (default=True)
