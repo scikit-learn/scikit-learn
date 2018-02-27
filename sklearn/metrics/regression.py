@@ -208,7 +208,6 @@ def mean_absolute_percentage_error(y_true, y_pred):
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
     32.738...
-
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
                                                    'uniform_average')
@@ -219,7 +218,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
     if (y_true == 0).any():
         raise ValueError("mean_absolute_percentage_error requires"
-                         " y_true to never be zero")
+                         " y_true to not include zeros")
 
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 

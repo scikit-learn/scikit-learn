@@ -27,7 +27,8 @@ from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_absolute_percentage_error,
                mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss, balanced_accuracy_score,
+               precision_score, recall_score, log_loss,
+               balanced_accuracy_score,
                explained_variance_score, brier_score_loss)
 
 from .cluster import adjusted_rand_score
@@ -487,10 +488,10 @@ deprecation_msg = ('Scoring method mean_absolute_error was renamed to '
                    'be removed in 0.20.')
 mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                          greater_is_better=False)
-neg_mean_absolute_percentage_error_scorer = make_scorer(
-    mean_absolute_percentage_error, greater_is_better=False)
-
 mean_absolute_error_scorer._deprecation_msg = deprecation_msg
+neg_mape_scorer = make_scorer(mean_absolute_percentage_error,
+                              greater_is_better=False)
+
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 deprecation_msg = ('Scoring method median_absolute_error was renamed to '
@@ -540,9 +541,9 @@ fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 SCORERS = dict(explained_variance=explained_variance_scorer,
                r2=r2_scorer,
+               neg_mape=neg_mape_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-               neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                median_absolute_error=median_absolute_error_scorer,
