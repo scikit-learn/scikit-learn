@@ -2502,6 +2502,7 @@ def test_count_featurizer_multi_y():
 
 def test_count_featurizer_multi_inclusion():
     # test with 2D inclusion
+
     X = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])
     y = np.array([[0], [0], [0], [1]])
     cf = CountFeaturizer(inclusion=np.array([[0], [1]]))
@@ -2532,21 +2533,30 @@ def test_count_featurizer_multi_inclusion():
                  [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1],
                  [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1]]))
 
+
 def test_count_featurizer_none_inclusion():
+    # test with None as the inclusion criteria, should report error
+
     cf = CountFeaturizer(inclusion=None)
     none_inclusion_msg = "Inclusion cannot be none"
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
     assert_raise_message(ValueError, none_inclusion_msg,
                          cf.fit_transform, X)
 
+
 def test_count_featurizer_empty_inclusion():
+    # test with empty inclusion criteria
+
     cf = CountFeaturizer(inclusion=[])
     zero_inclusion_msg = "Inclusion size must not be 0"
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
     assert_raise_message(ValueError, zero_inclusion_msg,
                          cf.fit_transform, X)
 
+
 def test_count_featurizer_illegal_inclusion():
+    # test with illegal inclusion criteria
+
     cf = CountFeaturizer(inclusion="foo bar baz")
     cf2 = CountFeaturizer(inclusion=0)
     illegal_inclusion_msg = "Illegal value for inclusion parameter"
