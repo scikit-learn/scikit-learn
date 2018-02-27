@@ -153,7 +153,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         if self.axis == 0:
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                             force_all_finite='allow-nan'
-                            if self.missing_values == 'NaN' else True)
+                            if self.missing_values == 'NaN' 
+                            or np.isnan(self.missing_values) else True)
 
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
@@ -251,7 +252,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite='allow-nan'
-                        if self.missing_values == 'NaN' else True)
+                        if self.missing_values == 'NaN' 
+                        or np.isnan(self.missing_values) else True)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
@@ -312,7 +314,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                             force_all_finite='allow-nan'
-                            if self.missing_values == 'NaN' else True,
+                            if self.missing_values == 'NaN' 
+                            or np.isnan(self.missing_values) else True,
                             copy=self.copy)
             statistics = self.statistics_
             if X.shape[1] != statistics.shape[0]:
@@ -325,7 +328,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
                             force_all_finite='allow-nan'
-                            if self.missing_values == 'NaN' else True,
+                            if self.missing_values == 'NaN' 
+                            or np.isnan(self.missing_values) else True,
                             copy=self.copy)
 
             if sparse.issparse(X):
