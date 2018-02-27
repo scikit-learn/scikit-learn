@@ -95,6 +95,10 @@ class Imputer(BaseEstimator, TransformerMixin):
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
 
+    default_value : numeric or boolean, optional (default=None)
+        The default_value for columns where all elements are NaN.
+        If `default_value` is None the column will be dropped.
+
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
@@ -119,10 +123,11 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True):
+                 axis=0, default_value=None, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
+        self.default_value = default_value
         self.verbose = verbose
         self.copy = copy
 
@@ -167,6 +172,13 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.strategy,
                                                    self.missing_values,
                                                    self.axis)
+
+        # Replace nan columns with the passed `default_value`.
+        if hasattr(self, 'statistics_') and self.default_value is not None:
+            is_nan = np.isnan(self.statistics_)
+            if np.any(is_nan):
+                nan_indexes = np.where(is_nan)[0]
+                self.statistics_[nan_indexes] = self.default_value
 
         return self
 
