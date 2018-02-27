@@ -2531,3 +2531,27 @@ def test_count_featurizer_multi_inclusion():
                  [0, 0, 2, 0, 1, 1, 0, 0, 3, 1, 1, 1, 1, 1],
                  [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1],
                  [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1]]))
+
+def test_count_featurizer_none_inclusion():
+    cf = CountFeaturizer(inclusion=None)
+    none_inclusion_msg = "Inclusion cannot be none"
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    assert_raise_message(ValueError, none_inclusion_msg,
+                         cf.fit_transform, X)
+
+def test_count_featurizer_empty_inclusion():
+    cf = CountFeaturizer(inclusion=[])
+    zero_inclusion_msg = "Inclusion size must not be 0"
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    assert_raise_message(ValueError, zero_inclusion_msg,
+                         cf.fit_transform, X)
+
+def test_count_featurizer_illegal_inclusion():
+    cf = CountFeaturizer(inclusion="foo bar baz")
+    cf2 = CountFeaturizer(inclusion=0)
+    illegal_inclusion_msg = "Illegal value for inclusion parameter"
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    assert_raise_message(ValueError, illegal_inclusion_msg,
+                         cf.fit_transform, X)
+    assert_raise_message(ValueError, illegal_inclusion_msg,
+                         cf2.fit_transform, X)

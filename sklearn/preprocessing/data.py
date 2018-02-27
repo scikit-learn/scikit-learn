@@ -2974,7 +2974,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             else:
                 return [inclusion]
         else:
-            raise ValueError("Illegal data type in inclusion")
+            raise ValueError("Illegal value for inclusion parameter")
 
     def fit(self, X, y=None):
         """Fits the CountFeaturizer to X, y
