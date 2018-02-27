@@ -163,6 +163,10 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
+  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
+  <bellet>`.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
