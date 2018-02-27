@@ -633,3 +633,16 @@ def test_n_iter_no_change_inf():
 
     # validate _update_no_improvement_count() was always triggered
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_lbfgs_max_iter():
+    # test n_iter_no_change using binary data set
+    # the fitting process should go to max_iter iterations
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+
+    max_iter = 3000
+    clf = MLPClassifier(max_iter=max_iter, solver='lbfgs')
+    clf.fit(X, y)
+    assert clf.n_iter_ == max_iter
