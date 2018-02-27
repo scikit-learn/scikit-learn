@@ -47,10 +47,10 @@ def test_kfeatures_type_1():
     X = iris.data
     y = iris.target
     knn = KNeighborsClassifier()
-    expect = ('n_features_to_select must be a positive integer'
+    expect = ('n_features must be a positive integer'
               ' between 1 and X.shape[1], got 0')
     sfs = SFS(estimator=knn,
-              n_features_to_select=0)
+              n_features=0)
     assert_raise_message(ValueError, expect, sfs.fit, X, y)
 
 
@@ -59,9 +59,9 @@ def test_kfeatures_type_2():
     X = iris.data
     y = iris.target
     knn = KNeighborsClassifier()
-    expect = 'n_features_to_select must be a positive integer or tuple'
+    expect = 'n_features must be a positive integer or tuple'
     sfs = SFS(estimator=knn,
-              n_features_to_select='abc')
+              n_features='abc')
     assert_raise_message(ValueError, expect, sfs.fit, X, y)
 
 
@@ -70,10 +70,10 @@ def test_kfeatures_type_3():
     X = iris.data
     y = iris.target
     knn = KNeighborsClassifier()
-    expect = ('n_features_to_select tuple min value must be in'
+    expect = ('n_features tuple min value must be in'
               ' range(1, X.shape[1]+1).')
     sfs = SFS(estimator=knn,
-              n_features_to_select=(0, 5))
+              n_features=(0, 5))
     assert_raise_message(ValueError, expect, sfs.fit, X, y)
 
 
@@ -82,10 +82,10 @@ def test_kfeatures_type_4():
     X = iris.data
     y = iris.target
     knn = KNeighborsClassifier()
-    expect = ('n_features_to_select tuple max value must be in'
+    expect = ('n_features tuple max value must be in'
               ' range(1, X.shape[1]+1).')
     sfs = SFS(estimator=knn,
-              n_features_to_select=(1, 5))
+              n_features=(1, 5))
     assert_raise_message(ValueError, expect, sfs.fit, X, y)
 
 
@@ -94,10 +94,10 @@ def test_kfeatures_type_5():
     X = iris.data
     y = iris.target
     knn = KNeighborsClassifier()
-    expect = ('he min n_features_to_select value must be'
-              ' smaller than the max n_features_to_select value.')
+    expect = ('he min n_features value must be'
+              ' smaller than the max n_features value.')
     sfs = SFS(estimator=knn,
-              n_features_to_select=(3, 1))
+              n_features=(3, 1))
     assert_raise_message(ValueError, expect, sfs.fit, X, y)
 
 
@@ -107,7 +107,7 @@ def test_knn_wo_cv():
     y = iris.target
     knn = KNeighborsClassifier(n_neighbors=4)
     sfs1 = SFS(knn,
-               n_features_to_select=3,
+               n_features=3,
                forward=True,
                cv=0)
     sfs1 = sfs1.fit(X, y)
@@ -129,7 +129,7 @@ def test_knn_cv3():
     y = iris.target
     knn = KNeighborsClassifier(n_neighbors=4)
     sfs1 = SFS(knn,
-               n_features_to_select=3,
+               n_features=3,
                forward=True,
                cv=4)
     sfs1 = sfs1.fit(X, y)
@@ -161,7 +161,7 @@ def test_knn_option_sbs():
     y = iris.target
     knn = KNeighborsClassifier(n_neighbors=4)
     sfs3 = SFS(knn,
-               n_features_to_select=3,
+               n_features=3,
                forward=False,
                cv=4)
     sfs3 = sfs3.fit(X, y)
@@ -175,7 +175,7 @@ def test_knn_option_sfs_tuplerange():
     y = iris.target
     knn = KNeighborsClassifier(n_neighbors=3)
     sfs4 = SFS(knn,
-               n_features_to_select=(1, 3),
+               n_features=(1, 3),
                forward=True,
                cv=4)
     sfs4 = sfs4.fit(X, y)
@@ -190,21 +190,21 @@ def test_knn_scoring_metric():
     y = iris.target
     knn = KNeighborsClassifier(n_neighbors=4)
     sfs5 = SFS(knn,
-               n_features_to_select=3,
+               n_features=3,
                forward=False,
                cv=4)
     sfs5 = sfs5.fit(X, y)
     assert round(sfs5.score_, 4) == 0.9728
 
     sfs6 = SFS(knn,
-               n_features_to_select=3,
+               n_features=3,
                forward=False,
                cv=4)
     sfs6 = sfs6.fit(X, y)
     assert round(sfs6.score_, 4) == 0.9728
 
     sfs7 = SFS(knn,
-               n_features_to_select=3,
+               n_features=3,
                forward=False,
                scoring='f1_macro',
                cv=4)
@@ -217,7 +217,7 @@ def test_regression():
     X, y = boston.data, boston.target
     lr = LinearRegression()
     sfs_r = SFS(lr,
-                n_features_to_select=13,
+                n_features=13,
                 forward=True,
                 cv=10)
     sfs_r = sfs_r.fit(X, y)
@@ -233,7 +233,7 @@ def test_regression_in_tuplerange_forward():
     X, y = boston.data, boston.target
     lr = LinearRegression()
     sfs_r = SFS(lr,
-                n_features_to_select=(1, 13),
+                n_features=(1, 13),
                 forward=True,
                 cv=10)
     sfs_r = sfs_r.fit(X, y)
@@ -250,7 +250,7 @@ def test_regression_in_tuplerange_backward():
     lr = LinearRegression()
 
     sfs_r = SFS(lr,
-                n_features_to_select=(1, 5),
+                n_features=(1, 5),
                 forward=False,
                 scoring='neg_mean_squared_error',
                 cv=10)
@@ -270,7 +270,7 @@ def test_transform_not_fitted():
     knn = KNeighborsClassifier(n_neighbors=4)
 
     sfs1 = SFS(knn,
-               n_features_to_select=2,
+               n_features=2,
                forward=True,
                cv=0)
 

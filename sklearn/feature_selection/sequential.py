@@ -36,15 +36,15 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         will fit a clone of the original estimator that
         will be stored in the class attribute ``self.estimators_``.
 
-    n_features_to_select : int or tuple (default=1)
+    n_features : int or tuple (default=1)
         An integer arguments specifies the number of features to select,
-        where n_features_to_select < the full feature set.
+        where n_features < the full feature set.
         Optionally, a tuple containing a min and max value can be provided
         so that the feature selector will return a feature subset between
         with min <= n_features <= max that scored highest in the evaluation.
         For example, the tuple (1, 4) will return any combination from
         1 up to 4 features instead of a fixed number
-        of features ``n_features_to_select``.
+        of features ``n_features``.
 
     scoring : str, callable, or None (default=None)
         A string (see model evaluation documentation) or a scorer
@@ -113,7 +113,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         >>> iris = load_iris()
         >>> X, y = iris.data, iris.target
         >>> knn = KNeighborsClassifier(n_neighbors=3)
-        >>> sfs = SequentialFeatureSelector(knn, n_features_to_select=(1, 3))
+        >>> sfs = SequentialFeatureSelector(knn, n_features=(1, 3))
         >>> sfs = sfs.fit(X, y)
         >>> sfs.score_  # doctest: +ELLIPSIS
         0.9733...
@@ -134,13 +134,13 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
            Pattern Recognition in Practice IV : 403-413, 1994
 
     """
-    def __init__(self, estimator, n_features_to_select=1,
+    def __init__(self, estimator, n_features=1,
                  forward=True, scoring=None,
                  cv=5, n_jobs=1,
                  pre_dispatch='2*n_jobs'):
 
         self.estimator = estimator
-        self.n_features_to_select = n_features_to_select
+        self.n_features = n_features
         self.forward = forward
         self.pre_dispatch = pre_dispatch
         self.scoring = scoring
@@ -164,41 +164,41 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
         """
 
-        if not (isinstance(self.n_features_to_select, int) or
-                isinstance(self.n_features_to_select, tuple)):
-            raise ValueError('n_features_to_select must be a positive integer'
+        if not (isinstance(self.n_features, int) or
+                isinstance(self.n_features, tuple)):
+            raise ValueError('n_features must be a positive integer'
                              ' or tuple')
 
-        if isinstance(self.n_features_to_select, int) and (
-                    self.n_features_to_select < 1 or
-                    self.n_features_to_select > X.shape[1]):
-            raise ValueError('n_features_to_select must be a positive integer'
+        if isinstance(self.n_features, int) and (
+                    self.n_features < 1 or
+                    self.n_features > X.shape[1]):
+            raise ValueError('n_features must be a positive integer'
                              ' between 1 and X.shape[1], got %s'
-                             % (self.n_features_to_select, ))
+                             % (self.n_features, ))
 
-        if isinstance(self.n_features_to_select, tuple):
-            if len(self.n_features_to_select) != 2:
-                raise ValueError('n_features_to_select tuple must consist of 2'
+        if isinstance(self.n_features, tuple):
+            if len(self.n_features) != 2:
+                raise ValueError('n_features tuple must consist of 2'
                                  ' elements a min and a max value.')
 
-            if self.n_features_to_select[0] not in range(1, X.shape[1] + 1):
-                raise ValueError('n_features_to_select tuple min value must'
+            if self.n_features[0] not in range(1, X.shape[1] + 1):
+                raise ValueError('n_features tuple min value must'
                                  ' be in range(1, X.shape[1]+1).')
 
-            if self.n_features_to_select[1] not in range(1, X.shape[1] + 1):
-                raise ValueError('n_features_to_select tuple max value must'
+            if self.n_features[1] not in range(1, X.shape[1] + 1):
+                raise ValueError('n_features tuple max value must'
                                  ' be in range(1, X.shape[1]+1).')
 
-            if self.n_features_to_select[0] > self.n_features_to_select[1]:
-                raise ValueError('The min n_features_to_select value must be'
+            if self.n_features[0] > self.n_features[1]:
+                raise ValueError('The min n_features value must be'
                                  ' smaller than the max'
-                                 ' n_features_to_select value.')
+                                 ' n_features value.')
 
-        if isinstance(self.n_features_to_select, tuple):
+        if isinstance(self.n_features, tuple):
             select_in_range = True
         else:
             select_in_range = False
-            k_to_select = self.n_features_to_select
+            k_to_select = self.n_features
 
         self._scorer = check_scoring(self.estimator, scoring=self.scoring)
 
@@ -209,12 +209,12 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         orig_set = set(range(self._n_features))
         if self.forward:
             if select_in_range:
-                k_to_select = self.n_features_to_select[1]
+                k_to_select = self.n_features[1]
             k_idx = ()
             k = 0
         else:
             if select_in_range:
-                k_to_select = self.n_features_to_select[0]
+                k_to_select = self.n_features[0]
             k_idx = tuple(range(self._n_features))
             k = len(k_idx)
             k_score = self._calc_score(X, y, k_idx, cloned_estimator)
@@ -257,8 +257,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         if select_in_range:
             max_score = float('-inf')
             for k in self.subsets_:
-                if (k < self.n_features_to_select[0] or
-                        k > self.n_features_to_select[1]):
+                if (k < self.n_features[0] or
+                        k > self.n_features[1]):
                     continue
                 if self.subsets_[k]['avg_score'] > max_score:
                     max_score = self.subsets_[k]['avg_score']
