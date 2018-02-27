@@ -349,8 +349,7 @@ SYMMETRIC_METRICS = [
     "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error",
-    "mean_absolute_percentage_error", "mean_squared_error",
-    "median_absolute_error",
+    "mean_squared_error", "median_absolute_error",
 
     "cohen_kappa_score",
 ]
@@ -369,7 +368,9 @@ NOT_SYMMETRIC_METRICS = [
     "weighted_precision_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss"
+    "macro_recall_score", "log_loss", "hinge_loss",
+
+    "mean_absolute_percentage_error"
 ]
 
 
