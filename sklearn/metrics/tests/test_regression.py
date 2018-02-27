@@ -29,7 +29,11 @@ def test_regression_metrics(n_samples=50):
                         mean_squared_error(np.log(1 + y_true),
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
-    assert_almost_equal(mean_absolute_percentage_error(y_true, y_pred), 98.0)
+    # comparing (y_true + 1) and (y_pred + 1) instead of
+    # y_true and y_pred to avoid division by zero
+    assert_almost_equal(mean_absolute_percentage_error(1 + y_true,
+                                                       1 + y_pred),
+                        8.998, 2)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
