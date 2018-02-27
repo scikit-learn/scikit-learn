@@ -9,6 +9,7 @@ from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
@@ -376,8 +377,7 @@ def test_pairwise_distances_argmin_min():
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
     # Test batch_size deprecation warning
-    assert_warns_message(DeprecationWarning, "'batch_size' was deprecated in "
-                         "version 0.20 and will be removed in version 0.22.",
+    assert_warns_message(DeprecationWarning, "version 0.22",
                          pairwise_distances_argmin_min, X, Y, batch_size=500,
                          metric='euclidean')
 
@@ -396,7 +396,8 @@ def test_pairwise_distances_chunked_reduce():
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
     assert len(S_chunks) > 1
-    assert_array_almost_equal(S, np.vstack(S_chunks))
+    # atol is for diagonal where S is explcitly zeroed on the diagonal
+    assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
 
 
 @pytest.mark.parametrize('good_reduce', [
@@ -441,11 +442,10 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
     min_block_mib = np.array(X).shape[0] * 8 * 2 ** -20
-    working_memory = min(working_memory, min_block_mib)
 
     for block in blockwise_distances:
         memory_used = len(block) * 8
-        assert_true(memory_used <= working_memory * 2 ** 20)
+        assert memory_used <= min(working_memory, min_block_mib) * 2 ** 20
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
@@ -459,6 +459,10 @@ def test_pairwise_distances_chunked():
     X = rng.random_sample((400, 4))
     check_pairwise_distances_chunked(X, None, working_memory=1,
                                      metric='euclidean')
+    # Test small amounts of memory
+    for power in range(-16, 0):
+        check_pairwise_distances_chunked(X, None, working_memory=2 ** power,
+                                         metric='euclidean')
     # X as list
     check_pairwise_distances_chunked(X.tolist(), None, working_memory=1,
                                      metric='euclidean')

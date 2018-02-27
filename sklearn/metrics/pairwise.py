@@ -339,8 +339,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances_argmin
     """
     if batch_size is not None:
-        warnings.warn("'batch_size' was deprecated in version 0.20 and will "
-                      "be removed in version 0.22. "
+        warnings.warn("'batch_size' is ignored. It was deprecated in version "
+                      "0.20 and will be removed in version 0.22. "
                       "Use sklearn.set_config(working_memory=...) instead.",
                       DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
@@ -1190,7 +1190,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     working_memory : int, optional
         The sought maximum memory for temporary distance matrix chunks.
-        Defaults to sklearn.get_config()['working_memory'].
+        When None (default), the value of
+        ``sklearn.get_config()['working_memory']`` is used.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -1221,14 +1222,14 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> r = .2
     >>> def reduce_func(D_chunk, start):
     ...     neigh = [np.flatnonzero(d < r) for d in D_chunk]
-    ...     avg_dist = np.ma.masked_array(D_chunk, D_chunk < r).mean(axis=1)
+    ...     avg_dist = (D_chunk * (D_chunk < r)).mean(axis=1)
     ...     return neigh, avg_dist
     >>> gen = pairwise_distances_chunked(X, reduce_func=reduce_func)
     >>> neigh, avg_dist = next(gen)
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
-    >>> avg_dist.data  # doctest: +ELLIPSIS
-    array([ 0.427...,  0.513...,  0.586...,  0.459... ,  0.687...])
+    >>> avg_dist  # doctest: +ELLIPSIS
+    array([ 0.039...,  0.        ,  0.        ,  0.039...,  0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:
 
