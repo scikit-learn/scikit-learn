@@ -273,7 +273,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise', **fit_params):
+                   verbose, error_score='raise-deprecating', **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -391,7 +391,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise', return_train_score=True):
+                 error_score='raise-deprecating', return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -909,9 +909,9 @@ class GridSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise-deprecating' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
+        If set to 'raise-deprecating', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
@@ -1085,7 +1085,7 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise',
+                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -1244,11 +1244,11 @@ class RandomizedSearchCV(BaseSearchCV):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise-deprecating' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        If set to 'raise-deprecating', the error is raised. If a numeric value
+        is given, FitFailedWarning is raised. This parameter does not affect
+        the refitstep, which will always raise the error.
 
     return_train_score : boolean, optional
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1386,7 +1386,7 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score="warn"):
+                 error_score='raise-deprecating', return_train_score="warn"):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
