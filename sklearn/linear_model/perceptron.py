@@ -71,7 +71,8 @@ class Perceptron(BaseSGDClassifier):
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
+        initialization, otherwise, just erase the previous solution. See
+        :term:`the Glossary <warm_start>`.
 
     n_iter : int, optional
         The number of passes over the training data (aka epochs).

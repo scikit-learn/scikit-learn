@@ -65,6 +65,16 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
 
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
+
+    train_sizes : array-like, shape (n_ticks,), dtype float or int
+        Relative or absolute numbers of training examples that will be used to
+        generate the learning curve. If the dtype is float, it is regarded as a
+        fraction of the maximum size of the training set (that is determined
+        by the selected validation method), i.e. it has to be within (0, 1].
+        Otherwise it is interpreted as absolute sizes of the training sets.
+        Note that for classification the number of samples usually have to
+        be big enough to contain at least one sample from each class.
+        (default: np.linspace(0.1, 1.0, 5))
     """
     plt.figure()
     plt.title(title)

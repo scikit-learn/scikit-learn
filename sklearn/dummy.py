@@ -456,6 +456,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         return_std : boolean, optional
             Whether to return the standard deviation of posterior prediction.
+            All zeros in this case.
 
         Returns
         -------

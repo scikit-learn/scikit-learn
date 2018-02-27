@@ -18,8 +18,6 @@ from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 
-solve_triangular_args = {'check_finite': False}
-
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
 """
@@ -85,12 +83,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
-    if solve_triangular_args:
-        # new scipy, don't need to initialize because check_finite=False
-        L = np.empty((max_features, max_features), dtype=X.dtype)
-    else:
-        # old scipy, we need the garbage upper triangle to be non-Inf
-        L = np.zeros((max_features, max_features), dtype=X.dtype)
+
+    L = np.empty((max_features, max_features), dtype=X.dtype)
 
     if return_path:
         coefs = np.empty_like(L)
@@ -109,7 +103,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
                                     L[n_active, :n_active],
                                     trans=0, lower=1,
                                     overwrite_b=True,
-                                    **solve_triangular_args)
+                                    check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
             Lkk = linalg.norm(X[:, lam]) ** 2 - v
             if Lkk <= min_float:  # selected atoms are dependent
@@ -212,12 +206,9 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
-    if solve_triangular_args:
-        # new scipy, don't need to initialize because check_finite=False
-        L = np.empty((max_features, max_features), dtype=Gram.dtype)
-    else:
-        # old scipy, we need the garbage upper triangle to be non-Inf
-        L = np.zeros((max_features, max_features), dtype=Gram.dtype)
+
+    L = np.empty((max_features, max_features), dtype=Gram.dtype)
+
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -234,7 +225,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                                     L[n_active, :n_active],
                                     trans=0, lower=1,
                                     overwrite_b=True,
-                                    **solve_triangular_args)
+                                    check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
             Lkk = Gram[lam, lam] - v
             if Lkk <= min_float:  # selected atoms are dependent

@@ -50,6 +50,9 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its 
+  ``predict`` method. The returned standard deviations will be zeros.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
@@ -163,6 +166,10 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
+  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
+  <bellet>`.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
@@ -245,6 +252,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.ElasticNet` which caused the input to be
   overridden when using parameter ``copy_X=True`` and ``check_input=False``.
   :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
+
+- Fixed a bug in :class:`sklearn.linear_model.Lasso`
+  where the coefficient had wrong shape when ``fit_intercept=False``.
+  :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
 
 Decomposition, manifold learning and clustering
 
@@ -335,6 +346,12 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
+Utils
+
+- :func:`utils.validation.check_array` yield a ``FutureWarning`` indicating
+  that arrays of bytes/strings will be interpreted as decimal numbers
+  beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
+
 Preprocessing
 
 - Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
@@ -394,6 +411,14 @@ Outlier Detection models
   In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
+
+Covariance
+
+- The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and 
+  :class:`covariance.GraphLassoCV` have been renamed to 
+  :func:`covariance.graphical_lasso`, :class:`covariance.GraphicalLasso` and
+  :class:`covariance.GraphicalLassoCV` respectively and will be removed in version 0.22.
+  :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
 
 Misc
 
