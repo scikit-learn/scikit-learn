@@ -87,11 +87,10 @@ class _IffHasAttrDescriptor(object):
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
-    def __init__(self, fn, delegate_names, attribute_name, backup_attribute):
+    def __init__(self, fn, delegate_names, attribute_names):
         self.fn = fn
         self.delegate_names = delegate_names
-        self.attribute_name = attribute_name
-        self.backup_attribute = backup_attribute
+        self.attribute_names = attribute_names
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -107,12 +106,18 @@ class _IffHasAttrDescriptor(object):
                 except AttributeError:
                     continue
                 else:
-                    try:
-                        getattr(delegate, self.attribute_name)
-                    except AttributeError:
-                        if self.backup_attribute is None:
-                            raise
-                        getattr(delegate, self.backup_attribute)
+                    # Look for any of the matching attributes
+                    for attribute in self.attribute_names:
+                        try:
+                            getattr(delegate, attribute)
+                        except AttributeError:
+                            continue
+                        else:
+                            # Found the attribute
+                            break
+                    else:
+                        # If none are found, raise error
+                        getattr(delegate, self.attribute_names[0])
                     break
             else:
                 attrgetter(self.delegate_names[-1])(obj)
@@ -124,7 +129,7 @@ class _IffHasAttrDescriptor(object):
         return out
 
 
-def if_delegate_has_method(delegate, backup_method=None):
+def if_delegate_has_method(delegate, backup_method=''):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
@@ -137,6 +142,10 @@ def if_delegate_has_method(delegate, backup_method=None):
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
 
+    backup_method : string
+        Name of the method that will be looked up, in case the function with
+        the same name is not found.
+
     """
     if isinstance(delegate, list):
         delegate = tuple(delegate)
@@ -144,8 +153,7 @@ def if_delegate_has_method(delegate, backup_method=None):
         delegate = (delegate,)
 
     return lambda fn: _IffHasAttrDescriptor(
-        fn, delegate, attribute_name=fn.__name__,
-        backup_attribute=backup_method)
+        fn, delegate, (fn.__name__, backup_method))
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
