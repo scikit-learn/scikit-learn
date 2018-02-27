@@ -186,7 +186,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
@@ -305,7 +304,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._partial_fit(X, y, classes, _refit=False,
                                  sample_weight=sample_weight)
@@ -339,7 +337,6 @@ class GaussianNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
@@ -471,13 +468,17 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
     def _check_alpha(self):
-        if self.alpha < 0:
+        if np.min(self.alpha) < 0:
             raise ValueError('Smoothing parameter alpha = %.1e. '
-                             'alpha should be > 0.' % self.alpha)
-        if self.alpha < _ALPHA_MIN:
+                             'alpha should be > 0.' % np.min(self.alpha))
+        if isinstance(self.alpha, np.ndarray):
+            if not self.alpha.shape[0] == self.feature_count_.shape[1]:
+                raise ValueError("alpha should be a scalar or a numpy array "
+                                 "with shape [n_features]")
+        if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn('alpha too small will result in numeric errors, '
                           'setting alpha = %.1e' % _ALPHA_MIN)
-            return _ALPHA_MIN
+            return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -515,7 +516,6 @@ class BaseDiscreteNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
@@ -581,7 +581,6 @@ class BaseDiscreteNB(BaseNB):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
@@ -658,7 +657,7 @@ class MultinomialNB(BaseDiscreteNB):
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    intercept_ : property
+    intercept_ : array, shape (n_classes, )
         Mirrors ``class_log_prior_`` for interpreting MultinomialNB
         as a linear model.
 
@@ -666,7 +665,7 @@ class MultinomialNB(BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    coef_ : property
+    coef_ : array, shape (n_classes, n_features)
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
         as a linear model.
 

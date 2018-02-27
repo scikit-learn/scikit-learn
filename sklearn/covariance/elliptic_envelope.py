@@ -1,25 +1,17 @@
-"""
-Class for outlier detection.
-
-This class provides a framework for outlier detection. It consists in
-several methods that can be added to a covariance estimator in order to
-assess the outlying-ness of the observations of a data set.
-Such a "outlier detector" object is proposed constructed from a robust
-covariance estimator (the Minimum Covariance Determinant).
-
-"""
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD 3 clause
 
 import numpy as np
 import scipy as sp
+import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
 from ..metrics import accuracy_score
+from ..base import OutlierMixin
 
 
-class EllipticEnvelope(MinCovDet):
+class EllipticEnvelope(MinCovDet, OutlierMixin):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.
@@ -70,6 +62,13 @@ class EllipticEnvelope(MinCovDet):
         A mask of the observations that have been used to compute the
         robust estimates of location and shape.
 
+    offset_ : float
+        Offset used to define the decision function from the raw scores.
+        We have the relation: decision_function = score_samples - offset_.
+        The offset depends on the contamination parameter and is defined in
+        such a way we obtain the expected number of outliers (samples with
+        decision function < 0) in training.
+
     See Also
     --------
     EmpiricalCovariance, MinCovDet
@@ -97,79 +96,92 @@ class EllipticEnvelope(MinCovDet):
         self.contamination = contamination
 
     def fit(self, X, y=None):
-        """Fit the EllipticEnvelope model with X.
+        """Fit the EllipticEnvelope model.
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples, n_features]
+        X : numpy array or sparse matrix, shape (n_samples, n_features).
             Training data
         y : (ignored)
         """
         super(EllipticEnvelope, self).fit(X)
-        self.threshold_ = sp.stats.scoreatpercentile(
-            self.dist_, 100. * (1. - self.contamination))
+        self.offset_ = sp.stats.scoreatpercentile(
+            -self.dist_, 100. * self.contamination)
         return self
 
-    def decision_function(self, X, raw_values=False):
+    def decision_function(self, X, raw_values=None):
         """Compute the decision function of the given observations.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        raw_values : bool
+        raw_values : bool, optional
             Whether or not to consider raw Mahalanobis distances as the
             decision function. Must be False (default) for compatibility
             with the others outlier detection tools.
 
+        .. deprecated:: 0.20
+            ``raw_values`` has been deprecated in 0.20 and will be removed
+            in 0.22.
+
         Returns
         -------
+
         decision : array-like, shape (n_samples, )
             Decision function of the samples.
-            It is equal to the Mahalanobis distances if `raw_values`
-            is True. By default (``raw_values=False``), it is equal
-            to the cubic root of the shifted Mahalanobis distances.
-            In that case, the threshold for being an outlier is 0, which
-            ensures a compatibility with other outlier detection tools
-            such as the One-Class SVM.
+            It is equal to the shifted Mahalanobis distances.
+            The threshold for being an outlier is 0, which ensures a
+            compatibility with other outlier detection algorithms.
 
         """
-        check_is_fitted(self, 'threshold_')
-        X = check_array(X)
-        mahal_dist = self.mahalanobis(X)
-        if raw_values:
-            decision = mahal_dist
-        else:
-            transformed_mahal_dist = mahal_dist ** 0.33
-            decision = self.threshold_ ** 0.33 - transformed_mahal_dist
+        check_is_fitted(self, 'offset_')
+        negative_mahal_dist = self.score_samples(X)
 
-        return decision
+        # raw_values deprecation:
+        if raw_values is not None:
+            warnings.warn("raw_values parameter is deprecated in 0.20 and will"
+                          " be removed in 0.22.", DeprecationWarning)
 
-    def predict(self, X):
-        """Outlyingness of observations in X according to the fitted model.
+            if not raw_values:
+                return (-self.offset_) ** 0.33 - (-negative_mahal_dist) ** 0.33
+
+        return negative_mahal_dist - self.offset_
+
+    def score_samples(self, X):
+        """Compute the negative Mahalanobis distances.
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        is_outliers : array, shape = (n_samples, ), dtype = bool
-            For each observation, tells whether or not it should be considered
-            as an outlier according to the fitted model.
-
-        threshold : float,
-            The values of the less outlying point's decision function.
-
+        negative_mahal_distances : array-like, shape (n_samples, )
+            Opposite of the Mahalanobis distances.
         """
-        check_is_fitted(self, 'threshold_')
+        check_is_fitted(self, 'offset_')
+        X = check_array(X)
+        return -self.mahalanobis(X)
+
+    def predict(self, X):
+        """
+        Predict the labels (1 inlier, -1 outlier) of X according to the
+        fitted model.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        is_inlier : array, shape (n_samples,)
+            Returns -1 for anomalies/outliers and +1 for inliers.
+        """
         X = check_array(X)
         is_inlier = -np.ones(X.shape[0], dtype=int)
-        if self.contamination is not None:
-            values = self.decision_function(X, raw_values=True)
-            is_inlier[values <= self.threshold_] = 1
-        else:
-            raise NotImplementedError("You must provide a contamination rate.")
+        values = self.decision_function(X)
+        is_inlier[values >= 0] = 1
 
         return is_inlier
 
@@ -182,13 +194,13 @@ class EllipticEnvelope(MinCovDet):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,) or (n_samples, n_outputs)
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like, shape = (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
 
         Returns
@@ -198,3 +210,9 @@ class EllipticEnvelope(MinCovDet):
 
         """
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+
+    @property
+    def threshold_(self):
+        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
+                      " be removed in 0.22.", DeprecationWarning)
+        return self.offset_
