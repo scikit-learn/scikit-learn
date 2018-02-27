@@ -34,25 +34,15 @@ def _check_statistics(X, X_true,
     if X.dtype.kind == 'f' or X_true.dtype.kind == 'f':
         assert_ae = assert_array_almost_equal
 
-    # Normal matrix, axis = 0
-    imputer = SimpleImputer(missing_values, strategy=strategy, axis=0)
+    # Normal matrix
+    imputer = SimpleImputer(missing_values, strategy=strategy)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_ae(imputer.statistics_, statistics,
               err_msg=err_msg.format(0, False))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(0, False))
 
-    # Normal matrix, axis = 1
-    imputer = SimpleImputer(missing_values, strategy=strategy, axis=1)
-    imputer.fit(X.transpose())
-    if np.isnan(statistics).any():
-        assert_raises(ValueError, imputer.transform, X.copy().transpose())
-    else:
-        X_trans = imputer.transform(X.copy().transpose())
-        assert_ae(X_trans, X_true.transpose(),
-                  err_msg=err_msg.format(1, False))
-
-    # Sparse matrix, axis = 0
-    imputer = SimpleImputer(missing_values, strategy=strategy, axis=0)
+    # Sparse matrix
+    imputer = SimpleImputer(missing_values, strategy=strategy)
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
@@ -62,22 +52,6 @@ def _check_statistics(X, X_true,
     assert_ae(imputer.statistics_, statistics,
               err_msg=err_msg.format(0, True))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(0, True))
-
-    # Sparse matrix, axis = 1
-    imputer = SimpleImputer(missing_values, strategy=strategy, axis=1)
-    imputer.fit(sparse.csc_matrix(X.transpose()))
-    if np.isnan(statistics).any():
-        assert_raises(ValueError, imputer.transform,
-                      sparse.csc_matrix(X.copy().transpose()))
-    else:
-        X_trans = imputer.transform(sparse.csc_matrix(X.copy().transpose()))
-
-        if sparse.issparse(X_trans):
-            X_trans = X_trans.toarray()
-
-        assert_ae(X_trans, X_true.transpose(),
-                  err_msg=err_msg.format(1, True))
-
 
 def test_imputation_shape():
     # Verify the shapes of the imputed matrix for different strategies.
@@ -330,36 +304,18 @@ def test_imputation_copy():
     Xt.data[0] = -1
     assert_array_almost_equal(X.data, Xt.data)
 
-    # copy=False, sparse csc, axis=0 => no copy
+    # copy=False, sparse csc => no copy
     X = X_orig.copy().tocsc()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False, axis=0)
+                            copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_array_almost_equal(X.data, Xt.data)
 
-    # copy=False, sparse csr, axis=0 => copy
+    # copy=False, sparse csr => copy
     X = X_orig.copy()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False, axis=0)
+                            copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
-
-    # copy=False, sparse csc, axis=1 => copy
-    X = X_orig.copy().tocsc()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False, axis=1)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = -1
-    assert_false(np.all(X.data == Xt.data))
-
-    # copy=False, sparse csr, axis=1, missing_values=0 => copy
-    X = X_orig.copy()
-    imputer = SimpleImputer(missing_values=0, strategy="mean",
-                            copy=False, axis=1)
-    Xt = imputer.fit(X).transform(X)
-    assert_false(sparse.issparse(Xt))
-
-    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
-    # made, even if copy=False.
