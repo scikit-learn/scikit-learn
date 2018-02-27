@@ -212,9 +212,15 @@ def mean_absolute_percentage_error(y_true, y_pred):
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
                                                    'uniform_average')
+
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported "
                          "in mean_absolute_percentage_error")
+
+    if (y_true == 0).any():
+        raise ValueError("mean_absolute_percentage_error requires"
+                         " y_true to never be zero")
+
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
