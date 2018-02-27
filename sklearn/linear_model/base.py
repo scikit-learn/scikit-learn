@@ -264,6 +264,9 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
+            if(len(self.coef_.shape) == 0):
+                self.coef_ = np.expand_dims(self.coef_, axis=0)
+            self.coef_ = np.array(self.coef_)
             self.intercept_ = 0.
 
 
