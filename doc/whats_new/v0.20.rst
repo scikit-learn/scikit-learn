@@ -246,6 +246,10 @@ Classifiers and regressors
   overridden when using parameter ``copy_X=True`` and ``check_input=False``.
   :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
 
+- Fixed a bug in :class:`sklearn.linear_model.Lasso`
+  where the coefficient had wrong shape when ``fit_intercept=False``.
+  :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
