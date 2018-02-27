@@ -7,6 +7,7 @@ import tempfile
 import os
 from time import sleep
 
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.exceptions import FitFailedWarning
@@ -1462,7 +1463,7 @@ def test_fit_and_score():
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
-    # check if exception was raised, with default error_score argument
+    # check if exception is raised, with default error_score argument
     assert_raise_message(ValueError, "Failing classifier failed as required",
                          _fit_and_score, *fit_and_score_args)
 
@@ -1472,11 +1473,9 @@ def test_fit_and_score():
                        "assigned to the score in such cases, then specify "
                        "error_score parameter. From version 0.22 the "
                        "default value will be error_score=np.nan")
-    try:
+    with pytest.raises(ValueError):
         assert_warns_message(FutureWarning, warning_message, _fit_and_score,
                              *fit_and_score_args)
-    except ValueError:
-        pass
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
