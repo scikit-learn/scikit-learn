@@ -62,6 +62,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -285,6 +286,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
