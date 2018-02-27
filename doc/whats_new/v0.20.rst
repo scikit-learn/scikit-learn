@@ -80,6 +80,8 @@ Model evaluation
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+- Added the :func:`metrics.mean_absolute_percentage_error` metric and the associated
+  scorer for regression problems. :issue:`10711` by :user:`Mohamed Ali Jamaoui <mohamed-ali>`
 
 Decomposition, manifold learning and clustering
 
