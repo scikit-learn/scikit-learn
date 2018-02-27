@@ -7,8 +7,10 @@ Sequential feature selection
 #
 # License: BSD 3 clause
 
-import numpy as np
 from itertools import combinations
+
+import numpy as np
+
 from .base import SelectorMixin
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
