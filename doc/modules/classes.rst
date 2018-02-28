@@ -140,6 +140,26 @@ Classes
    SpectralBiclustering
    SpectralCoclustering
 
+.. _compose_ref:
+
+:mod:`sklearn.compose`: Composite Estimators
+============================================
+
+.. automodule:: sklearn.compose
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    compose.TransformedTargetRegressor
+
 .. _covariance_ref:
 
 :mod:`sklearn.covariance`: Covariance Estimators
@@ -1225,7 +1245,6 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
-   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/
