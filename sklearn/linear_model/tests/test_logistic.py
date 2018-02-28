@@ -1050,7 +1050,8 @@ def test_max_iter():
                                         multi_class=multi_class,
                                         random_state=0, solver=solver)
                 lr.fit(X, y_bin)
-                assert_equal(lr.n_iter_[0], max_iter)
+                # scipy <= 1.0.0 may do extra iterations in lbfgs
+                assert lr.n_iter_[0] >= max_iter
 
 
 def test_n_iter():
