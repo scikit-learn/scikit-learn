@@ -1967,12 +1967,6 @@ def train_test_split(*arrays, **options):
             If the input is sparse, the output will be a
             ``scipy.sparse.csr_matrix``. Else, output type is the same as the
             input type.
-            
-    Notes
-    -----
-    Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
-    to an integer.
 
     Examples
     --------
