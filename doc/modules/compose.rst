@@ -230,8 +230,8 @@ variable::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_boston
-  >>> from sklearn.preprocessing import (TransformedTargetRegressor,
-  ...                                    QuantileTransformer)
+  >>> from sklearn.compose import TransformedTargetRegressor
+  >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
   >>> boston = load_boston()
