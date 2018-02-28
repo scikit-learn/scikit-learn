@@ -2333,8 +2333,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             output_distribution = self.output_distribution
         output_distribution = getattr(stats, output_distribution)
 
-        # older version of scipy do not handle tuple as fill_value
-        # clipping the value before transform solve the issue
         if not inverse:
             lower_bound_x = quantiles[0]
             upper_bound_x = quantiles[-1]
