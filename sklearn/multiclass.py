@@ -50,7 +50,8 @@ from .utils.validation import check_X_y, check_array
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
-from .utils.metaestimators import _safe_split, if_delegate_has_method
+from .utils.metaestimators import (_safe_split, if_delegate_has_method,
+                                   if_delegate_has_methods)
 
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -352,8 +353,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-    @if_delegate_has_method(['_first_estimator', 'estimator'],
-                            backup_method='predict_proba')
+    @if_delegate_has_methods(['_first_estimator', 'estimator'],
+                             ['decision_function', 'predict_proba'])
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. If decision_function is not implemented in the estimator,

@@ -12,7 +12,7 @@ from ..utils import safe_indexing
 from ..externals import six
 from ..base import BaseEstimator
 
-__all__ = ['if_delegate_has_method']
+__all__ = ['if_delegate_has_method', 'if_delegate_has_methods']
 
 
 class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -129,7 +129,7 @@ class _IffHasAttrDescriptor(object):
         return out
 
 
-def if_delegate_has_method(delegate, backup_method=''):
+def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
@@ -142,9 +142,32 @@ def if_delegate_has_method(delegate, backup_method=''):
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
 
-    backup_method : string
-        Name of the method that will be looked up, in case the function with
-        the same name is not found.
+    """
+    if isinstance(delegate, list):
+        delegate = tuple(delegate)
+    if not isinstance(delegate, tuple):
+        delegate = (delegate,)
+
+    return lambda fn: _IffHasAttrDescriptor(
+        fn, delegate, (fn.__name__,))
+
+
+def if_delegate_has_methods(delegate, methods):
+    """Create a decorator for checking the existance of multiple methods
+
+    This enables ducktyping by hasattr returning True according to the
+    sub-estimator and supports multiple methods.
+
+    Parameters
+    ----------
+    delegate : string, list of strings or tuple of strings
+        Name of the sub-estimator that can be accessed as an attribute of the
+        base object. If a list or a tuple of names are provided, the first
+        sub-estimator that is an attribute of the base object will be used.
+
+    methods : iterable of strings
+        Name of the methods that will be looked up. fn.__name__ is not used,
+        and should be included in methods.
 
     """
     if isinstance(delegate, list):
@@ -153,7 +176,7 @@ def if_delegate_has_method(delegate, backup_method=''):
         delegate = (delegate,)
 
     return lambda fn: _IffHasAttrDescriptor(
-        fn, delegate, (fn.__name__, backup_method))
+        fn, delegate, methods)
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
