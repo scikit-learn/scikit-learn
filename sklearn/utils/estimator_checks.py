@@ -2036,7 +2036,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         else:
             estimator.fit(X, y_)
 
-        assert_greater_equal(estimator.n_iter_, 1)
+        assert estimator.n_iter_ >= 1
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

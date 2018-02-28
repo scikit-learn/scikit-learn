@@ -168,7 +168,7 @@ def test_huber_warm_start():
     # these would be almost same but not equal.
     assert_array_almost_equal(huber_warm.coef_, huber_warm_coef, 1)
 
-    assert_equal(0, huber_warm.n_iter_)
+    assert huber_warm.n_iter_ == 0
 
 
 def test_huber_better_r2_score():
