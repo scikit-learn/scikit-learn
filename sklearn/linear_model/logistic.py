@@ -703,24 +703,14 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
-            try:
-                w0, loss, info = optimize.fmin_l_bfgs_b(
-                    func, w0, fprime=None,
-                    args=(X, target, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
-            except TypeError:
-                # old scipy doesn't have maxiter
-                w0, loss, info = optimize.fmin_l_bfgs_b(
-                    func, w0, fprime=None,
-                    args=(X, target, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol)
+            w0, loss, info = optimize.fmin_l_bfgs_b(
+                func, w0, fprime=None,
+                args=(X, target, 1. / C, sample_weight),
+                iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.", ConvergenceWarning)
-            try:
-                n_iter_i = info['nit'] - 1
-            except:
-                n_iter_i = info['funcalls'] - 1
+            n_iter_i = info['nit'] - 1
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,

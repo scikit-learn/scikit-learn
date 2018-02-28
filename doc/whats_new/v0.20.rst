@@ -50,9 +50,15 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its 
+  ``predict`` method. The returned standard deviations will be zeros.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
+
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Preprocessing
 
@@ -72,14 +78,16 @@ Preprocessing
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
   :user:`Maniteja Nandana <maniteja123>`.
 
+- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
+  the target y before fitting a regression model. The predictions are mapped
+  back to the original space via an inverse transform. :issue:`9041` by
+  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 - Added the :func:`metrics.mean_absolute_percentage_error` metric and the associated
   scorer for regression problems. :issue:`10711` by :user:`Mohamed Ali Jamaoui <mohamed-ali>`
 
@@ -88,10 +96,6 @@ Decomposition, manifold learning and clustering
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
-
-- Speed improvements for both 'exact' and 'barnes_hut' methods in
-  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
-  `Tom Dupre la Tour`_.
 
 
 Enhancements
@@ -164,6 +168,16 @@ Model evaluation and meta-estimators
   sizes of different test sets in cross-validation were very unequal, i.e. in
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
+
+- Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
+  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
+  <bellet>`.
+
+Decomposition and manifold learning
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
+  `Tom Dupre la Tour`_.
 
 Metrics
 
@@ -247,6 +261,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.ElasticNet` which caused the input to be
   overridden when using parameter ``copy_X=True`` and ``check_input=False``.
   :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
+
+- Fixed a bug in :class:`sklearn.linear_model.Lasso`
+  where the coefficient had wrong shape when ``fit_intercept=False``.
+  :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
 
 Decomposition, manifold learning and clustering
 
