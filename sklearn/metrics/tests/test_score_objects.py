@@ -66,6 +66,7 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
+NONZERO_Y_SCORERS = ['neg_mape']
 
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
@@ -487,7 +488,10 @@ def check_scorer_memmap(scorer_name):
     if scorer_name in MULTILABEL_ONLY_SCORERS:
         score = scorer(estimator, X_mm, y_ml_mm)
     else:
-        score = scorer(estimator, X_mm, y_mm)
+        if scorer_name in NONZERO_Y_SCORERS:
+            score = scorer(estimator, X_mm, y_mm+1)
+        else:
+            score = scorer(estimator, X_mm, y_mm)
     assert isinstance(score, numbers.Number), scorer_name
 
 
