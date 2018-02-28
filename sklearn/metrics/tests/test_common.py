@@ -385,6 +385,11 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "mean_absolute_percentage_error"
 ]
 
+# Metrics that only support non-zero y
+METRICS_WITH_NON_ZERO_Y = [
+    "mean_absolute_percentage_error"
+] 
+
 
 @ignore_warnings
 def test_symmetry():
@@ -392,6 +397,11 @@ def test_symmetry():
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
+
+    # this used to test metrics that only support non zero y
+    # like mean_absolute_percentage_error 
+    non_zero_y_true = random_state.randint(1, 3, size=(20, ))
+    non_zero_y_pred = random_state.randint(1, 3, size=(20, ))
 
     # We shouldn't forget any metrics
     assert_equal(set(SYMMETRIC_METRICS).union(
@@ -406,15 +416,25 @@ def test_symmetry():
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_pred, y_true),
-                            err_msg="%s is not symmetric" % name)
+        if name in METRICS_WITH_NON_ZERO_Y:
+            assert_almost_equal(metric(non_zero_y_true, non_zero_y_pred),
+                                metric(non_zero_y_pred, non_zero_y_true),
+                                err_msg="%s is not symmetric" % name) 
+        else:
+            assert_almost_equal(metric(y_true, y_pred),
+                                metric(y_pred, y_true),
+                                err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
-                    msg="%s seems to be symmetric" % name)
+        if name in METRICS_WITH_NON_ZERO_Y:
+            assert_true(np.any(metric(non_zero_y_true,
+             non_zero_y_pred) != metric(non_zero_y_pred, non_zero_y_true)),
+                        msg="%s seems to be symmetric" % name)
+        else:
+            assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
+                        msg="%s seems to be symmetric" % name)
 
 
 @ignore_warnings
@@ -423,15 +443,29 @@ def test_sample_order_invariance():
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
+    # this used to test metrics that only support non zero y
+    # like mean_absolute_percentage_error 
+    non_zero_y_true = random_state.randint(1, 3, size=(20, ))
+    non_zero_y_pred = random_state.randint(1, 3, size=(20, ))
+    non_zero_y_true_shuffle, non_zero_y_pred_shuffle = shuffle(non_zero_y_true,
+                                                               non_zero_y_pred,
+                                                                random_state=0)
 
     for name, metric in ALL_METRICS.items():
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
-        assert_almost_equal(metric(y_true, y_pred),
-                            metric(y_true_shuffle, y_pred_shuffle),
-                            err_msg="%s is not sample order invariant"
-                                    % name)
+        if name in METRICS_WITH_NON_ZERO_Y:
+            assert_almost_equal(metric(non_zero_y_true, non_zero_y_pred),
+                                metric(non_zero_y_true_shuffle,
+                                       non_zero_y_pred_shuffle),
+                                err_msg="%s is not sample order invariant"
+                                        % name)
+        else:
+            assert_almost_equal(metric(y_true, y_pred),
+                                metric(y_true_shuffle, y_pred_shuffle),
+                                err_msg="%s is not sample order invariant"
+                                        % name)
 
 
 @ignore_warnings
@@ -474,11 +508,14 @@ def test_sample_order_invariance_multilabel_and_multioutput():
                                     % name)
 
 
-@ignore_warnings
-def test_format_invariance_with_1d_vectors():
+def data_for_test_format_invariance_with_1d_vectors(non_zero_y=False):
     random_state = check_random_state(0)
-    y1 = random_state.randint(0, 2, size=(20, ))
-    y2 = random_state.randint(0, 2, size=(20, ))
+    if non_zero_y:
+        y1 = random_state.randint(1, 3, size=(20, ))
+        y2 = random_state.randint(1, 3, size=(20, ))
+    else:
+        y1 = random_state.randint(0, 2, size=(20, ))
+        y2 = random_state.randint(0, 2, size=(20, ))
 
     y1_list = list(y1)
     y2_list = list(y2)
@@ -490,11 +527,31 @@ def test_format_invariance_with_1d_vectors():
     y2_column = np.reshape(y2_1d, (-1, 1))
     y1_row = np.reshape(y1_1d, (1, -1))
     y2_row = np.reshape(y2_1d, (1, -1))
+    return (y1, y2, y1_list, y2_list, y1_1d, y2_1d, 
+           y1_column, y2_column, y1_row, y2_row)
+
+
+@ignore_warnings
+def test_format_invariance_with_1d_vectors():
+
+    data = data_for_test_format_invariance_with_1d_vectors(
+                non_zero_y=False)
+    # preparing the data 
+    (y1, y2, y1_list, y2_list, y1_1d, y2_1d, y1_column, 
+    y2_column, y1_row, y2_row)  = data
 
     for name, metric in ALL_METRICS.items():
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
+        if name in METRICS_WITH_NON_ZERO_Y:
+            # preparing the data for the special case of a metric 
+            # that doesn't support y containing zeros. 
+            data = data_for_test_format_invariance_with_1d_vectors(
+                non_zero_y=True)
+            (y1, y2, y1_list, y2_list, y1_1d, y2_1d, y1_column, 
+                y2_column, y1_row, y2_row)  = data
+            
         measure = metric(y1, y2)
 
         assert_almost_equal(metric(y1_list, y2_list), measure,
@@ -658,8 +715,12 @@ def check_single_sample(name):
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
-    for i, j in product([0, 1], repeat=2):
-        metric([i], [j])
+    if name in METRICS_WITH_NON_ZERO_Y:
+        for i, j in product([1, 2], repeat=2):
+            metric([i], [j])
+    else:
+        for i, j in product([0, 1], repeat=2):
+            metric([i], [j])
 
 
 @ignore_warnings
