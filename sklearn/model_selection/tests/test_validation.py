@@ -368,20 +368,23 @@ def test_cross_validate():
         test_mse_scores = []
         train_r2_scores = []
         test_r2_scores = []
+        fitted_estimators = []
         for train, test in cv.split(X, y):
             est = clone(reg).fit(X[train], y[train])
             train_mse_scores.append(mse_scorer(est, X[train], y[train]))
             train_r2_scores.append(r2_scorer(est, X[train], y[train]))
             test_mse_scores.append(mse_scorer(est, X[test], y[test]))
             test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+            fitted_estimators.append(est)
 
         train_mse_scores = np.array(train_mse_scores)
         test_mse_scores = np.array(test_mse_scores)
         train_r2_scores = np.array(train_r2_scores)
         test_r2_scores = np.array(test_r2_scores)
+        fitted_estimators = np.array(fitted_estimators)
 
         scores = (train_mse_scores, test_mse_scores, train_r2_scores,
-                  test_r2_scores)
+                  test_r2_scores, fitted_estimators)
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
@@ -411,7 +414,7 @@ def test_cross_validate_return_train_score_warn():
 
 def check_cross_validate_single_metric(clf, X, y, scores):
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     # Test single metric evaluation when scoring is string or singleton list
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
@@ -443,11 +446,19 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
+    # Test return_estimator option
+    mse_scores_dict = cross_validate(clf, X, y, cv=5,
+                                     scoring='neg_mean_squared_error',
+                                     return_estimator=True)
+    for k, est in enumerate(mse_scores_dict['estimator']):
+        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
+
 
 def check_cross_validate_multi_metric(clf, X, y, scores):
     # Test multimetric evaluation when scoring is a list / dict
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
