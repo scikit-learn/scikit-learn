@@ -376,11 +376,11 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "confusion_matrix",  # Left this one here because the tests in this file do
-                         # not work for confusion_matrix, as its output is a
-                         # matrix instead of a number. Testing of
-                         # confusion_matrix with sample_weight is in
-                         # test_classification.py
+    "confusion_matrix", # Left this one here because the tests in this file do
+                        # not work for confusion_matrix, as its output is a
+                        # matrix instead of a number. Testing of
+                        # confusion_matrix with sample_weight is in
+                        # test_classification.py
     "median_absolute_error",
     "mean_absolute_percentage_error"
 ]
