@@ -21,8 +21,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import MICEImputer
+from sklearn.impute import SimpleImputer, MICEImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)

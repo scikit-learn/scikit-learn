@@ -34,7 +34,6 @@ from .label import MultiLabelBinarizer
 
 from ._target import TransformedTargetRegressor
 from .imputation import Imputer
-from .imputation import MICEImputer
 
 
 __all__ = [
@@ -44,7 +43,6 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
-    'MICEImputer',
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',

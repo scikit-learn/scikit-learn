@@ -219,18 +219,6 @@ def test_mean_strategy_regressor():
     assert_array_equal(reg.predict(X), [np.mean(y)] * len(X))
 
 
-def test_dummy_regressor_zero_std():
-    random_state = np.random.RandomState(seed=1)
-
-    X = [[0]] * 4  # ignored
-    y = random_state.randn(4)
-
-    reg = DummyRegressor()
-    reg.fit(X, y)
-    _, y_est_std = reg.predict(X, return_std=True)
-    assert_array_equal(y_est_std, [0] * len(X))
-
-
 def test_mean_strategy_multioutput_regressor():
     random_state = np.random.RandomState(seed=1)
 

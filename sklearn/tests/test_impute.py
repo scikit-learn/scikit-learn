@@ -5,10 +5,11 @@ from scipy import sparse
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
-from sklearn.impute import SimpleImputer
+from sklearn.impute import SimpleImputer, MICEImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -84,11 +85,14 @@ def test_imputation_shape():
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent']:
-        imputer = SimpleImputer(strategy=strategy)
+    for strategy in ['mean', 'median', 'most_frequent', 'mice']:
+        if strategy == 'mice':
+            imputer = MICEImputer()
+        else:
+            imputer = SimpleImputer(strategy=strategy)
+            X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+            assert_equal(X_imputed.shape, (10, 2))
         X_imputed = imputer.fit_transform(X)
-        assert_equal(X_imputed.shape, (10, 2))
-        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
         assert_equal(X_imputed.shape, (10, 2))
 
 
@@ -309,3 +313,215 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+
+def test_mice_rank_one():
+    rng = np.random.RandomState(0)
+    d = 100
+    A = rng.rand(d, 1)
+    B = rng.rand(1, d)
+    X = np.dot(A, B)
+    nan_mask = rng.rand(d, d) < 0.5
+    X_missing = X.copy()
+    X_missing[nan_mask] = np.nan
+
+    imputer = MICEImputer(n_imputations=5,
+                          n_burn_in=5,
+                          verbose=True)
+    X_filled = imputer.fit_transform(X_missing)
+    assert_array_almost_equal(X_filled, X, decimal=2)
+
+
+def test_mice_imputation_order():
+    rng = np.random.RandomState(0)
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10,
+                             random_state=rng).toarray()
+    X[:, 0] = 1  # this column shouldn't be ever used
+
+    for imputation_order in ['random', 'roman', 'monotone',
+                             'revmonotone', 'arabic']:
+        imputer = MICEImputer(missing_values=0,
+                              n_imputations=1,
+                              n_burn_in=1,
+                              n_nearest_features=5,
+                              min_value=0,
+                              max_value=1,
+                              verbose=False,
+                              imputation_order=imputation_order)
+        imputer.fit_transform(X)
+        ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
+        if imputation_order == 'roman':
+            assert np.all(ordered_idx[:d-1] == np.arange(1, d))
+        elif imputation_order == 'arabic':
+            assert np.all(ordered_idx[:d-1] == np.arange(d-1, 0, -1))
+        elif imputation_order == 'random':
+            ordered_idx_round_1 = ordered_idx[:d-1]
+            ordered_idx_round_2 = ordered_idx[d-1:]
+            assert ordered_idx_round_1 != ordered_idx_round_2
+        elif 'monotone' in imputation_order:
+            assert len(ordered_idx) == 2 * (d - 1)
+
+
+def test_mice_predictors():
+    rng = np.random.RandomState(0)
+    from sklearn.dummy import DummyRegressor
+    from sklearn.linear_model import BayesianRidge, ARDRegression
+
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10,
+                             random_state=rng).toarray()
+
+    for predictor in [DummyRegressor, BayesianRidge, ARDRegression]:
+        imputer = MICEImputer(missing_values=0,
+                              n_imputations=1,
+                              n_burn_in=1,
+                              predictor=predictor())
+        imputer.fit_transform(X)
+
+        # correct types for predictors?
+        hashes = []
+        for triplet in imputer.imputation_sequence_:
+            assert triplet.predictor
+            hashes.append(id(triplet.predictor))
+
+        # each predictor unique?
+        assert len(set(hashes)) == len(hashes)
+
+
+def test_mice_clip():
+    rng = np.random.RandomState(0)
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10,
+                             random_state=rng).toarray()
+
+    imputer = MICEImputer(missing_values=0,
+                          n_imputations=1,
+                          n_burn_in=1,
+                          min_value=0.1,
+                          max_value=0.2)
+
+    Xt = imputer.fit_transform(X)
+    assert_array_almost_equal(np.min(Xt[X == 0]), 0.1)
+    assert_array_almost_equal(np.max(Xt[X == 0]), 0.2)
+    assert_array_almost_equal(Xt[X != 0], X[X != 0])
+
+
+def test_mice_missing_at_transform():
+    rng = np.random.RandomState(0)
+    n = 100
+    d = 10
+    X_train = rng.randint(low=0, high=3, size=(n, d))
+    X_test = rng.randint(low=0, high=3, size=(n, d))
+
+    X_train[:, 0] = 1  # definitely no missing values in 0th column
+    X_test[0, 0] = 0  # definitely missing value in 0th column
+
+    for strategy in ["mean", "median", "most_frequent"]:
+        mice = MICEImputer(missing_values=0,
+                           n_imputations=1,
+                           n_burn_in=1,
+                           initial_strategy=strategy).fit(X_train)
+        initial_imputer = SimpleImputer(missing_values=0,
+                                  strategy=strategy).fit(X_train)
+
+        # if there were no missing values at time of fit, then mice will
+        # only use the initial imputer for that feature at transform
+        assert np.all(mice.transform(X_test)[:, 0] ==
+                      initial_imputer.transform(X_test)[:, 0])
+
+
+def test_mice_transform_stochasticity():
+    rng = np.random.RandomState(0)
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10,
+                             random_state=rng).toarray()
+
+    imputer = MICEImputer(missing_values=0,
+                          n_imputations=1,
+                          n_burn_in=1)
+    imputer.fit(X)
+
+    X_fitted_1 = imputer.transform(X)
+    X_fitted_2 = imputer.transform(X)
+
+    # sufficient to assert that the means are not the same
+    assert_not_equal(np.mean(X_fitted_1), np.mean(X_fitted_2))
+
+
+def test_mice_no_missing():
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 100)
+    X[:, 0] = np.nan
+    m1 = MICEImputer(n_imputations=10)
+    m2 = MICEImputer(n_imputations=10)
+    pred1 = m1.fit(X).transform(X)
+    pred2 = m2.fit_transform(X)
+    # should exclude the first column entirely
+    assert_array_almost_equal(X[:, 1:], pred1)
+    # fit and fit_transform should both be identical
+    assert_array_almost_equal(pred1, pred2)
+
+
+def test_mice_transform_recovery():
+    rng = np.random.RandomState(0)
+
+    def make_data(rank):
+        n = 100
+        d = 100
+        A = rng.rand(n, rank)
+        B = rng.rand(rank, d)
+        Xfilled = np.dot(A, B)
+        # half is randomly missing
+        nan_mask = rng.rand(n, d) < 0.5
+        X_missing = Xfilled.copy()
+        X_missing[nan_mask] = np.nan
+
+        # split up data in half
+        n = n // 2
+        X_train_filled = Xfilled[:n]
+        X_train = X_missing[:n]
+        X_test_filled = Xfilled[n:]
+        X_test = X_missing[n:]
+        return X_train_filled, X_train, X_test_filled, X_test
+
+    for rank in [5, 10]:
+        X_train_filled, X_train, X_test_filled, X_test = make_data(rank)
+        imputer = MICEImputer(n_imputations=10,
+                              n_burn_in=10,
+                              verbose=True).fit(X_train)
+        X_test_est = imputer.transform(X_test)
+        assert_array_almost_equal(X_test_filled, X_test_est, decimal=1)
+
+
+def test_mice_additive_matrix():
+    rng = np.random.RandomState(0)
+    n = 100
+    d = 10
+    A = rng.randn(n, d)
+    B = rng.randn(n, d)
+    Xfilled = np.zeros(A.shape)
+    for i in range(d):
+        for j in range(d):
+            Xfilled[:, (i+j) % d] += (A[:, i] + B[:, j]) / 2
+    # a quarter is randomly missing
+    nan_mask = rng.rand(n, d) < 0.25
+    X_missing = Xfilled.copy()
+    X_missing[nan_mask] = np.nan
+
+    # split up data
+    n = n // 2
+    X_train = X_missing[:n]
+    X_test_filled = Xfilled[n:]
+    X_test = X_missing[n:]
+
+    imputer = MICEImputer(n_imputations=25,
+                          n_burn_in=10,
+                          verbose=True,
+                          random_state=rng).fit(X_train)
+    X_test_est = imputer.transform(X_test)
+    assert_array_almost_equal(X_test_filled, X_test_est, decimal=2)
