@@ -315,8 +315,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. From version 0.22 the default
-        will be np.nan
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     Returns
     -------

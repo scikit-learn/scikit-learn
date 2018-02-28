@@ -485,11 +485,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if error_score == 'raise':
             raise
         elif error_score == 'raise-deprecating':
-            warnings.warn("Estimator failed to fit for these parameters; the "
-                          "error will be raised. If you want a value to be "
-                          "assigned to the score in such cases, then specify "
-                          "error_score parameter. Default is 'raise' but from "
-                          "version 0.22 it will change to np.nan.",
+            warnings.warn("From version 0.22, errors during fit will result "
+                          "in a cross validation score of NaN by default. Use "
+                          "error_score='raise' if you want an exception "
+                          "raised or error_score=np.nan to adopt the "
+                          "behavior from version 0.22.",
                           FutureWarning)
             raise
         elif isinstance(error_score, numbers.Number):

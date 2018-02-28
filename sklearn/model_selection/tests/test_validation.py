@@ -1468,11 +1468,11 @@ def test_fit_and_score():
                          _fit_and_score, *fit_and_score_args)
 
     # check if warning was raised, with default error_score argument
-    warning_message = ("Estimator failed to fit for these parameters; the "
-                       "error will be raised. If you want a value to be "
-                       "assigned to the score in such cases, then specify "
-                       "error_score parameter. Default is 'raise' but from "
-                       "version 0.22 it will change to np.nan.")
+    warning_message = ("From version 0.22, errors during fit will result "
+                       "in a cross validation score of NaN by default. Use "
+                       "error_score='raise' if you want an exception "
+                       "raised or error_score=np.nan to adopt the "
+                       "behavior from version 0.22.")
     with pytest.raises(ValueError):
         assert_warns_message(FutureWarning, warning_message, _fit_and_score,
                              *fit_and_score_args)
