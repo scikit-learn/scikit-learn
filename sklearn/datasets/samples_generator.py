@@ -48,9 +48,13 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     class. It introduces interdependence between these features and adds
     various types of further noise to the data.
 
-    Prior to shuffling, `X` stacks a number of these primary "informative"
-    features, "redundant" linear combinations of these, "repeated" duplicates
-    of sampled features, and arbitrary noise for and remaining features.
+    Without shuffling, `X` horizontally stacks features in the following
+    order: the primary `n_informative` features, followed by `n_redundant`
+    linear combinations of the informative features, followed by `n_repeated`
+    duplicates, drawn randomly with replacement from the informative and
+    redundant features. The remaining features are filled with random noise.
+    Thus, without shuffling, all useful features are contained in the columns
+    `X[:, :n_informative + n_redundant + n_repeated]`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
