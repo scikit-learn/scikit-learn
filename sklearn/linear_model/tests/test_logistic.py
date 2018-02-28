@@ -1,6 +1,11 @@
+from distutils.version import LooseVersion
+
 import numpy as np
+
+import scipy
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
+
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
@@ -1050,8 +1055,15 @@ def test_max_iter():
                                         multi_class=multi_class,
                                         random_state=0, solver=solver)
                 lr.fit(X, y_bin)
-                # scipy <= 1.0.0 may do extra iterations in lbfgs
-                assert lr.n_iter_[0] >= max_iter
+                expected_n_iter = max_iter
+                # scipy <= 1.0.0 may do extra iterations in lbfgs. See
+                # https://github.com/scipy/scipy/issues/7854.
+                scipy_lbfgs_bug = (solver == 'lbfgs' and (
+                    LooseVersion(scipy.__version__) < '1' or
+                    LooseVersion(scipy.__version__) == '1.0.0'))
+                if scipy_lbfgs_bug:
+                    expected_n_iter += 1
+                assert lr.n_iter_[0] == expected_n_iter
 
 
 def test_n_iter():
