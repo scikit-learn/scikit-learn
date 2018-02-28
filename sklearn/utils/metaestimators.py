@@ -90,7 +90,10 @@ class _IffHasAttrDescriptor(object):
     def __init__(self, fn, delegate_names, attribute_names):
         self.fn = fn
         self.delegate_names = delegate_names
-        self.attribute_names = attribute_names
+        if isinstance(attribute_names, str):
+            self.attribute_names = (attribute_names,)
+        else:
+            self.attribute_names = attribute_names
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -148,8 +151,7 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(
-        fn, delegate, (fn.__name__,))
+    return lambda fn: _IffHasAttrDescriptor(fn, delegate, fn.__name__)
 
 
 def if_delegate_has_methods(delegate, methods):
