@@ -426,7 +426,7 @@ def test_mice_missing_at_transform():
                            n_burn_in=1,
                            initial_strategy=strategy).fit(X_train)
         initial_imputer = SimpleImputer(missing_values=0,
-                                  strategy=strategy).fit(X_train)
+                                        strategy=strategy).fit(X_train)
 
         # if there were no missing values at time of fit, then mice will
         # only use the initial imputer for that feature at transform
