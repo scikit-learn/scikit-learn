@@ -388,7 +388,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
 # Metrics that only support non-zero y
 METRICS_WITH_NON_ZERO_Y = [
     "mean_absolute_percentage_error"
-] 
+]
 
 
 @ignore_warnings
@@ -399,7 +399,7 @@ def test_symmetry():
     y_pred = random_state.randint(0, 2, size=(20, ))
 
     # this used to test metrics that only support non zero y
-    # like mean_absolute_percentage_error 
+    # like mean_absolute_percentage_error
     non_zero_y_true = random_state.randint(1, 3, size=(20, ))
     non_zero_y_pred = random_state.randint(1, 3, size=(20, ))
 
@@ -419,7 +419,7 @@ def test_symmetry():
         if name in METRICS_WITH_NON_ZERO_Y:
             assert_almost_equal(metric(non_zero_y_true, non_zero_y_pred),
                                 metric(non_zero_y_pred, non_zero_y_true),
-                                err_msg="%s is not symmetric" % name) 
+                                err_msg="%s is not symmetric" % name)
         else:
             assert_almost_equal(metric(y_true, y_pred),
                                 metric(y_pred, y_true),
@@ -430,10 +430,13 @@ def test_symmetry():
         metric = ALL_METRICS[name]
         if name in METRICS_WITH_NON_ZERO_Y:
             assert_true(np.any(metric(non_zero_y_true,
-             non_zero_y_pred) != metric(non_zero_y_pred, non_zero_y_true)),
+                                      non_zero_y_pred) != metric(
+                                      non_zero_y_pred,
+                                      non_zero_y_true)),
                         msg="%s seems to be symmetric" % name)
         else:
-            assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
+            assert_true(np.any(metric(y_true,
+                                      y_pred) != metric(y_pred, y_true)),
                         msg="%s seems to be symmetric" % name)
 
 
@@ -444,12 +447,12 @@ def test_sample_order_invariance():
     y_pred = random_state.randint(0, 2, size=(20, ))
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
     # this used to test metrics that only support non zero y
-    # like mean_absolute_percentage_error 
+    # like mean_absolute_percentage_error
     non_zero_y_true = random_state.randint(1, 3, size=(20, ))
     non_zero_y_pred = random_state.randint(1, 3, size=(20, ))
     non_zero_y_true_shuffle, non_zero_y_pred_shuffle = shuffle(non_zero_y_true,
                                                                non_zero_y_pred,
-                                                                random_state=0)
+                                                               random_state=0)
 
     for name, metric in ALL_METRICS.items():
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
@@ -527,8 +530,8 @@ def data_for_test_format_invariance_with_1d_vectors(non_zero_y=False):
     y2_column = np.reshape(y2_1d, (-1, 1))
     y1_row = np.reshape(y1_1d, (1, -1))
     y2_row = np.reshape(y2_1d, (1, -1))
-    return (y1, y2, y1_list, y2_list, y1_1d, y2_1d, 
-           y1_column, y2_column, y1_row, y2_row)
+    return (y1, y2, y1_list, y2_list, y1_1d, y2_1d,
+            y1_column, y2_column, y1_row, y2_row)
 
 
 @ignore_warnings
@@ -536,22 +539,22 @@ def test_format_invariance_with_1d_vectors():
 
     data = data_for_test_format_invariance_with_1d_vectors(
                 non_zero_y=False)
-    # preparing the data 
-    (y1, y2, y1_list, y2_list, y1_1d, y2_1d, y1_column, 
-    y2_column, y1_row, y2_row)  = data
+    # preparing the data
+    (y1, y2, y1_list, y2_list, y1_1d, y2_1d, y1_column,
+     y2_column, y1_row, y2_row) = data
 
     for name, metric in ALL_METRICS.items():
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
         if name in METRICS_WITH_NON_ZERO_Y:
-            # preparing the data for the special case of a metric 
-            # that doesn't support y containing zeros. 
+            # preparing the data for the special case of a metric
+            # that doesn't support y containing zeros.
             data = data_for_test_format_invariance_with_1d_vectors(
                 non_zero_y=True)
-            (y1, y2, y1_list, y2_list, y1_1d, y2_1d, y1_column, 
-                y2_column, y1_row, y2_row)  = data
-            
+            (y1, y2, y1_list, y2_list, y1_1d, y2_1d, y1_column,
+             y2_column, y1_row, y2_row) = data
+
         measure = metric(y1, y2)
 
         assert_almost_equal(metric(y1_list, y2_list), measure,
