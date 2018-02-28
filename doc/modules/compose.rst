@@ -7,9 +7,12 @@ Pipelines and composite estimators
 
 Transformers are usually combined with classifiers, regressors or other
 estimators to build a composite estimator.  The most common tool is a
-:ref:`Pipeline <pipeline>`, often in conjunction with other
-compositions such as :ref:`FeatureUnion <feature_union>` for concatenating
-the output of transformers into a composite feature space.
+:ref:`Pipeline <pipeline>`. Pipeline is often used in combination with
+:ref:`FeatureUnion <feature_union>` which concatenates the output of
+transformers into a composite feature space.  :ref:`TransformedTargetRegressor
+<transformed_target_regressor>` deals with transforming the :term:`target`
+(:term:`y`) (e.g. log-transform) while Pipelines only transform the observed
+data (:term:`X`).
 
 .. _pipeline:
 
