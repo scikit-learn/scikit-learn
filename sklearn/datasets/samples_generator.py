@@ -120,11 +120,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -311,11 +309,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         probabilities of features given classes, from which the data was
         drawn.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -418,11 +414,9 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     n_samples : int, optional (default=12000)
         The number of samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -510,11 +504,9 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     coef : boolean, optional (default=False)
         If True, the coefficients of the underlying linear model are returned.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -595,11 +587,9 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        See :term:`random_state <Glossary>`.
 
     factor : 0 < double < 1 (default=.8)
         Scale factor between inner and outer circle.
@@ -658,11 +648,9 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -731,11 +719,9 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -869,11 +855,9 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset noise.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -931,11 +915,9 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset noise.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -997,11 +979,9 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset noise.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1074,11 +1054,9 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
         The relative importance of the fat noisy tail of the singular values
         profile.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1128,11 +1106,9 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1188,11 +1164,9 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     n_features : int, optional (default=10)
         The number of features.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1229,11 +1203,9 @@ def make_spd_matrix(n_dim, random_state=None):
     n_dim : int
         The matrix dimension.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1279,11 +1251,9 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     largest_coef : float between 0 and 1, optional (default=0.9)
         The value of the largest coefficient.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1341,11 +1311,9 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1394,11 +1362,9 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1458,11 +1424,9 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1547,11 +1511,9 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -1614,7 +1576,6 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
 
 def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
                       maxval=100, shuffle=True, random_state=None):
-
     """Generate an array with block checkerboard structure for
     biclustering.
 
@@ -1640,11 +1601,9 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
