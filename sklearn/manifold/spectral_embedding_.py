@@ -211,24 +211,27 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
       http://dx.doi.org/10.1137%2FS1064827500366124
     """
     adjacency = check_symmetric(adjacency)
+    random_state = check_random_state(random_state)
 
-    try:
-        from pyamg import smoothed_aggregation_solver
-    except ImportError:
-        if eigen_solver == "amg":
-            raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
-                             "not available.")
+    n_nodes = adjacency.shape[0]
 
+    # reassign eigen_solver's value if necessary
     if eigen_solver is None:
         eigen_solver = 'arpack'
     elif eigen_solver not in ('arpack', 'lobpcg', 'amg'):
         raise ValueError("Unknown value for eigen_solver: '%s'."
                          "Should be 'amg', 'arpack', or 'lobpcg'"
                          % eigen_solver)
+    elif eigen_solver == 'amg':
+        if not sparse.isspmatrix(adjacency) or n_nodes < 5 * n_components:
+            # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
+            # for details see the source code in scipy:
+            # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
+            # /lobpcg/lobpcg.py#L237
+            # or matlab:
+            # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+            eigen_solver = 'arpack'
 
-    random_state = check_random_state(random_state)
-
-    n_nodes = adjacency.shape[0]
     # Whether to drop the first eigenvector
     if drop_first:
         n_components = n_components + 1
@@ -239,14 +242,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                       return_diag=True)
-    if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
-       (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
-        # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
-        # for details see the source code in scipy:
-        # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
-        # /lobpcg/lobpcg.py#L237
-        # or matlab:
-        # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+    if eigen_solver == 'arpack':
+
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
@@ -284,8 +281,12 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
-        if not sparse.issparse(laplacian):
-            warnings.warn("AMG works better for sparse matrices")
+        try:
+            from pyamg import smoothed_aggregation_solver
+        except ImportError:
+            raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
+                             "not available.")
+
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
