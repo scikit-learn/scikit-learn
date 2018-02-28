@@ -80,7 +80,7 @@ def test_proj_zero_radius(random_state=0):
     n = 5
     for _ in range(6):
         w = rng.randn(n)
-        for proj in [_py_proj_l1, proj_l1_slow, _py_proj_l2, proj_l2_slow][2:3]:
+        for proj in [_py_proj_l1, proj_l1_slow, _py_proj_l2, proj_l2_slow]:
             for ajj in [0., .1, 1., 1e4]:
                 w_ = w.copy()
                 proj(w_, 0., ajj)

@@ -1,4 +1,3 @@
-import warnings
 import numpy as np
 from sklearn.linear_model.coordescendant import L21_PENALTY, L11_PENALTY
 from .prox_slow import nrm2
@@ -14,7 +13,8 @@ def compute_dual_gap_slow(W, reg, l2_reg, X_or_Gram_conj, Y_or_Cov, R_or_RCov,
                 penalty_model))
 
     if precomputed and np.isnan(Y_norm2):
-        raise ValueError("`precomputed=True` was specified, expected a value for `Y_norm2`")
+        raise ValueError(
+            "`precomputed=True` was specified, expected a value for `Y_norm2`")
 
     n_features, n_targets = W.shape
     n_samples = len(X_or_Gram_conj)
@@ -35,7 +35,7 @@ def compute_dual_gap_slow(W, reg, l2_reg, X_or_Gram_conj, Y_or_Cov, R_or_RCov,
     else:
         # R_norm2 = ||R||^2_F = ||Y||^2_F
         # ry_sum = <R, Y>_F
-        R_flat = R_or_RCov.ravel() 
+        R_flat = R_or_RCov.ravel()
         R_norm2 = np.dot(R_flat.conjugate(), R_flat)
         ry_sum = np.real(np.dot(R_flat.conjugate(), Y_or_Cov.ravel()))
         # Grad = np.dot(X.T, R) - l2_reg * W

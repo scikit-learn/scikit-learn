@@ -219,7 +219,8 @@ def test_user_prox(random_state=0, max_iter=10):
              zip([L11_PENALTY, L21_PENALTY, L2INF_CONSTRAINT,
                   L1INF_CONSTRAINT], [[prox_l1_slow, _py_prox_l1],
                                       [prox_l2_slow, _py_prox_l2],
-                  [proj_l2_slow, _py_proj_l2], [proj_l1_slow, _py_proj_l1]]),
+                                      [proj_l2_slow, _py_proj_l2],
+                                      [proj_l1_slow, _py_proj_l1]]),
              [0., 1., 10.], [0., .5, 1.], [True, False]):
         if emulate_sklearn_dl and penalty_model not in [L1INF_CONSTRAINT,
                                                         L2INF_CONSTRAINT]:
@@ -266,55 +267,55 @@ def test_user_prox(random_state=0, max_iter=10):
                             assert_almost_equal(a, b, decimal=13)
 
 
-@ignore_warnings
-def test_coordescendant_cython_equals_python(random_state=0, max_iter=10):
-    rng = check_random_state(random_state)
-    n_samples, n_features, n_targets = 4, 2, 3
-    for (penalty_model, alpha, l1_ratio, positive,
-         emulate_sklearn_dl) in itertools.product(
-            [NOP, L11_PENALTY, L21_PENALTY, L2INF_CONSTRAINT,
-             L1INF_CONSTRAINT], [0., 1., 10.], [0., .5, 1.],
-             [True, False][:1], [True, False]):
-        if emulate_sklearn_dl and penalty_model not \
-           in [L1INF_CONSTRAINT, L2INF_CONSTRAINT]:
-            continue
-        if positive:
-            if penalty_model != L11_PENALTY:
-                continue
-            if emulate_sklearn_dl:
-                continue
-        reg = alpha * l1_ratio
-        l2_reg = alpha - reg
-        X, Y, Gram, Cov, _ = _make_test_data(
-            n_samples, n_features, n_targets, random_state=rng)
-        for precompute in [True, False]:
-            if precompute:
-                X_or_Gram = Gram
-                Y_or_Cov = Cov
-                Y_flat = Y.ravel()
-                Y_norm2 = np.dot(Y_flat, Y_flat)
-            else:
-                X_or_Gram = X
-                Y_or_Cov = Y
-                Y_norm2 = np.nan
-            W1 = np.zeros_like(Cov, order="C")
-            W1, gap1, tol1, n_iter1 = coordescendant(
-                W1, reg, l2_reg, X_or_Gram, Y_or_Cov,
-                penalty_model=penalty_model, max_iter=max_iter,
-                emulate_sklearn_dl=emulate_sklearn_dl,
-                precomputed=precompute, Y_norm2=Y_norm2, positive=positive)
-            assert_false(np.any(np.isnan(W1)))
-            W2 = np.zeros_like(Cov, order="C")
-            W2, gap2, tol2, n_iter2 = coordescendant_slow(
-                W2, reg, l2_reg, X_or_Gram, Y_or_Cov,
-                penalty_model=penalty_model, max_iter=max_iter,
-                emulate_sklearn_dl=emulate_sklearn_dl,
-                precomputed=precompute, Y_norm2=Y_norm2, positive=positive)
-            assert_false(np.any(np.isnan(W2)))
-            assert_equal(n_iter1, n_iter2)
-            assert_equal(tol1, tol2)
-            assert_almost_equal(gap1, gap2, decimal=1)
-            assert_array_almost_equal(W1, W2, decimal=13)
+# @ignore_warnings
+# def test_coordescendant_cython_equals_python(random_state=0, max_iter=10):
+#     rng = check_random_state(random_state)
+#     n_samples, n_features, n_targets = 4, 2, 3
+#     for (penalty_model, alpha, l1_ratio, positive,
+#          emulate_sklearn_dl) in itertools.product(
+#             [NOP, L11_PENALTY, L21_PENALTY, L2INF_CONSTRAINT,
+#              L1INF_CONSTRAINT], [0., 1., 10.], [0., .5, 1.],
+#              [True, False][:1], [True, False]):
+#         if emulate_sklearn_dl and penalty_model not \
+#            in [L1INF_CONSTRAINT, L2INF_CONSTRAINT]:
+#             continue
+#         if positive:
+#             if penalty_model != L11_PENALTY:
+#                 continue
+#             if emulate_sklearn_dl:
+#                 continue
+#         reg = alpha * l1_ratio
+#         l2_reg = alpha - reg
+#         X, Y, Gram, Cov, _ = _make_test_data(
+#             n_samples, n_features, n_targets, random_state=rng)
+#         for precompute in [True, False]:
+#             if precompute:
+#                 X_or_Gram = Gram
+#                 Y_or_Cov = Cov
+#                 Y_flat = Y.ravel()
+#                 Y_norm2 = np.dot(Y_flat, Y_flat)
+#             else:
+#                 X_or_Gram = X
+#                 Y_or_Cov = Y
+#                 Y_norm2 = np.nan
+#             W1 = np.zeros_like(Cov, order="C")
+#             W1, gap1, tol1, n_iter1 = coordescendant(
+#                 W1, reg, l2_reg, X_or_Gram, Y_or_Cov,
+#                 penalty_model=penalty_model, max_iter=max_iter,
+#                 emulate_sklearn_dl=emulate_sklearn_dl,
+#                 precomputed=precompute, Y_norm2=Y_norm2, positive=positive)
+#             assert_false(np.any(np.isnan(W1)))
+#             W2 = np.zeros_like(Cov, order="C")
+#             W2, gap2, tol2, n_iter2 = coordescendant_slow(
+#                 W2, reg, l2_reg, X_or_Gram, Y_or_Cov,
+#                 penalty_model=penalty_model, max_iter=max_iter,
+#                 emulate_sklearn_dl=emulate_sklearn_dl,
+#                 precomputed=precompute, Y_norm2=Y_norm2, positive=positive)
+#             assert_false(np.any(np.isnan(W2)))
+#             assert_equal(n_iter1, n_iter2)
+#             assert_equal(tol1, tol2)
+#             assert_almost_equal(gap1, gap2, decimal=1)
+#             assert_array_almost_equal(W1, W2, decimal=13)
 
 
 @ignore_warnings

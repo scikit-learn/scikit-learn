@@ -124,9 +124,8 @@ def coordescendant_slow(W, reg, l2_reg, X_or_Gram, Y_or_Cov, Y_norm2=np.nan,
             d_Wj_abs_max = np.max(np.abs(W[j] - Wj))
             d_W_abs_max = max(d_W_abs_max, d_Wj_abs_max)
 
-        if (W_abs_max == 0. or
-            d_W_abs_max / W_abs_max < d_W_abs_tol or
-            n_iter == max_iter - 1):
+        if (W_abs_max == 0. or d_W_abs_max / W_abs_max < d_W_abs_tol or
+                n_iter == max_iter - 1):
             if dual_gap_available:
                 gap = compute_dual_gap_slow(
                     W, reg, l2_reg, X_or_Gram_conj, Y_or_Cov, R, Grad,
