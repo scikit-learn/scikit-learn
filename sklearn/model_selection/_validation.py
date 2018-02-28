@@ -399,8 +399,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. From version 0.22 the default
-        will be np.nan
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -488,8 +488,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator failed to fit for these parameters; the "
                           "error will be raised. If you want a value to be "
                           "assigned to the score in such cases, then specify "
-                          "error_score parameter. From version 0.22 the "
-                          "default value will be error_score=np.nan",
+                          "error_score parameter. Default is 'raise' but from "
+                          "version 0.22 it will change to np.nan.",
                           FutureWarning)
             raise
         elif isinstance(error_score, numbers.Number):
