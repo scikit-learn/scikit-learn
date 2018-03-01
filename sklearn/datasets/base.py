@@ -145,7 +145,8 @@ def load_files(container_path, description=None, categories=None,
         argument 'errors' to bytes.decode.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for dataset shuffling.
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
         See :term:`random_state <Glossary>`.
 
     Returns

@@ -103,7 +103,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         instead of trying to download the data from the source site.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for dataset shuffling.
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
         See :term:`random_state <Glossary>`.
 
     shuffle : bool, default=False
@@ -178,7 +179,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
-
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
