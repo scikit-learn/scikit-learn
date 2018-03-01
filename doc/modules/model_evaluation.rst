@@ -1172,6 +1172,10 @@ F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
 
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
+
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
