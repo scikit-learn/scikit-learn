@@ -3,7 +3,13 @@
 # cython: wraparound=False
 # cython: cdivision=True
 #
-# Author: Elvis Dohmatob <gmdopp@gmail.com>
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+#         Alexis Mignon <alexis.mignon@gmail.com>
+#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
+#         Elvis Dohmatob <gmdopp@gmail.com>
+#
 # License: BSD
 #
 # Synopsis: Implementation of block coordinate-descent (BCD) algorithm for
@@ -43,12 +49,9 @@ ctypedef np.uint32_t UINT32_t
 from cython cimport floating
 from blas_api cimport (CblasColMajor, fused_scal, fused_copy, fused_nrm2,
                        fused_dot, fused_ger, fused_axpy)
-from dual_gap cimport compute_dual_gap
-from utils cimport (fmax, abs_max, diff_abs_max, relu, fused_nrm2_squared)
-from proj_l2 cimport proj_l2
-from proj_l1 cimport proj_l1
-from prox_l1 cimport prox_l1
-from prox_l2 cimport prox_l2
+from utils cimport (fmax, abs_max, diff_abs_max, relu, fused_nrm2_squared,
+                    compute_dual_gap)
+from prox_operators cimport prox_l1, proj_l1, prox_l2, proj_l2
 
 np.import_array()
 
@@ -80,7 +83,7 @@ def coordescendant(np.ndarray[floating, ndim=2, mode="c"] W,
                    object penalty_model=L11_PENALTY, unsigned int max_iter=100,
                    floating tol=0, bint random=False, object rng=None,
                    bint positive=False, bint emulate_sklearn_dl=False):
-    """Multi-output penalized least-squares solver for both real- and complex-valued
+    """Multi-output penalized least-squares coordinate-descent solver
     data.
 
     The optimization problem is of the form

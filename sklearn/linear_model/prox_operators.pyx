@@ -1,10 +1,10 @@
 # encoding: utf-8
-# cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: cdivision=True
 #
-# Author: Arthur Mensch <arthur.mensch@inria.fr>,
-#         Elvis Dohmatob <gmdopp@gmail.com>
+# Synopsis: Some popular proximal-operators
+# Author: Elvis Dohmatob <gmdopp@gmail.com>
 # License: BSD
 
 import warnings
@@ -12,8 +12,8 @@ from libc.math cimport fabs, sqrt
 cimport numpy as np
 import numpy as np
 from cython cimport floating
-from utils cimport fsign
-from blas_api cimport fused_scal, fused_copy
+from utils cimport fmax, fabs, fsign
+from blas_api cimport fused_scal, fused_nrm2, fused_copy
 
 
 cdef inline void swap(floating *b, unsigned int i, unsigned int j,
@@ -22,6 +22,67 @@ cdef inline void swap(floating *b, unsigned int i, unsigned int j,
     b[i] = b[j]
     b[j] = buf[0]
     return
+
+
+cdef inline void prox_l2(int n, floating *w, floating reg,
+                         floating ajj) nogil:
+    """Computes (in-place)
+
+        argmin .5 * ||z - w / ajj||_2^2 + (reg / ajj) * ||z||_2
+          z
+    """
+    cdef floating scaling
+
+    if ajj == 0.:
+        scaling = 0.
+    else:
+        # N.B.: scaling = ||w||_2
+        scaling = fused_nrm2(n, w, 1)
+        if scaling == 0.:
+            # w must be the zero vector; do nothing
+            return
+        scaling = fmax(1. - reg / scaling, 0.) / ajj
+
+    # N.B.: w *= scaling
+    fused_scal(n, scaling, w, 1)
+
+
+cdef inline void proj_l2(int n, floating *w, floating reg,
+                         floating ajj) nogil:
+    """Computes (in-place)
+
+        argmin .5 * ||z - w / ajj||_2^2 subject to ||z||_2 <= reg
+    """
+    cdef floating scaling
+
+    # N.B.: scaling = ||w||_2
+    if ajj == 0.:
+        scaling = 0.
+    else:
+        scaling = fused_nrm2(n, w, 1)
+        if scaling > ajj * reg:
+            scaling = reg / scaling
+        else:
+            scaling = 1. / ajj
+
+    # N.B.: w *= scaling
+    fused_scal(n, scaling, w, 1)
+
+
+cdef inline void prox_l1(int n, floating *w, floating reg,
+                         floating ajj) nogil:
+    """Computes (in-place)
+
+        argmin .5 * ||z - w / ajj||_2^2 + (reg / ajj) * ||z||_1
+          z
+    """
+    cdef int k
+    if ajj == 0.:
+        fused_scal(n, ajj, w, 1)
+        return
+    for k in range(n):
+        if w[k] != 0.:
+            w[k] = w[k] * fmax(1. - reg / fabs(w[k]), 0.) / ajj
 
 
 cdef void enet_projection(unsigned int m, floating *v, floating *out, floating radius,
@@ -146,4 +207,3 @@ cdef inline void proj_l1(int n, floating *w, floating reg,
             out = np.zeros(n, dtype=dtype)
         enet_projection(n, w, &out[0], reg, 1.)
         fused_copy(n, &out[0], 1, w, 1)
-

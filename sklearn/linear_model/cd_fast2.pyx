@@ -1,3 +1,12 @@
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+#         Alexis Mignon <alexis.mignon@gmail.com>
+#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
+#         Elvis Dohmatob <gmdopp@gmail.com>
+#
+# License: BSD 3 clause
+
 cimport numpy as np
 import numpy as np
 from cython cimport floating

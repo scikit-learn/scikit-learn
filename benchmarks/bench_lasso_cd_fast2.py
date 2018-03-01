@@ -134,5 +134,7 @@ if __name__ == '__main__':
                          label='Lasso (%s)' % backend)
     plt.legend(loc="best")
     plt.tight_layout()
-    # plt.savefig("paper/figs/bench.png", dpi=200, bbox_inches="tight")
+    out_file = "bench.png"
+    plt.savefig(out_file, dpi=200, bbox_inches="tight")
+    print(out_file)
     plt.show()
