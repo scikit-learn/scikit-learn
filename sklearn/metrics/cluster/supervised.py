@@ -22,13 +22,14 @@ from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
-from ...utils.fixes import comb
 
 
 def comb2(n):
-    # the exact version is faster for k == 2: use it by default globally in
-    # this module instead of the float approximate variant
-    return comb(n, 2, exact=1)
+    # returns (n choose 2)
+    if n < 2:
+        return 0
+    else:
+        return n*(n-1)//2
 
 
 def check_clusterings(labels_true, labels_pred):
