@@ -159,7 +159,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        eigen_tol=0.0, assign_labels='kmeans'):
+                        eigen_tol=0.0, assign_labels='kmeans', weighting=False):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -221,6 +221,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         the 'Multiclass spectral clustering' paper referenced below for
         more details on the discretization approach.
 
+    weighting : bool, optional, default=False
+        Whether to give weights to eigenvectors according to their related eigenvalues
+        in spectral embedding.
+
     Returns
     -------
     labels : array of integers, shape: n_samples
@@ -263,7 +267,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
-                              eigen_tol=eigen_tol, drop_first=False)
+                              eigen_tol=eigen_tol, drop_first=True,
+                              weighting=weighting)
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,

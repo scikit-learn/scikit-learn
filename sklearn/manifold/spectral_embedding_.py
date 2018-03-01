@@ -7,6 +7,7 @@
 from __future__ import division
 
 import warnings
+import math
 
 import numpy as np
 from scipy import sparse
@@ -135,7 +136,7 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+                       norm_laplacian=True, drop_first=True, weighting=False):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -190,6 +191,12 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
 
+    weighting : bool, optional, default=False
+        Whether to give weights to eigenvectors according to their related eigenvalues.
+        Each eigenvector is scaled with the inverse of the square root of its eigenvalue.
+        This idea is inspired by the gaussian network model(GNM) which is mathematically
+        equivalent to spectral embedding.
+
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)
@@ -209,6 +216,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
       Block Preconditioned Conjugate Gradient Method
       Andrew V. Knyazev
       http://dx.doi.org/10.1137%2FS1064827500366124
+
+    * https://en.wikipedia.org/wiki/Gaussian_network_model
     """
     adjacency = check_symmetric(adjacency)
 
@@ -240,7 +249,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                       return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
-       (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
+            (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
@@ -272,8 +281,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol, v0=v0)
             embedding = diffusion_map.T[n_components::-1]
+            lambdas = lambdas[n_components::-1]
+
             if norm_laplacian:
                 embedding = embedding / dd
+
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -299,6 +311,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         embedding = diffusion_map.T
         if norm_laplacian:
             embedding = embedding / dd
+
         if embedding.shape[0] == 1:
             raise ValueError
 
@@ -329,6 +342,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                 embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError
+
+    if weighting:
+        for idx, ei_val in enumerate(lambdas):
+            if abs(ei_val) > 0.000001:
+                embedding[idx] = embedding[idx] * math.sqrt(abs(1 / ei_val))
 
     embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
