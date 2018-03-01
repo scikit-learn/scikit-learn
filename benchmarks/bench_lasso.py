@@ -41,10 +41,9 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             gc.collect()
             print("- benchmarking Lasso")
             clf = Lasso(alpha=alpha, fit_intercept=False,
-                        precompute=precompute, tol=0)
+                        precompute=precompute)
             tstart = time()
             clf.fit(X, Y)
-            print(clf.n_iter_)
             lasso_results.append(time() - tstart)
 
             gc.collect()
