@@ -488,7 +488,7 @@ def check_scorer_memmap(scorer_name):
     if scorer_name in MULTILABEL_ONLY_SCORERS:
         score = scorer(estimator, X_mm, y_ml_mm)
     elif scorer_name in NONZERO_Y_SCORERS:
-        score = scorer(estimator, X_mm, y_mm+1)
+        score = scorer(estimator, X_mm, y_mm + 1)
     else:
         score = scorer(estimator, X_mm, y_mm)
     assert isinstance(score, numbers.Number), scorer_name
