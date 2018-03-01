@@ -382,13 +382,15 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
-                 n_jobs=1):
+                 n_jobs=1, shuffle=False, random_state=None):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.shuffle = shuffle
+        self.random_state = random_state
 
     def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
@@ -411,7 +413,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         X, y = check_X_y(X, y, "csr")
 
         # Initialization
-        cv = check_cv(self.cv, y, is_classifier(self.estimator))
+        cv = check_cv(self.cv, y, is_classifier(self.estimator),
+                      shuffle=self.shuffle, random_state=self.random_state)
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
