@@ -662,7 +662,7 @@ def check_single_sample(name):
 
     # assert that no exception is thrown
     for i, j in product([1, 2], repeat=2):
-            metric([i], [j])
+        metric([i], [j])
 
 
 @ignore_warnings
