@@ -1,7 +1,7 @@
 # Author: Carlos Perales <sir.perales@gmail.com>
 # License: BSD 3 clause
 
-from .kernel_ridge import _BaseKernelRidge
+from .base_ridge import _BaseKernelRidge
 from ..base import ClassifierMixin
 
 

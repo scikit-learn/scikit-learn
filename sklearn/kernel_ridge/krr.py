@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 from ..base import RegressorMixin
-from .kernel_ridge import _BaseKernelRidge
+from .base_ridge import _BaseKernelRidge
 
 
 class KernelRidge(RegressorMixin, _BaseKernelRidge):

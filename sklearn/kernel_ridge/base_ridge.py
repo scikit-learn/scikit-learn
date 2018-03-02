@@ -120,7 +120,6 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Convert data
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False)
-        # Check alpha
         if self.alpha < 0:
             raise ValueError('alpha must be positive')
 
