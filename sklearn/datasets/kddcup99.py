@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True):
+                   percent10=True, download_if_missing=True,return_X_y=False):
     """Load and return the kddcup 99 dataset (classification).
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
@@ -155,6 +155,12 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object. See
+        below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.19
+
     Returns
     -------
     data : Bunch
@@ -162,6 +168,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         'data', the data to learn and 'target', the regression target for each
         sample.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.19
 
     References
     ----------
@@ -229,6 +238,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
+
+    if return_X_y:
+        return data, target
 
     return Bunch(data=data, target=target)
 
