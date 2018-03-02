@@ -1121,3 +1121,16 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+def test_raise_value_error_y_with_zeros():
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 2, size=(20, ))
+    y_pred = random_state.randint(0, 2, size=(20, ))
+
+    for name in METRICS_WITH_NON_ZERO_Y:
+        metric = ALL_METRICS[name]
+        assert_raise_message(ValueError,
+                             "mean_absolute_percentage_error requires"
+                             " y_true to not include zeros",
+                             metric, y_true, y_pred)
