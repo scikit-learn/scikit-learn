@@ -694,7 +694,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         return ordered_idx
 
     def _get_abs_corr_mat(self, X_filled, tolerance=1e-6):
-        """Gets absolute correlation matrix between features.
+        """Get absolute correlation matrix between features.
 
         Parameters
         ----------
