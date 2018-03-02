@@ -70,7 +70,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-ALLOW_NAN = ['QuantileTransformer']
+ALLOW_NAN = ['QuantileTransformer', 'Imputer']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -92,7 +92,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ['Imputer']:
+    if name not in ALLOW_NAN:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -1025,8 +1025,6 @@ def check_estimators_nan_inf(name, estimator_orig):
     error_string_transform = ("Estimator doesn't check for NaN and inf in"
                               " transform.")
     for X_train in [X_train_nan, X_train_inf]:
-        if np.any(np.isnan(X_train)) and name in ALLOW_NAN:
-            continue
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             estimator = clone(estimator_orig)
