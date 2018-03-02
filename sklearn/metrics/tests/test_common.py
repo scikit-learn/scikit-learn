@@ -395,9 +395,6 @@ METRICS_WITH_NON_ZERO_Y = [
 def test_symmetry():
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
-    # Changing from randint(0, 2) to randint(1, 3) to generalize
-    # test data to metrics that only support non zero y
-    # like mean_absolute_percentage_error
     y_true = random_state.randint(1, 3, size=(20, ))
     y_pred = random_state.randint(1, 3, size=(20, ))
 
@@ -428,9 +425,6 @@ def test_symmetry():
 @ignore_warnings
 def test_sample_order_invariance():
     random_state = check_random_state(0)
-    # Changing from randint(0, 2) to randint(1, 3) to generalize
-    # test data to metrics that only support non zero y
-    # like mean_absolute_percentage_error
     y_true = random_state.randint(1, 3, size=(20, ))
     y_pred = random_state.randint(1, 3, size=(20, ))
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
@@ -486,9 +480,6 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 @ignore_warnings
 def test_format_invariance_with_1d_vectors():
     random_state = check_random_state(0)
-    # Changing from randint(0, 2) to randint(1, 3) to generalize
-    # test data to metrics that only support non zero y
-    # like mean_absolute_percentage_error
     y1 = random_state.randint(1, 3, size=(20, ))
     y2 = random_state.randint(1, 3, size=(20, ))
 
