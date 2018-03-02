@@ -338,7 +338,6 @@ def test_mice_rank_one():
     assert_allclose(X_filled, X, atol=0.001)
 
 
-@ignore_warnings
 @pytest.mark.parametrize(
     "imputation_order",
     ['random', 'roman', 'monotone', 'revmonotone', 'arabic']
