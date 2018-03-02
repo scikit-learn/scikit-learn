@@ -209,6 +209,7 @@ def test_classifier_exceptions():
 
 
 def test_mean_strategy_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X = [[0]] * 4  # ignored
@@ -220,6 +221,7 @@ def test_mean_strategy_regressor():
 
 
 def test_mean_strategy_multioutput_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X_learn = random_state.randn(10, 10)
@@ -246,6 +248,7 @@ def test_regressor_exceptions():
 
 
 def test_median_strategy_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X = [[0]] * 5  # ignored
@@ -257,6 +260,7 @@ def test_median_strategy_regressor():
 
 
 def test_median_strategy_multioutput_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X_learn = random_state.randn(10, 10)
@@ -279,6 +283,7 @@ def test_median_strategy_multioutput_regressor():
 
 
 def test_quantile_strategy_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X = [[0]] * 5  # ignored
@@ -302,6 +307,7 @@ def test_quantile_strategy_regressor():
 
 
 def test_quantile_strategy_multioutput_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X_learn = random_state.randn(10, 10)
@@ -335,6 +341,7 @@ def test_quantile_strategy_multioutput_regressor():
 
 
 def test_quantile_invalid():
+
     X = [[0]] * 5  # ignored
     y = [0] * 5  # ignored
 
@@ -363,6 +370,7 @@ def test_quantile_strategy_empty_train():
 
 
 def test_constant_strategy_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X = [[0]] * 5  # ignored
@@ -378,6 +386,7 @@ def test_constant_strategy_regressor():
 
 
 def test_constant_strategy_multioutput_regressor():
+
     random_state = np.random.RandomState(seed=1)
 
     X_learn = random_state.randn(10, 10)

@@ -53,8 +53,7 @@ def get_results(dataset):
     y_missing = y_full.copy()
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
     zero_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error'
-                                         )
+                                         scoring='neg_mean_squared_error')
 
     # Estimate the score after imputation (mean strategy) of the missing values
     X_missing = X_full.copy()
@@ -65,8 +64,7 @@ def get_results(dataset):
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
     mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error'
-                                         )
+                                         scoring='neg_mean_squared_error')
 
     # Estimate the score after imputation (MICE strategy) of the missing values
     estimator = Pipeline([("imputer", MICEImputer(missing_values=0,
@@ -74,8 +72,7 @@ def get_results(dataset):
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
     mice_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error'
-                                         )
+                                         scoring='neg_mean_squared_error')
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),

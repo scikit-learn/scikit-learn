@@ -3,6 +3,8 @@
 #          Sergey Feldman <sergeyfeldman@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
+
 import warnings
 from time import time
 
@@ -435,7 +437,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         the each feature column. Nearness between features is measured using
         the absolute correlation coefficient between each feature pair (after
         initial imputation). Can provide significant speed-up when the number
-        of features is huge. If `None`, all features will be used.
+        of features is huge. If ``None``, all features will be used.
 
     initial_strategy : str, optional (default="mean")
         Which strategy to use to initialize the missing values. Same as the
@@ -443,10 +445,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Valid values: {"mean", "median", or "most_frequent"}.
 
     min_value : float, optional (default=None)
-        Minimum possible imputed value.
+        Minimum possible imputed value. Default of ``None`` will set minimum
+        to negative infinity.
 
     max_value : float, optional (default=None)
-        Maximum possible imputed value.
+        Maximum possible imputed value. Default of ``None`` will set maximum
+        to positive infinity.
 
     verbose : int, optional (default=0)
         Verbosity flag, controls the debug messages that are issued
@@ -458,7 +462,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     Attributes
     ----------
@@ -467,16 +471,17 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     imputation_sequence_ : list of tuples
         Each tuple has ``(feat_idx, neighbor_feat_idx, predictor)``, where
-        `feat_idx` is the current feature to be imputed, `neighbor_feat_idx`
-        is the array of other features used to impute the current feature, and
-        `predictor` is the trained predictor used for the imputation.
+        ``feat_idx`` is the current feature to be imputed,
+        ``neighbor_feat_idx`` is the array of other features used to impute the
+        current feature, and ``predictor`` is the trained predictor used for
+        the imputation.
 
     Notes
     -----
     The R version of MICE does not have inductive functionality, i.e. first
-    fitting on `X_train` and then transforming any `X_test` without additional
-    fitting. We do this by storing each feature's predictor during the
-    round-robin ``fit`` phase, and predicting without refitting (in order)
+    fitting on ``X_train`` and then transforming any ``X_test`` without
+    additional fitting. We do this by storing each feature's predictor during
+    the round-robin ``fit`` phase, and predicting without refitting (in order)
     during the ``transform`` phase.
 
     Features which contain all missing values at ``fit`` are discarded upon
@@ -525,11 +530,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                             neighbor_feat_idx,
                             predictor=None,
                             fit_mode=True):
-        """Imputes a single feature from the others provided.
+        """Impute a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
-        the current estimates of all the other features. The `predictor` must
-        support `return_std=True` in its ``predict`` method for this function
+        the current estimates of all the other features. The ``predictor`` must
+        support ``return_std=True`` in its ``predict`` method for this function
         to work.
 
         Parameters
@@ -544,7 +549,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Index of the feature currently being imputed.
 
         neighbor_feat_idx : ndarray
-            Indices of the features to be used in imputing `feat_idx`.
+            Indices of the features to be used in imputing ``feat_idx``.
 
         predictor : object
             The predictor to use at this step of the round-robin imputation.
@@ -557,7 +562,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_filled : ndarray
-            Input data with `X_filled[missing_row_mask, feat_idx]` updated.
+            Input data with ``X_filled[missing_row_mask, feat_idx]`` updated.
 
         predictor : predictor with sklearn API
             The fitted predictor used to impute
@@ -590,7 +595,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                missing_row_mask)
         mus, sigmas = predictor.predict(X_test, return_std=True)
         good_sigmas = sigmas > 0
-        imputed_values = np.zeros(mus.shape)
+        imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
         imputed_values[~good_sigmas] = mus[~good_sigmas]
         imputed_values[good_sigmas] = self.random_state_.normal(
             loc=mus[good_sigmas], scale=sigmas[good_sigmas])
@@ -608,29 +613,29 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                n_features,
                                feat_idx,
                                abs_corr_mat):
-        """Gets a list of other features to predict `feat_idx`.
+        """Get a list of other features to predict ``feat_idx``.
 
         If self.n_nearest_features is less than or equal to the total
         number of features, then use a probability proportional to the absolute
-        correlation between `feat_idx` and each other feature to randomly
+        correlation between ``feat_idx`` and each other feature to randomly
         choose a subsample of the other features (without replacement).
 
         Parameters
         ----------
         n_features : int
-            Number of features in `X`.
+            Number of features in ``X``.
 
         feat_idx : int
             Index of the feature currently being imputed.
 
         abs_corr_mat : ndarray, shape (n_features, n_features)
-            Absolute correlation matrix of X. The diagonal has been zeroed out
-            and each feature has been normalized to sum to 1. Can be None.
+            Absolute correlation matrix of ``X``. The diagonal has been zeroed
+            out and each feature has been normalized to sum to 1. Can be None.
 
         Returns
         -------
         neighbor_feat_idx : array-like
-            The features to use to impute `feat_idx`.
+            The features to use to impute ``feat_idx``.
         """
         if (self.n_nearest_features is not None and
                 self.n_nearest_features < n_features):
@@ -645,7 +650,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         return neighbor_feat_idx
 
     def _get_ordered_idx(self, mask_missing_values):
-        """Decides in what order we will update the features.
+        """Decide in what order we will update the features.
 
         As a homage to the MICE R package, we will have 4 main options of
         how to order the updates, and use a random order if anything else
@@ -697,15 +702,16 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Input data with the most recent imputations.
 
         tolerance : float, optional (default=1e-6)
-            `abs_corr_mat` can have nans, which will be replaced
-            with `tolerance`.
+            ``abs_corr_mat`` can have nans, which will be replaced
+            with ``tolerance``.
 
         Returns
         -------
         abs_corr_mat : ndarray, shape (n_features, n_features)
-            Absolute correlation matrix of X at the beginning of the current
-            round. The diagonal has been zeroed out and each feature's absolute
-            correlations with all others have been normalized to sum to 1.
+            Absolute correlation matrix of ``X`` at the beginning of the
+            current round. The diagonal has been zeroed out and each feature's
+            absolute correlations with all others have been normalized to sum
+            to 1.
         """
         n_features = X_filled.shape[1]
         if (self.n_nearest_features is None or
@@ -723,7 +729,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         return abs_corr_mat
 
     def _initial_imputation(self, X):
-        """Performs initial imputation for input X.
+        """Perform initial imputation for input X.
 
         Parameters
         ----------
@@ -889,7 +895,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # impute data
         n_rounds = self.n_burn_in + self.n_imputations
         n_imputations = len(self.imputation_sequence_)
-        imputations_per_round = n_imputations / n_rounds
+        imputations_per_round = n_imputations // n_rounds
         i_rnd = 0
         Xt = np.zeros(X.shape, dtype=X.dtype)
         if self.verbose > 0:
