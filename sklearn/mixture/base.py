@@ -149,8 +149,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                                    random_state=random_state).fit(X).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
-            resp = random_state.rand(n_samples, self.n_components)
-            resp /= resp.sum(axis=1)[:, np.newaxis]
+            resp = X[random_state.choice(n_samples, size=self.n_components, replace=False),:]
         else:
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
