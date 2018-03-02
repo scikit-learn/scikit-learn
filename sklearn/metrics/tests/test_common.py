@@ -670,11 +670,7 @@ def check_single_sample(name):
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
-    if name in METRICS_WITH_NON_ZERO_Y:
-        for i, j in product([1, 2], repeat=2):
-            metric([i], [j])
-    else:
-        for i, j in product([0, 1], repeat=2):
+    for i, j in product([1, 2], repeat=2):
             metric([i], [j])
 
 
