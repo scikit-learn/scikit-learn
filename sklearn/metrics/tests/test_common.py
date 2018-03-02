@@ -21,8 +21,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
@@ -40,16 +40,13 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
-from sklearn.metrics import zero_one_loss
-
-# TODO Curve are currently not covered by invariance test
-from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_curve
-
+from sklearn.metrics import zero_one_loss
 
 from sklearn.metrics.base import _average_binary_score
 
@@ -144,6 +141,8 @@ CLASSIFICATION_METRICS = {
     "cohen_kappa_score": cohen_kappa_score,
 }
 
+# Metrics are tested with numpy's assert_array. Therefor box-shaped outputs
+# are required.
 CURVE_METRICS = {
     "roc_curve": lambda *args, **kwargs: roc_curve(*args, **kwargs)[:2],
     "precision_recall_curve":
@@ -384,11 +383,6 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "confusion_matrix", # Left this one here because the tests in this file do
-                        # not work for confusion_matrix, as its output is a
-                        # matrix instead of a number. Testing of
-                        # confusion_matrix with sample_weight is in
-                        # test_classification.py
     "median_absolute_error",
 ]
 
@@ -1024,7 +1018,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                  "removing the corresponding samples (%s != %s) for %s" %
                  (weighted_score_zeroed, weighted_score_subset, name)))
 
-    if not name.startswith('unnormalized'):
+    if not (name.startswith('unnormalized') or name == 'confusion_matrix'):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
