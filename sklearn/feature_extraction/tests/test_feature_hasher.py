@@ -227,7 +227,7 @@ def test_hasher_get_feature_both():
     expected_feature_names_X = [['a'], ['b'], ['c'], [], []]
     expected_feature_names_X2 = [[], [], [], ['f'], ['e', 'd']]
     hasher = FeatureHasher(n_features=5, input_type="string",
-                           save_mappings="both")
+                           save_mappings="always")
     hasher.fit_transform(X)
     actual_X = hasher.get_feature_names()
     hasher.transform(X2)
@@ -242,9 +242,10 @@ def test_hasher_get_feature_both():
 
 def test_feature_hasher_save_mappings_arg():
     def make_hasher():
-        FeatureHasher(n_features=5, input_type="string",
-                      save_mappings="naruto")
+        hasher = FeatureHasher(n_features=5, input_type="string",
+                               save_mappings="naruto")
+        hasher.fit_transform(["a"])
     msg = ("Unknown parameter passed to save_mappings: '{0}'"
-           ". Valid parameters are 'fit', 'both' or None"
+           ". Valid parameters are 'fit', 'always' or False"
            .format("naruto"))
     assert_raise_message(ValueError, msg, make_hasher)

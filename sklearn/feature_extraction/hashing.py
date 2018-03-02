@@ -66,12 +66,12 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         .. deprecated:: 0.19
             This option will be removed in 0.21.
-    save_mappings : string, optional, default None
-        Possible values are : "fit" or "both". When "fit", FeatureHasher will
+    save_mappings : {"fit", "always"}, default False
+        Possible values are : "fit" or "always". When "fit", FeatureHasher will
         save the mappings between feature seen in training data, and the
-        corresponding column only once. When "both", mappings will be continued
-        to be stored even during the consequent transform calls.
-        By default, no mappings will be stored for performance reasons.
+        corresponding column only once during fit time. When "always", mappings
+        will be continued to be stored even during the subsequent transform
+        calls. By default, no mappings will be stored for performance reasons.
 
 
     Examples
@@ -93,7 +93,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
                  dtype=np.float64, alternate_sign=True, non_negative=False,
-                 save_mappings=None):
+                 save_mappings=False):
         self._validate_params(n_features, input_type, save_mappings)
         if non_negative:
             warnings.warn("the option non_negative=True has been deprecated"
@@ -120,9 +120,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if input_type not in ("dict", "pair", "string"):
             raise ValueError("input_type must be 'dict', 'pair' or 'string',"
                              " got %r." % input_type)
-        if save_mappings not in (None, "both", "fit"):
+        if save_mappings not in (False, "always", "fit"):
             raise ValueError("Unknown parameter passed to save_mappings: '{0}'"
-                             ". Valid parameters are 'fit', 'both' or None"
+                             ". Valid parameters are 'fit', 'always' or False"
                              .format(save_mappings))
 
     def _transform(self, raw_X, save_mappings):
@@ -213,7 +213,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        if self.save_mappings == "both":
+        if self.save_mappings == "always":
             return self._transform(raw_X, save_mappings=True)
         else:
             return self._transform(raw_X, save_mappings=False)
