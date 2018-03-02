@@ -414,11 +414,11 @@ def test_symmetry():
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_raises(
-            AssertionError,
-            assert_array_equal, metric(y_true, y_pred), metric(y_pred, y_true),
-            err_msg="%s seems to be symmetric" % name
-        )
+
+        # use context manager to supply custom error message
+        with assert_raises(AssertionError) as cm:
+            assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
+            cm.msg = ("%s seems to be symmetric" % name)
 
 
 @ignore_warnings
@@ -964,7 +964,7 @@ def test_averaging_multilabel_all_ones():
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 10, size=len(y1))
+    sample_weight = rng.randint(1, 100, size=len(y1))
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
@@ -977,12 +977,13 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
-    assert_raises(
-        AssertionError,
-        assert_array_equal, unweighted_score, weighted_score,
-        err_msg="Unweighted and weighted scores are unexpectedly "
-                "equal (%s) for %s" % (weighted_score, name)
-    )
+
+    # use context manager to supply custom error message
+    with assert_raises(AssertionError) as cm:
+        assert_array_almost_equal(unweighted_score, weighted_score)
+        cm.msg = ("Unweighted and weighted scores are unexpectedly almost "
+                  "equal (%s) and (%s) for %s" % (unweighted_score,
+                                                  weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
