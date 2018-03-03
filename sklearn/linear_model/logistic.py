@@ -710,7 +710,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.", ConvergenceWarning)
-            n_iter_i = info['nit'] - 1
+            # in scipy <= 1.0.0, nit may exceed maxiter
+            n_iter_i = min(info['nit'], max_iter)
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
@@ -1108,6 +1109,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
         number of iteration across all classes is given.
+
+        Note: in SciPy <= 1.0.0 the number of lbfgs iterations may exceed
+        ``max_iter``. ``n_iter_`` will report at most ``max_iter``.
 
     See also
     --------
