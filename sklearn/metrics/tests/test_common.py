@@ -96,7 +96,13 @@ CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
     "balanced_accuracy_score": balanced_accuracy_score,
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
-    "confusion_matrix": confusion_matrix,
+
+    "unnormalized_confusion_matrix": confusion_matrix,
+    "confusion_matrix": lambda *args, **kwargs: (
+        confusion_matrix(*args, **kwargs).astype('float') / confusion_matrix(
+            *args, **kwargs).sum(axis=1)[:, np.newaxis]
+    ),
+
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -273,6 +279,7 @@ METRICS_WITH_POS_LABEL = [
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
+    "unnormalized_confusion_matrix",
     "confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
@@ -367,6 +374,7 @@ NOT_SYMMETRIC_METRICS = [
     "balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
+    "unnormalized_confusion_matrix",
     "confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
@@ -1019,7 +1027,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                  "removing the corresponding samples (%s != %s) for %s" %
                  (weighted_score_zeroed, weighted_score_subset, name)))
 
-    if not (name.startswith('unnormalized') or name == 'confusion_matrix'):
+    if not name.startswith('unnormalized'):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
