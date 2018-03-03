@@ -70,7 +70,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False):
+               random_state=None, shuffle=False,return_X_y=False):
     """Load the RCV1 multilabel dataset, downloading it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
@@ -112,6 +112,12 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch object. See
+        below for more information about the `dataset.data` and `dataset.target` object.
+
+        .. versionadded:: 0.19
+
     Returns
     -------
     dataset : dict-like object with the following attributes:
@@ -131,6 +137,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     dataset.DESCR : string
         Description of the RCV1 dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.19
 
     References
     ----------
@@ -253,6 +263,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
+
+    if return_X_y:
+        return X, y
 
     return Bunch(data=X, target=y, sample_id=sample_id,
                  target_names=categories, DESCR=__doc__)
