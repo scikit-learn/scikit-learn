@@ -34,10 +34,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 # checking whether large sparse are supported by scipy or not
-if LooseVersion(scipy_version) >= '0.14.0':
-    LARGE_SPARSE_SUPPORTED = True
-else:
-    LARGE_SPARSE_SUPPORTED = False
+LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
 
 
 def _assert_all_finite(X, allow_nan=False):
@@ -566,7 +563,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
 
 def _check_large_sparse(X, accept_large_sparse=False):
     """Indices Regulation of Sparse Matrices
-       for estimators
     """
     if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
         supported_indices = ["int32"]
