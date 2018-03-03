@@ -95,6 +95,11 @@ Decomposition, manifold learning and clustering
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
+Metrics
+
+- Partial AUC is available via ``max_fpr`` parameter in
+  :func:`metrics.roc_auc_score`. :issue:`3273` by
+  :user:`Alexander Niederbühl <Alexander-N>`.
 
 Enhancements
 ............
