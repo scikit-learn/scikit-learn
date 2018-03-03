@@ -1,6 +1,11 @@
+from distutils.version import LooseVersion
+
 import numpy as np
+
+import scipy
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
+
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
