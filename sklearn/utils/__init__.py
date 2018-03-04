@@ -498,6 +498,19 @@ def indices_to_mask(indices, mask_length):
     -------
     mask : 1d boolean nd-array
         Boolean array that is True where indices are present, else False.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indices_to_mask
+    >>> indices = [1, 2 , 3, 4]
+    >>> indices_to_mask(indices, 5)
+    array([False,  True,  True,  True,  True], dtype=bool)
+    >>> indices_to_mask(indices, 4)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "sklearn/utils/__init__.py", line 503, in indices_to_mask
+        raise ValueError("mask_length must be greater than max(indices)")
+    ValueError: mask_length must be greater than max(indices)
     """
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
