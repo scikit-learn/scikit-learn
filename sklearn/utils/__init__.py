@@ -493,7 +493,7 @@ def indices_to_mask(indices, mask_length):
         List of integers treated as indices.
     mask_length : int
         Length of boolean mask to be generated.
-        This parameter must be greater than max(indices) 
+        This parameter must be greater than max(indices)
 
     Returns
     -------
