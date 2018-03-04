@@ -493,6 +493,7 @@ def indices_to_mask(indices, mask_length):
         List of integers treated as indices.
     mask_length : int
         Length of boolean mask to be generated.
+        This parameter must be greater than max(indices) 
 
     Returns
     -------
@@ -505,12 +506,6 @@ def indices_to_mask(indices, mask_length):
     >>> indices = [1, 2 , 3, 4]
     >>> indices_to_mask(indices, 5)
     array([False,  True,  True,  True,  True], dtype=bool)
-    >>> indices_to_mask(indices, 4)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-      File "sklearn/utils/__init__.py", line 503, in indices_to_mask
-        raise ValueError("mask_length must be greater than max(indices)")
-    ValueError: mask_length must be greater than max(indices)
     """
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
