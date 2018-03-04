@@ -66,7 +66,7 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
-NONZERO_Y_SCORERS = ['neg_mape']
+y_nozero_SCORERS = ['neg_mape']
 
 
 def _make_estimators(X_train, y_train, y_ml_train):
@@ -85,30 +85,30 @@ def _make_estimators(X_train, y_train, y_ml_train):
     )
 
 
-X_mm, y_mm, y_ml_mm, nonzero_y_mm = None, None, None, None
+X_mm, y_mm, y_ml_mm, y_nozero_mm = None, None, None, None
 ESTIMATORS = None
 TEMP_FOLDER = None
 
 
 def setup_module():
     # Create some memory mapped data
-    global X_mm, y_mm, y_ml_mm, nonzero_y_mm, TEMP_FOLDER, ESTIMATORS
+    global X_mm, y_mm, y_ml_mm, y_nozero_mm, TEMP_FOLDER, ESTIMATORS
     TEMP_FOLDER = tempfile.mkdtemp(prefix='sklearn_test_score_objects_')
     X, y = make_classification(n_samples=30, n_features=5, random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
-    nonzero_y = y + 1
+    y_nozero = y + 1
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    joblib.dump((X, y, y_ml, nonzero_y), filename)
-    X_mm, y_mm, y_ml_mm, nonzero_y_mm = joblib.load(filename, mmap_mode='r')
+    joblib.dump((X, y, y_ml, y_nozero), filename)
+    X_mm, y_mm, y_ml_mm, y_nozero_mm = joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 
 def teardown_module():
-    global X_mm, y_mm, y_ml_mm, nonzero_y_mm, TEMP_FOLDER, ESTIMATORS
+    global X_mm, y_mm, y_ml_mm, y_nozero_mm, TEMP_FOLDER, ESTIMATORS
     # GC closes the mmap file descriptors
     X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
-    nonzero_y_mm = None
+    y_nozero_mm = None
     shutil.rmtree(TEMP_FOLDER)
 
 
@@ -490,8 +490,8 @@ def check_scorer_memmap(scorer_name):
     scorer, estimator = SCORERS[scorer_name], ESTIMATORS[scorer_name]
     if scorer_name in MULTILABEL_ONLY_SCORERS:
         score = scorer(estimator, X_mm, y_ml_mm)
-    elif scorer_name in NONZERO_Y_SCORERS:
-        score = scorer(estimator, X_mm, nonzero_y_mm)
+    elif scorer_name in y_nozero_SCORERS:
+        score = scorer(estimator, X_mm, y_nozero_mm)
     else:
         score = scorer(estimator, X_mm, y_mm)
     assert isinstance(score, numbers.Number), scorer_name
