@@ -1353,6 +1353,14 @@ def test_grid_search_failing_classifier():
                if gs.cv_results_['param_parameter'][cand_i] ==
                FailingClassifier.FAILING_PARAMETER)
 
+    ranks = gs.cv_results_['rank_test_score']
+
+    # Check that succeeded estimators have lower ranks
+    assert ranks[0] <= 2 and ranks[1] <= 2
+    # Check that failed estimator has the highest rank
+    assert ranks[clf.FAILING_PARAMETER] == 3
+    assert gs.best_index_ != clf.FAILING_PARAMETER
+
 
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
