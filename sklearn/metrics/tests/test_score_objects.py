@@ -68,6 +68,7 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
 NONZERO_Y_SCORERS = ['neg_mape']
 
+
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
@@ -104,9 +105,10 @@ def setup_module():
 
 
 def teardown_module():
-    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
+    global X_mm, y_mm, y_ml_mm, nonzero_y_mm, TEMP_FOLDER, ESTIMATORS
     # GC closes the mmap file descriptors
     X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
+    nonzero_y_mm = None
     shutil.rmtree(TEMP_FOLDER)
 
 
