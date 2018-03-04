@@ -182,7 +182,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     n_iter_ : int
         Number of iterations that fmin_l_bfgs_b has run for.
-        Not available if SciPy version is 0.9 and below.
+
+        .. versionchanged:: 0.20
+
+            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
+            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
@@ -264,7 +268,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             raise ValueError("HuberRegressor convergence failed:"
                              " l-BFGS-b solver terminated with %s"
                              % dict_['task'].decode('ascii'))
-        self.n_iter_ = dict_['nit']
+        self.n_iter_ = min(dict_['nit'], self.max_iter)
         self.scale_ = parameters[-1]
         if self.fit_intercept:
             self.intercept_ = parameters[-2]

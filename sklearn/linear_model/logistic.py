@@ -1110,8 +1110,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         it returns only 1 element. For liblinear solver, only the maximum
         number of iteration across all classes is given.
 
-        Note: in SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-        ``max_iter``. ``n_iter_`` will report at most ``max_iter``.
+        .. versionchanged:: 0.20
+
+            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
+            ``max_iter``. ``n_iter_`` will nowreport at most ``max_iter``.
 
     See also
     --------
