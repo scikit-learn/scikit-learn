@@ -172,6 +172,11 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- The ``predict`` method of :class:`pipeline.Pipeline` now passes keyword
+  arguments on to the pipeline's last estimator, enabling the use of parameters
+  such as ``return_std`` in a pipeline with caution.
+  :issue:`9304` by :user:`Breno Freitas <brenolf>`.
+
 - Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
