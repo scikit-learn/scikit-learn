@@ -30,6 +30,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils.fixes import unique
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 
@@ -917,7 +918,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
-    _, inv, counts = np.unique(
+    _, inv, counts = unique(
         - y_score, return_inverse=True, return_counts=True)
     ranked = np.zeros(len(counts))
     np.add.at(ranked, inv, y_true)
