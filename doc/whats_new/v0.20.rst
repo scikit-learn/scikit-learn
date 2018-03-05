@@ -384,7 +384,7 @@ Linear, kernelized and related models
 
 - ``n_iter_`` may vary from previous releases in
   :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
-  :class:`linear_model.HuberRegressor`.  For Scipy <= 1, the optimizer could
+  :class:`linear_model.HuberRegressor`.  For Scipy <= 1.0.0, the optimizer could
   perform more than the requested maximum number of iterations. Now both
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.

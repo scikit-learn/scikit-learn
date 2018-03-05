@@ -710,7 +710,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.", ConvergenceWarning)
-            # in scipy <= 1.0.0, nit may exceed maxiter
+            # In scipy <= 1.0.0, nit may exceed maxiter.
+            # See https://github.com/scipy/scipy/issues/7854.
             n_iter_i = min(info['nit'], max_iter)
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)

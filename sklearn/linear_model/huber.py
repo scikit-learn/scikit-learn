@@ -268,6 +268,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             raise ValueError("HuberRegressor convergence failed:"
                              " l-BFGS-b solver terminated with %s"
                              % dict_['task'].decode('ascii'))
+        # In scipy <= 1.0.0, nit may exceed maxiter.
+        # See https://github.com/scipy/scipy/issues/7854.
         self.n_iter_ = min(dict_['nit'], self.max_iter)
         self.scale_ = parameters[-1]
         if self.fit_intercept:
