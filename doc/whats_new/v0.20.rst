@@ -50,9 +50,15 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its 
+  ``predict`` method. The returned standard deviations will be zeros.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
+
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Preprocessing
 
@@ -72,14 +78,16 @@ Preprocessing
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
   :user:`Maniteja Nandana <maniteja123>`.
 
+- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
+  the target y before fitting a regression model. The predictions are mapped
+  back to the original space via an inverse transform. :issue:`9041` by
+  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Decomposition, manifold learning and clustering
 
@@ -87,10 +95,11 @@ Decomposition, manifold learning and clustering
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
-- Speed improvements for both 'exact' and 'barnes_hut' methods in
-  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
-  `Tom Dupre la Tour`_.
+Metrics
 
+- Partial AUC is available via ``max_fpr`` parameter in
+  :func:`metrics.roc_auc_score`. :issue:`3273` by
+  :user:`Alexander Niederbühl <Alexander-N>`.
 
 Enhancements
 ............
@@ -137,6 +146,13 @@ Cluster
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
+Datasets
+
+- In :func:`datasets.make_blobs`, one can now pass a list to the `n_samples`
+  parameter to indicate the number of samples to generate per cluster.
+  :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>`
+  and :user:`Konstantinos Katrioplas <kkatrio>`.
+
 Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
@@ -156,9 +172,20 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
-- A paramenter `predict_params` was added to :class:`pipeline.Pipeline` allowing
-  that parameters passed to `predict` propagate to the very last estimator of 
-  the pipeline. :issue:`9304` by :user:`Breno Freitas <brenolf>`.
+- The ``predict`` method of :class:`pipeline.Pipeline` now passes keyword
+  arguments on to the pipeline's last estimator, enabling the use of parameters
+  such as ``return_std`` in a pipeline with caution.
+  :issue:`9304` by :user:`Breno Freitas <brenolf>`.
+
+- Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
+  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
+  <bellet>`.
+
+Decomposition and manifold learning
+
+- Speed improvements for both 'exact' and 'barnes_hut' methods in
+  :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
+  `Tom Dupre la Tour`_.
 
 Metrics
 
@@ -242,6 +269,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.ElasticNet` which caused the input to be
   overridden when using parameter ``copy_X=True`` and ``check_input=False``.
   :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
+
+- Fixed a bug in :class:`sklearn.linear_model.Lasso`
+  where the coefficient had wrong shape when ``fit_intercept=False``.
+  :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
 
 Decomposition, manifold learning and clustering
 
@@ -332,6 +363,12 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
+Utils
+
+- :func:`utils.validation.check_array` yield a ``FutureWarning`` indicating
+  that arrays of bytes/strings will be interpreted as decimal numbers
+  beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
+
 Preprocessing
 
 - Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
@@ -368,6 +405,12 @@ Cluster
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
+Imputer
+
+- Deprecate :class:`preprocessing.Imputer` and move the corresponding module to
+  :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
+  <thechargedneutron>`.
+
 Outlier Detection models
 
 - More consistent outlier detection API:
@@ -386,11 +429,13 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
-Preprocessing
+Covariance
 
-- Deprecate ``axis`` parameter in :func:`preprocessing.Imputer`.
-  :issue:`10558` by :user:`Baze Petrushev <petrushev>` and
-  :user:`Hanmin Qin <qinhanmin2014>`.
+- The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and 
+  :class:`covariance.GraphLassoCV` have been renamed to 
+  :func:`covariance.graphical_lasso`, :class:`covariance.GraphicalLasso` and
+  :class:`covariance.GraphicalLassoCV` respectively and will be removed in version 0.22.
+  :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
 
 Misc
 

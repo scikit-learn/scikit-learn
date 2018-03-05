@@ -490,17 +490,17 @@ Mean Squared Error:
 
 .. math::
 
-    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
 Mean Absolute Error:
 
 .. math::
 
-    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
 
 where :math:`X_m` is the training data in node :math:`m`
 
