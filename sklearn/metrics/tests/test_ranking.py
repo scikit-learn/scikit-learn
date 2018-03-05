@@ -1120,11 +1120,23 @@ def test_dcg_ties():
     ])
 
 
+def test_ndcg_invariant():
+    y_true = np.arange(70).reshape(7, 10)
+    y_score = y_true + np.random.RandomState(0).uniform(
+        -.2, .2, size=y_true.shape)
+    assert_almost_equal(1., ndcg_score(y_true, y_score))
+
+
 def test_ndcg_toy_examples():
     y_true = 3 * np.eye(7)[:5]
     y_score = np.tile(np.arange(6, -1, -1), (5, 1))
+    y_score_noisy = y_score + np.random.RandomState(0).uniform(
+        -.2, .2, size=y_score.shape)
     assert_array_almost_equal(
         _dcg_sample_scores(y_true, y_score), 3 / np.log2(np.arange(2, 7)))
+    assert_array_almost_equal(
+        _dcg_sample_scores(y_true, y_score_noisy),
+        3 / np.log2(np.arange(2, 7)))
     assert_array_almost_equal(
         _ndcg_sample_scores(y_true, y_score), 1 / np.log2(np.arange(2, 7)))
     assert_array_almost_equal(
