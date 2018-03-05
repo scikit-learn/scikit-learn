@@ -4,11 +4,26 @@ Kernel Approximation
 ====================
 
 This submodule contains functions that approximate the feature mappings that
-correspond to certain kernels, as they are used for example in support vector
-machines (see :ref:`svm`).
-The following feature functions perform non-linear transformations of the
-input, which can serve as a basis for linear classification or other
-algorithms.
+correspond to certain kernels, as they are used, for example, by
+`linear classifiers <https://en.wikipedia.org/wiki/Linear_classifier>`_.
+Some relevant linear classifiers are support vector machines
+(see :ref:`svm`) or kernel ridge estimators (see :ref:`kernel_ridge`).
+
+Shortly, SVM tries to define an hyperplane that separates class 1 from
+class 2 by maximizing the space between the hyperplane and the training
+instances. "One-against-all" and "one-against-one" techniques are used
+for multiclass problems. On other hand, Kernel Ridge directly tries to
+minimize the error of assigning a label to a data by linear least
+squares with l2-norm regularization, so it can be applied to multiclass
+problems, though it has no geometrical representation.
+
+These classifiers make a target decision based on the value of a linear
+combination of the feature values. However, a previous non-linear
+transformation of the
+`feature vector <https://en.wikipedia.org/wiki/Feature_vector>`_ allows
+to use linear classifiers in non-linear problems. The following feature
+functions perform non-linear transformations of the input, which can
+serve as a basis for linear classification or other algorithms.
 
 .. currentmodule:: sklearn.linear_model
 
