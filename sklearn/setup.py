@@ -30,8 +30,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
-    config.add_subpackage('kernel_ridge')
-    config.add_subpackage('kernel_ridge/tests')
     config.add_subpackage('mixture')
     config.add_subpackage('mixture/tests')
     config.add_subpackage('model_selection')
