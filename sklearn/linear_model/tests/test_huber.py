@@ -42,6 +42,13 @@ def test_huber_equals_lr_for_high_epsilon():
     assert_almost_equal(huber.intercept_, lr.intercept_, 2)
 
 
+def test_huber_max_iter():
+    X, y = make_regression_with_outliers()
+    huber = HuberRegressor(max_iter=1)
+    huber.fit(X, y)
+    assert huber.n_iter_ == huber.max_iter
+
+
 def test_huber_gradient():
     # Test that the gradient calculated by _huber_loss_and_gradient is correct
     rng = np.random.RandomState(1)
