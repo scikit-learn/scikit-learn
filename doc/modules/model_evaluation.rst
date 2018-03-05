@@ -174,24 +174,23 @@ Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
 
     >>> import numpy as np
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
+    >>> def my_custom_loss_func(y_true, y_pred):
+    ...     diff = np.abs(y_true - y_pred).max()
     ...     return np.log(1 + diff)
     ...
-    >>> # loss_func will negate the return value of my_custom_loss_func,
-    >>> #  which will be np.log(2), 0.693, given the values for ground_truth
-    >>> #  and predictions defined below.
-    >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1], [1]]
-    >>> predictions  = [0, 1]
+    >>> # score will negate the return value of my_custom_loss_func,
+    >>> # which will be np.log(2), 0.693, given the values for X
+    >>> # and y defined below.
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> X = [[1], [1]]
+    >>> y  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
-    >>> clf = clf.fit(ground_truth, predictions)
-    >>> loss(clf,ground_truth, predictions) # doctest: +ELLIPSIS
-    -0.69...
-    >>> score(clf,ground_truth, predictions) # doctest: +ELLIPSIS
+    >>> clf = clf.fit(X, y)
+    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
     0.69...
+    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    -0.69...
 
 
 .. _diy_scoring:
@@ -245,19 +244,19 @@ permitted and will require a wrapper to return a single metric::
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
     >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
-    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
-    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
+    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
-    [12 13 15]
+    [16 14  9]
     >>> # Getting the test set false negative scores
     >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
-    [5 4 1]
+    [1 3 7]
 
 .. _classification_metrics:
 
@@ -460,6 +459,39 @@ given binary ``y_true`` and ``y_pred``:
 
     Currently this score function is only defined for binary classification problems, you
     may need to wrap it by yourself if you want to use it for multilabel problems.
+
+    There is no clear consensus on the definition of a balanced accuracy for the
+    multiclass setting. Here are some definitions that can be found in the literature:
+
+    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
+      the recall for each class is computed independently and the average is taken over all classes.
+      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
+      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
+      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
+    * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
+      and the recall for each class is computed. Those values are then averaged over the total
+      number of classes to get the balanced accuracy.
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+      is computed for each class and then averaged over total number of classes.
+
+    Note that none of these different definitions are currently implemented within
+    the :func:`balanced_accuracy_score` function.
+
+.. topic:: References:
+
+  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
+     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
+     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     IJCNN 2015.
+  .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
+     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     IJCV 2010.
+  .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
+     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
+     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
+     2015.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
+     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -1105,11 +1137,11 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
+    array([ 0. ,  0. ,  0.5,  0.5,  1. ])
     >>> tpr
-    array([ 0.5,  0.5,  1. ,  1. ])
+    array([ 0. ,  0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([ 1.8 ,  0.8 ,  0.4 ,  0.35,  0.1 ])
 
 This figure shows an example of such an ROC curve:
 
@@ -1139,6 +1171,10 @@ Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
+
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
 
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
@@ -1268,7 +1304,7 @@ Here is a small example of usage of this function:::
 .. topic:: References:
 
   * G. Brier, `Verification of forecasts expressed in terms of probability
-    <http://docs.lib.noaa.gov/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
     Monthly weather review 78.1 (1950)
 
 .. _multilabel_ranking_metrics:
@@ -1332,29 +1368,33 @@ implements label ranking average precision (LRAP). This metric is linked to
 the :func:`average_precision_score` function, but is based on the notion of
 label ranking instead of precision and recall.
 
-Label ranking average precision (LRAP) is the average over each ground truth
-label assigned to each sample, of the ratio of true vs. total labels with lower
-score. This metric will yield better scores if you are able to give better rank
-to the labels associated with each sample. The obtained score is always strictly
-greater than 0, and the best value is 1. If there is exactly one relevant
-label per sample, label ranking average precision is equivalent to the `mean
+Label ranking average precision (LRAP) averages over the samples the answer to
+the following question: for each ground truth label, what fraction of
+higher-ranked labels were true labels? This performance measure will be higher
+if you are able to give better rank to the labels associated with each sample.
+The obtained score is always strictly greater than 0, and the best value is 1.
+If there is exactly one relevant label per sample, label ranking average
+precision is equivalent to the `mean
 reciprocal rank <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_.
 
 Formally, given a binary indicator matrix of the ground truth labels
-:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
-score associated with each label
-:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}`
+and the score associated with each label
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
 the average precision is defined as
 
 .. math::
   LRAP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0}
     \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
 
 
-with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
-:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
-and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
+where
+:math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
+:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`,
+:math:`|\cdot|` computes the cardinality of the set (i.e., the number of
+elements in the set), and :math:`||\cdot||_0` is the :math:`\ell_0` "norm"
+(which computes the number of nonzero elements in a vector).
 
 Here is a small example of usage of this function::
 
@@ -1373,8 +1413,8 @@ Ranking loss
 The :func:`label_ranking_loss` function computes the ranking loss which
 averages over the samples the number of label pairs that are incorrectly
 ordered, i.e. true labels have a lower score than false labels, weighted by
-the inverse number of false and true labels. The lowest achievable
-ranking loss is zero.
+the inverse of the number of ordered pairs of false and true labels.
+The lowest achievable ranking loss is zero.
 
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
@@ -1384,10 +1424,12 @@ the ranking loss is defined as
 
 .. math::
   \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|(n_\text{labels} - |y_i|)}
-    \left|\left\{(k, l): \hat{f}_{ik} < \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
+    \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
-where :math:`|\cdot|` is the :math:`\ell_0` norm or the cardinality of the set.
+where :math:`|\cdot|` computes the cardinality of the set (i.e., the number of
+elements in the set) and :math:`||\cdot||_0` is the :math:`\ell_0` "norm"
+(which computes the number of nonzero elements in a vector).
 
 Here is a small example of usage of this function::
 
@@ -1698,7 +1740,7 @@ implements several such simple strategies for classification:
   set class distribution.
 - ``most_frequent`` always predicts the most frequent label in the training set.
 - ``prior`` always predicts the class that maximizes the class prior
-  (like ``most_frequent`) and ``predict_proba`` returns the class prior.
+  (like ``most_frequent``) and ``predict_proba`` returns the class prior.
 - ``uniform`` generates predictions uniformly at random.
 - ``constant`` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring, when the positive class

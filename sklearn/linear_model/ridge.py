@@ -31,6 +31,7 @@ from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
+from ..exceptions import ConvergenceWarning
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
@@ -73,7 +74,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 
         if max_iter is None and info > 0 and verbose:
             warnings.warn("sparse_cg did not converge after %d iterations." %
-                          info)
+                          info, ConvergenceWarning)
 
     return coefs
 
@@ -243,8 +244,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
@@ -358,11 +359,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             solver = 'cholesky'
         else:
             solver = 'sparse_cg'
-
-    elif solver == 'lsqr' and not hasattr(sp_linalg, 'lsqr'):
-        warnings.warn("""lsqr not available on this machine, falling back
-                      to sparse_cg.""")
-        solver = 'sparse_cg'
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
@@ -577,8 +573,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
@@ -624,7 +620,10 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV, :class:`sklearn.kernel_ridge.KernelRidge`
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
+    :class:`sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
+        combines ridge regression with the kernel trick
 
     Examples
     --------
@@ -732,8 +731,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its unbiased and more flexible version named SAGA. Both methods
@@ -770,7 +769,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     See also
     --------
-    Ridge, RidgeClassifierCV
+    Ridge : Ridge regression
+    RidgeClassifierCV :  Ridge classifier with built-in cross validation
 
     Notes
     -----
@@ -871,7 +871,7 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
+    http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
@@ -990,7 +990,7 @@ class _RidgeGCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
@@ -1109,7 +1109,7 @@ class _BaseRidgeCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
@@ -1233,9 +1233,9 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeClassifierCV: Ridge classifier with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
     pass
 
@@ -1318,9 +1318,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeCV: Ridge regression with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
 
     Notes
     -----
@@ -1353,7 +1353,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
-            Returns self.
         """
         check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                   multi_output=True)

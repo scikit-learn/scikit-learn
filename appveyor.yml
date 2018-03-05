@@ -25,12 +25,12 @@ environment:
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.0"
+    - PYTHON: "C:\\Python36"
+      PYTHON_VERSION: "3.6.1"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.0"
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.1"
       PYTHON_ARCH: "64"
 
 
@@ -78,12 +78,11 @@ build: false
 test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
-  - "mkdir empty_folder"
-  - "cd empty_folder"
-  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s sklearn"
-
+  - mkdir "../empty_folder"
+  - cd "../empty_folder"
+  - pytest --showlocals --durations=20 --pyargs sklearn
   # Move back to the project folder
-  - "cd .."
+  - cd "../scikit-learn"
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.

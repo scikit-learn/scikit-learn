@@ -114,6 +114,18 @@ def test_gnb_priors():
     assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
 
 
+def test_gnb_priors_sum_isclose():
+    # test whether the class prior sum is properly tested"""
+    X = np.array([[-1, -1], [-2, -1], [-3, -2], [-4, -5], [-5, -4],
+                 [1, 1], [2, 1], [3, 2], [4, 4], [5, 5]])
+    priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14,
+                       0.11, 0.0])
+    Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    clf = GaussianNB(priors)
+    # smoke test for issue #9633
+    clf.fit(X, Y)
+
+
 def test_gnb_wrong_nb_priors():
     """ Test whether an error is raised if the number of prior is different
     from the number of class"""
@@ -656,3 +668,45 @@ def test_alpha():
                          X, y, classes=[0, 1])
     assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
                          X, y, classes=[0, 1])
+
+
+def test_alpha_vector():
+    X = np.array([[1, 0], [1, 1]])
+    y = np.array([0, 1])
+
+    # Setting alpha=np.array with same length
+    # as number of features should be fine
+    alpha = np.array([1, 2])
+    nb = MultinomialNB(alpha=alpha)
+    nb.partial_fit(X, y, classes=[0, 1])
+
+    # Test feature probabilities uses pseudo-counts (alpha)
+    feature_prob = np.array([[1 / 2, 1 / 2], [2 / 5, 3 / 5]])
+    assert_array_almost_equal(nb.feature_log_prob_, np.log(feature_prob))
+
+    # Test predictions
+    prob = np.array([[5 / 9, 4 / 9], [25 / 49, 24 / 49]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    # Test alpha non-negative
+    alpha = np.array([1., -0.1])
+    expected_msg = ('Smoothing parameter alpha = -1.0e-01. '
+                    'alpha should be > 0.')
+    m_nb = MultinomialNB(alpha=alpha)
+    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+
+    # Test that too small pseudo-counts are replaced
+    ALPHA_MIN = 1e-10
+    alpha = np.array([ALPHA_MIN / 2, 0.5])
+    m_nb = MultinomialNB(alpha=alpha)
+    m_nb.partial_fit(X, y, classes=[0, 1])
+    assert_array_almost_equal(m_nb._check_alpha(),
+                              [ALPHA_MIN, 0.5],
+                              decimal=12)
+
+    # Test correct dimensions
+    alpha = np.array([1., 2., 3.])
+    m_nb = MultinomialNB(alpha=alpha)
+    expected_msg = ('alpha should be a scalar or a numpy array '
+                    'with shape [n_features]')
+    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)

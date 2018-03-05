@@ -45,9 +45,9 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     Parameters
     ----------
-    y_true : array-like,
+    y_true : array-like
 
-    y_pred : array-like,
+    y_pred : array-like
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -310,7 +310,7 @@ def mean_squared_log_error(y_true, y_pred,
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if not (y_true >= 0).all() and not (y_pred >= 0).all():
+    if (y_true < 0).any() or (y_pred < 0).any():
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 

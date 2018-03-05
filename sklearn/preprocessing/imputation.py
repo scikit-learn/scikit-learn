@@ -10,6 +10,7 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils import deprecated
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -60,6 +61,9 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
+@deprecated("Imputer was deprecated in version 0.20 and will be "
+            "removed in 0.22. Import impute.SimpleImputer from "
+            "sklearn instead.")
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
@@ -134,7 +138,6 @@ class Imputer(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : Imputer
-            Returns self.
         """
         # Check parameters
         allowed_strategies = ["mean", "median", "most_frequent"]
@@ -264,12 +267,6 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
-            if tuple(int(v) for v in np.__version__.split('.')[:2]) < (1, 5):
-                # In old versions of numpy, calling a median on an array
-                # containing nans returns nan. This is different is
-                # recent versions of numpy, which we want to mimic
-                masked_X.mask = np.logical_or(masked_X.mask,
-                                              np.isnan(X))
             median_masked = np.ma.median(masked_X, axis=axis)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)

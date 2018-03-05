@@ -110,7 +110,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    SVD suffers from a problem called "sign indeterminancy", which means the
+    SVD suffers from a problem called "sign indeterminacy", which means the
     sign of the ``components_`` and the output from transform depend on the
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.

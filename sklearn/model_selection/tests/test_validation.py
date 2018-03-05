@@ -7,8 +7,12 @@ import tempfile
 import os
 from time import sleep
 
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from sklearn.exceptions import FitFailedWarning
+
+from sklearn.tests.test_grid_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -16,6 +20,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
@@ -23,7 +28,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -40,10 +44,12 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _fit_and_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
@@ -54,12 +60,13 @@ from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
@@ -362,20 +369,23 @@ def test_cross_validate():
         test_mse_scores = []
         train_r2_scores = []
         test_r2_scores = []
+        fitted_estimators = []
         for train, test in cv.split(X, y):
             est = clone(reg).fit(X[train], y[train])
             train_mse_scores.append(mse_scorer(est, X[train], y[train]))
             train_r2_scores.append(r2_scorer(est, X[train], y[train]))
             test_mse_scores.append(mse_scorer(est, X[test], y[test]))
             test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+            fitted_estimators.append(est)
 
         train_mse_scores = np.array(train_mse_scores)
         test_mse_scores = np.array(test_mse_scores)
         train_r2_scores = np.array(train_r2_scores)
         test_r2_scores = np.array(test_r2_scores)
+        fitted_estimators = np.array(fitted_estimators)
 
         scores = (train_mse_scores, test_mse_scores, train_r2_scores,
-                  test_r2_scores)
+                  test_r2_scores, fitted_estimators)
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
@@ -405,7 +415,7 @@ def test_cross_validate_return_train_score_warn():
 
 def check_cross_validate_single_metric(clf, X, y, scores):
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     # Test single metric evaluation when scoring is string or singleton list
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
@@ -437,11 +447,19 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
+    # Test return_estimator option
+    mse_scores_dict = cross_validate(clf, X, y, cv=5,
+                                     scoring='neg_mean_squared_error',
+                                     return_estimator=True)
+    for k, est in enumerate(mse_scores_dict['estimator']):
+        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
+
 
 def check_cross_validate_multi_metric(clf, X, y, scores):
     # Test multimetric evaluation when scoring is a list / dict
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
@@ -726,7 +744,7 @@ def test_permutation_test_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     permutation_test_score(p, X, y, cv=5)
@@ -738,7 +756,7 @@ def test_cross_val_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     cross_val_score(p, X, y, cv=5)
@@ -799,6 +817,89 @@ def test_cross_val_predict():
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
+
+    X, y = load_iris(return_X_y=True)
+
+    warning_message = ('Number of classes in training fold (2) does '
+                       'not match total number of classes (3). '
+                       'Results may not be appropriate for your use case.')
+    assert_warns_message(RuntimeWarning, warning_message,
+                         cross_val_predict, LogisticRegression(),
+                         X, y, method='predict_proba', cv=KFold(2))
+
+
+def test_cross_val_predict_decision_function_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (50,))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (150, 3))
+
+    # This specifically tests imbalanced splits for binary
+    # classification with decision_function. This is only
+    # applicable to classifiers that can be fit on a single
+    # class.
+    X = X[:100]
+    y = y[:100]
+    assert_raise_message(ValueError,
+                         'Only 1 class/es in training fold, this'
+                         ' is not supported for decision_function'
+                         ' with imbalanced folds. To fix '
+                         'this, use a cross-validation technique '
+                         'resulting in properly stratified folds',
+                         cross_val_predict, RidgeClassifier(), X, y,
+                         method='decision_function', cv=KFold(2))
+
+    X, y = load_digits(return_X_y=True)
+    est = SVC(kernel='linear', decision_function_shape='ovo')
+
+    preds = cross_val_predict(est,
+                              X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (1797, 45))
+
+    ind = np.argsort(y)
+    X, y = X[ind], y[ind]
+    assert_raises_regex(ValueError,
+                        r'Output shape \(599L?, 21L?\) of decision_function '
+                        r'does not match number of classes \(7\) in fold. '
+                        'Irregular decision_function .*',
+                        cross_val_predict, est, X, y,
+                        cv=KFold(n_splits=3), method='decision_function')
+
+
+def test_cross_val_predict_predict_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_proba')
+    assert_equal(preds.shape, (150, 3))
+
+
+def test_cross_val_predict_predict_log_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
+    assert_equal(preds.shape, (150, 3))
 
 
 def test_cross_val_predict_input_types():
@@ -1241,11 +1342,12 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        exp_pred_test = np.zeros((len(test), classes))
-        if method is 'decision_function' and len(est.classes_) == 2:
-            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        if method is 'predict_proba':
+            exp_pred_test = np.zeros((len(test), classes))
         else:
-            exp_pred_test[:, est.classes_] = expected_predictions_
+            exp_pred_test = np.full((len(test), classes),
+                                    np.finfo(expected_predictions.dtype).min)
+        exp_pred_test[:, est.classes_] = expected_predictions_
         expected_predictions[test] = exp_pred_test
 
     return expected_predictions
@@ -1253,9 +1355,9 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 def test_cross_val_predict_class_subset():
 
-    X = np.arange(8).reshape(4, 2)
-    y = np.array([0, 0, 1, 2])
-    classes = 3
+    X = np.arange(200).reshape(100, 2)
+    y = np.array([x//10 for x in range(100)])
+    classes = 10
 
     kfold3 = KFold(n_splits=3)
     kfold4 = KFold(n_splits=4)
@@ -1283,7 +1385,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
-        y = [1, 1, -4, 6]
+        y = shuffle(np.repeat(range(10), 10), random_state=0)
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
         y = le.fit_transform(y)
@@ -1336,3 +1438,47 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_fit_and_score():
+    # Create a failing classifier to deliberately fail
+    failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
+    # dummy X data
+    X = np.arange(1, 10)
+    fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0,
+                          None, None]
+    # passing error score to trigger the warning message
+    fit_and_score_kwargs = {'error_score': 0}
+    # check if the warning message type is as expected
+    assert_warns(FitFailedWarning, _fit_and_score, *fit_and_score_args,
+                 **fit_and_score_kwargs)
+    # since we're using FailingClassfier, our error will be the following
+    error_message = "ValueError: Failing classifier failed as required"
+    # the warning message we're expecting to see
+    warning_message = ("Estimator fit failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                          error_message))
+    # check if the same warning is triggered
+    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+                         *fit_and_score_args, **fit_and_score_kwargs)
+
+    # check if exception is raised, with default error_score argument
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args)
+
+    # check if warning was raised, with default error_score argument
+    warning_message = ("From version 0.22, errors during fit will result "
+                       "in a cross validation score of NaN by default. Use "
+                       "error_score='raise' if you want an exception "
+                       "raised or error_score=np.nan to adopt the "
+                       "behavior from version 0.22.")
+    with pytest.raises(ValueError):
+        assert_warns_message(FutureWarning, warning_message, _fit_and_score,
+                             *fit_and_score_args)
+
+    fit_and_score_kwargs = {'error_score': 'raise'}
+    # check if exception was raised, with default error_score='raise'
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args,
+                         **fit_and_score_kwargs)
