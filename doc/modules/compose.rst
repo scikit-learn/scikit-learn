@@ -11,8 +11,8 @@ estimators to build a composite estimator.  The most common tool is a
 :ref:`FeatureUnion <feature_union>` which concatenates the output of
 transformers into a composite feature space.  :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
-(:term:`y`) (e.g. log-transform) while Pipelines only transform the observed
-data (:term:`X`).
+(i.e. log-transform :term:`y`). In contrast, Pipelines only transform the
+observed data (:term:`X`).
 
 .. _pipeline:
 
