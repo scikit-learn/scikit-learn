@@ -1125,6 +1125,8 @@ def test_ndcg_invariant():
     y_score = y_true + np.random.RandomState(0).uniform(
         -.2, .2, size=y_true.shape)
     assert_almost_equal(1., ndcg_score(y_true, y_score))
+    y_score += 1000
+    assert_almost_equal(1., ndcg_score(y_true, y_score))
 
 
 def test_ndcg_toy_examples():
