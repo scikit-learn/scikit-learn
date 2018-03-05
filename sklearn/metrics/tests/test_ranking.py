@@ -1106,6 +1106,20 @@ def _test_dcg_score_for(y_true, y_score):
         ideal, (np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
 
 
+def test_dcg_ties():
+    y_true = np.asarray([np.arange(5)])
+    y_score = np.zeros(y_true.shape)
+    dcg = _dcg_sample_scores(y_true, y_score)
+    discounts = 1 / np.log2(np.arange(2, 7))
+    assert_array_almost_equal(dcg, [discounts.sum() * y_true.mean()])
+    y_score[0, 3:] = 1
+    dcg = _dcg_sample_scores(y_true, y_score)
+    assert_array_almost_equal(dcg, [
+        discounts[:2].sum() * y_true[0, 3:].mean() +
+        discounts[2:].sum() * y_true[0, :3].mean()
+    ])
+
+
 def test_ndcg_toy_examples():
     y_true = 3 * np.eye(7)[:5]
     y_score = np.tile(np.arange(6, -1, -1), (5, 1))
