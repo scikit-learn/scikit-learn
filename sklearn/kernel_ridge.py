@@ -123,7 +123,6 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.alpha < 0:
             raise ValueError('alpha must be positive')
 
-        K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
         copy = self.kernel == "precomputed"
 
@@ -146,6 +145,7 @@ class _BaseKernelRidge(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError('_BaseKernelRidge cannot be used as'
                              ' a estimator')
 
+        K = self._get_kernel(X)
         self.dual_coef_ = _solve_cholesky_kernel(K, y_, alpha,
                                                  sample_weight,
                                                  copy)
