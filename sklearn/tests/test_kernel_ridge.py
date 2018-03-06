@@ -18,6 +18,7 @@ from sklearn.externals import six
 from sklearn.kernel_ridge import KernelRidgeClassifier
 from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.preprocessing import label_binarize
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -129,3 +130,14 @@ def test_kernel_ridge_multi_output():
                         alpha=1).fit(X_reg, y_reg).predict(X_reg)
     pred3 = np.array([pred3, pred3]).T
     assert_array_almost_equal(pred2, pred3)
+
+
+def test_ridge_regression_classifier():
+    # This test asserts that KernelRidge and KernelRidgeClassifier
+    # have the same dual_coef_ when classification target are
+    # specified as regressions
+    krc = KernelRidgeClassifier(kernel='linear', alpha=1).fit(X, Y)
+    Y_krr = label_binarize(Y, classes=np.array([1, 2]),
+                           neg_label=-1, pos_label=1).ravel()
+    krr = KernelRidge(kernel='linear', alpha=1).fit(X, Y_krr)
+    assert_array_equal(krc.dual_coef_, krr.dual_coef_)
