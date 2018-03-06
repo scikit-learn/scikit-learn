@@ -371,10 +371,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
+        It uses NFKD normalization from :func:`unicodedata.normalize`.
         None (default) does nothing.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
@@ -575,10 +577,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
+        It uses NFKD normalization from :func:`unicodedata.normalize`.
         None (default) does nothing.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
@@ -1167,10 +1171,12 @@ class TfidfVectorizer(CountVectorizer):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
+        It uses NFKD normalization from :func:`unicodedata.normalize`.
         None (default) does nothing.
 
     analyzer : string, {'word', 'char'} or callable
