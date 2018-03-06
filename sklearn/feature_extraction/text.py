@@ -376,8 +376,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
-        It uses NFKD normalization from :func:`unicodedata.normalize`.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -582,8 +584,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
-        It uses NFKD normalization from :func:`unicodedata.normalize`.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -1176,8 +1180,10 @@ class TfidfVectorizer(CountVectorizer):
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
-        It uses NFKD normalization from :func:`unicodedata.normalize`.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.
