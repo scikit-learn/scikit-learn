@@ -5,6 +5,7 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_array_equal
 
 from sklearn import datasets
 
@@ -76,6 +77,13 @@ def test_20news_vectorized():
     assert_equal(bunch.data.shape, (7532, 130107))
     assert_equal(bunch.target.shape[0], 7532)
     assert_equal(bunch.data.dtype, np.float64)
+
+    # test return_X_y option
+    X_y_tuple = datasets.fetch_20newsgroups_vectorized(subset='test',return_X_y=True)
+    assert_true(isinstance(X_y_tuple, tuple))
+    # data to large to fit in memory so check shape
+    assert_array_equal(X_y_tuple[0].shape, bunch.data.shape)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
     # test subset = all
     bunch = datasets.fetch_20newsgroups_vectorized(subset='all')
