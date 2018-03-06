@@ -78,7 +78,7 @@ Loading an example dataset
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 datasets for classification and the `boston house prices dataset
-<http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.
+<https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
 load the ``iris`` and ``digits`` datasets.  Our notational convention is that
