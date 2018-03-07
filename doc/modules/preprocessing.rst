@@ -440,7 +440,7 @@ values. However, this comes at the price of losing data which may be valuable
 (even though incomplete). A better strategy is to impute the missing values,
 i.e., to infer them from the known part of the data.
 
-The :class:`Imputer` class provides basic strategies for imputing missing
+The :class:`impute` class provides basic strategies for imputing missing
 values, either using the mean, the median or the most frequent value of
 the row or column in which the missing values are located. This class
 also allows for different missing values encodings.
@@ -459,19 +459,19 @@ then the shape of the transformed input is
 ``(n_samples, n_features_new + len(imputed_features_))`` ::
 
     >>> import numpy as np
-    >>> from sklearn.preprocessing import Imputer
-    >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
+    >>> from sklearn import impute
+    >>> imp = impute(missing_values='NaN', strategy='mean', axis=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])  # doctest: +NORMALIZE_WHITESPACE
-    Imputer(add_indicator_features=False, axis=0, copy=True, missing_values='NaN',
+    impute(add_indicator_features=False, axis=0, copy=True, missing_values='NaN',
         strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.        ]
      [ 6.          3.666...]
      [ 7.          6.        ]]
-    >>> imp_with_in = Imputer(missing_values='NaN', strategy='mean', axis=0,add_indicator_features=True)
+    >>> imp_with_in = impute(missing_values='NaN', strategy='mean', axis=0,add_indicator_features=True)
     >>> imp_with_in.fit([[1, 2], [np.nan, 3], [7, 6]])
-    Imputer(add_indicator_features=True, axis=0, copy=True, missing_values='NaN',
+    impute(add_indicator_features=True, axis=0, copy=True, missing_values='NaN',
         strategy='mean', verbose=0)
     >>> print(imp_with_in.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.          1.          0.        ]
@@ -480,13 +480,13 @@ then the shape of the transformed input is
     >>> print(imp_with_in.imputed_features_)
     [0 1]
 
-The :class:`Imputer` class also supports sparse matrices::
+The :class:`impute` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
-    >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
+    >>> imp = impute(missing_values=0, strategy='mean', axis=0)
     >>> imp.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    Imputer(add_indicator_features=False, axis=0, copy=True, missing_values=0,
+    impute(add_indicator_features=False, axis=0, copy=True, missing_values=0,
         strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
@@ -498,7 +498,9 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
-:class:`Imputer` can be used in a Pipeline as a way to build a composite
+Note that sklearn.preprocessing.Imputer has been depreciated and replaced with sklearn.impute
+
+:class:`impute` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_missing_values.py`
 
 .. _polynomial_features:
