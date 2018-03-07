@@ -121,7 +121,7 @@ for i, (name, this_prec) in enumerate(precs):
     plt.xticks(())
     plt.yticks(())
     plt.title('%s precision' % name)
-    ax.set_facecolor('.7')
+    ax.set_facecolor('.7') if hasattr(ax, 'set_facecolor') else ax.set_axis_bgcolor('.7')
 
 # plot the model selection metric
 plt.figure(figsize=(4, 3))
