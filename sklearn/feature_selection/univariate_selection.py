@@ -231,7 +231,7 @@ def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
-    This is a scoring function to be used in a feature seletion procedure, not
+    This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
     This is done in 2 steps:
