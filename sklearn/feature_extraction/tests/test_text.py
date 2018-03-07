@@ -995,3 +995,25 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
+
+def test_vectorizers_invalid_ngram_range():
+    # vectorizers could be initialized with invalid ngram range
+    # test for raising error message
+    message = ("Invalid value for ngram_range, "
+               "min_n should not be larger than max_m")
+    invalid_range = (2, 1)
+    vecs = [CountVectorizer(ngram_range=invalid_range), 
+            HashingVectorizer(ngram_range=invalid_range)]
+    
+    for i, vec in enumerate(vecs):
+        assert_raise_message(
+            ValueError, message, vec.fit, ["good news everyone"])
+        assert_raise_message(
+            ValueError, message, vec.transform, ["good news everyone"])
+        if i == 1:
+            continue
+        # HashingVectorizer doesn't implement fit_transform   
+        assert_raise_message(
+            ValueError, message, vec.fit_transform, ["good news everyone"])
+
+
