@@ -986,6 +986,11 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
     Annual Conference on Learning Theory (COLT 2013)
 
+    McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+
     Examples
     --------
     >>> from sklearn.metrics import dcg_score
@@ -1102,6 +1107,11 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
     A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
     Annual Conference on Learning Theory (COLT 2013)
+
+    McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
 
     Examples
     --------
