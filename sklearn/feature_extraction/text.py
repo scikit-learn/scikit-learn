@@ -306,6 +306,15 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
+    def _check_ngram_range(self):
+        """ Check validity of ngram_range parameter, 
+            e.g., ngram_range=(2,1) is invalid
+        """
+        min_n, max_m = self.ngram_range
+        if min_n > max_m:
+            raise ValueError(
+                "Invalid value for ngram_range, "
+                "min_n should not be larger than max_m")
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -497,6 +506,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._check_ngram_range()
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -519,6 +530,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
+
+        self._check_ngram_range()
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -882,6 +895,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._check_ngram_range()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -939,6 +953,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
 
+        self._check_ngram_range()
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
