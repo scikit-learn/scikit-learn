@@ -285,7 +285,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         g = _cube
     elif callable(fun):
         def g(x, fun_args):
-            return fun(x, **fun_args)
+            f, f_prime = fun(x, **fun_args)
+            return f, f_prime.mean(axis=-1)
     else:
         exc = ValueError if isinstance(fun, six.string_types) else TypeError
         raise exc("Unknown function %r;"
