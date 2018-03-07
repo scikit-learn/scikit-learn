@@ -77,21 +77,21 @@ def test_fastica_simple(add_noise=False):
 
     # function as fun arg
     def g_test(x):
-        return x ** 3, (3 * x ** 2).mean(axis=-1)
+        return x ** 3, 3 * x ** 2
 
     algos = ['parallel', 'deflation']
     nls = ['logcosh', 'exp', 'cube', g_test]
     whitening = [True, False]
+    assert_raises(IndexError, fastica, m.T, fun=np.tanh,
+                  algorithm='parallel')
+    assert_raises(ValueError, fastica, m.T, fun=np.tanh,
+                  algorithm='deflation')
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
-            assert_raises(ValueError, fastica, m.T, fun=np.tanh,
-                          algorithm=algo)
         else:
             X = PCA(n_components=2, whiten=True).fit_transform(m.T)
             k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False)
-            assert_raises(ValueError, fastica, X, fun=np.tanh,
-                          algorithm=algo)
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
         if whiten:
