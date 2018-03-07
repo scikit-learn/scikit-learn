@@ -950,10 +950,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._check_ngram_range()
+
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
-
-        self._check_ngram_range()
+        
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
