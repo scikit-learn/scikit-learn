@@ -371,11 +371,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -575,11 +579,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -1167,11 +1175,15 @@ class TfidfVectorizer(CountVectorizer):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.
