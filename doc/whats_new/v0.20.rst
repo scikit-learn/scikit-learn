@@ -29,6 +29,8 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
+- The v0.19.0 release notes failed to mention a backwards incompatibility with
+  :class:`model_selection.StratifiedKFold` when ``shuffle=True``.
 
 Details are listed in the changelog below.
 
