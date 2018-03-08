@@ -159,7 +159,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -170,7 +170,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     References
     ----------

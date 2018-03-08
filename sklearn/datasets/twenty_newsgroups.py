@@ -312,7 +312,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     return_X_y : boolean, default=False.
         If True, returns ``(data.data, data.target)`` instead of a Bunch object.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     Returns
     -------

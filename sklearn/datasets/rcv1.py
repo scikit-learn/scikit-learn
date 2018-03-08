@@ -116,7 +116,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch object. See
         below for more information about the `dataset.data` and `dataset.target` object.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -140,7 +140,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     References
     ----------
