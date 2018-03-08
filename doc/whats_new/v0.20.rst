@@ -277,6 +277,9 @@ Classifiers and regressors
   where the coefficient had wrong shape when ``fit_intercept=False``.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
 
+- Fixed a bug in :class:`linear_model.RidgeCV` where using integer ``alphas``
+  raised an error. :issue:`10393` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:

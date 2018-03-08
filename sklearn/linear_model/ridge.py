@@ -778,6 +778,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
@@ -1041,11 +1042,16 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
+        if np.any(self.alphas < 0):
+            raise ValueError("alphas cannot be negative. "
+                             "Got {} containing some "
+                             "negative value instead.".format(self.alphas))
+
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(alpha, y, v, Q, QT_y)
+                out, c = _errors(float(alpha), y, v, Q, QT_y)
             else:
-                out, c = _values(alpha, y, v, Q, QT_y)
+                out, c = _values(float(alpha), y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -1085,7 +1091,7 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = alphas
+        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -1328,6 +1334,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(
