@@ -70,7 +70,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False,return_X_y=False):
+               random_state=None, shuffle=False, return_X_y=False):
     """Load the RCV1 multilabel dataset, downloading it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.

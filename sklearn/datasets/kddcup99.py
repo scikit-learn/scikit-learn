@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True,return_X_y=False):
+                   percent10=True, download_if_missing=True, return_X_y=False):
     """Load and return the kddcup 99 dataset (classification).
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
