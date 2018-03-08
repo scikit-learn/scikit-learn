@@ -183,10 +183,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. The derivative should be averaged along its last dimension.
+        Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, np.mean(3 * x ** 2, axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -285,8 +286,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         g = _cube
     elif callable(fun):
         def g(x, fun_args):
-            f, f_prime = fun(x, **fun_args)
-            return f, f_prime.mean(axis=-1)
+            return fun(x, **fun_args)
     else:
         exc = ValueError if isinstance(fun, six.string_types) else TypeError
         raise exc("Unknown function %r;"
