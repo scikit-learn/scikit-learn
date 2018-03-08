@@ -707,7 +707,6 @@ def test_sparse_design_with_sample_weights():
 
 
 def test_ridgecv_int_alphas():
-
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
@@ -718,7 +717,6 @@ def test_ridgecv_int_alphas():
 
 
 def test_ridgecv_negative_alphas():
-
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
@@ -729,7 +727,7 @@ def test_ridgecv_negative_alphas():
                         "alphas cannot be negative.",
                         ridge.fit, X, y)
 
-    # Negative alphas
+    # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
     assert_raises_regex(ValueError,
                         "alphas cannot be negative.",
