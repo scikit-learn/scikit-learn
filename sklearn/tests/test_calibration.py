@@ -17,7 +17,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
@@ -266,7 +266,7 @@ def test_calibration_nan_imputer():
                                random_state=42)
     X[0, 0] = np.nan
     clf = Pipeline(
-        [('imputer', Imputer()),
+        [('imputer', SimpleImputer()),
          ('rf', RandomForestClassifier(n_estimators=1))])
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)

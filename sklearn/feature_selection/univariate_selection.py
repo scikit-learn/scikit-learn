@@ -231,7 +231,7 @@ def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
-    This is a scoring function to be used in a feature seletion procedure, not
+    This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
     This is done in 2 steps:
@@ -336,7 +336,6 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
@@ -488,9 +487,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
-            raise ValueError("k should be >=0, <= n_features; got %r."
+            raise ValueError("k should be >=0, <= n_features = %d; got %r. "
                              "Use k='all' to return all features."
-                             % self.k)
+                             % (X.shape[1], self.k))
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')

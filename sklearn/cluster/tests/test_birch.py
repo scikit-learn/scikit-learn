@@ -9,6 +9,7 @@ from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.cluster.birch import Birch
 from sklearn.cluster.hierarchical import AgglomerativeClustering
 from sklearn.datasets import make_blobs
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
@@ -93,7 +94,7 @@ def test_n_clusters():
 
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.)
-    assert_warns(UserWarning, brc4.fit, X)
+    assert_warns(ConvergenceWarning, brc4.fit, X)
 
 
 def test_sparse_X():

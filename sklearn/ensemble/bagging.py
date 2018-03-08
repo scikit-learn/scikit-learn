@@ -242,7 +242,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -275,7 +274,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         random_state = check_random_state(self.random_state)
 
@@ -459,13 +457,15 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
@@ -480,7 +480,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
-        a whole new ensemble.
+        a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
         .. versionadded:: 0.17
            *warm_start* constructor parameter.
@@ -827,13 +827,15 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
@@ -848,7 +850,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
-        a whole new ensemble.
+        a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.

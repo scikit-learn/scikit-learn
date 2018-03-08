@@ -192,8 +192,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
     -------
     inertia : float
         The inertia of the batch prior to centers update, i.e. the sum
-        distances to the closest center for each sample. This is the objective
-        function being minimized by the k-means algorithm.
+        of squared distances to the closest center for each sample. This 
+        is the objective function being minimized by the k-means algorithm.
 
     squared_diff : float
         The sum of squared update (squared norm of the centers position

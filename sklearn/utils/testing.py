@@ -45,6 +45,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
+from sklearn.externals.funcsigs import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
@@ -122,7 +123,7 @@ def assert_warns(warning_class, func, *args, **kw):
         The class to test for, e.g. UserWarning.
 
     func : callable
-        Calable object to trigger warnings.
+        Callable object to trigger warnings.
 
     *args : the positional arguments to `func`.
 
@@ -168,12 +169,12 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         The class to test for, e.g. UserWarning.
 
     message : str | callable
-        The entire message or a substring to  test for. If callable,
-        it takes a string as argument and will trigger an assertion error
-        if it returns `False`.
+        The message or a substring of the message to test for. If callable,
+        it takes a string as the argument and will trigger an AssertionError
+        if the callable returns `False`.
 
     func : callable
-        Calable object to trigger warnings.
+        Callable object to trigger warnings.
 
     *args : the positional arguments to `func`.
 
@@ -181,7 +182,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
     Returns
     -------
-
     result : the return value of `func`
 
     """
@@ -228,6 +228,23 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     return result
 
 
+def assert_warns_div0(func, *args, **kw):
+    """Assume that numpy's warning for divide by zero is raised
+
+    Handles the case of platforms that do not support warning on divide by zero
+    """
+
+    with np.errstate(divide='warn', invalid='warn'):
+        try:
+            assert_warns(RuntimeWarning, np.divide, 1, np.zeros(1))
+        except AssertionError:
+            # This platform does not report numpy divide by zeros
+            return func(*args, **kw)
+        return assert_warns_message(RuntimeWarning,
+                                    'invalid value encountered',
+                                    func, *args, **kw)
+
+
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
     # very important to avoid uncontrolled state propagation
@@ -251,9 +268,9 @@ def assert_no_warnings(func, *args, **kw):
 def ignore_warnings(obj=None, category=Warning):
     """Context manager and decorator to ignore warnings.
 
-    Note. Using this (in both variants) will clear all warnings
+    Note: Using this (in both variants) will clear all warnings
     from all python modules loaded. In case you need to test
-    cross-module-warning-logging this is not your tool of choice.
+    cross-module-warning-logging, this is not your tool of choice.
 
     Parameters
     ----------
@@ -281,7 +298,7 @@ def ignore_warnings(obj=None, category=Warning):
 class _IgnoreWarnings(object):
     """Improved and simplified Python warnings context manager and decorator.
 
-    This class allows to ignore the warnings raise by a function.
+    This class allows the user to ignore the warnings raised by a function.
     Copied from Python 2.7.5 and modified as required.
 
     Parameters
@@ -341,37 +358,30 @@ class _IgnoreWarnings(object):
 assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 
-
-def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
-                     err_msg='', verbose=True):
-    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    if np.allclose(actual, desired, rtol=rtol, atol=atol):
-        return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
-           'actual %s, desired %s') % (rtol, atol, actual, desired)
-    raise AssertionError(msg)
-
-
-if hasattr(np.testing, 'assert_allclose'):
-    assert_allclose = np.testing.assert_allclose
-else:
-    assert_allclose = _assert_allclose
-
+assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions.
+    """Helper function to test the message raised in an exception.
+
+    Given an exception, a callable to raise the exception, and
+    a message string, tests that the correct exception is raised and
+    that the message is a substring of the error thrown. Used to test
+    that the specific message thrown during an exception is correct.
 
     Parameters
     ----------
     exceptions : exception or tuple of exception
-        Name of the estimator
+        An Exception object.
+
+    message : str
+        The error message or a substring of the error message.
 
     function : callable
-        Calable object to raise error
+        Callable object to raise error.
 
     *args : the positional arguments to `function`.
 
-    **kw : the keyword arguments to `function`
+    **kwargs : the keyword arguments to `function`.
     """
     try:
         function(*args, **kwargs)
@@ -474,20 +484,22 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
 
 class mock_mldata_urlopen(object):
+    """Object that mocks the urlopen function to fake requests to mldata.
 
+    When requesting a dataset with a name that is in mock_datasets, this object
+    creates a fake dataset in a StringIO object and returns it. Otherwise, it
+    raises an HTTPError.
+
+    Parameters
+    ----------
+    mock_datasets : dict
+        A dictionary of {dataset_name: data_dict}, or
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a
+        dictionary of {column_name: data_array}, and `ordering` is a list of
+        column_names to determine the ordering in the data set (see
+        :func:`fake_mldata` for details).
+    """
     def __init__(self, mock_datasets):
-        """Object that mocks the urlopen function to fake requests to mldata.
-
-        `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering).
-        `data_dict` itself is a dictionary of {column_name: data_array},
-        and `ordering` is a list of column_names to determine the ordering
-        in the data set (see `fake_mldata` for details).
-
-        When requesting a dataset with a name that is in mock_datasets,
-        this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an HTTPError.
-        """
         self.mock_datasets = mock_datasets
 
     def __call__(self, urlname):
@@ -526,17 +538,18 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
+                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
+                   "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
 
-# some trange ones
-DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
+# some strange ones
+DONT_TEST = ['SparseCoder', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder',
              'MultiLabelBinarizer', 'TfidfTransformer',
              'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding',
+             'OneHotEncoder', 'RandomTreesEmbedding', 'CategoricalEncoder',
              'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
              'TruncatedSVD', 'PolynomialFeatures',
              'GaussianRandomProjectionHash', 'HashingVectorizer',
@@ -768,36 +781,17 @@ class TempMemmap(object):
         _delete_folder(self.temp_folder)
 
 
-class _named_check(object):
-    """Wraps a check to show a useful description
-
-    Parameters
-    ----------
-    check : function
-        Must have ``__name__`` and ``__call__``
-    arg_text : str
-        A summary of arguments to the check
-    """
-    # Setting the description on the function itself can give incorrect results
-    # in failing tests
-    def __init__(self, check, arg_text):
-        self.check = check
-        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
-            inspect.stack()[1], check, arg_text))
-
-    def __call__(self, *args, **kwargs):
-        return self.check(*args, **kwargs)
-
 # Utils to test docstrings
 
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_args is not available for python < 3.5")
 
-    params = inspect.signature(function).parameters
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
     args = [key for key, param in params.items()
             if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
     if varargs:
@@ -887,23 +881,16 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
 
     param_names = []
     for name, type_definition, param_doc in doc['Parameters']:
-        if (type_definition.strip() == "" or
-                type_definition.strip().startswith(':')):
-
-            param_name = name.lstrip()
-
-            # If there was no space between name and the colon
-            # "verbose:" -> len(["verbose", ""][0]) -> 7
-            # If "verbose:"[7] == ":", then there was no space
-            if (':' not in param_name or
-                    param_name[len(param_name.split(':')[0].strip())] == ':'):
+        if not type_definition.strip():
+            if ':' in name and name[:name.index(':')][-1:].strip():
                 incorrect += [func_name +
                               ' There was no space between the param name and '
-                              'colon ("%s")' % name]
-            else:
-                incorrect += [func_name + ' Incorrect type definition for '
-                              'param: "%s" (type definition was "%s")'
-                              % (name.split(':')[0], type_definition)]
+                              'colon (%r)' % name]
+            elif name.rstrip().endswith(':'):
+                incorrect += [func_name +
+                              ' Parameter %r has an empty type spec. '
+                              'Remove the colon' % (name.lstrip())]
+
         if '*' not in name:
             param_names.append(name.split(':')[0].strip('` '))
 

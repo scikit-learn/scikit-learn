@@ -38,7 +38,7 @@ The empirical covariance matrix of a sample can be computed using the
 whether the data are centered or not, the result will be different, so
 one may want to use the ``assume_centered`` parameter accurately. More precisely
 if one uses ``assume_centered=False``, then the test set is supposed to have the
-same mean vector as the training set. If not so, both should be centered by the 
+same mean vector as the training set. If not so, both should be centered by the
 user, and ``assume_centered=True`` should be used.
 
 .. topic:: Examples:
@@ -104,6 +104,23 @@ The Ledoit-Wolf estimator of the covariance matrix can be computed on
 a sample with the :meth:`ledoit_wolf` function of the
 `sklearn.covariance` package, or it can be otherwise obtained by
 fitting a :class:`LedoitWolf` object to the same sample.
+
+.. note:: **Case when population covariance matrix is isotropic**
+
+    It is important to note that when the number of samples is much larger than
+    the number of features, one would expect that no shrinkage would be
+    necessary. The intuition behind this is that if the population covariance
+    is full rank, when the number of sample grows, the sample covariance will
+    also become positive definite. As a result, no shrinkage would necessary
+    and the method should automatically do this.
+
+    This, however, is not the case in the Ledoit-Wolf procedure when the
+    population covariance happens to be a multiple of the identity matrix. In
+    this case, the Ledoit-Wolf shrinkage estimate approaches 1 as the number of
+    samples increases. This indicates that the optimal estimate of the
+    covariance matrix in the Ledoit-Wolf sense is multiple of the identity.
+    Since the population covariance is already a multiple of the identity
+    matrix, the Ledoit-Wolf solution is indeed a reasonable estimate.
 
 .. topic:: Examples:
 
@@ -185,9 +202,9 @@ situation, or for very correlated data, they can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 
-The :class:`GraphLasso` estimator uses an l1 penalty to enforce sparsity on
+The :class:`GraphicalLasso` estimator uses an l1 penalty to enforce sparsity on
 the precision matrix: the higher its ``alpha`` parameter, the more sparse
-the precision matrix. The corresponding :class:`GraphLassoCV` object uses
+the precision matrix. The corresponding :class:`GraphicalLassoCV` object uses
 cross-validation to automatically set the ``alpha`` parameter.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_sparse_cov_001.png
@@ -206,7 +223,7 @@ cross-validation to automatically set the ``alpha`` parameter.
    that:
 
    * Recovery is easier from a correlation matrix than a covariance
-     matrix: standardize your observations before running :class:`GraphLasso`
+     matrix: standardize your observations before running :class:`GraphicalLasso`
 
    * If the underlying graph has nodes with much more connections than
      the average node, the algorithm will miss some of these connections.
@@ -216,7 +233,7 @@ cross-validation to automatically set the ``alpha`` parameter.
 
    * Even if you are in favorable recovery conditions, the alpha
      parameter chosen by cross-validation (e.g. using the
-     :class:`GraphLassoCV` object) will lead to selecting too many edges.
+     :class:`GraphicalLassoCV` object) will lead to selecting too many edges.
      However, the relevant edges will have heavier weights than the
      irrelevant ones.
 
@@ -334,4 +351,3 @@ ____
 
     * - |robust_vs_emp|
       - |mahalanobis|
-

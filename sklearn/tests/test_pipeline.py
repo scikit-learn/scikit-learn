@@ -24,10 +24,11 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
@@ -140,6 +141,17 @@ class DummyTransf(Transf):
         # store timestamp to figure out whether the result of 'fit' has been
         # cached or not
         self.timestamp_ = time.time()
+        return self
+
+
+class DummyEstimatorParams(BaseEstimator):
+    """Mock classifier that takes params on predict"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X, got_attribute=False):
+        self.got_attribute = got_attribute
         return self
 
 
@@ -289,7 +301,7 @@ def test_pipeline_raise_set_params_error():
                  'with `estimator.get_params().keys()`.')
 
     assert_raise_message(ValueError,
-                         error_msg % ('fake', 'Pipeline'),
+                         error_msg % ('fake', pipe),
                          pipe.set_params,
                          fake='nope')
 
@@ -395,6 +407,16 @@ def test_fit_predict_with_intermediate_fit_params():
     assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
     assert_true(pipe.named_steps['clf'].successful)
     assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+
+
+def test_predict_with_predict_params():
+    # tests that Pipeline passes predict_params to the final estimator
+    # when predict is invoked
+    pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
+    pipe.fit(None, None)
+    pipe.predict(X=None, got_attribute=True)
+
+    assert_true(pipe.named_steps['clf'].got_attribute)
 
 
 def test_feature_union():
@@ -861,6 +883,16 @@ def test_step_name_validation():
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
             assert_raise_message(ValueError, message, est.fit_transform,
                                  [[1]], [1])
+
+
+def test_set_params_nested_pipeline():
+    estimator = Pipeline([
+        ('a', Pipeline([
+            ('b', DummyRegressor())
+        ]))
+    ])
+    estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
+    estimator.set_params(a__steps=[('b', LogisticRegression())], a__b__C=5)
 
 
 def test_pipeline_wrong_memory():

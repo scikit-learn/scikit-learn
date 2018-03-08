@@ -22,6 +22,7 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
@@ -31,7 +32,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
-
+from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
@@ -55,7 +56,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : numpy.RandomState
+    random_state : RandomState
         The generator used to initialize the centers.
 
     n_local_trials : integer, optional
@@ -175,7 +176,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
-        The observations to cluster.
+        The observations to cluster. It must be noted that the data
+        will be converted to C ordering, which will cause a memory copy
+        if the given data is not C-contiguous.
 
     n_clusters : int
         The number of clusters to form as well as the number of
@@ -230,10 +233,12 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True, then the original data is not
-        modified.  If False, the original data is modified, and put back before
-        the function returns, but small numerical differences may be introduced
-        by subtracting and then adding the data mean.
+        the data first.  If copy_x is True (default), then the original data is
+        not modified, ensuring X is C-contiguous.  If False, the original data
+        is modified, and put back before the function returns, but small
+        numerical differences may be introduced by subtracting and then adding
+        the data mean, in this case it will also not ensure that data is
+        C-contiguous which may cause a significant slowdown.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
@@ -280,7 +285,14 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
-    X = as_float_array(X, copy=copy_x)
+    # avoid forcing order when copy_x=False
+    order = "C" if copy_x else None
+    X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                    order=order, copy=copy_x)
+    # verify that the number of samples given is larger than k
+    if _num_samples(X) < n_clusters:
+        raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
+            _num_samples(X), n_clusters))
     tol = _tolerance(X, tol)
 
     # If the distances are precomputed every job will create a matrix of shape
@@ -374,6 +386,13 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             X += X_mean
         best_centers += X_mean
 
+    distinct_clusters = len(set(best_labels))
+    if distinct_clusters < n_clusters:
+        warnings.warn("Number of distinct clusters ({}) found smaller than "
+                      "n_clusters ({}). Possibly due to duplicate points "
+                      "in X.".format(distinct_clusters, n_clusters),
+                      ConvergenceWarning, stacklevel=2)
+
     if return_n_iter:
         return best_centers, best_labels, best_inertia, best_n_iter
     else:
@@ -385,8 +404,7 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          random_state=None, tol=1e-4,
                          precompute_distances=True):
     if sp.issparse(X):
-        raise ValueError("algorithm='elkan' not supported for sparse input X")
-    X = check_array(X, order="C")
+        raise TypeError("algorithm='elkan' not supported for sparse input X")
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
@@ -551,7 +569,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
         Indices of clusters that samples are assigned to.
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     """
     n_samples = X.shape[0]
@@ -602,7 +620,7 @@ def _labels_inertia(X, x_squared_norms, centers,
         The resulting assignment
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
@@ -761,12 +779,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    copy_x : boolean, default True
+    copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True, then the original data is not
-        modified.  If False, the original data is modified, and put back before
-        the function returns, but small numerical differences may be introduced
-        by subtracting and then adding the data mean.
+        the data first.  If copy_x is True (default), then the original data is
+        not modified, ensuring X is C-contiguous.  If False, the original data
+        is modified, and put back before the function returns, but small
+        numerical differences may be introduced by subtracting and then adding
+        the data mean, in this case it will also not ensure that data is
+        C-contiguous which may cause a significant slowdown.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
@@ -792,7 +812,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Labels of each point
 
     inertia_ : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     Examples
     --------
@@ -853,14 +873,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.n_jobs = n_jobs
         self.algorithm = algorithm
 
-    def _check_fit_data(self, X):
-        """Verify that the number of samples given is larger than k"""
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32])
-        if X.shape[0] < self.n_clusters:
-            raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
-                X.shape[0], self.n_clusters))
-        return X
-
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
@@ -878,13 +890,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster.
+            Training instances to cluster. It must be noted that the data
+            will be converted to C ordering, which will cause a memory
+            copy if the given data is not C-contiguous.
 
         y : Ignored
 
         """
         random_state = check_random_state(self.random_state)
-        X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
@@ -907,7 +920,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
-        u : Ignored
+        y : Ignored
 
         Returns
         -------
@@ -937,7 +950,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         # np.array or CSR format already.
         # XXX This skips _check_test_data, which may change the dtype;
         # we should refactor the input validation.
-        X = self._check_fit_data(X)
         return self.fit(X)._transform(X)
 
     def transform(self, X):
@@ -1068,7 +1080,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     Returns
     -------
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     squared_diff : numpy array, shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
@@ -1344,7 +1356,9 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster.
+            Training instances to cluster. It must be noted that the data
+            will be converted to C ordering, which will cause a memory copy
+            if the given data is not C-contiguous.
 
         y : Ignored
 
@@ -1354,8 +1368,8 @@ class MiniBatchKMeans(KMeans):
                         dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
-            raise ValueError("Number of samples smaller than number "
-                             "of clusters.")
+            raise ValueError("n_samples=%d should be >= n_clusters=%d"
+                             % (n_samples, self.n_clusters))
 
         n_init = self.n_init
         if hasattr(self.init, '__array__'):
@@ -1488,7 +1502,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : array, shap (n_samples,)
+        labels : array, shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1509,13 +1523,14 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Coordinates of the data points to cluster.
+            Coordinates of the data points to cluster. It must be noted that
+            X will be copied if it is not C-contiguous.
 
         y : Ignored
 
         """
 
-        X = check_array(X, accept_sparse="csr")
+        X = check_array(X, accept_sparse="csr", order="C")
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
