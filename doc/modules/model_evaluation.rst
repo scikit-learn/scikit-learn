@@ -1450,6 +1450,49 @@ Here is a small example of usage of this function::
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
 
+.. _ndcg:
+
+Normalized Discounted Cumulative Gain
+-------------------------------------
+
+Discounted Cumulative Gain (DCG) orders the true targets (e.g. relevance of query
+answers) in the predicted order, then multiplies them by a logarithmic decay
+and sums the result. The sum can be truncated after the first :math:`K` results,
+in which case we call it DCG@K.
+Normalized Discounted Cumulative Gain (NDCG, or NDCG@K) is DCG divided by the
+DCG obtained by a perfect prediction, so that it is always between 0 and 1.
+
+For one sample, given the vector of continuous ground-truth values for each
+target :math:`y \in \mathbb{R}^{M}`, where :math:`M` the number of outputs, and
+the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+DCG score is
+
+.. math::
+   \sum_{r=1}^{\min(K, M)}\frac{y_r^f}{\log(1 + r)}
+
+and the NDCG score is the DCG score divided by the DCG score obtained for
+:math:`y`.
+
+.. topic:: References:
+
+  * Wikipedia entry for Discounted Cumulative Gain:
+    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+
+  * Jarvelin, K., & Kekalainen, J. (2002).
+    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
+    Information Systems (TOIS), 20(4), 422-446.
+
+  * Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
+    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
+    Annual Conference on Learning Theory (COLT 2013)
+
+  * McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+
+
+
 .. _regression_metrics:
 
 Regression metrics
