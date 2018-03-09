@@ -174,24 +174,23 @@ Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
 
     >>> import numpy as np
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
+    >>> def my_custom_loss_func(y_true, y_pred):
+    ...     diff = np.abs(y_true - y_pred).max()
     ...     return np.log(1 + diff)
     ...
-    >>> # loss_func will negate the return value of my_custom_loss_func,
-    >>> #  which will be np.log(2), 0.693, given the values for ground_truth
-    >>> #  and predictions defined below.
-    >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1], [1]]
-    >>> predictions  = [0, 1]
+    >>> # score will negate the return value of my_custom_loss_func,
+    >>> # which will be np.log(2), 0.693, given the values for X
+    >>> # and y defined below.
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> X = [[1], [1]]
+    >>> y  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
-    >>> clf = clf.fit(ground_truth, predictions)
-    >>> loss(clf,ground_truth, predictions) # doctest: +ELLIPSIS
-    -0.69...
-    >>> score(clf,ground_truth, predictions) # doctest: +ELLIPSIS
+    >>> clf = clf.fit(X, y)
+    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
     0.69...
+    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    -0.69...
 
 
 .. _diy_scoring:
@@ -245,19 +244,19 @@ permitted and will require a wrapper to return a single metric::
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
     >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
-    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
-    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
+    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
-    [12 13 15]
+    [16 14  9]
     >>> # Getting the test set false negative scores
     >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
-    [5 4 1]
+    [1 3 7]
 
 .. _classification_metrics:
 
@@ -492,7 +491,7 @@ given binary ``y_true`` and ``y_pred``:
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
   .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
-     classifier system < https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -1172,6 +1171,10 @@ Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
+
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
 
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png

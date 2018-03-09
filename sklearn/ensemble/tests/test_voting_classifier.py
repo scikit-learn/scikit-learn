@@ -414,7 +414,7 @@ def test_transform():
         flatten_transform=False).fit(X, y)
 
     warn_msg = ("'flatten_transform' default value will be "
-                "changed to True in 0.21."
+                "changed to True in 0.21. "
                 "To silence this warning you may"
                 " explicitly set flatten_transform=False.")
     res = assert_warns_message(DeprecationWarning, warn_msg,

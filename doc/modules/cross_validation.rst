@@ -182,7 +182,8 @@ The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
 
 - It allows specifying multiple metrics for evaluation.
 
-- It returns a dict containing training scores, fit-times and score-times in
+- It returns a dict containing fit-times, score-times
+  (and optionally training scores as well as fitted estimators) in
   addition to the test score.
 
 For single metric evaluation, where the scoring parameter is a string,
@@ -195,6 +196,9 @@ following keys -
 ``return_train_score`` is set to ``True`` by default. It adds train score keys
 for all the scorers. If train scores are not needed, this should be set to
 ``False`` explicitly.
+
+You may also retain the estimator fitted on each training set by setting
+``return_estimator=True``.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
@@ -226,9 +230,10 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 Here is an example of ``cross_validate`` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
-    ...                         scoring='precision_macro')
+    ...                         scoring='precision_macro',
+    ...                         return_estimator=True)
     >>> sorted(scores.keys())
-    ['fit_time', 'score_time', 'test_score', 'train_score']
+    ['estimator', 'fit_time', 'score_time', 'test_score', 'train_score']
 
 
 Obtaining predictions by cross-validation
@@ -260,7 +265,7 @@ section.
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
-    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
 Cross validation iterators

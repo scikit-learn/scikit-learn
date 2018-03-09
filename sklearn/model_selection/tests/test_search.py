@@ -63,7 +63,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
@@ -922,9 +922,6 @@ def test_search_iid_param():
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s_i][0]
                                        for s_i in range(search.n_splits_)))
-        train_cv_scores = np.array(list(search.cv_results_['split%d_train_'
-                                                           'score' % s_i][0]
-                                        for s_i in range(search.n_splits_)))
         test_mean = search.cv_results_['mean_test_score'][0]
         test_std = search.cv_results_['std_test_score'][0]
 
@@ -1295,12 +1292,12 @@ def test_predict_proba_disabled():
 
 
 def test_grid_search_allows_nans():
-    # Test GridSearchCV with Imputer
+    # Test GridSearchCV with SimpleImputer
     X = np.arange(20, dtype=np.float64).reshape(5, -1)
     X[2, :] = np.nan
     y = [0, 0, 1, 1, 1]
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
@@ -1359,6 +1356,14 @@ def test_grid_search_failing_classifier():
                for cand_i in range(n_candidates)
                if gs.cv_results_['param_parameter'][cand_i] ==
                FailingClassifier.FAILING_PARAMETER)
+
+    ranks = gs.cv_results_['rank_test_score']
+
+    # Check that succeeded estimators have lower ranks
+    assert ranks[0] <= 2 and ranks[1] <= 2
+    # Check that failed estimator has the highest rank
+    assert ranks[clf.FAILING_PARAMETER] == 3
+    assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
 def test_grid_search_failing_classifier_raise():

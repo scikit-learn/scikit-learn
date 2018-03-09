@@ -144,6 +144,17 @@ class DummyTransf(Transf):
         return self
 
 
+class DummyEstimatorParams(BaseEstimator):
+    """Mock classifier that takes params on predict"""
+
+    def fit(self, X, y):
+        return self
+
+    def predict(self, X, got_attribute=False):
+        self.got_attribute = got_attribute
+        return self
+
+
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
@@ -397,6 +408,16 @@ def test_fit_predict_with_intermediate_fit_params():
     assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
     assert_true(pipe.named_steps['clf'].successful)
     assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+
+
+def test_predict_with_predict_params():
+    # tests that Pipeline passes predict_params to the final estimator
+    # when predict is invoked
+    pipe = Pipeline([('transf', Transf()), ('clf', DummyEstimatorParams())])
+    pipe.fit(None, None)
+    pipe.predict(X=None, got_attribute=True)
+
+    assert_true(pipe.named_steps['clf'].got_attribute)
 
 
 def test_feature_union():

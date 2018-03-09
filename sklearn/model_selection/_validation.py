@@ -39,7 +39,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score="warn"):
+                   pre_dispatch='2*n_jobs', return_train_score="warn",
+                   return_estimator=False):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -129,6 +130,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+    return_estimator : boolean, default False
+        Whether to return the estimators fitted on each split.
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -150,6 +154,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 The time for scoring the estimator on the test set for each
                 cv split. (Note time for scoring on the train set is not
                 included even if ``return_train_score`` is set to ``True``
+            ``estimator``
+                The estimator objects for each cv split.
+                This is available only if ``return_estimator`` parameter
+                is set to ``True``.
 
     Examples
     --------
@@ -203,20 +211,25 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
-            return_times=True)
+            return_times=True, return_estimator=return_estimator)
         for train, test in cv.split(X, y, groups))
 
+    zipped_scores = list(zip(*scores))
     if return_train_score:
-        train_scores, test_scores, fit_times, score_times = zip(*scores)
+        train_scores = zipped_scores.pop(0)
         train_scores = _aggregate_score_dicts(train_scores)
-    else:
-        test_scores, fit_times, score_times = zip(*scores)
+    if return_estimator:
+        fitted_estimators = zipped_scores.pop()
+    test_scores, fit_times, score_times = zipped_scores
     test_scores = _aggregate_score_dicts(test_scores)
 
     # TODO: replace by a dict in 0.21
     ret = DeprecationDict() if return_train_score == 'warn' else {}
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
+
+    if return_estimator:
+        ret['estimator'] = fitted_estimators
 
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
@@ -347,7 +360,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise'):
+                   return_times=False, return_estimator=False,
+                   error_score='raise-deprecating'):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -381,11 +395,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -404,6 +419,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     return_times : boolean, optional, default: False
         Whether to return the fit/score times.
+
+    return_estimator : boolean, optional, default: False
+        Whether to return the fitted estimator.
 
     Returns
     -------
@@ -425,6 +443,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
+
+    estimator : estimator object
+        The fitted estimator
     """
     if verbose > 1:
         if parameters is None:
@@ -439,7 +460,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
-    test_scores = {}
     train_scores = {}
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -463,6 +483,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         fit_time = time.time() - start_time
         score_time = 0.0
         if error_score == 'raise':
+            raise
+        elif error_score == 'raise-deprecating':
+            warnings.warn("From version 0.22, errors during fit will result "
+                          "in a cross validation score of NaN by default. Use "
+                          "error_score='raise' if you want an exception "
+                          "raised or error_score=np.nan to adopt the "
+                          "behavior from version 0.22.",
+                          FutureWarning)
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
@@ -513,6 +541,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
+    if return_estimator:
+        ret.append(estimator)
     return ret
 
 
