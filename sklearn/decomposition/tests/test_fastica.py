@@ -259,3 +259,15 @@ def test_inverse_transform():
             # reversibility test in non-reduction case
             if n_components == X.shape[1]:
                 assert_array_almost_equal(X, X2)
+
+
+def test_fastica_errors():
+    n_features = 3
+    n_samples = 10
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, n_features))
+    w_init = rng.randn(n_features + 1, n_features + 1)
+    assert_raises(ValueError, FastICA, max_iter=0)
+    assert_raises(ValueError, fastica, X, fun_args={'alpha': 0})
+    assert_raises(ValueError, fastica, X, w_init=w_init)
+    assert_raises(ValueError, fastica, X, algorithm='pizza')
