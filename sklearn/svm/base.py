@@ -168,8 +168,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if self.gamma in ('scale', 'auto', 'auto_deprecated'):
-            if isinstance(X, sp.csr_matrix):
+        if self.gamma in ('scale', 'auto_deprecated'):
+            if sparse:
                 # std = sqrt(E[X^2] - E[X]^2)
                 X_std = np.sqrt((X.multiply(X)).mean() - (X.mean())**2)
             else:
@@ -180,10 +180,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 else:
                     self._gamma = 1.0
             else:
-                if (self.gamma == 'auto_deprecated' and
-                        self.kernel not in ('linear', 'precomputed') and
-                        not np.isclose(X_std, 1.0) and
-                        not callable(self.kernel)):
+                kernel_uses_gamma = (not callable(self.kernel) and self.kernel
+                                     not in ('linear', 'precomputed'))
+                if kernel_uses_gamma and not np.isclose(X_std, 1.0):
                     # NOTE: when deprecation ends we need to remove explicitly
                     # setting `gamma` in examples (also in tests). See
                     # https://github.com/scikit-learn/scikit-learn/pull/10331
@@ -194,6 +193,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                   "gamma explicitly to 'auto' or 'scale' to "
                                   "avoid this warning.", DeprecationWarning)
                 self._gamma = 1.0 / X.shape[1]
+        elif self.gamma == 'auto':
+            self._gamma = 1.0 / X.shape[1]
         else:
             self._gamma = self.gamma
 
