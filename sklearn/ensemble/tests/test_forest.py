@@ -1221,3 +1221,27 @@ def test_min_impurity_decrease():
             # Simply check if the parameter is passed on correctly. Tree tests
             # will suffice for the actual working of this param
             assert_equal(tree.min_impurity_decrease, 0.1)
+
+
+def test_all_predictions_attribute():
+    n_targets = 2
+    n_estimators = 10
+    X_reg, y_reg = datasets.make_regression(n_samples=100, n_targets=n_targets)
+    X_cls, y_cls = datasets.make_classification(n_samples=100, n_classes=n_targets)
+    regressors = [RandomForestClassifier, RandomForestRegressor,
+                      ExtraTreesClassifier, ExtraTreesRegressor]
+
+    for Estimator in regressors:
+        est = Estimator(n_estimators=10)
+        assert_equal(est.all_predictions_, None)
+        if est._estimator_type == 'classifier':
+            est.fit(X_cls, y_cls)
+            X_test = X_cls[-10:]
+        else:
+            est.fit(X_reg, y_reg)
+            X_test = X_reg[-10:]
+        est.predict(X_test)
+        all_pred_shape = est.all_predictions_.shape
+        assert_equal(all_pred_shape[0], X_test.shape[0])
+        assert_equal(all_pred_shape[1], n_estimators)
+        assert_equal(all_pred_shape[2], n_targets)
