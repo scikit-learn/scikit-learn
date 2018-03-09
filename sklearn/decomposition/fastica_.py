@@ -456,7 +456,7 @@ class FastICA(BaseEstimator, TransformerMixin):
                  w_init=None, random_state=None):
         super(FastICA, self).__init__()
         if max_iter < 1:
-            raise (ValueError, "max_iter should be greater than 1")
+            raise ValueError("max_iter should be greater than 1")
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
