@@ -323,7 +323,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
     filebase = '20newsgroup_vectorized'
