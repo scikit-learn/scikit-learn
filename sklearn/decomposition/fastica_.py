@@ -75,7 +75,6 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     for j in range(n_components):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
-        i = -1
         for i in moves.xrange(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
@@ -105,7 +104,6 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     W = _sym_decorrelation(w_init)
     del w_init
     p_ = float(X.shape[1])
-    ii = -1
     for ii in moves.xrange(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
@@ -456,6 +454,8 @@ class FastICA(BaseEstimator, TransformerMixin):
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super(FastICA, self).__init__()
+        if max_iter < 1:
+            raise (ValueError, "max_iter should be greater than 1")
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
