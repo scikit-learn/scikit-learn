@@ -25,7 +25,9 @@ def test_fetch_rcv1():
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
     # test return_X_y option
-    X_y_tuple = fetch_rcv1(shuffle=False, download_if_missing=False,return_X_y=True)
+    X_y_tuple = fetch_rcv1(shuffle=False, download_if_missing=False,
+                           return_X_y=True)
+
     assert_true(isinstance(X_y_tuple, tuple))
     assert_array_equal(X_y_tuple[0], X1)
     assert_array_equal(X_y_tuple[1], Y1)

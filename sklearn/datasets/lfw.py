@@ -238,7 +238,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                      min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
-                     download_if_missing=True):
+                     download_if_missing=True, return_X_y=False):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -287,6 +287,12 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch object. See
+        below for more information about the `dataset.data` and `dataset.target` object.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     dataset : dict-like object with the following attributes:
@@ -307,6 +313,11 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     dataset.DESCR : string
         Description of the Labeled Faces in the Wild (LFW) dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
+
     """
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
@@ -323,8 +334,13 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         data_folder_path, resize=resize,
         min_faces_per_person=min_faces_per_person, color=color, slice_=slice_)
 
+    X = faces.reshape(len(faces), -1)
+
+    if return_X_y:
+        return X, target
+
     # pack the results as a Bunch instance
-    return Bunch(data=faces.reshape(len(faces), -1), images=faces,
+    return Bunch(data=X, images=faces,
                  target=target, target_names=target_names,
                  DESCR="LFW faces dataset")
 
