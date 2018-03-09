@@ -210,7 +210,7 @@ def average_precision_score(y_true, y_score, average="macro",
     """
     def _binary_uninterpolated_average_precision(
             y_true, y_score, sample_weight=None):
-        precision, recall, thresholds = precision_recall_curve(
+        precision, recall, _ = precision_recall_curve(
             y_true, y_score, sample_weight=sample_weight)
         # Return the step function integral
         # The following works because the last entry of precision is
@@ -303,8 +303,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             raise ValueError("Only one class present in y_true. ROC AUC score "
                              "is not defined in that case.")
 
-        fpr, tpr, thresholds = roc_curve(y_true, y_score,
-                                        sample_weight=sample_weight)
+        fpr, tpr, _ = roc_curve(y_true, y_score,
+                                sample_weight=sample_weight)
         if max_fpr is None or max_fpr == 1:
             return auc(fpr, tpr)
         if max_fpr <= 0 or max_fpr > 1:
