@@ -70,10 +70,12 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     n_components = w_init.shape[0]
     W = np.zeros((n_components, n_components), dtype=X.dtype)
     n_iter = []
+
     # j is the index of the extracted component
     for j in range(n_components):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
+
         for i in moves.xrange(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
