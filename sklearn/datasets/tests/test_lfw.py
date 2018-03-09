@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -138,6 +139,15 @@ def test_load_fake_lfw_people():
     assert_array_equal(lfw_people.target_names,
                        ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+
+    # test return_X_y option
+    X_y_tuple = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, resize=None,
+                                  slice_=None, color=True,
+                                  download_if_missing=False,
+                                 return_X_y=True)
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], lfw_people.data)
+    assert_array_equal(X_y_tuple[1], lfw_people.target)
 
 
 def test_load_fake_lfw_people_too_restrictive():
