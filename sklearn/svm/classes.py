@@ -467,9 +467,6 @@ class SVC(BaseSVC):
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
 
-        .. versionchanged:: 0.20
-           Default parameter value will change to 'scale' in version 0.22.
-
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -635,9 +632,6 @@ class NuSVC(BaseSVC):
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
 
-        .. versionchanged:: 0.20
-           Default parameter value will change to 'scale' in version 0.22.
-
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -802,9 +796,6 @@ class SVR(BaseLibSVM, RegressorMixin):
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
 
-        .. versionchanged:: 0.20
-           Default parameter value will change to 'scale' in version 0.22.
-
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -929,9 +920,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
 
-        .. versionchanged:: 0.20
-           Default parameter value will change to 'scale' in version 0.22.
-
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -1048,9 +1036,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
         was passed.
-
-        .. versionchanged:: 0.20
-           Default parameter value will change to 'scale' in version 0.22.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
