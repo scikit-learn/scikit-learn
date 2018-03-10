@@ -995,3 +995,15 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
+
+
+def test_vectorizer_ngram_range_validation():
+    invalid_range = (3, 2)
+    min_n, max_n = invalid_range
+    message = ('Invalid value for "ngram_range": {0},'
+               ' min_n must not be greater than max_n.'
+               .format(invalid_range))
+    exception = ValueError
+    for vec in [CountVectorizer, TfidfVectorizer, HashingVectorizer]:
+        assert_raise_message(
+                exception, message, vec, ngram_range=invalid_range)
