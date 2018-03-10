@@ -190,7 +190,7 @@ object::
               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-         [[ -1.77484909e-19  ... 4.07058917e-18]]
+         [[-1.77484909e-19  ... 4.07058917e-18]]
 
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
@@ -212,7 +212,7 @@ object::
                steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
      >>> print(cached_pipe.named_steps['reduce_dim'].components_)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-         [[ -1.77484909e-19  ... 4.07058917e-18]]
+         [[-1.77484909e-19  ... 4.07058917e-18]]
      >>> # Remove the cache directory
      >>> rmtree(cachedir)
 

@@ -31,9 +31,9 @@ that contain the missing values::
     SimpleImputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
-    [[ 4.          2.        ]
-     [ 6.          3.666...]
-     [ 7.          6.        ]]
+    [[4.          2.        ]
+     [6.          3.666...]
+     [7.          6.        ]]
 
 The :class:`SimpleImputer` class also supports sparse matrices::
 
@@ -44,9 +44,9 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     SimpleImputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))      # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
-    [[ 4.          2.        ]
-     [ 6.          3.666...]
-     [ 7.          6.        ]]
+    [[4.          2.        ]
+     [6.          3.666...]
+     [7.          6.        ]]
 
 Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing

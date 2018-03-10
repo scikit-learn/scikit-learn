@@ -827,8 +827,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     >>> kmeans.cluster_centers_
-    array([[ 1.,  2.],
-           [ 4.,  2.]])
+    array([[1., 2.],
+           [4., 2.]])
 
     See also
     --------
