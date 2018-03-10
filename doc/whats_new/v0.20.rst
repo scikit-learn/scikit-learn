@@ -405,6 +405,12 @@ Linear, kernelized and related models
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
 
+- The default value of ``gamma`` parameter of :class:`svm.SVC`,
+  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`NuSVR`, :class:`OneClassSVM`
+  will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
+  better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
+  and :user:`Ting Neo <neokt>`.
+
 Metrics
 
 - Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
