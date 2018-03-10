@@ -191,7 +191,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                   "from 'auto' to 'scale' in version 0.22 to "
                                   "account better for unscaled features. Set "
                                   "gamma explicitly to 'auto' or 'scale' to "
-                                  "avoid this warning.", DeprecationWarning)
+                                  "avoid this warning.", FutureWarning)
                 self._gamma = 1.0 / X.shape[1]
         elif self.gamma == 'auto':
             self._gamma = 1.0 / X.shape[1]

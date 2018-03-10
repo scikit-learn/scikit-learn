@@ -991,7 +991,7 @@ def test_gamma_auto():
            "version 0.22 to account better for unscaled features. Set gamma "
            "explicitly to 'auto' or 'scale' to avoid this warning.")
 
-    assert_warns_message(DeprecationWarning, msg,
+    assert_warns_message(FutureWarning, msg,
                          svm.SVC().fit, X, y)
     assert_no_warnings(svm.SVC(kernel='linear').fit, X, y)
     assert_no_warnings(svm.SVC(kernel='precomputed').fit, X, y)
