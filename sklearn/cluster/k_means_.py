@@ -55,7 +55,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : RandomState
+    random_state : int, RandomState instance
         The generator used to initialize the centers. Use an int to make the
         randomness deterministic.
         See :term:`random_state <Glossary>`.
