@@ -190,7 +190,7 @@ image from ``digits.data``. By predicting, you'll determine the image from the
 training set that best matches the last image.
 
 
-  >>> clf.predict(digits.data[-1:])
+  >>> clf.predict([digits.data[-1:]])
   array([8])
 
 The corresponding image is:
