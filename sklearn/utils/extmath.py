@@ -696,7 +696,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
-    with np.errstate(divide ="ignore"):  # as division by 0 might happen
+    with np.errstate(divide="ignore"):  # as division by 0 might happen
         updated_mean = (last_sum + new_sum) / updated_sample_count
     updated_mean[np.logical_not(updated_sample_count)] = 0
 
@@ -708,7 +708,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         new_unnormalized_variance[~np.isfinite(new_unnormalized_variance)] = 0
         new_unnormalized_variance *= new_sample_count
         last_unnormalized_variance = last_variance * last_sample_count
-        with np.errstate(divide = "ignore"):
+        with np.errstate(divide="ignore"):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_over_new_count / updated_sample_count *
@@ -719,8 +719,9 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         updated_unnormalized_variance += (last_unnormalized_variance +
                                           new_unnormalized_variance)
 
-        with np.errstate(divide = "ignore"):
-            updated_variance = updated_unnormalized_variance / updated_sample_count
+        with np.errstate(divide="ignore"):
+            updated_variance = (updated_unnormalized_variance /
+                                updated_sample_count)
         # As division by Zero might happen
         updated_variance[np.logical_not(updated_sample_count)] = 0
 
