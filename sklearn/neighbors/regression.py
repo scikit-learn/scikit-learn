@@ -313,7 +313,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
 
-        if np.max(np.isnan(y_pred)):
+        if np.any(np.isnan(y_pred)):
             empty_warning_msg = ("One or more samples have no neighbors "
                                  "within specified radius; predicting NaN.")
             warnings.warn(empty_warning_msg)

@@ -7,7 +7,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 import warnings
-import numbers
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -98,17 +97,6 @@ def _get_weights(dist, weights):
     else:
         raise ValueError("weights not recognized: should be 'uniform', "
                          "'distance', or a callable function")
-
-
-def _check_outlier_label(outlier_label):
-    """Check to make sure outlier_handler is valid"""
-    if outlier_label in ['raise', 'most_frequent']:
-        return outlier_label
-    elif isinstance(outlier_label, (numbers.Integral, np.integer)):
-        return outlier_label
-    else:
-        raise ValueError("outlier_label not recognized, should be int "
-                         "'raise', or 'most_frequent'.")
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):

@@ -1328,32 +1328,17 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-def test_radius_neighbors_clf_predict_proba():
-    # test for #9597
-    # weight of uniform
-    # outlier warnings
-    def check_warn(w='distance'):
-        RNC = neighbors.RadiusNeighborsClassifier
-        clf = RNC(radius=1, weights=w, outlier_label=-1)
-        X = [[0], [1], [2], [3]]
-        y = [0, 0, 1, 1]
-        clf.fit(X, y)
-        clf.predict_proba([[1], [5]])
-    assert_warns(UserWarning, check_warn, w='distance')
-    assert_warns(UserWarning, check_warn, w='uniform')
-
-
 def test_radius_neighbors_outliers():
     # outler handlers: 1. uniform, prior, None
     RNC = neighbors.RadiusNeighborsClassifier
     X = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
     y = [0, 2, 2, 1, 1, 1, 3, 3, 3, 3]
 
-    # test invalid outlier_label parameter
+    # test invalid outlier_label dtype
     def check_exception():
-        clf = RNC(radius=1, outlier_label='invalid')
+        clf = RNC(radius=1, outlier_label='a')
         clf.fit(X, y)
-    assert_raises(ValueError, check_exception)
+    assert_raises(TypeError, check_exception)
 
     # test outiler Error rasing
     def check_exception():
@@ -1372,16 +1357,16 @@ def test_radius_neighbors_outliers():
     assert_equal(predict[1, 3], 1)
 
     # test manual label in y
-    clf = RNC(radius=1, outlier_label=2)
+    clf = RNC(radius=1, outlier_label=1)
     clf.fit(X, y)
     proba = clf.predict_proba([[1], [15]])
     assert_equal(proba[1, 0], 0.0)
-    assert_equal(proba[1, 1], 0.0)
-    assert_equal(proba[1, 2], 1.0)
+    assert_equal(proba[1, 1], 1.0)
+    assert_equal(proba[1, 2], 0.0)
     assert_equal(proba[1, 3], 0.0)
     pred = clf.predict([[1], [15]])
-    assert_equal(pred[0], 3.0)
-    assert_equal(pred[1], 2.0)
+    assert_equal(pred[0], 2)
+    assert_equal(pred[1], 1)
 
     # test manual label out of y
     clf = RNC(radius=1, outlier_label=4)
@@ -1392,12 +1377,42 @@ def test_radius_neighbors_outliers():
     assert_equal(proba[1, 2], 0.0)
     assert_equal(proba[1, 3], 0.0)
     pred = clf.predict([[7], [15]])
-
     assert_equal(pred[1], 4.0)
 
-    # test check_outlier_handler error raise
-    assert_raise_message(ValueError,
-                         'outlier_label',
-                         lambda: RNC(outlier_label='hello world'))
+    # test multi output same outlier label
+    y_multi = [[0, 1], [2, 1], [2, 2], [1, 2], [1, 2],
+               [1, 3], [3, 3], [3, 3], [3, 0], [3, 0]]
+    clf = RNC(radius=1, outlier_label=1)
+    clf.fit(X, y_multi)
+    proba = clf.predict_proba([[7], [15]])
+    assert_equal(proba[1][1, 0], 0.0)
+    assert_equal(proba[1][1, 1], 1.0)
+    assert_equal(proba[1][1, 2], 0.0)
+    assert_equal(proba[1][1, 3], 0.0)
+    pred = clf.predict([[7], [15]])
+    assert_equal(pred[1, 0], 1)
+    assert_equal(pred[1, 1], 1)
 
+    # test multi output different outlier label
+    y_multi = [[0, 0], [2, 2], [2, 2], [1, 1], [1, 1],
+               [1, 1], [3, 3], [3, 3], [3, 3], [3, 3]]
+    clf = RNC(radius=1, outlier_label=[0, 1])
+    clf.fit(X, y_multi)
+    proba = clf.predict_proba([[7], [15]])
+    assert_equal(proba[0][1, 0], 1.0)
+    assert_equal(proba[0][1, 1], 0.0)
+    assert_equal(proba[0][1, 2], 0.0)
+    assert_equal(proba[0][1, 3], 0.0)
+    assert_equal(proba[1][1, 0], 0.0)
+    assert_equal(proba[1][1, 1], 1.0)
+    assert_equal(proba[1][1, 2], 0.0)
+    assert_equal(proba[1][1, 3], 0.0)
+    pred = clf.predict([[7], [15]])
+    assert_equal(pred[1, 0], 0)
+    assert_equal(pred[1, 1], 1)
 
+    # test inconsistent outlier label list legth
+    def check_exception():
+        clf = RNC(radius=1, outlier_label=[0, 1, 2])
+        clf.fit(X, y_multi)
+    assert_raises(ValueError, check_exception)
