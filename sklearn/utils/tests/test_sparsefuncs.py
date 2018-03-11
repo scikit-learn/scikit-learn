@@ -17,8 +17,24 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        count_nonzero, csc_median_axis_0)
 from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
-                                            inplace_csr_row_normalize_l2)
+                                            inplace_csr_row_normalize_l2,
+                                            csr_mean_variance_axis0,
+                                            csc_mean_variance_axis0)
 from sklearn.utils.testing import assert_raises
+
+
+def test_csr_csc_mean_axis0():
+    X = np.array([[600, np.nan, 0, 0, np.nan],
+                  [np.nan, 0, np.nan, np.nan, 0],
+                  [600, np.nan, 0, 0, np.nan]])
+    X_csr = sp.csr_matrix(X)
+    X_means, X_variance = csr_mean_variance_axis0(X_csr)
+    assert_array_almost_equal(X_means, np.array([600, 0, 0, 0, 0]))
+    assert_array_almost_equal(X_variance, np.array([0, 0, 0, 0, 0]))
+    X_csc = sp.csc_matrix(X)
+    X_means, X_variance = csc_mean_variance_axis0(X_csc)
+    assert_array_almost_equal(X_means, np.array([600, 0, 0, 0, 0]))
+    assert_array_almost_equal(X_variance, np.array([0, 0, 0, 0, 0]))
 
 
 def test_mean_variance_axis0():

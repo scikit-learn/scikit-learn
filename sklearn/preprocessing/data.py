@@ -652,6 +652,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 self.mean_ = None
                 self.var_ = None
         else:
+            X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                            warn_on_dtype=True, estimator=self,
+                            dtype=FLOAT_DTYPES)
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
                 self.mean_ = .0
