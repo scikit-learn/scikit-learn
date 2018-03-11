@@ -288,7 +288,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     outlier_label : manual label, 'most_frequent', 'raise', optional
         (default = 'raise')
         - manual label: str or int label (should be the same type as y)
-          or list of manual labels if multi ouputs are used
+          or list of manual labels if multi ouputs are used.
           label given for outlier samples (samples with no neighbors in
           given radius).
         - 'most_frequent' : assign the most frequent label to outliers.
@@ -328,11 +328,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label='raise', metric_params=None, **kwargs):
-        self._init_params(radius=radius,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          metric=metric, p=p, metric_params=metric_params,
-                          **kwargs)
+        super(RadiusNeighborsClassifier, self).__init__(
+            radius=radius,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric, p=p, metric_params=metric_params, **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
