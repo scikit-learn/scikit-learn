@@ -470,21 +470,24 @@ def test_logistic_sigmoid():
 
 def test_incremental_mean_and_var_nan():
     # Test mean and variance when an array has floating NaN values
-    A = np.array([[600, 470, 170, 430, np.nan],
-                  [600, np.nan, 170, 430, 300],
-                  [np.nan, np.nan, np.nan, np.nan, np.nan],
-                  [np.nan, np.nan, np.nan, np.nan, np.nan]])
-    X1 = A[:3, :]
-    X2 = A[3:, :]
+
+    X1 = np.array([[600, 470, 170, 430, np.nan],
+                   [600, np.nan, 170, 430, 300],
+                   [np.nan, np.nan, np.nan, np.nan, np.nan],
+                   [600, 470, 170, 430, 300]])
+
+    X2 = np.array([[np.nan, np.nan, np.nan, np.nan, np.nan],
+                   [600, 470, 170, 430, 300]])
+    A = np.concatenate((X1, X2,), axis=0)
     X_means, X_variances, X_count = _incremental_mean_and_var(
         X1, np.array([0, 0, 0, 0, 0]), np.array([0, 0, 0, 0, 0]),
-        np.array([0, 0, 0, 0, 0]))
+        np.array([0, 0, 0, 0, 0]), ignore_nan=True)
     A_means = np.nanmean(A, axis=0)
     A_variances = np.nanvar(A, axis=0)
-    A_count = np.array([2, 1, 2, 2, 1])
+    A_count = np.array([4, 3, 4, 4, 3])
 
     final_means, final_variances, final_count = _incremental_mean_and_var(
-        X2, X_means, X_variances, X_count)
+        X2, X_means, X_variances, X_count, ignore_nan=True)
     assert_almost_equal(A_means, final_means)
     assert_almost_equal(A_variances, final_variances)
     assert_almost_equal(A_count, final_count)
