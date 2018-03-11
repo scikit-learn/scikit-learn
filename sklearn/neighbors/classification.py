@@ -8,8 +8,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import numbers
-import warnings as warns
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -336,7 +334,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
-
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -370,7 +367,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         else:
             if (_is_arraylike(self.outlier_label) and
-                not isinstance(self.outlier_label, string_types)):
+            not isinstance(self.outlier_label, string_types)):
                 if len(self.outlier_label) != len(classes_):
                     raise ValueError('The length of outlier_label: {} is '
                                      'inconsistent with output '
@@ -387,7 +384,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             
         self.outlier_label_ = outlier_label_
         return self
-
 
     def predict(self, X):
         """Predict the class labels for the provided data
@@ -518,7 +514,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
             if outliers.size > 0:
                 label_index = np.where(classes_k == self.outlier_label_[k])
-                if label_index[0].size != 0:                    
+                if label_index[0].size != 0:
                     proba_k[outliers,
                             label_index[0][0]] = 1.0
 
