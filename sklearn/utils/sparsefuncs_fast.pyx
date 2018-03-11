@@ -121,12 +121,10 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             continue
         means[col_ind] += x_i
 
-    with warnings.catch_warnings():
+    with np.errstate(divide="ignore"):
         # as division by 0 might happen
-        warnings.simplefilter('ignore')
         means /= n_samples_feat
-        means[np.isnan(means)] = 0
-        means[np.isinf(means)] = 0
+    means[np.logical_not(n_samples_feat)] = 0
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
@@ -138,12 +136,10 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         counts[col_ind] += 1
 
     variances += (n_samples_feat - counts) * means ** 2
-    with warnings.catch_warnings():
+    with np.errstate(divide="ignore"):
         # as division by 0 might happen
-        warnings.simplefilter('ignore')
         variances /= n_samples_feat
-        variances[np.isnan(variances)] = 0
-        variances[np.isinf(variances)] = 0
+    variances[np.logical_not(n_samples_feat)] = 0
 
     return means, variances
 
@@ -209,23 +205,27 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         n_samples_feat = n_samples
 
         for j in xrange(startptr, endptr):
-            x_i = X_data[j]
-            if ignore_nan and isnan(x_i):
+            x_j = X_data[j]
+            if ignore_nan and isnan(x_j):
                 n_samples_feat -= 1
                 continue
-            means[i] += x_i
+            means[i] += x_j
+
         if n_samples_feat != 0:
-            means[i] /= n_samples
+            means[i] /= n_samples_feat
         else:
             means[i] = 0
 
         for j in xrange(startptr, endptr):
-            diff = X_data[j] - means[i]
+            x_j = X_data[j]
+            if ignore_nan and isnan(x_j):
+                continue;
+            diff = x_j - means[i]
             variances[i] += diff * diff
 
         variances[i] += (n_samples - counts) * means[i] * means[i]
         if n_samples_feat != 0:
-            variances[i] /= n_samples
+            variances[i] /= n_samples_feat
         else:
             variances[i] = 0
 
