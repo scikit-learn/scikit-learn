@@ -306,15 +306,14 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
-    def _check_ngram_range(self):
-        """Check validity of ngram_range parameter,
-        e.g., ngram_range=(2,1) is invalid
-        """
+    def _validate_params(self):
+        """Check validity of ngram_range parameter"""
         min_n, max_m = self.ngram_range
         if min_n > max_m:
             raise ValueError(
-                "Invalid value for ngram_range, "
-                "min_n should not be larger than max_m")
+                "Invalid value for ngram_range=%s "
+                "lower boundary larger than the upper boundary"
+                % str(self.ngram_range))
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
@@ -507,7 +506,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
-        self._check_ngram_range()
+        self._validate_params()
 
         self._get_hasher().fit(X, y=y)
         return self
@@ -532,7 +531,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
-        self._check_ngram_range()
+        self._validate_params()
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -896,7 +895,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
-        self._check_ngram_range()
+        self._validate_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -950,8 +949,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
-
-        self._check_ngram_range()
 
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
