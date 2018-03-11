@@ -318,7 +318,6 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                                  "within specified radius; predicting NaN.")
             warnings.warn(empty_warning_msg)
 
-
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
 

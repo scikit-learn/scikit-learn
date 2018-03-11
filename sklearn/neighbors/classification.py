@@ -367,7 +367,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         else:
             if (_is_arraylike(self.outlier_label) and
-            not isinstance(self.outlier_label, string_types)):
+               not isinstance(self.outlier_label, string_types)):
                 if len(self.outlier_label) != len(classes_):
                     raise ValueError('The length of outlier_label: {} is '
                                      'inconsistent with output '
@@ -381,7 +381,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                    for classes, label in zip(classes_, outlier_label_)):
                 raise TypeError('The dtype of outlier_label is'
                                 'inconsistent with y')
-            
+
         self.outlier_label_ = outlier_label_
         return self
 
