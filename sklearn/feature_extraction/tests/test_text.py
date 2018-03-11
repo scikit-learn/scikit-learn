@@ -997,6 +997,7 @@ def test_vectorizer_string_object_as_input():
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
 
+
 @mark.parametrize("vec, index", [
         (HashingVectorizer(ngram_range=(2, 1)), 0),
         (CountVectorizer(ngram_range=(2, 1)), 1),
@@ -1007,9 +1008,9 @@ def test_vectorizers_invalid_ngram_range(vec, index):
     # test for raising error message
     invalid_range = vec.ngram_range
     message = ("Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary"
-                % str(invalid_range))
-    
+               "lower boundary larger than the upper boundary"
+               % str(invalid_range))
+
     # HashingVectorizer implements fit, transform
     # CountVectorizer, TfidfVectorizer implement fit, fit_transform
     if index in [0, 1, 2]:
@@ -1017,7 +1018,7 @@ def test_vectorizers_invalid_ngram_range(vec, index):
             ValueError, message, vec.fit, ["good news everyone"])
     if index in [1, 2]:
         assert_raise_message(
-            ValueError, message, vec.fit_transform, ["good news everyone"])  
+            ValueError, message, vec.fit_transform, ["good news everyone"])
     if index in [0]:
         assert_raise_message(
             ValueError, message, vec.transform, ["good news everyone"])
