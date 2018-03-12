@@ -312,7 +312,7 @@ class VectorizerMixin(object):
         if min_n > max_m:
             raise ValueError(
                 "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary"
+                "lower boundary larger than the upper boundary."
                 % str(self.ngram_range))
 
 
