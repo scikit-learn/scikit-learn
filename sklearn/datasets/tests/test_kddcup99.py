@@ -6,7 +6,8 @@ scikit-learn data folder.
 """
 
 from sklearn.datasets import fetch_kddcup99
-from sklearn.utils.testing import assert_equal, SkipTest, assert_true, assert_array_equal
+from sklearn.utils.testing import assert_equal, SkipTest, assert_true
+from sklearn.utils.testing import assert_array_equal
 
 
 

@@ -287,9 +287,9 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
-        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch object. See
-        below for more information about the `dataset.data` and `dataset.target` object.
+    return_X_y : boolean, default=False. If True, returns ``(dataset.data,
+    dataset.target)`` instead of a Bunch object. See below for more
+    information about the `dataset.data` and `dataset.target` object.
 
         .. versionadded:: 0.20
 
