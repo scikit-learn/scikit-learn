@@ -431,13 +431,12 @@ def _ovr_decision_function(predictions, confidences, n_classes):
             votes[predictions[:, k] == 1, j] += 1
             k += 1
 
-    # monotonically transform the sum_of_confidences to (-0.5, 0.5)
+    # Monotonically transform the sum_of_confidences to (-0.5, 0.5)
     # and add it with votes.
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
-    eps = np.finfo(sum_of_confidences.dtype).eps
-    # add epsilon to ensure that we won't reach the limits
+    # Use 1/3 instead of 1/2 to ensure that we won't reach the limits
     transformed_confidences = (sum_of_confidences /
-                               ((2 + eps) * (np.abs(sum_of_confidences) + 1)))
+                               (3 * (np.abs(sum_of_confidences) + 1)))
     return votes + transformed_confidences
