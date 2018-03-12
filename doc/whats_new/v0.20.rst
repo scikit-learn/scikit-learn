@@ -385,6 +385,11 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Datasets
+
+- Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
+  :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+
 API changes summary
 -------------------
 
