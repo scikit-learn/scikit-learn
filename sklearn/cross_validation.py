@@ -1717,7 +1717,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                              )
 
     else:
-        test_scores = _score(estimator, X_test, y_test, scorer, sample_weight=test_sample_weight)
+        test_score = _score(estimator, X_test, y_test, scorer, sample_weight=test_sample_weight)
         if return_train_score:
             train_score = _score(estimator, X_train, y_train, scorer, sample_weight=train_sample_weight)
 
