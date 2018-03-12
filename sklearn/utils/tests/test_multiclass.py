@@ -388,12 +388,12 @@ def test_safe_split_with_precomputed_kernel():
 def test_ovr_decision_function():
     # test properties for ovr decision function
 
-    predictions = np.array([[0, 0, 1],
+    predictions = np.array([[0, 1, 1],
                             [0, 1, 0],
                             [0, 1, 1],
                             [0, 1, 1]])
 
-    confidences = np.array([[1., 1., 5.],
+    confidences = np.array([[-1e16, 0, -1e16],
                             [1., 2., -3.],
                             [-5., 2., 5.],
                             [-0.5, 0.2, 0.5]])
@@ -403,7 +403,7 @@ def test_ovr_decision_function():
     dec_values = _ovr_decision_function(predictions, confidences, n_classes)
 
     # check that the decision values are within 0.5 range of the votes
-    votes = np.array([[2, 0, 1],
+    votes = np.array([[1, 0, 2],
                       [1, 1, 1],
                       [1, 0, 2],
                       [1, 0, 2]])
@@ -411,13 +411,13 @@ def test_ovr_decision_function():
     assert_allclose(votes, dec_values, atol=0.5)
 
     # check that the prediction are what we expect
-    # highest vote or highest confidence if there is a tie
+    # highest vote or highest confidence if there is a tie.
     # for the second sample we have a tie (should be won by 1)
-    expected_prediction = np.array([0, 1, 2, 2])
+    expected_prediction = np.array([2, 1, 2, 2])
     assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
 
     # third and fourth sample have the same vote but third sample
-    # have higher confidence, this should reflect on the decision values
+    # has higher confidence, this should reflect on the decision values
     assert_true(dec_values[2, 2] > dec_values[3, 2])
 
     # assert subset invariance.
