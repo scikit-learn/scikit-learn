@@ -366,7 +366,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise', weighted_test_score=True):
+                   return_times=False, error_score='raise', weighted_test_score=False):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -424,7 +424,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_times : boolean, optional, default: False
         Whether to return the fit/score times.
 
-    weighted_test_score : boolean, optional, default: True.
+    weighted_test_score : boolean, optional, default: False.
         Test score is weigthed by sample weights.
 
     Returns
@@ -561,10 +561,11 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weigh
     if is_multimetric:
         return _multimetric_score(estimator, X_test, y_test, scorer, sample_weight=sample_weight)
     else:
+        scorer_kwargs = {'sample_weight': sample_weight} if sample_weight is not None else {}
         if y_test is None:
-            score = scorer(estimator, X_test, sample_weight=sample_weight)
+            score = scorer(estimator, X_test, **scorer_kwargs)
         else:
-            score = scorer(estimator, X_test, y_test, sample_weight=sample_weight)
+            score = scorer(estimator, X_test, y_test, **scorer_kwargs)
 
         if hasattr(score, 'item'):
             try:
@@ -583,12 +584,12 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weigh
 def _multimetric_score(estimator, X_test, y_test, scorers, sample_weight=None):
     """Return a dict of score for multimetric scoring"""
     scores = {}
-
+    scorer_kwargs = {'sample_weight': sample_weight} if sample_weight is not None else {}
     for name, scorer in scorers.items():
         if y_test is None:
-            score = scorer(estimator, X_test, sample_weight=sample_weight)
+            score = scorer(estimator, X_test, **scorer_kwargs)
         else:
-            score = scorer(estimator, X_test, y_test, sample_weight=sample_weight)
+            score = scorer(estimator, X_test, y_test, **scorer_kwargs)
 
         if hasattr(score, 'item'):
             try:

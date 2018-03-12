@@ -1476,7 +1476,7 @@ def _check_is_partition(locs, n):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs', weighted_test_score=True):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs', weighted_test_score=False):
     """Evaluate a score by cross-validation
 
     .. deprecated:: 0.18
@@ -1586,7 +1586,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
-                   return_parameters=False, error_score='raise', weighted_test_score=True):
+                   return_parameters=False, error_score='raise', weighted_test_score=False):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -1632,7 +1632,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
-    weighted_test_score : boolean, optional, default: True.
+    weighted_test_score : boolean, optional, default: False.
         Test score is weigthed by sample weights.
 
     Returns
@@ -1771,10 +1771,11 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
 
 def _score(estimator, X_test, y_test, scorer, sample_weight=None):
     """Compute the score of an estimator on a given test set."""
+    scorer_kwargs = {'sample_weight': sample_weight} if sample_weight is not None else {}
     if y_test is None:
-        score = scorer(estimator, X_test, sample_weight=sample_weight)
+        score = scorer(estimator, X_test, **scorer_kwargs)
     else:
-        score = scorer(estimator, X_test, y_test, sample_weight=sample_weight)
+        score = scorer(estimator, X_test, y_test, **scorer_kwargs)
     if hasattr(score, 'item'):
         try:
             # e.g. unwrap memmapped scalars
