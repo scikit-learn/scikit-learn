@@ -392,7 +392,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=True):
+                 error_score='raise-deprecating', return_train_score=True,
+                 weighted_test_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -405,12 +406,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.weighted_test_score = weighted_test_score
 
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, sample_weight=None):
         """Returns the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -426,6 +428,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
+        sample_weight : array-like of shape = (n_samples), optional
+            Sample weights.
         Returns
         -------
         score : float
@@ -436,7 +440,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
-        return score(self.best_estimator_, X, y)
+        return score(self.best_estimator_, X, y, sample_weight=sample_weight)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
@@ -636,7 +640,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
-                                  error_score=self.error_score)
+                                  error_score=self.error_score,
+                                  weighted_test_score=self.weighted_test_score)
           for parameters, (train, test) in product(candidate_params,
                                                    cv.split(X, y, groups)))
 
@@ -1088,12 +1093,12 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
-                 return_train_score="warn"):
+                 return_train_score="warn", weighted_test_score=True):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score, weighted_test_score=weighted_test_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1389,7 +1394,7 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise-deprecating', return_train_score="warn"):
+                 error_score='raise-deprecating', return_train_score="warn", weighted_test_score=True):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1397,7 +1402,7 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score, weighted_test_score=weighted_test_score)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""

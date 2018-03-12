@@ -1476,7 +1476,7 @@ def _check_is_partition(locs, n):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs', weighted_test_score=True):
     """Evaluate a score by cross-validation
 
     .. deprecated:: 0.18
@@ -1544,6 +1544,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
+    weighted_test_score : boolean, optional, default: True.
+        Test score is weigthed by sample weights.
 
     Returns
     -------
@@ -1577,14 +1579,14 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
                                               train, test, verbose, None,
-                                              fit_params)
+                                              fit_params, weighted_test_score=weighted_test_score)
                       for train, test in cv)
     return np.array(scores)[:, 0]
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
-                   return_parameters=False, error_score='raise'):
+                   return_parameters=False, error_score='raise', weighted_test_score=True):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -1630,6 +1632,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
+    weighted_test_score : boolean, optional, default: True.
+        Test score is weigthed by sample weights.
+
     Returns
     -------
     train_score : float, optional
@@ -1657,6 +1662,27 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
+
+    if 'sample_weight' in fit_params:
+        sample_weight_key = 'sample_weight'     # standard estimator
+    else:
+        # didn't find 'sample_weight' key, maybe a Pipeline object?
+        maybe_pipeline_sample_weights = list(filter(lambda x: x.endswith('__sample_weight'), fit_params))
+        if len(maybe_pipeline_sample_weights) > 1:
+            raise ValueError("Multiple pipeline weights found in fit_params: %s" % ', '.join(maybe_pipeline_sample_weights))
+        elif len(maybe_pipeline_sample_weights) == 1:
+            sample_weight_key = maybe_pipeline_sample_weights[0]
+        else:
+            # No sample weight passed. Set it to None.
+            sample_weight_key = None
+
+    if sample_weight_key is not None and weighted_test_score:
+        train_sample_weight = _index_param_value(X, fit_params[sample_weight_key], train)
+        test_sample_weight = _index_param_value(X, fit_params[sample_weight_key], test)
+    else:
+        train_sample_weight = None
+        test_sample_weight = None
+
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
@@ -1691,9 +1717,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                              )
 
     else:
-        test_score = _score(estimator, X_test, y_test, scorer)
+        test_scores = _score(estimator, X_test, y_test, scorer, sample_weight=test_sample_weight)
         if return_train_score:
-            train_score = _score(estimator, X_train, y_train, scorer)
+            train_score = _score(estimator, X_train, y_train, scorer, sample_weight=train_sample_weight)
 
     scoring_time = time.time() - start_time
 
@@ -1743,12 +1769,12 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     return X_subset, y_subset
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, sample_weight=None):
     """Compute the score of an estimator on a given test set."""
     if y_test is None:
-        score = scorer(estimator, X_test)
+        score = scorer(estimator, X_test, sample_weight=sample_weight)
     else:
-        score = scorer(estimator, X_test, y_test)
+        score = scorer(estimator, X_test, y_test, sample_weight=sample_weight)
     if hasattr(score, 'item'):
         try:
             # e.g. unwrap memmapped scalars
