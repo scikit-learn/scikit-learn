@@ -15,10 +15,9 @@ better.
 
 from __future__ import division
 
-from math import log
-
 import numpy as np
 from scipy import sparse as sp
+import warnings
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
@@ -105,6 +104,23 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
             # don't use += as contingency is integer
             contingency = contingency + eps
     return contingency
+
+
+def log(x, log_base=None):
+    """Calculate the logarithm of x base log_base."""
+    if log_base is None:
+        # NOTE: when deprecation ends we need to change explicitly
+        # setting `log_base` to `e` to 2
+        log_base='e'
+        warnings.warn("From version 0.22, log_base=None will mean "
+                      "log_base=2 rather than the current default, "
+                      "'e'.", FutureWarning)
+    if log_base is 2:
+        return np.log2(x)
+    elif log_base is 'e':
+        return np.log(x)
+    else:
+        raise ValueError("Unsupported value for 'log_base': %s; allowed values are 2 or 'e'." % log_base)
 
 
 # clustering measures
@@ -527,7 +543,7 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-def mutual_info_score(labels_true, labels_pred, contingency=None):
+def mutual_info_score(labels_true, labels_pred, contingency=None, log_base=None):
     r"""Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
@@ -566,6 +582,9 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
 
+    log_base : 2 or 'e'
+        Base of the log function: 'e' for results in nats, 2 for results in bits.
+
     Returns
     -------
     mi : float
@@ -598,17 +617,17 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
-    log_contingency_nm = np.log(nz_val)
+    log_contingency_nm = log(nz_val, log_base)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
     outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
-    log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
-    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
+    log_outer = -log(outer, log_base) + log(pi.sum(), log_base) + log(pj.sum(), log_base)
+    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum, log_base)) +
           contingency_nm * log_outer)
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred):
+def adjusted_mutual_info_score(labels_true, labels_pred, log_base=None):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -640,6 +659,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    log_base : 2 or 'e'
+        Base of the log function: 'e' for results in nats, 2 for results in bits.
 
     Returns
     -------
@@ -695,16 +717,19 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
-                           contingency=contingency)
+                           contingency=contingency,
+                           log_base=log_base)
     # Calculate the expected value for the mutual information
-    emi = expected_mutual_information(contingency, n_samples)
+    emi = expected_mutual_information(contingency, n_samples,
+                                      log_base=log_base)
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true = entropy(labels_true, log_base=log_base)
+    h_pred = entropy(labels_pred, log_base=log_base)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred):
+def normalized_mutual_info_score(labels_true, labels_pred, log_base=None):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
@@ -733,6 +758,9 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    log_base : 2 or 'e'
+        Base of the log function: 'e' for results in nats, 2 for results in bits.
 
     Returns
     -------
@@ -776,10 +804,12 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
-                           contingency=contingency)
+                           contingency=contingency,
+                           log_base=log_base)
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true = entropy(labels_true, log_base=log_base)
+    h_pred = entropy(labels_pred, log_base=log_base)
     nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
     return nmi
 
@@ -859,7 +889,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     return tk / np.sqrt(pk * qk) if tk != 0. else 0.
 
 
-def entropy(labels):
+def entropy(labels, log_base=None):
     """Calculates the entropy for a labeling."""
     if len(labels) == 0:
         return 1.0
@@ -869,4 +899,4 @@ def entropy(labels):
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    return -np.sum((pi / pi_sum) * (log(pi, log_base) - log(pi_sum, log_base)))
