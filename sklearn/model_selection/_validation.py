@@ -361,7 +361,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating'):
+                   error_score='raise-deprecating', test_score_weight=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -401,6 +401,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error. Default is 'raise' but from
         version 0.22 it will change to np.nan.
+
+    test_score_weight : string, optional, default: None
+        If specified, this is the sample weight key in the `fit_params` dict.
+        If there's no such key found, we will assume unweighted test score.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -455,8 +459,22 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
-    # Adjust length of sample weights
+    # Init to empty dict if pass in as None
     fit_params = fit_params if fit_params is not None else {}
+
+    sample_weight_key, weighted_test_score = None, False
+
+    if test_score_weight is not None and test_score_weight in fit_params:
+        sample_weight_key, weighted_test_score = test_score_weight, True
+
+    if weighted_test_score:
+        train_sample_weight = _index_param_value(X, fit_params[sample_weight_key], train)
+        test_sample_weight = _index_param_value(X, fit_params[sample_weight_key], test)
+    else:
+        train_sample_weight = None
+        test_sample_weight = None
+
+    # Adjust length of sample weights
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
@@ -516,11 +534,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         fit_time = time.time() - start_time
         # _score will return dict if is_multimetric is True
-        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
+        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric, sample_weight=test_sample_weight)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric)
+                                  is_multimetric, sample_weight=train_sample_weight)
 
     if verbose > 2:
         if is_multimetric:
@@ -546,19 +564,20 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
+def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weight=None):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a single float if is_multimetric is False and a dict of floats,
     if is_multimetric is True
     """
     if is_multimetric:
-        return _multimetric_score(estimator, X_test, y_test, scorer)
+        return _multimetric_score(estimator, X_test, y_test, scorer, sample_weight=sample_weight)
     else:
+        score_kwgs = {} if sample_weight is None else {'sample_weight': sample_weight}
         if y_test is None:
-            score = scorer(estimator, X_test)
+            score = scorer(estimator, X_test, **score_kwgs)
         else:
-            score = scorer(estimator, X_test, y_test)
+            score = scorer(estimator, X_test, y_test, **score_kwgs)
 
         if hasattr(score, 'item'):
             try:
@@ -575,15 +594,15 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     return score
 
 
-def _multimetric_score(estimator, X_test, y_test, scorers):
+def _multimetric_score(estimator, X_test, y_test, scorers, sample_weight=None):
     """Return a dict of score for multimetric scoring"""
     scores = {}
-
+    score_kwgs = {} if sample_weight is None else {'sample_weight': sample_weight}
     for name, scorer in scorers.items():
         if y_test is None:
-            score = scorer(estimator, X_test)
+            score = scorer(estimator, X_test, **score_kwgs)
         else:
-            score = scorer(estimator, X_test, y_test)
+            score = scorer(estimator, X_test, y_test, **score_kwgs)
 
         if hasattr(score, 'item'):
             try:
