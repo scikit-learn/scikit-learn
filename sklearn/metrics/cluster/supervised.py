@@ -111,7 +111,7 @@ def log(x, log_base=None):
     if log_base is None:
         # NOTE: when deprecation ends we need to change explicitly
         # setting `log_base` to `e` to 2
-        log_base='e'
+        log_base = 'e'
         warnings.warn("From version 0.22, log_base=None will mean "
                       "log_base=2 rather than the current default, "
                       "'e'.", FutureWarning)
@@ -120,7 +120,8 @@ def log(x, log_base=None):
     elif log_base is 'e':
         return np.log(x)
     else:
-        raise ValueError("Unsupported value for 'log_base': %s; allowed values are 2 or 'e'." % log_base)
+        raise ValueError("Unsupported value for 'log_base': {}; allowed "
+                         "values are 2 or 'e'.".format(log_base))
 
 
 # clustering measures
@@ -543,7 +544,8 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-def mutual_info_score(labels_true, labels_pred, contingency=None, log_base=None):
+def mutual_info_score(labels_true, labels_pred, contingency=None,
+                      log_base=None):
     r"""Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
@@ -583,7 +585,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None, log_base=None)
         used, with ``labels_true`` and ``labels_pred`` ignored.
 
     log_base : 2 or 'e'
-        Base of the log function: 'e' for results in nats, 2 for results in bits.
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits.
 
     Returns
     -------
@@ -621,9 +624,12 @@ def mutual_info_score(labels_true, labels_pred, contingency=None, log_base=None)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
     outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
-    log_outer = -log(outer, log_base) + log(pi.sum(), log_base) + log(pj.sum(), log_base)
-    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum, log_base)) +
-          contingency_nm * log_outer)
+    log_outer = -log(outer, log_base) \
+                + log(pi.sum(), log_base) \
+                + log(pj.sum(), log_base)
+    mi = (contingency_nm
+          * (log_contingency_nm - log(contingency_sum, log_base))
+          + contingency_nm * log_outer)
     return mi.sum()
 
 
@@ -661,7 +667,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, log_base=None):
         A clustering of the data into disjoint subsets.
 
     log_base : 2 or 'e'
-        Base of the log function: 'e' for results in nats, 2 for results in bits.
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits.
 
     Returns
     -------
@@ -760,7 +767,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, log_base=None):
         A clustering of the data into disjoint subsets.
 
     log_base : 2 or 'e'
-        Base of the log function: 'e' for results in nats, 2 for results in bits.
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits.
 
     Returns
     -------
