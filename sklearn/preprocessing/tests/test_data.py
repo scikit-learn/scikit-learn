@@ -1094,9 +1094,7 @@ def test_quantile_transform_subsampling():
 
     # sparse support
 
-    # TODO: rng should be seeded once we drop support for older versions of
-    # scipy (< 0.13) that don't support seeding.
-    X = sparse.rand(n_samples, 1, density=.99, format='csc')
+    X = sparse.rand(n_samples, 1, density=.99, format='csc', random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
@@ -1222,7 +1220,7 @@ def test_robust_scaler_invalid_range():
     ]:
         scaler = RobustScaler(quantile_range=range_)
 
-        assert_raises_regex(ValueError, 'Invalid quantile range: \(',
+        assert_raises_regex(ValueError, r'Invalid quantile range: \(',
                             scaler.fit, iris.data)
 
 
@@ -1775,7 +1773,8 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
+                        SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
     assert_true(pipeline._pairwise)
@@ -1858,7 +1857,7 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = "unknown categorical feature present \[2\] during transform."
+    error_msg = r"unknown categorical feature present \[2\] during transform."
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
     assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
 
@@ -2111,7 +2110,7 @@ def test_categorical_encoder_specified_categories():
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories[0] == ['a', 'b', 'c']
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
 
     # unsorted passed categories raises for now
     enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
@@ -2125,7 +2124,7 @@ def test_categorical_encoder_specified_categories():
                     [0., 1., 0., 0., 0., 1.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
     assert enc.categories_[1].tolist() == [0, 1, 2]
     assert np.issubdtype(enc.categories_[1].dtype, np.integer)
 
@@ -2225,6 +2224,12 @@ def test_categorical_encoder_dtypes_pandas():
     enc.fit(X)
     assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
     assert_array_equal(enc.transform(X).toarray(), exp)
+
+
+def test_categorical_encoder_warning():
+    enc = CategoricalEncoder()
+    X = [['Male', 1], ['Female', 3]]
+    np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
 def test_fit_cold_start():

@@ -13,6 +13,7 @@ from itertools import chain, combinations
 import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -476,7 +477,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators: they might behave badly if the
-    individual feature do not more or less look like standard normally
+    individual features do not more or less look like standard normally
     distributed data (e.g. Gaussian with 0 mean and unit variance).
 
     For instance many elements used in the objective function of
@@ -2222,9 +2223,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                           " sparse matrix. This parameter has no effect.")
 
         n_samples, n_features = X.shape
-        # for compatibility issue with numpy<=1.8.X, references
-        # need to be a list scaled between 0 and 100
-        references = (self.references_ * 100).tolist()
+        references = self.references_ * 100
+        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
+        if LooseVersion(np.__version__) < '1.9':
+            references = references.tolist()
+
         self.quantiles_ = []
         for col in X.T:
             if self.subsample < n_samples:
@@ -2245,10 +2248,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             needs to be nonnegative.
         """
         n_samples, n_features = X.shape
+        references = self.references_ * 100
+        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
+        if LooseVersion(np.__version__) < '1.9':
+            references = references.tolist()
 
-        # for compatibility issue with numpy<=1.8.X, references
-        # need to be a list scaled between 0 and 100
-        references = list(map(lambda x: x * 100, self.references_))
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx]:
@@ -2333,8 +2337,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             output_distribution = self.output_distribution
         output_distribution = getattr(stats, output_distribution)
 
-        # older version of scipy do not handle tuple as fill_value
-        # clipping the value before transform solve the issue
         if not inverse:
             lower_bound_x = quantiles[0]
             upper_bound_x = quantiles[-1]
@@ -2996,7 +2998,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                                      "supported")
 
         X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
@@ -3039,7 +3041,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         """
         X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp

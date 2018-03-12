@@ -480,7 +480,7 @@ General Concepts
 
     missing values
         Most Scikit-learn estimators do not work with missing values. When they
-        do (e.g. in :class:`preprocessing.Imputer`), NaN is the preferred
+        do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
         specifying another ``missing_values`` value when imputation or
@@ -925,7 +925,7 @@ Class APIs and Estimator Types
 There are further APIs specifically related to a small family of estimators,
 such as:
 
-.. glossary:
+.. glossary::
 
     cross-validation splitter
     CV splitter
@@ -1547,9 +1547,15 @@ functions or non-estimator constructors.
         their number.
 
         :term:`partial_fit` also retains the model between calls, but differs:
-        with ``warm_start`` the parameters change and the data is constant
-        across calls to ``fit``; with ``partial_fit``, the mini-batch of data
-        changes and model parameters stay fixed.
+        with ``warm_start`` the parameters change and the data is
+        (more-or-less) constant across calls to ``fit``; with ``partial_fit``,
+        the mini-batch of data changes and model parameters stay fixed.
+
+        There are cases where you want to use ``warm_start`` to fit on
+        different, but closely related data. For example, one may initially fit
+        to a subset of the data, then fine-tune the parameter search on the
+        full dataset. For classification, all data in a sequence of
+        ``warm_start`` calls to ``fit`` must include samples from each class.
 
 .. _glossary_attributes:
 

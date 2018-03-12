@@ -135,10 +135,12 @@ random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
     random_state=0, n_samples=30, n_features=10)
 
+# NB: despite their names X_sparse_* are numpy arrays (and not sparse matrices)
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25, random_state=0)
+X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
+                                    random_state=0).toarray()
 
 
 DATASETS = {
@@ -1729,3 +1731,20 @@ def test_criterion_copy():
             assert_equal(typename, typename_)
             assert_equal(n_outputs, n_outputs_)
             assert_equal(n_samples, n_samples_)
+
+
+def test_empty_leaf_infinite_threshold():
+    # try to make empty leaf by using near infinite value.
+    data = np.random.RandomState(0).randn(100, 11) * 2e38
+    data = np.nan_to_num(data.astype('float32'))
+    X_full = data[:, :-1]
+    X_sparse = csc_matrix(X_full)
+    y = data[:, -1]
+    for X in [X_full, X_sparse]:
+        tree = DecisionTreeRegressor(random_state=0).fit(X, y)
+        terminal_regions = tree.apply(X)
+        left_leaf = set(np.where(tree.tree_.children_left == TREE_LEAF)[0])
+        empty_leaf = left_leaf.difference(terminal_regions)
+        infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
+        assert len(infinite_threshold) == 0
+        assert len(empty_leaf) == 0
