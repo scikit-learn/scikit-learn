@@ -273,7 +273,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise-deprecating', **fit_params):
+                   verbose, error_score='raise-deprecating', weighted_test_score=True, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -318,6 +318,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         step, which will always raise the error. Default is 'raise' but from
         version 0.22 it will change to np.nan.
 
+    weighted_test_score : boolean, optional, default: True
+        Whether test score is weighted.
     Returns
     -------
     score : float
@@ -337,7 +339,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                                             test, verbose, parameters,
                                             fit_params=fit_params,
                                             return_n_test_samples=True,
-                                            error_score=error_score)
+                                            error_score=error_score,
+                                            weighted_test_score=weighted_test_score)
     return scores, parameters, n_samples_test
 
 

@@ -40,7 +40,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False):
+                   return_estimator=False, weighted_test_score=True):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -133,6 +133,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
+    weighted_test_score : boolean, optional, default: True.
+        Test score is weigthed by sample weights.
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -211,7 +214,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator)
+            return_times=True, return_estimator=return_estimator, weighted_test_score=weighted_test_score)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
@@ -250,7 +253,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs'):
+                    pre_dispatch='2*n_jobs', weighted_test_score=True):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -319,6 +322,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    weighted_test_score : boolean, optional, default: True.
+        Test score is weigthed by sample weights.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -353,7 +359,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                 return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
-                                pre_dispatch=pre_dispatch)
+                                pre_dispatch=pre_dispatch, weighted_test_score=weighted_test_score)
     return cv_results['test_score']
 
 
