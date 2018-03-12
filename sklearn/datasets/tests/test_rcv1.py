@@ -29,8 +29,8 @@ def test_fetch_rcv1():
                            return_X_y=True)
 
     assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], X1)
-    assert_array_equal(X_y_tuple[1], Y1)
+    assert_array_equal(X_y_tuple[0].shape, X1.shape)
+    assert_array_equal(X_y_tuple[1].shape, Y1.shape)
 
     # test sparsity
     assert_true(sp.issparse(X1))
