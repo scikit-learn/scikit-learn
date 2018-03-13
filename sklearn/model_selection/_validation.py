@@ -468,8 +468,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         sample_weight_key, weighted_test_score = test_score_weight, True
 
     if weighted_test_score:
-        train_sample_weight = _index_param_value(X, fit_params[sample_weight_key], train)
-        test_sample_weight = _index_param_value(X, fit_params[sample_weight_key], test)
+        train_sample_weight = _index_param_value(X,
+                                                 fit_params[sample_weight_key],
+                                                 train)
+        test_sample_weight = _index_param_value(X,
+                                                fit_params[sample_weight_key],
+                                                test)
     else:
         train_sample_weight = None
         test_sample_weight = None
@@ -534,11 +538,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         fit_time = time.time() - start_time
         # _score will return dict if is_multimetric is True
-        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric, sample_weight=test_sample_weight)
+        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric,
+                             sample_weight=test_sample_weight)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric, sample_weight=train_sample_weight)
+                                  is_multimetric,
+                                  sample_weight=train_sample_weight)
 
     if verbose > 2:
         if is_multimetric:
@@ -564,16 +570,19 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weight=None):
+def _score(estimator, X_test, y_test, scorer, is_multimetric=False,
+           sample_weight=None):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a single float if is_multimetric is False and a dict of floats,
     if is_multimetric is True
     """
     if is_multimetric:
-        return _multimetric_score(estimator, X_test, y_test, scorer, sample_weight=sample_weight)
+        return _multimetric_score(estimator, X_test, y_test, scorer,
+                                  sample_weight=sample_weight)
     else:
-        score_kwgs = {} if sample_weight is None else {'sample_weight': sample_weight}
+        score_kwgs = {} if sample_weight is None else \
+            {'sample_weight': sample_weight}
         if y_test is None:
             score = scorer(estimator, X_test, **score_kwgs)
         else:
@@ -594,10 +603,12 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weigh
     return score
 
 
-def _multimetric_score(estimator, X_test, y_test, scorers, sample_weight=None):
+def _multimetric_score(estimator, X_test, y_test, scorers,
+                       sample_weight=None):
     """Return a dict of score for multimetric scoring"""
     scores = {}
-    score_kwgs = {} if sample_weight is None else {'sample_weight': sample_weight}
+    score_kwgs = {} if sample_weight is None else \
+        {'sample_weight': sample_weight}
     for name, scorer in scorers.items():
         if y_test is None:
             score = scorer(estimator, X_test, **score_kwgs)

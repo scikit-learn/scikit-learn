@@ -273,7 +273,8 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise-deprecating', test_score_weight=None, **fit_params):
+                   verbose, error_score='raise-deprecating',
+                   test_score_weight=None, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -342,7 +343,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                                             fit_params=fit_params,
                                             return_n_test_samples=True,
                                             error_score=error_score,
-                                            test_score_weight=test_score_weight)
+                                            test_score_weight=test_score_weight
+                                            )
     return scores, parameters, n_samples_test
 
 
@@ -446,7 +448,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
-        score_kwgs = {} if sample_weight is None else {'sample_weight': sample_weight}
+        score_kwgs = {} if sample_weight is None else \
+            {'sample_weight': sample_weight}
         return score(self.best_estimator_, X, y, **score_kwgs)
 
     def _check_is_fitted(self, method_name):
@@ -1105,7 +1108,8 @@ class GridSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score, test_score_weight=test_score_weight)
+            return_train_score=return_train_score,
+            test_score_weight=test_score_weight)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1401,7 +1405,8 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise-deprecating', return_train_score="warn", test_score_weight=None):
+                 error_score='raise-deprecating', return_train_score="warn",
+                 test_score_weight=None):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1409,7 +1414,8 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score, test_score_weight=test_score_weight)
+            return_train_score=return_train_score,
+            test_score_weight=test_score_weight)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""
