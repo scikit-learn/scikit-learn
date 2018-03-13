@@ -1001,11 +1001,14 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 cdef class BinaryTree:
 
     cdef np.ndarray data_arr
+    cdef np.ndarray sample_weight_arr
     cdef np.ndarray idx_array_arr
     cdef np.ndarray node_data_arr
     cdef np.ndarray node_bounds_arr
 
     cdef readonly DTYPE_t[:, ::1] data
+    cdef readonly DTYPE_t[::1] sample_weight
+    cdef public DTYPE_t sum_weight
     cdef public ITYPE_t[::1] idx_array
     cdef public NodeData_t[::1] node_data
     cdef public DTYPE_t[:, :, ::1] node_bounds
@@ -1029,11 +1032,13 @@ cdef class BinaryTree:
     # errors and seg-faults in rare cases where __init__ is not called
     def __cinit__(self):
         self.data_arr = np.empty((1, 1), dtype=DTYPE, order='C')
+        self.sample_weight_arr = np.empty(1, dtype=DTYPE, order='C')
         self.idx_array_arr = np.empty(1, dtype=ITYPE, order='C')
         self.node_data_arr = np.empty(1, dtype=NodeData, order='C')
         self.node_bounds_arr = np.empty((1, 1, 1), dtype=DTYPE)
 
         self.data = get_memview_DTYPE_2D(self.data_arr)
+        self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
         self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
         self.node_data = get_memview_NodeData_1D(self.node_data_arr)
         self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
@@ -1050,9 +1055,16 @@ cdef class BinaryTree:
         self.n_calls = 0
 
     def __init__(self, data,
-                 leaf_size=40, metric='minkowski', **kwargs):
+                 leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
         self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
         self.data = get_memview_DTYPE_2D(self.data_arr)
+
+        if sample_weight is not None:
+            self.sample_weight_arr = np.asarray(sample_weight, dtype=DTYPE, order='C')
+            self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
+            self.sum_weight = np.sum(self.sample_weight)
+        else:
+            self.sample_weight = None
 
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
@@ -1524,6 +1536,11 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_LB = 0, dist_UB = 0
 
         cdef ITYPE_t n_samples = self.data.shape[0]
+        cdef DTYPE_t Z
+        if self.sample_weight is not None:
+            Z = self.sum_weight
+        else:
+            Z = <DTYPE_t> n_samples
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i
         cdef KernelType kernel_c
@@ -1585,10 +1602,10 @@ cdef class BinaryTree:
             for i in range(Xarr.shape[0]):
                 min_max_dist(self, 0, pt, &dist_LB, &dist_UB)
                 # compute max & min bounds on density within top node
-                log_min_bound = (log(n_samples) +
+                log_min_bound = (log(Z) +
                                  compute_log_kernel(dist_UB,
                                                     h_c, kernel_c))
-                log_max_bound = (log(n_samples) +
+                log_max_bound = (log(Z) +
                                  compute_log_kernel(dist_LB,
                                                     h_c, kernel_c))
                 log_bound_spread = logsubexp(log_max_bound, log_min_bound)
@@ -2057,14 +2074,24 @@ cdef class BinaryTree:
         # keep track of the global bounds on density.  The procedure here is
         # to split nodes, updating these bounds, until the bounds are within
         # atol & rtol.
-        cdef ITYPE_t i, i1, i2, N1, N2, i_node
+        cdef ITYPE_t i, i1, i2, i_node
+        cdef DTYPE_t N1, N2
         cdef DTYPE_t global_log_min_bound, global_log_bound_spread
         cdef DTYPE_t global_log_max_bound
 
         cdef DTYPE_t* data = &self.data[0, 0]
+        cdef bint with_sample_weight = self.sample_weight is not None
+        cdef DTYPE_t* sample_weight
+        if with_sample_weight:
+            sample_weight = &self.sample_weight[0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef NodeData_t* node_data = &self.node_data[0]
-        cdef ITYPE_t N = self.data.shape[0]
+        cdef DTYPE_t N
+        cdef DTYPE_t log_weight
+        if with_sample_weight:
+            N = self.sum_weight
+        else:
+            N = <DTYPE_t> self.data.shape[0]
         cdef ITYPE_t n_features = self.data.shape[1]
 
         cdef NodeData_t node_info
@@ -2096,7 +2123,12 @@ cdef class BinaryTree:
             i_node = nodeheap_item.i1
 
             node_info = node_data[i_node]
-            N1 = node_info.idx_end - node_info.idx_start
+            if with_sample_weight:
+                N1 = 0.0
+                for i in range(node_info.idx_start, node_info.idx_end):
+                    N1 += sample_weight[idx_array[i]]
+            else:
+                N1 = node_info.idx_end - node_info.idx_start
 
             #------------------------------------------------------------
             # Case 1: local bounds are equal to within per-point tolerance.
@@ -2121,12 +2153,21 @@ cdef class BinaryTree:
                 global_log_bound_spread =\
                     logsubexp(global_log_bound_spread,
                               node_log_bound_spreads[i_node])
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    dist_pt = self.dist(pt, data + n_features * idx_array[i],
-                                        n_features)
-                    log_density = compute_log_kernel(dist_pt, h, kernel)
-                    global_log_min_bound = logaddexp(global_log_min_bound,
-                                                     log_density)
+                if with_sample_weight:
+                    for i in range(node_info.idx_start, node_info.idx_end):
+                        dist_pt = self.dist(pt, data + n_features * idx_array[i],
+                                            n_features)
+                        log_density = compute_log_kernel(dist_pt, h, kernel)
+                        log_weight = np.log(sample_weight[idx_array[i]])
+                        global_log_min_bound = logaddexp(global_log_min_bound,
+                                                         log_density + log_weight)
+                else:
+                    for i in range(node_info.idx_start, node_info.idx_end):
+                        dist_pt = self.dist(pt, data + n_features * idx_array[i],
+                                            n_features)
+                        log_density = compute_log_kernel(dist_pt, h, kernel)
+                        global_log_min_bound = logaddexp(global_log_min_bound,
+                                                         log_density)
 
             #------------------------------------------------------------
             # Case 4: split node and query subnodes
@@ -2134,8 +2175,16 @@ cdef class BinaryTree:
                 i1 = 2 * i_node + 1
                 i2 = 2 * i_node + 2
 
-                N1 = node_data[i1].idx_end - node_data[i1].idx_start
-                N2 = node_data[i2].idx_end - node_data[i2].idx_start
+                if with_sample_weight:
+                    N1 = 0.0
+                    for i in range(node_data[i1].idx_start, node_data[i1].idx_end):
+                        N1 += sample_weight[idx_array[i]]
+                    N2 = 0.0
+                    for i in range(node_data[i2].idx_start, node_data[i2].idx_end):
+                        N2 += sample_weight[idx_array[i]]
+                else:
+                    N1 = node_data[i1].idx_end - node_data[i1].idx_start
+                    N2 = node_data[i2].idx_end - node_data[i2].idx_start
 
                 min_max_dist(self, i1, pt, &dist_LB_1, &dist_UB_1)
                 min_max_dist(self, i2, pt, &dist_LB_2, &dist_UB_2)
@@ -2197,9 +2246,15 @@ cdef class BinaryTree:
         # global_min_bound and global_max_bound give the minimum and maximum
         # density over the entire tree.  We recurse down until global_min_bound
         # and global_max_bound are within rtol and atol.
-        cdef ITYPE_t i, i1, i2, N1, N2
+        cdef ITYPE_t i, i1, i2, iw, start, end
+        cdef DTYPE_t N1, N2
 
         cdef DTYPE_t* data = &self.data[0, 0]
+        cdef bint with_sample_weight = self.sample_weight is not None
+        cdef DTYPE_t* sample_weight
+        cdef DTYPE_t log_weight
+        if with_sample_weight:
+            sample_weight = &self.sample_weight[0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
 
@@ -2210,8 +2265,14 @@ cdef class BinaryTree:
         cdef DTYPE_t child1_log_bound_spread, child2_log_bound_spread
         cdef DTYPE_t dist_UB = 0, dist_LB = 0
 
-        N1 = node_info.idx_end - node_info.idx_start
-        N2 = self.data.shape[0]
+        if with_sample_weight:
+            N1 = 0.0
+            for i in range(node_info.idx_start, node_info.idx_end):
+                N1 += sample_weight[idx_array[i]]
+            N2 = self.sum_weight
+        else:
+            N1 = <DTYPE_t>(node_info.idx_end - node_info.idx_start)
+            N2 = <DTYPE_t>self.data.shape[0]
 
         #------------------------------------------------------------
         # Case 1: local bounds are equal to within errors.  Return
@@ -2234,12 +2295,22 @@ cdef class BinaryTree:
                                                 local_log_min_bound)
             global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
                                                    local_log_bound_spread)
-            for i in range(node_info.idx_start, node_info.idx_end):
-                dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
-                                    n_features)
-                log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
-                global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                    log_dens_contribution)
+            if with_sample_weight:
+                for i in range(node_info.idx_start, node_info.idx_end):
+                    dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+                                        n_features)
+                    log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
+                    log_weight = np.log(sample_weight[idx_array[i]])
+                    global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                                        log_dens_contribution +
+                                                            log_weight)
+            else:
+                for i in range(node_info.idx_start, node_info.idx_end):
+                    dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+                                        n_features)
+                    log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
+                    global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                                        log_dens_contribution)
 
         #------------------------------------------------------------
         # Case 4: split node and query subnodes
@@ -2247,8 +2318,20 @@ cdef class BinaryTree:
             i1 = 2 * i_node + 1
             i2 = 2 * i_node + 2
 
-            N1 = self.node_data[i1].idx_end - self.node_data[i1].idx_start
-            N2 = self.node_data[i2].idx_end - self.node_data[i2].idx_start
+            if with_sample_weight:
+                N1 = 0.0
+                start = self.node_data[i1].idx_start
+                end = self.node_data[i1].idx_end
+                for i in range(start, end):
+                    N1 += sample_weight[idx_array[i]]
+                N2 = 0.0
+                start = self.node_data[i2].idx_start
+                end = self.node_data[i2].idx_end
+                for i in range(start, end):
+                    N2 += sample_weight[idx_array[i]]
+            else:
+                N1 = <DTYPE_t>(self.node_data[i1].idx_end - self.node_data[i1].idx_start)
+                N2 = <DTYPE_t>(self.node_data[i2].idx_end - self.node_data[i2].idx_start)
 
             min_max_dist(self, i1, pt, &dist_LB, &dist_UB)
             child1_log_min_bound = log(N1) + compute_log_kernel(dist_UB, h,

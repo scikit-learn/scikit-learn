@@ -112,7 +112,7 @@ class KernelDensity(BaseEstimator):
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
 
         Parameters
@@ -120,6 +120,8 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        sample_weight: array_like, shape (n_samples, ), optional
+            List of sample weights attached to the data X.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
@@ -129,6 +131,7 @@ class KernelDensity(BaseEstimator):
             kwargs = {}
         self.tree_ = TREE_DICT[algorithm](X, metric=self.metric,
                                           leaf_size=self.leaf_size,
+                                          sample_weight=sample_weight,
                                           **kwargs)
         return self
 
@@ -150,7 +153,10 @@ class KernelDensity(BaseEstimator):
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
         X = check_array(X, order='C', dtype=DTYPE)
-        N = self.tree_.data.shape[0]
+        if self.tree_.sample_weight is None:
+            N = self.tree_.data.shape[0]
+        else:
+            N = self.tree_.sum_weight
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
             X, h=self.bandwidth, kernel=self.kernel, atol=atol_N,
@@ -202,8 +208,14 @@ class KernelDensity(BaseEstimator):
         data = np.asarray(self.tree_.data)
 
         rng = check_random_state(random_state)
-        i = rng.randint(data.shape[0], size=n_samples)
-
+        if self.tree_.sample_weight is None:
+            i = rng.randint(data.shape[0], size=n_samples)
+        else:
+            u = rng.uniform(0, 1, size=n_samples)
+            # TODO: recode in Cython with logaddexp to remove underflows
+            cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
+            sum_weight = cumsum_weight[-1]
+            i = np.searchsorted(cumsum_weight, u * sum_weight)
         if self.kernel == 'gaussian':
             return np.atleast_2d(rng.normal(data[i], self.bandwidth))
 
