@@ -273,7 +273,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise', **fit_params):
+                   verbose, error_score='raise', weighted_test_score=False, **fit_params):
     """Run fit on one set of parameters.
 
     .. deprecated:: 0.18
@@ -319,6 +319,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
+    weighted_test_score : boolean, optional, default: False
+        Whether test score is weighted.
+
     Returns
     -------
     score : float
@@ -332,7 +335,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     """
     score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
                                               test, verbose, parameters,
-                                              fit_params, error_score)
+                                              fit_params, error_score, weighted_test_score=weighted_test_score)
     return score, parameters, n_samples_test
 
 
@@ -385,7 +388,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise'):
+                 error_score='raise', weighted_test_score=False):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -397,6 +400,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
+        self.weighted_test_score = weighted_test_score
 
     @property
     def _estimator_type(self):
@@ -406,7 +410,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def classes_(self):
         return self.best_estimator_.classes_
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, sample_weight=None):
         """Returns the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -421,6 +425,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
+
+        sample_weight : array-like of shape = (n_samples), optional
+            Sample weights.
 
         Returns
         -------
@@ -437,7 +444,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        return self.scorer_(self.best_estimator_, X, y)
+        score_kwargs = {'sample_weight': sample_weight} if sample_weight is not None else {}
+        return self.scorer_(self.best_estimator_, X, y, **score_kwargs)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):
@@ -570,7 +578,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
                                     train, test, self.verbose, parameters,
                                     self.fit_params, return_parameters=True,
-                                    error_score=self.error_score)
+                                    error_score=self.error_score, weighted_test_score=self.weighted_test_score)
                 for parameters in parameter_iterable
                 for train, test in cv)
 
@@ -812,11 +820,11 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise'):
+                 pre_dispatch='2*n_jobs', error_score='raise', weighted_test_score=False):
 
         super(GridSearchCV, self).__init__(
             estimator, scoring, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch, error_score)
+            refit, cv, verbose, pre_dispatch, error_score, weighted_test_score=weighted_test_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1016,7 +1024,7 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise'):
+                 error_score='raise', weighted_test_score=False):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -1024,7 +1032,7 @@ class RandomizedSearchCV(BaseSearchCV):
         super(RandomizedSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch, error_score=error_score)
+            pre_dispatch=pre_dispatch, error_score=error_score, weighted_test_score=weighted_test_score)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
