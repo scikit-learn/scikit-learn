@@ -594,7 +594,7 @@ as a dict, not as scalars.
 Imputation of missing values
 ============================
 
-This module is deprecated and has been moved to :ref:`impute`. This would be removed in 0.22.
+Tools for imputing missing values are discussed at :ref:`impute`.
 
 .. _polynomial_features:
 
