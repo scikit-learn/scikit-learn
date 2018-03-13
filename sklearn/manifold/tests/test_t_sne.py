@@ -328,7 +328,7 @@ def test_non_positive_computed_distances():
     def metric(x, y):
         return -1
 
-    tsne = TSNE(metric=metric, method='exact')
+    tsne = TSNE(metric=metric, method='exact', perplexity=1)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     assert_raises_regexp(ValueError, "All distances .*metric given.*",
                          tsne.fit_transform, X)
