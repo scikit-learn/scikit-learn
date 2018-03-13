@@ -143,6 +143,14 @@ Preprocessing
 
 Model evaluation and meta-estimators
 
+- When estimators of :class:`multiclass.OneVsRestClassifier` have a 
+  `predict_proba` but no `decision_function`, 
+  `OneVsRestClassifier.decision_function` returns the individual 
+  `predict_proba` results scaled to [-1,1]. This is different from 
+  `OneVsRestClassifier.predict_proba` which normalizes the individual 
+  probabilities so that they sum up to 1. :issue:`10612` by 
+  :user:`Emre Ates <EmreAtes>`.
+
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
