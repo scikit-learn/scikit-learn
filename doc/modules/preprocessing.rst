@@ -589,6 +589,13 @@ columns for this feature will be all zeros
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
 
+.. _imputation:
+
+Imputation of missing values
+============================
+
+This module is deprecated and has been moved to :ref:`impute`. This would be removed in 0.22.
+
 .. _polynomial_features:
 
 Generating polynomial features
