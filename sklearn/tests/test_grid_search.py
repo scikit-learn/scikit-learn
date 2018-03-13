@@ -688,7 +688,7 @@ def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf = SVC(probability=False)
+    clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 

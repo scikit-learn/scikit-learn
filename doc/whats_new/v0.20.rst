@@ -385,6 +385,11 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Datasets
+
+- Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
+  :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+
 API changes summary
 -------------------
 
@@ -404,6 +409,12 @@ Linear, kernelized and related models
   perform more than the requested maximum number of iterations. Now both
   estimators will report at most ``max_iter`` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
+
+- The default value of ``gamma`` parameter of :class:`svm.SVC`,
+  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`NuSVR`, :class:`OneClassSVM`
+  will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
+  better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
+  and :user:`Ting Neo <neokt>`.
 
 Metrics
 
