@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 
@@ -50,6 +51,7 @@ iris = datasets.load_iris()
 
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
+
 
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
@@ -702,6 +704,34 @@ def test_sparse_design_with_sample_weights():
 
             assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
                                       decimal=6)
+
+
+def test_ridgecv_int_alphas():
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Integers
+    ridge = RidgeCV(alphas=(1, 10, 100))
+    ridge.fit(X, y)
+
+
+def test_ridgecv_negative_alphas():
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Negative integers
+    ridge = RidgeCV(alphas=(-1, -10, -100))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
+
+    # Negative floats
+    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():

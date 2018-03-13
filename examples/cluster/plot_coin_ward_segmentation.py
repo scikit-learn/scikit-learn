@@ -63,7 +63,7 @@ plt.figure(figsize=(5, 5))
 plt.imshow(rescaled_coins, cmap=plt.cm.gray)
 for l in range(n_clusters):
     plt.contour(label == l,
-                colors=[plt.cm.spectral(l / float(n_clusters)), ])
+                colors=[plt.cm.nipy_spectral(l / float(n_clusters)), ])
 plt.xticks(())
 plt.yticks(())
 plt.show()

@@ -29,6 +29,9 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
+- The v0.19.0 release notes failed to mention a backwards incompatibility with
+  :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
+  :issue:`7823`.
 
 Details are listed in the changelog below.
 
@@ -172,6 +175,11 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- The ``predict`` method of :class:`pipeline.Pipeline` now passes keyword
+  arguments on to the pipeline's last estimator, enabling the use of parameters
+  such as ``return_std`` in a pipeline with caution.
+  :issue:`9304` by :user:`Breno Freitas <brenolf>`.
+
 - Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
@@ -268,6 +276,9 @@ Classifiers and regressors
 - Fixed a bug in :class:`sklearn.linear_model.Lasso`
   where the coefficient had wrong shape when ``fit_intercept=False``.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
+
+- Fixed a bug in :class:`linear_model.RidgeCV` where using integer ``alphas``
+  raised an error. :issue:`10393` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
 
 Decomposition, manifold learning and clustering
 
@@ -374,6 +385,11 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Datasets
+
+- Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
+  :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+
 API changes summary
 -------------------
 
@@ -386,6 +402,19 @@ Linear, kernelized and related models
 - Deprecate ``positive=True`` option in :class:`linear_model.Lars` as the
   underlying implementation is broken. Use :class:`linear_model.Lasso` instead.
   :issue:`9837` by `Alexandre Gramfort`_.
+
+- ``n_iter_`` may vary from previous releases in
+  :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
+  :class:`linear_model.HuberRegressor`.  For Scipy <= 1.0.0, the optimizer could
+  perform more than the requested maximum number of iterations. Now both
+  estimators will report at most ``max_iter`` iterations even if more were
+  performed. :issue:`10723` by `Joel Nothman`_.
+
+- The default value of ``gamma`` parameter of :class:`svm.SVC`,
+  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`NuSVR`, :class:`OneClassSVM`
+  will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
+  better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
+  and :user:`Ting Neo <neokt>`.
 
 Metrics
 

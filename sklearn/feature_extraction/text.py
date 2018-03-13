@@ -306,6 +306,15 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
+    def _validate_params(self):
+        """Check validity of ngram_range parameter"""
+        min_n, max_m = self.ngram_range
+        if min_n > max_m:
+            raise ValueError(
+                "Invalid value for ngram_range=%s "
+                "lower boundary larger than the upper boundary."
+                % str(self.ngram_range))
+
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -371,11 +380,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -493,6 +506,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -515,6 +530,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
+
+        self._validate_params()
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -575,11 +592,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -874,6 +895,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -1167,11 +1189,15 @@ class TfidfVectorizer(CountVectorizer):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.
