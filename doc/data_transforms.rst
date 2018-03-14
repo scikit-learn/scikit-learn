@@ -28,6 +28,7 @@ scikit-learn.
     modules/pipeline
     modules/feature_extraction
     modules/preprocessing
+    modules/impute
     modules/unsupervised_reduction
     modules/random_projection
     modules/kernel_approximation
