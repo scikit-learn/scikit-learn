@@ -120,9 +120,11 @@ def log(x, log_base=None):
         return np.log2(x)
     elif log_base is 'e':
         return np.log(x)
+    elif log_base is 10:
+        return np.log10(x)
     else:
         raise ValueError("Unsupported value for 'log_base': {}; allowed "
-                         "values are 2 or 'e'.".format(log_base))
+                         "values are 2, 10 or 'e'".format(log_base))
 
 
 # clustering measures
@@ -585,14 +587,16 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
 
-    log_base : 2 or 'e'
+    log_base : {None, 2, 10, 'e'}
         Base of the log function: 'e' for results in nats, 2 for results in
-        bits.
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+
+       .. versionadded:: 0.20
 
     Returns
     -------
     mi : float
-       Mutual information, a non-negative value
+       Mutual information, a non-negative value.
 
     See also
     --------
@@ -671,9 +675,11 @@ def adjusted_mutual_info_score(labels_true, labels_pred, log_base=None):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    log_base : 2 or 'e'
+    log_base : {None, 2, 10, 'e'}
         Base of the log function: 'e' for results in nats, 2 for results in
-        bits.
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+
+       .. versionadded:: 0.20
 
     Returns
     -------
@@ -771,9 +777,11 @@ def normalized_mutual_info_score(labels_true, labels_pred, log_base=None):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    log_base : 2 or 'e'
+    log_base : {None, 2, 10, 'e'}
         Base of the log function: 'e' for results in nats, 2 for results in
-        bits.
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+
+       .. versionadded:: 0.20
 
     Returns
     -------
@@ -903,7 +911,23 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
 
 
 def entropy(labels, log_base=None):
-    """Calculates the entropy for a labeling."""
+    """Calculates the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : int array, shape = [n_samples]
+
+    log_base : {None, 2, 10, 'e'}
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+
+       .. versionadded:: 0.20
+
+    Returns
+    -------
+    h : float
+        Entropy, a non-negative value.
+    """
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]

@@ -46,7 +46,7 @@ def test_error_messages_on_wrong_input():
                              [0, 1, 0], [[1, 1], [0, 0]])
 
     expected = ("Unsupported value for 'log_base': f; allowed"
-                " values are 2 or 'e'")
+                " values are 2, 10 or 'e'")
     assert_raise_message(ValueError, expected, entropy, [0, 0],
                          log_base='f')
 
