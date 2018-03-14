@@ -48,8 +48,9 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
         The number of samples to use. If not given, all samples are used.
 
     random_state : int, RandomState instance or None (default)
-        The generator used to randomly select the samples from input points for bandwidth
-        estimation. Use an int to make the randomness deterministic.
+        The generator used to randomly select the samples from input points
+        for bandwidth estimation. Use an int to make the randomness
+        deterministic.
         See :term:`random_state <Glossary>`.
 
     n_jobs : int, optional (default = 1)
