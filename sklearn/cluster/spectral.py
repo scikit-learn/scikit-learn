@@ -38,11 +38,9 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Use an int to make the randomness deterministic.
+        See :term:`random_state <Glossary>`.
 
     Returns
     -------
@@ -195,13 +193,12 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization. If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        the K-Means initialization. Use an int to make the randomness
+        deterministic.
+        See :term:`random_state <Glossary>`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -309,13 +306,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization.  If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        the K-Means initialization. Use an int to make the randomness
+        deterministic.
+        See :term:`random_state <Glossary>`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
