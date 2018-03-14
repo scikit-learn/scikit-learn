@@ -25,6 +25,7 @@ from ...utils.fixes import comb
 
 
 def comb2(n):
+    """Shorthand for comb (= N choose k) with k==2"""
     # the exact version is faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
@@ -110,11 +111,11 @@ def log(x, log_base=None):
     """Calculate the logarithm of x base log_base."""
     if log_base is None:
         # NOTE: when deprecation ends we need to change explicitly
-        # setting `log_base` to `e` to 2
-        log_base = 'e'
+        # setting `log_base` from `e` to 2
         warnings.warn("From version 0.22, log_base=None will mean "
-                      "log_base=2 rather than the current default, "
-                      "'e'.", FutureWarning)
+                      "log_base=2 rather than the current default "
+                      "log_base='e'", FutureWarning)
+        log_base = 'e'
     if log_base is 2:
         return np.log2(x)
     elif log_base is 'e':
@@ -546,7 +547,7 @@ def v_measure_score(labels_true, labels_pred):
 
 def mutual_info_score(labels_true, labels_pred, contingency=None,
                       log_base=None):
-    r"""Mutual Information between two clusterings.
+    """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`|U_i|` is the number of the samples
@@ -620,6 +621,11 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
+
+    # Special limit cases: empty sets are a perfect match hence return 1.0.
+    if (pi.size == 0 or pj.size == 0):
+        return 1.0
+
     log_contingency_nm = log(nz_val, log_base)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
@@ -694,7 +700,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, log_base=None):
       1.0
 
     If classes members are completely split across different clusters,
-    the assignment is totally in-complete, hence the AMI is null::
+    the assignment is totally in-complete, hence the AMI is zero::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0

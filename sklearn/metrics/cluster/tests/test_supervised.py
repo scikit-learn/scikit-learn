@@ -16,21 +16,21 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
+        assert_warns
 )
 from numpy.testing import assert_array_almost_equal
 
 
-score_funcs = [
-    adjusted_rand_score,
-    homogeneity_score,
-    completeness_score,
-    v_measure_score,
-    adjusted_mutual_info_score,
-    normalized_mutual_info_score,
-]
-
-
 def test_error_messages_on_wrong_input():
+    score_funcs = [
+        adjusted_rand_score,
+        homogeneity_score,
+        completeness_score,
+        v_measure_score,
+        mutual_info_score,
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
     for score_func in score_funcs:
         expected = ('labels_true and labels_pred must have same size,'
                     ' got 2 and 3')
@@ -45,8 +45,25 @@ def test_error_messages_on_wrong_input():
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1, 0], [[1, 1], [0, 0]])
 
+    score_funcs = [
+        mutual_info_score,
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
+    for score_func in score_funcs:
+        expected = ("Unsupported value for 'log_base': f; allowed"
+                    " values are 2 or 'e'")
+        assert_raise_message(ValueError, expected, score_func,
+                             [0, 0], [0, 0], log_base='f')
+
 
 def test_perfect_matches():
+    score_funcs = [
+        adjusted_rand_score,
+        homogeneity_score,
+        completeness_score,
+        v_measure_score
+    ]
     for score_func in score_funcs:
         assert_equal(score_func([], []), 1.0)
         assert_equal(score_func([0], [1]), 1.0)
@@ -55,6 +72,31 @@ def test_perfect_matches():
         assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
         assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
         assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
+
+    score_funcs = [
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
+    for score_func in score_funcs:
+        assert_equal(score_func([], [], log_base='e'), 1.0)
+        assert_equal(score_func([0], [1], log_base='e'), 1.0)
+        assert_equal(score_func([0, 0, 0], [0, 0, 0], log_base='e'), 1.0)
+        assert_equal(score_func([0, 1, 0], [42, 7, 42], log_base='e'), 1.0)
+        assert_equal(score_func([0., 1., 0.], [42., 7., 42.], log_base='e'),
+                     1.0)
+        assert_equal(score_func([0., 1., 2.], [42., 7., 2.], log_base='e'),
+                     1.0)
+        assert_equal(score_func([0, 1, 2], [42, 7, 2], log_base='e'), 1.0)
+
+
+def test_future_warning():
+    score_funcs = [
+        mutual_info_score,
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
+    for score_func in score_funcs:
+        assert_warns(FutureWarning, score_func, [0, 0], [0, 1])
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -186,9 +228,14 @@ def test_int_overflow_mutual_info_score():
 
 
 def test_entropy():
-    ent = entropy([0, 0, 42.], 'e')
-    assert_almost_equal(ent, 0.6365141, 5)
-    assert_almost_equal(entropy([]), 1)
+    h = entropy([0, 0, 42.], log_base='e')
+    assert_almost_equal(h, 0.6365141, 5)
+    h = entropy([0, 0, 42.], log_base=2)
+    assert_almost_equal(h, 0.9182958, 5)
+    h = entropy([], log_base='e')
+    assert_almost_equal(h, 1)
+    h = entropy([], log_base=2)
+    assert_almost_equal(h, 1)
 
 
 def test_contingency_matrix():
