@@ -141,3 +141,30 @@ def test_kde_pipeline_gridsearch():
     search = GridSearchCV(pipe1, param_grid=params, cv=5)
     search.fit(X)
     assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
+
+
+def test_kde_sample_weights():
+    N = 10000
+    T = 100
+    for d in [1, 2, 10]:
+        rng = np.random.RandomState(0)
+        X = rng.rand(N, d)
+        W = 1 + (10 * X.sum(axis=1)).astype(np.int8)
+        repetitions = []
+        for x, w in zip(X, W):
+            for _ in range(w):
+                repetitions.append(x.tolist())
+        X_repetitions = np.array(repetitions)
+        Y = rng.rand(T / d, d)
+        i = 0
+        for algorithm in ['auto', 'ball_tree', 'kd_tree']:
+            for metric in ['euclidean', 'minkowski', 'manhattan',
+                           'chebyshev']:
+                if algorithm != 'kd_tree' or metric in KDTree.valid_metrics:
+                    i += 1
+                    kde = KernelDensity(algorithm=algorithm, metric=metric)
+                    kde.fit(X, sample_weight=W)
+                    y_test = kde.score_samples(Y)
+                    kde.fit(X_repetitions)
+                    y_ref = kde.score_samples(Y)
+                    assert_allclose(y_test, y_ref)
