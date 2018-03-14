@@ -155,7 +155,7 @@ def test_kde_sample_weights():
             for _ in range(w):
                 repetitions.append(x.tolist())
         X_repetitions = np.array(repetitions)
-        Y = rng.rand(T / d, d)
+        Y = rng.rand(T // d, d)
         i = 0
         for algorithm in ['auto', 'ball_tree', 'kd_tree']:
             for metric in ['euclidean', 'minkowski', 'manhattan',
