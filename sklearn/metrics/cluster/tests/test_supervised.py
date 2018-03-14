@@ -45,16 +45,10 @@ def test_error_messages_on_wrong_input():
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1, 0], [[1, 1], [0, 0]])
 
-    score_funcs = [
-        mutual_info_score,
-        adjusted_mutual_info_score,
-        normalized_mutual_info_score
-    ]
-    for score_func in score_funcs:
-        expected = ("Unsupported value for 'log_base': f; allowed"
-                    " values are 2 or 'e'")
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 0], [0, 0], log_base='f')
+    expected = ("Unsupported value for 'log_base': f; allowed"
+                " values are 2 or 'e'")
+    assert_raise_message(ValueError, expected, entropy, [0, 0],
+                         log_base='f')
 
 
 def test_perfect_matches():
