@@ -44,6 +44,9 @@ def expected_mutual_information(contingency, int n_samples, log_base=None):
     if log_base is 2:
         log_ab_outer = np.log2(a)[:, np.newaxis] + np.log2(b)
         log_Nnij = np.log2(N * nijs)
+    elif log_base is 10:
+        log_ab_outer = np.log10(a)[:, np.newaxis] + np.log10(b)
+        log_Nnij = np.log10(N * nijs)     
     else:
         log_ab_outer = np.log(a)[:, np.newaxis] + np.log(b)
         log_Nnij = np.log(N * nijs)
