@@ -1337,7 +1337,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):

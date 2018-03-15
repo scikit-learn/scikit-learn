@@ -49,7 +49,6 @@ iris = datasets.load_iris()
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
-
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
@@ -604,7 +603,6 @@ def test_ridge_classifier_cv_store_cv_values():
     y = np.array([1, 1, 1, -1, -1])
 
     n_samples = x.shape[0]
-
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 

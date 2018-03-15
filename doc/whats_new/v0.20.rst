@@ -222,7 +222,7 @@ Classifiers and regressors
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
 - Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
-  the parameter ``store_cv_values`` was not immplemented though
+  the parameter ``store_cv_values`` was not implemented though
   it was documented in ``cv_values`` as a way to set up the storage
   of cross-validation values for different alphas. :issue:`10297` by 
   :user:`Mabel Villalba-Jiménez <mabelvj>`.
