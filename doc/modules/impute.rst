@@ -67,7 +67,7 @@ snippet::
     >>> from sklearn.impute import MICEImputer
     >>> imp = MICEImputer(n_imputations=10, random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
-    MICEImputer(imputation_order='monotone', initial_strategy='mean',
+    MICEImputer(imputation_order='ascending', initial_strategy='mean',
           max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
           n_imputations=10, n_nearest_features=None, predictor=None,
           random_state=0, verbose=False)
