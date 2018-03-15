@@ -62,6 +62,7 @@ from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR
 
 from sklearn import datasets
@@ -100,6 +101,44 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
     else:
         assert_equal(i * chunk_size + (batch_stop - batch_start),
                      n_samples_seen)
+
+
+def _generate_tuple_transformer_missing_value():
+    trans_handling_nan = [QuantileTransformer()]
+    return [(trans, iris.data.copy(), 15)
+            for trans in trans_handling_nan]
+
+
+@pytest.mark.parametrize(
+    "est, X, n_missing",
+    _generate_tuple_transformer_missing_value()
+)
+def test_missing_value_handling(est, X, n_missing):
+    # check that the preprocessing method let pass nan
+    rng = np.random.RandomState(42)
+    X[rng.randint(X.shape[0], size=n_missing),
+      rng.randint(X.shape[1], size=n_missing)] = np.nan
+    X_train, X_test = train_test_split(X)
+    # sanity check
+    assert not np.all(np.isnan(X_train), axis=0).any()
+    X_test[:, 0] = np.nan  # make sure this boundary case is tested
+
+    Xt = est.fit(X_train).transform(X_test)
+    # missing values should still be missing, and only them
+    assert_array_equal(np.isnan(Xt), np.isnan(X_test))
+
+    for i in range(X.shape[1]):
+        # train only on non-NaN
+        est.fit(X_train[:, [i]][~np.isnan(X_train[:, i])])
+        # check transforming with NaN works even when training without NaN
+        Xt_col = est.transform(X_test[:, [i]])
+        assert_array_equal(Xt_col, Xt[:, [i]])
+        # check non-NaN is handled as before - the 1st column is all nan
+        if not np.isnan(X_test[:, i]).all():
+            Xt_col_nonan = est.transform(
+                X_test[:, [i]][~np.isnan(X_test[:, i])])
+            assert_array_equal(Xt_col_nonan,
+                               Xt_col[~np.isnan(Xt_col.squeeze())])
 
 
 def test_polynomial_features():
@@ -966,51 +1005,6 @@ def test_quantile_transform_check_error():
     assert_raise_message(ValueError,
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
-
-
-@pytest.mark.parametrize(
-    "missing_value, dtype",
-    [(np.nan, np.float64),
-     (np.nan, np.float32)])
-def test_quantile_transform_missing_value(missing_value, dtype):
-    X_some_missing = np.array([[0, 1],
-                               [0, 0],
-                               [missing_value, 2],
-                               [0, missing_value],
-                               [0, 1]], dtype=dtype)
-    X_all_missing = np.array([[missing_value, missing_value],
-                              [missing_value, missing_value]], dtype=dtype)
-    X_expected_some_missing = np.array([[0, 0.5],
-                                        [0, 0],
-                                        [missing_value, 1],
-                                        [0, missing_value],
-                                        [0, 0.5]])
-    X_expected_all_missing = X_all_missing.copy()
-
-    for X, X_expected, all_nan in zip([X_some_missing, X_all_missing],
-                                      [X_expected_some_missing,
-                                       X_expected_all_missing],
-                                      [False, True]):
-        transformer = QuantileTransformer(n_quantiles=5)
-
-        if all_nan:
-            X_trans = assert_warns_message(UserWarning,
-                                           "samples in a column of X are NaN",
-                                           transformer.fit_transform, X)
-        else:
-            X_trans = assert_no_warnings(transformer.fit_transform, X)
-        assert_almost_equal(X_expected, X_trans)
-
-        X_sparse = sparse.csc_matrix(X)
-        if all_nan:
-            X_trans = assert_warns_message(UserWarning,
-                                           "samples in a column of X are NaN",
-                                           transformer.fit_transform, X_sparse)
-        else:
-            X_trans = assert_no_warnings(transformer.fit_transform, X_sparse)
-        assert_almost_equal(X_expected, X_trans.A)
-
-        assert X_trans.dtype == dtype
 
 
 def test_quantile_transform_sparse_ignore_zeros():
