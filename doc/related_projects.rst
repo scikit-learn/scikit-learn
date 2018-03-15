@@ -183,6 +183,9 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic
   regression on multidimensional features.
+  
+- `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence 
+  learning using sliding window segmentation.
 
 **Decomposition and clustering**
 
