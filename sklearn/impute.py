@@ -406,12 +406,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         ``missing_values`` will be imputed. For missing values encoded as
         np.nan, use the string value "NaN".
 
-    imputation_order : str, optional (default="monotone")
+    imputation_order : str, optional (default="ascending")
         The order in which the features will be imputed. Possible values:
 
-        "monotone"
+        "ascending"
             From features with fewest missing values to most.
-        "revmonotone"
+        "descending"
             From features with most missing values to fewest.
         "roman"
             Left to right.
@@ -500,7 +500,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     def __init__(self,
                  missing_values='NaN',
-                 imputation_order='monotone',
+                 imputation_order='ascending',
                  n_imputations=100,
                  n_burn_in=10,
                  predictor=None,
@@ -579,7 +579,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             raise ValueError("If fit_mode is False, then an already-fitted "
                              "predictor should be passed in.")
 
-        # if no predictor provided, instantiate a new one
         if predictor is None:
             predictor = clone(self._predictor)
 
@@ -675,11 +674,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             ordered_idx = missing_values_idx
         elif self.imputation_order == 'arabic':
             ordered_idx = missing_values_idx[::-1]
-        elif self.imputation_order == 'monotone':
+        elif self.imputation_order == 'ascending':
             n = len(frac_of_missing_values) - len(missing_values_idx)
             ordered_idx = np.argsort(frac_of_missing_values,
                                      kind='mergesort')[n:][::-1]
-        elif self.imputation_order == 'revmonotone':
+        elif self.imputation_order == 'descending':
             n = len(frac_of_missing_values) - len(missing_values_idx)
             ordered_idx = np.argsort(frac_of_missing_values,
                                      kind='mergesort')[n:]
@@ -689,7 +688,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             raise ValueError("Got an invalid imputation order: '{0}'. It must "
                              "be one of the following: 'roman', 'arabic', "
-                             "'monotone', 'revmonotone', or "
+                             "'ascending', 'descending', or "
                              "'random'.".format(self.imputation_order))
         return ordered_idx
 
@@ -765,7 +764,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             X_filled = self.initial_imputer_.transform(X)
 
-        # removing empty features
         valid_mask = np.flatnonzero(np.logical_not(
             np.isnan(self.initial_imputer_.statistics_)))
         Xt = X[:, valid_mask]
@@ -798,11 +796,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             self._predictor = clone(self.predictor)
 
-        # parse min and max values
         self._min_value = np.nan if self.min_value is None else self.min_value
         self._max_value = np.nan if self.max_value is None else self.max_value
 
-        # initial imputation
         self.initial_imputer_ = None
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
@@ -812,7 +808,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if self.n_imputations < 1:
             return X_filled
 
-        # clip
         X_filled = np.clip(X_filled, self._min_value, self._max_value)
 
         # order in which to impute
@@ -821,8 +816,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # see: https://goo.gl/KyCNwj and subsequent comments
         ordered_idx = self._get_ordered_idx(mask_missing_values)
 
-        # absolute correlation matrix is used to randomly choose a subset of
-        # other features to impute from
         abs_corr_mat = self._get_abs_corr_mat(X_filled)
 
         # impute data
@@ -834,11 +827,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
         start_t = time()
         for i_rnd in range(n_rounds):
-            # recompute order if random
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
-            # fill in each feature in the order of ordered_idx
             for feat_idx in ordered_idx:
                 neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
                                                                 feat_idx,
@@ -880,7 +871,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'initial_imputer_')
 
-        # initial imputation
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
         # edge case: in case the user specifies 0 for n_imputations,
@@ -889,10 +879,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if self.n_imputations < 1:
             return X_filled
 
-        # clip
         X_filled = np.clip(X_filled, self._min_value, self._max_value)
 
-        # impute data
         n_rounds = self.n_burn_in + self.n_imputations
         n_imputations = len(self.imputation_sequence_)
         imputations_per_round = n_imputations // n_rounds

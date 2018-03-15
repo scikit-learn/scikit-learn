@@ -339,7 +339,7 @@ def test_mice_rank_one():
 
 @pytest.mark.parametrize(
     "imputation_order",
-    ['random', 'roman', 'monotone', 'revmonotone', 'arabic']
+    ['random', 'roman', 'monotone', 'descending', 'arabic']
 )
 def test_mice_imputation_order(imputation_order):
     rng = np.random.RandomState(0)
@@ -366,7 +366,7 @@ def test_mice_imputation_order(imputation_order):
         ordered_idx_round_1 = ordered_idx[:d-1]
         ordered_idx_round_2 = ordered_idx[d-1:]
         assert ordered_idx_round_1 != ordered_idx_round_2
-    elif 'monotone' in imputation_order:
+    elif 'ending' in imputation_order:
         assert len(ordered_idx) == 2 * (d - 1)
 
 
@@ -387,13 +387,13 @@ def test_mice_predictors(predictor):
                           predictor=predictor)
     imputer.fit_transform(X)
 
-    # correct types for predictors?
+    # check that types are correct for predictors
     hashes = []
     for triplet in imputer.imputation_sequence_:
         assert triplet.predictor
         hashes.append(id(triplet.predictor))
 
-    # each predictor unique?
+    # check that each predictor is unique
     assert len(set(hashes)) == len(hashes)
 
 
