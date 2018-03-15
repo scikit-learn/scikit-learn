@@ -256,6 +256,12 @@ Classifiers and regressors
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
+- Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
+  the parameter ``store_cv_values`` was not implemented though
+  it was documented in ``cv_values`` as a way to set up the storage
+  of cross-validation values for different alphas. :issue:`10297` by 
+  :user:`Mabel Villalba-Jiménez <mabelvj>`.
+  
 - Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
   valued pseudocounts (alpha).
   :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
