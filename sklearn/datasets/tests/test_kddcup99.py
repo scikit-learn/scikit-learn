@@ -41,8 +41,7 @@ def test_percent10():
     assert_equal(data.target.shape, (9571,))
 
     X_y_tuple = fetch_kddcup99('smtp', return_X_y=True)
-    bunch = fetch_kddcup99('smtp')
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(data, X_y_tuple)
 
 
 def test_shuffle():
