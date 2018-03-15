@@ -339,7 +339,7 @@ def test_mice_rank_one():
 
 @pytest.mark.parametrize(
     "imputation_order",
-    ['random', 'roman', 'monotone', 'descending', 'arabic']
+    ['random', 'roman', 'ascending', 'descending', 'arabic']
 )
 def test_mice_imputation_order(imputation_order):
     rng = np.random.RandomState(0)

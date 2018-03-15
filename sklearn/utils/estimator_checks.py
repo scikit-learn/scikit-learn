@@ -72,7 +72,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer']
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
@@ -93,7 +93,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ['SimpleImputer', 'Imputer', 'MICEImputer']:
+    if name not in ALLOW_NAN:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
