@@ -154,7 +154,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `eta`.
+        In the literature, this is called `beta`.
 
     learning_method : 'batch' | 'online', default='online'
         Method used to update `_component`. Only used in `fit` method.

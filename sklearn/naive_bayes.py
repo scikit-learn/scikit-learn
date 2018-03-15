@@ -468,13 +468,17 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
     def _check_alpha(self):
-        if self.alpha < 0:
+        if np.min(self.alpha) < 0:
             raise ValueError('Smoothing parameter alpha = %.1e. '
-                             'alpha should be > 0.' % self.alpha)
-        if self.alpha < _ALPHA_MIN:
+                             'alpha should be > 0.' % np.min(self.alpha))
+        if isinstance(self.alpha, np.ndarray):
+            if not self.alpha.shape[0] == self.feature_count_.shape[1]:
+                raise ValueError("alpha should be a scalar or a numpy array "
+                                 "with shape [n_features]")
+        if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn('alpha too small will result in numeric errors, '
                           'setting alpha = %.1e' % _ALPHA_MIN)
-            return _ALPHA_MIN
+            return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):

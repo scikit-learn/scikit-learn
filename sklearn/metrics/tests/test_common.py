@@ -163,6 +163,7 @@ THRESHOLDED_METRICS = {
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
     "macro_roc_auc": partial(roc_auc_score, average="macro"),
+    "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
     "average_precision_score": average_precision_score,
     "weighted_average_precision_score":
@@ -220,6 +221,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "weighted_roc_auc",
     "macro_roc_auc",
     "samples_roc_auc",
+    "partial_roc_auc",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -240,7 +242,7 @@ METRICS_WITH_AVERAGING = [
 
 # Threshold-based metrics with an "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = [
-    "roc_auc_score", "average_precision_score",
+    "roc_auc_score", "average_precision_score", "partial_roc_auc",
 ]
 
 # Metrics with a "pos_label" argument
@@ -297,7 +299,7 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "unnormalized_log_loss",
 
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
-    "micro_roc_auc", "macro_roc_auc",
+    "micro_roc_auc", "macro_roc_auc", "partial_roc_auc",
 
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
