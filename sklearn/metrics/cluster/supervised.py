@@ -590,6 +590,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
     log_base : {None, 2, 10, 'e'}
         Base of the log function: 'e' for results in nats, 2 for results in
         bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+        From version 0.22, ``log_base=None`` will mean ``log_base=2`` rather
+        than the current default ``log_base='e'``.
 
        .. versionadded:: 0.20
 
@@ -678,6 +680,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, log_base=None):
     log_base : {None, 2, 10, 'e'}
         Base of the log function: 'e' for results in nats, 2 for results in
         bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+        From version 0.22, ``log_base=None`` will mean ``log_base=2`` rather
+        than the current default ``log_base='e'``.
 
        .. versionadded:: 0.20
 
@@ -780,6 +784,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, log_base=None):
     log_base : {None, 2, 10, 'e'}
         Base of the log function: 'e' for results in nats, 2 for results in
         bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+        From version 0.22, ``log_base=None`` will mean ``log_base=2`` rather
+        than the current default ``log_base='e'``.
 
        .. versionadded:: 0.20
 
