@@ -7,6 +7,7 @@ import errno
 import scipy.sparse as sp
 import numpy as np
 from sklearn.datasets import fetch_rcv1
+from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -24,13 +25,6 @@ def test_fetch_rcv1():
     X1, Y1 = data1.data, data1.target
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
-    # test return_X_y option
-    X_y_tuple = fetch_rcv1(shuffle=False, download_if_missing=False,
-                           return_X_y=True)
-
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0].shape, X1.shape)
-    assert_array_equal(X_y_tuple[1].shape, Y1.shape)
 
     # test sparsity
     assert_true(sp.issparse(X1))
@@ -60,6 +54,12 @@ def test_fetch_rcv1():
                        download_if_missing=False)
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
+
+    # test return_X_y option
+    X_y_tuple = fetch_rcv1(shuffle=False, subset='train',
+                           download_if_missing=False,
+                           return_X_y=True)
+    check_return_X_y(data2, X_y_tuple)
 
     # The first 23149 samples are the training samples
     assert_array_equal(np.sort(s1[:23149]), np.sort(s2))

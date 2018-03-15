@@ -19,6 +19,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals.six import b, u
 from sklearn.externals._pilutil import pillow_installed
@@ -141,9 +142,7 @@ def test_load_digits():
     # test return_X_y option
     X_y_tuple = load_digits(return_X_y=True)
     bunch = load_digits()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_load_digits_n_class_lt_10():
@@ -179,9 +178,7 @@ def test_load_diabetes():
     # test return_X_y option
     X_y_tuple = load_diabetes(return_X_y=True)
     bunch = load_diabetes()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_load_linnerud():
@@ -196,9 +193,7 @@ def test_load_linnerud():
     # test return_X_y option
     X_y_tuple = load_linnerud(return_X_y=True)
     bunch = load_linnerud()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_load_iris():
@@ -212,9 +207,7 @@ def test_load_iris():
     # test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
     bunch = load_iris()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_load_wine():
@@ -227,9 +220,7 @@ def test_load_wine():
     # test return_X_y option
     X_y_tuple = load_wine(return_X_y=True)
     bunch = load_wine()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_load_breast_cancer():
@@ -243,9 +234,7 @@ def test_load_breast_cancer():
     # test return_X_y option
     X_y_tuple = load_breast_cancer(return_X_y=True)
     bunch = load_breast_cancer()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_load_boston():
@@ -259,9 +248,7 @@ def test_load_boston():
     # test return_X_y option
     X_y_tuple = load_boston(return_X_y=True)
     bunch = load_boston()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(bunch, X_y_tuple)
 
 
 def test_loads_dumps_bunch():

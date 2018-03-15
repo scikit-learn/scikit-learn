@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -145,9 +145,7 @@ def test_load_fake_lfw_people():
                                  slice_=None, color=True,
                                  download_if_missing=False,
                                  return_X_y=True)
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], lfw_people.data)
-    assert_array_equal(X_y_tuple[1], lfw_people.target)
+    check_return_X_y(lfw_people, X_y_tuple)
 
 
 def test_load_fake_lfw_people_too_restrictive():
