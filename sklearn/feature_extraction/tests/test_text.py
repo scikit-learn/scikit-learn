@@ -285,7 +285,7 @@ def test_countvectorizer_custom_vocabulary_gap_index():
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
-
+@ignore_warnings(category=DeprecationWarning)
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')

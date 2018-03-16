@@ -422,9 +422,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-      .. deprecated:: 0.19
+      .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.19 and will be removed
-         in 0.21.
+         in 0.22.
 
     lowercase : boolean, default=True
         Convert all characters to lowercase before tokenizing.
@@ -642,9 +642,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-      .. deprecated:: 0.19
+      .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.19 and will be removed
-         in 0.21.
+         in 0.22.
 
     lowercase : boolean, True by default
         Convert all characters to lowercase before tokenizing.
@@ -1243,9 +1243,9 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-      .. deprecated:: 0.19
+      .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.19 and will be removed
-         in 0.21.
+         in 0.22.
 
     lowercase : boolean, default True
         Convert all characters to lowercase before tokenizing.
