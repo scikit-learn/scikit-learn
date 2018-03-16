@@ -172,7 +172,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of

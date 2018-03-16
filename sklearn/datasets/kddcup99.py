@@ -143,7 +143,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         Determines random number generation for dataset shuffling and for
         selection of abnormal samples if `subset='SA'`. Pass an int for
         reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.

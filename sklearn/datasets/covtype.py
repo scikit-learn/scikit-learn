@@ -60,7 +60,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     shuffle : bool, default=False
         Whether to shuffle dataset.

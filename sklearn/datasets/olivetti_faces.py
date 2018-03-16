@@ -67,7 +67,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     random_state : int, RandomState instance or None (default=0)
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available

@@ -128,7 +128,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -318,7 +318,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -424,7 +424,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -515,7 +515,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -599,7 +599,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     factor : 0 < double < 1 (default=.8)
         Scale factor between inner and outer circle.
@@ -661,7 +661,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -733,7 +733,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -870,7 +870,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -931,7 +931,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -996,7 +996,7 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1072,7 +1072,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1125,7 +1125,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1184,7 +1184,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1224,7 +1224,7 @@ def make_spd_matrix(n_dim, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1273,7 +1273,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1334,7 +1334,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1386,7 +1386,7 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1449,7 +1449,7 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1537,7 +1537,7 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1628,7 +1628,7 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
