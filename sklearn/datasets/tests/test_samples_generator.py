@@ -84,7 +84,8 @@ def test_make_classification_informative_features():
                                                          (2, [1/4] * 4, 1),
                                                          (2, [1/2] * 2, 2),
                                                          (2, [3/4, 1/4], 2),
-                                                         (10, [1/3] * 3, 10)
+                                                         (10, [1/3] * 3, 10),
+                                                         (np.array(64), [1], 1)
                                                          ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
