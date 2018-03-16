@@ -94,8 +94,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as ``y``.
 
-    See :ref:`examples/preprocessing/plot_transform_target.py
-    <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
+    See :ref:`examples/preprocessing/plot_transformed_target.py
+    <sphx_glr_auto_examples_preprocessing_plot_transformed_target.py>`.
 
     """
     def __init__(self, regressor=None, transformer=None,
