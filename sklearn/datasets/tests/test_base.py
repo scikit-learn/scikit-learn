@@ -5,6 +5,7 @@ import warnings
 import numpy
 from pickle import loads
 from pickle import dumps
+from functools import partial
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -139,9 +140,7 @@ def test_load_digits():
     assert_equal(numpy.unique(digits.target).size, 10)
 
     # test return_X_y option
-    X_y_tuple = load_digits(return_X_y=True)
-    bunch = load_digits()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(digits, load_digits)
 
 
 def test_load_digits_n_class_lt_10():
@@ -175,9 +174,7 @@ def test_load_diabetes():
     assert_true(res.DESCR)
 
     # test return_X_y option
-    X_y_tuple = load_diabetes(return_X_y=True)
-    bunch = load_diabetes()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(res, partial(load_diabetes))
 
 
 def test_load_linnerud():
@@ -190,9 +187,7 @@ def test_load_linnerud():
     assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
-    X_y_tuple = load_linnerud(return_X_y=True)
-    bunch = load_linnerud()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(res, partial(load_linnerud))
 
 
 def test_load_iris():
@@ -204,9 +199,7 @@ def test_load_iris():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    X_y_tuple = load_iris(return_X_y=True)
-    bunch = load_iris()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(res, partial(load_iris))
 
 
 def test_load_wine():
@@ -217,9 +210,7 @@ def test_load_wine():
     assert_true(res.DESCR)
 
     # test return_X_y option
-    X_y_tuple = load_wine(return_X_y=True)
-    bunch = load_wine()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(res, partial(load_wine))
 
 
 def test_load_breast_cancer():
@@ -231,9 +222,7 @@ def test_load_breast_cancer():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    X_y_tuple = load_breast_cancer(return_X_y=True)
-    bunch = load_breast_cancer()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(res, partial(load_breast_cancer))
 
 
 def test_load_boston():
@@ -245,9 +234,7 @@ def test_load_boston():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    X_y_tuple = load_boston(return_X_y=True)
-    bunch = load_boston()
-    check_return_X_y(bunch, X_y_tuple)
+    check_return_X_y(res, partial(load_boston))
 
 
 def test_loads_dumps_bunch():

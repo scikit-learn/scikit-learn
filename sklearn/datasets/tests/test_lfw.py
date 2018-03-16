@@ -13,6 +13,7 @@ import os
 import shutil
 import tempfile
 import numpy as np
+from functools import partial
 from sklearn.externals import six
 from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
@@ -141,11 +142,11 @@ def test_load_fake_lfw_people():
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
 
     # test return_X_y option
-    X_y_tuple = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, resize=None,
-                                 slice_=None, color=True,
-                                 download_if_missing=False,
-                                 return_X_y=True)
-    check_return_X_y(lfw_people, X_y_tuple)
+    fetch_func = partial(fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                         resize=None,
+                         slice_=None, color=True,
+                         download_if_missing=False)
+    check_return_X_y(lfw_people, fetch_func)
 
 
 def test_load_fake_lfw_people_too_restrictive():
