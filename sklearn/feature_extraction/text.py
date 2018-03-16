@@ -423,7 +423,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         Only applies if ``analyzer == 'word'``.
 
       .. deprecated:: 0.20
-         ``stop_words='english'`` is deprecated in version 0.19 and will be removed
+         ``stop_words='english'`` is deprecated in version 0.20 and will be removed
          in 0.22.
 
     lowercase : boolean, default=True
@@ -643,7 +643,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         words based on intra corpus document frequency of terms.
 
       .. deprecated:: 0.20
-         ``stop_words='english'`` is deprecated in version 0.19 and will be removed
+         ``stop_words='english'`` is deprecated in version 0.20 and will be removed
          in 0.22.
 
     lowercase : boolean, True by default
@@ -1244,7 +1244,7 @@ class TfidfVectorizer(CountVectorizer):
         words based on intra corpus document frequency of terms.
 
       .. deprecated:: 0.20
-         ``stop_words='english'`` is deprecated in version 0.19 and will be removed
+         ``stop_words='english'`` is deprecated in version 0.20 and will be removed
          in 0.22.
 
     lowercase : boolean, default True
