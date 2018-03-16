@@ -9,7 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, safe_indexing
-from ._function_transformer import FunctionTransformer
+from ..preprocessing import FunctionTransformer
 
 __all__ = ['TransformedTargetRegressor']
 
@@ -76,7 +76,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.preprocessing import TransformedTargetRegressor
+    >>> from sklearn.compose import TransformedTargetRegressor
     >>> tt = TransformedTargetRegressor(regressor=LinearRegression(),
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
