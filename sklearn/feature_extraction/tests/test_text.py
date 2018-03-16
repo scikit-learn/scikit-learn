@@ -285,6 +285,7 @@ def test_countvectorizer_custom_vocabulary_gap_index():
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
+
 @ignore_warnings(category=DeprecationWarning)
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
@@ -1019,3 +1020,13 @@ def test_vectorizers_invalid_ngram_range(vec):
     if isinstance(vec, HashingVectorizer):
         assert_raise_message(
             ValueError, message, vec.transform, ["good news everyone"])
+
+
+def test_vectorizer_stop_words_english():
+    message = ("stop_words='english' is deprecated in version 0.20 "
+               "and will be removed in 0.22.")
+
+    def EngStopWords():
+        vec = CountVectorizer(stop_words='english')
+        vec.fit(["good", "news", "bad"])
+    assert_warns_message(DeprecationWarning, message, EngStopWords)
