@@ -144,7 +144,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        X, y = check_X_y(X, y, "csc")
+        X, y = check_X_y(X, y, "csc", force_all_finite=False, multi_output=True)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -408,7 +408,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-        X, y = check_X_y(X, y, "csr")
+        X, y = check_X_y(X, y, "csr", force_all_finite=False, multi_output=True)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
