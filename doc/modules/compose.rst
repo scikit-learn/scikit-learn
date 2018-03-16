@@ -182,7 +182,7 @@ object::
      >>> from sklearn.datasets import load_digits
      >>> digits = load_digits()
      >>> pca1 = PCA()
-     >>> svm1 = SVC()
+     >>> svm1 = SVC(gamma='scale')
      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
      >>> pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
@@ -203,7 +203,7 @@ object::
 
      >>> cachedir = mkdtemp()
      >>> pca2 = PCA()
-     >>> svm2 = SVC()
+     >>> svm2 = SVC(gamma='scale')
      >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
      ...                        memory=cachedir)
      >>> cached_pipe.fit(digits.data, digits.target)
