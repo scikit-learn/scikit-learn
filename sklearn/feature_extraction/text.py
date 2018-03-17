@@ -424,7 +424,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
       .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.20 and will be
-        removed in 0.22.
+        removed in 0.22 as the current list is broken, leading to unexpected
+        results.
 
     lowercase : boolean, default=True
         Convert all characters to lowercase before tokenizing.
@@ -644,7 +645,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
       .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.20 and will be
-        removed in 0.22.
+        removed in 0.22 as the current list is broken, leading to unexpected
+        results.
 
     lowercase : boolean, True by default
         Convert all characters to lowercase before tokenizing.
@@ -1245,7 +1247,8 @@ class TfidfVectorizer(CountVectorizer):
 
       .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.20 and will be
-         removed in 0.22.
+         removed in 0.22 as the current list is broken, leading to unexpected
+         results.
 
     lowercase : boolean, default True
         Convert all characters to lowercase before tokenizing.
