@@ -363,13 +363,6 @@ Neighbors
 
 Feature Extraction
 
-- Deprecate ``stop_words='english'`` parameter in
-  :class:`feature_extraction.text.CountVectorizer`,
-  :class:`feature_extraction.text.TfidfVectorizer`,
-  :class:`feature_extraction.text.HashingVectorizer` as the current list is
-  broken, leading to unexpected results. :issue:`10735`
-  by :user:`Mohammad Shahebaz <shaz13>`
-
 - Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which would
   throw an exception if ``max_patches`` was greater than or equal to the number
   of all possible patches rather than simply returning the number of possible
@@ -428,6 +421,15 @@ Linear, kernelized and related models
   will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
   better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
   and :user:`Ting Neo <neokt>`.
+
+Feature Extraction
+
+- Deprecate ``stop_words='english'`` parameter in
+  :class:`feature_extraction.text.CountVectorizer`,
+  :class:`feature_extraction.text.TfidfVectorizer`,
+  :class:`feature_extraction.text.HashingVectorizer` as the current list is
+  broken, leading to unexpected results. :issue:`10735`
+  by :user:`Mohammad Shahebaz <shaz13>`.
 
 Metrics
 
