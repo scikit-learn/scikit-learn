@@ -63,8 +63,7 @@ print("done in %0.3fs." % (time() - t0))
 # Use tf-idf features for NMF.
 print("Extracting tf-idf features for NMF...")
 tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                   max_features=n_features,
-                                   stop_words='english')
+                                   max_features=n_features)
 t0 = time()
 tfidf = tfidf_vectorizer.fit_transform(data_samples)
 print("done in %0.3fs." % (time() - t0))
@@ -72,8 +71,7 @@ print("done in %0.3fs." % (time() - t0))
 # Use tf (raw term count) features for LDA.
 print("Extracting tf features for LDA...")
 tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2,
-                                max_features=n_features,
-                                stop_words='english')
+                                max_features=n_features)
 t0 = time()
 tf = tf_vectorizer.fit_transform(data_samples)
 print("done in %0.3fs." % (time() - t0))
