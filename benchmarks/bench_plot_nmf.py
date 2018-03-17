@@ -374,7 +374,7 @@ def load_20news():
     from sklearn.datasets import fetch_20newsgroups
     dataset = fetch_20newsgroups(shuffle=True, random_state=1,
                                  remove=('headers', 'footers', 'quotes'))
-    vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, stop_words='english')
+    vectorizer = TfidfVectorizer(max_df=0.95, min_df=2)
     tfidf = vectorizer.fit_transform(dataset.data)
     return tfidf
 
