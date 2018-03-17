@@ -241,6 +241,8 @@ permitted and will require a wrapper to return a single metric::
 
     >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics import confusion_matrix
+	>>> from sklearn import datasets
+	>>> from sklearn.svm import LinearSVC
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
@@ -253,10 +255,10 @@ permitted and will require a wrapper to return a single metric::
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
-    [16 14  9]
+    [12 13 15]
     >>> # Getting the test set false negative scores
     >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
-    [1 3 7]
+    [5 4 1]
 
 .. _classification_metrics:
 
