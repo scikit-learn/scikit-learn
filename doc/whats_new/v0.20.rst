@@ -84,7 +84,7 @@ Preprocessing
 - :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
   :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
+- Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
@@ -495,3 +495,6 @@ Changes to estimator checks
 - Add test :func:`estimator_checks.check_methods_subset_invariance` to check
   that estimators methods are invariant if applied to a data subset.
   :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
+
+- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.

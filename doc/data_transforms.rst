@@ -25,7 +25,7 @@ scikit-learn.
 
 .. toctree::
 
-    modules/pipeline
+    modules/compose
     modules/feature_extraction
     modules/preprocessing
     modules/impute
