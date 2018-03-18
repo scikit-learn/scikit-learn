@@ -12,19 +12,14 @@ from sklearn.utils.testing import assert_array_equal
 
 iris = load_iris()
 
-TRANSFORMER_HANDLING_NAN = ['QuantileTransformer']
-
-
-def _generate_tuple_transformer_missing_value():
-    trans_handling_nan = [globals()[trans_name]()
-                          for trans_name in TRANSFORMER_HANDLING_NAN]
-    return [(trans, iris.data.copy(), 15)
-            for trans in trans_handling_nan]
-
 
 @pytest.mark.parametrize(
-    "est, X, n_missing",
-    _generate_tuple_transformer_missing_value()
+    "est",
+    [QuantileTransformer()]
+)
+@pytest.mark.parametrize(
+    "X, n_missing",
+    [(iris.data.copy(), 15)]
 )
 def test_missing_value_handling(est, X, n_missing):
     # check that the preprocessing method let pass nan
@@ -34,6 +29,8 @@ def test_missing_value_handling(est, X, n_missing):
     X_train, X_test = train_test_split(X)
     # sanity check
     assert not np.all(np.isnan(X_train), axis=0).any()
+    assert np.any(X_train, axis=0).all()
+    assert np.any(X_test, axis=0).all()
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
     Xt = est.fit(X_train).transform(X_test)
