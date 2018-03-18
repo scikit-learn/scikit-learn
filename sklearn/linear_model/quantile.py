@@ -115,6 +115,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    normalize : boolean, optional, default False
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+
     gamma : float, default 1e-2
         Starting value for smooth approximation.
         Absolute loss is replaced with quadratic for ``|error| < gamma``.
@@ -165,6 +173,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
                  warm_start=False, fit_intercept=True,
+                 normalize=False, copy_X=True,
                  gamma=1e-2, gtol=1e-4, xtol=1e-6,
                  gamma_decrease=0.1, n_gamma_decreases=100):
         self.quantile = quantile
@@ -173,6 +182,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.l1_ratio = l1_ratio
         self.warm_start = warm_start
         self.fit_intercept = fit_intercept
+        self.copy_X = copy_X
+        self.normalize = normalize
         self.gtol = gtol
         self.xtol = xtol
         self.gamma = gamma
@@ -201,6 +212,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         """
         X, y = check_X_y(
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True)
+
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
+
         if sample_weight is not None:
             sample_weight = np.array(sample_weight)
             check_consistent_length(y, sample_weight)
@@ -282,9 +298,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.n_iter_ = sum(total_iter)
         self.gamma_ = gamma
         self.total_iter_ = total_iter
+        self.coef_ = parameters[:X.shape[1]]
+        # do not use self.set_intercept_, because it assumes intercept is zero
+        # if the data is normalized, which is false in this case
         if self.fit_intercept:
-            self.intercept_ = parameters[-1]
+            self.coef_ = self.coef_ / X_scale
+            self.intercept_ = parameters[-1] + y_offset \
+                              - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
-        self.coef_ = parameters[:X.shape[1]]
         return self

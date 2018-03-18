@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_almost_equal, \
     assert_raises, assert_array_almost_equal
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
+from sklearn.model_selection import cross_val_score
 
 import warnings
 
@@ -79,6 +80,21 @@ def test_quantile_incorrect_quantile():
         QuantileRegressor(quantile=1.0).fit(X, y)
     with assert_raises(ValueError):
         QuantileRegressor(quantile=0.0).fit(X, y)
+
+
+def test_normalize():
+    # test that normalization works ok if features have different scales
+    X, y = make_regression(n_samples=1000, n_features=20, random_state=0,
+                           noise=10.0)
+    X += np.random.normal(size=X.shape[1], scale=3)
+    X *= np.random.normal(size=X.shape[1], scale=3)
+    y = y * 10 + 100
+    model1 = QuantileRegressor(alpha=1e-6, normalize=False)
+    model2 = QuantileRegressor(alpha=1e-6, normalize=True)
+    cvs1 = cross_val_score(model1, X, y).mean()
+    cvs2 = cross_val_score(model2, X, y).mean()
+    assert cvs1 > 0.99
+    assert cvs2 > 0.99
 
 
 def test_quantile_warm_start():
