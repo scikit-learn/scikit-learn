@@ -21,7 +21,7 @@ import numpy as np
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
-from ...utils.validation import check_array
+from ...utils.validation import check_array, check_consistent_length
 from ...utils.fixes import comb
 
 
@@ -33,8 +33,8 @@ def comb2(n):
 
 def check_clusterings(labels_true, labels_pred):
     """Check that the two clusterings matching 1D integer arrays."""
-    labels_true = np.asarray(labels_true)
-    labels_pred = np.asarray(labels_pred)
+    labels_true = check_array(labels_true, ensure_2d=False)
+    labels_pred = check_array(labels_pred, ensure_2d=False)
 
     # input checks
     if labels_true.ndim != 1:
@@ -43,10 +43,8 @@ def check_clusterings(labels_true, labels_pred):
     if labels_pred.ndim != 1:
         raise ValueError(
             "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
-    if labels_true.shape != labels_pred.shape:
-        raise ValueError(
-            "labels_true and labels_pred must have same size, got %d and %d"
-            % (labels_true.shape[0], labels_pred.shape[0]))
+    check_consistent_length(labels_true, labels_pred)
+
     return labels_true, labels_pred
 
 

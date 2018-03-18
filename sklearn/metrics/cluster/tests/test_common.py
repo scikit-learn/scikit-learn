@@ -1,4 +1,5 @@
 from functools import partial
+from itertools import product
 
 import pytest
 import numpy as np
@@ -142,11 +143,11 @@ def test_permute_labels(metric_name):
         assert_allclose(score_1, metric(X, 1 - y_pred))
 
 
-# For all clustering metrics Input parameters can be both
 @pytest.mark.parametrize(
     "metric_name",
     [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
 )
+# For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negetive or string
 def test_format_invariance(metric_name):
     y_true = [0, 0, 0, 0, 1, 1, 1, 1]
@@ -176,3 +177,39 @@ def test_format_invariance(metric_name):
         y_true_gen = generate_formats(y_true)
         for (y_true_fmt, fmt_name) in y_true_gen:
             assert score_1 == metric(X, y_true_fmt)
+
+
+@pytest.mark.parametrize(
+    "metric_name",
+    [name for name in SUPERVISED_METRICS]
+)
+# only the supervised metrics support single sample
+def test_single_sample(metric_name):
+    metric = SUPERVISED_METRICS[metric_name]
+    for i, j in product([0, 1], repeat=2):
+        metric([i], [j])
+
+
+@pytest.mark.parametrize(
+    "metric_name",
+    [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
+)
+def test_inf_nan_input(metric_name):
+    if metric_name in SUPERVISED_METRICS:
+        invalids = [([0, 1], [np.inf, np.inf]),
+                    ([0, 1], [np.nan, np.nan]),
+                    ([0, 1], [np.nan, np.inf])]
+
+        metric = SUPERVISED_METRICS[metric_name]
+        with pytest.raises(ValueError, message="contains NaN, infinity"):
+            for y_true, y_score in invalids:
+                metric(y_true, y_score)
+    else:
+        X = np.random.randint(10, size=(2, 10))
+        invalids = [(X, [np.inf, np.inf]),
+                    (X, [np.nan, np.nan]),
+                    (X, [np.nan, np.inf])]
+        metric = UNSUPERVISED_METRICS[metric_name]
+        with pytest.raises(ValueError, message="contains NaN, infinity"):
+            for y_true, y_score in invalids:
+                metric(y_true, y_score)

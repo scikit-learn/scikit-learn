@@ -354,6 +354,10 @@ Metrics
   :func:`mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- Fixed a bug in the supervised clustering metrics to not accept NaN values. In
+  addition, adding test to check single sample computation of those metrics. By
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
