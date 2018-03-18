@@ -172,7 +172,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Feature matrix, for use with estimators or further transformers"""
-
+        if self.save_mappings:
+            self.feature_to_index_map_ = {}
         return self._transform(X, self.save_mappings is not None)
 
     def fit(self, X=None, y=None):
