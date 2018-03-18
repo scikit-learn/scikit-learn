@@ -702,6 +702,9 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+        .. versionchanged:: 0.20
+            Fixed a wrong data point at [445, 0].
+
     Examples
     --------
     >>> from sklearn.datasets import load_boston

@@ -140,6 +140,26 @@ Classes
    SpectralBiclustering
    SpectralCoclustering
 
+.. _compose_ref:
+
+:mod:`sklearn.compose`: Composite Estimators
+============================================
+
+.. automodule:: sklearn.compose
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    compose.TransformedTargetRegressor
+
 .. _covariance_ref:
 
 :mod:`sklearn.covariance`: Covariance Estimators
@@ -159,8 +179,8 @@ Classes
 
    covariance.EmpiricalCovariance
    covariance.EllipticEnvelope
-   covariance.GraphLasso
-   covariance.GraphLassoCV
+   covariance.GraphicalLasso
+   covariance.GraphicalLassoCV
    covariance.LedoitWolf
    covariance.MinCovDet
    covariance.OAS
@@ -171,7 +191,7 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.graph_lasso
+   covariance.graphical_lasso
    covariance.ledoit_wolf
    covariance.oas
    covariance.shrunk_covariance
@@ -1211,7 +1231,6 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
-   preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
@@ -1226,7 +1245,6 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
-   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -1384,22 +1402,45 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.testing.mock_mldata_urlopen
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
+   utils.arrayfuncs.cholesky_delete
+   utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.bench.total_seconds
    utils.check_X_y
    utils.check_array
    utils.check_consistent_length
    utils.check_random_state
    utils.class_weight.compute_class_weight
    utils.class_weight.compute_sample_weight
+   utils.deprecated
    utils.estimator_checks.check_estimator
    utils.extmath.safe_sparse_dot
+   utils.extmath.randomized_range_finder
+   utils.extmath.randomized_svd
+   utils.extmath.fast_logdet
+   utils.extmath.density
+   utils.extmath.weighted_mode
+   utils.gen_even_slices
+   utils.graph.single_source_shortest_path_length
+   utils.graph_shortest_path.graph_shortest_path
    utils.indexable
    utils.multiclass.type_of_target
+   utils.multiclass.is_multilabel
+   utils.multiclass.unique_labels
+   utils.murmurhash3_32
    utils.resample
    utils.safe_indexing
+   utils.safe_mask
+   utils.safe_sqr
    utils.shuffle
    utils.sparsefuncs.incr_mean_variance_axis
    utils.sparsefuncs.inplace_column_scale
@@ -1407,11 +1448,19 @@ Low-level methods
    utils.sparsefuncs.inplace_swap_row
    utils.sparsefuncs.inplace_swap_column
    utils.sparsefuncs.mean_variance_axis
+   utils.sparsefuncs.inplace_csr_column_scale
+   utils.sparsefuncs_fast.inplace_csr_row_normalize_l1
+   utils.sparsefuncs_fast.inplace_csr_row_normalize_l2
+   utils.random.sample_without_replacement
    utils.validation.check_is_fitted
    utils.validation.check_memory
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+   utils.testing.assert_in
+   utils.testing.assert_not_in
+   utils.testing.assert_raise_message
+   utils.testing.all_estimators
 
 Recently deprecated
 ===================
@@ -1424,7 +1473,15 @@ To be removed in 0.22
    :toctree: generated/
    :template: deprecated_class.rst
 
+   covariance.GraphLasso
+   covariance.GraphLassoCV
    preprocessing.Imputer
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   covariance.graph_lasso
 
 
 To be removed in 0.21

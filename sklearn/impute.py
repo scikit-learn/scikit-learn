@@ -151,8 +151,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
         if self.axis == 0:
-            X = check_array(X, accept_sparse='csc', dtype=np.float64,
-                            force_all_finite=False)
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite='allow-nan'
+                            if self.missing_values == 'NaN'
+                            or np.isnan(self.missing_values) else True)
 
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
@@ -249,7 +251,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
-        X = check_array(X, force_all_finite=False)
+        X = check_array(X, force_all_finite='allow-nan'
+                        if self.missing_values == 'NaN'
+                        or np.isnan(self.missing_values) else True)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
@@ -264,12 +268,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
-            if tuple(int(v) for v in np.__version__.split('.')[:2]) < (1, 5):
-                # In old versions of numpy, calling a median on an array
-                # containing nans returns nan. This is different is
-                # recent versions of numpy, which we want to mimic
-                masked_X.mask = np.logical_or(masked_X.mask,
-                                              np.isnan(X))
             median_masked = np.ma.median(masked_X, axis=axis)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
@@ -309,7 +307,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
+                            force_all_finite='allow-nan'
+                            if self.missing_values == 'NaN'
+                            or np.isnan(self.missing_values) else True,
+                            copy=self.copy)
             statistics = self.statistics_
             if X.shape[1] != statistics.shape[0]:
                 raise ValueError("X has %d features per sample, expected %d"
@@ -320,7 +321,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         # when the imputation is done per sample
         else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
+                            force_all_finite='allow-nan'
+                            if self.missing_values == 'NaN'
+                            or np.isnan(self.missing_values) else True,
+                            copy=self.copy)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -338,7 +342,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
-        valid_statistics_indexes = np.where(valid_mask)[0]
+        valid_statistics_indexes = np.flatnonzero(valid_mask)
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():

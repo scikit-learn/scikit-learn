@@ -484,7 +484,7 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
-    clf = SVC()
+    clf = SVC(gamma="scale")
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
@@ -499,7 +499,7 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones(6).reshape(3, 2)}
-    clf = SVC()
+    clf = SVC(gamma="scale")
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
@@ -828,7 +828,8 @@ def test_grid_search_cv_results():
     n_candidates = n_grid_points
 
     for iid in (False, True):
-        search = GridSearchCV(SVC(), cv=n_splits, iid=iid, param_grid=params)
+        search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid,
+                              param_grid=params)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -878,8 +879,9 @@ def test_random_search_cv_results():
     n_cand = n_search_iter
 
     for iid in (False, True):
-        search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_splits,
-                                    iid=iid, param_distributions=params)
+        search = RandomizedSearchCV(SVC(gamma='scale'), n_iter=n_search_iter,
+                                    cv=n_splits, iid=iid,
+                                    param_distributions=params)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -908,7 +910,8 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv)
+    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]},
+                               cv=cv)
     random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv)
@@ -942,7 +945,8 @@ def test_search_iid_param():
         assert_almost_equal(test_mean, expected_test_mean)
         assert_almost_equal(test_std, expected_test_std)
         assert_array_almost_equal(test_cv_scores,
-                                  cross_val_score(SVC(C=1), X, y, cv=cv))
+                                  cross_val_score(SVC(C=1), X,
+                                                  y, cv=cv))
 
         # For the train scores, we do not take a weighted mean irrespective of
         # i.i.d. or not
@@ -998,9 +1002,9 @@ def test_grid_search_cv_results_multimetric():
         for scoring in ({'accuracy': make_scorer(accuracy_score),
                          'recall': make_scorer(recall_score)},
                         'accuracy', 'recall'):
-            grid_search = GridSearchCV(SVC(), cv=n_splits, iid=iid,
-                                       param_grid=params, scoring=scoring,
-                                       refit=False)
+            grid_search = GridSearchCV(SVC(gamma='scale'), cv=n_splits,
+                                       iid=iid, param_grid=params,
+                                       scoring=scoring, refit=False)
             grid_search.fit(X, y)
             assert_equal(grid_search.iid, iid)
             grid_searches.append(grid_search)
@@ -1095,8 +1099,8 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {'C': [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(), param_grid=param_grid)
-    random_search = RandomizedSearchCV(SVC(), n_iter=3,
+    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid=param_grid)
+    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=3,
                                        param_distributions=param_grid)
 
     for search in (grid_search, random_search):
@@ -1282,7 +1286,7 @@ def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf = SVC(probability=False)
+    clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 
@@ -1352,6 +1356,14 @@ def test_grid_search_failing_classifier():
                for cand_i in range(n_candidates)
                if gs.cv_results_['param_parameter'][cand_i] ==
                FailingClassifier.FAILING_PARAMETER)
+
+    ranks = gs.cv_results_['rank_test_score']
+
+    # Check that succeeded estimators have lower ranks
+    assert ranks[0] <= 2 and ranks[1] <= 2
+    # Check that failed estimator has the highest rank
+    assert ranks[clf.FAILING_PARAMETER] == 3
+    assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
 def test_grid_search_failing_classifier_raise():
@@ -1528,18 +1540,18 @@ def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.22")
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=3)
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=3)
     # no warning with equally sized test sets
     assert_no_warnings(grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=5)
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=5)
     # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=2)
     # warning because stratification into two classes and 27 % 2 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=KFold(2))
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
     assert_no_warnings(grid.fit, X, y)
