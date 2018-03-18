@@ -17,13 +17,11 @@ iris = load_iris()
     "est",
     [QuantileTransformer()]
 )
-@pytest.mark.parametrize(
-    "X, n_missing",
-    [(iris.data.copy(), 15)]
-)
-def test_missing_value_handling(est, X, n_missing):
+def test_missing_value_handling(est):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
+    X = iris.data.copy()
+    n_missing = 15
     X[rng.randint(X.shape[0], size=n_missing),
       rng.randint(X.shape[1], size=n_missing)] = np.nan
     X_train, X_test = train_test_split(X)
