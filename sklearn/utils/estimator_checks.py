@@ -1287,7 +1287,7 @@ def check_classifiers_train(name, classifier_orig):
         X = pairwise_estimator_convert_X(X, classifier_orig)
         set_random_state(classifier)
         # raises error on malformed input for fit
-        with assert_raises(ValueError, msg="The classifer {} does not"
+        with assert_raises(ValueError, msg="The classifier {} does not"
                            " raise an error when incorrect/malformed input "
                            "data for fit is passed. The number of training "
                            "examples is not the same as the number of labels."
@@ -1649,7 +1649,7 @@ def check_regressors_train(name, regressor_orig):
         regressor.C = 0.01
 
     # raises error on malformed input for fit
-    with assert_raises(ValueError, msg="The classifer {} does not"
+    with assert_raises(ValueError, msg="The classifier {} does not"
                        " raise an error when incorrect/malformed input "
                        "data for fit is passed. The number of training "
                        "examples is not the same as the number of "
@@ -2036,10 +2036,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         else:
             estimator.fit(X, y_)
 
-        # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
-        # which doesn't return a n_iter for old versions of SciPy.
-        if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
-            assert_greater_equal(estimator.n_iter_, 1)
+        assert estimator.n_iter_ >= 1
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

@@ -580,6 +580,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -762,8 +763,12 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
+            self.coef_ = coef_[0]
+            self.dual_gap_ = dual_gaps_[0]
+        else:
+            self.coef_ = coef_
+            self.dual_gap_ = dual_gaps_
 
-        self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
         self._set_intercept(X_offset, y_offset, X_scale)
 
         # workaround since _set_intercept will cast self.coef_ into X.dtype
@@ -855,6 +860,7 @@ class Lasso(ElasticNet):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -1648,6 +1654,7 @@ class MultiTaskElasticNet(Lasso):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -1838,6 +1845,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random

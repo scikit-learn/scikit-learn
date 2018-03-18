@@ -202,9 +202,9 @@ situation, or for very correlated data, they can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 
-The :class:`GraphLasso` estimator uses an l1 penalty to enforce sparsity on
+The :class:`GraphicalLasso` estimator uses an l1 penalty to enforce sparsity on
 the precision matrix: the higher its ``alpha`` parameter, the more sparse
-the precision matrix. The corresponding :class:`GraphLassoCV` object uses
+the precision matrix. The corresponding :class:`GraphicalLassoCV` object uses
 cross-validation to automatically set the ``alpha`` parameter.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_sparse_cov_001.png
@@ -223,7 +223,7 @@ cross-validation to automatically set the ``alpha`` parameter.
    that:
 
    * Recovery is easier from a correlation matrix than a covariance
-     matrix: standardize your observations before running :class:`GraphLasso`
+     matrix: standardize your observations before running :class:`GraphicalLasso`
 
    * If the underlying graph has nodes with much more connections than
      the average node, the algorithm will miss some of these connections.
@@ -233,7 +233,7 @@ cross-validation to automatically set the ``alpha`` parameter.
 
    * Even if you are in favorable recovery conditions, the alpha
      parameter chosen by cross-validation (e.g. using the
-     :class:`GraphLassoCV` object) will lead to selecting too many edges.
+     :class:`GraphicalLassoCV` object) will lead to selecting too many edges.
      However, the relevant edges will have heavier weights than the
      irrelevant ones.
 
