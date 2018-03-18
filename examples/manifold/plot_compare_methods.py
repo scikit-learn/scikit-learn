@@ -43,14 +43,10 @@ fig = plt.figure(figsize=(15, 8))
 plt.suptitle("Manifold Learning with %i points, %i neighbors"
              % (1000, n_neighbors), fontsize=14)
 
-try:
-    # compatibility matplotlib < 1.0
-    ax = fig.add_subplot(251, projection='3d')
-    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
-    ax.view_init(4, -72)
-except:
-    ax = fig.add_subplot(251, projection='3d')
-    plt.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
+
+ax = fig.add_subplot(251, projection='3d')
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
+ax.view_init(4, -72)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
 labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']

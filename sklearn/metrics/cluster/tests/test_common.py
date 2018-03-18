@@ -71,72 +71,85 @@ NORMALIZED_METRICS = [
 ]
 
 
-def test_symmetry():
-    rng = np.random.RandomState(0)
-    y1 = rng.randint(3, size=30)
-    y2 = rng.randint(3, size=30)
-    for name in SYMMETRIC_METRICS:
-        metric = SUPERVISED_METRICS[name]
-        assert metric(y1, y2) == pytest.approx(metric(y2, y1)), \
-            "%s is not symmetric" % name
+rng = np.random.RandomState(0)
+y1 = rng.randint(3, size=30)
+y2 = rng.randint(3, size=30)
 
-    for name in NON_SYMMETRIC_METRICS:
-        metric = SUPERVISED_METRICS[name]
-        assert metric(y1, y2) != metric(y2, y1), \
-            "%s is symmetric" % name
 
+def test_symmetric_non_symmetric_union():
     assert (sorted(SYMMETRIC_METRICS + NON_SYMMETRIC_METRICS) ==
             sorted(SUPERVISED_METRICS))
 
 
-def test_normalized_output():
+@pytest.mark.parametrize(
+    'metric_name, y1, y2',
+    [(name, y1, y2) for name in SYMMETRIC_METRICS]
+)
+def test_symmetry(metric_name, y1, y2):
+    metric = SUPERVISED_METRICS[metric_name]
+    assert metric(y1, y2) == pytest.approx(metric(y2, y1))
+
+
+@pytest.mark.parametrize(
+    'metric_name, y1, y2',
+    [(name, y1, y2) for name in NON_SYMMETRIC_METRICS]
+)
+def test_non_symmetry(metric_name, y1, y2):
+    metric = SUPERVISED_METRICS[metric_name]
+    assert metric(y1, y2) != pytest.approx(metric(y2, y1))
+
+
+@pytest.mark.parametrize(
+    "metric_name",
+    [name for name in NORMALIZED_METRICS]
+)
+def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
-    for name in NORMALIZED_METRICS:
-        metric = SUPERVISED_METRICS[name]
-        assert metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]) > 0.0
-        assert metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]) > 0.0
-        assert metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]) < 1.0
-        assert metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]) < 1.0
-        assert metric(upper_bound_1, upper_bound_2) == pytest.approx(1.0), \
-            "%s has upper_bound greater than 1" % name
+    metric = SUPERVISED_METRICS[metric_name]
+    assert metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]) > 0.0
+    assert metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]) > 0.0
+    assert metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]) < 1.0
+    assert metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]) < 1.0
+    assert metric(upper_bound_1, upper_bound_2) == pytest.approx(1.0)
 
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
-    for name in NORMALIZED_METRICS:
-        metric = SUPERVISED_METRICS[name]
-        score = [metric(lower_bound_1, lower_bound_2),
-                 metric(lower_bound_2, lower_bound_1)]
-        assert_allclose(score, 0,
-                        err_msg="%s has lower bound less than 0.0" % name)
+    metric = SUPERVISED_METRICS[metric_name]
+    score = np.array([metric(lower_bound_1, lower_bound_2),
+                      metric(lower_bound_2, lower_bound_1)])
+    assert not (score < 0).any()
 
 
 # All clustering metrics do not change score due to permutations of labels
 # that is when 0 and 1 exchanged.
-def test_permute_labels():
+@pytest.mark.parametrize(
+    "metric_name",
+    [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
+)
+def test_permute_labels(metric_name):
     y_label = np.array([0, 0, 0, 1, 1, 0, 1])
     y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
-    for name in SUPERVISED_METRICS:
-        metric = SUPERVISED_METRICS[name]
+    if metric_name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[metric_name]
         score_1 = metric(y_pred, y_label)
-        assert_allclose(score_1, metric(1 - y_pred, y_label),
-                        err_msg="%s failed labels permutation" % name)
-        assert_allclose(score_1, metric(1 - y_pred, 1 - y_label),
-                        err_msg="%s failed labels permutation" % name)
-        assert_allclose(score_1, metric(y_pred, 1 - y_label),
-                        err_msg="%s failed labels permutation" % name)
-
-    for name in UNSUPERVISED_METRICS:
-        metric = UNSUPERVISED_METRICS[name]
+        assert_allclose(score_1, metric(1 - y_pred, y_label))
+        assert_allclose(score_1, metric(1 - y_pred, 1 - y_label))
+        assert_allclose(score_1, metric(y_pred, 1 - y_label))
+    else:
+        metric = UNSUPERVISED_METRICS[metric_name]
         X = np.random.randint(10, size=(7, 10))
         score_1 = metric(X, y_pred)
-        assert_allclose(score_1, metric(X, 1 - y_pred),
-                        err_msg="%s failed labels permutation" % name)
+        assert_allclose(score_1, metric(X, 1 - y_pred))
 
 
 # For all clustering metrics Input parameters can be both
+@pytest.mark.parametrize(
+    "metric_name",
+    [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
+)
 # in the form of arrays lists, positive, negetive or string
-def test_format_invariance():
+def test_format_invariance(metric_name):
     y_true = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
 
@@ -148,23 +161,19 @@ def test_format_invariance():
         yield y - 1, 'including negative ints'
         yield y + 1, 'strictly positive ints'
 
-    for name in SUPERVISED_METRICS:
-        metric = SUPERVISED_METRICS[name]
+    if metric_name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[metric_name]
         score_1 = metric(y_true, y_pred)
         y_true_gen = generate_formats(y_true)
         y_pred_gen = generate_formats(y_pred)
         for (y_true_fmt, fmt_name), (y_pred_fmt, _) in zip(y_true_gen,
                                                            y_pred_gen):
-            assert score_1 == metric(y_true_fmt, y_pred_fmt), \
-                "%s failed %s format invariance" % (name, fmt_name)
-
-    for name in UNSUPERVISED_METRICS:
-        metric = UNSUPERVISED_METRICS[name]
+            assert score_1 == metric(y_true_fmt, y_pred_fmt)
+    else:
+        metric = UNSUPERVISED_METRICS[metric_name]
         X = np.random.randint(10, size=(8, 10))
         score_1 = metric(X, y_true)
-        assert score_1 == metric(X.astype(float), y_true), \
-            "%s failed format invariance" % name
+        assert score_1 == metric(X.astype(float), y_true)
         y_true_gen = generate_formats(y_true)
         for (y_true_fmt, fmt_name) in y_true_gen:
-            assert score_1 == metric(X, y_true_fmt), \
-                "%s failed %s format invariance" % (name, fmt_name)
+            assert score_1 == metric(X, y_true_fmt)

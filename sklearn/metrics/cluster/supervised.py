@@ -18,12 +18,11 @@ from __future__ import division
 from math import log
 
 import numpy as np
-from scipy.misc import comb
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
-from ...utils.fixes import bincount
 from ...utils.validation import check_array
+from ...utils.fixes import comb
 
 
 def comb2(n):
@@ -151,7 +150,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfectly maching labelings have a score of 1 even
+    Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import adjusted_rand_score
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 1])
@@ -210,7 +209,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
 
-    prod_comb = (sum_comb_c * sum_comb_k) / comb(n_samples, 2)
+    prod_comb = (sum_comb_c * sum_comb_k) / comb2(n_samples)
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
@@ -529,20 +528,18 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Mutual Information between two clusterings.
+    r"""Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
-    the same data. Where :math:`P(i)` is the probability of a random sample
-    occurring in cluster :math:`U_i` and :math:`P'(j)` is the probability of a
-    random sample occurring in cluster :math:`V_j`, the Mutual Information
+    the same data. Where :math:`|U_i|` is the number of the samples
+    in cluster :math:`U_i` and :math:`|V_j|` is the number of the
+    samples in cluster :math:`V_j`, the Mutual Information
     between clusterings :math:`U` and :math:`V` is given as:
 
     .. math::
 
-        MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log\\frac{P(i,j)}{P(i)P'(j)}
-
-    This is equal to the Kullback-Leibler divergence of the joint distribution
-    with the product distribution of the marginals.
+        MI(U,V)=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \\frac{|U_i\cap V_j|}{N}
+        \log\\frac{N|U_i \cap V_j|}{|U_i||V_j|}
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -604,7 +601,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
-    outer = pi.take(nzx) * pj.take(nzy)
+    outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
@@ -654,7 +651,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    mutual_information_score: Mutual Information (not adjusted for chance)
+    mutual_info_score: Mutual Information (not adjusted for chance)
 
     Examples
     --------
@@ -713,7 +710,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``
+    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mustual_info_score` might be preferred.
@@ -816,6 +813,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
 
+    sparse : bool
+        Compute contingency matrix internally with sparse matrix.
+
     Returns
     -------
     score : float
@@ -864,7 +864,7 @@ def entropy(labels):
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = bincount(label_idx).astype(np.float64)
+    pi = np.bincount(label_idx).astype(np.float64)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for

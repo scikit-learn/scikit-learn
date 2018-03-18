@@ -53,15 +53,26 @@ cdef class Criterion:
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil
-    cdef void reset(self) nogil
-    cdef void reverse_reset(self) nogil
-    cdef void update(self, SIZE_t new_pos) nogil
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1
+    cdef int reset(self) nogil except -1
+    cdef int reverse_reset(self) nogil except -1
+    cdef int update(self, SIZE_t new_pos) nogil except -1
     cdef double node_impurity(self) nogil
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self, double impurity) nogil
     cdef double proxy_impurity_improvement(self) nogil
+
+cdef class ClassificationCriterion(Criterion):
+    """Abstract criterion for classification."""
+
+    cdef SIZE_t* n_classes
+    cdef SIZE_t sum_stride
+
+cdef class RegressionCriterion(Criterion):
+    """Abstract regression criterion."""
+
+    cdef double sq_sum_total

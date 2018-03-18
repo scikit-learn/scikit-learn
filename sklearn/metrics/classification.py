@@ -38,7 +38,6 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.fixes import bincount
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -78,8 +77,8 @@ def _check_targets(y_true, y_pred):
         y_type = set(["multiclass"])
 
     if len(y_type) > 1:
-        raise ValueError("Can't handle mix of {0} and {1}"
-                         "".format(type_true, type_pred))
+        raise ValueError("Classification metrics can't handle a mix of {0} "
+                         "and {1} targets".format(type_true, type_pred))
 
     # We can't have more than one value on y_type => The set is no more needed
     y_type = y_type.pop()
@@ -91,6 +90,10 @@ def _check_targets(y_true, y_pred):
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
+        if y_type == "binary":
+            unique_values = np.union1d(y_true, y_pred)
+            if len(unique_values) > 2:
+                y_type = "multiclass"
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)
@@ -164,12 +167,14 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     2
 
     In the multilabel case with binary label indicators:
+
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         score = differing_labels == 0
@@ -236,6 +241,12 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [0, 0, 1],
            [1, 0, 2]])
 
+    In the binary case, we can extract true positives, etc as follows:
+
+    >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
+    >>> (tn, fp, fn, tp)
+    (0, 2, 1, 1)
+
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -249,11 +260,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int)
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
         sample_weight = np.asarray(sample_weight)
 
-    check_consistent_length(sample_weight, y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
@@ -268,15 +279,21 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     # also eliminate weights of eliminated items
     sample_weight = sample_weight[ind]
 
+    # Choose the accumulator dtype to always have high precision
+    if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+        dtype = np.int64
+    else:
+        dtype = np.float64
+
     CM = coo_matrix((sample_weight, (y_true, y_pred)),
-                    shape=(n_labels, n_labels)
+                    shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
     return CM
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None):
-    """Cohen's kappa: a statistic that measures inter-annotator agreement.
+def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
+    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
@@ -311,6 +328,9 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
         List of weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     kappa : float
@@ -324,11 +344,12 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
            doi:10.1177/001316446002000104.
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596.
-           <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
+           <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
-    confusion = confusion_matrix(y1, y2, labels=labels)
+    confusion = confusion_matrix(y1, y2, labels=labels,
+                                 sample_weight=sample_weight)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -424,6 +445,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
         with np.errstate(divide='ignore', invalid='ignore'):
             # oddly, we may get an "invalid" rather than a "divide" error here
@@ -438,19 +460,20 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
-    """Compute the Matthews correlation coefficient (MCC) for binary classes
+    """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
-    measure of the quality of binary (two-class) classifications. It takes into
-    account true and false positives and negatives and is generally regarded as
-    a balanced measure which can be used even if the classes are of very
-    different sizes. The MCC is in essence a correlation coefficient value
+    measure of the quality of binary and multiclass classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are of
+    very different sizes. The MCC is in essence a correlation coefficient value
     between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
     an average random prediction and -1 an inverse prediction.  The statistic
     is also known as the phi coefficient. [source: Wikipedia]
 
-    Only in the binary case does this relate to information about true and
-    false positives and negatives. See references below.
+    Binary and multiclass labels are supported.  Only in the binary case does
+    this relate to information about true and false positives and negatives.
+    See references below.
 
     Read more in the :ref:`User Guide <matthews_corrcoef>`.
 
@@ -481,6 +504,14 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 
+    .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
+        K-category correlation coefficient
+        <http://www.sciencedirect.com/science/article/pii/S1476927104000799>`_
+
+    .. [4] `Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC and CEN
+        Error Measures in MultiClass Prediction
+        <http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`_
+
     Examples
     --------
     >>> from sklearn.metrics import matthews_corrcoef
@@ -488,28 +519,26 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-
-    if y_type != "binary":
+    check_consistent_length(y_true, y_pred, sample_weight)
+    if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
     lb = LabelEncoder()
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    mean_yt = np.average(y_true, weights=sample_weight)
-    mean_yp = np.average(y_pred, weights=sample_weight)
 
-    y_true_u_cent = y_true - mean_yt
-    y_pred_u_cent = y_pred - mean_yp
-
-    cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent, weights=sample_weight)
-    var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
-    var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
-
-    mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    t_sum = C.sum(axis=1, dtype=np.float64)
+    p_sum = C.sum(axis=0, dtype=np.float64)
+    n_correct = np.trace(C, dtype=np.float64)
+    n_samples = p_sum.sum()
+    cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
+    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
     if np.isnan(mcc):
         return 0.
@@ -961,7 +990,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     .. [3] `Discriminative Methods for Multi-labeled Classification Advances
            in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
            Godbole, Sunita Sarawagi
-           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`
+           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`_
 
     Examples
     --------
@@ -997,6 +1026,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
 
     if average == 'binary':
@@ -1042,6 +1072,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
+        if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
@@ -1074,16 +1105,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             tp_bins_weights = None
 
         if len(tp_bins):
-            tp_sum = bincount(tp_bins, weights=tp_bins_weights,
+            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
                               minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
-            pred_sum = bincount(y_pred, weights=sample_weight,
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
                                 minlength=len(labels))
         if len(y_true):
-            true_sum = bincount(y_true, weights=sample_weight,
+            true_sum = np.bincount(y_true, weights=sample_weight,
                                 minlength=len(labels))
 
         # Retain only selected labels
@@ -1334,6 +1365,67 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+    """Compute the balanced accuracy
+
+    The balanced accuracy is used in binary classification problems to deal
+    with imbalanced datasets. It is defined as the arithmetic mean of
+    sensitivity (true positive rate) and specificity (true negative rate),
+    or the average recall obtained on either class. It is also equal to the
+    ROC AUC score given binary inputs.
+
+    The best value is 1 and the worst value is 0.
+
+    Read more in the :ref:`User Guide <balanced_accuracy_score>`.
+
+    Parameters
+    ----------
+    y_true : 1d array-like
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    balanced_accuracy : float.
+        The average of sensitivity and specificity
+
+    See also
+    --------
+    recall_score, roc_auc_score
+
+    References
+    ----------
+    .. [1] Brodersen, K.H.; Ong, C.S.; Stephan, K.E.; Buhmann, J.M. (2010).
+           The balanced accuracy and its posterior distribution.
+           Proceedings of the 20th International Conference on Pattern
+           Recognition, 3121-24.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_true = [0, 1, 0, 0, 1, 0]
+    >>> y_pred = [0, 1, 0, 0, 0, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.625
+
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+
+    if y_type != 'binary':
+        raise ValueError('Balanced accuracy is only meaningful '
+                         'for binary classification problems.')
+    # simply wrap the ``recall_score`` function
+    return recall_score(y_true, y_pred,
+                        pos_label=None,
+                        average='macro',
+                        sample_weight=sample_weight)
+
+
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
@@ -1391,10 +1483,25 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     """
 
+    labels_given = True
     if labels is None:
         labels = unique_labels(y_true, y_pred)
+        labels_given = False
     else:
         labels = np.asarray(labels)
+
+    if target_names is not None and len(labels) != len(target_names):
+        if labels_given:
+            warnings.warn(
+                "labels size, {0}, does not match size of target_names, {1}"
+                .format(len(labels), len(target_names))
+            )
+        else:
+            raise ValueError(
+                "Number of classes, {0}, does not match size of "
+                "target_names, {1}. Try specifying the labels "
+                "parameter".format(len(labels), len(target_names))
+            )
 
     last_line_heading = 'avg / total'
 
@@ -1459,8 +1566,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         .. versionadded:: 0.18
 
     classes : array, shape = [n_labels], optional
-        (deprecated) Integer array of labels. This parameter has been
-         renamed to ``labels`` in version 0.18 and will be removed in 0.20.
+        Integer array of labels.
+
+        .. deprecated:: 0.18
+           This parameter has been deprecated in favor of ``labels`` in
+           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1515,6 +1625,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -1603,7 +1714,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     The logarithm used is the natural logarithm (base-e).
     """
     y_pred = check_array(y_pred, ensure_2d=False)
-    check_consistent_length(y_pred, y_true)
+    check_consistent_length(y_pred, y_true, sample_weight)
 
     lb = LabelBinarizer()
 
@@ -1876,6 +1987,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob, sample_weight)
 
     if pos_label is None:
         pos_label = y_true.max()

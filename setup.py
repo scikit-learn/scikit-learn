@@ -32,8 +32,8 @@ with open('README.rst') as f:
 MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
+DOWNLOAD_URL = 'https://pypi.org/project/scikit-learn/#files'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -41,8 +41,8 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-SCIPY_MIN_VERSION = '0.9'
-NUMPY_MIN_VERSION = '1.6.1'
+SCIPY_MIN_VERSION = '0.13.3'
+NUMPY_MIN_VERSION = '1.8.2'
 
 
 # Optional setuptools features
@@ -123,6 +123,7 @@ def configuration(parent_package='', top_path=None):
         os.remove('MANIFEST')
 
     from numpy.distutils.misc_util import Configuration
+
     config = Configuration(None, parent_package, top_path)
 
     # Avoid non-useful msg:
@@ -135,26 +136,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('sklearn')
 
     return config
-
-
-def get_scipy_status():
-    """
-    Returns a dictionary containing a boolean specifying whether SciPy
-    is up-to-date, along with the version string (empty string if
-    not installed).
-    """
-    scipy_status = {}
-    try:
-        import scipy
-        scipy_version = scipy.__version__
-        scipy_status['up_to_date'] = parse_version(
-            scipy_version) >= parse_version(SCIPY_MIN_VERSION)
-        scipy_status['version'] = scipy_version
-    except ImportError:
-        traceback.print_exc()
-        scipy_status['up_to_date'] = False
-        scipy_status['version'] = ""
-    return scipy_status
 
 
 def get_numpy_status():
@@ -184,8 +165,8 @@ def setup_package():
                     description=DESCRIPTION,
                     license=LICENSE,
                     url=URL,
-                    version=VERSION,
                     download_url=DOWNLOAD_URL,
+                    version=VERSION,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',
                                  'Intended Audience :: Developers',
@@ -203,8 +184,13 @@ def setup_package():
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
+                                 'Programming Language :: Python :: 3.6',
                                  ],
                     cmdclass=cmdclass,
+                    install_requires=[
+                        'numpy>={0}'.format(NUMPY_MIN_VERSION),
+                        'scipy>={0}'.format(SCIPY_MIN_VERSION)
+                    ],
                     **extra_setuptools_args)
 
     if len(sys.argv) == 1 or (
@@ -228,9 +214,6 @@ def setup_package():
         numpy_status = get_numpy_status()
         numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
             NUMPY_MIN_VERSION)
-        scipy_status = get_scipy_status()
-        scipy_req_str = "scikit-learn requires SciPy >= {0}.\n".format(
-            SCIPY_MIN_VERSION)
 
         instructions = ("Installation instructions are available on the "
                         "scikit-learn website: "
@@ -246,16 +229,6 @@ def setup_package():
                 raise ImportError("Numerical Python (NumPy) is not "
                                   "installed.\n{0}{1}"
                                   .format(numpy_req_str, instructions))
-        if scipy_status['up_to_date'] is False:
-            if scipy_status['version']:
-                raise ImportError("Your installation of Scientific Python "
-                                  "(SciPy) {0} is out-of-date.\n{1}{2}"
-                                  .format(scipy_status['version'],
-                                          scipy_req_str, instructions))
-            else:
-                raise ImportError("Scientific Python (SciPy) is not "
-                                  "installed.\n{0}{1}"
-                                  .format(scipy_req_str, instructions))
 
         from numpy.distutils.core import setup
 

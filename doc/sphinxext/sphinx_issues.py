@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""A Sphinx extension for linking to your project's issue tracker."""
-"""
+"""A Sphinx extension for linking to your project's issue tracker.
+
 Copyright 2014 Steven Loria
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,12 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-try:
-    from docutils import nodes, utils
-    from sphinx.util.nodes import split_explicit_title
-except ImportError:
-    # Load lazily so that test-sphinxext does not require docutils dependency
-    pass
+from docutils import nodes, utils
+from sphinx.util.nodes import split_explicit_title
 
 __version__ = '0.2.0'
 __author__ = 'Steven Loria'
@@ -37,7 +33,7 @@ __license__ = 'MIT'
 def user_role(name, rawtext, text, lineno,
               inliner, options=None, content=None):
     """Sphinx role for linking to a user profile. Defaults to linking to
-    Github profiles, but the profile URIS can be configured via the
+    GitHub profiles, but the profile URIS can be configured via the
     ``issues_user_uri`` config value.
 
     Example: ::
@@ -108,7 +104,7 @@ def setup(app):
     # Format template for issues URI
     # e.g. 'https://github.com/sloria/marshmallow/issues/{issue}
     app.add_config_value('issues_uri', default=None, rebuild='html')
-    # Shortcut for Github, e.g. 'sloria/marshmallow'
+    # Shortcut for GitHub, e.g. 'sloria/marshmallow'
     app.add_config_value('issues_github_path', default=None, rebuild='html')
     # Format template for user profile URI
     # e.g. 'https://github.com/{user}'

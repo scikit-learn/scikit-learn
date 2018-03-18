@@ -18,6 +18,9 @@ from cython cimport floating
 
 np.import_array()
 
+ctypedef fused integral:
+    int
+    long long
 
 ctypedef np.float64_t DOUBLE
 
@@ -30,11 +33,11 @@ def csr_row_norms(X):
 
 def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    shape,
-                   np.ndarray[int, ndim=1, mode="c"] X_indices,
-                   np.ndarray[int, ndim=1, mode="c"] X_indptr):
+                   np.ndarray[integral, ndim=1, mode="c"] X_indices,
+                   np.ndarray[integral, ndim=1, mode="c"] X_indptr):
     cdef:
-        unsigned int n_samples = shape[0]
-        unsigned int n_features = shape[1]
+        unsigned long long n_samples = shape[0]
+        unsigned long long n_features = shape[1]
         np.ndarray[DOUBLE, ndim=1, mode="c"] norms
 
         np.npy_intp i, j
@@ -294,27 +297,22 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # First pass
     if last_n == 0:
         return new_mean, new_var, new_n
+
     # Next passes
-    else:
-        updated_n = last_n + new_n
-        last_over_new_n = last_n / new_n
+    updated_n = last_n + new_n
+    last_over_new_n = last_n / new_n
 
-    for i in xrange(n_features):
-        # Unnormalized old stats
-        last_mean[i] *= last_n
-        last_var[i] *= last_n
+    # Unnormalized stats
+    last_mean *= last_n
+    last_var *= last_n
+    new_mean *= new_n
+    new_var *= new_n
 
-        # Unnormalized new stats
-        new_mean[i] *= new_n
-        new_var[i] *= new_n
-
-        # Update stats
-        updated_var[i] = (last_var[i] + new_var[i] +
-                          last_over_new_n / updated_n *
-                          (last_mean[i] / last_over_new_n - new_mean[i]) ** 2)
-
-        updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n
-        updated_var[i] = updated_var[i] / updated_n
+    # Update stats
+    updated_var = (last_var + new_var + last_over_new_n / updated_n *
+                   (last_mean / last_over_new_n - new_mean) ** 2)
+    updated_mean = (last_mean + new_mean) / updated_n
+    updated_var /= updated_n
 
     return updated_mean, updated_var, updated_n
 
@@ -326,17 +324,16 @@ def inplace_csr_row_normalize_l1(X):
 
 def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
                                   shape,
-                                  np.ndarray[int, ndim=1] X_indices,
-                                  np.ndarray[int, ndim=1] X_indptr):
-    cdef unsigned int n_samples = shape[0]
-    cdef unsigned int n_features = shape[1]
+                                  np.ndarray[integral, ndim=1] X_indices,
+                                  np.ndarray[integral, ndim=1] X_indptr):
+    cdef unsigned long long n_samples = shape[0]
+    cdef unsigned long long n_features = shape[1]
 
     # the column indices for row i are stored in:
     #    indices[indptr[i]:indices[i+1]]
     # and their corresponding values are stored in:
     #    data[indptr[i]:indptr[i+1]]
-    cdef unsigned int i
-    cdef unsigned int j
+    cdef np.npy_intp i, j
     cdef double sum_
 
     for i in xrange(n_samples):
@@ -361,13 +358,12 @@ def inplace_csr_row_normalize_l2(X):
 
 def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
                                   shape,
-                                  np.ndarray[int, ndim=1] X_indices,
-                                  np.ndarray[int, ndim=1] X_indptr):
-    cdef unsigned int n_samples = shape[0]
-    cdef unsigned int n_features = shape[1]
+                                  np.ndarray[integral, ndim=1] X_indices,
+                                  np.ndarray[integral, ndim=1] X_indptr):
+    cdef integral n_samples = shape[0]
+    cdef integral n_features = shape[1]
 
-    cdef unsigned int i
-    cdef unsigned int j
+    cdef np.npy_intp i, j
     cdef double sum_
 
     for i in xrange(n_samples):

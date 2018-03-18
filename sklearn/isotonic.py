@@ -9,7 +9,6 @@ from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from .utils import deprecated
-from .utils.fixes import astype
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
@@ -35,7 +34,7 @@ def check_increasing(x, y):
 
     Returns
     -------
-    `increasing_bool` : boolean
+    increasing_bool : boolean
         Whether the relationship is increasing or decreasing.
 
     Notes
@@ -57,7 +56,7 @@ def check_increasing(x, y):
     increasing_bool = rho >= 0
 
     # Run Fisher transform to get the rho CI, but handle rho=+/-1
-    if rho not in [-1.0, 1.0]:
+    if rho not in [-1.0, 1.0] and len(x) > 3:
         F = 0.5 * math.log((1. + rho) / (1. - rho))
         F_se = 1 / math.sqrt(len(x) - 3)
 
@@ -93,10 +92,10 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Parameters
     ----------
-    y : iterable of floating-point values
+    y : iterable of floats
         The data.
 
-    sample_weight : iterable of floating-point values, optional, default: None
+    sample_weight : iterable of floats, optional, default: None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
@@ -112,7 +111,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Returns
     -------
-    y_ : list of floating-point values
+    y_ : list of floats
         Isotonic fit of y.
 
     References
@@ -291,7 +290,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = np.ones(len(y))
 
         order = np.lexsort((y, X))
-        X, y, sample_weight = [astype(array[order], np.float64, copy=False)
+        X, y, sample_weight = [array[order].astype(np.float64, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)

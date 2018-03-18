@@ -1,23 +1,28 @@
 from itertools import product
+
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
-                          dok_matrix, lil_matrix)
+                          dok_matrix, lil_matrix, issparse)
 
 from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.validation import check_random_state
-from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.validation import check_random_state
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -654,6 +659,21 @@ def test_radius_neighbors_regressor(n_samples=40,
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_true(np.all(abs(y_pred - y_target) < radius / 2))
 
+    # test that nan is returned when no nearby observations
+    for weights in ['uniform', 'distance']:
+        neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                   weights=weights,
+                                                   algorithm='auto')
+        neigh.fit(X, y)
+        X_test_nan = np.ones((1, n_features))*-1
+        empty_warning_msg = ("One or more samples have no neighbors "
+                             "within specified radius; predicting NaN.")
+        pred = assert_warns_message(UserWarning,
+                                    empty_warning_msg,
+                                    neigh.predict,
+                                    X_test_nan)
+        assert_true(np.all(np.isnan(pred)))
+
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     # Test radius neighbors in multi-output regression (uniform weight)
@@ -727,9 +747,21 @@ def test_kneighbors_regressor_sparse(n_samples=40,
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                             algorithm='auto')
         knn.fit(sparsemat(X), y)
+
+        knn_pre = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
+                                                metric='precomputed')
+        knn_pre.fit(pairwise_distances(X, metric='euclidean'), y)
+
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
             assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
+
+            X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
+            if issparse(sparsev(X2_pre)):
+                assert_raises(ValueError, knn_pre.predict, X2_pre)
+            else:
+                assert_true(
+                    np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95)
 
 
 def test_neighbors_iris():
@@ -988,6 +1020,50 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
+def test_valid_brute_metric_for_auto_algorithm():
+    X = rng.rand(12, 12)
+    Xcsr = csr_matrix(X)
+
+    # check that there is a metric that is valid for brute
+    # but not ball_tree (so we actually test something)
+    assert_in("cosine", VALID_METRICS['brute'])
+    assert_false("cosine" in VALID_METRICS['ball_tree'])
+
+    # Metric which don't required any additional parameter
+    require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
+    for metric in VALID_METRICS['brute']:
+        if metric != 'precomputed' and metric not in require_params:
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(X)
+            nn.kneighbors(X)
+        elif metric == 'precomputed':
+            X_precomputed = rng.random_sample((10, 4))
+            Y_precomputed = rng.random_sample((3, 4))
+            DXX = metrics.pairwise_distances(X_precomputed, metric='euclidean')
+            DYX = metrics.pairwise_distances(Y_precomputed, X_precomputed,
+                                             metric='euclidean')
+            nb_p = neighbors.NearestNeighbors(n_neighbors=3)
+            nb_p.fit(DXX)
+            nb_p.kneighbors(DYX)
+
+    for metric in VALID_METRICS_SPARSE['brute']:
+        if metric != 'precomputed' and metric not in require_params:
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(Xcsr)
+            nn.kneighbors(Xcsr)
+
+    # Metric with parameter
+    VI = np.dot(X, X.T)
+    list_metrics = [('seuclidean', dict(V=rng.rand(12))),
+                    ('wminkowski', dict(w=rng.rand(12))),
+                    ('mahalanobis', dict(VI=VI))]
+    for metric, params in list_metrics:
+        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                        metric=metric,
+                                        metric_params=params).fit(X)
+        nn.kneighbors(X)
+
+
 def test_metric_params_interface():
     assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
                  metric_params={'p': 3})
@@ -1205,6 +1281,35 @@ def test_dtype_convert():
 
     result = classifier.fit(X, y).predict(X)
     assert_array_equal(result, y)
+
+
+def test_sparse_metric_callable():
+    def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
+        assert_true(issparse(x) and issparse(y))
+        return x.dot(y.T).A.item()
+
+    X = csr_matrix([  # Population matrix
+        [1, 1, 1, 1, 1],
+        [1, 0, 1, 0, 1],
+        [0, 0, 1, 0, 0]
+    ])
+
+    Y = csr_matrix([  # Query matrix
+        [1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1]
+    ])
+
+    nn = neighbors.NearestNeighbors(algorithm='brute', n_neighbors=2,
+                                    metric=sparse_metric).fit(X)
+    N = nn.kneighbors(Y, return_distance=False)
+
+    # GS indices of nearest neighbours in `X` for `sparse_metric`
+    gold_standard_nn = np.array([
+        [2, 1],
+        [2, 1]
+    ])
+
+    assert_array_equal(N, gold_standard_nn)
 
 
 # ignore conversion to boolean in pairwise_distances

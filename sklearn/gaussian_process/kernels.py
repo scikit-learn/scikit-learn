@@ -1505,14 +1505,15 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    """Exp-Sine-Squared kernel.
+    r"""Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
     parameterized by a length-scale parameter length_scale>0 and a periodicity
     parameter periodicity>0. Only the isotropic variant where l is a scalar is
     supported at the moment. The kernel given by:
 
-    k(x_i, x_j) = exp(-2 sin(\pi / periodicity * d(x_i, x_j)) / length_scale)^2
+    k(x_i, x_j) =
+    exp(-2 (sin(\pi / periodicity * d(x_i, x_j)) / length_scale) ^ 2)
 
     .. versionadded:: 0.18
 
@@ -1617,7 +1618,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class DotProduct(Kernel):
-    """Dot-Product kernel.
+    r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
     regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
@@ -1852,7 +1853,7 @@ class PairwiseKernel(Kernel):
             Diagonal of kernel k(X, X)
         """
         # We have to fall back to slow way of computing diagonal
-        return np.apply_along_axis(self, 1, X)[:, 0]
+        return np.apply_along_axis(self, 1, X).ravel()
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """

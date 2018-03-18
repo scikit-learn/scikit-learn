@@ -12,7 +12,7 @@ import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 
-from sklearn.datasets import load_digits, load_boston
+from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -24,6 +24,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
                                    assert_false, ignore_warnings)
+from sklearn.utils.testing import assert_raise_message
 
 
 np.seterr(all='warn')
@@ -48,6 +49,11 @@ boston = load_boston()
 
 Xboston = StandardScaler().fit_transform(boston.data)[: 200]
 yboston = boston.target[:200]
+
+iris = load_iris()
+
+X_iris = iris.data
+y_iris = iris.target
 
 
 def test_alpha():
@@ -414,6 +420,7 @@ def test_params_errors():
     assert_raises(ValueError, clf(beta_2=1).fit, X, y)
     assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
     assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(n_iter_no_change=-1).fit, X, y)
 
     assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
@@ -556,3 +563,73 @@ def test_adaptive_learning_rate():
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
     assert_greater(1e-6, clf._optimizer.learning_rate)
+
+
+@ignore_warnings(category=RuntimeWarning)
+def test_warm_start():
+    X = X_iris
+    y = y_iris
+
+    y_2classes = np.array([0] * 75 + [1] * 75)
+    y_3classes = np.array([0] * 40 + [1] * 40 + [2] * 70)
+    y_3classes_alt = np.array([0] * 50 + [1] * 50 + [3] * 50)
+    y_4classes = np.array([0] * 37 + [1] * 37 + [2] * 38 + [3] * 38)
+    y_5classes = np.array([0] * 30 + [1] * 30 + [2] * 30 + [3] * 30 + [4] * 30)
+
+    # No error raised
+    clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                        warm_start=True).fit(X, y)
+    clf.fit(X, y)
+    clf.fit(X, y_3classes)
+
+    for y_i in (y_2classes, y_3classes_alt, y_4classes, y_5classes):
+        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                            warm_start=True).fit(X, y)
+        message = ('warm_start can only be used where `y` has the same '
+                   'classes as in the previous call to fit.'
+                   ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
+        assert_raise_message(ValueError, message, clf.fit, X, y_i)
+
+
+def test_n_iter_no_change():
+    # test n_iter_no_change using binary data set
+    # the classifying fitting process is not prone to loss curve fluctuations
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+    tol = 0.01
+    max_iter = 3000
+
+    # test multiple n_iter_no_change
+    for n_iter_no_change in [2, 5, 10, 50, 100]:
+        clf = MLPClassifier(tol=tol, max_iter=max_iter, solver='sgd',
+                            n_iter_no_change=n_iter_no_change)
+        clf.fit(X, y)
+
+        # validate n_iter_no_change
+        assert_equal(clf._no_improvement_count, n_iter_no_change + 1)
+        assert_greater(max_iter, clf.n_iter_)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_n_iter_no_change_inf():
+    # test n_iter_no_change using binary data set
+    # the fitting process should go to max_iter iterations
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+
+    # set a ridiculous tolerance
+    # this should always trigger _update_no_improvement_count()
+    tol = 1e9
+
+    # fit
+    n_iter_no_change = np.inf
+    max_iter = 3000
+    clf = MLPClassifier(tol=tol, max_iter=max_iter, solver='sgd',
+                        n_iter_no_change=n_iter_no_change)
+    clf.fit(X, y)
+
+    # validate n_iter_no_change doesn't cause early stopping
+    assert_equal(clf.n_iter_, max_iter)
+
+    # validate _update_no_improvement_count() was always triggered
+    assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)

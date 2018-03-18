@@ -14,13 +14,12 @@ from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
-from ..utils.fixes import astype
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
 
 
-def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
+def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
            algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
@@ -44,11 +43,16 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
-        metric parameter.
+        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
+        its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
+
+    metric_params : dict, optional
+        Additional keyword arguments for the metric function.
+
+        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
@@ -85,7 +89,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     Notes
     -----
-    See examples/cluster/plot_dbscan.py for an example.
+    For an example, see :ref:`examples/cluster/plot_dbscan.py
+    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -118,8 +123,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         neighborhoods = np.empty(X.shape[0], dtype=object)
         X.sum_duplicates()  # XXX: modifies X's internals in-place
         X_mask = X.data <= eps
-        masked_indices = astype(X.indices, np.intp, copy=False)[X_mask]
-        masked_indptr = np.cumsum(X_mask)[X.indptr[1:] - 1]
+        masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
+        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))[X.indptr[1:]]
+
         # insert the diagonal: a point is its own neighbor, but 0 distance
         # means absence from sparse matrix data
         masked_indices = np.insert(masked_indices, masked_indptr,
@@ -130,7 +136,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     else:
         neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
                                            leaf_size=leaf_size,
-                                           metric=metric, p=p,
+                                           metric=metric,
+                                           metric_params=metric_params, p=p,
                                            n_jobs=n_jobs)
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
@@ -175,14 +182,19 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.calculate_distance for its
-        metric parameter.
+        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
+        its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
 
         .. versionadded:: 0.17
            metric *precomputed* to accept precomputed sparse matrix.
+
+    metric_params : dict, optional
+        Additional keyword arguments for the metric function.
+
+        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
@@ -217,7 +229,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/cluster/plot_dbscan.py for an example.
+    For an example, see :ref:`examples/cluster/plot_dbscan.py
+    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -237,10 +250,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 algorithm='auto', leaf_size=30, p=None, n_jobs=1):
+                 metric_params=None, algorithm='auto', leaf_size=30, p=None,
+                 n_jobs=1):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
+        self.metric_params = metric_params
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.p = p
@@ -260,6 +275,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             ``min_samples`` is by itself a core sample; a sample with negative
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
+
+        y : Ignored
+
         """
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
@@ -287,6 +305,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             ``min_samples`` is by itself a core sample; a sample with negative
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
+
+        y : Ignored
 
         Returns
         -------
