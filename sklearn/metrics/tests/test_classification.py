@@ -44,6 +44,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import specificity_score
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -1635,3 +1636,29 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+
+def test_specificity_score():
+    # Test binary class case
+    y_true = np.array([0, 1, 1, 1, 0, 1, 0])
+    y_pred = np.array([1, 0, 1, 1, 0, 1, 0])
+    spec_score = specificity_score(y_true, y_pred)
+    assert_almost_equal(spec_score, np.array([0.6666667]))
+
+    # Test multi class case
+    y_true = np.array([2, 1, 1, 0, 2, 0, 0, 2])
+    y_pred = np.array([1, 0, 1, 0, 0, 0, 1, 2])
+    spec_score = specificity_score(y_true, y_pred, neg_labels=[2])
+    assert_almost_equal(spec_score, np.array([0.3333333]))
+
+    # Test multi class with labels
+    y_true = np.array(["dog", "cat", "cat", "ant", "dog", "ant", "ant", "dog"])
+    y_pred = np.array(["cat", "ant", "cat", "ant", "ant", "ant", "cat", "dog"])
+    spec_score = specificity_score(y_true, y_pred)
+    assert_almost_equal(spec_score, np.array([0.6666667]))
+
+    # Test multi class with labels and negative labels
+    y_true = np.array(["dog", "cat", "cat", "ant", "dog", "ant", "ant", "dog"])
+    y_pred = np.array(["cat", "ant", "cat", "ant", "ant", "ant", "cat", "dog"])
+    spec_score = specificity_score(y_true, y_pred, neg_labels=["cat", "dog"])
+    assert_almost_equal(spec_score, np.array([0.5, 0.3333333]))

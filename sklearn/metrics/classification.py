@@ -1994,3 +1994,79 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_true = np.array(y_true == pos_label, int)
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def specificity_score(y_true, y_pred, labels=None, sample_weight=None,
+                      neg_labels=None):
+    """Compute the Specificity score.
+
+    Specificity measures the proportion of correctly classsified negative
+    instances against the total negative class population.
+
+    Parameters
+    ----------
+    y_true : array, shape (n_samples,)
+        True targets.
+
+    y_prob : array, shape (n_samples,)
+        Probabilities of the positive class.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to reorder
+        or select a subset of labels.
+        If none is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    neg_label : list, default=None
+        Labels of the negative class(es) to compute the specificity for. If
+        None, the minimum label is used as the only negative class
+
+    Returns
+    -------
+    score : array
+        Specificity scores for each negative class
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import specificity_score
+    >>> y_true = np.array([0, 1, 1, 0])
+    >>> y_pred = np.array([1, 1, 1, 0])
+    >>> specificity_score(y_true, y_pred)
+    array([ 0.5])
+    >>> y_true = np.array(["ant", "cat", "cat", "ant"])
+    >>> y_pred = np.array(["ant", "cat", "ant", "ant"])
+    >>> specificity_score(y_true, y_pred, neg_labels=["cat"])
+    array([ 0.5])
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Specificity score.
+            <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    if y_type not in {"binary", "multiclass"}:
+        raise ValueError("%s is not supported" % y_type)
+
+    lb = LabelEncoder()
+    lb.fit(np.hstack([y_true, y_pred]))
+    y_true = lb.transform(y_true)
+    y_pred = lb.transform(y_pred)
+
+    C = confusion_matrix(y_true, y_pred, labels=labels,
+                         sample_weight=sample_weight)
+
+    if neg_labels is None:
+        neg_labels = y_true.min()
+    # Get the index of neg labels
+    nl_idxs = [i for (i, l) in enumerate(lb.classes_) if l in set(neg_labels)]
+    # Find the total population for all neg_labels only
+    n = C[nl_idxs].sum(axis=1, dtype=np.float64)
+    # Get true negatives
+    tn = C.diagonal()[nl_idxs]
+    # Compute specificity
+    return np.divide(tn, n)
