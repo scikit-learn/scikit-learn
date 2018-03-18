@@ -492,3 +492,6 @@ Changes to estimator checks
 - Add test :func:`estimator_checks.check_methods_subset_invariance` to check
   that estimators methods are invariant if applied to a data subset.
   :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
+
+- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
