@@ -117,11 +117,21 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     gamma : float, default 1e-2
         Starting value for smooth approximation.
-        Absolute loss is replaced with quadratic for |error| < gamma.
-        Lasso penalty is replaced with quadratic for |w| < gamma.
-        Gamma = 0 gives exact non-smooth loss function.
+        Absolute loss is replaced with quadratic for ``|error| < gamma``.
+        Lasso penalty is replaced with quadratic for ``|w| < gamma``.
+        ``gamma = 0`` gives exact non-smooth loss function.
         The algorithm performs consecutive optimizations with gamma
-        decreasing by factor of 0.1, until xtol criterion is met.
+        decreasing by factor of ``gamma_decrease``,
+        until ``xtol`` criterion is met,
+        or until ``max_iter`` is exceeded.
+
+    gamma_decrease: float, default 0.1
+        The factor by which ``gamma`` is multiplied at each iteration.
+
+    n_gamma_decreases: int, default 10
+        Maximal number of iterations of approximation of the cost function.
+        At each iteration, ``gamma`` is multiplied by a factor
+        of ``gamma_decrease``
 
     gtol : float, default 1e-4
         The smooth optimizing iteration will stop when
@@ -129,7 +139,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         where pg_i is the i-th component of the projected gradient.
 
     xtol : float, default 1e-6
-        Global optimization will stop when |w_{t-1} - w_t| < xtol
+        Global optimization will stop when ``|w_{t-1} - w_t|`` < ``xtol``
         where w_t is result of t'th approximated optimization.
 
     Attributes
@@ -155,7 +165,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
                  warm_start=False, fit_intercept=True,
-                 gamma=1e-2, gtol=1e-4, xtol=1e-6):
+                 gamma=1e-2, gtol=1e-4, xtol=1e-6,
+                 gamma_decrease=0.1, n_gamma_decreases=100):
         self.quantile = quantile
         self.max_iter = max_iter
         self.alpha = alpha
@@ -165,6 +176,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.gtol = gtol
         self.xtol = xtol
         self.gamma = gamma
+        self.gamma_decrease = gamma_decrease
+        self.n_gamma_decreases = n_gamma_decreases
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -213,8 +226,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         total_iter = []
         loss_args = (X, y, self.quantile, self.alpha, self.l1_ratio,
                      sample_weight)
-        for i in range(10):
-            gamma = self.gamma * 0.1 ** i
+        for i in range(self.n_gamma_decreases):
+            gamma = self.gamma * self.gamma_decrease ** i
             result = optimize.minimize(
                 _smooth_quantile_loss_and_gradient,
                 parameters,
