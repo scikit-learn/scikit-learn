@@ -1630,7 +1630,7 @@ In normal usage, the Davies-Bouldin index is applied to the results of a
 cluster analysis.
 
   >>> from sklearn.cluster import KMeans
-  >>> from sklearn.metrics import davis_bouldin_index
+  >>> from sklearn.metrics import davies_bouldin_index
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_index(X, labels)  # doctest: +ELLIPSIS

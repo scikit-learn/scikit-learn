@@ -210,12 +210,12 @@ def test_davies_bouldin_index():
                          rng.rand(10, 2), np.arange(10))
 
     # Assert the value is 0. when all samples are equals
-    assert_equal(0., davies_bouldin_index(np.ones((10, 2)),
-                                          [0] * 5 + [1] * 5))
+    assert 0. == davies_bouldin_index(np.ones((10, 2)),
+                                      [0] * 5 + [1] * 5)
 
     # Assert the value is 0. when all the mean cluster are equal
-    assert_equal(0., davies_bouldin_index([[-1, -1], [1, 1]] * 10,
-                                          [0] * 10 + [1] * 10))
+    assert 0. == davies_bouldin_index([[-1, -1], [1, 1]] * 10,
+                                      [0] * 10 + [1] * 10)
 
     # General case (with non numpy arrays)
     X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
