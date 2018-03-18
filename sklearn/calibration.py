@@ -219,12 +219,12 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
 
 class _CutoffClassifier(object):
-    """Optimal cutoff point selection.
+    """Cutoff point selection.
 
     It assumes that base_estimator has already been fit, and uses the input set
-    of the fit function to select an optimal cutoff point. Note that this
-    class should not be used as an estimator directly. Use the
-    OptimalCutoffClassifier with cv="prefit" instead.
+    of the fit function to select a cutoff point. Note that this class should
+    not be used as an estimator directly. Use the CutoffClassifier with
+    cv="prefit" instead.
 
     Parameters
     ----------
