@@ -232,7 +232,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 _smooth_quantile_loss_and_gradient,
                 parameters,
                 args=loss_args + (gamma, ),
-                method='BFGS',
+                method='L-BFGS-B',
                 jac=True,
                 options={
                     'gtol': self.gtol,

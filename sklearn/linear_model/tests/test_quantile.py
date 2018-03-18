@@ -55,7 +55,7 @@ def test_quantile_without_intercept():
 
 def test_quantile_sample_weight():
     # test that with unequal sample weights we still estimate weighted fraction
-    n = 500
+    n = 1000
     X, y = make_regression(n_samples=n, n_features=10, random_state=0,
                            noise=10.0)
     weight = np.ones(n)
