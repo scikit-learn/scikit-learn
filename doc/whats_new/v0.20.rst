@@ -494,4 +494,4 @@ Changes to estimator checks
   :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
 
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
-  Sinha <anki08>` and `Guillaume Lemaitre <glemaitre>`.
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
