@@ -115,7 +115,6 @@ def test_normalized_output(metric_name):
 
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
-    metric = SUPERVISED_METRICS[metric_name]
     score = np.array([metric(lower_bound_1, lower_bound_2),
                       metric(lower_bound_2, lower_bound_1)])
     assert not (score < 0).any()
