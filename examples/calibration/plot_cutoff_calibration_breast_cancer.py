@@ -12,9 +12,9 @@ The CutoffClassifier can be used to calibrate the decision threshold of a model
 in order to increase the true positive rate or the true negative rate or their
 sum as a way to improve the classifiers trustworthiness.
 
-In this example the decision threshold calibration is applied on the breast
-cancer dataset to maximize the true positive and true negative rate
-respectively
+In this example the decision threshold calibration is applied on two
+classifiers trained on the breast cancer dataset. The goal is to maximize the
+true positive rate while maintaining a minimum true negative rate.
 """
 
 # Author: Prokopios Gryllos <prokopis.gryllos@sentiance.com>
@@ -58,11 +58,11 @@ clf_ada = AdaBoostClassifier().fit(
 # we want to maximize the true positive rate while the true negative rate is at
 # least 0.5
 clf_lr_max_tpr = CutoffClassifier(
-    clf_lr, method='max_tpr', cv=3, min_tnr=0.5
+    clf_lr, method='max_tpr', cv=3, threshold=0.7, scoring='predict_proba'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 
 clf_ada_max_tpr = CutoffClassifier(
-    clf_ada, method='max_tpr', cv=3, min_tnr=0.5
+    clf_ada, method='max_tpr', cv=3, threshold=0.7, scoring='predict_proba'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 
 y_pred_lr = clf_lr.predict(X_test)
@@ -80,8 +80,10 @@ tn_ada_max_tpr, fp_ada_max_tpr, fn_ada_max_tpr, tp_ada_max_tpr = \
 
 print('\n')
 print('Calibrated threshold')
-print('Logistic Regression classifier: {}'.format(clf_lr_max_tpr.threshold_))
-print('AdaBoost classifier: {}'.format(clf_ada_max_tpr.threshold_))
+print('Logistic Regression classifier: {}'.format(
+    clf_lr_max_tpr.decision_threshold_
+))
+print('AdaBoost classifier: {}'.format(clf_ada_max_tpr.decision_threshold_))
 
 print('\n')
 print('true positive and true negative rates before calibration')
