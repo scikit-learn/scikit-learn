@@ -32,8 +32,8 @@ score_funcs = [
 
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
-        expected = ('labels_true and labels_pred must have same size,'
-                    ' got 2 and 3')
+        expected = ('Found input variables with inconsistent numbers '
+                    'of samples: [2, 3]')
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1], [1, 1, 1])
 
