@@ -1,5 +1,6 @@
 from functools import partial
 
+import pytest
 import numpy as np
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
@@ -13,12 +14,7 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import calinski_harabaz_score
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 
 
 # Dictionaries of metrics
@@ -81,16 +77,16 @@ def test_symmetry():
     y2 = rng.randint(3, size=30)
     for name in SYMMETRIC_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_almost_equal(metric(y1, y2), metric(y2, y1),
-                            err_msg="%s is not symmetric" % name)
+        assert metric(y1, y2) == pytest.approx(metric(y2, y1)), \
+            "%s is not symmetric" % name
 
     for name in NON_SYMMETRIC_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_not_equal(metric(y1, y2), metric(y2, y1),
-                         msg="%s is symmetric" % name)
+        assert metric(y1, y2) != metric(y2, y1), \
+            "%s is symmetric" % name
 
-    assert_equal(sorted(SYMMETRIC_METRICS + NON_SYMMETRIC_METRICS),
-                 sorted(SUPERVISED_METRICS))
+    assert (sorted(SYMMETRIC_METRICS + NON_SYMMETRIC_METRICS) ==
+            sorted(SUPERVISED_METRICS))
 
 
 def test_normalized_output():
@@ -98,12 +94,12 @@ def test_normalized_output():
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
     for name in NORMALIZED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_greater(metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]), 0.0)
-        assert_greater(metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]), 0.0)
-        assert_less(metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]), 1.0)
-        assert_less(metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]), 1.0)
-        assert_equal(metric(upper_bound_1, upper_bound_2), 1.0,
-                     msg="%s has upper_bound greater than 1" % name)
+        assert metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]) > 0.0
+        assert metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]) > 0.0
+        assert metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]) < 1.0
+        assert metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]) < 1.0
+        assert metric(upper_bound_1, upper_bound_2) == pytest.approx(1.0), \
+            "%s has upper_bound greater than 1" % name
 
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
@@ -111,8 +107,8 @@ def test_normalized_output():
         metric = SUPERVISED_METRICS[name]
         score = [metric(lower_bound_1, lower_bound_2),
                  metric(lower_bound_2, lower_bound_1)]
-        assert_true(0.0 in score,
-                    msg="%s has lower bound less than 0.0" % name)
+        assert_allclose(score, 0,
+                        err_msg="%s has lower bound less than 0.0" % name)
 
 
 # All clustering metrics do not change score due to permutations of labels
@@ -123,19 +119,19 @@ def test_permute_labels():
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
         score_1 = metric(y_pred, y_label)
-        assert_almost_equal(score_1, metric(1 - y_pred, y_label),
-                            err_msg="%s failed labels permutation" % name)
-        assert_almost_equal(score_1, metric(1 - y_pred, 1 - y_label),
-                            err_msg="%s failed labels permutation" % name)
-        assert_almost_equal(score_1, metric(y_pred, 1 - y_label),
-                            err_msg="%s failed labels permutation" % name)
+        assert_allclose(score_1, metric(1 - y_pred, y_label),
+                        err_msg="%s failed labels permutation" % name)
+        assert_allclose(score_1, metric(1 - y_pred, 1 - y_label),
+                        err_msg="%s failed labels permutation" % name)
+        assert_allclose(score_1, metric(y_pred, 1 - y_label),
+                        err_msg="%s failed labels permutation" % name)
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
         X = np.random.randint(10, size=(7, 10))
         score_1 = metric(X, y_pred)
-        assert_almost_equal(score_1, metric(X, 1 - y_pred),
-                            err_msg="%s failed labels permutation" % name)
+        assert_allclose(score_1, metric(X, 1 - y_pred),
+                        err_msg="%s failed labels permutation" % name)
 
 
 # For all clustering metrics Input parameters can be both
@@ -159,18 +155,16 @@ def test_format_invariance():
         y_pred_gen = generate_formats(y_pred)
         for (y_true_fmt, fmt_name), (y_pred_fmt, _) in zip(y_true_gen,
                                                            y_pred_gen):
-            assert_equal(score_1, metric(y_true_fmt, y_pred_fmt),
-                         msg="%s failed %s format invariance" % (name,
-                                                                 fmt_name))
+            assert score_1 == metric(y_true_fmt, y_pred_fmt), \
+                "%s failed %s format invariance" % (name, fmt_name)
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
         X = np.random.randint(10, size=(8, 10))
         score_1 = metric(X, y_true)
-        assert_equal(score_1, metric(X.astype(float), y_true),
-                     msg="%s failed format invariance" % name)
+        assert score_1 == metric(X.astype(float), y_true), \
+            "%s failed format invariance" % name
         y_true_gen = generate_formats(y_true)
         for (y_true_fmt, fmt_name) in y_true_gen:
-            assert_equal(score_1, metric(X, y_true_fmt),
-                         msg="%s failed %s format invariance" % (name,
-                                                                 fmt_name))
+            assert score_1 == metric(X, y_true_fmt), \
+                "%s failed %s format invariance" % (name, fmt_name)
