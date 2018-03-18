@@ -85,13 +85,10 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         If cv='prefit' the base estimator is assumed to be fitted and all data
         will be used for the calibration of the probability threshold.
 
-    min_tnr : float in [0, 1]
-        In case method = 'max_tpr' this value must be set to specify the
-        minimum required value for the true negative rate
-
-    min_tpr : float in [0, 1]
-        In case method = 'max_tnr' this value must be set to specify the
-        minimum required value for the true positive rate
+    threshold : float in [0, 1] or None, (default=None)
+        In case method is 'max_tpr' or 'max_tnr' this parameter must be set to
+        specify the threshold for the true negative rate or true positive rate
+        respectively that needs to be achieved
 
     Attributes
     ----------
@@ -107,14 +104,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     """
     def __init__(self, base_estimator, method='roc', scoring=None, pos_label=1,
-                 cv=3, min_tnr=None, min_tpr=None):
+                 cv=3, threshold=None):
         self.base_estimator = base_estimator
         self.method = method
         self.scoring = scoring
         self.pos_label = pos_label
         self.cv = cv
-        self.min_tnr = min_tnr
-        self.min_tpr = min_tpr
+        self.threshold = threshold
 
     def fit(self, X, y):
         """Fit model
@@ -146,17 +142,11 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                              'or "predict_proba" or None. Got %s instead' %
                              self.scoring)
 
-        if self.method == 'max_tpr':
-            if not self.min_tnr or not isinstance(self.min_tnr, float) \
-                    or not self.min_tnr >= 0 or not self.min_tnr <= 1:
-                raise ValueError('max_tnr must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.min_tnr))
-
-        elif self.method == 'max_tnr':
-            if not self.min_tpr or not isinstance(self.min_tpr, float) \
-                    or not self.min_tpr >= 0 or not self.min_tpr <= 1:
-                raise ValueError('max_tpr must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.min_tnr))
+        if self.method == 'max_tpr' or self.method == 'max_tnr':
+            if not self.threshold or not isinstance(self.threshold, float) \
+                    or not self.threshold >= 0 or not self.threshold <= 1:
+                raise ValueError('threshold must be a number in [1, 0]. '
+                                 'Got %s instead' % repr(self.threshold))
 
         X, y = check_X_y(X, y)
 
@@ -173,7 +163,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if self.cv == 'prefit':
             self.decision_threshold_ = _CutoffClassifier(
                 self.base_estimator, self.method, self.scoring, self.pos_label,
-                self.min_tnr, self.min_tpr
+                self.threshold
             ).fit(X, y).decision_threshold_
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -186,8 +176,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                       self.method,
                                       self.scoring,
                                       self.pos_label,
-                                      self.min_tnr,
-                                      self.min_tpr).fit(
+                                      self.threshold).fit(
                         X[test], y[test]
                     ).decision_threshold_
                 )
@@ -246,27 +235,22 @@ class _CutoffClassifier(object):
     pos_label : object
         Label considered as positive during the roc_curve construction.
 
-    min_tnr : float in [0, 1]
-        minimum required value for true negative rate (specificity) in case
-        method 'max_tpr' is used
-
-    min_tpr : float in [0, 1]
-        minimum required value for true positive rate (sensitivity) in case
-        method 'max_tnr' is used
+    threshold : float in [0, 1]
+        minimum required value for the true negative rate (specificity) in case
+        method 'max_tpr' is used or for the true positive rate (sensitivity) in
+        case method 'max_tnr' is used
 
     Attributes
     ----------
     decision_threshold_ : float
         Acquired decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, scoring, pos_label, min_tnr,
-                 min_tpr):
+    def __init__(self, base_estimator, method, scoring, pos_label, threshold):
         self.base_estimator = base_estimator
         self.method = method
         self.scoring = scoring
         self.pos_label = pos_label
-        self.min_tnr = min_tnr
-        self.min_tpr = min_tpr
+        self.threshold = threshold
 
     def fit(self, X, y):
         """Select a decision threshold for the fitted model's positive class
@@ -296,11 +280,11 @@ class _CutoffClassifier(object):
                 np.argmin(fpr ** 2 + (tpr - 1) ** 2)
             ]
         elif self.method == 'max_tpr':
-            indices = np.where(1 - fpr >= self.min_tnr)[0]
+            indices = np.where(1 - fpr >= self.threshold)[0]
             max_tpr_index = np.argmax(tpr[indices])
             self.decision_threshold_ = thresholds[indices[max_tpr_index]]
         else:
-            indices = np.where(tpr >= self.min_tpr)[0]
+            indices = np.where(tpr >= self.threshold)[0]
             max_tnr_index = np.argmax(1 - fpr[indices])
             self.decision_threshold_ = thresholds[indices[max_tnr_index]]
         return self
