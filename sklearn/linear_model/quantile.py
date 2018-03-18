@@ -1,5 +1,5 @@
 # Authors: David Dale dale.david@mail.ru
-# License: TBD
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
