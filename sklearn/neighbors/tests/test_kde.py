@@ -146,6 +146,7 @@ def test_kde_pipeline_gridsearch():
 def test_kde_sample_weights():
     N = 10000
     T = 100
+    W_neutral = 3 * np.ones(N)
     for d in [1, 2, 10]:
         rng = np.random.RandomState(0)
         X = rng.rand(N, d)
@@ -156,13 +157,18 @@ def test_kde_sample_weights():
                 repetitions.append(x.tolist())
         X_repetitions = np.array(repetitions)
         Y = rng.rand(T // d, d)
-        i = 0
         for algorithm in ['auto', 'ball_tree', 'kd_tree']:
             for metric in ['euclidean', 'minkowski', 'manhattan',
                            'chebyshev']:
                 if algorithm != 'kd_tree' or metric in KDTree.valid_metrics:
-                    i += 1
                     kde = KernelDensity(algorithm=algorithm, metric=metric)
+                    # Test that adding a constant sample weight has no effect
+                    kde.fit(X, sample_weight=W_neutral)
+                    y_test = kde.score_samples(Y)
+                    kde.fit(X)
+                    y_ref = kde.score_samples(Y)
+                    assert_allclose(y_test, y_ref)
+                    # Test equivalence between sampling and sample weights
                     kde.fit(X, sample_weight=W)
                     y_test = kde.score_samples(Y)
                     kde.fit(X_repetitions)
