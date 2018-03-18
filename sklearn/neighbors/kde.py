@@ -120,11 +120,24 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        sample_weight: array_like, shape (n_samples, ), optional
+        sample_weight: array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
+
+        if sample_weight is not None:
+            if len(sample_weight.shape) != 1:
+                raise ValueError("the shape of sample_weight must be ({0},),"
+                                 " but was {1}".format(X.shape[0],
+                                                       sample_weight.shape))
+            if sample_weight.shape[0] != X.shape[0]:
+                raise ValueError("X and sample_weight have incompatible "
+                                 "shapes: X has shape {0} and sample_weight "
+                                 "has shape {1}".format(X.shape,
+                                                        sample_weight.shape))
+            if sample_weight.min() <= 0:
+                raise ValueError("sample_weight must have positive values")
 
         kwargs = self.metric_params
         if kwargs is None:
