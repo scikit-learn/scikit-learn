@@ -53,6 +53,7 @@ def _check_statistics(X, X_true,
               err_msg=err_msg.format(0, True))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(0, True))
 
+
 def test_imputation_shape():
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
@@ -206,8 +207,7 @@ def test_imputation_pipeline_grid_search():
                          ('tree', tree.DecisionTreeRegressor(random_state=0))])
 
     parameters = {
-        'imputer__strategy': ["mean", "median", "most_frequent"],
-        'imputer__axis': [0, 1]
+        'imputer__strategy': ["mean", "median", "most_frequent"]
     }
 
     X = sparse_random_matrix(100, 100, density=0.10)
@@ -241,14 +241,6 @@ def test_imputation_copy():
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
     assert_array_almost_equal(X, Xt)
-
-    # copy=False, sparse csr, axis=1 => no copy
-    X = X_orig.copy()
-    imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
-                            copy=False, axis=1)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = -1
-    assert_array_almost_equal(X.data, Xt.data)
 
     # copy=False, sparse csc => no copy
     X = X_orig.copy().tocsc()
