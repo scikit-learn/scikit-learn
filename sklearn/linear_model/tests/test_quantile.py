@@ -1,12 +1,11 @@
 # Authors: David Dale dale.david@mail.ru
-# License: TBD
+# License: BSD 3 clause
 
 import numpy as np
-from sklearn.utils.testing import assert_almost_equal, assert_greater, assert_raises, assert_array_almost_equal, assert_equal, assert_true
-
+from sklearn.utils.testing import assert_almost_equal, \
+    assert_raises, assert_array_almost_equal
 from sklearn.datasets import make_regression
-
-from sklearn.linear_model import (HuberRegressor, LinearRegression, SGDRegressor, QuantileRegressor)
+from sklearn.linear_model import HuberRegressor, QuantileRegressor
 
 import warnings
 
@@ -68,18 +67,18 @@ def test_quantile_sample_weight():
     fraction_below = np.mean(y < quant.predict(X))
     assert fraction_below > 0.5
     weighted_fraction_below = np.sum((y < quant.predict(X)) * weight) \
-                              / np.sum(weight)
+        / np.sum(weight)
     assert_almost_equal(weighted_fraction_below, 0.5, 2)
 
 
 def test_quantile_incorrect_quantile():
     X, y = make_regression(n_samples=10, n_features=1, random_state=0, noise=1)
     with assert_raises(ValueError):
-        quant = QuantileRegressor(quantile=2.0).fit(X, y)
+        QuantileRegressor(quantile=2.0).fit(X, y)
     with assert_raises(ValueError):
-        quant = QuantileRegressor(quantile=1.0).fit(X, y)
+        QuantileRegressor(quantile=1.0).fit(X, y)
     with assert_raises(ValueError):
-        quant = QuantileRegressor(quantile=0.0).fit(X, y)
+        QuantileRegressor(quantile=0.0).fit(X, y)
 
 
 def test_quantile_warm_start():
@@ -104,11 +103,11 @@ def test_quantile_convergence():
 
     # check that for small n_iter, warning is thrown
     with warnings.catch_warnings(record=True) as w:
-        quant = QuantileRegressor(max_iter=10).fit(X, y)
+        QuantileRegressor(max_iter=10).fit(X, y)
         assert len(w) == 1
         assert 'QuantileRegressor convergence failed' in str(w[-1].message)
 
     # check that for large n_iter, it is not thrown
     with warnings.catch_warnings(record=True) as w:
-        quant = QuantileRegressor(max_iter=10000).fit(X, y)
+        QuantileRegressor(max_iter=10000).fit(X, y)
         assert len(w) == 0
