@@ -1180,7 +1180,7 @@ Quantile regression may be useful if one is interested in predicting an interval
 instead of point prediction. Sometimes prediction interval is calculated based on
 assumption that prediction error is distributed normally with zero mean and constant variance.
 Quantile regression provides sensible prediction intervals even for errors with non-constant
-(but predictable) variance) or non-normal distribution.
+(but predictable) variance or non-normal distribution.
 
 .. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_001.png
    :target: ../auto_examples/linear_model/plot_quantile_regression.html
@@ -1195,10 +1195,10 @@ Quantile loss function can be used with models other than linear.
 :class:`GradientBoostingRegressor` also has an option to predict conditional quantiles.
 
 Most implementations of quantile regression are based on linear programming problem.
-Use of L2 regularization makes the problem nonlinear, but use non-differentiable absolute values
-makes it difficult for gradient descent optimization. Instead, current implementation solves
+Use of L2 regularization makes the problem nonlinear, but use of non-differentiable absolute values
+makes it difficult for gradient descent optimization. Instead, the current implementation solves
 a sequence of smooth approximate problems similar to Huber regression, proposed by Chen.
-Every next step uses finer approximation. Optimization stops when solutions of two
+Every next step uses a finer approximation. Optimization stops when solutions of two
 consecutive steps are almost identical.
 
 .. topic:: Examples:

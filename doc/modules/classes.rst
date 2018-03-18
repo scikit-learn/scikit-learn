@@ -688,6 +688,7 @@ Kernels:
    linear_model.PassiveAggressiveClassifier
    linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
+   linear_model.QuantileRegressor
    linear_model.RANSACRegressor
    linear_model.Ridge
    linear_model.RidgeClassifier
