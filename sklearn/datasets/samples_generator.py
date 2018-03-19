@@ -161,6 +161,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         raise ValueError("Number of informative, redundant and repeated "
                          "features must sum to less than the number of total"
                          " features")
+    # Use log2 to avoid overflow errors
     if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
