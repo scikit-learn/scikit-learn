@@ -17,10 +17,10 @@ def test_missing_value_handling(est):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
-    n_missing = 30
+    n_missing = 50
     X[rng.randint(X.shape[0], size=n_missing),
       rng.randint(X.shape[1], size=n_missing)] = np.nan
-    X_train, X_test = train_test_split(X)
+    X_train, X_test = train_test_split(X, random_state=0)
     # sanity check
     assert not np.all(np.isnan(X_train), axis=0).any()
     assert np.any(np.isnan(X_train), axis=0).all()
