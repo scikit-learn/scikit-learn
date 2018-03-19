@@ -89,8 +89,8 @@ def test_normalize():
     X += np.random.normal(size=X.shape[1], scale=3)
     X *= np.random.normal(size=X.shape[1], scale=3)
     y = y * 10 + 100
-    model1 = QuantileRegressor(alpha=1e-6, normalize=False)
-    model2 = QuantileRegressor(alpha=1e-6, normalize=True)
+    model1 = QuantileRegressor(alpha=1e-6, normalize=False, max_iter=10000)
+    model2 = QuantileRegressor(alpha=1e-6, normalize=True, max_iter=10000)
     cvs1 = cross_val_score(model1, X, y).mean()
     cvs2 = cross_val_score(model2, X, y).mean()
     assert cvs1 > 0.99
@@ -119,9 +119,9 @@ def test_quantile_convergence():
 
     # check that for small n_iter, warning is thrown
     with warnings.catch_warnings(record=True) as w:
-        QuantileRegressor(max_iter=10).fit(X, y)
+        QuantileRegressor(max_iter=1).fit(X, y)
         assert len(w) == 1
-        assert 'QuantileRegressor convergence failed' in str(w[-1].message)
+        assert 'QuantileRegressor did not converge' in str(w[-1].message)
 
     # check that for large n_iter, it is not thrown
     with warnings.catch_warnings(record=True) as w:

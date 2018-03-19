@@ -291,9 +291,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # do I really need to issue this warning?
         # Its reason is lineSearchError, which cannot be easily fixed
         if not result['success']:
-            warnings.warn("QuantileRegressor convergence failed:" +
-                          " Scipy solver terminated with %s."
-                          % result['message']
+            warnings.warn("QuantileRegressor did not converge:" +
+                          " Scipy solver terminated with '%s'."
+                          % str(result['message'])
                           )
         self.n_iter_ = sum(total_iter)
         self.gamma_ = gamma
@@ -304,7 +304,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         if self.fit_intercept:
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = parameters[-1] + y_offset \
-                              - np.dot(X_offset, self.coef_.T)
+                - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.0
         return self
