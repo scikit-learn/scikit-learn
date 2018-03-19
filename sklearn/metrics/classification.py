@@ -372,15 +372,24 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                 y_pred = (y_pred == 1)
 
         # account for sample weight
+
+        def _sparse_row_multiply(A, w):
+            # for scipy <= 0.16 (and maybe later), A.multiply(w) will densify A
+            if A.format == 'csr':
+                return A._with_data(A.data * np.repeat(w, np.diff(A.indptr)))
+            elif A.format == 'csc':
+                return A._with_data(A.data * np.take(w, A.indices,
+                                                     mode='clip'))
+            else:
+                raise ValueError
+
         if sample_weight is not None:
             if issparse(y_true):
-                y_true = y_true.multiply(np.reshape(sample_weight, (-1, 1)))
-                y_true = y_true.tocsc()
+                y_true = _sparse_row_multiply(y_true, sample_weight).tocsc()
             else:
                 y_true = np.multiply(sample_weight, y_true)
             if issparse(y_pred):
-                y_pred = y_pred.multiply(np.reshape(sample_weight, (-1, 1)))
-                y_pred = y_pred.tocsc()
+                y_pred = _sparse_row_multiply(y_pred, sample_weight).tocsc()
             else:
                 y_pred = np.multiply(sample_weight, y_pred)
 
