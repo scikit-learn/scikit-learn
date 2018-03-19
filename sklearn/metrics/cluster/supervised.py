@@ -209,7 +209,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
 
-    prod_comb = (sum_comb_c * sum_comb_k) / comb(n_samples, 2)
+    prod_comb = (sum_comb_c * sum_comb_k) / comb2(n_samples)
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
@@ -528,7 +528,7 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Mutual Information between two clusterings.
+    r"""Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`|U_i|` is the number of the samples
@@ -538,7 +538,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     .. math::
 
-        MI(U,V)=\sum_{i=1}^|U| \sum_{j=1}^|V| \\frac{|U_i\cap V_j|}{N}
+        MI(U,V)=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \\frac{|U_i\cap V_j|}{N}
         \log\\frac{N|U_i \cap V_j|}{|U_i||V_j|}
 
     This metric is independent of the absolute values of the labels:
@@ -601,7 +601,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
-    outer = pi.take(nzx) * pj.take(nzy)
+    outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
@@ -710,7 +710,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``
+    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mustual_info_score` might be preferred.

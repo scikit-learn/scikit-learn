@@ -553,7 +553,7 @@ The kernel is given by:
 .. math::
    k(x_i, x_j) = \left(1 + \frac{d(x_i, x_j)^2}{2\alpha l^2}\right)^{-\alpha}
 
-The prior and posterior of a GP resulting from an RBF kernel are shown in
+The prior and posterior of a GP resulting from a :class:`RationalQuadratic` kernel are shown in
 the following figure:
 
 .. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_001.png
@@ -604,4 +604,3 @@ References
 .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
-

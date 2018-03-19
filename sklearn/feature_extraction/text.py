@@ -30,6 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -305,6 +306,15 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
+    def _validate_params(self):
+        """Check validity of ngram_range parameter"""
+        min_n, max_m = self.ngram_range
+        if min_n > max_m:
+            raise ValueError(
+                "Invalid value for ngram_range=%s "
+                "lower boundary larger than the upper boundary."
+                % str(self.ngram_range))
+
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -370,11 +380,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -492,6 +506,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -514,6 +530,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
+
+        self._validate_params()
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -574,11 +592,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -784,7 +806,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
         j_indices = []
-        indptr = _make_int_array()
+        indptr = []
+
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -811,8 +834,20 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = np.asarray(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
+        if indptr[-1] > 2147483648:  # = 2**31 - 1
+            if sp_version >= (0, 14):
+                indices_dtype = np.int64
+            else:
+                raise ValueError(('sparse CSR array has {} non-zero '
+                                  'elements and requires 64 bit indexing, '
+                                  ' which is unsupported with scipy {}. '
+                                  'Please upgrade to scipy >=0.14')
+                                 .format(indptr[-1], '.'.join(sp_version)))
+
+        else:
+            indices_dtype = np.int32
+        j_indices = np.asarray(j_indices, dtype=indices_dtype)
+        indptr = np.asarray(indptr, dtype=indices_dtype)
         values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
@@ -860,6 +895,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -1153,11 +1189,15 @@ class TfidfVectorizer(CountVectorizer):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.

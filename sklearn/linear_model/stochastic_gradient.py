@@ -127,7 +127,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                     "they default to max_iter=5 and tol=None. "
                     "If tol is not None, max_iter defaults to max_iter=1000. "
                     "From 0.21, default max_iter will be 1000, and"
-                    " default tol will be 1e-3." % type(self), FutureWarning)
+                    " default tol will be 1e-3." % type(self).__name__,
+                    FutureWarning)
                 # Before 0.19, default was n_iter=5
             max_iter = 5
         else:
@@ -723,6 +724,15 @@ class SGDClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
+
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
+        If a dynamic learning rate is used, the learning rate is adapted
+        depending on the number of samples already seen. Calling ``fit`` resets
+        this counter, while ``partial_fit`` will result in increasing the
+        existing counter.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
@@ -1272,6 +1282,15 @@ class SGDRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
+
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
+        If a dynamic learning rate is used, the learning rate is adapted
+        depending on the number of samples already seen. Calling ``fit`` resets
+        this counter, while ``partial_fit``  will result in increasing the
+        existing counter.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
