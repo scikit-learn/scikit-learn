@@ -100,7 +100,7 @@ def test_normalize():
 def test_quantile_warm_start():
     X, y = make_regression()
     warm = QuantileRegressor(fit_intercept=True, alpha=1.0, max_iter=10000,
-                             warm_start=True, gtol=1e-1)
+                             warm_start=True)
     warm.fit(X, y)
     warm_coef = warm.coef_.copy()
     warm.fit(X, y)
@@ -108,6 +108,7 @@ def test_quantile_warm_start():
     # SciPy performs the tol check after doing the coef updates, so
     # these would be almost same but not equal.
     assert_array_almost_equal(warm.coef_, warm_coef, 1)
+    # todo: assert a smaller number of iterations than the first fit
 
 
 def test_quantile_convergence():
