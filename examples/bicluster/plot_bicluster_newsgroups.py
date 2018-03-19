@@ -68,7 +68,7 @@ categories = ['alt.atheism', 'comp.graphics',
 newsgroups = fetch_20newsgroups(categories=categories)
 y_true = newsgroups.target
 
-vectorizer = NumberNormalizingVectorizer(min_df=5)
+vectorizer = NumberNormalizingVectorizer(max_df=0.4, min_df=5)
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
 kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,

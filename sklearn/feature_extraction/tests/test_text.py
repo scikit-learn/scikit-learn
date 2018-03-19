@@ -1023,7 +1023,9 @@ def test_vectorizers_invalid_ngram_range(vec):
 
 def test_vectorizer_stop_words_english():
     message = ("stop_words='english' is deprecated in version 0.20 "
-               "and will be removed in 0.22.")
+               "and will be removed in 0.22. Provide the list of "
+               "stop words or consider using the max_df parameter,"
+               "if possible.")
     for vec in [CountVectorizer(),
                 TfidfVectorizer(), HashingVectorizer()]:
         vec.set_params(stop_words='english')

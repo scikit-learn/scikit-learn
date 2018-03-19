@@ -89,7 +89,9 @@ def strip_tags(s):
 def _check_stop_list(stop):
     if stop == "english":
         warnings.warn("stop_words='english' is deprecated in version 0.20 "
-                      "and will be removed in 0.22.", DeprecationWarning)
+                      "and will be removed in 0.22. Provide the list of "
+                      "stop words or consider using the max_df parameter,"
+                      "if possible.", DeprecationWarning)
         return ENGLISH_STOP_WORDS
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
@@ -424,8 +426,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
       .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.20 and will be
-        removed in 0.22 as the current list is broken, leading to unexpected
-        results.
+        removed in 0.22 as the current list is controversial, leading to
+        unexpected results.
 
     lowercase : boolean, default=True
         Convert all characters to lowercase before tokenizing.
@@ -645,8 +647,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
       .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.20 and will be
-        removed in 0.22 as the current list is broken, leading to unexpected
-        results.
+        removed in 0.22 as the current list is controversial, leading to
+        unexpected results.
 
     lowercase : boolean, True by default
         Convert all characters to lowercase before tokenizing.
@@ -1247,8 +1249,8 @@ class TfidfVectorizer(CountVectorizer):
 
       .. deprecated:: 0.20
          ``stop_words='english'`` is deprecated in version 0.20 and will be
-         removed in 0.22 as the current list is broken, leading to unexpected
-         results.
+         removed in 0.22 as the current list is controversial, leading to
+         unexpected results.
 
     lowercase : boolean, default True
         Convert all characters to lowercase before tokenizing.

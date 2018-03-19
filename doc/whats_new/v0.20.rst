@@ -424,12 +424,12 @@ Linear, kernelized and related models
 
 Feature Extraction
 
-- Deprecate ``stop_words='english'`` parameter in 
-  :class:`feature_extraction.text.CountVectorizer`, 
-  :class:`feature_extraction.text.TfidfVectorizer`, 
-  :class:`feature_extraction.text.HashingVectorizer` as the current list is 
-  broken, leading to unexpected results. :issue:`10735` 
-  by :user:`Mohammad Shahebaz <shaz13>` 
+- Deprecate ``stop_words='english'`` parameter in
+  :class:`feature_extraction.text.CountVectorizer`,
+  :class:`feature_extraction.text.TfidfVectorizer`,
+  :class:`feature_extraction.text.HashingVectorizer` as the current list is
+  controversial and may lead to unexpected results. :issue:`10735` 
+  by :user:`Mohammad Shahebaz <shaz13>`
 
 Metrics
 
