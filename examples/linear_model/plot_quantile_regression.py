@@ -5,9 +5,11 @@ Quantile regression
 
 Plot the prediction of different conditional quantiles.
 
-The left figure shows the case when error distribution is normal, but variance is not constant.
+The left figure shows the case when error distribution is normal,
+but variance is not constant.
 
-The right figure shows example of asymmetric error distribution (namely, Pareto).
+The right figure shows example of an asymmetric error distribution
+(namely, Pareto).
 """
 from __future__ import division
 print(__doc__)
@@ -28,7 +30,8 @@ plt.scatter(x, y)
 
 quantiles = [0.05, 0.5, 0.95]
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0).fit(X, y)
+    qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0)
+    qr.fit(X, y)
     plt.plot([0, 10], qr.predict([[0], [10]]))
 plt.xlabel('x')
 plt.ylabel('y')
@@ -41,8 +44,9 @@ y = 20 + x * 0.5 + np.random.pareto(10, size=x.shape[0])*10
 plt.scatter(x, y)
 
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0).fit(X, y)
-    plt.plot([0, 10], qr.predict([[0],[10]]))
+    qr = QuantileRegressor(quantile=quantile, max_iter=10000, alpha=0)
+    qr.fit(X, y)
+    plt.plot([0, 10], qr.predict([[0], [10]]))
 plt.xlabel('x')
 plt.ylabel('y')
 plt.title('Quantiles of asymmetrically distributed residuals')

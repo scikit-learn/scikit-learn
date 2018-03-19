@@ -1197,13 +1197,13 @@ Quantile loss function can be used with models other than linear.
 Most implementations of quantile regression are based on linear programming problem.
 Use of L2 regularization makes the problem nonlinear, but use of non-differentiable absolute values
 makes it difficult for gradient descent optimization. Instead, the current implementation solves
-a sequence of smooth approximate problems similar to Huber regression, proposed by Chen.
+a sequence of smooth approximate problems similar to Huber regression, proposed by Chen and Wei.
 Every next step uses a finer approximation. Optimization stops when solutions of two
-consecutive steps are almost identical.
+consecutive steps are almost identical or when maximal number of iterations is exceeded.
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`
 
 .. topic:: References:
 
