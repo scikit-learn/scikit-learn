@@ -43,9 +43,9 @@ def test_quantile_toy_example():
 
     # for a large ridge penalty, the model no longer minimizes MAE
     # (1.75, 0.25) minimizes c^2 + 0.5 (abs(1-b) + abs(2-b-c) + abs(11-b-c))
-    model = QuantileRegressor(quantile=0.5, alpha=0.01).fit(X, y)
-    assert_almost_equal(model.intercept_, 1, 1.75)
-    assert_almost_equal(model.coef_[0], 1, 0.25)
+    model = QuantileRegressor(quantile=0.5, alpha=1).fit(X, y)
+    assert_almost_equal(model.intercept_, 1.75, 2)
+    assert_almost_equal(model.coef_[0], 0.25, 2)
 
 
 def test_quantile_equals_huber_for_low_epsilon():
