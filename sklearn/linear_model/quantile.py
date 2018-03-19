@@ -110,6 +110,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         This is useful if the stored attributes of a previously used model
         has to be reused. If set to False, then the coefficients will
         be rewritten for every call to fit.
+        ``warm_start`` does not significantly speed up the convergence
+        if the model optimizes different cost functions, as ``gamma`` converges
+        to 0. It is therefore recommended to set small ``gamma``
+        if ``warm_start`` is set to True.
 
     fit_intercept : bool, default True
         Whether or not to fit the intercept. This can be set to False
@@ -171,7 +175,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
            Sankhya: The Indian Journal of Statistics, 399-417.
     """
 
-    def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
+    def __init__(self, quantile=0.5,
+                 max_iter=10000, alpha=0.0001, l1_ratio=0.0,
                  warm_start=False, fit_intercept=True,
                  normalize=False, copy_X=True,
                  gamma=1e-2, gtol=1e-4, xtol=1e-6,

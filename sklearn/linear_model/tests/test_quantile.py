@@ -11,6 +11,43 @@ from sklearn.model_selection import cross_val_score
 import warnings
 
 
+def test_quantile_toy_example():
+    # test how different parameters affect a small intuitive example
+    X = [[0], [1], [1]]
+    y = [1, 2, 11]
+    # for 50% quantile w/o regularization, any slope in [1, 10] is okay
+    model = QuantileRegressor(quantile=0.5, alpha=0).fit(X, y)
+    assert_almost_equal(model.intercept_, 1, 2)
+    assert model.coef_[0] >= 1
+    assert model.coef_[0] <= 10
+
+    # if positive error costs more, the slope is maximal
+    model = QuantileRegressor(quantile=0.51, alpha=0).fit(X, y)
+    assert_almost_equal(model.intercept_, 1, 2)
+    assert_almost_equal(model.coef_[0], 10, 2)
+
+    # if negative error costs more, the slope is minimal
+    model = QuantileRegressor(quantile=0.49, alpha=0).fit(X, y)
+    assert_almost_equal(model.intercept_, 1, 2)
+    assert_almost_equal(model.coef_[0], 1, 2)
+
+    # for a small ridge penalty, the slope is also minimal
+    model = QuantileRegressor(quantile=0.5, alpha=0.01).fit(X, y)
+    assert_almost_equal(model.intercept_, 1, 2)
+    assert_almost_equal(model.coef_[0], 1, 2)
+
+    # for a small lasso penalty, the slope is also minimal
+    model = QuantileRegressor(quantile=0.5, alpha=0.01, l1_ratio=1).fit(X, y)
+    assert_almost_equal(model.intercept_, 1, 2)
+    assert_almost_equal(model.coef_[0], 1, 2)
+
+    # for a large ridge penalty, the model no longer minimizes MAE
+    # (1.75, 0.25) minimizes c^2 + 0.5 (abs(1-b) + abs(2-b-c) + abs(11-b-c))
+    model = QuantileRegressor(quantile=0.5, alpha=0.01).fit(X, y)
+    assert_almost_equal(model.intercept_, 1, 1.75)
+    assert_almost_equal(model.coef_[0], 1, 0.25)
+
+
 def test_quantile_equals_huber_for_low_epsilon():
     X, y = make_regression(n_samples=100, n_features=20, random_state=0,
                            noise=1.0)
@@ -98,17 +135,21 @@ def test_normalize():
 
 
 def test_quantile_warm_start():
-    X, y = make_regression()
+    # test that warm restart leads to the same point
+    X, y = make_regression(random_state=0, n_samples=1000)
     warm = QuantileRegressor(fit_intercept=True, alpha=1.0, max_iter=10000,
-                             warm_start=True)
+                             warm_start=True, gamma=1e-10,
+                             xtol=1e-10, gtol=1e-10)
     warm.fit(X, y)
     warm_coef = warm.coef_.copy()
+    warm_iter = sum(warm.total_iter_)
     warm.fit(X, y)
 
     # SciPy performs the tol check after doing the coef updates, so
-    # these would be almost same but not equal.
+    # these would be almost same but not necessarily equal.
     assert_array_almost_equal(warm.coef_, warm_coef, 1)
-    # todo: assert a smaller number of iterations than the first fit
+    # assert a smaller number of iterations than the first fit
+    assert sum(warm.total_iter_) < warm_iter
 
 
 def test_quantile_convergence():
