@@ -130,7 +130,7 @@ def test_make_classification_informative_features():
                 centroid = X[cluster_index == cluster].mean(axis=0)
                 if hypercube:
                     assert_array_almost_equal(np.abs(centroid) / class_sep,
-                                              np.array([class_sep] \
+                                              np.array([class_sep]
                                               * n_informative) / class_sep,
                                               decimal=5,
                                               err_msg="Clusters are not "
