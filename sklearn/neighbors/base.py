@@ -117,10 +117,11 @@ def _is_sorted_by_data(graph):
     res : boolean
         Whether input graph is sorted by data
     """
-    assert issparse(graph)
+    assert graph.format == 'csr'
     out_of_order = graph.data[:-1] > graph.data[1:]
-    return (out_of_order.sum() == out_of_order.take(graph.indptr[1:-1] - 1,
-                                                    mode='clip').sum())
+    line_change = np.unique(graph.indptr[1:-1] - 1)
+    line_change = line_change[line_change < out_of_order.shape[0]]
+    return (out_of_order.sum() == out_of_order.take(line_change).sum())
 
 
 def _check_precomputed(X):
@@ -198,6 +199,7 @@ def _kneighbors_from_graph(graph, n_neighbors):
         Indices of nearest neighbors.
     """
     n_samples = graph.shape[0]
+    assert graph.format == 'csr'
 
     # number of neighbors by samples
     row_nnz = np.diff(graph.indptr)
@@ -245,7 +247,7 @@ def _radius_neighbors_from_graph(graph, radius):
     neigh_ind :array, shape (n_samples,) of arrays
         Indices of nearest neighbors.
     """
-    n_samples = graph.shape[0]
+    assert graph.format == 'csr'
 
     if graph.data.max() <= radius:
         data, indices, indptr = graph.data, graph.indices, graph.indptr
@@ -255,12 +257,9 @@ def _radius_neighbors_from_graph(graph, radius):
         indices = np.compress(mask, graph.indices)
         indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
 
-    neigh_dist = np.empty(n_samples, dtype='object')
-    neigh_ind = np.empty(n_samples, dtype='object')
-    for i in range(n_samples):
-        idx = slice(indptr[i], indptr[i + 1])
-        neigh_dist[i] = data[idx]
-        neigh_ind[i] = indices[idx]
+    neigh_dist = np.array(np.split(data, indptr[1:-1]))
+    neigh_ind = np.array(np.split(indices, indptr[1:-1]))
+
     return neigh_dist, neigh_ind
 
 
@@ -364,7 +363,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        if getattr(self, 'effective_metric_', '') == 'precomputed':
+        if self.effective_metric_ == 'precomputed':
             X = _check_precomputed(X)
         else:
             X = check_array(X, accept_sparse='csr')
@@ -518,7 +517,6 @@ class KNeighborsMixin(object):
             )
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
-        neigh_dist = None
 
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
@@ -684,7 +682,8 @@ class KNeighborsMixin(object):
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
-    def radius_neighbors(self, X=None, radius=None, return_distance=True):
+    def radius_neighbors(self, X=None, radius=None, return_distance=True,
+                         sort_results=False):
         """Finds the neighbors within a given radius of a point or points.
 
         Return the indices and distances of each point from the dataset
@@ -706,7 +705,13 @@ class RadiusNeighborsMixin(object):
             (default is the value passed to the constructor).
 
         return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
+            If False, distances will not be returned.
+
+        sort_results : boolean, optional. Defaults to False.
+            if True, the distances and indices will be sorted before being
+            returned.  If False, the results will not be sorted.  If
+            return_distance == False, setting sort_results = True will
+            result in an error.
 
         Returns
         -------
@@ -765,7 +770,6 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
-        neigh_dist = None
         n_samples = X.shape[0]
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
@@ -811,7 +815,8 @@ class RadiusNeighborsMixin(object):
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             results = self._tree.query_radius(X, radius,
-                                              return_distance=return_distance)
+                                              return_distance=return_distance,
+                                              sort_results=sort_results)
             if return_distance:
                 results = results[::-1]
         else:
@@ -900,7 +905,8 @@ class RadiusNeighborsMixin(object):
             A_data = None
         elif mode == 'distance':
             dist, A_ind = self.radius_neighbors(X, radius,
-                                                return_distance=True)
+                                                return_distance=True,
+                                                sort_results=True)
             A_data = np.concatenate(list(dist))
         else:
             raise ValueError(

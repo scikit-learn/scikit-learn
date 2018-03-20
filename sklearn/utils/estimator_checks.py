@@ -875,7 +875,7 @@ def _check_transformer(name, transformer_orig, X, y):
     # Transformers whose fit_transform() is different from fit().transform()
     skip_fit_transform_check = [
         'KNeighborsTransformer',  # with include_self=False
-        'RadiusNeighborsRegressor',  # with include_self=False
+        'RadiusNeighborsTransformer',  # with include_self=False
     ]
 
     if hasattr(transformer, 'transform'):

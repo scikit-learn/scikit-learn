@@ -3,10 +3,11 @@ from itertools import product
 import pytest
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
-                          dok_matrix, lil_matrix, issparse)
+                          dok_matrix, lil_matrix, issparse, random)
 
 from sklearn import metrics
 from sklearn import neighbors, datasets
+from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
@@ -112,7 +113,7 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
-def check_precomputed(make_train_test, implicit_diagonal=True):
+def check_precomputed(make_train_test):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
     rng = np.random.RandomState(42)
@@ -144,11 +145,10 @@ def check_precomputed(make_train_test, implicit_diagonal=True):
         assert_array_almost_equal(ind_X, ind_D)
 
         # Check X=None in prediction
-        if implicit_diagonal:
-            dist_X, ind_X = getattr(nbrs_X, method)(None)
-            dist_D, ind_D = getattr(nbrs_D, method)(None)
-            assert_array_almost_equal(dist_X, dist_D)
-            assert_array_almost_equal(ind_X, ind_D)
+        dist_X, ind_X = getattr(nbrs_X, method)(None)
+        dist_D, ind_D = getattr(nbrs_D, method)(None)
+        assert_array_almost_equal(dist_X, dist_D)
+        assert_array_almost_equal(ind_X, ind_D)
 
         # Must raise a ValueError if the matrix is not of correct shape
         assert_raises(ValueError, getattr(nbrs_D, method), X)
@@ -172,30 +172,29 @@ def test_precomputed_dense():
 
 
 @pytest.mark.parametrize('fmt', ['csr', 'lil'])
-def test_precomputed_sparse_implicit_diagonal(fmt):
+def test_precomputed_sparse(fmt):
     def make_train_test(X_train, X_test):
         nn = neighbors.NearestNeighbors(n_neighbors=3).fit(X_train)
         return (nn.kneighbors_graph(None, mode='distance').asformat(fmt),
                 nn.kneighbors_graph(X_test, mode='distance').asformat(fmt))
 
-    check_precomputed(make_train_test, implicit_diagonal=True)
-
-
-def test_precomputed_sparse_explicit_diagonal():
-    def make_train_test(X_train, X_test):
-        nn = neighbors.NearestNeighbors(n_neighbors=3).fit(X_train)
-        return (nn.kneighbors_graph(X_train.copy(), mode='distance'),
-                nn.kneighbors_graph(X_test, mode='distance'))
-
-    check_precomputed(make_train_test, implicit_diagonal=False)
+    check_precomputed(make_train_test)
 
 
 def test_is_sorted_by_data():
     # Test the helper function _is_sorted_by_data
+
+    # Test with sorted 1D array
     X = csr_matrix(np.arange(10))
     assert _is_sorted_by_data(X)
+    # Test with unsorted 1D array
     X[0, 2] = 5
     assert not _is_sorted_by_data(X)
+
+    # Test when the data is sorted in each sample, but not necessarily
+    # between samples
+    X = csr_matrix([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
+    assert _is_sorted_by_data(X)
 
 
 def test_check_precomputed():
@@ -205,9 +204,14 @@ def test_check_precomputed():
     Xt = _check_precomputed(X)
     assert _is_sorted_by_data(Xt)
 
+    # est with a different number of nonzero entries for each sample
+    X = random(10, 10, density=0.1, random_state=42).tocsr()
+    assert not _is_sorted_by_data(X)
+    Xt = _check_precomputed(X)
+    assert _is_sorted_by_data(Xt)
+
 
 def test_precomputed_sparse_invalid():
-    # Ensures enough number of nearest neighbors
     dist = np.array([[0., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
@@ -215,10 +219,15 @@ def test_precomputed_sparse_invalid():
     neigh.kneighbors(None, n_neighbors=2)
     neigh.kneighbors(np.array([[0., 0., 0.]]), n_neighbors=2)
 
+    # Ensures enough number of nearest neighbors
     dist = np.array([[0., 2., 0.], [2., 0., 3.], [0., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     msg = "2 neighbors per samples are required, but some samples have only 1"
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=2)
+
+    # Same with an empty matrix
+    dist_csr = csr_matrix(np.zeros((3, 3)))
     assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=2)
 
     # Checks error with inconsistent distance matrix
@@ -1269,6 +1278,7 @@ def test_k_and_radius_neighbors_duplicates():
 
         rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5,
                                         mode='distance')
+        rng.sort_indices()
         assert_array_equal(rng.A, [[0, 1], [1, 0]])
         assert_array_equal(rng.indices, [0, 1, 0, 1])
         assert_array_equal(rng.data, [0, 1, 1, 0])
@@ -1399,17 +1409,28 @@ def test_pipeline_with_nearest_neighbors_transformer(bonus):
     X2 = 2 * rng.rand(40, 5) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
 
-    # K Neighbors
-    for klass in [neighbors.KNeighborsClassifier,
-                  neighbors.KNeighborsRegressor]:
-        n_neighbors = 8
+    n_neighbors = 8
+    radius = 2
+
+    transformers = [
+        neighbors.KNeighborsTransformer(n_neighbors=n_neighbors + bonus,
+                                        mode='distance', include_self=True),
+        neighbors.RadiusNeighborsTransformer(
+            radius=radius + bonus, mode='distance', include_self=True),
+    ]
+    estimators = [
+        neighbors.KNeighborsClassifier(n_neighbors=n_neighbors),
+        neighbors.RadiusNeighborsClassifier(radius=radius),
+    ]
+
+    # KNeighborsTransformer
+    for est, trans in product(estimators, transformers):
         # compare the chained version and the compact version
-        est_chain = make_pipeline(
-            neighbors.KNeighborsTransformer(
-                n_neighbors=n_neighbors + bonus, mode='distance',
-                include_self=True),
-            klass(metric='precomputed', n_neighbors=n_neighbors))
-        est_compact = klass(n_neighbors=n_neighbors)
+        est_compact = clone(est)
+        est_precomp = clone(est)
+        est_precomp.set_params(metric='precomputed')
+
+        est_chain = make_pipeline(clone(trans), est_precomp)
 
         y_pred_chain = est_chain.fit(X, y).predict(X2)
         y_pred_compact = est_compact.fit(X, y).predict(X2)
@@ -1418,18 +1439,3 @@ def test_pipeline_with_nearest_neighbors_transformer(bonus):
             y_pred_chain = est_chain.predict_proba(X2)
             y_pred_compact = est_compact.predict_proba(X2)
             assert_array_almost_equal(y_pred_chain, y_pred_compact)
-
-    # Radius Neighbors
-    for klass in [neighbors.RadiusNeighborsClassifier,
-                  neighbors.RadiusNeighborsRegressor]:
-        radius = 2
-        # compare the chained version and the compact version
-        est_chain = make_pipeline(
-            neighbors.RadiusNeighborsTransformer(
-                radius=radius + bonus, mode='distance', include_self=True),
-            klass(metric='precomputed', radius=radius))
-        est_compact = klass(radius=radius)
-
-        y_pred_chain = est_chain.fit(X, y).predict(X2)
-        y_pred_compact = est_compact.fit(X, y).predict(X2)
-        assert_array_almost_equal(y_pred_chain, y_pred_compact)

@@ -110,7 +110,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
 
 def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
-                           p=2, metric_params=None, include_self=False, n_jobs=1):
+                           p=2, metric_params=None, include_self=False,
+                           n_jobs=1):
     """Computes the (weighted) graph of Neighbors for points in X
 
     Neighborhoods are restricted the points at a distance lower than
@@ -164,7 +165,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     --------
     >>> X = [[0], [3], [1]]
     >>> from sklearn.neighbors import radius_neighbors_graph
-    >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity', include_self=True)
+    >>> mode = 'connectivity'
+    >>> A = radius_neighbors_graph(X, 1.5, mode=mode, include_self=True)
     >>> A.toarray()
     array([[ 1.,  0.,  1.],
            [ 0.,  1.,  0.],
@@ -201,8 +203,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     include_self : bool, default=None.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If None, then True is used for mode='connectivity' and False
-        for mode='distance'.
+        itself, in fit_transform (but not in transform). If None, then True is
+        used for mode='connectivity' and False for mode='distance'.
 
     n_neighbors : int, optional (default = 5)
         Number of neighbors to use for :meth:`kneighbors` queries.
@@ -296,9 +298,10 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         -------
         Xt : CSR sparse matrix, shape (n_samples_fit, n_samples_transform)
             Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
         """
         check_is_fitted(self, '_fit_X')
-        return self.kneighbors_graph(X, self.n_neighbors, self.mode)
+        return self.kneighbors_graph(X, mode=self.mode)
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -317,6 +320,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         -------
         Xt : CSR sparse matrix, shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
+            The diagonal is explicit if include_self.
         """
         self.fit(X)
 
@@ -342,8 +347,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
     include_self : bool, default=None.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If None, then True is used for mode='connectivity' and False
-        for mode='distance'.
+        itself, in fit_transform (but not in transform). If None, then True is
+        used for mode='connectivity' and False for mode='distance'.
 
     radius : float, optional (default = 1.)
         Range of parameter space to use for :meth:`radius_neighbors`
@@ -437,9 +442,10 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         -------
         Xt : CSR sparse matrix, shape (n_samples_fit, n_samples_transform)
             Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
         """
         check_is_fitted(self, '_fit_X')
-        return self.radius_neighbors_graph(X, self.radius, self.mode)
+        return self.radius_neighbors_graph(X, mode=self.mode)
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
@@ -458,6 +464,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         -------
         Xt : CSR sparse matrix, shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
+            The diagonal is explicit if include_self.
         """
         self.fit(X)
 
