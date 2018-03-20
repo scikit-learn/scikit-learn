@@ -3,7 +3,7 @@ from itertools import product
 import pytest
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
-                          dok_matrix, lil_matrix, issparse, random)
+                          dok_matrix, lil_matrix, issparse)
 
 from sklearn import metrics
 from sklearn import neighbors, datasets
@@ -205,7 +205,10 @@ def test_check_precomputed():
     assert _is_sorted_by_data(Xt)
 
     # est with a different number of nonzero entries for each sample
-    X = random(10, 10, density=0.1, random_state=42).tocsr()
+    mask = np.random.RandomState(42).randint(2, size=(10, 10), dtype='bool')
+    X = X.toarray()
+    X[mask] = 0
+    X = csr_matrix(X)
     assert not _is_sorted_by_data(X)
     Xt = _check_precomputed(X)
     assert _is_sorted_by_data(Xt)
