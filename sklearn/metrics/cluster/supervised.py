@@ -856,7 +856,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return tk / np.sqrt(pk * qk) if tk != 0. else 0.
+    return tk / np.sqrt(pk.astype(np.int64) * qk.astype(np.int64)) if tk != 0. else 0.
 
 
 def entropy(labels):
