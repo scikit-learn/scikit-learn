@@ -205,9 +205,9 @@ def test_check_precomputed():
     assert _is_sorted_by_data(Xt)
 
     # est with a different number of nonzero entries for each sample
-    mask = np.random.RandomState(42).randint(2, size=(10, 10), dtype='bool')
+    mask = np.random.RandomState(42).randint(2, size=(10, 10))
     X = X.toarray()
-    X[mask] = 0
+    X[mask == 1] = 0
     X = csr_matrix(X)
     assert not _is_sorted_by_data(X)
     Xt = _check_precomputed(X)
