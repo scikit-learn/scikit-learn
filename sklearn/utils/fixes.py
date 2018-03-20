@@ -297,7 +297,7 @@ else:
     from numpy.ma import MaskedArray    # noqa
 
 
-if np_version < (1, 9):
+if np_version < (1, 10):
     def nanpercentile(a, q):
         """
         Compute the qth percentile of the data along the specified axis,
