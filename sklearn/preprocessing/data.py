@@ -2213,16 +2213,16 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.copy = copy
 
-    @staticmethod
-    def _nanpercentile_force_finite(column_data, percentiles):
-        """Force the output of nanpercentile to be finite."""
-        percentile = nanpercentile(column_data, percentiles)
-        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-            if np.all(np.isclose(percentile, np.nan, equal_nan=True)):
-                warnings.warn("All samples in a column of X are NaN.")
-                return np.zeros(len(percentiles), dtype=column_data.dtype)
-            else:
-                return percentile
+    # @staticmethod
+    # def _nanpercentile_force_finite(column_data, percentiles):
+    #     """Force the output of nanpercentile to be finite."""
+    #     percentile = nanpercentile(column_data, percentiles)
+    #     if np.all(np.isnan(percentile)):
+    #         print(percentile)
+    #         warnings.warn("All samples in a column of X are NaN.")
+    #         return np.array([np.nan] * len(percentiles)) # np.zeros(len(percentiles), dtype=column_data.dtype)
+    #     else:
+    #         return percentile
 
     def _dense_fit(self, X, random_state):
         """Compute percentiles for dense matrices.
@@ -2249,8 +2249,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(
-                self._nanpercentile_force_finite(col, references))
+            self.quantiles_.append(self.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2296,7 +2295,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    self._nanpercentile_force_finite(column_data, references))
+                    self.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
