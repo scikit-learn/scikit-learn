@@ -1210,6 +1210,20 @@ def test_quantile_transform_and_inverse():
     assert_array_almost_equal(X, X_trans_inv)
 
 
+def test_quantile_transform_nan():
+    X = np.array([[np.nan, 0,  0, 1],
+                  [np.nan, np.nan, 0, 0.5],
+                  [np.nan, 1, 1, 0]])
+
+    transformer = QuantileTransformer(n_quantiles=10, random_state=42)
+    transformer.fit_transform(X)
+
+    # check that the quantile of the first column is all NaN
+    assert np.isnan(transformer.quantiles_[:, 0]).all()
+    # all other column should not contain NaN
+    assert not np.isnan(transformer.quantiles_[:, 1:]).any()
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),

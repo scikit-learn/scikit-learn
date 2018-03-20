@@ -5,13 +5,14 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 
 iris = load_iris()
 
 
 @pytest.mark.parametrize(
     "est",
-    [QuantileTransformer()]
+    [QuantileTransformer(n_quantiles=10, random_state=42)]
 )
 def test_missing_value_handling(est):
     # check that the preprocessing method let pass nan
@@ -20,7 +21,7 @@ def test_missing_value_handling(est):
     n_missing = 50
     X[rng.randint(X.shape[0], size=n_missing),
       rng.randint(X.shape[1], size=n_missing)] = np.nan
-    X_train, X_test = train_test_split(X, random_state=0)
+    X_train, X_test = train_test_split(X, random_state=1)
     # sanity check
     assert not np.all(np.isnan(X_train), axis=0).any()
     assert np.any(np.isnan(X_train), axis=0).all()
@@ -30,6 +31,11 @@ def test_missing_value_handling(est):
     Xt = est.fit(X_train).transform(X_test)
     # missing values should still be missing, and only them
     assert_array_equal(np.isnan(Xt), np.isnan(X_test))
+
+    # check that the inverse transform keep NaN
+    Xt_inv = est.inverse_transform(Xt)
+    assert_array_equal(np.isnan(Xt_inv), np.isnan(X_test))
+    assert_allclose(Xt_inv, X_test, equal_nan=True)
 
     for i in range(X.shape[1]):
         # train only on non-NaN

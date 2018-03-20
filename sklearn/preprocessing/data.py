@@ -2213,17 +2213,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.copy = copy
 
-    # @staticmethod
-    # def _nanpercentile_force_finite(column_data, percentiles):
-    #     """Force the output of nanpercentile to be finite."""
-    #     percentile = nanpercentile(column_data, percentiles)
-    #     if np.all(np.isnan(percentile)):
-    #         print(percentile)
-    #         warnings.warn("All samples in a column of X are NaN.")
-    #         return np.array([np.nan] * len(percentiles)) # np.zeros(len(percentiles), dtype=column_data.dtype)
-    #     else:
-    #         return percentile
-
     def _dense_fit(self, X, random_state):
         """Compute percentiles for dense matrices.
 
