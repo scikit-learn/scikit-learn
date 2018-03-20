@@ -2249,7 +2249,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(self.nanpercentile(col, references))
+            self.quantiles_.append(nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2294,8 +2294,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(
-                    self.nanpercentile(column_data, references))
+                self.quantiles_.append(nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
