@@ -35,7 +35,9 @@ def test_missing_value_handling(est):
     # check that the inverse transform keep NaN
     Xt_inv = est.inverse_transform(Xt)
     assert_array_equal(np.isnan(Xt_inv), np.isnan(X_test))
-    assert_allclose(Xt_inv, X_test, equal_nan=True)
+    # FIXME: we can introduce equal_nan=True in recent version of numpy.
+    # For the moment which just check that non-NaN values are almost equal.
+    assert_allclose(Xt_inv[~np.isnan(Xt_inv)], X_test[~np.isnan(X_test)])
 
     for i in range(X.shape[1]):
         # train only on non-NaN
