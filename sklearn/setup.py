@@ -22,6 +22,8 @@ def configuration(parent_package='', top_path=None):
 
     # submodules which do not have their own setup.py
     # we must manually add sub-submodules & tests
+    config.add_subpackage('compose')
+    config.add_subpackage('compose/tests')
     config.add_subpackage('covariance')
     config.add_subpackage('covariance/tests')
     config.add_subpackage('cross_decomposition')

@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin
+from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
@@ -208,7 +208,6 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
-            Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
@@ -393,7 +392,6 @@ class LinearSVR(LinearModel, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
@@ -448,12 +446,12 @@ class SVC(BaseSVC):
         Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
-         Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to pre-compute the kernel matrix from data matrices; that matrix
-         should be an array of shape ``(n_samples, n_samples)``.
+        Specifies the kernel type to be used in the algorithm.
+        It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+        a callable.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to pre-compute the kernel matrix from data matrices; that matrix
+        should be an array of shape ``(n_samples, n_samples)``.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
@@ -461,7 +459,13 @@ class SVC(BaseSVC):
 
     gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 'auto' then 1/n_features will be used instead.
+
+        Current default is 'auto' which uses 1 / n_features,
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -552,7 +556,7 @@ class SVC(BaseSVC):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
-    >>> clf = SVC()
+    >>> clf = SVC(gamma='auto')
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
@@ -575,7 +579,7 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
@@ -620,7 +624,13 @@ class NuSVC(BaseSVC):
 
     gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 'auto' then 1/n_features will be used instead.
+
+        Current default is 'auto' which uses 1 / n_features,
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -710,10 +720,10 @@ class NuSVC(BaseSVC):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import NuSVC
-    >>> clf = NuSVC()
+    >>> clf = NuSVC(gamma='scale')
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     NuSVC(cache_size=200, class_weight=None, coef0=0.0,
-          decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+          decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -731,9 +741,9 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 shrinking=True, probability=False, tol=1e-3, cache_size=200,
-                 class_weight=None, verbose=False, max_iter=-1,
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, shrinking=True, probability=False, tol=1e-3,
+                 cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
@@ -778,7 +788,13 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 'auto' then 1/n_features will be used instead.
+
+        Current default is 'auto' which uses 1 / n_features,
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -833,9 +849,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
+    >>> clf = SVR(gamma='scale', C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='auto',
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='scale',
         kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
 
     See also
@@ -851,8 +867,8 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     _impl = 'epsilon_svr'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
+    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
@@ -896,7 +912,13 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 'auto' then 1/n_features will be used instead.
+
+        Current default is 'auto' which uses 1 / n_features,
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -948,9 +970,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
+    >>> clf = NuSVR(gamma='scale', C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='auto',
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='scale',
           kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001,
           verbose=False)
 
@@ -967,8 +989,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     _impl = 'nu_svr'
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma='auto', coef0=0.0, shrinking=True, tol=1e-3,
-                 cache_size=200, verbose=False, max_iter=-1):
+                 gamma='auto_deprecated', coef0=0.0, shrinking=True,
+                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
             kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
@@ -977,7 +999,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             verbose=verbose, max_iter=max_iter, random_state=None)
 
 
-class OneClassSVM(BaseLibSVM):
+class OneClassSVM(BaseLibSVM, OutlierMixin):
     """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.
@@ -1007,7 +1029,13 @@ class OneClassSVM(BaseLibSVM):
 
     gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 'auto' then 1/n_features will be used instead.
+
+        Current default is 'auto' which uses 1 / n_features,
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        as value of gamma. The current default of gamma, 'auto', will change
+        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
+        'auto' is used as a default indicating that no explicit value of gamma
+        was passed.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1058,12 +1086,18 @@ class OneClassSVM(BaseLibSVM):
     intercept_ : array, shape = [1,]
         Constant in the decision function.
 
+    offset_ : float
+        Offset used to define the decision function from the raw scores.
+        We have the relation: decision_function = score_samples - offset_.
+        The offset is the opposite of intercept_ and is provided for
+        consistency with other outlier detection algorithms.
+
     """
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
+    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
@@ -1088,7 +1122,6 @@ class OneClassSVM(BaseLibSVM):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         -----
@@ -1102,6 +1135,7 @@ class OneClassSVM(BaseLibSVM):
 
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
+        self.offset_ = -self._intercept_
         return self
 
     def decision_function(self, X):
@@ -1115,11 +1149,25 @@ class OneClassSVM(BaseLibSVM):
 
         Returns
         -------
-        X : array-like, shape (n_samples,)
+        dec : array-like, shape (n_samples,)
             Returns the decision function of the samples.
         """
-        dec = self._decision_function(X)
+        dec = self._decision_function(X).ravel()
         return dec
+
+    def score_samples(self, X):
+        """Raw scoring function of the samples.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        score_samples : array-like, shape (n_samples,)
+            Returns the (unshifted) scoring function of the samples.
+        """
+        return self.decision_function(X) + self.offset_
 
     def predict(self, X):
         """

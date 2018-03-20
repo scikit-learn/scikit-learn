@@ -13,6 +13,7 @@ from itertools import chain, combinations
 import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import sparse
@@ -326,7 +327,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -475,7 +477,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators: they might behave badly if the
-    individual feature do not more or less look like standard normally
+    individual features do not more or less look like standard normally
     distributed data (e.g. Gaussian with 0 mean and unit variance).
 
     For instance many elements used in the objective function of
@@ -589,7 +591,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
 
         # Reset internal state before fitting
@@ -613,7 +616,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
@@ -828,7 +832,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y
+            Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES)
@@ -1016,7 +1021,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
-    https://en.wikipedia.org/wiki/Median_(statistics)
+    https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 
@@ -1325,7 +1330,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         -------
         self : instance
         """
-        n_samples, n_features = check_array(X).shape
+        n_samples, n_features = check_array(X, accept_sparse=True).shape
         combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
@@ -1338,31 +1343,42 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like or sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
+            Sparse input should preferably be in CSC format.
 
         Returns
         -------
-        XP : np.ndarray shape [n_samples, NP]
+        XP : np.ndarray or CSC sparse matrix, shape [n_samples, NP]
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csc')
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
 
-        # allocate output data
-        XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
-
         combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        for i, c in enumerate(combinations):
-            XP[:, i] = X[:, c].prod(1)
+        if sparse.isspmatrix(X):
+            columns = []
+            for comb in combinations:
+                if comb:
+                    out_col = 1
+                    for col_idx in comb:
+                        out_col = X[:, col_idx].multiply(out_col)
+                    columns.append(out_col)
+                else:
+                    columns.append(sparse.csc_matrix(np.ones((X.shape[0], 1))))
+            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+        else:
+            XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
+            for i, comb in enumerate(combinations):
+                XP[:, i] = X[:, comb].prod(1)
 
         return XP
 
@@ -2207,9 +2223,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                           " sparse matrix. This parameter has no effect.")
 
         n_samples, n_features = X.shape
-        # for compatibility issue with numpy<=1.8.X, references
-        # need to be a list scaled between 0 and 100
-        references = (self.references_ * 100).tolist()
+        references = self.references_ * 100
+        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
+        if LooseVersion(np.__version__) < '1.9':
+            references = references.tolist()
+
         self.quantiles_ = []
         for col in X.T:
             if self.subsample < n_samples:
@@ -2230,10 +2248,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             needs to be nonnegative.
         """
         n_samples, n_features = X.shape
+        references = self.references_ * 100
+        # numpy < 1.9 bug: np.percentile 2nd argument needs to be a list
+        if LooseVersion(np.__version__) < '1.9':
+            references = references.tolist()
 
-        # for compatibility issue with numpy<=1.8.X, references
-        # need to be a list scaled between 0 and 100
-        references = list(map(lambda x: x * 100, self.references_))
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx]:
@@ -2279,7 +2298,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns self
         """
         if self.n_quantiles <= 0:
             raise ValueError("Invalid value for 'n_quantiles': %d. "
@@ -2319,8 +2337,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             output_distribution = self.output_distribution
         output_distribution = getattr(stats, output_distribution)
 
-        # older version of scipy do not handle tuple as fill_value
-        # clipping the value before transform solve the issue
         if not inverse:
             lower_bound_x = quantiles[0]
             upper_bound_x = quantiles[-1]
@@ -2592,14 +2608,15 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions (i.e. the
-    transformed data could be far from zero-mean, unit-variance).
+    or other situations where normality is desired.
 
     Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
     for stabilizing variance and minimizing skewness is estimated through
     maximum likelihood.
+
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2608,6 +2625,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     method : str, (default='box-cox')
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
+
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
 
     copy : boolean, optional, default=True
         Set to False to perform inplace computation during transformation.
@@ -2624,13 +2645,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='box-cox')
+    PowerTransformer(copy=True, method='box-cox', standardize=True)
     >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
     [ 1.051... -2.345...]
     >>> print(pt.transform(data))  # doctest: +ELLIPSIS
-    [[ 0...      0.342...]
-     [ 2.068...  0.342...]
-     [ 3.135...  0.416...]]
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
@@ -2651,8 +2672,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-    def __init__(self, method='box-cox', copy=True):
+    def __init__(self, method='box-cox', standardize=True, copy=True):
         self.method = method
+        self.standardize = standardize
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -2672,15 +2694,23 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X = self._check_input(X, check_positive=True, check_method=True)
 
         self.lambdas_ = []
+        transformed = []
+
         for col in X.T:
-            _, lmbda = stats.boxcox(col, lmbda=None)
+            col_trans, lmbda = stats.boxcox(col, lmbda=None)
             self.lambdas_.append(lmbda)
+            transformed.append(col_trans)
+
         self.lambdas_ = np.array(self.lambdas_)
+        transformed = np.array(transformed)
+
+        if self.standardize:
+            self._scaler = StandardScaler()
+            self._scaler.fit(X=transformed.T)
 
         return self
 
@@ -2697,6 +2727,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         for i, lmbda in enumerate(self.lambdas_):
             X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
+
+        if self.standardize:
+            X = self._scaler.transform(X)
 
         return X
 
@@ -2717,6 +2750,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_shape=True)
+
+        if self.standardize:
+            X = self._scaler.inverse_transform(X)
 
         for i, lmbda in enumerate(self.lambdas_):
             x = X[:, i]
@@ -2765,22 +2801,21 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-def power_transform(X, method='box-cox', copy=True):
+def power_transform(X, method='box-cox', standardize=True, copy=True):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions (i.e. the
-    transformed data could be far from zero-mean, unit-variance).
-.
+    or other situations where normality is desired.
 
     Currently, power_transform() supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
     for stabilizing variance and minimizing skewness is estimated
     through maximum likelihood.
 
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2793,6 +2828,10 @@ def power_transform(X, method='box-cox', copy=True):
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
 
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
+
     copy : boolean, optional, default=True
         Set to False to perform inplace computation.
 
@@ -2801,10 +2840,10 @@ def power_transform(X, method='box-cox', copy=True):
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
-    [[ 0...      0.342...]
-     [ 2.068...  0.342...]
-     [ 3.135...  0.416...]]
+    >>> print(power_transform(data))  # doctest: +ELLIPSIS
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
@@ -2825,7 +2864,7 @@ def power_transform(X, method='box-cox', copy=True):
     G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
     Royal Statistical Society B, 26, 211-252 (1964).
     """
-    pt = PowerTransformer(method=method, copy=copy)
+    pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
 
 
@@ -2959,7 +2998,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                                      "supported")
 
         X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
@@ -3002,7 +3041,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         """
         X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp

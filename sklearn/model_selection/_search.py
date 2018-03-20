@@ -273,7 +273,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise', **fit_params):
+                   verbose, error_score='raise-deprecating', **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -311,11 +311,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     Returns
     -------
@@ -391,7 +392,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise', return_train_score=True):
+                 error_score='raise-deprecating', return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -909,11 +910,12 @@ class GridSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     return_train_score : boolean, optional
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -935,7 +937,7 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC()
+    >>> svc = svm.SVC(gamma="scale")
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -968,13 +970,13 @@ class GridSearchCV(BaseSearchCV):
         +------------+-----------+------------+-----------------+---+---------+
         |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_t...|
         +============+===========+============+=================+===+=========+
-        |  'poly'    |     --    |      2     |        0.8      |...|    2    |
+        |  'poly'    |     --    |      2     |       0.80      |...|    2    |
         +------------+-----------+------------+-----------------+---+---------+
-        |  'poly'    |     --    |      3     |        0.7      |...|    4    |
+        |  'poly'    |     --    |      3     |       0.70      |...|    4    |
         +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.1   |     --     |        0.8      |...|    3    |
+        |  'rbf'     |     0.1   |     --     |       0.80      |...|    3    |
         +------------+-----------+------------+-----------------+---+---------+
-        |  'rbf'     |     0.2   |     --     |        0.9      |...|    1    |
+        |  'rbf'     |     0.2   |     --     |       0.93      |...|    1    |
         +------------+-----------+------------+-----------------+---+---------+
 
         will be represented by a ``cv_results_`` dict of::
@@ -986,19 +988,19 @@ class GridSearchCV(BaseSearchCV):
                                         mask = [ True  True False False]...),
             'param_degree': masked_array(data = [2.0 3.0 -- --],
                                          mask = [False False  True  True]...),
-            'split0_test_score'  : [0.8, 0.7, 0.8, 0.9],
-            'split1_test_score'  : [0.82, 0.5, 0.7, 0.78],
-            'mean_test_score'    : [0.81, 0.60, 0.75, 0.82],
-            'std_test_score'     : [0.02, 0.01, 0.03, 0.03],
+            'split0_test_score'  : [0.80, 0.70, 0.80, 0.93],
+            'split1_test_score'  : [0.82, 0.50, 0.70, 0.78],
+            'mean_test_score'    : [0.81, 0.60, 0.75, 0.85],
+            'std_test_score'     : [0.01, 0.10, 0.05, 0.08],
             'rank_test_score'    : [2, 4, 3, 1],
-            'split0_train_score' : [0.8, 0.9, 0.7],
-            'split1_train_score' : [0.82, 0.5, 0.7],
-            'mean_train_score'   : [0.81, 0.7, 0.7],
-            'std_train_score'    : [0.03, 0.03, 0.04],
+            'split0_train_score' : [0.80, 0.92, 0.70, 0.93],
+            'split1_train_score' : [0.82, 0.55, 0.70, 0.87],
+            'mean_train_score'   : [0.81, 0.74, 0.70, 0.90],
+            'std_train_score'    : [0.01, 0.19, 0.00, 0.03],
             'mean_fit_time'      : [0.73, 0.63, 0.43, 0.49],
             'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
-            'mean_score_time'    : [0.007, 0.06, 0.04, 0.04],
-            'std_score_time'     : [0.001, 0.002, 0.003, 0.005],
+            'mean_score_time'    : [0.01, 0.06, 0.04, 0.04],
+            'std_score_time'     : [0.00, 0.00, 0.00, 0.01],
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
@@ -1085,7 +1087,7 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise',
+                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
@@ -1244,11 +1246,12 @@ class RandomizedSearchCV(BaseSearchCV):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is 'raise' but from
+        version 0.22 it will change to np.nan.
 
     return_train_score : boolean, optional
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1274,11 +1277,11 @@ class RandomizedSearchCV(BaseSearchCV):
         +--------------+-------------+-------------------+---+---------------+
         | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
         +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |        0.8        |...|       2       |
+        |    'rbf'     |     0.1     |       0.80        |...|       2       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |        0.9        |...|       1       |
+        |    'rbf'     |     0.2     |       0.90        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |        0.7        |...|       1       |
+        |    'rbf'     |     0.3     |       0.70        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
 
         will be represented by a ``cv_results_`` dict of::
@@ -1287,19 +1290,19 @@ class RandomizedSearchCV(BaseSearchCV):
             'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.8, 0.9, 0.7],
-            'split1_test_score'  : [0.82, 0.5, 0.7],
-            'mean_test_score'    : [0.81, 0.7, 0.7],
-            'std_test_score'     : [0.02, 0.2, 0.],
+            'split0_test_score'  : [0.80, 0.90, 0.70],
+            'split1_test_score'  : [0.82, 0.50, 0.70],
+            'mean_test_score'    : [0.81, 0.70, 0.70],
+            'std_test_score'     : [0.01, 0.20, 0.00],
             'rank_test_score'    : [3, 1, 1],
-            'split0_train_score' : [0.8, 0.9, 0.7],
-            'split1_train_score' : [0.82, 0.5, 0.7],
-            'mean_train_score'   : [0.81, 0.7, 0.7],
-            'std_train_score'    : [0.03, 0.03, 0.04],
-            'mean_fit_time'      : [0.73, 0.63, 0.43, 0.49],
-            'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
-            'mean_score_time'    : [0.007, 0.06, 0.04, 0.04],
-            'std_score_time'     : [0.001, 0.002, 0.003, 0.005],
+            'split0_train_score' : [0.80, 0.92, 0.70],
+            'split1_train_score' : [0.82, 0.55, 0.70],
+            'mean_train_score'   : [0.81, 0.74, 0.70],
+            'std_train_score'    : [0.01, 0.19, 0.00],
+            'mean_fit_time'      : [0.73, 0.63, 0.43],
+            'std_fit_time'       : [0.01, 0.02, 0.01],
+            'mean_score_time'    : [0.01, 0.06, 0.04],
+            'std_score_time'     : [0.00, 0.00, 0.00],
             'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
@@ -1386,7 +1389,7 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score="warn"):
+                 error_score='raise-deprecating', return_train_score="warn"):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state

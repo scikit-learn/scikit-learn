@@ -13,7 +13,6 @@ import sys
 import re
 import pkgutil
 
-from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
@@ -89,11 +88,8 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            if PY3:
-                with open('setup.py') as f:
-                    exec(f.read(), dict(__name__='__main__'))
-            else:
-                execfile('setup.py', dict(__name__='__main__'))
+            with open('setup.py') as f:
+                exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
