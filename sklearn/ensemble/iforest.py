@@ -17,6 +17,7 @@ from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
+from ..base import OutlierMixin
 
 from .bagging import BaseBagging
 
@@ -25,7 +26,7 @@ __all__ = ["IsolationForest"]
 INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
-class IsolationForest(BaseBagging):
+class IsolationForest(BaseBagging, OutlierMixin):
     """Isolation Forest Algorithm
 
     Return the anomaly score of each sample using the IsolationForest algorithm
@@ -109,10 +110,12 @@ class IsolationForest(BaseBagging):
     offset_ : float
         Offset used to define the decision function from the raw scores.
         We have the relation: decision_function = score_samples - offset_.
-        The offset is set to 0.5 as in the original paper, except when a
-        contamination parameter different than "auto" is provided. In that
-        case, the offset is defined in such a way we obtain the expected
-        number of outliers (samples with decision function < 0) in training.
+        When the contamination parameter is set to "auto", the offset is equal
+        to -0.5 as the scores of inliers are close to 0 and the scores of
+        outliers are close to -1. When a contamination parameter different
+        than "auto" is provided, the offset is defined in such a way we obtain
+        the expected number of outliers (samples with decision function < 0)
+        in training.
 
     References
     ----------

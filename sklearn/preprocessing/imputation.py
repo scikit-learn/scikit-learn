@@ -10,6 +10,7 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils import deprecated
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -60,6 +61,9 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
+@deprecated("Imputer was deprecated in version 0.20 and will be "
+            "removed in 0.22. Import impute.SimpleImputer from "
+            "sklearn instead.")
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
@@ -82,18 +86,11 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If "most_frequent", then replace missing using the most frequent
           value along the axis.
 
-    axis : integer, optional (default=None)
+    axis : integer, optional (default=0)
         The axis along which to impute.
 
         - If `axis=0`, then impute along columns.
         - If `axis=1`, then impute along rows.
-
-        .. deprecated:: 0.20
-           Parameter ``axis`` has been deprecated in 0.20 and will be removed
-           in 0.22. Future (and default) behavior is equivalent to ``axis=0``
-           (impute along columns). Row-wise imputation can be performed with
-           FunctionTransformer (e.g.,
-           ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -122,7 +119,7 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=None, verbose=0, copy=True):
+                 axis=0, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
@@ -149,24 +146,14 @@ class Imputer(BaseEstimator, TransformerMixin):
                              " got strategy={1}".format(allowed_strategies,
                                                         self.strategy))
 
-        if self.axis is None:
-            self._axis = 0
-        else:
-            warnings.warn("Parameter 'axis' has been deprecated in 0.20 and "
-                          "will be removed in 0.22. Future (and default) "
-                          "behavior is equivalent to 'axis=0' (impute along "
-                          "columns). Row-wise imputation can be performed "
-                          "with FunctionTransformer.", DeprecationWarning)
-            self._axis = self.axis
-
-        if self._axis not in [0, 1]:
+        if self.axis not in [0, 1]:
             raise ValueError("Can only impute missing values on axis 0 and 1, "
-                             " got axis={0}".format(self._axis))
+                             " got axis={0}".format(self.axis))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
-        if self._axis == 0:
+        if self.axis == 0:
             X = check_array(X, accept_sparse='csc', dtype=np.float64,
                             force_all_finite=False)
 
@@ -174,12 +161,12 @@ class Imputer(BaseEstimator, TransformerMixin):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
                                                     self.missing_values,
-                                                    self._axis)
+                                                    self.axis)
             else:
                 self.statistics_ = self._dense_fit(X,
                                                    self.strategy,
                                                    self.missing_values,
-                                                   self._axis)
+                                                   self.axis)
 
         return self
 
@@ -280,12 +267,6 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
-            if tuple(int(v) for v in np.__version__.split('.')[:2]) < (1, 5):
-                # In old versions of numpy, calling a median on an array
-                # containing nans returns nan. This is different is
-                # recent versions of numpy, which we want to mimic
-                masked_X.mask = np.logical_or(masked_X.mask,
-                                              np.isnan(X))
             median_masked = np.ma.median(masked_X, axis=axis)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
@@ -322,7 +303,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        if self._axis == 0:
+        if self.axis == 0:
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
@@ -342,27 +323,27 @@ class Imputer(BaseEstimator, TransformerMixin):
                 statistics = self._sparse_fit(X,
                                               self.strategy,
                                               self.missing_values,
-                                              self._axis)
+                                              self.axis)
 
             else:
                 statistics = self._dense_fit(X,
                                              self.strategy,
                                              self.missing_values,
-                                             self._axis)
+                                             self.axis)
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
-        missing = np.arange(X.shape[not self._axis])[invalid_mask]
+        missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
-        if self._axis == 0 and invalid_mask.any():
+        if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
             X = X[:, valid_statistics_indexes]
-        elif self._axis == 1 and invalid_mask.any():
+        elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
                              "missing values: %s" % missing)
 
@@ -379,10 +360,10 @@ class Imputer(BaseEstimator, TransformerMixin):
                 X = X.toarray()
 
             mask = _get_mask(X, self.missing_values)
-            n_missing = np.sum(mask, axis=self._axis)
+            n_missing = np.sum(mask, axis=self.axis)
             values = np.repeat(valid_statistics, n_missing)
 
-            if self._axis == 0:
+            if self.axis == 0:
                 coordinates = np.where(mask.transpose())[::-1]
             else:
                 coordinates = mask

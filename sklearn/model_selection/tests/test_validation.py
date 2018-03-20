@@ -7,6 +7,7 @@ import tempfile
 import os
 from time import sleep
 
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.exceptions import FitFailedWarning
@@ -64,7 +65,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
+
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
@@ -337,10 +339,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -367,20 +369,23 @@ def test_cross_validate():
         test_mse_scores = []
         train_r2_scores = []
         test_r2_scores = []
+        fitted_estimators = []
         for train, test in cv.split(X, y):
             est = clone(reg).fit(X[train], y[train])
             train_mse_scores.append(mse_scorer(est, X[train], y[train]))
             train_r2_scores.append(r2_scorer(est, X[train], y[train]))
             test_mse_scores.append(mse_scorer(est, X[test], y[test]))
             test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+            fitted_estimators.append(est)
 
         train_mse_scores = np.array(train_mse_scores)
         test_mse_scores = np.array(test_mse_scores)
         train_r2_scores = np.array(train_r2_scores)
         test_r2_scores = np.array(test_r2_scores)
+        fitted_estimators = np.array(fitted_estimators)
 
         scores = (train_mse_scores, test_mse_scores, train_r2_scores,
-                  test_r2_scores)
+                  test_r2_scores, fitted_estimators)
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
@@ -410,7 +415,7 @@ def test_cross_validate_return_train_score_warn():
 
 def check_cross_validate_single_metric(clf, X, y, scores):
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     # Test single metric evaluation when scoring is string or singleton list
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
@@ -442,11 +447,19 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
+    # Test return_estimator option
+    mse_scores_dict = cross_validate(clf, X, y, cv=5,
+                                     scoring='neg_mean_squared_error',
+                                     return_estimator=True)
+    for k, est in enumerate(mse_scores_dict['estimator']):
+        assert_almost_equal(est.coef_, fitted_estimators[k].coef_)
+        assert_almost_equal(est.intercept_, fitted_estimators[k].intercept_)
+
 
 def check_cross_validate_multi_metric(clf, X, y, scores):
     # Test multimetric evaluation when scoring is a list / dict
     (train_mse_scores, test_mse_scores, train_r2_scores,
-     test_r2_scores) = scores
+     test_r2_scores, fitted_estimators) = scores
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
@@ -559,7 +572,7 @@ def test_cross_val_score_precomputed():
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
@@ -731,7 +744,7 @@ def test_permutation_test_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     permutation_test_score(p, X, y, cv=5)
@@ -743,7 +756,7 @@ def test_cross_val_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
     cross_val_score(p, X, y, cv=5)
@@ -1449,3 +1462,23 @@ def test_fit_and_score():
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
+
+    # check if exception is raised, with default error_score argument
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args)
+
+    # check if warning was raised, with default error_score argument
+    warning_message = ("From version 0.22, errors during fit will result "
+                       "in a cross validation score of NaN by default. Use "
+                       "error_score='raise' if you want an exception "
+                       "raised or error_score=np.nan to adopt the "
+                       "behavior from version 0.22.")
+    with pytest.raises(ValueError):
+        assert_warns_message(FutureWarning, warning_message, _fit_and_score,
+                             *fit_and_score_args)
+
+    fit_and_score_kwargs = {'error_score': 'raise'}
+    # check if exception was raised, with default error_score='raise'
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args,
+                         **fit_and_score_kwargs)

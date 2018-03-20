@@ -285,6 +285,42 @@ def test_check_array():
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
 
+    # deprecation warning if string-like array with dtype="numeric"
+    X_str = [['a', 'b'], ['c', 'd']]
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, X_str, "numeric")
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, np.array(X_str, dtype='U'), "numeric")
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, np.array(X_str, dtype='S'), "numeric")
+
+    # deprecation warning if byte-like array with dtype="numeric"
+    X_bytes = [[b'a', b'b'], [b'c', b'd']]
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, X_bytes, "numeric")
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, np.array(X_bytes, dtype='V1'), "numeric")
+
 
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
@@ -563,7 +599,7 @@ def test_check_is_fitted():
     assert_raises(TypeError, check_is_fitted, "SVR", "support_")
 
     ard = ARDRegression()
-    svr = SVR()
+    svr = SVR(gamma='scale')
 
     try:
         assert_raises(NotFittedError, check_is_fitted, ard, "coef_")

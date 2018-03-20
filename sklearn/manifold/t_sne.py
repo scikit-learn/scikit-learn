@@ -7,6 +7,7 @@
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+from __future__ import division
 
 from time import time
 import numpy as np
@@ -130,7 +131,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -206,7 +207,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         Sparse approximate joint probability matrix, computed only for the
         k nearest-neighbors and symmetrized.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -781,7 +782,7 @@ class TSNE(BaseEstimator):
         # degrees_of_freedom = n_components - 1 comes from
         # "Learning a Parametric Embedding by Preserving Local Structure"
         # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        degrees_of_freedom = max(self.n_components - 1, 1)
 
         return self._tsne(P, degrees_of_freedom, n_samples,
                           X_embedded=X_embedded,
