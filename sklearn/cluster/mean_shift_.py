@@ -106,7 +106,8 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
-               min_bin_freq=1, cluster_all=True, max_iter=300,
+               min_bin_freq=1, cluster_all=True,
+               cluster_assignment='nearest_centroid', max_iter=300,
                n_jobs=1):
     """Perform mean shift clustering of data using a flat kernel.
 
@@ -148,6 +149,13 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
+    cluster_assignment : string, default 'nearest_centroid'
+        How to assign points to clusters. The default option
+        'nearest_centroid', assigns a point to the nearest cluster_center.
+        The other option 'attractor' uses the cluster center that the nearest
+        seed point was attracted to during the mean shift iterations. In the
+        reference 'attractor' cluster assignment is used.
+
     max_iter : int, default 300
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
@@ -173,10 +181,32 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     labels : array, shape=[n_samples]
         Cluster labels for each point.
 
+    seeds : array, shape=[n_seeds]
+        The seeds that were used as initial kernel locations. Seeds without
+        any points within the bandwidth have been removed.
+
+    seed_labels : array, shape=[n_seeds]
+        The label for each seed under cluster_assignment='attractor'.
+
+    Raises
+    ------
+    ValueError when cluster_assignment is not 'nearest_centroid' or
+    'attractor'.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+
+    When using bin seeding, cluster_assignment='attractor' uses 
+    5^n_features as many seeds and is therefore this much slower.
+
+    References
+    ----------
+
+    Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
+    feature space analysis". IEEE Transactions on Pattern Analysis and
+    Machine Intelligence. 2002. pp. 603-619.
 
     """
 
@@ -187,23 +217,38 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             got %f" % bandwidth)
     if seeds is None:
         if bin_seeding:
-            seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
+            if cluster_assignment == 'nearest_centroid':
+                bin_size = bandwidth
+            elif cluster_assignment == 'attractor':
+                bin_size = bandwidth * .2
+            else:
+                raise ValueError("Not valid cluster assignment.")
+            seeds = get_bin_seeds(X, bin_size, min_bin_freq)
         else:
             seeds = X
     n_samples, n_features = X.shape
-    center_intensity_dict = {}
     nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
         delayed(_mean_shift_single_seed)
         (seed, X, nbrs, max_iter) for seed in seeds)
-    # copy results in a dictionary
-    for i in range(len(seeds)):
-        if all_res[i] is not None:
-            center_intensity_dict[all_res[i][0]] = all_res[i][1]
+    # copy results to one dictionary mapping attractors (centers)
+    # to intensities and one dictionary mapping attractors
+    # to a list of corresponding seeds. Seeds that have no
+    # attractors are discarded.
+    attractor_intensity_dict = {}
+    seeds_mapped_to_attractor = defaultdict(list)
+    seeds_kept = []
+    seed_idx = 0
+    for res, seed in zip(all_res, seeds):
+        if res is not None:
+            attractor_intensity_dict[res[0]] = res[1]
+            seeds_kept.append(seed)
+            seeds_mapped_to_attractor[res[0]].append(seed_idx)
+            seed_idx += 1
 
-    if not center_intensity_dict:
+    if not attractor_intensity_dict:
         # nothing near seeds
         raise ValueError("No point was within bandwidth=%f of any seed."
                          " Try a different seeding strategy \
@@ -214,31 +259,58 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # If the distance between two kernels is less than the bandwidth,
     # then we have to remove one because it is a duplicate. Remove the
     # one with fewer points.
-    sorted_by_intensity = sorted(center_intensity_dict.items(),
+    # Assign seed labels either to the attractor it is mapped to
+    # or to one within bandwidth that is not removed as a duplicate.
+    sorted_by_intensity = sorted(attractor_intensity_dict.items(),
                                  key=lambda tup: tup[1], reverse=True)
-    sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
-    unique = np.ones(len(sorted_centers), dtype=np.bool)
+    sorted_attractors = [tup[0] for tup in sorted_by_intensity]
+    sorted_attractors_array = np.array(sorted_attractors)
+    unique = np.ones(len(sorted_attractors), dtype=np.bool)
+
+    seed_labels = np.zeros(len(seeds_kept), np.int_)
+    cluster_idx = 0
     nbrs = NearestNeighbors(radius=bandwidth,
-                            n_jobs=n_jobs).fit(sorted_centers)
-    for i, center in enumerate(sorted_centers):
+                            n_jobs=n_jobs).fit(sorted_attractors_array)
+    for i, attractor in enumerate(sorted_attractors):
         if unique[i]:
-            neighbor_idxs = nbrs.radius_neighbors([center],
+            neighbor_idxs = nbrs.radius_neighbors([attractor],
                                                   return_distance=False)[0]
             unique[neighbor_idxs] = 0
+            if cluster_assignment == 'attractor':
+                curr_seeds = seeds_mapped_to_attractor[attractor]
+                for idx in neighbor_idxs:
+                    curr_seeds += \
+                        seeds_mapped_to_attractor[sorted_attractors[idx]]
+                seed_labels[curr_seeds] = cluster_idx
             unique[i] = 1  # leave the current point as unique
-    cluster_centers = sorted_centers[unique]
+            cluster_idx += 1
+    cluster_centers = sorted_attractors_array[unique]
 
-    # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
-    labels = np.zeros(n_samples, dtype=np.int)
-    distances, idxs = nbrs.kneighbors(X)
-    if cluster_all:
-        labels = idxs.flatten()
+    # ASSIGN LABELS: according to 'cluster_assignment'
+    #   nearest_centroid: a point belongs to the cluster whose
+    #       cluster center it is closest to
+    #   attractor: a point belongs to the cluster that
+    #       the closest seed belongs to.
+    if cluster_assignment == 'nearest_centroid':
+        nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(
+            cluster_centers)
+    elif cluster_assignment == 'attractor':
+        nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(
+            seeds_kept)
     else:
-        labels.fill(-1)
-        bool_selector = distances.flatten() <= bandwidth
-        labels[bool_selector] = idxs.flatten()[bool_selector]
-    return cluster_centers, labels
+        raise ValueError("Not valid cluster assignment.")
+
+    distances, idxs = nbrs.kneighbors(X)
+    if cluster_assignment == 'nearest_centroid':
+        labels = idxs.flatten()
+    elif cluster_assignment == 'attractor':
+        labels = seed_labels[idxs.flatten()]
+    else:
+        raise ValueError("Not valid cluster assignment.")
+
+    if not cluster_all:
+        labels[distances.flatten() > bandwidth] = -1
+    return cluster_centers, labels, seeds_kept, seed_labels
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
@@ -334,6 +406,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
+    cluster_assignment : string, default 'nearest_centroid'
+        How to assign points to clusters. The default option
+        'nearest_centroid', assigns a point to the nearest cluster_center.
+        The other option 'attractor' uses the cluster center that the nearest
+        seed point was attracted to during the mean shift iterations. In the
+        reference 'attractor' cluster assignment is used.
+
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
@@ -377,11 +456,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=1):
+                 min_bin_freq=1, cluster_all=True,
+                 cluster_assignment='nearest_centroid', n_jobs=1):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
+        self.cluster_assignment = cluster_assignment
         self.min_bin_freq = min_bin_freq
         self.n_jobs = n_jobs
 
@@ -397,11 +478,14 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
         """
         X = check_array(X)
-        self.cluster_centers_, self.labels_ = \
+        self.cluster_centers_, self.labels_, \
+            self.seeds_, self.seed_labels_ = \
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
-                       cluster_all=self.cluster_all, n_jobs=self.n_jobs)
+                       cluster_all=self.cluster_all,
+                       cluster_assignment=self.cluster_assignment,
+                       n_jobs=self.n_jobs)
         return self
 
     def predict(self, X):
@@ -419,4 +503,10 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        return pairwise_distances_argmin(X, self.cluster_centers_)
+        assert self.cluster_assignment in ('nearest_centroid', 'attractor')
+        if self.cluster_assignment == 'nearest_centroid':
+            labels = pairwise_distances_argmin(X, self.cluster_centers_)
+        if self.cluster_assignment == 'attractor':
+            labels = self.seed_labels_[
+                pairwise_distances_argmin(X, self.seeds_)]
+        return labels

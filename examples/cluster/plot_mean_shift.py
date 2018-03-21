@@ -13,6 +13,9 @@ Machine Intelligence. 2002. pp. 603-619.
 print(__doc__)
 
 import numpy as np
+import matplotlib.pyplot as plt
+from itertools import cycle
+
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.datasets.samples_generator import make_blobs
 
@@ -27,30 +30,32 @@ X, _ = make_blobs(n_samples=10000, centers=centers, cluster_std=0.6)
 # The following bandwidth can be automatically detected using
 bandwidth = estimate_bandwidth(X, quantile=0.2, n_samples=500)
 
-ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
-ms.fit(X)
-labels = ms.labels_
-cluster_centers = ms.cluster_centers_
+for cluster_assignment in ('nearest_centroid', 'attractor'):
 
-labels_unique = np.unique(labels)
-n_clusters_ = len(labels_unique)
+    ms = MeanShift(bandwidth=bandwidth, bin_seeding=True,
+                   cluster_assignment=cluster_assignment)
+    ms.fit(X)
+    labels = ms.labels_
+    cluster_centers = ms.cluster_centers_
 
-print("number of estimated clusters : %d" % n_clusters_)
+    labels_unique = np.unique(labels)
+    n_clusters_ = len(labels_unique)
 
-# #############################################################################
-# Plot result
-import matplotlib.pyplot as plt
-from itertools import cycle
+    print("number of estimated clusters : %d" % n_clusters_)
 
-plt.figure(1)
-plt.clf()
+    # #############################################################################
+    # Plot result
 
-colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
-for k, col in zip(range(n_clusters_), colors):
-    my_members = labels == k
-    cluster_center = cluster_centers[k]
-    plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
-    plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-             markeredgecolor='k', markersize=14)
-plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.figure()
+    plt.clf()
+
+    colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
+    for k, col in zip(range(n_clusters_), colors):
+        my_members = labels == k
+        cluster_center = cluster_centers[k]
+        plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
+        plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
+                 markeredgecolor='k', markersize=14)
+    plt.title('Estimated number of clusters: {}\n'.format(n_clusters_) +
+              'cluster_assignment = {}'.format(cluster_assignment))
 plt.show()

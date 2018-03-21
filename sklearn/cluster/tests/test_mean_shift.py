@@ -45,16 +45,20 @@ def test_mean_shift():
     # Test MeanShift algorithm
     bandwidth = 1.2
 
-    ms = MeanShift(bandwidth=bandwidth)
-    labels = ms.fit(X).labels_
-    labels_unique = np.unique(labels)
-    n_clusters_ = len(labels_unique)
-    assert_equal(n_clusters_, n_clusters)
+    for cluster_assignment in ('nearest_centroid', 'attractor'):
+        ms = MeanShift(bandwidth=bandwidth,
+                       cluster_assignment=cluster_assignment)
+        labels = ms.fit(X).labels_
+        labels_unique = np.unique(labels)
+        n_clusters_ = len(labels_unique)
+        assert_equal(n_clusters_, n_clusters)
 
-    cluster_centers, labels = mean_shift(X, bandwidth=bandwidth)
-    labels_unique = np.unique(labels)
-    n_clusters_ = len(labels_unique)
-    assert_equal(n_clusters_, n_clusters)
+        cluster_centers, labels = \
+            mean_shift(X, bandwidth=bandwidth,
+                       cluster_assignment=cluster_assignment)
+        labels_unique = np.unique(labels)
+        n_clusters_ = len(labels_unique)
+        assert_equal(n_clusters_, n_clusters)
 
 
 def test_estimate_bandwidth_with_sparse_matrix():
@@ -77,10 +81,11 @@ def test_parallel():
 
 def test_meanshift_predict():
     # Test MeanShift.predict
-    ms = MeanShift(bandwidth=1.2)
-    labels = ms.fit_predict(X)
-    labels2 = ms.predict(X)
-    assert_array_equal(labels, labels2)
+    for cluster_assignment in ('nearest_centroid', 'attractor'):
+        ms = MeanShift(bandwidth=1.2, cluster_assignment=cluster_assignment)
+        labels = ms.fit_predict(X)
+        labels2 = ms.predict(X)
+        assert_array_equal(labels, labels2)
 
 
 def test_meanshift_all_orphans():
