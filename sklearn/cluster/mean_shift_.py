@@ -13,6 +13,7 @@ Seeding is performed using a binning technique for scalability.
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
+#          Kerstin Johnsson <kerstin.johnsson@hotmail.com>
 
 import numpy as np
 import warnings
