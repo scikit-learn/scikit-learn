@@ -2,6 +2,7 @@
 ==============================================
 Inductive Clustering
 ==============================================
+
 Clustering is expensive, especially when our dataset contains millions of
 datapoints. Recomputing the clusters everytime we receive some new data
 is thus in many cases, intractable. With more data, there is also the
