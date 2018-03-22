@@ -58,8 +58,8 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         ``set_params``.
 
     weights : array-like, shape = [n_regressors], optional (default=`None`)
-        Sequence of weights (`float` or `int`) to weight the prediction of 
-        a given estimator. 
+        Sequence of weights (`float` or `int`) to weight the prediction of
+        a given estimator.
 
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for ``fit``.
@@ -79,7 +79,7 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> # TODO 
+    >>> # TODO
     """
 
     def __init__(self, estimators, weights=None, n_jobs=1):
@@ -92,7 +92,7 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         return Bunch(**dict(self.estimators))
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators. 
+        """ Fit the estimators.
 
         Parameters
         ----------
@@ -125,7 +125,6 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
                 for clf in clfs if clf is not None)
 
         return self
-
 
     def predict(self, X):
         """Predict regression target for X.
