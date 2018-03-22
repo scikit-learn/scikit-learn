@@ -1403,42 +1403,43 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-# If bonus > 0, we precompute more neighbors than necessary
-@pytest.mark.parametrize('bonus', [0, 2])
-def test_pipeline_with_nearest_neighbors_transformer(bonus):
+def test_pipeline_with_nearest_neighbors_transformer():
     # Test chaining KNeighborsTransformer and classifiers/regressors
     rng = np.random.RandomState(0)
     X = 2 * rng.rand(40, 5) - 1
     X2 = 2 * rng.rand(40, 5) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = rng.rand(40, 1)
 
-    n_neighbors = 8
-    radius = 2
+    n_neighbors = 12
+    radius = 1.5
+    # We precompute more neighbors than necessary, to have equivalence between
+    # k-neighbors estimator after radius-neighbors transformer, and vice-versa.
+    factor = 2
 
-    transformers = [
-        neighbors.KNeighborsTransformer(n_neighbors=n_neighbors + bonus,
-                                        mode='distance', include_self=True),
-        neighbors.RadiusNeighborsTransformer(
-            radius=radius + bonus, mode='distance', include_self=True),
-    ]
-    estimators = [
-        neighbors.KNeighborsClassifier(n_neighbors=n_neighbors),
-        neighbors.RadiusNeighborsClassifier(radius=radius),
-    ]
+    k_trans = neighbors.KNeighborsTransformer(
+        n_neighbors=n_neighbors, mode='distance')
+    k_trans_factor = neighbors.KNeighborsTransformer(
+        n_neighbors=int(n_neighbors * factor), mode='distance')
 
-    # KNeighborsTransformer
-    for est, trans in product(estimators, transformers):
+    r_trans = neighbors.RadiusNeighborsTransformer(
+        radius=radius, mode='distance')
+    r_trans_factor = neighbors.RadiusNeighborsTransformer(
+        radius=int(radius * factor), mode='distance')
+
+    k_reg = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors)
+    r_reg = neighbors.RadiusNeighborsRegressor(radius=radius)
+
+    test_list = [(k_trans, k_reg), (k_trans_factor, r_reg),
+                 (r_trans, r_reg), (r_trans_factor, k_reg), ]
+
+    for trans, reg in test_list:
         # compare the chained version and the compact version
-        est_compact = clone(est)
-        est_precomp = clone(est)
-        est_precomp.set_params(metric='precomputed')
+        reg_compact = clone(reg)
+        reg_precomp = clone(reg)
+        reg_precomp.set_params(metric='precomputed')
 
-        est_chain = make_pipeline(clone(trans), est_precomp)
+        reg_chain = make_pipeline(clone(trans), reg_precomp)
 
-        y_pred_chain = est_chain.fit(X, y).predict(X2)
-        y_pred_compact = est_compact.fit(X, y).predict(X2)
+        y_pred_chain = reg_chain.fit(X, y).predict(X2)
+        y_pred_compact = reg_compact.fit(X, y).predict(X2)
         assert_array_almost_equal(y_pred_chain, y_pred_compact)
-        if hasattr(est_chain, 'predict_proba'):
-            y_pred_chain = est_chain.predict_proba(X2)
-            y_pred_compact = est_compact.predict_proba(X2)
-            assert_array_almost_equal(y_pred_chain, y_pred_compact)
