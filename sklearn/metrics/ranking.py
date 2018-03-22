@@ -639,7 +639,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     return fpr, tpr, thresholds
 
 
-def label_ranking_average_precision_score(y_true, y_score):
+def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     """Compute ranking-based average precision
 
     Label ranking average precision (LRAP) is the average over each ground
@@ -664,6 +664,9 @@ def label_ranking_average_precision_score(y_true, y_score):
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     score : float
@@ -682,6 +685,7 @@ def label_ranking_average_precision_score(y_true, y_score):
     check_consistent_length(y_true, y_score)
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
+    check_consistent_length(y_true, y_score, sample_weight)
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
@@ -712,7 +716,7 @@ def label_ranking_average_precision_score(y_true, y_score):
         L = rankdata(scores_i[relevant], 'max')
         out += (L / rank).mean()
 
-    return out / n_samples
+    return np.average(out / n_samples, weights=sample_weight)
 
 
 def coverage_error(y_true, y_score, sample_weight=None):
