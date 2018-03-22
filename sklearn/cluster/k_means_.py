@@ -191,8 +191,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': generate k centroids from a Gaussian with mean and
-        variance estimated from the data.
+        'random': choose k observations (rows) at random from data for
+        the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -445,8 +445,8 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': generate k centroids from a Gaussian with mean and
-        variance estimated from the data.
+        'random': choose k observations (rows) at random from data for
+        the initial centroids.
 
         If an ndarray is passed, it should be of shape (k, p) and gives
         the initial centers.
