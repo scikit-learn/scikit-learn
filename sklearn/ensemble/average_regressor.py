@@ -12,6 +12,7 @@ regression estimators.
 
 from ..base import RegressorMixin
 from ..base import TransformerMixin
+from ..base import clone
 from ..externals.joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.metaestimators import _BaseComposition
@@ -112,15 +113,32 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         -------
         self : object
         """
+
+        # validate that the estimaors is not an empty list
+        if self.estimators is None or len(self.estimators) == 0:
+            raise AttributeError('Invalid `estimators` attribute, `estimators`'
+                                 ' should be a list of (string, estimator)'
+                                 ' tuples')
+
         # validate that at least one estimator is not None
-        isnone = [clf not None for _, clf in self.estimators]
+        isnone = [clf is not None for _, clf in self.estimators]
         if not any(isnone):
             raise ValueError('All estimators are None. At least one is '
                              'required to be a regressor!')
 
+        # check that len(weights) == len(estimators)
+        if (self.weights is not None and
+                len(self.weights) != len(self.estimators)):
+            raise ValueError('Number of classifiers and weights must be equal'
+                             '; got %d weights, %d estimators'
+                             % (len(self.weights), len(self.estimators)))
+
+        names, clfs = zip(*self.estimators)
+        self._validate_names(names)
+        
         # fit estimators in parallel if n_jobs > 1
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf is not None)
 
