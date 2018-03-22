@@ -259,7 +259,6 @@ Loaders
    datasets.load_files
    datasets.load_iris
    datasets.load_linnerud
-   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -1491,6 +1490,7 @@ To be removed in 0.21
    :toctree: generated/
    :template: deprecated_class.rst
 
+   datasets.load_mlcomp
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
    neighbors.LSHForest
