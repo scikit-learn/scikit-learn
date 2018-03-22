@@ -477,7 +477,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators: they might behave badly if the
-    individual feature do not more or less look like standard normally
+    individual features do not more or less look like standard normally
     distributed data (e.g. Gaussian with 0 mean and unit variance).
 
     For instance many elements used in the objective function of

@@ -32,7 +32,6 @@ from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
-from ._target import TransformedTargetRegressor
 from .imputation import Imputer
 
 
@@ -53,7 +52,6 @@ __all__ = [
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
-    'TransformedTargetRegressor',
     'add_dummy_feature',
     'PolynomialFeatures',
     'binarize',
