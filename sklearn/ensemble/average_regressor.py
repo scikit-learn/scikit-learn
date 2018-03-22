@@ -23,6 +23,15 @@ from .base import BaseEnsemble, _partition_estimators
 __all__ = ["AverageRegressor"]
 
 
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+    """Private function used to fit an estimator within a job."""
+    if sample_weight is not None:
+        estimator.fit(X, y, sample_weight=sample_weight)
+    else:
+        estimator.fit(X, y)
+    return estimator
+
+
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private function used to compute predictions within a job."""
     return sum(estimator.predict(X[:, features])
@@ -38,7 +47,7 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
 
         .. versionadded:: 0.20
 
-    Read more in the :ref:`User Guide <voting_classifier>`.
+    Read more in the :ref:`User Guide <average_regressor>`.
 
     Parameters
     ----------
@@ -78,11 +87,45 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         self.weights = weights
         self.n_jobs = n_jobs
 
-    def _set_oob_score(self, X, y):
-        pass
+    @property
+    def named_estimators(self):
+        return Bunch(**dict(self.estimators))
 
-    def fit(self):
-        pass
+    def fit(self, X, y, sample_weight=None):
+        """ Fit the estimators. 
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        self : object
+        """
+        # validate that at least one estimator is not None
+        isnone = [clf not None for _, clf in self.estimators]
+        if not any(isnone):
+            raise ValueError('All estimators are None. At least one is '
+                             'required to be a regressor!')
+
+        # fit estimators in parallel if n_jobs > 1
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                                                 sample_weight=sample_weight)
+                for clf in clfs if clf is not None)
+
+        return self
+
 
     def predict(self, X):
         """Predict regression target for X.
@@ -120,9 +163,3 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
-
-    def transform():
-        pass
-
-    def predict_proba():
-        pass
