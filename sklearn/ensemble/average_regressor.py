@@ -83,14 +83,23 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
     >>> # TODO
     """
 
-    def __init__(self, estimators, weights=None, n_jobs=1):
+    def __init__(self, estimators, weights=None, verbose=0, n_jobs=1):
         self.estimators = estimators
         self.weights = weights
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     @property
     def named_estimators(self):
         return Bunch(**dict(self.estimators))
+
+    @property
+    def _weights_not_none(self):
+        """Get the weights of not `None` estimators"""
+        if self.weights is None:
+            return None
+        return [w for est, w in zip(self.estimators,
+                                    self.weights) if est[1] is not None]
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -135,7 +144,7 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
 
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
-        
+
         # fit estimators in parallel if n_jobs > 1
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
@@ -166,7 +175,8 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+        n_estimators = len(self.estimators_) 
+        n_jobs, n_estimators, starts = _partition_estimators(n_estimators,
                                                              self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
@@ -177,6 +187,7 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
             for i in range(n_jobs))
 
         # Reduce
-        y_hat = sum(all_y_hat) / self.n_estimators
-
+        y_hat = np.average(all_y_hat, axis=0,
+                           weights=self._weights_not_none)
+        
         return y_hat

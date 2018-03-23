@@ -13,7 +13,10 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
 
 
 rng = check_random_state(0)
@@ -77,3 +80,25 @@ def test_notfitted():
     msg = ("This AverageRegressor instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, ensemble.predict, X_train)
+
+
+def test_average_prediction():
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
+                                                        random_state=rng)
+
+    reg1 = LinearRegression()
+    reg2 = RandomForestRegressor(random_state=rng)
+    reg3 = DecisionTreeRegressor(random_state=rng)
+
+    ensemble = AverageRegressor(estimators=[
+                ('lr', reg1), ('rf', reg2), ('dt', reg3)])
+
+    scores = cross_val_score(ensemble,
+                             X_train,
+                             y_train,
+                             cv=5,
+                             scoring='neg_mean_squared_error')
+
+    assert_almost_equal(scores.mean(), 0.05, decimal=2)
