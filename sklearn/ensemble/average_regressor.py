@@ -17,7 +17,7 @@ from ..base import clone
 from ..externals.joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, has_fit_parameter
 
 from .base import BaseEnsemble
 
@@ -132,9 +132,16 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         # check that len(weights) == len(estimators)
         if (self.weights is not None and
                 len(self.weights) != len(self.estimators)):
-            raise ValueError('Number of classifiers and weights must be equal'
+            raise ValueError('Number of regressors and weights must be equal'
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
+
+        if sample_weight is not None:
+            for name, step in self.estimators:
+                if not has_fit_parameter(step, 'sample_weight'):
+                    raise ValueError('Underlying estimator \'%s\' does not'
+                                     ' support sample weights.' % name)
+
 
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
