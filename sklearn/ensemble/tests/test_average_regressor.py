@@ -10,13 +10,20 @@ from sklearn import datasets
 from sklearn.ensemble import AverageRegressor
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.exceptions import NotFittedError
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import r2_score
+from sklearn.metrics import make_scorer
 
 
 rng = check_random_state(0)
@@ -82,23 +89,71 @@ def test_notfitted():
     assert_raise_message(NotFittedError, msg, ensemble.predict, X_train)
 
 
-def test_average_prediction():
+def test_single_estimator():
+    # Check singleton ensembles.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
                                                         random_state=rng)
 
-    reg1 = LinearRegression()
-    reg2 = RandomForestRegressor(random_state=rng)
-    reg3 = DecisionTreeRegressor(random_state=rng)
+    clf1 = AverageRegressor(estimators=[
+        ('knn', KNeighborsRegressor())]).fit(X_train, y_train)
 
-    ensemble = AverageRegressor(estimators=[
-                ('lr', reg1), ('rf', reg2), ('dt', reg3)])
 
+    clf2 = KNeighborsRegressor().fit(X_train, y_train)
+
+    assert_array_almost_equal(clf1.predict(X_test), clf2.predict(X_test))
+
+
+def test_average_prediction():
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+                            random_state=rng,
+                            n_estimators=100)
+    reg2 = RandomForestRegressor(random_state=rng, 
+                                 n_estimators=100)
+    reg3 = GradientBoostingRegressor(random_state=rng,
+                                     n_estimators=100)
+
+    ensemble = AverageRegressor(
+        estimators=[('br', reg1),
+                    ('rf', reg2),
+                    ('gbr', reg3)])
+
+    ensemble.fit(X_train, y_train)
     scores = cross_val_score(ensemble,
                              X_train,
                              y_train,
                              cv=5,
-                             scoring='neg_mean_squared_error')
+                            scoring='r2')
+    
+    assert_almost_equal(scores.mean(), 0.85, decimal=2)
 
-    assert_almost_equal(scores.mean(), 0.05, decimal=2)
+
+def test_parallel_regression():
+    # Check parallel regression.
+    rng = check_random_state(0)
+
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    estimators = [('dtr', DecisionTreeRegressor())]
+    ensemble = AverageRegressor(estimators=estimators,
+                                n_jobs=3).fit(X_train, y_train)
+
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y2)
+
+    ensemble = AverageRegressor(estimators=estimators,
+                                n_jobs=1).fit(X_train, y_train)
+
+    y3 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y3)

@@ -9,6 +9,7 @@ regression estimators.
 # Author: Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
 #
 # License: BSD 3 clause
+import numpy as np
 
 from ..base import RegressorMixin
 from ..base import TransformerMixin
@@ -153,6 +154,12 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
 
         return self
 
+
+    def _collect_predictions(self, X):
+        """Collect results from reg.predict calls. """
+        return np.asarray([reg.predict(X) for reg in self.estimators_])
+
+
     def predict(self, X):
         """Predict regression target for X.
 
@@ -174,20 +181,7 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        # Parallel loop
-        n_estimators = len(self.estimators_) 
-        n_jobs, n_estimators, starts = _partition_estimators(n_estimators,
-                                                             self.n_jobs)
-
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                self.estimators_features_[starts[i]:starts[i + 1]],
-                X)
-            for i in range(n_jobs))
-
-        # Reduce
-        y_hat = np.average(all_y_hat, axis=0,
-                           weights=self._weights_not_none)
-        
+        check_is_fitted(self, 'estimators_')
+        y_hat = np.average(self._collect_predictions(X), axis=0,
+                         weights=self._weights_not_none)
         return y_hat
