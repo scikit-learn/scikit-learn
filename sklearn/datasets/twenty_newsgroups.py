@@ -169,8 +169,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : numpy random number generator or seed integer
-        Used to shuffle the dataset.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
