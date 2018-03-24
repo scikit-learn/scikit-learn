@@ -7,8 +7,8 @@ regression estimators.
 """
 
 # Author: Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
-#
 # License: BSD 3 clause
+
 import numpy as np
 
 from ..base import RegressorMixin
@@ -19,7 +19,7 @@ from ..utils import check_array
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
 
-from .base import BaseEnsemble, _partition_estimators
+from .base import BaseEnsemble
 
 
 __all__ = ["AverageRegressor"]
@@ -32,13 +32,6 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     else:
         estimator.fit(X, y)
     return estimator
-
-
-def _parallel_predict_regression(estimators, estimators_features, X):
-    """Private function used to compute predictions within a job."""
-    return sum(estimator.predict(X[:, features])
-               for estimator, features in zip(estimators,
-                                              estimators_features))
 
 
 class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
@@ -181,7 +174,6 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        check_is_fitted(self, 'estimators_')
         y_hat = np.average(self._collect_predictions(X), axis=0,
                          weights=self._weights_not_none)
         return y_hat

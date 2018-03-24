@@ -134,6 +134,36 @@ def test_average_prediction():
     assert_almost_equal(scores.mean(), 0.85, decimal=2)
 
 
+def test_weights_average_regression_boston():
+    """Check weighted average regression prediction on boston dataset."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+                            random_state=rng,
+                            n_estimators=100)
+    reg2 = RandomForestRegressor(random_state=rng, 
+                                 n_estimators=100)
+    reg3 = GradientBoostingRegressor(random_state=rng,
+                                     n_estimators=100)
+
+    ensemble = AverageRegressor(
+        estimators=[('br', reg1),
+                    ('rf', reg2),
+                    ('gbr', reg3)],
+        weights=[1, 2, 10])
+
+    ensemble.fit(X_train, y_train)
+    scores = cross_val_score(ensemble,
+                             X_train,
+                             y_train,
+                             cv=5,
+                            scoring='r2')
+    assert_almost_equal(scores.mean(), 0.85, decimal=2)
+
+
 def test_parallel_regression():
     # Check parallel regression.
     rng = check_random_state(0)
