@@ -82,7 +82,7 @@ def test_estimator_init():
 def test_notfitted():
     """Test raise error when predicting with non-fitted estimator"""
     ensemble = AverageRegressor(estimators=[('lr1', LinearRegression()),
-                                        ('lr2', LinearRegression())])
+                                            ('lr2', LinearRegression())])
     msg = ("This AverageRegressor instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, ensemble.predict, X_train)
@@ -94,7 +94,6 @@ def test_single_estimator():
     clf1 = AverageRegressor(estimators=[
         ('knn', KNeighborsRegressor())]).fit(X_train, y_train)
 
-
     clf2 = KNeighborsRegressor().fit(X_train, y_train)
 
     assert_array_almost_equal(clf1.predict(X_test), clf2.predict(X_test))
@@ -102,10 +101,10 @@ def test_single_estimator():
 
 def test_average_prediction():
     """ Check AverageRegressor with multiple models"""
-    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
                             n_estimators=100)
-    reg2 = RandomForestRegressor(random_state=rng, 
+    reg2 = RandomForestRegressor(random_state=rng,
                                  n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=rng,
                                      n_estimators=100)
@@ -120,18 +119,18 @@ def test_average_prediction():
                              X_train,
                              y_train,
                              cv=5,
-                            scoring='r2')
-    
+                             scoring='r2')
+
     assert_almost_equal(scores.mean(), 0.85, decimal=2)
 
 
 def test_weights_average_regression_boston():
     """Check weighted average regression prediction on boston dataset."""
 
-    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
                             n_estimators=100)
-    reg2 = RandomForestRegressor(random_state=rng, 
+    reg2 = RandomForestRegressor(random_state=rng,
                                  n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=rng,
                                      n_estimators=100)
@@ -147,7 +146,7 @@ def test_weights_average_regression_boston():
                              X_train,
                              y_train,
                              cv=5,
-                            scoring='r2')
+                             scoring='r2')
     assert_almost_equal(scores.mean(), 0.87, decimal=2)
 
 
@@ -174,10 +173,10 @@ def test_parallel_regression():
 def test_gridsearch():
     """Check GridSearch support."""
 
-    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
                             n_estimators=100)
-    reg2 = RandomForestRegressor(random_state=rng, 
+    reg2 = RandomForestRegressor(random_state=rng,
                                  n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=rng,
                                      n_estimators=100)
@@ -196,11 +195,11 @@ def test_gridsearch():
 
 def test_estimator_weights_format():
     """ Test estimator weights inputs as list and array """
-    
-    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
                             n_estimators=100)
-    reg2 = RandomForestRegressor(random_state=rng, 
+    reg2 = RandomForestRegressor(random_state=rng,
                                  n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=rng,
                                      n_estimators=100)
@@ -219,10 +218,9 @@ def test_estimator_weights_format():
 
     ensemble1.fit(X_train, y_train)
     ensemble2.fit(X_train, y_train)
-    
+
     assert_array_almost_equal(ensemble1.predict(X_test),
-                              ensemble2.predict(X_test),
-                             )
+                              ensemble2.predict(X_test))
 
 
 def test_sample_weight_kwargs():
@@ -241,10 +239,10 @@ def test_sample_weight_kwargs():
 
 def test_sample_weight():
     """Tests sample_weight parameter of AverageRegressor"""
-    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(), 
+    reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
                             n_estimators=100)
-    reg2 = RandomForestRegressor(random_state=rng, 
+    reg2 = RandomForestRegressor(random_state=rng,
                                  n_estimators=100)
     reg3 = GradientBoostingRegressor(random_state=rng,
                                      n_estimators=100)
@@ -268,7 +266,7 @@ def test_sample_weight():
     assert_array_equal(ensemble1.predict(X_test), ensemble2.predict(X_test))
 
     sample_weight = np.random.RandomState(123).uniform(size=(len(y_train),))
-    
+
     ensemble3 = AverageRegressor(
         estimators=[('gbr', reg3)])
 
@@ -279,7 +277,7 @@ def test_sample_weight():
     knnR = KNeighborsRegressor()
     ensemble4 = AverageRegressor(estimators=[
         ('rf', reg2), ('knn', knnR)])
-    
+
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(
         ValueError, msg, ensemble4.fit, X_train, y_train, sample_weight)

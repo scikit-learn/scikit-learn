@@ -18,8 +18,7 @@ from ..externals.joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted, has_fit_parameter
-
-from .base import BaseEnsemble
+from ..utils import Bunch
 
 
 __all__ = ["AverageRegressor"]
@@ -142,7 +141,6 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
                     raise ValueError('Underlying estimator \'%s\' does not'
                                      ' support sample weights.' % name)
 
-
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
@@ -154,11 +152,9 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
 
         return self
 
-
     def _collect_predictions(self, X):
         """Collect results from reg.predict calls. """
         return np.asarray([reg.predict(X) for reg in self.estimators_])
-
 
     def predict(self, X):
         """Predict regression target for X.
@@ -182,5 +178,5 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         y_hat = np.average(self._collect_predictions(X), axis=0,
-                         weights=self._weights_not_none)
+                           weights=self._weights_not_none)
         return y_hat
