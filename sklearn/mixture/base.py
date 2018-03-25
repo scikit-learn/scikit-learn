@@ -239,6 +239,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
+        self.lower_bound_ = max_lower_bound
 
         return self
 
