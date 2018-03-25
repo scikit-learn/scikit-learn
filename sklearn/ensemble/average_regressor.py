@@ -55,6 +55,9 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         Sequence of weights (`float` or `int`) to weight the prediction of
         a given estimator.
 
+    verbose : int, optional (default=0)
+        Controls the verbosity of the building process.
+
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for ``fit``.
         If -1, then the number of jobs is set to the number of cores.
