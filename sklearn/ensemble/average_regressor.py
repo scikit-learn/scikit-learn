@@ -19,6 +19,7 @@ from ..utils import check_array
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted, has_fit_parameter
 from ..utils import Bunch
+from .base import BaseEnsemble
 
 
 __all__ = ["AverageRegressor"]
@@ -33,7 +34,8 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
-class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
+class AverageRegressor(_BaseComposition, BaseEnsemble, RegressorMixin,
+                       TransformerMixin):
     """
     An average regressor is an ensemble meta-estimator that fits base
     regressors each on the whole dataset. it, then, averages the individual
