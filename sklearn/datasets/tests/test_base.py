@@ -140,7 +140,7 @@ def test_load_digits():
     assert_equal(numpy.unique(digits.target).size, 10)
 
     # test return_X_y option
-    check_return_X_y(digits, load_digits)
+    check_return_X_y(digits, partial(load_digits))
 
 
 def test_load_digits_n_class_lt_10():
