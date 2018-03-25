@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_covtype(data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False):
+                  random_state=None, shuffle=False, return_X_y=False):
     """Load the covertype dataset, downloading it if necessary.
 
     Read more in the :ref:`User Guide <datasets>`.
@@ -67,6 +67,11 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
+    return_X_y : boolean, default=False. If True, returns ``(data.data,
+    data.target)`` instead of a Bunch object.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     dataset : dict-like object with the following attributes:
@@ -81,6 +86,9 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     dataset.DESCR : string
         Description of the forest covertype dataset.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -119,5 +127,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         rng.shuffle(ind)
         X = X[ind]
         y = y[ind]
+
+    if return_X_y:
+        return X, y
 
     return Bunch(data=X, target=y, DESCR=__doc__)
