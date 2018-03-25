@@ -559,7 +559,8 @@ DONT_TEST = ['SparseCoder', 'DictVectorizer',
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
              'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration', 'VotingClassifier']
+             '_SigmoidCalibration', 'VotingClassifier',
+             'AverageRegressor']
 
 
 def all_estimators(include_meta_estimators=False,
