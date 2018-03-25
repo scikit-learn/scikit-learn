@@ -63,6 +63,10 @@ Classifiers and regressors
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- Added :class:`ensemble.AverageRegressor` which provides an equivalent 
+  of `ensemble.VotingClassifier` for regression problems. :issue:`10868` 
+  by :user:`Mohamed Ali Jamaoui <mohamed-ali>`. 
+
 Preprocessing
 
 - Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
