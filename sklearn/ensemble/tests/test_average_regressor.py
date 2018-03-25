@@ -125,7 +125,7 @@ def test_average_prediction():
                              cv=5,
                              scoring='r2')
 
-    assert_almost_equal(scores.mean(), 0.85, decimal=2)
+    assert_almost_equal(scores.mean(), 0.85, decimal=1)
 
 
 def test_weights_average_regression_boston():
@@ -151,7 +151,7 @@ def test_weights_average_regression_boston():
                              y_train,
                              cv=5,
                              scoring='r2')
-    assert_almost_equal(scores.mean(), 0.87, decimal=2)
+    assert_almost_equal(scores.mean(), 0.87, decimal=1)
 
 
 def test_parallel_regression():
