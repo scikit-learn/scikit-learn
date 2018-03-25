@@ -14,7 +14,9 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -26,6 +28,8 @@ from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_selection import SelectKBest
 
 
 rng = check_random_state(0)
@@ -175,11 +179,11 @@ def test_gridsearch():
 
     reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
-                            n_estimators=100)
+                            n_estimators=10)
     reg2 = RandomForestRegressor(random_state=rng,
-                                 n_estimators=100)
+                                 n_estimators=10)
     reg3 = GradientBoostingRegressor(random_state=rng,
-                                     n_estimators=100)
+                                     n_estimators=10)
 
     ensemble = AverageRegressor(
         estimators=[('br', reg1),
@@ -198,11 +202,11 @@ def test_estimator_weights_format():
 
     reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
-                            n_estimators=100)
+                            n_estimators=10)
     reg2 = RandomForestRegressor(random_state=rng,
-                                 n_estimators=100)
+                                 n_estimators=10)
     reg3 = GradientBoostingRegressor(random_state=rng,
-                                     n_estimators=100)
+                                     n_estimators=10)
 
     ensemble1 = AverageRegressor(
         estimators=[('br', reg1),
@@ -241,11 +245,11 @@ def test_sample_weight():
     """Tests sample_weight parameter of AverageRegressor"""
     reg1 = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                             random_state=rng,
-                            n_estimators=100)
+                            n_estimators=10)
     reg2 = RandomForestRegressor(random_state=rng,
-                                 n_estimators=100)
+                                 n_estimators=10)
     reg3 = GradientBoostingRegressor(random_state=rng,
-                                     n_estimators=100)
+                                     n_estimators=10)
 
     ensemble1 = AverageRegressor(
         estimators=[('br', reg1),
@@ -281,3 +285,49 @@ def test_sample_weight():
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(
         ValueError, msg, ensemble4.fit, X_train, y_train, sample_weight)
+
+
+def test_average_regression_with_pipeline():
+
+    pipline = make_pipeline(SelectKBest(k=1), DecisionTreeRegressor())
+    estimator = AverageRegressor([('pp', pipline)])
+
+    estimator.fit(X_train, y_train)
+    assert_true(hasattr(estimator, 'estimators_'))
+
+
+def test_set_params():
+    """set_params should be able to set estimators"""
+    reg1 = LinearRegression()
+    reg2 = RandomForestRegressor(random_state=rng,
+                                 n_estimators=10)
+    reg3 = GradientBoostingRegressor(random_state=rng,
+                                     n_estimators=10)
+
+    ensmble = AverageRegressor(estimators=[
+        ('lr', reg1), ('rf', reg2)], weights=[1, 2])
+
+    assert_true('lr' in ensmble.named_estimators)
+    assert_true(ensmble.named_estimators.lr is ensmble.estimators[0][1])
+    assert_true(ensmble.named_estimators.lr is ensmble.named_estimators['lr'])
+
+    ensmble.fit(X_train, y_train)
+    assert_true('lr' in ensmble.named_estimators_)
+    assert_true(ensmble.named_estimators_.lr is ensmble.estimators_[0])
+    assert_true(ensmble.named_estimators_.lr is
+                ensmble.named_estimators_['lr'])
+
+    ensmble2 = AverageRegressor([
+        ('lr', reg1), ('gbr', reg3)], weights=[1, 2])
+    ensmble2.set_params(gbr=reg2).fit(X_train, y_train)
+    assert_false(hasattr(ensmble2, 'gbr'))
+
+    assert_array_equal(ensmble.predict(X_train), ensmble2.predict(X_train))
+    assert_equal(ensmble2.estimators[0][1].get_params(), reg1.get_params())
+    assert_equal(ensmble2.estimators[1][1].get_params(), reg2.get_params())
+
+    ensmble2.set_params(gbr__max_depth=5)
+    assert_true(ensmble2.estimators[1][1].get_params()['max_depth'] == 5)
+
+    assert_equal(ensmble2.get_params()["gbr__max_depth"],
+                 ensmble2.get_params()["gbr"].get_params()['max_depth'])

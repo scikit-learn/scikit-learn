@@ -150,6 +150,10 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf is not None)
 
+        self.named_estimators_ = Bunch(**dict())
+        for k, e in zip(self.estimators, self.estimators_):
+            self.named_estimators_[k[0]] = e
+
         return self
 
     def _collect_predictions(self, X):
@@ -180,3 +184,34 @@ class AverageRegressor(_BaseComposition, RegressorMixin, TransformerMixin):
         y_hat = np.average(self._collect_predictions(X), axis=0,
                            weights=self._weights_not_none)
         return y_hat
+
+    def set_params(self, **params):
+        """ Setting the parameters for the average regressor
+
+        Valid parameter keys can be listed with get_params().
+
+        Parameters
+        ----------
+        params : keyword arguments
+            Specific parameters using e.g. set_params(parameter_name=new_value)
+            In addition, to setting the parameters of the ``AverageRegressor``,
+            the individual regressors of the ``AverageRegressor`` can also be
+            set or replaced by setting them to None.
+
+        Examples
+        --------
+        >># TODO
+        """
+        super(AverageRegressor, self)._set_params('estimators', **params)
+        return self
+
+    def get_params(self, deep=True):
+        """ Get the parameters of the AverageRegressor
+
+        Parameters
+        ----------
+        deep: bool
+            Setting it to True gets the various regressors and their parameters
+        """
+        return super(AverageRegressor,
+                     self)._get_params('estimators', deep=deep)
