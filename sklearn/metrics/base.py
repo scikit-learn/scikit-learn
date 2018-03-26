@@ -147,8 +147,8 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
             mean. This does not take label imbalance into account. Classes
             are assumed to be uniformly distributed.
         ``'weighted'``:
-            Calculate metrics for each label, taking into account the prevalence
-             of the classes.
+            Calculate metrics for each label, taking into account the
+            prevalence of the classes.
 
     binary_metric : callable, the binary metric function to use.
         Accepts the following as input
@@ -217,8 +217,8 @@ def _average_multiclass_ovr_score(binary_metric, y_true, y_score, average):
             mean. This does not take label imbalance into account. Classes
             are assumed to be uniformly distributed.
         ``'weighted'``:
-            Calculate metrics for each label, taking into account the prevalence
-             of the classes in the dataset.
+            Calculate metrics for each label, taking into account the
+            prevalence of the classes in the dataset.
 
     binary_metric : callable, the binary metric function to use.
         Accepts the following as input
