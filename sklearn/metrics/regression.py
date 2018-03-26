@@ -199,7 +199,8 @@ def mean_absolute_percentage_error(y_true, y_pred):
     Returns
     -------
     loss : float
-        A positive floating point value (the best value is 0.0).
+        A positive floating point value between 0.0 and 100.0,
+        the best value is 0.0.
 
     Examples
     --------
