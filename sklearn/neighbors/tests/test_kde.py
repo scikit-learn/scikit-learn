@@ -162,15 +162,23 @@ def test_kde_sample_weights():
                            'chebyshev']:
                 if algorithm != 'kd_tree' or metric in KDTree.valid_metrics:
                     kde = KernelDensity(algorithm=algorithm, metric=metric)
+
                     # Test that adding a constant sample weight has no effect
                     kde.fit(X, sample_weight=W_neutral)
                     y_test = kde.score_samples(Y)
+                    sample_test = kde.sample(random_state=1234)
                     kde.fit(X)
                     y_ref = kde.score_samples(Y)
+                    sample_ref = kde.sample(random_state=1234)
                     assert_allclose(y_test, y_ref)
+                    assert_allclose(sample_test, sample_ref)
+
                     # Test equivalence between sampling and sample weights
                     kde.fit(X, sample_weight=W)
                     y_test = kde.score_samples(Y)
+                    sample_test = kde.sample(random_state=1234)
                     kde.fit(X_repetitions)
                     y_ref = kde.score_samples(Y)
+                    sample_ref = kde.sample(random_state=1234)
                     assert_allclose(y_test, y_ref)
+                    assert_allclose(sample_test, sample_ref)

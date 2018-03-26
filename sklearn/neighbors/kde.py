@@ -223,11 +223,10 @@ class KernelDensity(BaseEstimator):
         data = np.asarray(self.tree_.data)
 
         rng = check_random_state(random_state)
+        u = rng.uniform(0, 1, size=n_samples)
         if self.tree_.sample_weight is None:
-            i = rng.randint(data.shape[0], size=n_samples)
+            i = (u * data.shape[0]).astype(np.int64)
         else:
-            u = rng.uniform(0, 1, size=n_samples)
-            # TODO: recode in Cython with logaddexp to remove underflows
             cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
