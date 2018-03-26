@@ -354,6 +354,12 @@ Metrics
   :func:`mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- Fixed a bug in :func:`metrics.cluster.fowlkes_mallows_score` to avoid integer
+  overflow. Casted return value of `contingency_matrix` to `int64` and computed
+  product of square roots rather than square root of product.
+  :issue:`9515` by :user:`Alan Liddell <aliddell>` and
+  :user:`Kumar Ashutosh <thechargedneutron>` and :user:`Manh Dao <manhdao>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
