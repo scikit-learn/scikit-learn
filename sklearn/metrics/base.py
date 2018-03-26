@@ -169,8 +169,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
     prevalence = np.empty(n_pairs)
     pair_scores = np.empty(n_pairs)
 
-    ix = 0
-    for a, b in itertools.combinations(range(n_classes), 2):
+    for ix, (a, b) in enumerate(itertools.combinations(range(n_classes), 2)):
         a_mask = y_true == a
         ab_mask = np.logical_or(a_mask, y_true == b)
 
@@ -188,7 +187,6 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
         binary_avg_score = (a_true_score + b_true_score) / 2
         pair_scores[ix] = binary_avg_score
 
-        ix += 1
     return (np.average(pair_scores, weights=prevalence)
             if average == "weighted" else np.average(pair_scores))
 
