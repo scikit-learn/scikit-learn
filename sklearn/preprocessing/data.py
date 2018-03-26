@@ -508,9 +508,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean, True by default
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : boolean or int, 1 by default
+        If 1 or 2, scale the data to unit variance (or equivalently,
+        unit standard deviation) using scaling factor of 1 or 2 standard 
+        deviation.
 
     Attributes
     ----------
@@ -661,7 +662,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                                           self.n_samples_seen_)
 
         if self.with_std:
-            self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
+            if not 1 <= self.with_std <= 2:
+                raise ValueError("Invalid factor: %s" %
+                                 str(self.with_std))
+            self.scale_ = _handle_zeros_in_scale(self.with_std * np.sqrt(self.var_))
         else:
             self.scale_ = None
 
