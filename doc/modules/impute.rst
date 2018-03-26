@@ -1,8 +1,10 @@
-
 .. _impute:
 
+============================
 Imputation of missing values
 ============================
+
+.. currentmodule:: sklearn.impute
 
 For various reasons, many real world datasets contain missing values, often
 encoded as blanks, NaNs or other placeholders. Such datasets however are

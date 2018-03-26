@@ -2036,10 +2036,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         else:
             estimator.fit(X, y_)
 
-        # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
-        # which doesn't return a n_iter for old versions of SciPy.
-        if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
-            assert_greater_equal(estimator.n_iter_, 1)
+        assert estimator.n_iter_ >= 1
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

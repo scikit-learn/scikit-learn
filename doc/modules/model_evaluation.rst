@@ -99,9 +99,9 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(probability=True, random_state=0)
+    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
     >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.06...])
+    array([-0.09..., -0.16..., -0.07...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -1173,6 +1173,10 @@ F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
 
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
+
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
@@ -1798,7 +1802,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.97...
 

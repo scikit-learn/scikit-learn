@@ -75,10 +75,10 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
     >>> y = [0, 1]
-    >>> clf = svm.SVC()
+    >>> clf = svm.SVC(gamma='scale')
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 
@@ -119,10 +119,10 @@ n_classes)``::
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
-    >>> clf = svm.SVC(decision_function_shape='ovo')
+    >>> clf = svm.SVC(gamma='scale', decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovo', degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
@@ -318,8 +318,9 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma='auto',
-        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1,
+        gamma='auto_deprecated', kernel='rbf', max_iter=-1, shrinking=True,
+        tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -534,7 +535,7 @@ test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto',
+        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
