@@ -1592,10 +1592,6 @@ in the example above are shifted by adding 10, the error becomes smaller:
    >>> y_pred = np.array([2.5, 0.0, 2, 8])
    >>> y_true = y_true + 10
    >>> y_pred = y_pred + 10
-   >>> y_true
-   array([13. ,  9.5, 12. , 17. ])
-   >>> y_pred
-   array([12.5, 10. , 12. , 18. ])
    >>> mean_absolute_percentage_error(y_true, y_pred)
    3.747916170516789
 
