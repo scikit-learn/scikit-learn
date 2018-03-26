@@ -338,7 +338,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
     y_type = type_of_target(y_true)
-    y_true = check_array(y_true, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_score = check_array(y_score, ensure_2d=False)
 
     if y_type == "multiclass" or (y_type == "binary" and
