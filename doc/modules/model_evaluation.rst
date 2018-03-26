@@ -1558,13 +1558,15 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
 
 .. _mean_absolute_percentage_error:
 
-Mean absolute error
--------------------
+Mean absolute percentage error
+------------------------------
 
-The :func:`mean_absolute_percentage_error` function computes `mean absolute
+The :func:`mean_absolute_percentage_error` function, also known as **MAPE**, computes `mean absolute
 percentage error <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_, a risk
 metric corresponding to the expected value of the absolute percentage error loss or
-:math:`l1`-norm of percentage loss.
+:math:`l1`-norm of percentage loss. MAPE computes the error relative to the true value.
+Therefore the same absolute distance between prediction and ground truth will lead to a smaller
+error if the true value is larger. In particular the metrics is not shift-invariant.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
 and :math:`y_i` is the corresponding true value, then the mean absolute percentage error
