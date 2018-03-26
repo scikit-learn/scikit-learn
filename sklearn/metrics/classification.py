@@ -293,7 +293,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
-    """Cohen's kappa: a statistic that measures inter-annotator agreement.
+    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is

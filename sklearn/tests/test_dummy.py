@@ -620,3 +620,16 @@ def test_dummy_classifier_on_3D_array():
     y_pred_proba = cls.predict_proba(X)
     assert_array_equal(y_pred, y_expected)
     assert_array_equal(y_pred_proba, y_proba_expected)
+
+
+def test_dummy_regressor_return_std():
+    X = [[0]] * 3  # ignored
+    y = np.array([2, 2, 2])
+    y_std_expected = np.array([0, 0, 0])
+    cls = DummyRegressor()
+    cls.fit(X, y)
+    y_pred_list = cls.predict(X, return_std=True)
+    # there should be two elements when return_std is True
+    assert_equal(len(y_pred_list), 2)
+    # the second element should be all zeros
+    assert_array_equal(y_pred_list[1], y_std_expected)

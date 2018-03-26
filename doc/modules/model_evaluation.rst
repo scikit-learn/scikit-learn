@@ -98,9 +98,9 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(probability=True, random_state=0)
+    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
     >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.06...])
+    array([-0.09..., -0.16..., -0.07...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -174,24 +174,23 @@ Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
 
     >>> import numpy as np
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
+    >>> def my_custom_loss_func(y_true, y_pred):
+    ...     diff = np.abs(y_true - y_pred).max()
     ...     return np.log(1 + diff)
     ...
-    >>> # loss_func will negate the return value of my_custom_loss_func,
-    >>> #  which will be np.log(2), 0.693, given the values for ground_truth
-    >>> #  and predictions defined below.
-    >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1], [1]]
-    >>> predictions  = [0, 1]
+    >>> # score will negate the return value of my_custom_loss_func,
+    >>> # which will be np.log(2), 0.693, given the values for X
+    >>> # and y defined below.
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> X = [[1], [1]]
+    >>> y  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
-    >>> clf = clf.fit(ground_truth, predictions)
-    >>> loss(clf,ground_truth, predictions) # doctest: +ELLIPSIS
-    -0.69...
-    >>> score(clf,ground_truth, predictions) # doctest: +ELLIPSIS
+    >>> clf = clf.fit(X, y)
+    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
     0.69...
+    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    -0.69...
 
 
 .. _diy_scoring:
@@ -492,7 +491,7 @@ given binary ``y_true`` and ``y_pred``:
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
   .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
-     classifier system < https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -1173,6 +1172,10 @@ F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
 
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
+
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
@@ -1772,7 +1775,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.97...
 

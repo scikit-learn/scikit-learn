@@ -95,8 +95,6 @@ for _, offset in enumerate(clusters_separation):
             clf.fit(X)
             scores_pred = clf.decision_function(X)
             y_pred = clf.predict(X)
-        threshold = stats.scoreatpercentile(scores_pred,
-                                            100 * outliers_fraction)
         n_errors = (y_pred != ground_truth).sum()
         # plot the levels lines and the points
         if clf_name == "Local Outlier Factor":
@@ -106,11 +104,11 @@ for _, offset in enumerate(clusters_separation):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
         subplot = plt.subplot(2, 2, i + 1)
-        subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
+        subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7),
                          cmap=plt.cm.Blues_r)
-        a = subplot.contour(xx, yy, Z, levels=[threshold],
+        a = subplot.contour(xx, yy, Z, levels=[0],
                             linewidths=2, colors='red')
-        subplot.contourf(xx, yy, Z, levels=[threshold, Z.max()],
+        subplot.contourf(xx, yy, Z, levels=[0, Z.max()],
                          colors='orange')
         b = subplot.scatter(X[:-n_outliers, 0], X[:-n_outliers, 1], c='white',
                             s=20, edgecolor='k')
