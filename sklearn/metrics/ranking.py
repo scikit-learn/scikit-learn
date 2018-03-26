@@ -277,7 +277,9 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
 
     max_fpr : float > 0 and <= 1, optional
         If not ``None``, the standardized partial AUC [3]_ over the range
-        [0, max_fpr] is returned.
+        [0, max_fpr] is returned. If multiclass task, should be either
+        equal to ``None`` or ``1.0`` as AUC ROC partial computation currently
+        not supported in this case.
 
     Returns
     -------
@@ -348,6 +350,14 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         if not np.allclose(1, y_score.sum(axis=1)):
             raise ValueError("Target scores should sum up to 1.0 for all"
                              "samples.")
+
+        # do not support partial ROC computation for multiclass
+        if max_fpr is not None and max_fpr != 1.:
+            raise ValueError("Partial AUC computation not available in "
+                             "multiclass setting. Parameter 'max_fpr' must be"
+                             " set to `None`. Received `max_fpr={0}` "
+                             "instead.".format(max_fpr))
+
         # validation for multiclass parameter specifications
         average_options = ("macro", "weighted")
         if average not in average_options:

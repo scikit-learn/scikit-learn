@@ -592,6 +592,13 @@ def test_auc_score_multi_error():
     assert_raise_message(ValueError, sample_weight_error_msg,
                          roc_auc_score, y_true, y_pred,
                          multiclass="ovo", sample_weight=[])
+    partial_comp_error_msg = ("Partial AUC computation not available in "
+                              "multiclass setting. Parameter 'max_fpr' must "
+                              "be set to `None`. Received `max_fpr=0.5` "
+                              "instead.")
+    assert_raise_message(ValueError, partial_comp_error_msg,
+                         roc_auc_score, y_true, y_pred,
+                         multiclass="ovo", max_fpr=0.5)
 
 
 def test_auc_score_non_binary_class():
