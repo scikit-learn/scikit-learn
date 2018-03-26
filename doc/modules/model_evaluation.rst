@@ -1587,13 +1587,18 @@ prediction and ground truth will lead to a smaller error if the true value is la
 In particular the metric is not shift-invariant. For example, if :math:`y_{true}` and :math:`y_{pred}`
 in the example above are shifted by adding 10, the error becomes smaller:
 
+   >>> from sklearn.metrics import mean_absolute_percentage_error
    >>> import numpy as np
    >>> y_true = np.array([3, -0.5, 2, 7])
    >>> y_pred = np.array([2.5, 0.0, 2, 8])
    >>> y_true = y_true + 10
    >>> y_pred = y_pred + 10
+   >>> y_true
+   array([ 13. ,  9.5 ,  12. ,  17. ])
+   >>> y_pred
+   array([ 12.5 ,  10. ,  12. ,  18. ])
    >>> mean_absolute_percentage_error(y_true, y_pred)
-   3.747916170516789
+   3.747...
 
 .. _mean_squared_error:
 
