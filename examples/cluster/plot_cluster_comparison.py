@@ -168,7 +168,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a',
                                              '#f781bf', '#a65628', '#984ea3',
                                              '#999999', '#e41a1c', '#dede00']),
-                                      int(max(y_pred) + 1))))
+                                      int(max(y_pred) + 2))))
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-2.5, 2.5)
