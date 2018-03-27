@@ -86,7 +86,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     >>> tt.score(X, y)
     1.0
     >>> tt.regressor_.coef_
-    array([ 2.])
+    array([2.])
 
     Notes
     -----
