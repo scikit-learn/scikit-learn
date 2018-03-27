@@ -970,7 +970,7 @@ def test_sample():
 @ignore_warnings(category=ConvergenceWarning)
 def test_init():
     # We check that by increasing the n_init number we have a better solution
-    for random_state in range(100):
+    for random_state in range(25):
         rand_data = RandomData(np.random.RandomState(random_state), scale=1)
         n_components = rand_data.n_components
         X = rand_data.X['full']

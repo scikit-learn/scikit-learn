@@ -460,7 +460,9 @@ class GaussianMixture(BaseMixture):
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
-        lower bound average gain is below this threshold.
+        lower bound average gain is below this threshold. If 'warm_start' is
+        True and 'max_iter' is 1, then the lower bound after the single
+        iteration is compared to the lower bound after the last fit().
 
     reg_covar : float, defaults to 1e-6.
         Non-negative regularization added to the diagonal of covariance.
@@ -509,6 +511,8 @@ class GaussianMixture(BaseMixture):
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
+        In that case, 'n_init' is ignored and only a single initialization
+        occurs upon the first call.
         See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
@@ -572,7 +576,8 @@ class GaussianMixture(BaseMixture):
         Number of step used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
-        Log-likelihood of the best fit of EM.
+        Lower bound value on the log-likelihood (of the training data with
+        respect to the model) of the best fit of EM.
 
     See Also
     --------
