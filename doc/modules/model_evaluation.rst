@@ -1558,10 +1558,10 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
 
 .. _mean_absolute_percentage_error:
 
-Mean absolute error
--------------------
+Mean absolute percentage error
+------------------------------
 
-The :func:`mean_absolute_percentage_error` function computes `mean absolute
+The :func:`mean_absolute_percentage_error` function, also known as **MAPE**, computes `mean absolute
 percentage error <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_, a risk
 metric corresponding to the expected value of the absolute percentage error loss or
 :math:`l1`-norm of percentage loss.
@@ -1581,6 +1581,20 @@ Here is a small example of usage of the :func:`mean_absolute_percentage_error` f
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> mean_absolute_percentage_error(y_true, y_pred)
   32.738...
+
+MAPE computes the error relative to the true value. Therefore the same absolute distance between
+prediction and ground truth will lead to a smaller error if the true value is larger.
+In particular the metric is not shift-invariant. For example, if :math:`y_{true}` and :math:`y_{pred}`
+in the example above are shifted by adding 10, the error becomes smaller:
+
+   >>> from sklearn.metrics import mean_absolute_percentage_error
+   >>> import numpy as np
+   >>> y_true = np.array([3, -0.5, 2, 7])
+   >>> y_pred = np.array([2.5, 0.0, 2, 8])
+   >>> y_true = y_true + 10
+   >>> y_pred = y_pred + 10
+   >>> mean_absolute_percentage_error(y_true, y_pred)
+   3.747...
 
 .. _mean_squared_error:
 
