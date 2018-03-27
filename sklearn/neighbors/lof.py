@@ -104,8 +104,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
-
 
     Attributes
     ----------

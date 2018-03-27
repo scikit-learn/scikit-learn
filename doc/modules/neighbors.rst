@@ -135,8 +135,8 @@ have the same interface; we'll show an example of using the KD Tree here:
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
-including specification of query strategies, distance metrics, etc. For a list 
-of available metrics, see the documentation of the :class:`DistanceMetric` 
+including specification of query strategies, distance metrics, etc. For a list
+of available metrics, see the documentation of the :class:`DistanceMetric`
 class.
 
 .. _classification:
@@ -160,8 +160,8 @@ training point, where :math:`r` is a floating-point value specified by
 the user.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
-is the most commonly used technique. The optimal choice of the value :math:`k` 
-is highly data-dependent: in general a larger :math:`k` suppresses the effects 
+is the most commonly used technique. The optimal choice of the value :math:`k`
+is highly data-dependent: in general a larger :math:`k` suppresses the effects
 of noise, but makes the classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
@@ -320,7 +320,7 @@ To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but results in a data structure which can be very efficient on 
+KD tree, but results in a data structure which can be very efficient on
 highly structured data, even in very high dimensions.
 
 A ball tree recursively divides the data into
@@ -550,12 +550,12 @@ estimation, for instance enabling multiprocessing though the parameter `n_jobs`.
 Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or
 implementation with special data types. The precomputed neighbors need to be
-formatted as in `radius_neighbors_graph` output with `mode='distance'`:
+formatted as in :func:`neighbors.radius_neighbors_graph` output:
 
 * a CSR matrix (although COO, CSC or LIL will be accepted).
 * only explicitly store nearest neighborhoods of each sample with respect to the
   training data. This should include those at 0 distance from a query point, but
-  exclude the matrix diagonal in the training data.
+  may exclude the matrix diagonal in the training data.
 * each row's `data` should store the distance in increasing order (although
   unsorted data will be stable-sorted).
 * all values in data should be non-negative.

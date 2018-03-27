@@ -667,7 +667,9 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if X.min() < 0:
+            # avoid X.min() on sparse matrix since it also sorts the indices
+            X_min = X.data.min() if issparse(X) else X.min()
+            if X_min < 0:
                 raise ValueError("All distances should be positive, the "
                                  "precomputed distances given as X is not "
                                  "correct")

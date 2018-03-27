@@ -497,7 +497,7 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            if getattr(self, 'effective_metric_', '') == 'precomputed':
+            if self.effective_metric_ == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = check_array(X, accept_sparse='csr')
@@ -708,8 +708,8 @@ class RadiusNeighborsMixin(object):
             If False, distances will not be returned.
 
         sort_results : boolean, optional. Defaults to False.
-            if True, the distances and indices will be sorted before being
-            returned.  If False, the results will not be sorted.  If
+            If True, the distances and indices will be sorted before being
+            returned. If False, the results will not be sorted. If
             return_distance == False, setting sort_results = True will
             result in an error.
 
@@ -759,7 +759,7 @@ class RadiusNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            if getattr(self, 'effective_metric_', '') == 'precomputed':
+            if self.effective_metric_ == 'precomputed':
                 X = _check_precomputed(X)
             else:
                 X = check_array(X, accept_sparse='csr')

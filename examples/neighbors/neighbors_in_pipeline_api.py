@@ -17,19 +17,20 @@ Expected output:
 
 Benchmarking on MNIST_2000:
 ---------------------------
-AnnoyTransformer:                    1.885 sec
-KNeighborsTransformer:               1.550 sec
-TSNE with AnnoyTransformer:          12.408 sec
-TSNE with KNeighborsTransformer:     11.856 sec
-TSNE with internal NearestNeighbors: 11.884 sec
+AnnoyTransformer:                    1.947 sec
+KNeighborsTransformer:               1.565 sec
+TSNE with AnnoyTransformer:          8.571 sec
+TSNE with KNeighborsTransformer:     8.332 sec
+TSNE with internal NearestNeighbors: 8.270 sec
 
 Benchmarking on MNIST_10000:
 ----------------------------
-AnnoyTransformer:                    12.613 sec
-KNeighborsTransformer:               44.348 sec
-TSNE with AnnoyTransformer:          75.256 sec
-TSNE with KNeighborsTransformer:     110.472 sec
-TSNE with internal NearestNeighbors: 110.527 sec
+AnnoyTransformer:                    12.688 sec
+KNeighborsTransformer:               44.298 sec
+TSNE with AnnoyTransformer:          46.222 sec
+TSNE with KNeighborsTransformer:     79.842 sec
+TSNE with internal NearestNeighbors: 79.984 sec
+___
 """
 # Author: Tom Dupre la Tour
 #
@@ -119,8 +120,7 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
         return kneighbors_graph
 
     def fit_transform(self, X, y=None):
-        self.fit(X)
-        return self.transform(X=None)
+        return self.fit(X).transform(X=None)
 
 
 def test_annoy_transformer():
@@ -226,5 +226,4 @@ def run_benchmark():
 
 if __name__ == '__main__':
     test_annoy_transformer()
-
     run_benchmark()
