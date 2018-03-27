@@ -27,8 +27,8 @@ def _check_params(X, metric, p, metric_params):
 
 def _query_include_self(X, include_self, mode):
     """Return the query based on include_self param"""
-    if include_self is None:
-        include_self = mode == 'connectivity'
+    if include_self == 'auto':
+        include_self = (mode == 'connectivity')
 
     # it does not include each sample as its own neighbors
     if not include_self:
@@ -71,9 +71,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     metric_params : dict, optional
         additional keyword arguments for the metric function.
 
-    include_self : bool, default=False.
+    include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If None, then True is used for mode='connectivity' and False
+        itself. If 'auto', then True is used for mode='connectivity' and False
         for mode='distance'.
 
     n_jobs : int, optional (default = 1)
@@ -147,9 +147,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     metric_params : dict, optional
         additional keyword arguments for the metric function.
 
-    include_self : bool, default=False
+    include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If None, then True is used for mode='connectivity' and False
+        itself. If 'auto', then True is used for mode='connectivity' and False
         for mode='distance'.
 
     n_jobs : int, optional (default = 1)
@@ -201,10 +201,10 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    include_self : bool, default=None.
+    include_self : bool or 'auto', default='auto'
         Whether or not to mark each sample as the first nearest neighbor to
-        itself, in fit_transform (but not in transform). If None, then True is
-        used for mode='connectivity' and False for mode='distance'.
+        itself, in fit_transform (but not in transform). If 'auto', then True
+        is used for mode='connectivity' and False for mode='distance'.
 
     n_neighbors : int, optional (default = 5)
         Number of neighbors to use for :meth:`kneighbors` queries.
@@ -276,7 +276,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
-    def __init__(self, mode='distance', include_self=None,
+    def __init__(self, mode='distance', include_self='auto',
                  n_neighbors=5, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None, n_jobs=1):
         super(KNeighborsTransformer, self).__init__(
@@ -345,10 +345,10 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    include_self : bool, default=None.
+    include_self : bool or 'auto', default='auto'
         Whether or not to mark each sample as the first nearest neighbor to
-        itself, in fit_transform (but not in transform). If None, then True is
-        used for mode='connectivity' and False for mode='distance'.
+        itself, in fit_transform (but not in transform). If 'auto', then True
+        is used for mode='connectivity' and False for mode='distance'.
 
     radius : float, optional (default = 1.)
         Range of parameter space to use for :meth:`radius_neighbors`
@@ -420,7 +420,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='distance', include_self=None,
+    def __init__(self, mode='distance', include_self='auto',
                  radius=1., algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None, n_jobs=1):
         super(RadiusNeighborsTransformer, self).__init__(
