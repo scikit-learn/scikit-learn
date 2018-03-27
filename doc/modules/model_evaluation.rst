@@ -99,9 +99,9 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(probability=True, random_state=0)
+    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
     >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.06...])
+    array([-0.09..., -0.16..., -0.07...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -831,7 +831,7 @@ Here are some small examples in binary classification::
   >>> metrics.fbeta_score(y_true, y_pred, beta=2) # doctest: +ELLIPSIS
   0.55...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
-  (array([ 0.66...,  1.        ]), array([ 1. ,  0.5]), array([ 0.71...,  0.83...]), array([2, 2]...))
+  (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]))
 
 
   >>> import numpy as np
@@ -841,11 +841,11 @@ Here are some small examples in binary classification::
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
   >>> precision  # doctest: +ELLIPSIS
-  array([ 0.66...,  0.5       ,  1.        ,  1.        ])
+  array([0.66..., 0.5       , 1.        , 1.        ])
   >>> recall
-  array([ 1. ,  0.5,  0.5,  0. ])
+  array([1. , 0.5, 0.5, 0. ])
   >>> threshold
-  array([ 0.35,  0.4 ,  0.8 ])
+  array([0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
   0.83...
 
@@ -912,7 +912,7 @@ Then the metrics are defined as:
   0.23...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
   ... # doctest: +ELLIPSIS
-  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
+  (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...))
 
 For multiclass classification with a "negative class", it is possible to exclude some labels:
 
@@ -1138,11 +1138,11 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0. ,  0.5,  0.5,  1. ])
+    array([0. , 0. , 0.5, 0.5, 1. ])
     >>> tpr
-    array([ 0. ,  0.5,  0.5,  1. ,  1. ])
+    array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([ 1.8 ,  0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
 
 This figure shows an example of such an ROC curve:
 
@@ -1172,6 +1172,10 @@ Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
+
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
 
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
@@ -1512,7 +1516,7 @@ function::
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
     ... # doctest: +ELLIPSIS
-    array([ 0.967...,  1.        ])
+    array([0.967..., 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.990...
@@ -1547,10 +1551,10 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> mean_absolute_error(y_true, y_pred)
   0.75
   >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-  array([ 0.5,  1. ])
+  array([0.5, 1. ])
   >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
   ... # doctest: +ELLIPSIS
-  0.849...
+  0.85...
 
 .. _mean_absolute_percentage_error:
 
@@ -1722,7 +1726,7 @@ Here is a small example of usage of the :func:`r2_score` function::
   0.936...
   >>> r2_score(y_true, y_pred, multioutput='raw_values')
   ... # doctest: +ELLIPSIS
-  array([ 0.965...,  0.908...])
+  array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
   ... # doctest: +ELLIPSIS
   0.925...
@@ -1798,7 +1802,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.97...
 

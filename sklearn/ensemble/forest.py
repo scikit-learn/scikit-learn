@@ -942,7 +942,7 @@ class RandomForestClassifier(ForestClassifier):
                 min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [ 0.17287856  0.80608704  0.01884792  0.00218648]
+    [0.17287856 0.80608704 0.01884792 0.00218648]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1182,7 +1182,7 @@ class RandomForestRegressor(ForestRegressor):
                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
-    [ 0.17339552  0.81594114  0.          0.01066333]
+    [0.17339552 0.81594114 0.         0.01066333]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-2.50699856]
 

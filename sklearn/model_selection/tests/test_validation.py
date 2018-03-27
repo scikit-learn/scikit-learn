@@ -7,6 +7,7 @@ import tempfile
 import os
 from time import sleep
 
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.exceptions import FitFailedWarning
@@ -338,10 +339,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -571,7 +572,7 @@ def test_cross_val_score_precomputed():
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
@@ -1461,3 +1462,23 @@ def test_fit_and_score():
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
+
+    # check if exception is raised, with default error_score argument
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args)
+
+    # check if warning was raised, with default error_score argument
+    warning_message = ("From version 0.22, errors during fit will result "
+                       "in a cross validation score of NaN by default. Use "
+                       "error_score='raise' if you want an exception "
+                       "raised or error_score=np.nan to adopt the "
+                       "behavior from version 0.22.")
+    with pytest.raises(ValueError):
+        assert_warns_message(FutureWarning, warning_message, _fit_and_score,
+                             *fit_and_score_args)
+
+    fit_and_score_kwargs = {'error_score': 'raise'}
+    # check if exception was raised, with default error_score='raise'
+    assert_raise_message(ValueError, "Failing classifier failed as required",
+                         _fit_and_score, *fit_and_score_args,
+                         **fit_and_score_kwargs)

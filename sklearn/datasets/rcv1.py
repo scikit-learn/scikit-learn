@@ -70,7 +70,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False):
+               random_state=None, shuffle=False, return_X_y=False):
     """Load the RCV1 multilabel dataset, downloading it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
@@ -102,15 +102,19 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    return_X_y : boolean, default=False. If True, returns ``(dataset.data,
+    dataset.target)`` instead of a Bunch object. See below for more
+    information about the `dataset.data` and `dataset.target` object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -131,6 +135,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     dataset.DESCR : string
         Description of the RCV1 dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
 
     References
     ----------
@@ -181,7 +189,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
-
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -253,6 +260,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
+
+    if return_X_y:
+        return X, y
 
     return Bunch(data=X, target=y, sample_id=sample_id,
                  target_names=categories, DESCR=__doc__)
