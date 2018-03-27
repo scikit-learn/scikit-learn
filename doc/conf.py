@@ -243,9 +243,7 @@ sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
-        'sklearn': None},
-    'expected_failing_examples':
-        ['../examples/applications/plot_stock_market.py'],
+        'sklearn': None}
 }
 
 
