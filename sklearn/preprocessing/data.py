@@ -568,7 +568,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
     Statistics in medicine, 27(15), 2865-2873.
     """  # noqa
-
+    
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -670,7 +670,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if not 1 <= self.with_std <= 2:
                 raise ValueError("Invalid factor: %s" %
                                  str(self.with_std))
-            self.scale_ = _handle_zeros_in_scale(self.with_std * np.sqrt(self.var_))
+            self.scale_ = _handle_zeros_in_scale(
+                                self.with_std * np.sqrt(self.var_))
         else:
             self.scale_ = None
 
