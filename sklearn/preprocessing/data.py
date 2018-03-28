@@ -1308,7 +1308,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         for row in powers:
             inds = np.where(row)[0]
             if len(inds):
-                name = " ".join("%s^%d" % (input_features[ind], exp)
+                name = "*".join("%s^%d" % (input_features[ind], exp)
                                 if exp != 1 else input_features[ind]
                                 for ind, exp in zip(inds, row[inds]))
             else:
