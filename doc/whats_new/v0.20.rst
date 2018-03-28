@@ -91,8 +91,6 @@ Model evaluation
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-- Added the :func:`metrics.mean_absolute_percentage_error` metric and the associated
-  scorer for regression problems. :issue:`10711` by :user:`Mohamed Ali Jamaoui <mohamed-ali>`
 
 Decomposition, manifold learning and clustering
 
@@ -105,6 +103,8 @@ Metrics
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
+- Added the :func:`metrics.mean_absolute_percentage_error` metric and the associated
+  scorer for regression problems. :issue:`10711` by :user:`Mohamed Ali Jamaoui <mohamed-ali>`
 
 Enhancements
 ............
