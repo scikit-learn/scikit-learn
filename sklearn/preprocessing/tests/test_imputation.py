@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import KNNImputer
 from sklearn.metrics.pairwise import masked_euclidean_distances
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
@@ -392,8 +393,8 @@ def test_knn_imputation_shape():
     X[0, 0] = np.nan
 
     for weights in ['uniform', 'distance']:
-        for max_neighbors in range(1, 6):
-            imputer = KNNImputer(max_neighbors=max_neighbors, weights=weights)
+        for n_neighbors in range(1, 6):
+            imputer = KNNImputer(n_neighbors=n_neighbors, weights=weights)
             X_imputed = imputer.fit_transform(X)
             assert_equal(X_imputed.shape, (n_rows, n_cols))
 
@@ -401,12 +402,12 @@ def test_knn_imputation_shape():
 def test_knn_imputation_zero():
     # Test imputation when missing_values == 0
     missing_values = 0
-    max_neighbors = 2
+    n_neighbors = 2
     imputer = KNNImputer(missing_values=missing_values,
-                         max_neighbors=max_neighbors,
+                         n_neighbors=n_neighbors,
                          weights="uniform")
     imputer_nan = KNNImputer(missing_values="NaN",
-                             max_neighbors=max_neighbors,
+                             n_neighbors=n_neighbors,
                              weights="uniform")
 
     # Test with missing_values=0 when NaN present
@@ -595,8 +596,8 @@ def test_default_with_invalid_input():
         [3, 2, 3, 3, 8],
         [6, 6, 2, 5, 13],
     ])
-    msg = "There are only %d samples, but max_neighbors=%d." % \
-          (X.shape[0], imputer.max_neighbors)
+    msg = "There are only %d samples, but n_neighbors=%d." % \
+          (X.shape[0], imputer.n_neighbors)
     assert_raise_message(ValueError, msg, imputer.fit, X)
 
     # Test with inf present
@@ -633,7 +634,7 @@ def test_default_with_invalid_input():
     assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
 
 
-def test_knn_max_neighbors():
+def test_knn_n_neighbors():
 
     X = np.array([
         [0,      0],
@@ -657,9 +658,9 @@ def test_knn_max_neighbors():
         [14,     13]
     ])
 
-    max_neighbors = 1
-    imputer = KNNImputer(max_neighbors=max_neighbors)
-    imputer_plus1 = KNNImputer(max_neighbors=max_neighbors + 1)
+    n_neighbors = 1
+    imputer = KNNImputer(n_neighbors=n_neighbors)
+    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors + 1)
 
     assert_array_equal(imputer.fit_transform(X), X_imputed_1NN)
     assert_array_equal(imputer.statistics_, statistics_mean)
@@ -687,9 +688,9 @@ def test_knn_max_neighbors():
         [14,     13]
     ])
 
-    max_neighbors = 6
-    imputer = KNNImputer(max_neighbors=6)
-    imputer_plus1 = KNNImputer(max_neighbors=max_neighbors + 1)
+    n_neighbors = 6
+    imputer = KNNImputer(n_neighbors=6)
+    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors + 1)
 
     assert_array_equal(imputer.fit_transform(X), X_imputed_6NN)
     assert_array_equal(imputer.statistics_, statistics_mean)
@@ -744,7 +745,7 @@ def test_weight_distance():
     # Test with "distance" weight
     nn = NearestNeighbors(metric="masked_euclidean")
     nn.fit(X)
-    # Get distance of "max_neighbors" neighbors of row 1
+    # Get distance of "n_neighbors" neighbors of row 1
     dist, index = nn.kneighbors()
     dist = dist[1, :]
     index = index[1, :]
@@ -780,7 +781,7 @@ def test_weight_distance():
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed_distance2,
                               decimal=6)
 
-    # Test with weights = "distance" and max_neighbors=2
+    # Test with weights = "distance" and n_neighbors=2
     X = np.array([
         [np.nan, 0,      0],
         [2,      1,      2],
@@ -796,7 +797,7 @@ def test_weight_distance():
         [4,      5,     5],
     ])
 
-    imputer = KNNImputer(max_neighbors=2, weights="distance")
+    imputer = KNNImputer(n_neighbors=2, weights="distance")
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed,
                               decimal=4)
     assert_array_equal(imputer.statistics_, statistics_mean)
@@ -895,7 +896,7 @@ def test_callable_metric():
         [5, 9, 11, 10.]
     ])
 
-    imputer = KNNImputer(max_neighbors=2, metric=custom_callable)
+    imputer = KNNImputer(n_neighbors=2, metric=custom_callable)
     assert_array_equal(imputer.fit_transform(X), X_imputed)
 
 
@@ -903,31 +904,77 @@ def test_complete_features():
 
     # Test with use_complete=True
     X = np.array([
-        [0,      0, 0,       np.nan],
-        [1,      1, 1,       np.nan],
-        [2,      2, np.nan,  2],
-        [3,      3, 3,       3],
-        [4,      4, 4,       4],
-        [5,      5, 5,       5],
-        [6,      6, 6,       6],
-        [np.nan, 7, 7,       7]
+        [0,      np.nan,    0,       np.nan],
+        [1,      1,         1,       np.nan],
+        [2,      2,         np.nan,  2],
+        [3,      3,         3,       3],
+        [4,      4,         4,       4],
+        [5,      5,         5,       5],
+        [6,      6,         6,       6],
+        [np.nan, 7,         7,       7]
     ])
 
+    r0c1 = np.mean(X[1:6, 1])
     r0c3 = np.mean(X[2:-1, -1])
     r1c3 = np.mean(X[2:-1, -1])
     r2c2 = np.nanmean(X[:6, 2])
     r7c0 = np.mean(X[2:-1, 0])
 
     X_imputed = np.array([
-        [0,     0, 0,    r0c3],
-        [1,     1, 1,    r1c3],
-        [2,     2, r2c2, 2],
-        [3,     3, 3,    3],
-        [4,     4, 4,    4],
-        [5,     5, 5,    5],
-        [6,     6, 6,    6],
-        [r7c0,  7, 7,    7]
+        [0,     r0c1,   0,    r0c3],
+        [1,     1,      1,    r1c3],
+        [2,     2,      r2c2, 2],
+        [3,     3,      3,    3],
+        [4,     4,      4,    4],
+        [5,     5,      5,    5],
+        [6,     6,      6,    6],
+        [r7c0,  7,      7,    7]
     ])
 
     imputer_comp = KNNImputer(use_complete=True)
     assert_array_almost_equal(imputer_comp.fit_transform(X), X_imputed)
+
+
+def test_complete_features_weighted():
+
+    # Test with use_complete=True
+    X = np.array([
+        [0,      0,     0,       np.nan],
+        [1,      1,     1,       np.nan],
+        [2,      2,     np.nan,  2],
+        [3,      3,     3,       3],
+        [4,      4,     4,       4],
+        [5,      5,     5,       5],
+        [6,      6,     6,       6],
+        [np.nan, 7,     7,       7]
+    ])
+
+    dist = pairwise_distances(X,
+                              metric="masked_euclidean",
+                              squared=False)
+
+    # Calculate weights
+    r0c3_w = 1.0 / dist[0, 2:-1]
+    r1c3_w = 1.0 / dist[1, 2:-1]
+    r2c2_w = 1.0 / dist[2, (0, 1, 3, 4, 5)]
+    r7c0_w = 1.0 / dist[7, 2:7]
+
+    # Calculate weighted averages
+    r0c3 = np.average(X[2:-1, -1], weights=r0c3_w)
+    r1c3 = np.average(X[2:-1, -1], weights=r1c3_w)
+    r2c2 = np.average(X[(0, 1, 3, 4, 5), 2], weights=r2c2_w)
+    r7c0 = np.average(X[2:7, 0], weights=r7c0_w)
+
+    X_imputed = np.array([
+        [0,     0,  0,    r0c3],
+        [1,     1,  1,    r1c3],
+        [2,     2,  r2c2, 2],
+        [3,     3,  3,    3],
+        [4,     4,  4,    4],
+        [5,     5,  5,    5],
+        [6,     6,  6,    6],
+        [r7c0,  7,  7,    7]
+    ])
+
+    imputer_comp_wt = KNNImputer(weights="distance", use_complete=True)
+    assert_array_almost_equal(imputer_comp_wt.fit_transform(X), X_imputed)

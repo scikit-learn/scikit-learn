@@ -10,11 +10,13 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
+# from ..neighbors.base import _get_weights
 from ..utils import check_array
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-
+from ..utils import _get_n_jobs
+from ..metrics import pairwise_distances
 from ..externals import six
 
 zip = six.moves.zip
@@ -60,6 +62,52 @@ def _most_frequent(array, extra_value, n_repeat):
             return most_frequent_value
         else:
             return extra_value
+
+
+# Skeletal version of KNeighborsMixin.kneighbors()
+def _neighbors(X, donor_X=None, metric="masked_euclidean", n_jobs=1,
+               **metric_params):
+    """Finds the unsorted K-neighbors of a point.
+
+    Returns unsorted indices of and distances to the neighbors of each point.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        The samples whose neighbors are to be evaluated
+
+    donor_X : array-like, shape (n_query, n_features), \
+            or (n_query, n_indexed) if metric == 'precomputed'
+        The query point or points.
+        If not provided, neighbors of each indexed point are returned.
+        In this case, the query point is not considered its own neighbor.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
+    Returns
+    -------
+    dist : array
+        Array representing the unsorted lengths to points, only present if
+        return_distance=True
+
+    ind : array
+        Indices of the unsorted nearest points in the population matrix.
+
+    """
+    n_samples, _ = X.shape
+    sample_range = np.arange(n_samples)[:, None]
+
+    n_jobs = _get_n_jobs(n_jobs)
+    dist = pairwise_distances(X, donor_X,
+                              metric=metric,
+                              n_jobs=n_jobs,
+                              squared=True,
+                              **metric_params)
+    neigh_ind = np.argsort(dist[sample_range, :])
+
+    return neigh_ind
 
 
 # Code for function _unique1d taken directly from Numpy
@@ -533,7 +581,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 class KNNImputer(BaseEstimator, TransformerMixin):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
-    Each sample's missing values are imputed from up to ``max_neighbors``
+    Each sample's missing values are imputed from up to ``n_neighbors``
     nearest neighbors found in the training set. Each missing feature is then
     imputed as the average, either weighted or unweighted, of these neighbors
     who have a value for it. Where all neighbors have that feature value
@@ -546,7 +594,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         `missing_values` will be imputed. For missing values encoded as
         ``np.nan``, use the string value "NaN".
 
-    max_neighbors : int, optional (default = 5)
+    n_neighbors : int, optional (default = 5)
         Maximum number of neighboring samples to use for imputation. When any
         of the neighbors themselves have the feature value missing then the
         remaining neighbors, if any, that have the feature value available are
@@ -615,7 +663,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing.imputation import KNNImputer
     >>> nan = float("NaN")
     >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
-    >>> imputer = KNNImputer(max_neighbors=2, weights="uniform")
+    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
     >>> imputer.fit_transform(X)
     array([[ 1. ,  2. ,  4. ],
            [ 3. ,  4. ,  3. ],
@@ -623,13 +671,13 @@ class KNNImputer(BaseEstimator, TransformerMixin):
            [ 8. ,  8. ,  7. ]])
     """
 
-    def __init__(self, missing_values="NaN", max_neighbors=5,
+    def __init__(self, missing_values="NaN", n_neighbors=5,
                  weights="uniform", metric="masked_euclidean",
                  row_max_missing=0.5, col_max_missing=0.8,
                  use_complete=False, copy=True):
 
         self.missing_values = missing_values
-        self.max_neighbors = max_neighbors
+        self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
         self.row_max_missing = row_max_missing
@@ -685,21 +733,22 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             X = X[~bad_rows, :]
 
         # Check if sufficient neighboring samples available
-        if X.shape[0] < self.max_neighbors:
-            raise ValueError("There are only %d samples, but max_neighbors=%d."
-                             % (X.shape[0], self.max_neighbors))
+        if X.shape[0] < self.n_neighbors:
+            raise ValueError("There are only %d samples, but n_neighbors=%d."
+                             % (X.shape[0], self.n_neighbors))
 
         # Instantiate NN object, get column means, and store in statistics_
-        neigh = NearestNeighbors(n_neighbors=self.max_neighbors,
+        neigh = NearestNeighbors(n_neighbors=self.n_neighbors,
                                  metric=self.metric,
                                  metric_params={"missing_values":
                                                 self.missing_values})
         self._fitted_neighbors = neigh.fit(X)
+        # self.fitted_X_ = X
         self.statistics_ = X_col_means
 
         return self
 
-    def _get_weight_matrix(self, fitted_X, mask, adjusted_max_neighbors,
+    def _get_weight_matrix(self, fitted_X, mask, adjusted_n_neighbors,
                            receiver_row_index, row_repeats,
                            knn_row_index, knn_distances):
         """Get the weight matrix for the donors"""
@@ -708,7 +757,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         from ..neighbors.base import _get_weights
 
         # If different X in transform, get a new mask
-        if self.max_neighbors == adjusted_max_neighbors:
+        if self.n_neighbors == adjusted_n_neighbors:
             nbors_mask = _get_mask(fitted_X[knn_row_index],
                                    value_to_mask=self.missing_values)
         else:
@@ -733,10 +782,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             weight_matrix = np.repeat(weight_matrix,
                                       row_repeats, axis=0).ravel()
             weight_matrix = weight_matrix.reshape(
-                (-1, adjusted_max_neighbors))
+                (-1, adjusted_n_neighbors))
         return weight_matrix
 
-    def _transform(self, X, adjusted_max_neighbors):
+    def _transform(self, X, adjusted_n_neighbors):
         """Impute all missing values in X.
 
         Parameters
@@ -744,14 +793,15 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         X : {array-like}, shape = [n_samples, n_features]
             The input data to complete.
 
-        adjusted_max_neighbors : int
+        adjusted_n_neighbors : int
             Depending on the calling method, the default value must
-            either be equal to max_neighbors or max_neighbors + 1.
+            either be equal to n_neighbors or n_neighbors + 1.
             If the calling method is transform(), then its value needs to be
-            equal to max_neighbors and if calling method is fit_transform()
-            then its value must be equal to max_neighbors + 1.
+            equal to n_neighbors and if calling method is fit_transform()
+            then its value must be equal to n_neighbors + 1.
         """
-
+        # Import here to avoud circular import
+        from ..neighbors.base import _get_weights
         check_is_fitted(self, 'statistics_')
         force_all_finite = False if self.missing_values in ["NaN",
                                                             np.nan] else True
@@ -764,11 +814,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         # Get fitted data and ensure correct dimension
         fitted_X = self._fitted_neighbors._fit_X
-        if X.shape[1] != fitted_X.shape[1]:
+        n_rows_fit_X, n_cols_fit_X = fitted_X.shape
+        n_rows_X, n_cols_X = X.shape
+
+        if n_cols_X != n_cols_fit_X:
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed.")
         mask = _get_mask(X, self.missing_values)
-        n_rows_X, n_cols_X = X.shape
+
         row_total_missing = mask.sum(axis=1)
         if not np.any(row_total_missing):
             return X
@@ -789,90 +842,58 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         if np.any(row_has_missing):
             if self.use_complete:
                 # Initializations
+
                 # Mask for fitted_X
                 mask_fx = _get_mask(fitted_X, np.nan)
 
-                # Locate unique patterns
-                patterns, row_pat_idx = _unique(
-                    mask, return_inverse=True, axis=0)
-
-                # Get row idx for receivers (missing)
-                receiver_row_missing_index, _ = np.where(mask)
+                # Get row index of missing and distance from donors
+                n_adj_samples, _ = X[row_has_missing].shape
+                dist = pairwise_distances(X,
+                                          fitted_X,
+                                          metric=self.metric,
+                                          squared=False)
 
                 # For every pattern, index receivers and potential donors
-                for p in range(len(patterns)):
-                    if not np.any(patterns[p]):
+                for c in range(n_cols_X):
+                    if not np.any(mask[:, c], axis=0):
                         continue
-                    # receivers are those with pattern 'p'
-                    row_has_missing_pat = (row_pat_idx == p)
+                    # Row index for receivers and potential donors (pdonors)
+                    receivers_row_idx = np.where(mask[:, c])[0]
+                    pdonors_row_idx = np.where(~mask_fx[:, c])[0]
 
-                    # Donors have features missing in receivers available
-                    # The bitwise-AND captures if something is missing in both
-                    donor_row_idx = ~np.any(patterns[p] & mask_fx, axis=1)
+                    # Get distance from potential donors
+                    dist_pdonors = dist[receivers_row_idx][:, pdonors_row_idx]
+                    dist_pdonors = dist_pdonors.reshape(-1,
+                                                        len(pdonors_row_idx))
+                    pdonors_idx = np.argpartition(
+                        dist_pdonors, self.n_neighbors - 1, axis=1)
 
-                    # Change donor set to ones not missing relevant features
-                    self._fitted_neighbors._fit_X = fitted_X[donor_row_idx]
-                    if len(self._fitted_neighbors._fit_X) < self.max_neighbors:
-                        err_msg = "Insufficient neighbors with feature values."
-                        raise ValueError(err_msg)
-
-                    # Row index of receivers & identify potential donors
-                    receiver_row_index = np.where(
-                        row_has_missing_pat)[0].reshape((-1, 1))
-                    neighbors = self._fitted_neighbors.kneighbors(
-                        X[row_has_missing_pat, :],
-                        n_neighbors=self.max_neighbors)
-
-                    # Get row index, distance, and weights of donors
-                    knn_distances, knn_row_index = neighbors
-                    row_repeats = row_total_missing[row_has_missing_pat]
-
-                    # Weighting: Set self/degenerate donor(s) distance to inf
-                    weight_matrix = None
-                    if self.weights in ["distance"] or callable(self.weights):
-                        weight_matrix = self._get_weight_matrix(
-                            self._fitted_neighbors._fit_X,
-                            mask,
-                            self.max_neighbors,
-                            receiver_row_index,
-                            row_repeats,
-                            knn_row_index,
-                            knn_distances
-                        )
-
-                    # Repeat each set donor indices by
-                    # missing count in the corresponding recipient row
-                    knn_row_index_repeat = np.repeat(
-                        knn_row_index, row_repeats, axis=0).ravel()
-
-                    # Get repeated column index of donors
-                    _, receiver_col_missing_index = \
-                        np.where(mask[row_has_missing_pat])
-                    knn_col_index_repeat = np.repeat(
-                        receiver_col_missing_index,
-                        self.max_neighbors)
+                    # Get final donors row index from pdonors
+                    donors_idx = pdonors_idx[:, :self.n_neighbors]
+                    # Get weights or None
+                    dist_pdonors_rows = np.arange(len(donors_idx))[:, None]
+                    weight_matrix = _get_weights(
+                        dist_pdonors[
+                            dist_pdonors_rows, donors_idx], self.weights)
+                    donor_row_idx_ravel = donors_idx.ravel()
 
                     # Retrieve donor cells and calculate kNN score
-                    donors = self._fitted_neighbors._fit_X[
-                        knn_row_index_repeat, knn_col_index_repeat].reshape(
-                        (-1, self.max_neighbors))
+                    fitted_X_temp = fitted_X[pdonors_row_idx]
+                    donors = fitted_X_temp[donor_row_idx_ravel, c].reshape(
+                        (-1, self.n_neighbors))
                     donors_mask = _get_mask(donors, self.missing_values)
                     donors = np.ma.array(donors, mask=donors_mask)
 
                     # Final imputation
                     imputed = np.ma.average(donors, axis=1,
                                             weights=weight_matrix)
-                    X[np.where(row_has_missing_pat)[0],
-                      receiver_col_missing_index] = imputed.data
-
-                    # Recover original dataset
-                    self._fitted_neighbors._fit_X = fitted_X
+                    X[receivers_row_idx, c] = imputed.data
             else:
                 # Row index of receivers & identify potential donors
                 receiver_row_index = np.where(
                     row_has_missing)[0].reshape((-1, 1))
                 neighbors = self._fitted_neighbors.kneighbors(
-                    X[row_has_missing, :], n_neighbors=adjusted_max_neighbors)
+                    X[row_has_missing, :], n_neighbors=adjusted_n_neighbors)
 
                 # Get row index, distance, and weights of donors
                 knn_distances, knn_row_index = neighbors
@@ -884,7 +905,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                     weight_matrix = self._get_weight_matrix(
                         fitted_X,
                         mask,
-                        adjusted_max_neighbors,
+                        adjusted_n_neighbors,
                         receiver_row_index,
                         row_repeats,
                         knn_row_index,
@@ -900,17 +921,17 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 receiver_row_missing_index, receiver_col_missing_index = \
                     np.where(mask)
                 knn_col_index_repeat = np.repeat(receiver_col_missing_index,
-                                                 adjusted_max_neighbors)
+                                                 adjusted_n_neighbors)
 
                 # Retrieve donor cells and calculate kNN score
                 donors = fitted_X[
                     knn_row_index_repeat, knn_col_index_repeat].reshape(
-                    (-1, adjusted_max_neighbors))
+                    (-1, adjusted_n_neighbors))
                 donors_mask = _get_mask(donors, self.missing_values)
                 donors = np.ma.array(donors, mask=donors_mask)
 
-                # Warning if donor count < max_neighbors
-                if np.any(donors_mask.sum(axis=1) < self.max_neighbors):
+                # Warning if donor count < n_neighbors
+                if np.any(donors_mask.sum(axis=1) < self.n_neighbors):
                     warnings.warn("One or more donor(s) have the relevant "
                                   "feature value missing.")
 
@@ -955,7 +976,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             Returns imputed dataset.
         """
         return self.fit(X)._transform(
-            X, adjusted_max_neighbors=self.max_neighbors + 1)
+            X, adjusted_n_neighbors=self.n_neighbors + 1)
 
     def transform(self, X):
         """Impute all missing values in X.
@@ -978,4 +999,4 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             Returns imputed dataset.
         """
         check_is_fitted(self, 'statistics_')
-        return self._transform(X, adjusted_max_neighbors=self.max_neighbors)
+        return self._transform(X, adjusted_n_neighbors=self.n_neighbors)
