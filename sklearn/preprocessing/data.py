@@ -568,7 +568,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
     Statistics in medicine, 27(15), 2865-2873.
     """  # noqa
-    
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
