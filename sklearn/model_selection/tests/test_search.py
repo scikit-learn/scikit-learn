@@ -33,6 +33,7 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -350,7 +351,11 @@ def test_return_train_score_warn():
     for estimator in estimators:
         for val in [True, False, 'warn']:
             estimator.set_params(return_train_score=val)
-            result[val] = assert_no_warnings(estimator.fit, X, y).cv_results_
+            result[val] = assert_no_warnings(
+                ignore_warnings(estimator.fit, category=ConvergenceWarning),
+                X,
+                y
+                ).cv_results_
 
     train_keys = ['split0_train_score', 'split1_train_score',
                   'split2_train_score', 'mean_train_score', 'std_train_score']
