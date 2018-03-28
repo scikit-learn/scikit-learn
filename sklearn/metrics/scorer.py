@@ -491,7 +491,6 @@ mean_absolute_error_scorer = make_scorer(mean_absolute_error,
 mean_absolute_error_scorer._deprecation_msg = deprecation_msg
 neg_mape_scorer = make_scorer(mean_absolute_percentage_error,
                               greater_is_better=False)
-
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 deprecation_msg = ('Scoring method median_absolute_error was renamed to '
