@@ -17,7 +17,8 @@ from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
 from .voting_classifier import VotingClassifier
-from .average_regressor import AverageRegressor
+# from .average_regressor import AverageRegressor
+from .voting_classifier import AverageRegressor
 
 from . import bagging
 from . import forest
