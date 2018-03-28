@@ -666,9 +666,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                                           self.n_samples_seen_)
 
         if self.with_std:
-            if not 1 <= self.with_std <= 2:
-                raise ValueError("Invalid factor: %s" %
-                                 str(self.with_std))
             self.scale_ = _handle_zeros_in_scale(
                                 self.with_std * np.sqrt(self.var_))
         else:
