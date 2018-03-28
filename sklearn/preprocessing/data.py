@@ -508,11 +508,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean or int, 1 by default
+    with_std : boolean, 1 or 2, True by default
         If 1 or 2, scale the data to unit variance (or equivalently,
         unit standard deviation) using scaling factor of 1 or 2 standard 
-        deviation.
-
+        deviation.See [1]
+        
     Attributes
     ----------
     scale_ : ndarray, shape (n_features,)
@@ -562,6 +562,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+    
+    References
+    ----------
+    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
+    Statistics in medicine, 27(15), 2865-2873.
     """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
