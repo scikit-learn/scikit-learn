@@ -619,10 +619,18 @@ class RadiusNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            results = self._tree.query_radius(X, radius,
-                                              return_distance=return_distance)
+
+            n_jobs = _get_n_jobs(self.n_jobs)
+            results = Parallel(n_jobs, backend='threading')(
+                delayed(self._tree.query_radius, check_pickle=False)(
+                    X[s], radius, return_distance)
+                for s in gen_even_slices(X.shape[0], n_jobs)
+            )
             if return_distance:
-                results = results[::-1]
+                neigh_ind, dist = tuple(zip(*results))
+                results = np.hstack(dist), np.hstack(neigh_ind)
+            else:
+                results = np.hstack(results)
         else:
             raise ValueError("internal: _fit_method not recognized")
 
