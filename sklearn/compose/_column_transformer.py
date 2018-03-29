@@ -110,7 +110,7 @@ or "remainder", optional
     --------
     >>> from sklearn.compose import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
-    >>> union = ColumnTransformer(
+    >>> ct = ColumnTransformer(
     ...     [("norm1", Normalizer(norm='l1'), [0, 1]),
     ...      ("norm2", Normalizer(norm='l1'), slice(2, 4))])
     >>> X = np.array([[0., 1., 2., 2.],
@@ -118,9 +118,9 @@ or "remainder", optional
     >>> # Normalizer scales each row of X to unit norm. Therefore, a separate
     >>> # scaling is applied for the two first and two last elements of each
     >>> # row independently.
-    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
-    array([[ 0. ,  1. ,  0.5,  0.5],
-           [ 0.5,  0.5,  0. ,  1. ]])
+    >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
+    array([[0. , 1. , 0.5, 0.5],
+           [0.5, 0.5, 0. , 1. ]])
 
     """
 
