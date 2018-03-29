@@ -351,11 +351,9 @@ def test_return_train_score_warn():
     for estimator in estimators:
         for val in [True, False, 'warn']:
             estimator.set_params(return_train_score=val)
-            result[val] = assert_no_warnings(
-                ignore_warnings(estimator.fit, category=ConvergenceWarning),
-                X,
-                y
-                ).cv_results_
+            fit_func = ignore_warnings(estimator.fit,
+                                       category=ConvergenceWarning)
+            result[val] = assert_no_warnings(fit_func, X, y).cv_results_
 
     train_keys = ['split0_train_score', 'split1_train_score',
                   'split2_train_score', 'mean_train_score', 'std_train_score']
