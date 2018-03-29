@@ -83,12 +83,6 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
@@ -314,12 +308,6 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -401,6 +389,10 @@ class KFold(_BaseKFold):
     The first ``n_samples % n_splits`` folds have size
     ``n_samples // n_splits + 1``, other folds have size
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
+
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting ``random_state``
+    to an integer.
 
     See also
     --------
@@ -749,12 +741,6 @@ class TimeSeriesSplit(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -1102,6 +1088,11 @@ class RepeatedKFold(_RepeatedSplits):
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [0 3] TEST: [1 2]
 
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting ``random_state``
+    to an integer.
 
     See also
     --------
@@ -1149,6 +1140,11 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [0 2] TEST: [1 3]
 
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting ``random_state``
+    to an integer.
 
     See also
     --------

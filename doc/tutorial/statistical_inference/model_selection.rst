@@ -19,7 +19,7 @@ better**.
     >>> y_digits = digits.target
     >>> svc = svm.SVC(C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
-    0.97999999999999998
+    0.98
 
 To get a better measure of prediction accuracy (which we can use as a
 proxy for goodness of fit of the model), we can successively split the
@@ -38,8 +38,8 @@ data in *folds* that we use for training and testing::
     ...     y_test  = y_train.pop(k)
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
-    >>> print(scores)
-    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
+    >>> print(scores)  # doctest: +ELLIPSIS
+    [0.934..., 0.956..., 0.939...]
 
 .. currentmodule:: sklearn.model_selection
 
@@ -71,8 +71,8 @@ This example shows an example usage of the ``split`` method.
 The cross-validation can then be performed easily::
 
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
-    ...          for train, test in k_fold.split(X_digits)]
-    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
+    ...          for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
+    [0.934..., 0.956..., 0.939...]
 
 The cross-validation score can be directly calculated using the
 :func:`cross_val_score` helper. Given an estimator, the cross-validation object
@@ -86,7 +86,7 @@ Refer the :ref:`metrics module <metrics>` to learn more on the available scoring
 methods.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold, n_jobs=-1)
-    array([ 0.93489149,  0.95659432,  0.93989983])
+    array([0.93489149, 0.95659432, 0.93989983])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
@@ -96,7 +96,7 @@ scoring method.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold,
     ...                 scoring='precision_macro')
-    array([ 0.93969761,  0.95911415,  0.94041254])
+    array([0.93969761, 0.95911415, 0.94041254])
 
    **Cross-validation generators**
 
@@ -237,7 +237,7 @@ a stratified 3-fold.
 
         >>> cross_val_score(clf, X_digits, y_digits)
         ...                                               # doctest: +ELLIPSIS
-        array([ 0.938...,  0.963...,  0.944...])
+        array([0.938..., 0.963..., 0.944...])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set ``gamma`` and the other one by

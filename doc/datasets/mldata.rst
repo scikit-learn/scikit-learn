@@ -34,7 +34,7 @@ of size 28x28 pixels, labeled from 0 to 9::
   >>> mnist.target.shape
   (70000,)
   >>> np.unique(mnist.target)
-  array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
+  array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 
 After the first download, the dataset is cached locally in the path
 specified by the ``data_home`` keyword argument, which defaults to

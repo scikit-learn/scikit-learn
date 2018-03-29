@@ -134,7 +134,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids
 that minimise the *inertia*, or within-cluster sum of squared criterion:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia, or the within-cluster sum of squares criterion,
 can be recognized as a measure of how internally coherent clusters are.
@@ -469,15 +469,15 @@ function of the gradient of the image.
  * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_face_segmentation.py`: Spectral clustering
-   to split the image of the raccoon face in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
+   to split the image of coins in regions.
 
-.. |face_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_face_segmentation.html
+.. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
-.. |face_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_face_segmentation.html
+.. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
 Different label assignment strategies
@@ -495,7 +495,7 @@ geometrical shape.
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
-|face_kmeans|                          |face_discretize|
+|coin_kmeans|                          |coin_discretize|
 =====================================  =====================================
 
 Spectral Clustering Graphs
@@ -631,12 +631,12 @@ merging to nearest neighbors as in :ref:`this example
 <sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`raccoon face <sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py>` example.
+:ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`: Ward clustering
-   to split the image of a raccoon face in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward clustering
+   to split the image of coins in regions.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
