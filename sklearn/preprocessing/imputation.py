@@ -337,6 +337,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
+
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
