@@ -160,7 +160,11 @@ Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
-
+- :class:`preprocessing.StandardScaler` can now scale using factor of 2
+  standard deviation as described in Gelman (2008).
+  :issue:`10864` by :user:`Parth Sharma <parth1993>` and
+  :user:`Tymoteusz Wołodźko <twolodzko>`
+  
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
