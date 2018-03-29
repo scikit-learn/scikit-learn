@@ -96,8 +96,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True,  True,  True,
-            False, False, False, False, False], dtype=bool)
+    array([ True,  True,  True,  True,  True, False, False, False, False,
+           False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
@@ -365,8 +365,8 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True,  True,  True,
-            False, False, False, False, False], dtype=bool)
+    array([ True,  True,  True,  True,  True, False, False, False, False,
+           False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 

@@ -35,6 +35,7 @@ from functools import partial
 import pickle
 from io import StringIO
 
+import pytest
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -995,3 +996,26 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
+
+
+@pytest.mark.parametrize("vec", [
+        HashingVectorizer(ngram_range=(2, 1)),
+        CountVectorizer(ngram_range=(2, 1)),
+        TfidfVectorizer(ngram_range=(2, 1))
+    ])
+def test_vectorizers_invalid_ngram_range(vec):
+    # vectorizers could be initialized with invalid ngram range
+    # test for raising error message
+    invalid_range = vec.ngram_range
+    message = ("Invalid value for ngram_range=%s "
+               "lower boundary larger than the upper boundary."
+               % str(invalid_range))
+
+    assert_raise_message(
+        ValueError, message, vec.fit, ["good news everyone"])
+    assert_raise_message(
+        ValueError, message, vec.fit_transform, ["good news everyone"])
+
+    if isinstance(vec, HashingVectorizer):
+        assert_raise_message(
+            ValueError, message, vec.transform, ["good news everyone"])

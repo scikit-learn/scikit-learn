@@ -96,7 +96,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     KNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
-    [ 0.5]
+    [0.5]
 
     See also
     --------
@@ -247,7 +247,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
-    [ 0.5]
+    [0.5]
 
     See also
     --------

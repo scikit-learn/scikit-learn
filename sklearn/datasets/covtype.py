@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_covtype(data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False):
+                  random_state=None, shuffle=False, return_X_y=False):
     """Load the covertype dataset, downloading it if necessary.
 
     Read more in the :ref:`User Guide <datasets>`.
@@ -57,15 +57,18 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    return_X_y : boolean, default=False. If True, returns ``(data.data,
+    data.target)`` instead of a Bunch object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -81,6 +84,9 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     dataset.DESCR : string
         Description of the forest covertype dataset.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -119,5 +125,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         rng.shuffle(ind)
         X = X[ind]
         y = y[ind]
+
+    if return_X_y:
+        return X, y
 
     return Bunch(data=X, target=y, DESCR=__doc__)

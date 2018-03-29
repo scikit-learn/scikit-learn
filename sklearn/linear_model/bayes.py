@@ -106,7 +106,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
             n_iter=300, normalize=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.])
+    array([1.])
 
     Notes
     -----
@@ -385,7 +385,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             n_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
             verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.])
+    array([1.])
 
     Notes
     -----

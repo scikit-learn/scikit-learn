@@ -106,7 +106,7 @@ time)::
   >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
   >>> scores                                              # doctest: +ELLIPSIS
-  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 The mean score and the 95\% confidence interval of the score estimate are hence
 given by::
@@ -122,7 +122,7 @@ scoring parameter::
   >>> scores = cross_val_score(
   ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
   >>> scores                                              # doctest: +ELLIPSIS
-  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -141,7 +141,7 @@ validation iterator instead, for instance::
   >>> cv = ShuffleSplit(n_splits=3, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.97...,  1.        ])
+  array([0.97..., 0.97..., 1.        ])
 
 
 .. topic:: Data transformation with held out data
@@ -168,7 +168,7 @@ validation iterator instead, for instance::
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
-      array([ 0.97...,  0.93...,  0.95...])
+      array([0.97..., 0.93..., 0.95...])
 
     See :ref:`combining_estimators`.
 
@@ -212,7 +212,7 @@ predefined scorer names::
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
-    array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
@@ -225,7 +225,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
      'train_prec_macro', 'train_rec_micro']
     >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
-    array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
+    array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
 
 Here is an example of ``cross_validate`` using a single metric::
 
@@ -245,16 +245,23 @@ prediction that was obtained for that element when it was in the test set. Only
 cross-validation strategies that assign all elements to a test set exactly once
 can be used (otherwise, an exception is raised).
 
-These prediction can then be used to evaluate the classifier::
 
-  >>> from sklearn.model_selection import cross_val_predict
-  >>> predicted = cross_val_predict(clf, iris.data, iris.target, cv=10)
-  >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
-  0.973...
+.. warning:: Note on inappropriate usage of cross_val_predict
 
-Note that the result of this computation may be slightly different from those
-obtained using :func:`cross_val_score` as the elements are grouped in different
-ways.
+    The result of :func:`cross_val_predict` may be different from those
+    obtained using :func:`cross_val_score` as the elements are grouped in
+    different ways. The function :func:`cross_val_score` takes an average
+    over cross-validation folds, whereas :func:`cross_val_predict` simply
+    returns the labels (or probabilities) from several distinct models
+    undistinguished. Thus, :func:`cross_val_predict` is not an appropriate
+    measure of generalisation error.
+
+
+The function :func:`cross_val_predict` is appropriate for:
+  - Visualization of predictions obtained from different models.
+  - Model blending: When predictions of one supervised estimator are used to
+    train another estimator in ensemble methods.
+
 
 The available cross validation iterators are introduced in the following
 section.
@@ -265,7 +272,7 @@ section.
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
-    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
 Cross validation iterators
