@@ -440,10 +440,10 @@ Imputer
 - Deprecate :class:`preprocessing.Imputer` and move the corresponding module to
   :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
-- The ``axis`` parameter was deprecated in this version.
-- Future (and default) behavior is equivalent to ``axis=0``
-  (impute along columns). Row-wise imputation can be performed with
-  FunctionTransformer (e.g.,
+
+- The ``axis`` parameter was deprecated in this version. Future (and default)
+  behavior is equivalent to ``axis=0`` (impute along columns). Row-wise
+  imputation can be performed with FunctionTransformer (e.g.,
   ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
 
 Outlier Detection models
