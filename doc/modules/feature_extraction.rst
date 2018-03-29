@@ -108,7 +108,7 @@ ColumnTransformer for heterogeneous data
 
 .. warning::
 
-    The :class:`experimental.ColumnTransformer <sklearn.experimental.ColumnTransformer>`
+    The :class:`compose.ColumnTransformer <sklearn.compose.ColumnTransformer>`
     class is experimental and the API is subject to change.
 
 Many datasets contain features of different types, say text, floats, and dates,
@@ -124,10 +124,10 @@ one of the following reasons:
 2. You may want to include the parameters of the preprocessors in a
    :ref:`parameter search <grid_search>`.
 
-The :class:`~sklearn.experimental.ColumnTransformer` helps performing different
+The :class:`~sklearn.compose.ColumnTransformer` helps performing different
 transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
-be parametrized. :class:`~sklearn.experimental.ColumnTransformer` works on
+be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
 arrays, sparse matrices, and
 `pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
 
@@ -146,7 +146,7 @@ variable, but apply a :class:`feature_extraction.text.CountVectorizer
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
-  >>> from sklearn.experimental import ColumnTransformer
+  >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),

@@ -309,7 +309,7 @@ and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
 
 When you want to apply different transformations to each field of the data,
-see the related class :class:`sklearn.experimental.ColumnTransformer`
+see the related class :class:`sklearn.compose.ColumnTransformer`
 (see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -

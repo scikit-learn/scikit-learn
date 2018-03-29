@@ -12,7 +12,7 @@ extraction and processing pipelines.  This scenario might occur when:
    require different processing pipelines.
 
 This example demonstrates how to use
-:class:`sklearn.experimental.ColumnTransformer` on a dataset containing
+:class:`sklearn.compose.ColumnTransformer` on a dataset containing
 different types of features.  We use the 20-newsgroups dataset and compute
 standard bag-of-words features for the subject line and body in separate
 pipelines as well as ad hoc features on the body. We combine them (with
@@ -39,7 +39,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline
-from sklearn.experimental import ColumnTransformer
+from sklearn.compose import ColumnTransformer
 from sklearn.svm import SVC
 
 

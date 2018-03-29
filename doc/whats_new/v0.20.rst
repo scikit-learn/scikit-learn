@@ -74,7 +74,7 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
-- Added :class:`experimental.ColumnTransformer`, which allows to apply
+- Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
   DataFrames. By `Andreas Müller`_ and `Joris Van den Bossche`_.
 

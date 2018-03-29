@@ -28,8 +28,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('covariance/tests')
     config.add_subpackage('cross_decomposition')
     config.add_subpackage('cross_decomposition/tests')
-    config.add_subpackage('experimental')
-    config.add_subpackage('experimental/tests')
     config.add_subpackage('feature_selection')
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('gaussian_process')

@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.experimental import ColumnTransformer, make_column_transformer
+from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.feature_extraction import DictVectorizer
