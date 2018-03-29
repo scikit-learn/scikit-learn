@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.experimental._column_transformer` module implements utilities
+The :mod:`sklearn.compose._column_transformer` module implements utilities
 to work with heterogeneous data and to apply different transformers to
 different columns.
 """
@@ -108,7 +108,7 @@ or "remainder", optional
 
     Examples
     --------
-    >>> from sklearn.experimental import ColumnTransformer
+    >>> from sklearn.compose import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> union = ColumnTransformer(
     ...     [("norm1", Normalizer(norm='l1'), [0, 1]),
@@ -542,7 +542,7 @@ def make_column_transformer(*transformers, **kwargs):
     Examples
     --------
     >>> from sklearn.preprocessing import StandardScaler, CategoricalEncoder
-    >>> from sklearn.experimental import make_column_transformer
+    >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
     ...     (StandardScaler(), ['numerical_column']),
     ...     (CategoricalEncoder(), ['categorical_column']))
