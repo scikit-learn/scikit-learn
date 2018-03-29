@@ -93,7 +93,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         - If X is not an array of floating values;
         - If X is sparse and `missing_values=0`;
-        - Otherwise X is encoded as a CSC matrix;
+        - If X is encoded as a CSR matrix;
 
     Attributes
     ----------

@@ -63,7 +63,7 @@ def _most_frequent(array, extra_value, n_repeat):
 
 @deprecated("Imputer was deprecated in version 0.20 and will be "
             "removed in 0.22. Import impute.SimpleImputer from "
-            "sklearn instead. The axis parameter was also deprecated")
+            "sklearn instead.")
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
@@ -336,14 +336,15 @@ class Imputer(BaseEstimator, TransformerMixin):
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
+        missing = np.arange(X.shape[not self.axis])[invalid_mask]
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
-                              "observed values")
+                              "observed values: %s" % missing)
             X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
-                             "missing values")
+                             "missing values: %s" % missing)
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
