@@ -65,16 +65,15 @@ else:
     __check_build  # avoid flakes unused variable error
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
-               'cross_validation', 'datasets', 'decomposition',
-               'discriminant_analysis', 'dummy', 'ensemble', 'exceptions',
-               'experimental', 'externals', 'feature_extraction',
+               'cross_validation', 'datasets', 'decomposition', 'dummy',
+               'ensemble', 'exceptions', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search',
                'isotonic', 'kernel_approximation', 'kernel_ridge',
                'learning_curve', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'multiclass', 'multioutput',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'impute', 'compose',
+               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context']
 
