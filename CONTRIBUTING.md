@@ -4,7 +4,7 @@ Contributing to scikit-learn
 
 **Note: This document is a 'getting started' summary for contributing code,
 documentation, testing, and filing issues.** Visit the [**Contributing
-page**](http://scikit-learn.org/stable/developers/contributing.html)
+page**](http://scikit-learn.org/dev/developers/contributing.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.
@@ -168,7 +168,7 @@ following rules before submitting:
 
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
-   [new algorithm requirements](http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
+   [new algorithm requirements](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -235,6 +235,6 @@ illustrating it.
 Further Information
 -------------------
 
-Visit the [Contributing Code](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
+Visit the [Contributing Code](http://scikit-learn.org/stable/developers/contributing.html#coding-guidelines)
 section of the website for more information including conforming to the
 API spec and profiling contributed code.
