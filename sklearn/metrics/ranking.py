@@ -715,8 +715,16 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
         out += (L / rank).mean()
-
-    return np.average(out / n_samples, weights=sample_weight)
+    
+    out /= n_samples
+    if sample_weight != None:
+        aux = 0.0
+        for weight in sample_weight:
+            aux += weight
+            out = out*weight
+        out /= aux
+    
+    return out
 
 
 def coverage_error(y_true, y_score, sample_weight=None):
