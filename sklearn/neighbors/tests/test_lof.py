@@ -15,7 +15,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns_message, assert_raises
 
 from sklearn.datasets import load_iris
 
@@ -51,7 +51,6 @@ def test_lof_performance():
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
-    X_train = np.r_[X + 2, X - 2]
     X_train = X[:100]
 
     # Generate some abnormal novel observations
@@ -72,15 +71,20 @@ def test_lof_performance():
 def test_lof_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
-    clf = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X_train)
+    clf1 = neighbors.LocalOutlierFactor(n_neighbors=2,
+                                        contamination=0.1).fit(X_train)
+    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X_train)
     s_0 = 2. * sqrt(2.) / (1. + sqrt(2.))
     s_1 = (1. + sqrt(2)) * (1. / (4. * sqrt(2.)) + 1. / (2. + 2. * sqrt(2)))
     # check predict()
-    assert_array_almost_equal(-clf.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_array_almost_equal(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_array_almost_equal(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf._decision_function([[2., 2.]]), [s_0])
-    # # check predict(one sample already in train)
-    assert_array_almost_equal(-clf._decision_function([[1., 1.]]), [s_1])
+    assert_array_almost_equal(-clf1._score_samples([[2., 2.]]), [s_0])
+    assert_array_almost_equal(-clf2._score_samples([[2., 2.]]), [s_0])
+    # check predict(one sample already in train)
+    assert_array_almost_equal(-clf1._score_samples([[1., 1.]]), [s_1])
+    assert_array_almost_equal(-clf2._score_samples([[1., 1.]]), [s_1])
 
 
 def test_lof_precomputed(random_state=42):
@@ -118,3 +122,29 @@ def test_n_neighbors_attribute():
                          "n_neighbors will be set to (n_samples - 1)",
                          clf.fit, X)
     assert_equal(clf.n_neighbors_, X.shape[0] - 1)
+
+
+def test_score_samples():
+    X_train = [[1, 1], [1, 2], [2, 1]]
+    clf1 = neighbors.LocalOutlierFactor(n_neighbors=2,
+                                        contamination=0.1).fit(X_train)
+    clf2 = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X_train)
+    assert_array_equal(clf1._score_samples([[2., 2.]]),
+                       clf1._decision_function([[2., 2.]]) + clf1.offset_)
+    assert_array_equal(clf2._score_samples([[2., 2.]]),
+                       clf2._decision_function([[2., 2.]]) + clf2.offset_)
+    assert_array_equal(clf1._score_samples([[2., 2.]]),
+                       clf2._score_samples([[2., 2.]]))
+
+
+def test_contamination():
+    X = [[1, 1], [1, 0]]
+    clf = neighbors.LocalOutlierFactor(contamination=0.6)
+    assert_raises(ValueError, clf.fit, X)
+
+
+def test_deprecation():
+    assert_warns_message(DeprecationWarning,
+                         'default contamination parameter 0.1 will change '
+                         'in version 0.22 to "auto"',
+                         neighbors.LocalOutlierFactor, )

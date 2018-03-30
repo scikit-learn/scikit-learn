@@ -6,7 +6,7 @@
 import scipy.sparse as sp
 import numpy as np
 
-from .fixes import sparse_min_max, bincount
+from .fixes import sparse_min_max
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
@@ -104,7 +104,7 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
-    function. Both must be initilized to 0-arrays of the proper size, i.e.
+    function. Both must be initialized to 0-arrays of the proper size, i.e.
     the number of features in X. last_n is the number of samples encountered
     until now.
 
@@ -302,9 +302,9 @@ def inplace_swap_row(X, m, n):
         Index of the row of X to be swapped.
     """
     if isinstance(X, sp.csc_matrix):
-        return inplace_swap_row_csc(X, m, n)
+        inplace_swap_row_csc(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return inplace_swap_row_csr(X, m, n)
+        inplace_swap_row_csr(X, m, n)
     else:
         _raise_typeerror(X)
 
@@ -329,9 +329,9 @@ def inplace_swap_column(X, m, n):
     if n < 0:
         n += X.shape[1]
     if isinstance(X, sp.csc_matrix):
-        return inplace_swap_row_csr(X, m, n)
+        inplace_swap_row_csr(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return inplace_swap_row_csc(X, m, n)
+        inplace_swap_row_csc(X, m, n)
     else:
         _raise_typeerror(X)
 
@@ -401,10 +401,10 @@ def count_nonzero(X, axis=None, sample_weight=None):
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:
-            return bincount(X.indices, minlength=X.shape[1])
+            return np.bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return bincount(X.indices, minlength=X.shape[1],
+            return np.bincount(X.indices, minlength=X.shape[1],
                             weights=weights)
     else:
         raise ValueError('Unsupported axis: {0}'.format(axis))

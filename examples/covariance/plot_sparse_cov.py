@@ -3,7 +3,7 @@
 Sparse inverse covariance estimation
 ======================================
 
-Using the GraphLasso estimator to learn a covariance and sparse precision
+Using the GraphicalLasso estimator to learn a covariance and sparse precision
 from a small number of samples.
 
 To estimate a probabilistic model (e.g. a Gaussian model), estimating the
@@ -43,8 +43,8 @@ Note that, the color range of the precision matrices is tweaked to
 improve readability of the figure. The full range of values of the
 empirical precision is not displayed.
 
-The alpha parameter of the GraphLasso setting the sparsity of the model is
-set by internal cross-validation in the GraphLassoCV. As can be
+The alpha parameter of the GraphicalLasso setting the sparsity of the model is
+set by internal cross-validation in the GraphicalLassoCV. As can be
 seen on figure 2, the grid to compute the cross-validation score is
 iteratively refined in the neighborhood of the maximum.
 """
@@ -56,10 +56,10 @@ print(__doc__)
 import numpy as np
 from scipy import linalg
 from sklearn.datasets import make_sparse_spd_matrix
-from sklearn.covariance import GraphLassoCV, ledoit_wolf
+from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
 import matplotlib.pyplot as plt
 
-##############################################################################
+# #############################################################################
 # Generate the data
 n_samples = 60
 n_features = 20
@@ -79,11 +79,11 @@ X = prng.multivariate_normal(np.zeros(n_features), cov, size=n_samples)
 X -= X.mean(axis=0)
 X /= X.std(axis=0)
 
-##############################################################################
+# #############################################################################
 # Estimate the covariance
 emp_cov = np.dot(X.T, X) / n_samples
 
-model = GraphLassoCV()
+model = GraphicalLassoCV()
 model.fit(X)
 cov_ = model.covariance_
 prec_ = model.precision_
@@ -91,14 +91,14 @@ prec_ = model.precision_
 lw_cov_, _ = ledoit_wolf(X)
 lw_prec_ = linalg.inv(lw_cov_)
 
-##############################################################################
+# #############################################################################
 # Plot the results
 plt.figure(figsize=(10, 6))
 plt.subplots_adjust(left=0.02, right=0.98)
 
 # plot the covariances
 covs = [('Empirical', emp_cov), ('Ledoit-Wolf', lw_cov_),
-        ('GraphLasso', cov_), ('True', cov)]
+        ('GraphicalLassoCV', cov_), ('True', cov)]
 vmax = cov_.max()
 for i, (name, this_cov) in enumerate(covs):
     plt.subplot(2, 4, i + 1)
@@ -111,7 +111,7 @@ for i, (name, this_cov) in enumerate(covs):
 
 # plot the precisions
 precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
-         ('GraphLasso', prec_), ('True', prec)]
+         ('GraphicalLasso', prec_), ('True', prec)]
 vmax = .9 * prec_.max()
 for i, (name, this_prec) in enumerate(precs):
     ax = plt.subplot(2, 4, i + 5)
@@ -121,7 +121,10 @@ for i, (name, this_prec) in enumerate(precs):
     plt.xticks(())
     plt.yticks(())
     plt.title('%s precision' % name)
-    ax.set_axis_bgcolor('.7')
+    if hasattr(ax, 'set_facecolor'):
+        ax.set_facecolor('.7')
+    else:
+        ax.set_axis_bgcolor('.7')
 
 # plot the model selection metric
 plt.figure(figsize=(4, 3))

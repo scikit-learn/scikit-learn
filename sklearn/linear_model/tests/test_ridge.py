@@ -11,8 +11,11 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
+
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -48,6 +51,7 @@ iris = datasets.load_iris()
 
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
+
 
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
@@ -135,6 +139,16 @@ def test_ridge_regression_sample_weights():
                     y * np.sqrt(sample_weight),
                     alpha=alpha, solver=solver)
                 assert_array_almost_equal(coefs, coefs2)
+
+
+def test_ridge_regression_convergence_fail():
+    rng = np.random.RandomState(0)
+    y = rng.randn(5)
+    X = rng.randn(5, 10)
+
+    assert_warns(ConvergenceWarning, ridge_regression,
+                 X, y, alpha=1.0, solver="sparse_cg",
+                 tol=0., max_iter=None, verbose=1)
 
 
 def test_ridge_sample_weights():
@@ -383,6 +397,16 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+def _test_ridge_cv_normalize(filter_):
+    ridge_cv = RidgeCV(normalize=True, cv=3)
+    ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
+
+    gs = GridSearchCV(Ridge(normalize=True), cv=3,
+                      param_grid={'alpha': ridge_cv.alphas})
+    gs.fit(filter_(10. * X_diabetes), y_diabetes)
+    assert_equal(gs.best_estimator_.alpha, ridge_cv.alpha_)
+
+
 def _test_ridge_cv(filter_):
     ridge_cv = RidgeCV()
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
@@ -462,6 +486,7 @@ def check_dense_sparse(test_func):
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
+                      _test_ridge_cv_normalize,
                       _test_ridge_diabetes,
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
@@ -564,8 +589,7 @@ def test_class_weights_cv():
 
 
 def test_ridgecv_store_cv_values():
-    # Test _RidgeCV's store_cv_values attribute.
-    rng = rng = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
 
     n_samples = 8
     n_features = 5
@@ -578,13 +602,38 @@ def test_ridgecv_store_cv_values():
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
     r.fit(x, y)
-    assert_equal(r.cv_values_.shape, (n_samples, n_alphas))
+    assert r.cv_values_.shape == (n_samples, n_alphas)
 
     # with len(y.shape) == 2
-    n_responses = 3
-    y = rng.randn(n_samples, n_responses)
+    n_targets = 3
+    y = rng.randn(n_samples, n_targets)
     r.fit(x, y)
-    assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+
+
+def test_ridge_classifier_cv_store_cv_values():
+    x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = np.array([1, 1, 1, -1, -1])
+
+    n_samples = x.shape[0]
+    alphas = [1e-1, 1e0, 1e1]
+    n_alphas = len(alphas)
+
+    r = RidgeClassifierCV(alphas=alphas, store_cv_values=True)
+
+    # with len(y.shape) == 1
+    n_targets = 1
+    r.fit(x, y)
+    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+
+    # with len(y.shape) == 2
+    y = np.array([[1, 1, 1, -1, -1],
+                  [1, -1, 1, -1, 1],
+                  [-1, -1, 1, -1, -1]]).transpose()
+    n_targets = y.shape[1]
+    r.fit(x, y)
+    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
 def test_ridgecv_sample_weight():
@@ -607,7 +656,7 @@ def test_ridgecv_sample_weight():
         gs = GridSearchCV(Ridge(), parameters, cv=cv)
         gs.fit(X, y, sample_weight=sample_weight)
 
-        assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
+        assert ridgecv.alpha_ == gs.best_estimator_.alpha
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
 
 
@@ -679,6 +728,34 @@ def test_sparse_design_with_sample_weights():
 
             assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
                                       decimal=6)
+
+
+def test_ridgecv_int_alphas():
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Integers
+    ridge = RidgeCV(alphas=(1, 10, 100))
+    ridge.fit(X, y)
+
+
+def test_ridgecv_negative_alphas():
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Negative integers
+    ridge = RidgeCV(alphas=(-1, -10, -100))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
+
+    # Negative floats
+    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
@@ -788,3 +865,64 @@ def test_errors_and_values_svd_helper():
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
+
+
+def test_dtype_match():
+    rng = np.random.RandomState(0)
+    alpha = 1.0
+
+    n_samples, n_features = 6, 5
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    solvers = ["svd", "sparse_cg", "cholesky", "lsqr"]
+    for solver in solvers:
+
+        # Check type consistency 32bits
+        ridge_32 = Ridge(alpha=alpha, solver=solver)
+        ridge_32.fit(X_32, y_32)
+        coef_32 = ridge_32.coef_
+
+        # Check type consistency 64 bits
+        ridge_64 = Ridge(alpha=alpha, solver=solver)
+        ridge_64.fit(X_64, y_64)
+        coef_64 = ridge_64.coef_
+
+        # Do the actual checks at once for easier debug
+        assert coef_32.dtype == X_32.dtype
+        assert coef_64.dtype == X_64.dtype
+        assert ridge_32.predict(X_32).dtype == X_32.dtype
+        assert ridge_64.predict(X_64).dtype == X_64.dtype
+        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+
+def test_dtype_match_cholesky():
+    # Test different alphas in cholesky solver to ensure full coverage.
+    # This test is separated from test_dtype_match for clarity.
+    rng = np.random.RandomState(0)
+    alpha = (1.0, 0.5)
+
+    n_samples, n_features, n_target = 6, 7, 2
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples, n_target)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    # Check type consistency 32bits
+    ridge_32 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_32.fit(X_32, y_32)
+    coef_32 = ridge_32.coef_
+
+    # Check type consistency 64 bits
+    ridge_64 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_64.fit(X_64, y_64)
+    coef_64 = ridge_64.coef_
+
+    # Do all the checks at once, like this is easier to debug
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
+    assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)

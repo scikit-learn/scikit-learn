@@ -18,8 +18,8 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
-from ..utils.fixes import argpartition
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..exceptions import NotFittedError
@@ -103,12 +103,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod
-    def __init__(self):
-        pass
-
-    def _init_params(self, n_neighbors=None, radius=None,
-                     algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, metric_params=None, n_jobs=1):
+    def __init__(self, n_neighbors=None, radius=None,
+                 algorithm='auto', leaf_size=30, metric='minkowski',
+                 p=2, metric_params=None, n_jobs=1):
 
         self.n_neighbors = n_neighbors
         self.radius = radius
@@ -118,45 +115,47 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.metric_params = metric_params
         self.p = p
         self.n_jobs = n_jobs
+        self._check_algorithm_metric()
 
-        if algorithm not in ['auto', 'brute',
-                             'kd_tree', 'ball_tree']:
-            raise ValueError("unrecognized algorithm: '%s'" % algorithm)
+    def _check_algorithm_metric(self):
+        if self.algorithm not in ['auto', 'brute',
+                                  'kd_tree', 'ball_tree']:
+            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
-        if algorithm == 'auto':
-            if metric == 'precomputed':
+        if self.algorithm == 'auto':
+            if self.metric == 'precomputed':
                 alg_check = 'brute'
-            else:
+            elif (callable(self.metric) or
+                  self.metric in VALID_METRICS['ball_tree']):
                 alg_check = 'ball_tree'
+            else:
+                alg_check = 'brute'
         else:
-            alg_check = algorithm
+            alg_check = self.algorithm
 
-        if callable(metric):
-            if algorithm == 'kd_tree':
+        if callable(self.metric):
+            if self.algorithm == 'kd_tree':
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
                     "kd_tree algorithm does not support callable metric '%s'"
-                    % metric)
-        elif metric not in VALID_METRICS[alg_check]:
+                    % self.metric)
+        elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
-                             % (metric, algorithm))
+                             % (self.metric, self.algorithm))
 
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
                           "The corresponding parameter from __init__ "
                           "is ignored.", SyntaxWarning, stacklevel=3)
-            effective_p = metric_params['p']
+            effective_p = self.metric_params['p']
         else:
             effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
-        self._fit_X = None
-        self._tree = None
-        self._fit_method = None
-
     def _fit(self, X):
+        self._check_algorithm_metric()
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -210,7 +209,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
-            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
+            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute'] \
+                    and not callable(self.effective_metric_):
+
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
             self._fit_X = X.copy()
@@ -229,8 +230,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
-                else:
+                elif (callable(self.effective_metric_) or
+                        self.effective_metric_ in VALID_METRICS['ball_tree']):
                     self._fit_method = 'ball_tree'
+                else:
+                    self._fit_method = 'brute'
             else:
                 self._fit_method = 'brute'
 
@@ -307,7 +311,7 @@ class KNeighborsMixin(object):
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
-        (array([[ 0.5]]), array([[2]]...))
+        (array([[0.5]]), array([[2]]))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
@@ -319,8 +323,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        if self._fit_method is None:
-            raise NotFittedError("Must fit neighbors before querying.")
+        check_is_fitted(self, "_fit_method")
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -356,7 +359,7 @@ class KNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
 
-            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
             neigh_ind = neigh_ind[
@@ -453,9 +456,9 @@ class KNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.toarray()
-        array([[ 1.,  0.,  1.],
-               [ 0.,  1.,  1.],
-               [ 1.,  0.,  1.]])
+        array([[1., 0., 1.],
+               [0., 1., 1.],
+               [1., 0., 1.]])
 
         See also
         --------
@@ -549,7 +552,7 @@ class RadiusNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
         >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
-        [ 1.5  0.5]
+        [1.5 0.5]
         >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS
         [1 2]
 
@@ -565,8 +568,7 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        if self._fit_method is None:
-            raise NotFittedError("Must fit neighbors before querying.")
+        check_is_fitted(self, "_fit_method")
 
         if X is not None:
             query_is_train = False
@@ -682,9 +684,9 @@ class RadiusNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.toarray()
-        array([[ 1.,  0.,  1.],
-               [ 0.,  1.,  0.],
-               [ 1.,  0.,  1.]])
+        array([[1., 0., 1.],
+               [0., 1., 0.],
+               [1., 0., 1.]])
 
         See also
         --------

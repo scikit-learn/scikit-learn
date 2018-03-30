@@ -131,7 +131,13 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
            *loss='multinomial'*
 
     alpha : float, optional
-        Constant that multiplies the regularization term. Defaults to 1.
+        L2 regularization term in the objective function
+        ``(0.5 * alpha * || W ||_F^2)``. Defaults to 1.
+
+    beta : float, optional
+        L1 regularization term in the objective function
+        ``(beta * || W ||_1)``. Only applied if ``is_saga`` is set to True.
+        Defaults to 0.
 
     max_iter : int, optional
         The max number of passes over the training data if the stopping
@@ -144,9 +150,12 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     verbose : integer, optional
         The verbosity level.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.

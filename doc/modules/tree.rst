@@ -110,7 +110,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba([[2., 2.]])
-    array([[ 0.,  1.]])
+    array([[0., 1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -126,41 +126,35 @@ Using the Iris dataset, we can construct a tree as follows::
 
 Once trained, we can export the tree in `Graphviz
 <http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. Below is an example export of a tree trained on the entire
-iris dataset::
+exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+and the python package can be installed with 
 
-    >>> with open("iris.dot", 'w') as f:
-    ...     f = tree.export_graphviz(clf, out_file=f)
+    conda install python-graphviz
+   
+Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+and the Python wrapper installed from pypi with `pip install graphviz`. 
 
-Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
-supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
+Below is an example graphviz export of the above tree trained on the entire
+iris dataset; the results are saved in an output file `iris.pdf`::
 
-::
 
-    >>> import os
-    >>> os.unlink('iris.dot')
-
-Alternatively, if we have Python module ``pydotplus`` installed, we can generate
-a PDF file (or any other supported file type) directly in Python::
-
-    >>> import pydotplus # doctest: +SKIP
+    >>> import graphviz # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data) # doctest: +SKIP
-    >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+    >>> graph.render("iris") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
 options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. IPython notebooks can also
-render these plots inline using the `Image()` function::
+using explicit variable and class names if desired. Jupyter notebooks also
+render these plots inline automatically::
 
-    >>> from IPython.display import Image  # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
-    >>> Image(graph.create_png())  # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+    >>> graph # doctest: +SKIP
 
 .. only:: html
 
@@ -181,7 +175,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba(iris.data[:1, :])
-    array([[ 1.,  0.,  0.]])
+    array([[1., 0., 0.]])
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -216,7 +210,7 @@ instead of integer values::
     >>> clf = tree.DecisionTreeRegressor()
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 0.5])
+    array([0.5])
 
 .. topic:: Examples:
 
@@ -487,23 +481,26 @@ Regression criteria
 
 If the target is a continuous value, then for node :math:`m`,
 representing a region :math:`R_m` with :math:`N_m` observations, common
-criteria to minimise are
+criteria to minimise as for determining locations for future
+splits are Mean Squared Error, which minimizes the L2 error
+using mean values at terminal nodes, and Mean Absolute Error, which 
+minimizes the L1 error using median values at terminal nodes. 
 
 Mean Squared Error:
 
 .. math::
 
-    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
 Mean Absolute Error:
 
 .. math::
 
-    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
 
 where :math:`X_m` is the training data in node :math:`m`
 

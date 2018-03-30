@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
-from ..utils.extmath import norm, safe_sparse_dot, row_norms
+from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
@@ -231,7 +231,7 @@ def r_regression(X, y, center=True):
     """Univariate linear regression tests returning Pearson R.
 
     Linear model for testing the individual effect of each of many regressors.
-    This is a scoring function to be used in a feature seletion procedure, not
+    This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
     The cross correlation between each regressor and the target is computed,
@@ -292,7 +292,7 @@ def r_regression(X, y, center=True):
     # compute the correlation
     corr = safe_sparse_dot(y, X)
     corr /= X_norms
-    corr /= norm(y)
+    corr /= np.linalg.norm(y)
     return corr
 
 
@@ -390,7 +390,6 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
@@ -481,10 +480,10 @@ class SelectPercentile(_BaseFilter):
             return np.zeros(len(self.scores_), dtype=np.bool)
 
         scores = _clean_nans(self.scores_)
-        treshold = stats.scoreatpercentile(scores,
-                                           100 - self.percentile)
-        mask = scores > treshold
-        ties = np.where(scores == treshold)[0]
+        threshold = stats.scoreatpercentile(scores,
+                                            100 - self.percentile)
+        mask = scores > threshold
+        ties = np.where(scores == threshold)[0]
         if len(ties):
             max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]
@@ -530,7 +529,7 @@ class SelectKBest(_BaseFilter):
     abs_r_regression: absolute value of Pearson R between label/feature for
         regression tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a continious target.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -544,9 +543,9 @@ class SelectKBest(_BaseFilter):
 
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
-            raise ValueError("k should be >=0, <= n_features; got %r."
+            raise ValueError("k should be >=0, <= n_features = %d; got %r. "
                              "Use k='all' to return all features."
-                             % self.k)
+                             % (X.shape[1], self.k))
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')

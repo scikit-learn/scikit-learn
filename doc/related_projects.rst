@@ -23,8 +23,16 @@ enhance the functionality of scikit-learn's estimators.
 
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
+  
+- `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
+  compatibility of scikit-learn estimators with xarray data structures.
 
 **Auto-ML**
+
+- `auto_ml <https://github.com/ClimbsRocks/auto_ml/>`_
+  Automated machine learning for production and analytics, built on scikit-learn
+  and related projects. Trains a pipeline wth all the standard machine learning 
+  steps. Tuned for prediction speed and ease of transfer to production environments. 
 
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
   An automated machine learning toolkit and a drop-in replacement for a
@@ -36,10 +44,13 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
 
-**Experimentation frameworks**
+- `scikit-optimize <https://scikit-optimize.github.io/>`_
+  A library to minimize (very) expensive and noisy black-box functions. It
+  implements several methods for sequential model-based optimization, and
+  includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
+  cross-validated parameter search using any of these strategies.
 
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
-  fitting algorithms.
+**Experimentation frameworks**
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
@@ -55,6 +66,11 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
+- `Xcessiv <https://github.com/reiinakano/xcessiv>`_ is a notebook-like
+  application for quick, scalable, and automated hyperparameter tuning
+  and stacked ensembling. Provides a framework for keeping track of 
+  model-hyperparameter combinations.
+
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
@@ -66,6 +82,10 @@ enhance the functionality of scikit-learn's estimators.
 
 - `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
   for quick and easy generation of common plots in data analysis and machine learning.
+
+- `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
 
 
 **Model export for production**
@@ -144,6 +164,10 @@ and tasks.
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
   tree library.
 
+- `ML-Ensemble <http://mlens.readthedocs.io/en/latest/>`_ Generalized
+  ensemble learning (stacking, blending, subsemble, deep ensembles,
+  etc.).
+
 - `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
   state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
@@ -159,6 +183,9 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic
   regression on multidimensional features.
+  
+- `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence 
+  learning using sliding window segmentation.
 
 **Decomposition and clustering**
 
@@ -184,6 +211,16 @@ and tasks.
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
 
+**Pre-processing**
+
+- `categorical-encoding
+  <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
+  library of sklearn compatible categorical variable encoders.
+
+- `imbalanced-learn
+  <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
+  methods to under- and over-sample datasets.
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
@@ -194,21 +231,22 @@ Other packages useful for data analysis and machine learning.
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `statsmodels <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+- `statsmodels <http://www.statsmodels.org>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+  fitting algorithms.
+
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
-
-- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
-  document indexing and similarity retrieval
 
 - `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
+
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,12 +257,18 @@ Domain specific packages
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
   processing and some machine learning.
 
+- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
+  document indexing and similarity retrieval
+
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
+
+- `scikit-surprise <http://surpriselib.com>`_ A scikit for building and
+  evaluating recommender systems.
 
 Snippets and tidbits
 ---------------------

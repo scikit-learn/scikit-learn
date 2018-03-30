@@ -3,6 +3,11 @@
 
     >>> import numpy as np
     >>> import os
+    >>> import tempfile
+    >>> # Create a temporary folder for the data fetcher
+    >>> custom_data_home = tempfile.mkdtemp()
+    >>> os.makedirs(os.path.join(custom_data_home, 'mldata'))
+
 
 .. _mldata:
 
@@ -29,7 +34,7 @@ of size 28x28 pixels, labeled from 0 to 9::
   >>> mnist.target.shape
   (70000,)
   >>> np.unique(mnist.target)
-  array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
+  array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 
 After the first download, the dataset is cached locally in the path
 specified by the ``data_home`` keyword argument, which defaults to
@@ -70,3 +75,8 @@ defaults to individual datasets:
     ...                      data_home=custom_data_home)
     >>> iris3 = fetch_mldata('datasets-UCI iris', target_name='class',
     ...                      data_name='double0', data_home=custom_data_home)
+
+
+..
+    >>> import shutil
+    >>> shutil.rmtree(custom_data_home)

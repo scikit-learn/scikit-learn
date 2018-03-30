@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.externals.six import iteritems
@@ -74,10 +75,10 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # Low-level function for manhattan can divide in blocks to avoid
-    # using too much memory during the broadcasting
-    S3 = manhattan_distances(X, Y, size_threshold=10)
-    assert_array_almost_equal(S, S3)
+    # Using size_threshold argument should raise
+    # a deprecation warning
+    assert_warns(DeprecationWarning,
+                 manhattan_distances, X, Y, size_threshold=10)
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
     # while the function cosine is scipy.spatial

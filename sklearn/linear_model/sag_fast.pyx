@@ -53,7 +53,7 @@ cdef double _logsumexp(double* arr, int n_classes) nogil:
 cdef class MultinomialLogLoss:
     cdef double _loss(self, double* prediction, double y, int n_classes,
                       double sample_weight) nogil:
-        """Multinomial Logistic regression loss.
+        r"""Multinomial Logistic regression loss.
 
         The multinomial logistic loss for one sample is:
         loss = - sw \sum_c \delta_{y,c} (prediction[c] - logsumexp(prediction))
@@ -97,7 +97,7 @@ cdef class MultinomialLogLoss:
 
     cdef void _dloss(self, double* prediction, double y, int n_classes,
                      double sample_weight, double* gradient_ptr) nogil:
-        """Multinomial Logistic regression gradient of the loss.
+        r"""Multinomial Logistic regression gradient of the loss.
 
         The gradient of the multinomial logistic loss with respect to a class c,
         and for one sample is:
@@ -248,7 +248,7 @@ def sag(SequentialDataset dataset,
     ---------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
     (section 4.3)
 
     Defazio, A., Bach, F., Lacoste-Julien, S. (2014),
@@ -263,7 +263,7 @@ def sag(SequentialDataset dataset,
     cdef int *x_ind_ptr = NULL
     # the number of non-zero features for current sample
     cdef int xnnz = -1
-    # the label value for curent sample
+    # the label value for current sample
     cdef double y
     # the sample weight
     cdef double sample_weight
@@ -614,10 +614,14 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
                         last_update_ind = sample_itr - 1
                     for lagged_ind in range(sample_itr - 1,
                                    last_update_ind - 1, -1):
-                        grad_step = (cumulative_sums[lagged_ind]
-                           - cumulative_sums[lagged_ind - 1])
-                        prox_step = (cumulative_sums_prox[lagged_ind]
-                           - cumulative_sums_prox[lagged_ind - 1])
+                        if lagged_ind > 0:
+                            grad_step = (cumulative_sums[lagged_ind]
+                               - cumulative_sums[lagged_ind - 1])
+                            prox_step = (cumulative_sums_prox[lagged_ind]
+                               - cumulative_sums_prox[lagged_ind - 1])
+                        else:
+                            grad_step = cumulative_sums[lagged_ind]
+                            prox_step = cumulative_sums_prox[lagged_ind]
                         weights[idx] -= sum_gradient[idx] * grad_step
                         weights[idx] = _soft_thresholding(weights[idx],
                                                           prox_step)

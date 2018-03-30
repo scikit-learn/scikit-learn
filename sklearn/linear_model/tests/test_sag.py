@@ -13,7 +13,7 @@ from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model.base import make_dataset
 from sklearn.linear_model.logistic import _multinomial_loss_grad
 
-from sklearn.utils.extmath import logsumexp
+from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal

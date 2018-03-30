@@ -4,7 +4,7 @@
 This script converts a subset of SVG into an HTML imagemap
 
 Note *subset*.  It only handles <path> elements, for which it only pays
-attention to the M and L commands.  Futher, it only notices the "translate"
+attention to the M and L commands.  Further, it only notices the "translate"
 transform.
 
 It was written to generate the examples in the documentation for maphilight,
@@ -24,6 +24,8 @@ attributes in the SVG file.
 group1 through groupN are group ids.  If only want particular groups used,
 enter their ids here and all others will be ignored.
 """
+
+from __future__ import print_function
 
 import os
 import re
@@ -70,7 +72,7 @@ for e in elements:
         for pointset in points:
             paths.append([e.getAttribute('id'), pointset])
     if e.hasAttribute('transform'):
-        print e.getAttribute('id'), e.getAttribute('transform')
+        print(e.getAttribute('id'), e.getAttribute('transform'))
         for transform in re.findall(r'(\w+)\((-?\d+.?\d*),(-?\d+.?\d*)\)', e.getAttribute('transform')):
             if transform[0] == 'translate':
                 x_shift = float(transform[1])

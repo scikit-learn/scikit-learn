@@ -61,7 +61,7 @@ y_pred, sigma = gp.predict(x, return_std=True)
 
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
-fig = plt.figure()
+plt.figure()
 plt.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 plt.plot(X, y, 'r.', markersize=10, label=u'Observations')
 plt.plot(x, y_pred, 'b-', label=u'Prediction')
@@ -85,8 +85,8 @@ dy = 0.5 + 1.0 * np.random.random(y.shape)
 noise = np.random.normal(0, dy)
 y += noise
 
-# Instanciate a Gaussian Process model
-gp = GaussianProcessRegressor(kernel=kernel, alpha=(dy / y) ** 2,
+# Instantiate a Gaussian Process model
+gp = GaussianProcessRegressor(kernel=kernel, alpha=dy ** 2,
                               n_restarts_optimizer=10)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
@@ -97,7 +97,7 @@ y_pred, sigma = gp.predict(x, return_std=True)
 
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
-fig = plt.figure()
+plt.figure()
 plt.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 plt.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')
 plt.plot(x, y_pred, 'b-', label=u'Prediction')

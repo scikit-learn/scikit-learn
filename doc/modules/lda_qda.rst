@@ -87,7 +87,12 @@ linear decision surfaces between, as can be seen by comparing the
 log-probability ratios :math:`\log[P(y=k | X) / P(y=l | X)]`:
 
 .. math::
-   \log\left(\frac{P(y=k|X)}{P(y=l | X)}\right) = 0 \Leftrightarrow (\mu_k-\mu_l)\Sigma^{-1} X = \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
+    \log\left(\frac{P(y=k|X)}{P(y=l|X)}\right)=
+    \log\left(\frac{P(X|y=k)P(y=k)}{P(X|y=l)P(y=l)}\right)=0 \Leftrightarrow
+
+    (\mu_k-\mu_l)^t\Sigma^{-1} X =
+    \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
+    - \log\frac{P(y=k)}{P(y=l)}
 
 In the case of QDA, there are no assumptions on the covariance matrices
 :math:`\Sigma_k` of the Gaussians, leading to quadratic decision surfaces. See

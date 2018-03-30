@@ -31,7 +31,7 @@ References
 ----------
 
  * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+   <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 """
@@ -168,7 +168,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         idx = np.where(land_reference > -9999)
         coverages_land = data.coverages[:, idx[0], idx[1]].T
 
-        pred = clf.decision_function((coverages_land - mean) / std)[:, 0]
+        pred = clf.decision_function((coverages_land - mean) / std)
         Z *= pred.min()
         Z[idx[0], idx[1]] = pred
 
@@ -192,8 +192,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
 
         # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
-        pred_test = clf.decision_function((species.cov_test - mean)
-                                          / std)[:, 0]
+        pred_test = clf.decision_function((species.cov_test - mean) / std)
         scores = np.r_[pred_test, pred_background]
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)
