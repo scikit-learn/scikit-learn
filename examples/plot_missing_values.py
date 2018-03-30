@@ -26,7 +26,6 @@ from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
-
 def get_results(dataset):
     X_full, y_full = dataset.data, dataset.target
     n_samples = X_full.shape[0]
