@@ -119,8 +119,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
 
     # Average the results
     if average is not None:
-        # Scores with 0 weights are forced to be 0, preventing the average score from being affected by...
-        # 0-weighted NaN elements.
+        # Scores with 0 weights are forced to be 0, preventing the average
+        # score from being affected by 0-weighted NaN elements.
         score[average_weight == 0] = 0
         return np.average(score, weights=average_weight)
     else:
