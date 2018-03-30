@@ -1527,9 +1527,9 @@ Calinski-Harabaz Index
 ----------------------
 
 If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) can be used to evaluate the
-model, where a higher Calinski-Harabaz score relates to a model with better
-defined clusters.
+(:func:`sklearn.metrics.calinski_harabaz_score`), also known as the Variance 
+Ratio Criterion, can be used to evaluate the model, where a higher 
+Calinski-Harabaz score relates to a model with better defined clusters.
 
 For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
