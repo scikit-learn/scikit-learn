@@ -1502,7 +1502,7 @@ cdef class BinaryTree:
                 indices_npy = np.zeros(Xarr.shape[0], dtype='object')
                 distances_npy = np.zeros(Xarr.shape[0], dtype='object')
                 for i in range(Xarr.shape[0]):
-                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INT64, indices[i])
+                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_LONG, indices[i])
                     #indices_npy[i].flags |= np.NPY_ARRAY_OWNDATA
                     distances_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_DOUBLE, distances[i])
                     #distances_npy[i].flags |= np.NPY_ARRAY_OWNDATA
@@ -1512,7 +1512,7 @@ cdef class BinaryTree:
             else:
                 indices_npy = np.zeros(Xarr.shape[0], dtype='object')
                 for i in range(Xarr.shape[0]):
-                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INT64, indices[i])
+                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_LONG, indices[i])
                     #indices_npy[i].flags |= np.NPY_ARRAY_OWNDATA
 
                 return indices_npy.reshape(X.shape[:X.ndim - 1])
