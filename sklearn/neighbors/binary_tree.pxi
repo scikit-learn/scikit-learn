@@ -2023,7 +2023,7 @@ cdef class BinaryTree:
                                       DTYPE_t* distances,
                                       ITYPE_t count,
                                       int count_only,
-                                      int return_distance) nogil except -1:
+                                      int return_distance) nogil:
         """recursive single-tree radius query, depth-first"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
