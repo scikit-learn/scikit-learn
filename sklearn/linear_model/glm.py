@@ -1065,6 +1065,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             P1 = np.ones(X.shape[1])
         else:
             P1 = np.atleast_1d(np.copy(self.P1))
+            if P1.dtype.kind not in ['b', 'i', 'u', 'f']:
+                raise ValueError("P1 must be a numeric value; "
+                                 "got (dtype={0}).".format(P1.dtype))
             if (P1.ndim != 1) or (P1.shape[0] != X.shape[1]):
                 raise ValueError("P1 must be either None or an 1D array with "
                                  "the length of X.shape[1]; "

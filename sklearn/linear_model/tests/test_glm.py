@@ -187,6 +187,27 @@ def test_glm_l1_ratio_argument():
         assert_raises(ValueError, glm.fit, X, y)
 
 
+def test_glm_P1_argument():
+    """Test GLM P1 arguments
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for P1 in [['a string', 'a string'], [1, [2]], [1, 2, 3]]:
+        glm = GeneralizedLinearRegressor(P1=P1)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_P2_argument():
+    """Test GLM P2 arguments
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for P2 in [np.full((2, 2), 'a string'), [[1, [2]], [3, 4]], [1, 2, 3],
+               [[1, 2]], [[1], [2]]]:
+        glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
 def test_glm_fit_intercept_argument():
     """Test GLM fit_intercept argument
     """
@@ -263,16 +284,6 @@ def test_glm_selection_argument():
         assert_raises(ValueError, glm.fit, X, y)
 
 
-def test_glm_check_input_argument():
-    """Test GLM check_input argument
-    """
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    for check_input in ['not bool', 1, 0, [True]]:
-        glm = GeneralizedLinearRegressor(check_input=check_input)
-        assert_raises(ValueError, glm.fit, X, y)
-
-
 def test_glm_random_state_argument():
     """Test GLM random_state argument
     """
@@ -283,7 +294,26 @@ def test_glm_random_state_argument():
         assert_raises(ValueError, glm.fit, X, y)
 
 
-# TODO: check P1 and P2
+def test_glm_copy_X_argument():
+    """Test GLM copy_X arguments
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for copy_X in ['not bool', 1, 0, [True]]:
+        glm = GeneralizedLinearRegressor(copy_X=copy_X)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
+def test_glm_check_input_argument():
+    """Test GLM check_input argument
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for check_input in ['not bool', 1, 0, [True]]:
+        glm = GeneralizedLinearRegressor(check_input=check_input)
+        assert_raises(ValueError, glm.fit, X, y)
+
+
 # TODO: check additional validations if check_input == True
 
 def test_glm_identiy_regression():
