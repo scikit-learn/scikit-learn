@@ -75,9 +75,9 @@ snippet::
           random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> print(np.round(imp.transform(X_test)))            # doctest: +ELLIPSIS
-    [[  1.   2.]
-     [  6.   4.]
-     [ 13.   6.]]
+    [[ 1.  2.]
+     [ 6.  4.]
+     [13.  6.]]
 
 Note that MICE uses sampling as part of its imputation process, so the exact
 values of the imputed data will be slightly different each time you run it.
