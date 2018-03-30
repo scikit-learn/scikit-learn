@@ -441,12 +441,12 @@ Imputer
   :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
-- The ``axis`` parameter in :class:`impute.SimpleImputer` was removed.
-  Future (and default) behavior is equivalent to ``axis=0`` (impute along
-  columns). Row-wise imputation can be performed with FunctionTransformer
-  (e.g., ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
-  :issue:`10829` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Gilberto Olimpio <gilbertoolimpio>`.
+- The ``axis`` parameter in :class:`impute.SimpleImputer` was removed. The
+  behavior is equivalent to ``axis=0`` (impute along columns). Row-wise
+  imputation can be performed with FunctionTransformer (e.g.,
+  ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
+  :issue:`10829` by :user:`Guillaume Lemaitre <glemaitre>` and :user:`Gilberto
+  Olimpio <gilbertoolimpio>`.
 
 Outlier Detection models
 
