@@ -701,8 +701,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                                             missing_values=self.missing_values,
-                                            strategy=self.initial_strategy,
-                                            axis=0)
+                                            strategy=self.initial_strategy)
             X_filled = self.initial_imputer_.fit_transform(X)
         else:
             X_filled = self.initial_imputer_.transform(X)
