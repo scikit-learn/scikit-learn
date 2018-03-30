@@ -202,8 +202,8 @@ def test_glm_P2_argument():
     """
     y = np.array([1, 2])
     X = np.array([[1], [1]])
-    for P2 in [np.full((2, 2), 'a string'), [[1, [2]], [3, 4]], [1, 2, 3],
-               [[1, 2]], [[1], [2]]]:
+    for P2 in [np.full((2, 2), 'a string', dtype=np.dtype('<U8')),
+               [[1, [2]], [3, 4]], [1, 2, 3], [[1, 2]], [[1], [2]]]:
         glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False)
         assert_raises(ValueError, glm.fit, X, y)
 
