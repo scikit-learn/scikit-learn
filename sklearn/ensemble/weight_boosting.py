@@ -286,7 +286,7 @@ def _samme_proba(estimator, n_classes, X):
     # Displace zero probabilities so the log is defined.
     # Also fix negative elements which may occur with
     # negative sample weights.
-    proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+    proba[proba < np.finfo(proba.dtype).tiny] = np.finfo(proba.dtype).tiny
     log_proba = np.log(proba)
 
     return (n_classes - 1) * (log_proba - (1. / n_classes)
