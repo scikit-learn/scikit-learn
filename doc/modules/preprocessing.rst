@@ -614,12 +614,12 @@ neighbors of the rows that contain the missing values::
     >>> from sklearn.impute import KNNImputer
     >>> nan = np.nan
     >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
-    >>> imputer = KNNImputer(max_neighbors=2, weights="uniform")
+    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
     >>> imputer.fit_transform(X)
-    array([[ 1. ,  2. ,  4. ],
-           [ 3. ,  4. ,  3. ],
-           [ 5.5,  6. ,  5. ],
-           [ 8. ,  8. ,  7. ]])
+    array([[1. , 2. , 4. ],
+           [3. , 4. , 3. ],
+           [5.5, 6. , 5. ],
+           [8. , 8. , 7. ]])
 
 
 :class:`KNNImputer` can also be used in a Pipeline as a way to build a
