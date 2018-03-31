@@ -40,7 +40,6 @@ __all__ = [
     'FunctionTransformer',
     'Imputer',
     'KernelCenterer',
-    'KNNImputer',
     'LabelBinarizer',
     'LabelEncoder',
     'MultiLabelBinarizer',

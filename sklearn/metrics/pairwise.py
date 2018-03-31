@@ -330,8 +330,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     >>> X = [[0, 1], [1, nan]]
     >>> # distance between rows of X
     >>> masked_euclidean_distances(X, X)
-    array([[ 0.        ,  1.41421356],
-           [ 1.41421356,  0.        ]])
+    array([[0.        , 1.41421356],
+           [1.41421356, 0.        ]])
 
     >>> # get distance to origin
     >>> masked_euclidean_distances(X, [[0, 0]])

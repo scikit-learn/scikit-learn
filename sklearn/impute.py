@@ -620,10 +620,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
     >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
     >>> imputer.fit_transform(X)
-    array([[ 1. ,  2. ,  4. ],
-           [ 3. ,  4. ,  3. ],
-           [ 5.5,  6. ,  5. ],
-           [ 8. ,  8. ,  7. ]])
+    array([[1. , 2. , 4. ],
+           [3. , 4. , 3. ],
+           [5.5, 6. , 5. ],
+           [8. , 8. , 7. ]])
     """
 
     def __init__(self, missing_values="NaN", n_neighbors=5,
