@@ -285,20 +285,10 @@ You can also check for common programming errors with the following tools:
 
   see also :ref:`testing_coverage`
 
-* No pyflakes warnings, check with::
+* No flake8 warnings, check with::
 
-    $ pip install pyflakes
-    $ pyflakes path/to/module.py
-
-* No PEP8 warnings, check with::
-
-    $ pip install pep8
-    $ pep8 path/to/module.py
-
-* AutoPEP8 can help you fix some of the easy redundant errors::
-
-    $ pip install autopep8
-    $ autopep8 path/to/pep8.py
+    $ pip install flake8
+    $ flake8 path/to/module.py
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -359,7 +349,7 @@ following rules before submitting:
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
    `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published>`_.
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -432,27 +422,34 @@ documents live in the source code repository under the ``doc/`` directory.
 You can edit the documentation using any text editor, and then generate the
 HTML output by building the documentation website.
 
-**Building the documentation**
+Building the documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
 ``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
 
+To build the documentation, you need to be in the ``doc`` folder::
+
+    cd doc
+
 It also requires having the version of scikit-learn installed that corresponds
 to the documentation, e.g.::
 
     pip install --editable ..
 
-To generate the full web site, including the example gallery (this might take a
-while)::
+To generate the full web site, including the example gallery::
 
     make html
 
-Or, if you'd rather quickly generate the documentation without the example
-gallery::
-
-    make html-noplot
+Generating the example gallery will run all our examples which takes a
+while. To save some time, you can use:
+    - ``make html-noplot``: this will generate the documentation without the
+      example gallery. This is useful when changing a docstring for example.
+    - ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
+      matching ``your_regex_goes_here`` will be run. This is particularly
+      useful if you are modifying a few examples.
 
 That should create all the documentation in the ``_build/html/stable`` directory.
 
@@ -460,9 +457,20 @@ To build the PDF manual, run::
 
     make latexpdf
 
-**When you are writing documentation**, it is important to keep a good
-compromise between mathematical and algorithmic details, and give
-intuition to the reader on what the algorithm does.
+.. warning:: **Sphinx version**
+
+   While we do our best to have the documentation build under as many
+   versions of Sphinx as possible, the different versions tend to
+   behave slightly differently. To get the best results, you should
+   use the same version as the one we used on CircleCI. Look at this
+   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   to know the exact version.
+
+Guidelines for writing documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is important to keep a good compromise between mathematical and algorithmic
+details, and give intuition to the reader on what the algorithm does.
 
 Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waving explanation of what the
@@ -487,22 +495,6 @@ documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
-You may also be asked to show your changes when it's built. When you create
-a pull request or make changes in an existing one modifying the docs, CircleCI
-automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following URL:
-
-``http://scikit-learn.org/circle?{BUILD_NUMBER}``
-
-We attempt to assemble a more precise set of changed files in the
-documentation at:
-
-``http://scikit-learn.org/circle?{BUILD_NUMBER}/_changed.html``
-
-Note: When you visit the details page of the CircleCI tests, you can find your
-BUILD_NUMBER mentioned as 'build #' which is different from your pull request
-number, which is presented as 'pull/#'.
-
 Finally, follow the formatting rules below to make it consistently good:
 
 * Add "See also" in docstrings for related classes/functions.
@@ -520,15 +512,26 @@ Finally, follow the formatting rules below to make it consistently good:
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
-.. warning:: **Sphinx version**
+Generated documentation on CircleCI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   While we do our best to have the documentation build under as many
-   versions of Sphinx as possible, the different versions tend to
-   behave slightly differently. To get the best results, you should
-   use the same version as the one we used on CircleCI. Look at this
-   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
-   to know the exact version.
+When you change the documentation in a pull request, CircleCI automatically
+builds it. To view the documentation generated by CircleCI:
 
+* navigate to the bottom of your pull request page to see the CI
+  statuses. You may need to click on "Show all checks" to see all the CI
+  statuses.
+* click on the CircleCI status with "python3" in the title.
+* add ``#artifacts`` at the end of the URL. Note: you need to wait for the
+  CircleCI build to finish before being able to look at the artifacts.
+* once the artifacts are visible, navigate to ``doc/_changed.html`` to see a
+  list of documentation pages that are likely to be affected by your pull
+  request. Navigate to ``doc/index.html`` to see the full generated html
+  documentation.
+
+If you often need to look at the documentation generated by CircleCI, e.g. when
+reviewing pull requests, you may find :ref:`this tip
+<viewing_rendered_html_documentation>` very handy.
 
 .. _testing_coverage:
 
@@ -750,6 +753,8 @@ when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
 
+.. _contributing_deprecation:
+
 Deprecation
 -----------
 
@@ -891,6 +896,7 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
+.. _api_overview:
 
 APIs of scikit-learn objects
 ============================
@@ -899,6 +905,9 @@ To have a uniform API, we try to have a common basic API for all the
 objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object must implement.
+
+Elements of the scikit-learn API are described more definitively in the
+:ref:`glossary`.
 
 Different objects
 -----------------
@@ -1123,7 +1132,7 @@ the correct interface more easily.
 
 .. topic:: ``BaseEstimator`` and mixins:
 
-    We tend to use use "duck typing", so building an estimator which follows
+    We tend to use "duck typing", so building an estimator which follows
     the API suffices for compatibility, without needing to inherit from or
     even import any scikit-learn classes.
 
@@ -1258,7 +1267,9 @@ is implemented using the ``_estimator_type`` attribute, which takes a string val
 It should be ``"classifier"`` for classifiers and ``"regressor"`` for
 regressors and ``"clusterer"`` for clustering methods, to work as expected.
 Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
-will set the attribute automatically.
+will set the attribute automatically.  When a meta-estimator needs to distinguish
+among estimator types, instead of checking ``_estimator_type`` directly, helpers
+like :func:`base.is_classifier` should be used.
 
 Working notes
 -------------

@@ -47,7 +47,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> reg.coef_
-    array([ 0.5,  0.5])
+    array([0.5, 0.5])
 
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
@@ -106,7 +106,7 @@ its ``coef_`` member::
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> reg.coef_
-    array([ 0.34545455,  0.34545455])
+    array([0.34545455, 0.34545455])
     >>> reg.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
@@ -148,7 +148,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 .. topic:: References
 
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-      <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+      <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
@@ -188,7 +188,7 @@ for another implementation::
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> reg.predict([[1, 1]])
-    array([ 0.8])
+    array([0.8])
 
 Also useful for lower-level tasks is the function :func:`lasso_path` that
 computes the coefficients along the full path of possible values.
@@ -453,7 +453,7 @@ function of the norm of its coefficients.
         fit_path=True, max_iter=500, normalize=True, positive=False,
         precompute='auto', verbose=False)
    >>> reg.coef_    # doctest: +ELLIPSIS
-   array([ 0.717157...,  0.        ])
+   array([0.717157..., 0.        ])
 
 .. topic:: Examples:
 
@@ -619,13 +619,13 @@ Bayesian Ridge Regression is used for regression::
 After being fitted, the model can then be used to predict new values::
 
     >>> reg.predict ([[1, 0.]])
-    array([ 0.50000013])
+    array([0.50000013])
 
 
 The weights :math:`w` of the model can be access::
 
     >>> reg.coef_
-    array([ 0.49999993,  0.49999993])
+    array([0.49999993, 0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
 ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
@@ -686,7 +686,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
     .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://www.tristanfletcher.co.uk/RVM%20Explained.pdf>`_
+    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.651.8603&rep=rep1&type=pdf>`_
 
 
 
@@ -819,7 +819,7 @@ Stochastic Gradient Descent - SGD
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-The ``partial_fit`` method allows only/out-of-core learning.
+The ``partial_fit`` method allows online/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
@@ -1021,7 +1021,7 @@ performance.
  * https://en.wikipedia.org/wiki/RANSAC
  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
-   <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
+   <https://www.sri.com/sites/default/files/publications/ransac-publication.pdf>`_
    Martin A. Fischler and Robert C. Bolles - SRI International (1981)
  * `"Performance Evaluation of RANSAC Family"
    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
@@ -1211,9 +1211,9 @@ of a given degree.  It can be used as follows::
            [4, 5]])
     >>> poly = PolynomialFeatures(degree=2)
     >>> poly.fit_transform(X)
-    array([[  1.,   0.,   1.,   0.,   0.,   1.],
-           [  1.,   2.,   3.,   4.,   6.,   9.],
-           [  1.,   4.,   5.,  16.,  20.,  25.]])
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
 
 The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
 :math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within

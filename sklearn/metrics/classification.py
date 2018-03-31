@@ -293,7 +293,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
-    """Cohen's kappa: a statistic that measures inter-annotator agreement.
+    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
@@ -344,7 +344,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
            doi:10.1177/001316446002000104.
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596.
-           <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
+           <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
@@ -463,10 +463,10 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
-    measure of the quality of binary (two-class) classifications. It takes into
-    account true and false positives and negatives and is generally regarded as
-    a balanced measure which can be used even if the classes are of very
-    different sizes. The MCC is in essence a correlation coefficient value
+    measure of the quality of binary and multiclass classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are of
+    very different sizes. The MCC is in essence a correlation coefficient value
     between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
     an average random prediction and -1 an inverse prediction.  The statistic
     is also known as the phi coefficient. [source: Wikipedia]
@@ -708,7 +708,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.8,  0. ,  0. ])
+    array([0.8, 0. , 0. ])
 
 
     """
@@ -819,7 +819,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
-    array([ 0.71...,  0.        ,  0.        ])
+    array([0.71..., 0.        , 0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1012,9 +1012,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    (array([ 0. ,  0. ,  0.66...]),
-     array([ 0.,  0.,  1.]),
-     array([ 0. ,  0. ,  0.8]),
+    (array([0.        , 0.        , 0.66...]),
+     array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
 
     """
@@ -1072,6 +1071,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
+        if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
@@ -1254,7 +1254,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.22...
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
-    array([ 0.66...,  0.        ,  0.        ])
+    array([0.66..., 0.        , 0.        ])
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1351,7 +1351,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
-    array([ 1.,  0.,  0.])
+    array([1., 0., 0.])
 
 
     """

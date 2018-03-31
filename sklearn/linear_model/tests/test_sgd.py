@@ -385,15 +385,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
+        regex = (r"class_weight 'balanced' is not supported for "
+                 r"partial_fit\. In order to use 'balanced' weights, "
+                 r"use compute_class_weight\('balanced', classes, y\). "
+                 r"In place of y you can us a large enough sample "
+                 r"of the full training set target to properly "
+                 r"estimate the class frequency distributions\. "
+                 r"Pass the resulting weights as the class_weight "
+                 r"parameter\.")
         assert_raises_regexp(ValueError,
-                             "class_weight 'balanced' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight\('balanced', classes, y\). "
-                             "In place of y you can us a large enough sample "
-                             "of the full training set target to properly "
-                             "estimate the class frequency distributions. "
-                             "Pass the resulting weights as the class_weight "
-                             "parameter.",
+                             regex,
                              self.factory(class_weight='balanced').partial_fit,
                              X, Y, classes=np.unique(Y))
 

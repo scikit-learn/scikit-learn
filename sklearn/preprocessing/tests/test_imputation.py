@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import KNNImputer
@@ -20,6 +21,7 @@ from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
 
 
+@ignore_warnings
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
@@ -84,6 +86,7 @@ def _check_statistics(X, X_true,
                   err_msg=err_msg.format(1, True))
 
 
+@ignore_warnings
 def test_imputation_shape():
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
@@ -97,6 +100,7 @@ def test_imputation_shape():
         assert_equal(X_imputed.shape, (10, 2))
 
 
+@ignore_warnings
 def test_imputation_mean_median_only_zero():
     # Test imputation using the mean and median strategies, when
     # missing_values == 0.
@@ -143,6 +147,7 @@ def safe_mean(arr, *args, **kwargs):
     return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
 
 
+@ignore_warnings
 def test_imputation_mean_median():
     # Test imputation using the mean and median strategies, when
     # missing_values != 0.
@@ -213,6 +218,7 @@ def test_imputation_mean_median():
                           true_statistics, test_missing_values)
 
 
+@ignore_warnings
 def test_imputation_median_special_cases():
     # Test median imputation with sparse boundary cases
     X = np.array([
@@ -242,6 +248,7 @@ def test_imputation_median_special_cases():
                       statistics_median, 'NaN')
 
 
+@ignore_warnings
 def test_imputation_most_frequent():
     # Test imputation using the most-frequent strategy.
     X = np.array([
@@ -265,6 +272,7 @@ def test_imputation_most_frequent():
     _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
 
 
+@ignore_warnings
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     pipeline = Pipeline([('imputer', Imputer(missing_values=0)),
@@ -282,6 +290,7 @@ def test_imputation_pipeline_grid_search():
     gs.fit(X, Y)
 
 
+@ignore_warnings
 def test_imputation_pickle():
     # Test for pickling imputers.
     import pickle
@@ -303,6 +312,7 @@ def test_imputation_pickle():
         )
 
 
+@ignore_warnings
 def test_imputation_copy():
     # Test imputation with copy
     X_orig = sparse_random_matrix(10, 10, density=0.75, random_state=0)

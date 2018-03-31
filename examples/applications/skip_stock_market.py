@@ -146,6 +146,7 @@ def quotes_historical_google(symbol, start_date, end_date):
         raise RuntimeError(message)
     return data
 
+
 # #############################################################################
 # Retrieve the data from Internet
 
@@ -233,7 +234,7 @@ variation = close_prices - open_prices
 
 # #############################################################################
 # Learn a graphical structure from the correlations
-edge_model = covariance.GraphLassoCV()
+edge_model = covariance.GraphicalLassoCV()
 
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
@@ -278,7 +279,7 @@ non_zero = (np.abs(np.triu(partial_correlations, k=1)) > 0.02)
 
 # Plot the nodes using the coordinates of our embedding
 plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
-            cmap=plt.cm.spectral)
+            cmap=plt.cm.nipy_spectral)
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
@@ -321,7 +322,7 @@ for index, (name, label, (x, y)) in enumerate(
              horizontalalignment=horizontalalignment,
              verticalalignment=verticalalignment,
              bbox=dict(facecolor='w',
-                       edgecolor=plt.cm.spectral(label / float(n_labels)),
+                       edgecolor=plt.cm.nipy_spectral(label / float(n_labels)),
                        alpha=.6))
 
 plt.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
