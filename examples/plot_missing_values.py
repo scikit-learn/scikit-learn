@@ -49,8 +49,8 @@ estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_full, y_full).mean()
 print("Score with the entire dataset = %.2f" % score)
 
-# Add missing values in 75% of the lines
-missing_rate = 0.75
+# Add missing values in 50% of the lines
+missing_rate = 0.50
 n_missing_samples = int(np.floor(n_samples * missing_rate))
 missing_samples = np.hstack((np.zeros(n_samples - n_missing_samples,
                                       dtype=np.bool),
@@ -80,7 +80,7 @@ print("Score after imputation of the missing values = %.2f" % score)
 # Estimate the score after kNN-imputation of the missing values
 knn_estimator = Pipeline(
     [("knnimputer", KNNImputer(missing_values=0, n_neighbors=10,
-                               col_max_missing=0.95)),
+                               col_max_missing=0.90)),
      ("forest", RandomForestRegressor(random_state=0, n_estimators=100))])
 knn_score = cross_val_score(knn_estimator, X_missing, y_missing).mean()
 print("Score after knn-imputation of the missing values = %.2f" % knn_score)
