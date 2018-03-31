@@ -589,6 +589,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         The maximum percentage of rows (or samples) that can be missing
         for a given feature beyond which an error is raised.
 
+    use_complete : boolean, optional (default = False)
+        When determining neighbors, only consider those samples that have
+        the feature of interest available (i.e., it is not NaN).
+
     copy : boolean, optional (default = True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, if metric is
