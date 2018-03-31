@@ -819,10 +819,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                     receivers_row_idx = np.where(mask[:, c])[0]
                     pdonors_row_idx = np.where(~mask_fx[:, c])[0]
 
-                    # Check if sufficient number of donors are available
-                    if len(pdonors_row_idx) < self.n_neighbors:
-                        raise ValueError("Insufficient number of neighbors.")
-
                     # Get distance from potential donors
                     dist_pdonors = dist[receivers_row_idx][:, pdonors_row_idx]
                     dist_pdonors = dist_pdonors.reshape(-1,
