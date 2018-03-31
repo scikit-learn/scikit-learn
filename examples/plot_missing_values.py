@@ -79,7 +79,8 @@ print("Score after imputation of the missing values = %.2f" % score)
 
 # Estimate the score after kNN-imputation of the missing values
 knn_estimator = Pipeline(
-    [("knnimputer", KNNImputer(missing_values=0, n_neighbors=10)),
+    [("knnimputer", KNNImputer(missing_values=0, n_neighbors=10,
+                               col_max_missing=0.95)),
      ("forest", RandomForestRegressor(random_state=0, n_estimators=100))])
 knn_score = cross_val_score(knn_estimator, X_missing, y_missing).mean()
 print("Score after knn-imputation of the missing values = %.2f" % knn_score)
