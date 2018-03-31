@@ -611,7 +611,7 @@ encoded as ``np.nan``, using the mean feature value of the two nearest
 neighbors of the rows that contain the missing values::
 
     >>> import numpy as np
-    >>> from sklearn.preprocessing.imputation import KNNImputer
+    >>> from sklearn.impute import KNNImputer
     >>> nan = np.nan
     >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
     >>> imputer = KNNImputer(max_neighbors=2, weights="uniform")
