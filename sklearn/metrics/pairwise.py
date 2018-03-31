@@ -335,8 +335,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     >>> # get distance to origin
     >>> masked_euclidean_distances(X, [[0, 0]])
-    array([[ 1.        ],
-           [ 1.41421356]])
+    array([[1.        ],
+           [1.41421356]])
 
     References
     ----------

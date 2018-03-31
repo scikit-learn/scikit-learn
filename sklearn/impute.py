@@ -702,7 +702,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                  metric_params={"missing_values":
                                                 self.missing_values})
         self._fitted_neighbors = neigh.fit(X)
-        # self.fitted_X_ = X
         self.statistics_ = X_col_means
 
         return self
@@ -812,7 +811,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                           metric=self.metric,
                                           squared=False)
 
-                # For every pattern, index receivers and potential donors
+                # For each column, find and impute missing
                 for c in range(n_cols_X):
                     if not np.any(mask[:, c], axis=0):
                         continue
