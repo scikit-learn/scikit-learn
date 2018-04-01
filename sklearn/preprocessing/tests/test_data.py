@@ -2376,3 +2376,11 @@ def test_power_transformer_lambda_zero():
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
+
+def test_standard_scaler_with_std():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=2)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert_array_almost_equal(X_scaled.mean(), 0.0)
+    assert_array_almost_equal(X_scaled.std(), 0.5)

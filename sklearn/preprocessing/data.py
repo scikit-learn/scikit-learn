@@ -512,7 +512,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         If 1 or 2, scale the data to unit variance (or equivalently,
         unit standard deviation) using scaling factor of 1 or 2 standard 
         deviation. See [1]_
-        elman
+        
     Attributes
     ----------
     scale_ : ndarray, shape (n_features,)
