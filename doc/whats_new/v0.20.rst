@@ -164,7 +164,10 @@ Preprocessing
   standard deviation as described in Gelman (2008).
   :issue:`10864` by :user:`Parth Sharma <parth1993>` and
   :user:`Tymoteusz Wołodźko <twolodzko>`
+<<<<<<< HEAD
 
+=======
+>>>>>>> 00247217870c38a7af6a5544d4d4ad64eba08152
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
