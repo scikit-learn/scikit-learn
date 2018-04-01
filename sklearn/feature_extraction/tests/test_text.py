@@ -948,8 +948,8 @@ def test_transformer_idf_setter():
     copy = TfidfTransformer()
     copy.idf_ = orig.idf_
     assert_array_equal(
-        copy.fit_transform(X).toarray(),
-        orig.fit_transform(X).toarray())
+        copy.transform(X).toarray(),
+        orig.transform(X).toarray())
 
 
 def test_non_unique_vocab():
