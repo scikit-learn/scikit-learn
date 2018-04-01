@@ -942,6 +942,16 @@ def test_pickling_transformer():
         orig.fit_transform(X).toarray())
 
 
+def test_transformer_idf_setter():
+    X = CountVectorizer().fit_transform(JUNK_FOOD_DOCS)
+    orig = TfidfTransformer().fit(X)
+    copy = TfidfTransformer()
+    copy.idf_ = orig.idf_
+    assert_array_equal(
+        copy.fit_transform(X).toarray(),
+        orig.fit_transform(X).toarray())
+
+
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
     vect = CountVectorizer(vocabulary=vocab)
