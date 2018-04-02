@@ -952,6 +952,25 @@ def test_transformer_idf_setter():
         orig.transform(X).toarray())
 
 
+def test_tfidf_vectorizer_setter():
+    orig = TfidfVectorizer(use_idf=True)
+    orig.fit(JUNK_FOOD_DOCS)
+    copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=True)
+    copy.idf_ = orig.idf_
+    assert_array_equal(
+        copy.transform(JUNK_FOOD_DOCS).toarray(),
+        orig.transform(JUNK_FOOD_DOCS).toarray())
+
+
+def test_tfidfvectorizer_invalid_idf_attr():
+    vect = TfidfVectorizer(use_idf=True)
+    vect.fit(JUNK_FOOD_DOCS)
+    copy = TfidfVectorizer(vocabulary=vect.vocabulary_, use_idf=True)
+    expected_idf_len = len(vect.idf_)
+    invalid_idf = [1.0] * (expected_idf_len + 1)
+    assert_raises(ValueError, copy.__setattr__, 'idf_', invalid_idf)
+
+
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
     vect = CountVectorizer(vocabulary=vocab)

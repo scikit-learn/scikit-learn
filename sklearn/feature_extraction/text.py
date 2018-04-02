@@ -1399,6 +1399,14 @@ class TfidfVectorizer(CountVectorizer):
     def idf_(self):
         return self._tfidf.idf_
 
+    @idf_.setter
+    def idf_(self, value):
+        self._validate_vocabulary()
+        if hasattr(self, 'vocabulary_'):
+            if len(self.vocabulary_) != len(value):
+                raise ValueError("idf length = %d must be equal to vocabulary size = %d" % (len(value), len(self.vocabulary)))
+        self._tfidf.idf_ = value
+
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
 
