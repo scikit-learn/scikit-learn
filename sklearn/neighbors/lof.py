@@ -297,7 +297,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         return self._predict(X)
 
-
     def decision_function(self, X):
         """Shifted opposite of the Local Outlier Factor of X
 
