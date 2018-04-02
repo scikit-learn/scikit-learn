@@ -707,7 +707,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 func, w0, fprime=None,
                 args=(X, target, 1. / C, sample_weight),
                 iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
-            if info["warnflag"] == 1 and verbose > 0:
+            if info["warnflag"] == 1:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.", ConvergenceWarning)
             # In scipy <= 1.0.0, nit may exceed maxiter.
