@@ -15,7 +15,9 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater, ignore_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_warns_message, assert_raises
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.datasets import load_iris
 
@@ -47,6 +49,7 @@ def test_lof():
     clf = neighbors.LocalOutlierFactor(contamination=0.25,
                                        n_neighbors=5).fit(X)
     assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
+    assert_array_equal(clf.fit_predict(X), 6 * [1] + 2 * [-1])
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -157,6 +160,23 @@ def test_contamination():
     X = [[1, 1], [1, 0]]
     clf = neighbors.LocalOutlierFactor(contamination=0.6)
     assert_raises(ValueError, clf.fit, X)
+
+
+def test_novelty_errors():
+    X = iris.data
+
+    # check errors for novelty=False
+    clf = neighbors.LocalOutlierFactor()
+    clf.fit(X)
+    # predict, decision_function and score_samples raise ValueError
+    for method in ['predict', 'decision_function', 'score_samples']:
+        msg = ('{} is not available when novelty=False'.format(method))
+        assert_raises_regex(ValueError, msg, getattr(clf, method), X)
+
+    # check errors for novelty=True
+    clf = neighbors.LocalOutlierFactor(novelty=True)
+    msg = 'fit_predict is not available when novelty=True'
+    assert_raises_regex(ValueError, msg, clf.fit_predict, X)
 
 
 def test_deprecation():
