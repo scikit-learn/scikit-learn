@@ -266,12 +266,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 **kwargs):
         super(RadiusNeighborsRegressor, self).__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
-              p=p, metric=metric, metric_params=metric_params, **kwargs)
+              p=p, metric=metric, metric_params=metric_params,
+              n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
