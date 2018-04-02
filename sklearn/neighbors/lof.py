@@ -183,7 +183,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         if self.novelty:
             msg = ('fit_predict is not available when novelty=True. Use '
                    'novelty=False if you want to predict on the training set.')
-            raise NotImplementedError(msg)
+            raise ValueError(msg)
 
         return self.fit(X)._predict()
 
@@ -288,14 +288,15 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
 
-        if self.novelty:
-            return self._predict(X)
+        if not self.novelty:
+            msg = ('predict is not available when novelty=False, use '
+                   'fit_predict if you want to predict on training data. Use '
+                   'novelty=True if you want to use LOF for novelty detection '
+                   'and predict on new unseen data.')
+            raise ValueError(msg)
 
-        msg = ('predict is not available when novelty=False, use fit_predict '
-               'if you want to predict on training data. Use novelty=True if '
-               'you want to use LOF for novelty detection and predict on new '
-               'unseen data.')
-        raise NotImplementedError(msg)
+        return self._predict(X)
+
 
     def decision_function(self, X):
         """Shifted opposite of the Local Outlier Factor of X
@@ -322,15 +323,16 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             samples. The lower, the more abnormal. Negative scores represent
             outliers, positive scores represent inliers.
         """
-        if self.novelty:
-            return self.score_samples(X) - self.offset_
+        if not self.novelty:
+            msg = ('decision_function is not available when novelty=False. '
+                   'Use novelty=True if you want to use LOF for novelty '
+                   'detection and compute decision_function for new unseen '
+                   'data. Note that the opposite LOF of the training samples '
+                   'is always available by considering the '
+                   'negative_outlier_factor_ attribute.')
+            raise ValueError(msg)
 
-        msg = ('decision_function is not available when novelty=False. Use '
-               'novelty=True if you want to use LOF for novelty detection and '
-               'compute decision_function for new unseen data. Note that the '
-               'opposite LOF of the training samples is always available by '
-               'considering the negative_outlier_factor_ attribute.')
-        raise NotImplementedError(msg)
+        return self.score_samples(X) - self.offset_
 
     def score_samples(self, X):
         """Opposite of the Local Outlier Factor of X (as bigger is
@@ -357,28 +359,28 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The lower, the more abnormal.
         """
 
-        if self.novelty:
-            check_is_fitted(self, ["offset_", "negative_outlier_factor_",
-                                   "_distances_fit_X_"])
-            X = check_array(X, accept_sparse='csr')
+        if not self.novelty:
+            msg = ('score_samples is not available when novelty=False. The '
+                   'scores of the training samples are always available '
+                   'through the negative_outlier_factor_ attribute. Use '
+                   'novelty=True if you want to use LOF for novelty detection '
+                   'and compute score_samples for new unseen data.')
+            raise ValueError(msg)
 
-            distances_X, neighbors_indices_X = (
-                self.kneighbors(X, n_neighbors=self.n_neighbors_))
-            X_lrd = self._local_reachability_density(distances_X,
-                                                     neighbors_indices_X)
+        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
+                               "_distances_fit_X_"])
+        X = check_array(X, accept_sparse='csr')
 
-            lrd_ratios_array = (self._lrd[neighbors_indices_X] /
-                                X_lrd[:, np.newaxis])
+        distances_X, neighbors_indices_X = (
+            self.kneighbors(X, n_neighbors=self.n_neighbors_))
+        X_lrd = self._local_reachability_density(distances_X,
+                                                 neighbors_indices_X)
 
-            # as bigger is better:
-            return -np.mean(lrd_ratios_array, axis=1)
+        lrd_ratios_array = (self._lrd[neighbors_indices_X] /
+                            X_lrd[:, np.newaxis])
 
-        msg = ('score_samples is not available when novelty=False. The '
-               'score_samples on training data is always available by '
-               'considering the negative_outlier_factor_ attribute. Use '
-               'novelty=True if you want to use LOF for novelty detection and '
-               'compute score_samples for new unseen data.')
-        raise NotImplementedError(msg)
+        # as bigger is better:
+        return -np.mean(lrd_ratios_array, axis=1)
 
     def _local_reachability_density(self, distances_X, neighbors_indices):
         """The local reachability density (LRD)
