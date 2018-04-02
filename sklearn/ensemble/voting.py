@@ -25,6 +25,7 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..externals.joblib import Parallel, delayed
+from ..externals.six import with_metaclass
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils import check_array
 from ..utils.metaestimators import _BaseComposition
@@ -46,7 +47,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
-class BaseVoting(with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseVoting(with_metaclass(ABCMeta, BaseEnsemble, _BaseComposition)):
     """Base class for voting and averaging.
     
     Warning: This class should not be used directly. Use derived classes
@@ -62,7 +63,23 @@ class BaseVoting(with_metaclass(ABCMeta, BaseEnsemble)):
                  flatten_transform=None):
         super(BaseVoting, self).__init__()
         self.arg = arg
-        
+
+    @property
+    def named_estimators(self):
+        return Bunch(**dict(self.estimators))
+
+    @property
+    def _weights_not_none(self):
+        """Get the weights of not `None` estimators"""
+        if self.weights is None:
+            return None
+        return [w for est, w in zip(self.estimators,
+                                    self.weights) if est[1] is not None]
+
+    def _predict(self, X):
+        """Collect results from clf.predict calls. """
+        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+
 
 class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -160,10 +177,6 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
 
-    @property
-    def named_estimators(self):
-        return Bunch(**dict(self.estimators))
-
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
 
@@ -232,14 +245,6 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         for k, e in zip(self.estimators, self.estimators_):
             self.named_estimators_[k[0]] = e
         return self
-
-    @property
-    def _weights_not_none(self):
-        """Get the weights of not `None` estimators"""
-        if self.weights is None:
-            return None
-        return [w for est, w in zip(self.estimators,
-                                    self.weights) if est[1] is not None]
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -377,11 +382,6 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         return super(VotingClassifier,
                      self)._get_params('estimators', deep=deep)
 
-    def _predict(self, X):
-        """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
-
-
 class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     """
     An average regressor is an ensemble meta-estimator that fits base
@@ -433,18 +433,6 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         self.weights = weights
         self.n_jobs = n_jobs
         self.verbose = verbose
-
-    @property
-    def named_estimators(self):
-        return Bunch(**dict(self.estimators))
-
-    @property
-    def _weights_not_none(self):
-        """Get the weights of not `None` estimators"""
-        if self.weights is None:
-            return None
-        return [w for est, w in zip(self.estimators,
-                                    self.weights) if est[1] is not None]
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -508,10 +496,6 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
 
         return self
 
-    def _collect_predictions(self, X):
-        """Collect results from reg.predict calls. """
-        return np.asarray([reg.predict(X) for reg in self.estimators_])
-
     def predict(self, X):
         """Predict regression target for X.
 
@@ -533,7 +517,7 @@ class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        y_hat = np.average(self._collect_predictions(X), axis=0,
+        y_hat = np.average(self._predict(X).T, axis=0,
                            weights=self._weights_not_none)
         return y_hat
 
