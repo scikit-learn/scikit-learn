@@ -1404,7 +1404,8 @@ class TfidfVectorizer(CountVectorizer):
         self._validate_vocabulary()
         if hasattr(self, 'vocabulary_'):
             if len(self.vocabulary_) != len(value):
-                raise ValueError("idf length = %d must be equal to vocabulary size = %d" %
+                raise ValueError("idf length = %d must be equal "
+                                 "to vocabulary size = %d" %
                                  (len(value), len(self.vocabulary)))
         self._tfidf.idf_ = value
 
