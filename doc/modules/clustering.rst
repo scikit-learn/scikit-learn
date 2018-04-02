@@ -134,7 +134,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids
 that minimise the *inertia*, or within-cluster sum of squared criterion:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia, or the within-cluster sum of squares criterion,
 can be recognized as a measure of how internally coherent clusters are.
@@ -469,15 +469,15 @@ function of the gradient of the image.
  * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_face_segmentation.py`: Spectral clustering
-   to split the image of the raccoon face in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
+   to split the image of coins in regions.
 
-.. |face_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_face_segmentation.html
+.. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
-.. |face_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_face_segmentation.html
+.. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
 Different label assignment strategies
@@ -495,7 +495,7 @@ geometrical shape.
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
-|face_kmeans|                          |face_discretize|
+|coin_kmeans|                          |coin_discretize|
 =====================================  =====================================
 
 Spectral Clustering Graphs
@@ -554,6 +554,8 @@ metric used for the merge strategy:
   observations of pairs of clusters.
 - **Average linkage** minimizes the average of the distances between all
   observations of pairs of clusters.
+- **Single linkage** minimizes the distance between the closest
+  observations of pairs of clusters.
 
 :class:`AgglomerativeClustering` can also scale to large number of samples
 when it is used jointly with a connectivity matrix, but is computationally
@@ -567,30 +569,24 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
-Different linkage type: Ward, complete and average linkage
------------------------------------------------------------
+Different linkage type: Ward, complete, average, and single linkage
+-------------------------------------------------------------------
 
-:class:`AgglomerativeClustering` supports Ward, average, and complete
+:class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_linkage_comparison_001.png
+    :target: ../auto_examples/cluster/plot_linkage_comparison.html
     :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
 
 Agglomerative cluster has a "rich get richer" behavior that leads to
-uneven cluster sizes. In this regard, complete linkage is the worst
+uneven cluster sizes. In this regard, single linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
-Euclidean metrics, average linkage is a good alternative.
+Euclidean metrics, average linkage is a good alternative. Single linkage,
+while not robust to noisy data, can be computed very efficiently and can
+therefore be useful to provide hierarchical clustering of larger datasets.
+Single linkage can also perform well on non-globular data.
 
 .. topic:: Examples:
 
@@ -635,12 +631,12 @@ merging to nearest neighbors as in :ref:`this example
 <sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`raccoon face <sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py>` example.
+:ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`: Ward clustering
-   to split the image of a raccoon face in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward clustering
+   to split the image of coins in regions.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
@@ -652,15 +648,16 @@ enable only merging of neighboring pixels on an image, as in the
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
-.. warning:: **Connectivity constraints with average and complete linkage**
+.. warning:: **Connectivity constraints with single, average and complete linkage**
 
-    Connectivity constraints and complete or average linkage can enhance
+    Connectivity constraints and single, complete or average linkage can enhance
     the 'rich getting richer' aspect of agglomerative clustering,
     particularly so if they are built with
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
     :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    Single linkage is the most brittle linkage option with regard to this issue.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
@@ -682,7 +679,7 @@ enable only merging of neighboring pixels on an image, as in the
 Varying the metric
 -------------------
 
-Average and complete linkage can be used with a variety of distances (or
+Single, average and complete linkage can be used with a variety of distances (or
 affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
@@ -1499,7 +1496,7 @@ cluster analysis.
  * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
    Interpretation and Validation of Cluster Analysis". Computational
    and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <http://dx.doi.org/10.1016/0377-0427(87)90125-7>`_.
+   `doi:10.1016/0377-0427(87)90125-7 <https://doi.org/10.1016/0377-0427(87)90125-7>`_.
 
 
 Advantages
@@ -1592,7 +1589,7 @@ Drawbacks
 
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
-    `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+    `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
 
 .. _contingency_matrix:
 

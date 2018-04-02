@@ -62,6 +62,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -122,9 +123,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                   n_jobs=1, random_state=0, shuffle=True, tol=None, verbose=0,
                   warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.49324685  1.0552176   1.49519589  1.33798314]]
+    [[0.49324685 1.0552176  1.49519589 1.33798314]]
     >>> print(clf.intercept_)
-    [ 2.18438388]
+    [2.18438388]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -285,6 +286,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -331,7 +333,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                   max_iter=None, n_iter=None, random_state=0, shuffle=True,
                   tol=None, verbose=0, warm_start=False)
     >>> print(regr.coef_)
-    [ 20.48736655  34.18818427  67.59122734  87.94731329]
+    [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)
     [-0.02306214]
     >>> print(regr.predict([[0, 0, 0, 0]]))

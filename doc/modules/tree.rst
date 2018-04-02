@@ -110,7 +110,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba([[2., 2.]])
-    array([[ 0.,  1.]])
+    array([[0., 1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -175,7 +175,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba(iris.data[:1, :])
-    array([[ 1.,  0.,  0.]])
+    array([[1., 0., 0.]])
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -210,7 +210,7 @@ instead of integer values::
     >>> clf = tree.DecisionTreeRegressor()
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 0.5])
+    array([0.5])
 
 .. topic:: Examples:
 
@@ -490,17 +490,17 @@ Mean Squared Error:
 
 .. math::
 
-    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
 Mean Absolute Error:
 
 .. math::
 
-    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
 
 where :math:`X_m` is the training data in node :math:`m`
 

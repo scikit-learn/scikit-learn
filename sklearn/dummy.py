@@ -104,7 +104,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant", "prior"):
@@ -386,7 +385,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
@@ -447,7 +445,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self.constant_ = np.reshape(self.constant_, (1, -1))
         return self
 
-    def predict(self, X):
+    def predict(self, X, return_std=False):
         """
         Perform classification on test vectors X.
 
@@ -456,17 +454,26 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
+        return_std : boolean, optional
+            Whether to return the standard deviation of posterior prediction.
+            All zeros in this case.
+
         Returns
         -------
         y : array, shape = [n_samples]  or [n_samples, n_outputs]
             Predicted target values for X.
+
+        y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
+            Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
 
-        y = np.ones((n_samples, 1)) * self.constant_
+        y = np.ones((n_samples, self.n_outputs_)) * self.constant_
+        y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
+            y_std = np.ravel(y_std)
 
-        return y
+        return (y, y_std) if return_std else y

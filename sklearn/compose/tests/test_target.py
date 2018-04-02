@@ -14,12 +14,13 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import TransformedTargetRegressor
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.linear_model import LinearRegression, Lasso
 
 from sklearn import datasets
+
+from sklearn.compose import TransformedTargetRegressor
 
 friedman = datasets.make_friedman1(random_state=0)
 
@@ -37,8 +38,8 @@ def test_transform_target_regressor_error():
     sample_weight = np.ones((y.shape[0],))
     regr = TransformedTargetRegressor(regressor=Lasso(),
                                       transformer=StandardScaler())
-    assert_raises_regex(TypeError, "fit\(\) got an unexpected keyword argument"
-                        " 'sample_weight'", regr.fit, X, y,
+    assert_raises_regex(TypeError, r"fit\(\) got an unexpected keyword "
+                        "argument 'sample_weight'", regr.fit, X, y,
                         sample_weight=sample_weight)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)

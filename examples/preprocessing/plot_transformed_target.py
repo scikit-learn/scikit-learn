@@ -7,7 +7,7 @@ Effect of transforming the targets in regression model
 ======================================================
 
 In this example, we give an overview of the
-:class:`sklearn.preprocessing.TransformedTargetRegressor`. Two examples
+:class:`sklearn.compose.TransformedTargetRegressor`. Two examples
 illustrate the benefit of transforming the targets before learning a linear
 regression model. The first example uses synthetic data while the second
 example is based on the Boston housing data set.
@@ -31,7 +31,7 @@ print(__doc__)
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
-from sklearn.preprocessing import TransformedTargetRegressor
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
 
 ###############################################################################
@@ -40,22 +40,13 @@ from sklearn.metrics import median_absolute_error, r2_score
 # non-negative and (ii) applying an exponential function to obtain non-linear
 # targets which cannot be fitted using a simple linear model.
 #
-# Therefore, a logarithmic and an exponential function will be used to
-# transform the targets before training a linear regression model and using it
-# for prediction.
-
-
-def log_transform(x):
-    return np.log(x + 1)
-
-
-def exp_transform(x):
-    return np.exp(x) - 1
-
+# Therefore, a logarithmic (`np.log1p`) and an exponential function
+# (`np.expm1`) will be used to transform the targets before training a linear
+# regression model and using it for prediction.
 
 X, y = make_regression(n_samples=10000, noise=100, random_state=0)
 y = np.exp((y + abs(y.min())) / 200)
-y_trans = log_transform(y)
+y_trans = np.log1p(y)
 
 ###############################################################################
 # The following illustrate the probability density functions of the target
@@ -103,8 +94,8 @@ ax0.set_xlim([0, 2000])
 ax0.set_ylim([0, 2000])
 
 regr_trans = TransformedTargetRegressor(regressor=RidgeCV(),
-                                        func=log_transform,
-                                        inverse_func=exp_transform)
+                                        func=np.log1p,
+                                        inverse_func=np.expm1)
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 

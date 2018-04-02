@@ -28,7 +28,7 @@ import numpy as np
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -64,9 +64,8 @@ print("Score without the samples containing missing values = %.2f" % score)
 X_missing = X_full.copy()
 X_missing[np.where(missing_samples)[0], missing_features] = 0
 y_missing = y_full.copy()
-estimator = Pipeline([("imputer", Imputer(missing_values=0,
-                                          strategy="mean",
-                                          axis=0)),
+estimator = Pipeline([("imputer", SimpleImputer(missing_values=0,
+                                                strategy="mean")),
                       ("forest", RandomForestRegressor(random_state=0,
                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
