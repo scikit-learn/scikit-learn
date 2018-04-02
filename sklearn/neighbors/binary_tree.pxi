@@ -1466,7 +1466,7 @@ cdef class BinaryTree:
                 pt += n_features
 
                 if count_only:
-                    pass
+                    continue
 
                 if sort_results:
                     _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
