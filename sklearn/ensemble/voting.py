@@ -1,7 +1,7 @@
 """
 Soft Voting/Majority Rule classifier and Average regressor.
 
-This module contains: 
+This module contains:
  - A Soft Voting/Majority Rule classifier for
 classification estimators.
  - An average regressor for
@@ -34,7 +34,7 @@ from ..utils import Bunch
 from .base import BaseEnsemble
 
 
-__all__ = ["AverageRegressor", 
+__all__ = ["AverageRegressor",
            "VotingClassifier"]
 
 
@@ -49,20 +49,19 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
 
 class BaseVoting(with_metaclass(ABCMeta, BaseEnsemble, _BaseComposition)):
     """Base class for voting and averaging.
-    
+
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
 
     @abstractmethod
-    def __init__(self, 
+    def __init__(self,
                  estimators,
                  voting='hard',
                  weights=None,
                  n_jobs=1,
                  flatten_transform=None):
         super(BaseVoting, self).__init__()
-        self.arg = arg
 
     @property
     def named_estimators(self):
@@ -381,6 +380,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         """
         return super(VotingClassifier,
                      self)._get_params('estimators', deep=deep)
+
 
 class AverageRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     """
