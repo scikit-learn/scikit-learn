@@ -210,6 +210,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
 def calinski_harabaz_score(X, labels):
     """Compute the Calinski and Harabaz score.
+
     It is also known as the Variance Ratio Criterion.
 
     The score is defined as ratio between the within-cluster dispersion and
