@@ -238,6 +238,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
