@@ -83,15 +83,15 @@ def _class_means(X, y):
 
     Returns
     -------
-    means : array-like, shape (n_features,)
+    means : array-like, shape (n_classes, n_features)
         Class means.
     """
-    means = []
     classes = np.unique(y)
-    for group in classes:
+    means = np.empty(shape=(len(classes), X.shape[1]), dtype=X.dtype)
+    for idx, group in enumerate(classes):
         Xg = X[y == group, :]
-        means.append(Xg.mean(0))
-    return np.asarray(means)
+        means[idx] = Xg.mean(0)
+    return means
 
 
 def _class_cov(X, y, priors=None, shrinkage=None):
@@ -120,11 +120,14 @@ def _class_cov(X, y, priors=None, shrinkage=None):
         Class covariance matrix.
     """
     classes = np.unique(y)
-    covs = []
-    for group in classes:
+    cov = np.zeros((X.shape[1], X.shape[1]), dtype=X.dtype)
+    for idx, group in enumerate(classes):
         Xg = X[y == group, :]
-        covs.append(np.atleast_2d(_cov(Xg, shrinkage)))
-    return np.average(covs, axis=0, weights=priors)
+        if priors is None:
+            cov = cov + np.atleast_2d(_cov(Xg, shrinkage)) / len(classes)
+        else:
+            cov = cov + priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
+    return cov
 
 
 class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
