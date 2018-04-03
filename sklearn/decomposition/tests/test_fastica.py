@@ -272,7 +272,8 @@ def test_fastica_errors():
                         FastICA, max_iter=0)
     assert_raises_regex(ValueError, r'alpha must be in \[1,2\]',
                         fastica, X, fun_args={'alpha': 0})
-    assert_raises_regex(ValueError, 'w_init has invalid shape.+\(3, 3\)',
+    assert_raises_regex(ValueError, 'w_init has invalid shape.+'
+                        r'should be \(3L?, 3L?\)',
                         fastica, X, w_init=w_init)
     assert_raises_regex(ValueError,
                         'Invalid algorithm.+must be.+parallel.+or.+deflation',
