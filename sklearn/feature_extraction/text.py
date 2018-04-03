@@ -951,6 +951,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+
         self._check_vocabulary()
 
         if sp.issparse(X):
