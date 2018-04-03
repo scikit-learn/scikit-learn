@@ -971,6 +971,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+
         self._check_vocabulary()
 
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
