@@ -69,16 +69,23 @@ the class conditional distribution of the data :math:`P(X|y=k)` for each class
 
 and we select the class :math:`k` which maximizes this conditional probability.
 
-More specifically, for linear and quadratic discriminant analysis,
-:math:`P(X|y)` is modelled as a multivariate Gaussian distribution with
-density:
+More specifically, for linear and quadratic discriminant analysis, 
+the probability distribution of the :math:`d` dimensional random vector :math:`\vec{x}` 
+(:math:`\vec{x}\in \mathbb{R}^d`) conditioned on class group :math:`y` 
+is modelled as a multivariate Gaussian distribution with 
+density :math:`p(\vec{x}|y)`.  Mathematically, 
 
-.. math:: p(X | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right)
+.. math:: \vec{x}_i |y=k \; \overset{iid}{\sim} \; N_d(\vec{\mu}_k,\Sigma_k)
+
+:math:`i=1,...,n`, where :math:`n` is the number of observations and d is 
+the number of features.
+
+.. math:: p(\vec{x} | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (\vec{x}-\vec{\mu}_k)^T \Sigma_k^{-1} (\vec{x}-\vec{\mu}_k)\right)
 
 To use this model as a classifier, we just need to estimate from the training
 data the class priors :math:`P(y=k)` (by the proportion of instances of class
 :math:`k`), the class means :math:`\mu_k` (by the empirical sample class means)
-and the covariance matrices (either by the empirical sample class covariance
+and the covariance matrices :math:`\Sigma_k` (either by the empirical sample class covariance
 matrices, or by a regularized estimator: see the section on shrinkage below).
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
