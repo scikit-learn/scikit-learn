@@ -127,7 +127,7 @@ assume that all classes have the same estimated covariance :math:`\Sigma`, we
 can rescale the data :math:`X` :math:`(X \in \mathbb{R}^{(n\times d)})` to 
 :math:`X^*` so that its covariance is the identity:
 
-.. math:: X^* = X U^T D^{-1/2} \text{ with }\Sigma = UDU^T
+.. math:: X^* = X U D^{-1/2} \text{ with }\Sigma = UDU^T
 
 Then one can show that to classify a data point after scaling is equivalent to
 finding the estimated class mean :math:`\vec{\mu}^*_k` which is closest to the data
