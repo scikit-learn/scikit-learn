@@ -1064,9 +1064,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    idf_ : array, shape = [n_features], or None
+    idf_ : array, shape = [n_features], or not defined
         The learned idf vector (global term weights)
-        when ``use_idf`` is set to True, None otherwise.
+        when ``use_idf`` is set to True, not defined otherwise.
 
     References
     ----------
@@ -1308,9 +1308,9 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
-    idf_ : array, shape = [n_features], or None
+    idf_ : array, shape = [n_features], or not defined
         The learned idf vector (global term weights)
-        when ``use_idf`` is set to True, None otherwise.
+        when ``use_idf`` is set to True, not defined otherwise.
 
     stop_words_ : set
         Terms that were ignored because they either:
