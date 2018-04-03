@@ -968,7 +968,7 @@ def test_tfidfvectorizer_invalid_idf_attr():
     copy = TfidfVectorizer(vocabulary=vect.vocabulary_, use_idf=True)
     expected_idf_len = len(vect.idf_)
     invalid_idf = [1.0] * (expected_idf_len + 1)
-    assert_raises(ValueError, copy.__setattr__, 'idf_', invalid_idf)
+    assert_raises(ValueError, setattr, copy, 'idf_', invalid_idf)
 
 
 def test_non_unique_vocab():
