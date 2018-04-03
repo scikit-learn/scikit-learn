@@ -565,9 +565,8 @@ def test_feature_names():
 
     cv = CountVectorizer(vocabulary=vocab)
     feature_names = cv.get_feature_names()
-    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza',
-                        'salad', 'sparkling', 'tomato', 'water'],
-                        feature_names)
+    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza', 'salad',
+                        'sparkling', 'tomato', 'water'], feature_names)
     assert_true(cv.fixed_vocabulary_)
 
     for idx, name in enumerate(feature_names):
