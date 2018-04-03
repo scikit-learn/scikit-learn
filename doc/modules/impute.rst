@@ -79,9 +79,6 @@ snippet::
      [ 6.  4.]
      [13.  6.]]
 
-Note that MICE uses sampling as part of its imputation process, so the exact
-values of the imputed data will be slightly different each time you run it.
-
 Both :class:`SimpleImputer` and :class:`MICEImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
