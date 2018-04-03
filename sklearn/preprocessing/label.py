@@ -684,6 +684,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.OneHotEncoder : encode categorical integer features
         using a one-hot aka one-of-K scheme.
     """
+
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -794,8 +795,16 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
+        empty_mapping = False if class_mapping else True
         for labels in y:
-            indices.extend(set(class_mapping[label] for label in labels))
+            if empty_mapping:
+                # use all labels
+                index = set(class_mapping[label] for label in labels)
+            else:
+                # only use labels in self.classes_
+                index = set(class_mapping[label] for label in labels
+                            if label in class_mapping)
+            indices.extend(index)
             indptr.append(len(indices))
         data = np.ones(len(indices), dtype=int)
 
