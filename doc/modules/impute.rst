@@ -74,7 +74,7 @@ snippet::
           n_imputations=10, n_nearest_features=None, predictor=None,
           random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
-    >>> print(np.round(imp.transform(X_test)))            # doctest: +ELLIPSIS
+    >>> print(np.round(imp.transform(X_test)))
     [[ 1.  2.]
      [ 6.  4.]
      [13.  6.]]
