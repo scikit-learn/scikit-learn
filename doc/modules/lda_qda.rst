@@ -72,7 +72,7 @@ and we select the class :math:`k` which maximizes this conditional probability.
 More specifically, in linear and quadratic discriminant analysis, 
 the distribution of the :math:`d` dimensional random vector :math:`\vec{x}` 
 (:math:`\vec{x}\in \mathbb{R}^d`) conditioned on class group :math:`y` 
-is modelled as a multivariate Gaussian distribution with 
+is modeled as a multivariate Gaussian distribution with 
 density :math:`p(\vec{x}|y)`.  Mathematically, 
 
 .. math:: 
@@ -83,14 +83,15 @@ the number of features. So the density function is
 
 .. math:: p(\vec{x} | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (\vec{x}-\vec{\mu}_k)^T \Sigma_k^{-1} (\vec{x}-\vec{\mu}_k)\right)
 
-To use this model as a classifier, we just need to estimate the class priors, 
-the class means, and the covariance matrices from the training data :math:`X` 
-:math:`(X \in \mathbb{R}^{(n \times d)})`：  
+To use this model as a classifier, we just need to estimate :math:`P(y=k)`, :math:`\vec{\mu}_k`, 
+and :math:`\Sigma_k` from the training data :math:`X` 
+:math:`(X \in \mathbb{R}^{(n \times d)})`.
+
+Parameter estimation:
 
 * the class priors :math:`P(y=k)` : estimated by the proportion of instances of class :math:`k`
 * the class means :math:`\vec{\mu}_k`: estimated by the empirical sample class means  
-* the covariance matrices :math:`\Sigma_k` : estimated either by the empirical sample class covariance
-matrices, or by a regularized estimator: see the section on shrinkage below.  
+* the covariance matrices :math:`\Sigma_k` : estimated either by the empirical sample class covariance matrices, or by a regularized estimator: see the section on shrinkage below.  
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
@@ -101,7 +102,7 @@ log-probability ratios :math:`\log[P(y=k | \vec{x}) / P(y=l | \vec{x})]`:
     \log\left(\frac{P(y=k|\vec{x})}{P(y=l|\vec{x})}\right)=
     \log\left(\frac{P(\vec{x}|y=k)P(y=k)}{P(\vec{x}|y=l)P(y=l)}\right)=0 \Leftrightarrow
 
-    (\vec{\mu}_k-\vec{\mu}_l)^t\Sigma^{-1} \vec{x} =
+    (\vec{\mu}_k-\vec{\mu}_l)^T\Sigma^{-1} \vec{x} =
     \frac{1}{2} (\vec{\mu}_k^T \Sigma^{-1} \vec{\mu}_k - \vec{\mu}_l^T \Sigma^{-1} \vec{\mu}_l)
     - \log\frac{P(y=k)}{P(y=l)}
 
@@ -123,10 +124,10 @@ To understand the use of LDA in dimensionality reduction, it is useful to start
 with a geometric reformulation of the LDA classification rule explained above.
 We write :math:`K` for the total number of target classes. Since in LDA we
 assume that all classes have the same estimated covariance :math:`\Sigma`, we
-can rescale the data :math:`X` (:math:`X \in \mathbb{R}^{(n\times d)}`) to 
+can rescale the data :math:`X` :math:`(X \in \mathbb{R}^{(n\times d)})` to 
 :math:`X^*` so that its covariance is the identity:
 
-.. math:: X^* = X U^t D^{-1/2} \text{ with }\Sigma = UDU^t
+.. math:: X^* = X U^T D^{-1/2} \text{ with }\Sigma = UDU^T
 
 Then one can show that to classify a data point after scaling is equivalent to
 finding the estimated class mean :math:`\vec{\mu}^*_k` which is closest to the data
