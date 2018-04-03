@@ -122,8 +122,8 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
 
 source activate testenv
 pip install sphinx-gallery
-# Use numpydoc master (for now)
-pip install git+https://github.com/numpy/numpydoc
+# Use numpydoc PR: https://github.com/numpy/numpydoc/pull/154
+pip install https://github.com/jnothman/numpydoc/archive/underscore_escape.zip
 
 # Build and install scikit-learn in dev mode
 python setup.py develop
