@@ -548,6 +548,14 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              non_negative=self.non_negative)
 
 
+if six.PY3:
+    HashingVectorizer.fit_transform.__doc__ = \
+           HashingVectorizer.transform.__doc__
+else:
+    HashingVectorizer.fit_transform.__func__.__doc__ = \
+            HashingVectorizer.transform.__doc__
+
+
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
