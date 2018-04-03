@@ -76,18 +76,21 @@ is modelled as a multivariate Gaussian distribution with
 density :math:`p(\vec{x}|y)`.  Mathematically, 
 
 .. math:: 
-    \vec{x}_i |y=k \; \overset{iid}{\sim} \; N_d(\vec{\mu}_k,\Sigma_k) \quad text{for } i=1,...,n
+    \vec{x}_i |y=k \; \overset{iid}{\sim} \; N_d(\vec{\mu}_k,\Sigma_k) \qquad \text{for } i=1,...,n
 
 where :math:`n` is the number of observations and :math:`d` is 
 the number of features. So the density function is
 
 .. math:: p(\vec{x} | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (\vec{x}-\vec{\mu}_k)^T \Sigma_k^{-1} (\vec{x}-\vec{\mu}_k)\right)
 
-To use this model as a classifier, we just need to estimate from the training
-data :math:`X` (:math:`X \in \mathbb{R}^{(n \times d)}`) the class priors :math:`P(y=k)` (by the proportion of instances of class
-:math:`k`), the class means :math:`\vec{mu}_k` (by the empirical sample class means)
-and the covariance matrices :math:`\Sigma_k` (either by the empirical sample class covariance
-matrices, or by a regularized estimator: see the section on shrinkage below).
+To use this model as a classifier, we just need to estimate the class priors, 
+the class means, and the covariance matrices from the training data :math:`X` 
+:math:`(X \in \mathbb{R}^{(n \times d)})`：  
+
+* the class priors :math:`P(y=k)` : estimated by the proportion of instances of class :math:`k`
+* the class means :math:`\vec{\mu}_k`: estimated by the empirical sample class means  
+* the covariance matrices :math:`\Sigma_k` : estimated either by the empirical sample class covariance
+matrices, or by a regularized estimator: see the section on shrinkage below.  
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
