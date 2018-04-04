@@ -541,6 +541,26 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             X = normalize(X, norm=self.norm, copy=False)
         return X
 
+    def fit_transform(self, X, y=None):
+        """Transform a sequence of documents to a document-term matrix.
+
+        Parameters
+        ----------
+        X : iterable over raw text documents, length = n_samples
+            Samples. Each sample must be a text document (either bytes or
+            unicode strings, file name or file object depending on the
+            constructor argument) which will be tokenized and hashed.
+        y : any
+            Ignored. This parameter exists only for compatibility with
+            sklearn.pipeline.Pipeline.
+
+        Returns
+        -------
+        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+            Document-term matrix.
+        """
+        return self.fit(X, y).transform(X)
+
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
