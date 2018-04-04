@@ -309,11 +309,12 @@ def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
     Y = np.array([[0, 0]])
-    assert_warns(UserWarning, mlb.fit(y).transform, [[0]])
-    assert_array_equal(mlb.fit(y).transform([[0]]), Y)
+    matrix = assert_warns(UserWarning, mlb.fit(y).transform, [[0]])
+    assert_array_equal(matrix, Y)
 
     mlb = MultiLabelBinarizer(classes=[1, 2])
-    assert_array_equal(mlb.fit(y).transform([[0]]), Y)
+    matrix = assert_warns(UserWarning, mlb.fit(y).transform, [[0]])
+    assert_array_equal(matrix, Y)
 
 
 def test_multilabel_binarizer_given_classes():
