@@ -797,15 +797,17 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         indices = array.array('i')
         indptr = array.array('i', [0])
         for labels in y:
-            index = set()
+            index, unknown = set(), set()
             for label in labels:
                 try:
                     index.add(class_mapping[label])
                 except KeyError:
-                    warnings.warn("Unkown class {0!r} will be ignored"
-                                  .format(label))
+                    unknown.add(label)
             indices.extend(index)
             indptr.append(len(indices))
+        if unknown:
+            warnings.warn("Unkown class(es) {0} will be ignored"
+                          .format(unknown))
         data = np.ones(len(indices), dtype=int)
 
         return sp.csr_matrix((data, indices, indptr),
