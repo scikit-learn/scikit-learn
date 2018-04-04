@@ -798,6 +798,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         empty_mapping = False if class_mapping else True
         for labels in y:
             if not empty_mapping:
+                # use only known classes in self.classes_
                 labels = filter(class_mapping.__contains__, labels)
             indices.extend(set(class_mapping[label] for label in labels))
             indptr.append(len(indices))
