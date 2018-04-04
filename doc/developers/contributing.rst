@@ -42,6 +42,46 @@ ticket to the
 `Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
+.. _filing_bugs:
+
+Filing Bugs
+-----------
+
+We use GitHub issues to track all bugs and feature requests; feel free to
+open an issue if you have found a bug or wish to see a feature implemented.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
+   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
+
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   `new algorithm requirements
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
+
+-  Please ensure all code snippets and error messages are formatted in
+   appropriate code blocks.
+   See `Creating and highlighting code blocks
+   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
+
+-  Please include your operating system type and version number, as well
+   as your Python, scikit-learn, numpy, and scipy versions. This information
+   can be found by running the following code snippet::
+
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
+
+-  Please be specific about what estimators and/or functions are involved
+   and the shape of the data, as appropriate; please include a
+   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
+   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
+   please provide the traceback.
 
 Ways to contribute
 ==================
@@ -330,47 +370,6 @@ and Cython optimizations.
      [doc quick]            Docs built, but excludes example gallery plots
      [doc build]            Docs built including example gallery plots
      ====================== ===================
-
-.. _filing_bugs:
-
-Filing Bugs
------------
-
-We use GitHub issues to track all bugs and feature requests; feel free to
-open an issue if you have found a bug or wish to see a feature implemented.
-
-It is recommended to check that your issue complies with the
-following rules before submitting:
-
--  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
-   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
-
--  If you are submitting an algorithm or feature request, please verify that
-   the algorithm fulfills our
-   `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
-
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See `Creating and highlighting code blocks
-   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
-
--  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by running the following code snippet::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
-
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
-   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
-   please provide the traceback.
 
 .. _new_contributors:
 
