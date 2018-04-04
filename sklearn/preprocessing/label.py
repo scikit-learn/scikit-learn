@@ -9,6 +9,7 @@
 from collections import defaultdict
 import itertools
 import array
+import logging
 
 import numpy as np
 import scipy.sparse as sp
@@ -34,6 +35,9 @@ __all__ = [
     'LabelEncoder',
     'MultiLabelBinarizer',
 ]
+
+
+logger = logging.getLogger(__name__)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -803,9 +807,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                 labels = set(labels)  # in case labels is a generator
                 missing = labels - set(class_mapping)
                 if missing:
-                    raise Warning("Unkown class(es) found '{0}' "
-                                  "will be ignored."
-                                  .format("', '".join(missing)))
+                    logger.warning("Unkown class(es) found %s will be ignored",
+                                   missing)
                 labels = filter(class_mapping.__contains__, labels)
 
             indices.extend(set(class_mapping[label] for label in labels))
