@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -308,6 +309,7 @@ def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
     Y = np.array([[0, 0]])
+    assert_warns(UserWarning, mlb.fit(y).transform, [[0]])
     assert_array_equal(mlb.fit(y).transform([[0]]), Y)
 
     mlb = MultiLabelBinarizer(classes=[1, 2])
