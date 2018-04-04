@@ -802,7 +802,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                 try:
                     index.add(class_mapping[label])
                 except KeyError:
-                    warnings.warn("Unkown class {0} found and will be ignored"
+                    warnings.warn("Unkown class {0!r} will be ignored"
                                   .format(label))
             indices.extend(index)
             indptr.append(len(indices))
