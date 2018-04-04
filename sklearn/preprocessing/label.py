@@ -9,7 +9,7 @@
 from collections import defaultdict
 import itertools
 import array
-import logging
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -35,9 +35,6 @@ __all__ = [
     'LabelEncoder',
     'MultiLabelBinarizer',
 ]
-
-
-logger = logging.getLogger(__name__)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -799,19 +796,15 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
-        empty_mapping = False if class_mapping else True
-
         for labels in y:
-            if not empty_mapping:
-                # use only known classes in self.classes_
-                labels = set(labels)  # in case labels is a generator
-                missing = labels - set(class_mapping)
-                if missing:
-                    logger.warning("Unkown class(es) found %s will be ignored",
-                                   missing)
-                labels = filter(class_mapping.__contains__, labels)
-
-            indices.extend(set(class_mapping[label] for label in labels))
+            index = set()
+            for label in labels:
+                try:
+                    index.add(class_mapping[label])
+                except KeyError:
+                    warnings.warn("Unkown class {0} found and will be ignored"
+                                  .format(label))
+            indices.extend(index)
             indptr.append(len(indices))
         data = np.ones(len(indices), dtype=int)
 
