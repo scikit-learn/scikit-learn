@@ -34,21 +34,13 @@ See :ref:`new_contributors` to get started.
 
 |
 
-Submitting a bug report
-=======================
+Submitting a bug report or a feature request
+============================================
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
 `Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
-
-.. _filing_bugs:
-
-Filing Bugs
------------
-
-We use GitHub issues to track all bugs and feature requests; feel free to
-open an issue if you have found a bug or wish to see a feature implemented.
 
 It is recommended to check that your issue complies with the
 following rules before submitting:
@@ -61,6 +53,16 @@ following rules before submitting:
    the algorithm fulfills our
    `new algorithm requirements
    <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
+
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
+   :ref:`filing_bugs`.
+
+.. _filing_bugs:
+
+How to make a good Bug report:
+-----------
+When you submit an issue to `Github <https://github.com/scikit-learn/scikit-learn/issues>`_, 
+abiding to the following guidelines will help to provide you with the best feedback: 
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
