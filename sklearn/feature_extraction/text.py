@@ -1082,6 +1082,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    Attributes
+    ----------
+    idf_ : array, shape (n_features)
+        The inverse document frequency (IDF) vector; only defined
+        if  ``use_idf`` is True.
+
     References
     ----------
 
@@ -1176,6 +1182,13 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
+
+    @idf_.setter
+    def idf_(self, value):
+        value = np.asarray(value, dtype=np.float64)
+        n_features = value.shape[0]
+        self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
+                                    n=n_features, format='csr')
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1315,9 +1328,9 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
-    idf_ : array, shape = [n_features], or None
-        The learned idf vector (global term weights)
-        when ``use_idf`` is set to True, None otherwise.
+    idf_ : array, shape (n_features)
+        The inverse document frequency (IDF) vector; only defined
+        if  ``use_idf`` is True.
 
     stop_words_ : set
         Terms that were ignored because they either:
@@ -1405,6 +1418,16 @@ class TfidfVectorizer(CountVectorizer):
     @property
     def idf_(self):
         return self._tfidf.idf_
+
+    @idf_.setter
+    def idf_(self, value):
+        self._validate_vocabulary()
+        if hasattr(self, 'vocabulary_'):
+            if len(self.vocabulary_) != len(value):
+                raise ValueError("idf length = %d must be equal "
+                                 "to vocabulary size = %d" %
+                                 (len(value), len(self.vocabulary)))
+        self._tfidf.idf_ = value
 
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
