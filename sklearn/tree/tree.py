@@ -494,13 +494,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
-    @property
-    def feature_importances_(self):
+    def feature_importances_(self, normalized=False):
         """Return the feature importances.
 
-        The importance of a feature is computed as the (normalized) total
+        The importance of a feature is computed as the total
         reduction of the criterion brought by that feature.
         It is also known as the Gini importance.
+        Default: unnormalized.
+
 
         Returns
         -------
@@ -508,7 +509,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         check_is_fitted(self, 'tree_')
 
-        return self.tree_.compute_feature_importances()
+        return self.tree_.compute_feature_importances(normalized)
 
 
 # =============================================================================
