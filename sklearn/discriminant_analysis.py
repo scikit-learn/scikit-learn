@@ -123,10 +123,7 @@ def _class_cov(X, y, priors=None, shrinkage=None):
     cov = np.zeros((X.shape[1], X.shape[1]), dtype=X.dtype)
     for idx, group in enumerate(classes):
         Xg = X[y == group, :]
-        if priors is None:
-            cov = cov + np.atleast_2d(_cov(Xg, shrinkage)) / len(classes)
-        else:
-            cov = cov + priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
+        cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
     return cov
 
 
