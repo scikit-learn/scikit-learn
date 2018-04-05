@@ -86,11 +86,11 @@ def _class_means(X, y):
     means : array-like, shape (n_classes, n_features)
         Class means.
     """
-    classes = np.unique(y)
-    means = np.empty(shape=(len(classes), X.shape[1]))
-    for idx, group in enumerate(classes):
-        Xg = X[y == group, :]
-        means[idx] = Xg.mean(0)
+    classes, ny = np.unique(y, return_inverse=True)
+    cnt = np.bincount(ny)
+    means = np.zeros(shape=(len(classes), X.shape[1]))
+    for idx in xrange(X.shape[0]):
+        means[ny[idx]] += X[idx] / float(cnt[ny[idx]])
     return means
 
 
@@ -120,11 +120,10 @@ def _class_cov(X, y, priors=None, shrinkage=None):
         Class covariance matrix.
     """
     classes = np.unique(y)
-    cov = np.zeros((X.shape[1], X.shape[1]))
+    cov = np.zeros(shape=(X.shape[1], X.shape[1]))
     for idx, group in enumerate(classes):
         Xg = X[y == group, :]
         cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
-    cov /= sum(priors)
     return cov
 
 
