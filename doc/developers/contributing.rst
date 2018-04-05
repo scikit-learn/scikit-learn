@@ -59,7 +59,7 @@ following rules before submitting:
 
 .. _filing_bugs:
 
-How to make a good Bug report:
+How to make a good bug report:
 -----------
 When you submit an issue to `Github <https://github.com/scikit-learn/scikit-learn/issues>`_, 
 abiding to the following guidelines will help to provide you with the best feedback: 
