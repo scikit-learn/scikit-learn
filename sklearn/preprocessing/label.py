@@ -796,8 +796,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
+        unknown = set()
         for labels in y:
-            index, unknown = set(), set()
+            index = set()
             for label in labels:
                 try:
                     index.add(class_mapping[label])
