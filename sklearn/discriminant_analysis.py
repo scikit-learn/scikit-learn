@@ -89,12 +89,12 @@ def _class_means(X, y):
     classes, ny = np.unique(y, return_inverse=True)
     cnt = np.bincount(ny)
     means = np.zeros(shape=(len(classes), X.shape[1]))
-    for idx in xrange(X.shape[0]):
-        means[ny[idx]] += X[idx] / float(cnt[ny[idx]])
+    np.add.at(means, ny, X)
+    means /= cnt[:, None]
     return means
 
 
-def _class_cov(X, y, priors=None, shrinkage=None):
+def _class_cov(X, y, priors, shrinkage=None):
     """Compute class covariance matrix.
 
     Parameters
