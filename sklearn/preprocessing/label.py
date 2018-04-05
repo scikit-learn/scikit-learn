@@ -807,8 +807,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             indices.extend(index)
             indptr.append(len(indices))
         if unknown:
-            warnings.warn("Unkown class(es) {0} will be ignored"
-                          .format(unknown))
+            warnings.warn('unknown class(es) {0} will be ignored'
+                          .format(sorted(unknown, key=str)))
         data = np.ones(len(indices), dtype=int)
 
         return sp.csr_matrix((data, indices, indptr),
