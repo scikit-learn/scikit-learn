@@ -572,7 +572,7 @@ def test_weights_average_regression_boston():
 def test_parallel_regression():
     """ Check parallel regression. """
 
-    estimators = [('dtr', DecisionTreeRegressor())]
+    estimators = [('dtr', DecisionTreeRegressor(random_state=rng))]
     ensemble = AverageRegressor(estimators=estimators,
                                 n_jobs=3).fit(X_train, y_train)
 
