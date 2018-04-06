@@ -787,6 +787,8 @@ Changelog
 
 - :ref:`olivetti_faces` by `David Warde-Farley`_.
 
+- :func:`model_selection.model_selection.permutation_test_score` by `Alexandre Gramfort`_.
+
 
 API changes summary
 -------------------
@@ -877,7 +879,7 @@ People
 - 127  `Jake Vanderplas`_
 - 120  `Mathieu Blondel`_
 - 85  `Alexandre Passos`_
-- 67  `Alexandre Gramfort`_
+- 68  `Alexandre Gramfort`_
 - 57  `Peter Prettenhofer`_
 - 56  `Gilles Louppe`_
 - 42  Robert Layton
