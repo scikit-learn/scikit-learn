@@ -880,9 +880,9 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     classifier would have had a larger error on the original data
     than in the randomized one.
 
-    A small p-value (under a threshold, like :math:`\alpha = 0.05`) gives enough
-    evidence to conclude that the classifier has not learned a random pattern
-    in the data.
+    A small p-value (under a threshold, like :math:`\alpha = 0.05`) gives
+    enough evidence to conclude that the classifier has not learned a random
+    pattern in the data.
 
     .. versionadded:: 0.9
 
