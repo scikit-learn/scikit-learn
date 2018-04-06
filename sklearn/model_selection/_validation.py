@@ -871,7 +871,20 @@ def _index_param_value(X, v, indices):
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=1, random_state=0,
                            verbose=0, scoring=None):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluate the significance of a cross-validated score by permuting
+    the labels of the samples and computing the p-value against the null
+    hypothesis that the features and the labels are independent, meaning that
+    there is no difference between the classes.
+
+    The p-value represents the fraction of randomized data sets where the
+    classifier would have had a larger error on the original data
+    than in the randomized one.
+
+    A small p-value (under a threshold, like :math:`\alpha = 0.05`) gives enough
+    evidence to conclude that the classifier has not learned a random pattern
+    in the data.
+
+    .. versionadded:: 0.9
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -953,14 +966,17 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
 
         The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
+    References
+    ----------
+
+         * `"Permutation Tests for Studying Classifier Performance"
+           <http://ieeexplore.ieee.org/document/5360332/>`_
+           Ojala and Garriga - The Journal of Machine Learning Research (2010)
+           vol. 11
+
     Notes
     -----
-    This function implements Test 1 in:
-
-        Ojala and Garriga. Permutation Tests for Studying Classifier
-        Performance.  The Journal of Machine Learning Research (2010)
-        vol. 11
-
+    This function implements "Test 1" as described in the paper given above.
     """
     X, y, groups = indexable(X, y, groups)
 
