@@ -444,10 +444,10 @@ def test_transform():
             eclf2.transform(X)
     )
 
+
 # ===========================================================================
 # tests for sklearn.ensemble.AverageRegressor
 # ===========================================================================
-
 rng = check_random_state(0)
 # load the boston dataset
 # and randomly permute it
@@ -566,7 +566,7 @@ def test_weights_average_regression_boston():
                              y_train,
                              cv=5,
                              scoring='r2')
-    assert_almost_equal(scores.mean(), 0.87, decimal=1)
+    assert_true(scores.mean() > 0.80)
 
 
 def test_parallel_regression():
