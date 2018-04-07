@@ -195,6 +195,12 @@ k-means++ initialization scheme, which has been implemented in scikit-learn
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
+The algorithm supports sample weights, which can be given by a parameter
+``sample_weights``. This allows to assign more weight to some samples when
+computing cluster centers and values of inertia. For example, assigning a
+weight of 2 to a sample is equivalent to adding a duplicate of that sample
+to the dataset :math:`X`.
+
 A parameter can be given to allow K-means to be run in parallel, called
 ``n_jobs``. Giving this parameter a positive value uses that many processors
 (default: 1). A value of -1 uses all available processors, with -2 using one
