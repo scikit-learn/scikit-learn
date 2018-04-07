@@ -924,7 +924,7 @@ def test_k_means_weighted_vs_repeated():
     centers_2, labels_2 = _sort_cluster_centers_and_labels(
             km_weighted.cluster_centers_, np.repeat(km_weighted.labels_,
                                                     sample_weights) )
-    assert_equal(v_measure_score(labels_1, labels_2), 1.0)
+    assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
     assert_almost_equal(centers_1, centers_2)
 
 
@@ -939,7 +939,7 @@ def test_k_means_unit_weights():
             km_1.cluster_centers_, km_1.labels_)
     centers_2, labels_2 = _sort_cluster_centers_and_labels(
             km_2.cluster_centers_, km_2.labels_)
-    assert_equal(v_measure_score(labels_1, labels_2), 1.0)
+    assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
     assert_almost_equal(centers_1, centers_2)
 
 
@@ -955,7 +955,7 @@ def test_k_means_scaled_weights():
             km_1.cluster_centers_, km_1.labels_ )
     centers_2, labels_2 = _sort_cluster_centers_and_labels(
             km_2.cluster_centers_, km_2.labels_ )
-    assert_equal(v_measure_score(labels_1, labels_2), 1.0)
+    assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
     assert_almost_equal(centers_1, centers_2)
 
 
@@ -969,7 +969,7 @@ def test_mb_k_means_weighted_vs_repeated():
                                   ).fit(X, sample_weights=sample_weights)
     km_repeated = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
                                   random_state=42).fit(X_repeat)
-    assert_equal(v_measure_score(km_repeated.labels_,
+    assert_almost_equal(v_measure_score(km_repeated.labels_,
                                  np.repeat(km_weighted.labels_,sample_weights)
                                  ), 1.0)
 
@@ -981,7 +981,7 @@ def test_mb_k_means_unit_weights():
     km_1 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X)
     km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X,
             sample_weights=sample_weights)
-    assert_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
+    assert_almost_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
 
 
 def test_mb_k_means_scaled_weights():
@@ -992,4 +992,4 @@ def test_mb_k_means_scaled_weights():
             sample_weights=sample_weights)
     km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X,
             sample_weights=0.5*sample_weights)
-    assert_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
+    assert_almost_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
