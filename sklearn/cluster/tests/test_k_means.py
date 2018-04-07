@@ -75,17 +75,19 @@ def test_labels_assignment_and_inertia():
     assert_true((mindist >= 0.0).all())
     assert_true((labels_gold != -1).all())
 
+    sample_weights = None
+
     # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
     labels_array, inertia_array = _labels_inertia(
-        X, x_squared_norms, noisy_centers)
+        X, sample_weights, x_squared_norms, noisy_centers)
     assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignment using the sparse CSR input
     x_squared_norms_from_csr = row_norms(X_csr, squared=True)
     labels_csr, inertia_csr = _labels_inertia(
-        X_csr, x_squared_norms_from_csr, noisy_centers)
+        X_csr, sample_weights, x_squared_norms_from_csr, noisy_centers)
     assert_array_almost_equal(inertia_csr, inertia_gold)
     assert_array_equal(labels_csr, labels_gold)
 
@@ -98,8 +100,8 @@ def test_minibatch_update_consistency():
     new_centers = old_centers.copy()
     new_centers_csr = old_centers.copy()
 
-    counts = np.zeros(new_centers.shape[0], dtype=np.int32)
-    counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
+    weight_sums = np.zeros(new_centers.shape[0], dtype=np.double)
+    weight_sums_csr = np.zeros(new_centers.shape[0], dtype=np.double)
 
     x_squared_norms = (X ** 2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
@@ -113,15 +115,17 @@ def test_minibatch_update_consistency():
     x_mb_squared_norms = x_squared_norms[:10]
     x_mb_squared_norms_csr = x_squared_norms_csr[:10]
 
+    sample_weights_mb = np.ones(X_mb.shape[0],dtype=np.double)
+
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
-        X_mb, x_mb_squared_norms, new_centers, counts,
+        X_mb, sample_weights_mb, x_mb_squared_norms, new_centers, weight_sums,
         buffer, 1, None, random_reassign=False)
     assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels, new_inertia = _labels_inertia(
-        X_mb, x_mb_squared_norms, new_centers)
+        X_mb, sample_weights_mb, x_mb_squared_norms, new_centers)
     assert_greater(new_inertia, 0.0)
     assert_less(new_inertia, old_inertia)
 
@@ -132,13 +136,13 @@ def test_minibatch_update_consistency():
 
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
-        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
-        buffer_csr, 1, None, random_reassign=False)
+        X_mb_csr, sample_weights_mb, x_mb_squared_norms_csr, new_centers_csr,
+        weight_sums_csr, buffer_csr, 1, None, random_reassign=False)
     assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
-        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr)
+        X_mb_csr, sample_weights_mb, x_mb_squared_norms_csr, new_centers_csr)
     assert_greater(new_inertia_csr, 0.0)
     assert_less(new_inertia_csr, old_inertia_csr)
 
@@ -406,6 +410,7 @@ def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
     # should no longer be good
+    sample_weights = np.ones(X.shape[0], dtype=X.dtype)
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)
@@ -416,7 +421,7 @@ def test_minibatch_reassign():
             old_stdout = sys.stdout
             sys.stdout = StringIO()
             # Turn on verbosity to smoke test the display code
-            _mini_batch_step(this_X, (X ** 2).sum(axis=1),
+            _mini_batch_step(this_X, sample_weights, (X ** 2).sum(axis=1),
                              mb_k_means.cluster_centers_,
                              mb_k_means.counts_,
                              np.zeros(X.shape[1], np.double),
@@ -436,7 +441,7 @@ def test_minibatch_reassign():
         mb_k_means.fit(this_X)
         clusters_before = mb_k_means.cluster_centers_
         # Turn on verbosity to smoke test the display code
-        _mini_batch_step(this_X, (X ** 2).sum(axis=1),
+        _mini_batch_step(this_X, sample_weights, (X ** 2).sum(axis=1),
                          mb_k_means.cluster_centers_,
                          mb_k_means.counts_,
                          np.zeros(X.shape[1], np.double),
@@ -731,6 +736,7 @@ def test_k_means_function():
     sys.stdout = StringIO()
     try:
         cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
+                                                   sample_weights=None,
                                                    verbose=True)
     finally:
         sys.stdout = old_stdout
@@ -746,15 +752,16 @@ def test_k_means_function():
 
     # check warning when centers are passed
     assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
-                 init=centers)
+                 sample_weights=None, init=centers)
 
     # to many clusters desired
-    assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)
+    assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1,
+                  sample_weights=None)
 
     # kmeans for algorithm='elkan' raises TypeError on sparse matrix
     assert_raise_message(TypeError, "algorithm='elkan' not supported for "
                          "sparse input X", k_means, X=X_csr, n_clusters=2,
-                         algorithm="elkan")
+                         sample_weights=None, algorithm="elkan")
 
 
 def test_x_squared_norms_init_centroids():
@@ -892,4 +899,97 @@ def test_less_centers_than_unique_points():
     # centers have been used
     msg = ("Number of distinct clusters (3) found smaller than "
            "n_clusters (4). Possibly due to duplicate points in X.")
-    assert_warns_message(ConvergenceWarning, msg, k_means, X, n_clusters=4)
+    assert_warns_message(ConvergenceWarning, msg, k_means, X,
+                         sample_weights=None, n_clusters=4)
+
+
+def _sort_cluster_centers_and_labels(centers, labels):
+    sort_index = np.argsort(centers,axis=0)[:,0]
+    sorted_labels = np.zeros_like(labels)
+    for i,l in enumerate(sort_index):
+        sorted_labels[labels == l] = i
+    return centers[sort_index,:], sorted_labels
+
+
+def test_k_means_weighted_vs_repeated():
+    # a sample weight of N should yield the same result as an N-fold
+    # repetition of the sample
+    sample_weights = np.random.randint(1, 5, size=n_samples)
+    X_repeat = np.repeat(X, sample_weights, axis=0)
+    km_weighted = KMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=sample_weights)
+    km_repeated = KMeans(n_clusters=n_clusters, random_state=42).fit(X_repeat)
+    centers_1, labels_1 = _sort_cluster_centers_and_labels(
+            km_repeated.cluster_centers_, km_repeated.labels_ )
+    centers_2, labels_2 = _sort_cluster_centers_and_labels(
+            km_weighted.cluster_centers_, np.repeat(km_weighted.labels_,
+                                                    sample_weights) )
+    assert_equal(v_measure_score(labels_1, labels_2), 1.0)
+    assert_almost_equal(centers_1, centers_2)
+
+
+def test_k_means_unit_weights():
+    # not passing any sample weights should be equivalent
+    # to all weights equal to one
+    sample_weights = np.ones(n_samples)
+    km_1 = KMeans(n_clusters=n_clusters, random_state=42).fit(X)
+    km_2 = KMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=sample_weights)
+    centers_1, labels_1 = _sort_cluster_centers_and_labels(
+            km_1.cluster_centers_, km_1.labels_)
+    centers_2, labels_2 = _sort_cluster_centers_and_labels(
+            km_2.cluster_centers_, km_2.labels_)
+    assert_equal(v_measure_score(labels_1, labels_2), 1.0)
+    assert_almost_equal(centers_1, centers_2)
+
+
+def test_k_means_scaled_weights():
+    # scaling all sample weights by a common factor
+    # shouldn't change the result
+    sample_weights = np.ones(n_samples)
+    km_1 = KMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=sample_weights)
+    km_2 = KMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=0.5*sample_weights)
+    centers_1, labels_1 = _sort_cluster_centers_and_labels(
+            km_1.cluster_centers_, km_1.labels_ )
+    centers_2, labels_2 = _sort_cluster_centers_and_labels(
+            km_2.cluster_centers_, km_2.labels_ )
+    assert_equal(v_measure_score(labels_1, labels_2), 1.0)
+    assert_almost_equal(centers_1, centers_2)
+
+
+def test_mb_k_means_weighted_vs_repeated():
+    # a sample weight of N should yield the same result as an N-fold
+    # repetition of the sample
+    sample_weights = np.random.randint(1, 5, size=n_samples)
+    X_repeat = np.repeat(X, sample_weights, axis=0)
+    km_weighted = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
+                                  random_state=42
+                                  ).fit(X, sample_weights=sample_weights)
+    km_repeated = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
+                                  random_state=42).fit(X_repeat)
+    assert_equal(v_measure_score(km_repeated.labels_,
+                                 np.repeat(km_weighted.labels_,sample_weights)
+                                 ), 1.0)
+
+
+def test_mb_k_means_unit_weights():
+    # not passing any sample weights should be equivalent
+    # to all weights equal to one
+    sample_weights = np.ones(n_samples)
+    km_1 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X)
+    km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=sample_weights)
+    assert_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
+
+
+def test_mb_k_means_scaled_weights():
+    # scaling all sample weights by a common factor
+    # shouldn't change the result
+    sample_weights = np.ones(n_samples)
+    km_1 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=sample_weights)
+    km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X,
+            sample_weights=0.5*sample_weights)
+    assert_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
