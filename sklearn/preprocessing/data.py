@@ -956,11 +956,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     The IQR is the range between the 1st quartile (25th quantile)
     and the 3rd quartile (75th quantile).
 
-    Centering and scaling happen independently on each feature (or each
-    sample, depending on the ``axis`` argument) by computing the relevant
-    statistics on the samples in the training set. Median and  interquartile
-    range are then stored to be used on later data using the ``transform``
-    method.
+    Centering and scaling happen independently on each feature by computing 
+    the relevant statistics on the samples in the training set. Median and
+    interquartile range are then stored to be used on later data using the
+    ``transform`` method.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators. Typically this is done by removing the mean
