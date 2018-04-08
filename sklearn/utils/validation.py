@@ -503,16 +503,18 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             if array.ndim == 0:
                 raise ValueError(
                     "Expected 2D array, got scalar array instead:\narray={}.\n"
-                    "Reshape your data either using array.reshape(-1, 1) if "
-                    "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array))
+                    "Reshape your data either using "
+                    "np.reshape(array, (-1, 1)) if your data has a single "
+                    "feature or np.reshape(array, (1, -1)) if it contains "
+                    "a single sample.".format(array))
             # If input is 1D raise error
             if array.ndim == 1:
                 raise ValueError(
                     "Expected 2D array, got 1D array instead:\narray={}.\n"
-                    "Reshape your data either using array.reshape(-1, 1) if "
-                    "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array))
+                    "Reshape your data either using "
+                    "np.reshape(array, (-1, 1)) if your data has a single "
+                    "feature or np.reshape(array, (1, -1)) if it contains "
+                    "a single sample.".format(array))
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
