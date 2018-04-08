@@ -39,12 +39,17 @@ X_inliers = np.r_[X_inliers + 2, X_inliers - 2]
 X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
 X = np.r_[X_inliers, X_outliers]
 
+n_outliers = len(X_outliers)
+ground_truth = np.ones(len(X), dtype=int)
+ground_truth[-n_outliers:] = -1
+
 # fit the model for outlier detection (default)
 clf = LocalOutlierFactor(n_neighbors=20)
 # use fit_predict to compute the predicted labels of the training samples
 # (when LOF is used for outlier detection, the estimator has no predict,
 # decision_function and score_samples methods).
 y_pred = clf.fit_predict(X)
+n_errors = (y_pred != ground_truth).sum()
 
 # IMPORTANT: for illustration purpose we would like to plot the level sets of
 # the decision function however decision_function is not available when
@@ -57,7 +62,7 @@ y_pred = clf.fit_predict(X)
 
 # refit the model with novelty=True
 clf = LocalOutlierFactor(n_neighbors=20, novelty=True)
-y_pred = clf.fit(X)
+clf.fit(X)
 xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
@@ -73,7 +78,8 @@ plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.legend([a, b],
-           ["normal observations",
-            "abnormal observations"],
+           ["true inliers",
+            "true outliers"],
            loc="upper left")
+plt.xlabel("prediction errors: %d" % (n_errors))
 plt.show()
