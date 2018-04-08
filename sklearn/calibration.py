@@ -27,7 +27,7 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
-from .metrics.ranking import roc_curve
+from .metrics.ranking import precision_recall_curve, roc_curve
 from .utils.multiclass import type_of_target
 
 
@@ -103,10 +103,11 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
            Clinical chemistry, 1993
 
     """
-    def __init__(self, base_estimator, method='roc', scoring=None, pos_label=1,
-                 cv=3, threshold=None):
+    def __init__(self, base_estimator, method='roc', beta=None, scoring=None,
+                 pos_label=1, cv=3, threshold=None):
         self.base_estimator = base_estimator
         self.method = method
+        self.beta = beta
         self.scoring = scoring
         self.pos_label = pos_label
         self.cv = cv
@@ -133,7 +134,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             raise TypeError('The base_estimator needs to implement either a '
                             'decision_function or a predict_proba method')
 
-        if self.method not in ['roc', 'max_tpr', 'max_tnr']:
+        if self.method not in ['roc', 'f_beta', 'max_tpr', 'max_tnr']:
             raise ValueError('method can either be "roc" or "max_tpr" or '
                              '"max_tnr. Got %s instead' % self.method)
 
@@ -143,10 +144,18 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                              self.scoring)
 
         if self.method == 'max_tpr' or self.method == 'max_tnr':
-            if not self.threshold or not isinstance(self.threshold, float) \
+            if not self.threshold or not \
+                    isinstance(self.threshold, (int, float)) \
                     or not self.threshold >= 0 or not self.threshold <= 1:
-                raise ValueError('threshold must be a number in [1, 0]. '
-                                 'Got %s instead' % repr(self.threshold))
+                raise ValueError('parameter threshold must be a number in'
+                                 '[0, 1]. Got %s instead' %
+                                 repr(self.threshold))
+
+        if self.method == 'f_beta':
+            if not self.beta or not isinstance(self.beta, (int, float)) \
+                    or not self.beta >= 0 or not self.beta <= 1:
+                raise ValueError('parameter beta must be a number in [0, 1]. '
+                                 'Got %s instead' % repr(self.beta))
 
         X, y = check_X_y(X, y)
 
@@ -162,8 +171,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         if self.cv == 'prefit':
             self.decision_threshold_ = _CutoffClassifier(
-                self.base_estimator, self.method, self.scoring, self.pos_label,
-                self.threshold
+                self.base_estimator, self.method, self.beta, self.scoring,
+                self.pos_label, self.threshold
             ).fit(X, y).decision_threshold_
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -174,6 +183,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 decision_thresholds.append(
                     _CutoffClassifier(estimator,
                                       self.method,
+                                      self.beta,
                                       self.scoring,
                                       self.pos_label,
                                       self.threshold).fit(
@@ -223,8 +233,11 @@ class _CutoffClassifier(object):
         the acquired cutoff point. The estimator must have a decision_function
         or a predict_proba.
 
-    method : 'roc' or 'max_tpr' or 'max_tnr'
+    method : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
         The method to use for choosing the cutoff point.
+
+    beta : float in [0, 1]
+        beta value to be used in case method == 'f_beta'
 
     scoring : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
@@ -245,9 +258,11 @@ class _CutoffClassifier(object):
     decision_threshold_ : float
         Acquired decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, scoring, pos_label, threshold):
+    def __init__(self, base_estimator, method, beta, scoring, pos_label,
+                 threshold):
         self.base_estimator = base_estimator
         self.method = method
+        self.beta = beta
         self.scoring = scoring
         self.pos_label = pos_label
         self.threshold = threshold
@@ -271,6 +286,15 @@ class _CutoffClassifier(object):
         """
         y_score = _get_binary_score(self.base_estimator, X, self.scoring,
                                     self.pos_label)
+        if self.method == 'f_beta':
+            precision, recall, thresholds = precision_recall_curve(
+                y, y_score, self.pos_label
+            )
+            f_beta = (1 + self.beta**2) * (precision * recall) /\
+                     (self.beta**2 * precision + recall)
+            self.decision_threshold_ = thresholds[np.argmax(f_beta)]
+            return self
+
         fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
 
         if self.method == 'roc':

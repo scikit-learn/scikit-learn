@@ -20,7 +20,8 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss, confusion_matrix
+from sklearn.metrics import brier_score_loss, log_loss, confusion_matrix,\
+    f1_score
 from sklearn.calibration import CalibratedClassifierCV, CutoffClassifier
 from sklearn.calibration import _get_binary_score
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
@@ -38,7 +39,7 @@ def test_cutoff_prefit():
     lr = LogisticRegression().fit(X_train, y_train)
 
     clf_roc = CutoffClassifier(lr, method='roc', cv='prefit').fit(
-        X_test[:calibration_samples], y_train[:calibration_samples]
+        X_test[:calibration_samples], y_test[:calibration_samples]
     )
 
     y_pred = lr.predict(X_test[calibration_samples:])
@@ -55,12 +56,21 @@ def test_cutoff_prefit():
     tpr_roc = tp_roc / (tp_roc + fn_roc)
     tnr_roc = tn_roc / (tn_roc + fp_roc)
 
-    # check that the sum of tpr + tnr has improved
+    # check that the sum of tpr and tnr has improved
     assert_greater(tpr_roc + tnr_roc, tpr + tnr)
 
+    clf_f1 = CutoffClassifier(
+        lr, method='f_beta', beta=1, cv='prefit', scoring='predict_proba').fit(
+        X_test[:calibration_samples], y_test[:calibration_samples]
+    )
+
+    y_pred_f1 = clf_f1.predict(X_test[calibration_samples:])
+    assert_greater(f1_score(y_test[calibration_samples:], y_pred_f1),
+                   f1_score(y_test[calibration_samples:], y_pred))
+
     clf_max_tpr = CutoffClassifier(
-        lr, method='max_tpr', cv='prefit', threshold=0.3
-    ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
+        lr, method='max_tpr', cv='prefit', threshold=0.7
+    ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
 
     y_pred_max_tpr = clf_max_tpr.predict(X_test[calibration_samples:])
 
@@ -73,11 +83,11 @@ def test_cutoff_prefit():
     # check that the tpr increases with tnr >= min_val_tnr
     assert_greater(tpr_max_tpr, tpr)
     assert_greater(tpr_max_tpr, tpr_roc)
-    assert_greater_equal(tnr_max_tpr, 0.3)
+    assert_greater_equal(tnr_max_tpr, 0.7)
 
     clf_max_tnr = CutoffClassifier(
-        lr, method='max_tnr', cv='prefit', threshold=0.3
-    ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
+        lr, method='max_tnr', cv='prefit', threshold=0.7
+    ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
 
     y_pred_clf = clf_max_tnr.predict(X_test[calibration_samples:])
 
@@ -90,7 +100,7 @@ def test_cutoff_prefit():
     # check that the tnr increases with tpr >= min_val_tpr
     assert_greater(tnr_clf_max_tnr, tnr)
     assert_greater(tnr_clf_max_tnr, tnr_roc)
-    assert_greater_equal(tpr_clf_max_tnr, 0.3)
+    assert_greater_equal(tpr_clf_max_tnr, 0.7)
 
     # check error cases
     clf_bad_base_estimator = CutoffClassifier([])
@@ -101,6 +111,9 @@ def test_cutoff_prefit():
         n_informative=4
     )
     assert_raises(ValueError, clf_roc.fit, X_non_binary, y_non_binary)
+
+    clf_foo = CutoffClassifier(lr, method='f_beta', beta='foo')
+    assert_raises(ValueError, clf_foo.fit, X_train, y_train)
 
     clf_foo = CutoffClassifier(lr, method='foo')
     assert_raises(ValueError, clf_foo.fit, X_train, y_train)
