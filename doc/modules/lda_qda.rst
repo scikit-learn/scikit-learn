@@ -42,7 +42,7 @@ perform supervised dimensionality reduction, by projecting the input data to a
 linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
 below). The dimension of the output is necessarily less than the number of
-classes, so this is a in general a rather strong dimensionality reduction, and
+classes, so this is, in general, a rather strong dimensionality reduction, and
 only makes senses in a multiclass setting.
 
 This is implemented in
@@ -60,8 +60,8 @@ This parameter has no influence on
 Mathematical formulation of the LDA and QDA classifiers
 =======================================================
 
-Both LDA and QDA can be derived from probabilistic models which model
-the conditional distribution of class :math:`y` given data :math:`X`: :math:`P(y=k|X)` for each class
+Both LDA and QDA can be derived from simple probabilistic models which model
+the class conditional distribution of the data :math:`P(X|y=k)` for each class
 :math:`k`. Predictions can then be obtained by using Bayes' rule:
 
 .. math::
@@ -69,41 +69,31 @@ the conditional distribution of class :math:`y` given data :math:`X`: :math:`P(y
 
 and we select the class :math:`k` which maximizes this conditional probability.
 
-More specifically, in linear and quadratic discriminant analysis, 
-the distribution of the :math:`d` dimensional random vector :math:`\vec{x}` 
-(:math:`\vec{x}\in \mathbb{R}^d`) conditioned on class group :math:`y` 
-is modeled as a multivariate Gaussian distribution with 
-density :math:`p(\vec{x}|y)`.  Mathematically, 
+More specifically, for linear and quadratic discriminant analysis,
+:math:`P(X|y)` is modelled as a multivariate Gaussian distribution with
+density:
 
-.. math:: 
-    \vec{x}_i |y=k \; \overset{iid}{\sim} \; N_d(\vec{\mu}_k,\Sigma_k) \qquad \text{for } i=1,...,n
+.. math:: p(X | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right) 
 
-where :math:`n` is the number of observations and :math:`d` is 
-the number of features. So the density function is
+where X is a d-dimensional random vector.
 
-.. math:: p(\vec{x} | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (\vec{x}-\vec{\mu}_k)^T \Sigma_k^{-1} (\vec{x}-\vec{\mu}_k)\right)
-
-To use this model as a classifier, we just need to estimate :math:`P(y=k)`, :math:`\vec{\mu}_k`, 
-and :math:`\Sigma_k` from the training data :math:`X` 
-:math:`(X \in \mathbb{R}^{(n \times d)})`.
-
-Parameter estimation:
-
-* the class priors :math:`P(y=k)` : estimated by the proportion of instances of class :math:`k`
-* the class means :math:`\vec{\mu}_k`: estimated by the empirical sample class means  
-* the covariance matrices :math:`\Sigma_k` : estimated either by the empirical sample class covariance matrices, or by a regularized estimator: see the section on shrinkage below.  
+To use this model as a classifier, we just need to estimate from the training
+data the class priors :math:`P(y=k)` (by the proportion of instances of class
+:math:`k`), the class means :math:`\mu_k` (by the empirical sample class means)
+and the covariance matrices (either by the empirical sample class covariance
+matrices, or by a regularized estimator: see the section on shrinkage below).
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
 linear decision surfaces between, as can be seen by comparing the
-log-probability ratios :math:`\log[P(y=k | \vec{x}) / P(y=l | \vec{x})]`:
+log-probability ratios :math:`\log[P(y=k | X) / P(y=l | X)]`:
 
 .. math::
-    \log\left(\frac{P(y=k|\vec{x})}{P(y=l|\vec{x})}\right)=
-    \log\left(\frac{P(\vec{x}|y=k)P(y=k)}{P(\vec{x}|y=l)P(y=l)}\right)=0 \Leftrightarrow
+    \log\left(\frac{P(y=k|X)}{P(y=l|X)}\right)=
+    \log\left(\frac{P(X|y=k)P(y=k)}{P(X|y=l)P(y=l)}\right)=0 \Leftrightarrow
 
-    (\vec{\mu}_k-\vec{\mu}_l)^T\Sigma^{-1} \vec{x} =
-    \frac{1}{2} (\vec{\mu}_k^T \Sigma^{-1} \vec{\mu}_k - \vec{\mu}_l^T \Sigma^{-1} \vec{\mu}_l)
+    (\mu_k-\mu_l)^t\Sigma^{-1} X =
+    \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
     - \log\frac{P(y=k)}{P(y=l)}
 
 In the case of QDA, there are no assumptions on the covariance matrices
@@ -124,23 +114,22 @@ To understand the use of LDA in dimensionality reduction, it is useful to start
 with a geometric reformulation of the LDA classification rule explained above.
 We write :math:`K` for the total number of target classes. Since in LDA we
 assume that all classes have the same estimated covariance :math:`\Sigma`, we
-can rescale the data :math:`X` :math:`(X \in \mathbb{R}^{(n\times d)})` to 
-:math:`X^*` so that its covariance is the identity:
+can rescale the data so that this covariance is the identity:
 
-.. math:: X^* = X U D^{-1/2} \text{ with }\Sigma = UDU^T
+.. math:: X^* = D^{-1/2}U^t X\text{ with }\Sigma = UDU^t
 
 Then one can show that to classify a data point after scaling is equivalent to
-finding the estimated class mean :math:`\vec{\mu}^*_k` which is closest to the data
+finding the estimated class mean :math:`\mu^*_k` which is closest to the data
 point in the Euclidean distance. But this can be done just as well after
 projecting on the :math:`K-1` affine subspace :math:`H_K` generated by all the
-:math:`\vec{\mu}^*_k` for all classes. This shows that, implicit in the LDA
+:math:`\mu^*_k` for all classes. This shows that, implicit in the LDA
 classifier, there is a dimensionality reduction by linear projection onto a
 :math:`K-1` dimensional space.
 
 We can reduce the dimension even more, to a chosen :math:`L`, by projecting
 onto the linear subspace :math:`H_L` which maximize the variance of the
-:math:`\vec{\mu}^*_k` after projection (in effect, we are doing a form of PCA for the
-transformed class means :math:`\vec{\mu}^*_k`). This :math:`L` corresponds to the
+:math:`\mu^*_k` after projection (in effect, we are doing a form of PCA for the
+transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
 ``n_components`` parameter used in the
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
 [#1]_ for more details.
