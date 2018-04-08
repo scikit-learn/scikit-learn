@@ -106,7 +106,7 @@ time)::
   >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
   >>> scores                                              # doctest: +ELLIPSIS
-  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 The mean score and the 95\% confidence interval of the score estimate are hence
 given by::
@@ -122,7 +122,7 @@ scoring parameter::
   >>> scores = cross_val_score(
   ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
   >>> scores                                              # doctest: +ELLIPSIS
-  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -141,7 +141,7 @@ validation iterator instead, for instance::
   >>> cv = ShuffleSplit(n_splits=3, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([ 0.97...,  0.97...,  1.        ])
+  array([0.97..., 0.97..., 1.        ])
 
 
 .. topic:: Data transformation with held out data
@@ -168,7 +168,7 @@ validation iterator instead, for instance::
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
-      array([ 0.97...,  0.93...,  0.95...])
+      array([0.97..., 0.93..., 0.95...])
 
     See :ref:`combining_estimators`.
 
@@ -212,7 +212,7 @@ predefined scorer names::
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
-    array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
@@ -225,7 +225,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
      'train_prec_macro', 'train_rec_micro']
     >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
-    array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
+    array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
 
 Here is an example of ``cross_validate`` using a single metric::
 

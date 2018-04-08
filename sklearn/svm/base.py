@@ -907,7 +907,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
     n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter and verbose > 0:
+    if n_iter_ >= max_iter:
         warnings.warn("Liblinear failed to converge, increase "
                       "the number of iterations.", ConvergenceWarning)
 

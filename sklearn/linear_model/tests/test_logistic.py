@@ -800,15 +800,6 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-def test_logistic_regression_convergence_warnings():
-    # Test that warnings are raised if model does not converge
-
-    X, y = make_classification(n_samples=20, n_features=20, random_state=0)
-    clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
-    assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
-    assert_equal(clf_lib.n_iter_, 2)
-
-
 def test_logistic_regression_multinomial():
     # Tests for the multinomial option in logistic regression
 
@@ -1033,7 +1024,6 @@ def test_logreg_predict_proba_multinomial():
     assert_greater(clf_wrong_loss, clf_multi_loss)
 
 
-@ignore_warnings
 def test_max_iter():
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
@@ -1049,7 +1039,7 @@ def test_max_iter():
                 lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
                                         multi_class=multi_class,
                                         random_state=0, solver=solver)
-                lr.fit(X, y_bin)
+                assert_warns(ConvergenceWarning, lr.fit, X, y_bin)
                 assert_equal(lr.n_iter_[0], max_iter)
 
 
