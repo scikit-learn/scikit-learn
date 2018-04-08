@@ -3,7 +3,7 @@
 Outlier detection with Local Outlier Factor (LOF)
 =================================================
 
-The Local Outlier Factor (LOF) algorithm is an unsupervised outlier detection
+The Local Outlier Factor (LOF) algorithm is an unsupervised anomaly detection
 method which computes the local density deviation of a given data point with
 respect to its neighbors. It considers as outlier samples that have a
 substantially lower density than their neighbors. This example shows how to
@@ -22,11 +22,12 @@ local outliers.
 In practice, such informations are generally not available, and taking
 n_neighbors=20 appears to work well in general.
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
+
+print(__doc__)
 
 np.random.seed(42)
 
@@ -52,7 +53,7 @@ y_pred = clf.fit_predict(X)
 # function on a grid. Note that when using novelty=True, you MUST not use
 # predict, decision_function and score_samples on the training set X as this
 # would lead to wrong results. You must only use these methods on new unseen
-# data (not used in the training set)
+# data (which are not in the training set)
 
 # refit the model with novelty=True
 clf = LocalOutlierFactor(n_neighbors=20, novelty=True)
