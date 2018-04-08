@@ -35,9 +35,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """Decision threshold calibration for binary classification
 
     Meta estimator that calibrates the decision threshold (cutoff point)
-    that is used for prediction. The methods for picking cutoff points are
-    inferred from ROC analysis; making use of true positive and true negative
-    rates and their corresponding thresholds.
+    that is used for prediction. The methods for picking cutoff points make use
+    of traditional binary classification evaluation statistic such as the
+    true positive and true negative rates and F-scores.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
     be used for the selection of the cutoff point. Otherwise the decision
@@ -54,16 +54,22 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     method : str
         The method to use for choosing the cutoff point.
 
-        - 'roc', selects the point on the roc_curve that is closest to the
+        - 'roc', selects the point on the roc curve that is closest to the
         ideal corner (0, 1)
+
+        - 'f_beta', selects a decision threshold that maximizes the f_beta
+        score.
 
         - 'max_tpr', selects the point that yields the highest true positive
         rate with true negative rate at least equal to the value of the
-        parameter min_tnr
+        parameter threshold
 
         - 'max_tnr', selects the point that yields the highest true negative
         rate with true positive rate at least equal to the value of the
-        parameter min_tpr
+        parameter threshold
+
+    beta : float in [0, 1], optional (default=None)
+        beta value to be used in case method == 'f_beta'
 
     scoring : str or None, optional (default=None)
         The method to be used for acquiring the score.
