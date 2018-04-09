@@ -47,6 +47,9 @@ Note that :class:`neighbors.LocalOutlierFactor` does not support
 ``predict`` and ``decision_function`` methods, as this algorithm is
 purely transductive and is thus not designed to deal with new data.
 
+
+See more on OneClassSVM on :ref:`svm_outlier_detection`
+
 Overview of outlier detection methods
 =====================================
 
