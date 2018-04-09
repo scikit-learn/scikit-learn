@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.validation import _num_samples
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
@@ -995,3 +996,19 @@ def test_mb_k_means_scaled_weights():
     km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(
             X, sample_weights=0.5*sample_weights)
     assert_almost_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
+
+
+def test_sample_weights_length():
+    # check that an error is raised when passing sample weights
+    # with an incompatible shape
+    km = KMeans(n_clusters=n_clusters, random_state=42)
+    assert_raises_regex(ValueError, 'len\(sample_weights\)', km.fit, X,
+                        sample_weights=np.ones(2))
+
+
+def test_check_sample_weights():
+    from sklearn.cluster.k_means_ import _check_sample_weights
+    sample_weights = None
+    checked_sample_weights = _check_sample_weights(X, sample_weights)
+    assert_equal(_num_samples(X), _num_samples(checked_sample_weights))
+    assert_equal(X.dtype, checked_sample_weights.dtype)
