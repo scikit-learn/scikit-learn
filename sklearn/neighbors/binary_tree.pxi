@@ -1472,6 +1472,7 @@ cdef class BinaryTree:
                     _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
                                        counts[i])
 
+                # equivalent to: indices[i] = np_idx_arr[:counts[i]].copy()
                 indices[i] = <ITYPE_t*>malloc(counts[i] * sizeof(ITYPE_t))
                 if indices[i] == NULL:
                     memory_error = True
@@ -1479,42 +1480,55 @@ cdef class BinaryTree:
                 memcpy(indices[i], &idx_arr_i[0], counts[i] * sizeof(ITYPE_t))
 
                 if return_distance:
+                    # equivalent to: distances[i] = np_dist_arr[:counts[i]].copy()
                     distances[i] = <DTYPE_t*>malloc(counts[i] * sizeof(DTYPE_t))
                     if distances[i] == NULL:
                         memory_error = True
                         break
                     memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof(DTYPE_t))
 
-        # deflatten results
         try:
             if memory_error:
                 raise MemoryError()
 
             if count_only:
+                # deflatten results
                 return counts_arr.reshape(X.shape[:X.ndim - 1])
             elif return_distance:
                 indices_npy = np.zeros(Xarr.shape[0], dtype='object')
                 distances_npy = np.zeros(Xarr.shape[0], dtype='object')
                 for i in range(Xarr.shape[0]):
+                    # make a new numpy array that wraps the existing data
                     indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
-                    indices[i] = NULL
+                    # make sure the data will be freed when the numpy array is garbage collected
                     np.PyArray_UpdateFlags(indices_npy[i], indices_npy[i].flags.num | np.NPY_OWNDATA)
+                    # make sure the data is not freed twice
+                    indices[i] = NULL
 
+                    # make a new numpy array that wraps the existing data
                     distances_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_DOUBLE, distances[i])
-                    distances[i] = NULL
+                    # make sure the data will be freed when the numpy array is garbage collected
                     np.PyArray_UpdateFlags(distances_npy[i], distances_npy[i].flags.num | np.NPY_OWNDATA)
+                    # make sure the data is not freed twice
+                    distances[i] = NULL
 
+                # deflatten results
                 return (indices_npy.reshape(X.shape[:X.ndim - 1]),
                         distances_npy.reshape(X.shape[:X.ndim - 1]))
             else:
                 indices_npy = np.zeros(Xarr.shape[0], dtype='object')
                 for i in range(Xarr.shape[0]):
+                    # make a new numpy array that wraps the existing data
                     indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
-                    indices[i] = NULL
+                    # make sure the data will be freed when the numpy array is garbage collected
                     np.PyArray_UpdateFlags(indices_npy[i], indices_npy[i].flags.num | np.NPY_OWNDATA)
+                    # make sure the data is not freed twice
+                    indices[i] = NULL
 
+                # deflatten results
                 return indices_npy.reshape(X.shape[:X.ndim - 1])
         except:
+            # free any buffer that is not owned by a numpy array
             for i in range(Xarr.shape[0]):
                 free(indices[i])
                 if return_distance:
