@@ -48,8 +48,6 @@ Note that :class:`neighbors.LocalOutlierFactor` does not support
 purely transductive and is thus not designed to deal with new data.
 
 
-See more on OneClassSVM on :ref:`svm_outlier_detection`
-
 Overview of outlier detection methods
 =====================================
 
