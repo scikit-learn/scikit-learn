@@ -1,6 +1,7 @@
 from __future__ import division
 
 import numpy as np
+import pandas as pd
 import scipy.sparse as sp
 
 from sklearn.base import clone
@@ -82,7 +83,6 @@ def _check_equality_regressor(statistic, y_learn, y_pred_learn,
     assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)),
                               y_pred_test)
 
-
 def test_most_frequent_and_prior_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [1, 2, 1, 1]
@@ -100,6 +100,23 @@ def test_most_frequent_and_prior_strategy():
             assert_array_almost_equal(clf.predict_proba([X[0]]),
                                       clf.class_prior_.reshape((1, -1)) > 0.5)
 
+
+def test_most_frequent_and_prior_strategy_with_pandas_dataframe():
+    X = [[0], [0], [0], [0]]  # ignored
+    y = pd.DataFrame([1, 2, 1, 1])
+
+    for strategy in ("most_frequent", "prior"):
+        clf = DummyClassifier(strategy=strategy, random_state=0)
+        clf.fit(X, y)
+        assert_array_equal(clf.predict(X), np.ones(len(X)))
+        _check_predict_proba(clf, X, y)
+
+        if strategy == "prior":
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
+                                      clf.class_prior_.reshape((1, -1)))
+        else:
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
+                                      clf.class_prior_.reshape((1, -1)) > 0.5)
 
 def test_most_frequent_and_prior_strategy_multioutput():
     X = [[0], [0], [0], [0]]  # ignored
