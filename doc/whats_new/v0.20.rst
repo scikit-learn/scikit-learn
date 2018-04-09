@@ -142,6 +142,10 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
+  in :class:`discriminant_analysis`.
+  :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and

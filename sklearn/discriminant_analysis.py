@@ -86,10 +86,10 @@ def _class_means(X, y):
     means : array-like, shape (n_classes, n_features)
         Class means.
     """
-    classes, ny = np.unique(y, return_inverse=True)
-    cnt = np.bincount(ny)
+    classes, y = np.unique(y, return_inverse=True)
+    cnt = np.bincount(y)
     means = np.zeros(shape=(len(classes), X.shape[1]))
-    np.add.at(means, ny, X)
+    np.add.at(means, y, X)
     means /= cnt[:, None]
     return means
 
