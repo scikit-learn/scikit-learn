@@ -1006,7 +1006,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     The implementation is based on libsvm.
 
-    Read more in the :ref:`User Guide `<outlier_detection_outlier_detection>``.
+    Read more in the :ref:`User Guide <svm_outlier_detection>`.
     
 
     Parameters
