@@ -11,8 +11,10 @@ import scipy.sparse as sp
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .utils import check_random_state
 from .utils.validation import _num_samples
-from .utils.validation import check_array, check_consistent_length
-from .utils.validation import check_is_fitted, column_or_1d
+from .utils.validation import check_array
+from .utils.validation import check_consistent_length
+from .utils.validation import check_is_fitted
+from .utils.validation import column_or_1d
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
@@ -121,10 +123,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
-        check_consistent_length(X, y, sample_weight)
-
         self.output_2d_ = (y.ndim == 2) and (y.shape[1] > 1)
- 
+
         if not self.output_2d_:
             y = column_or_1d(y)
 
@@ -132,6 +132,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
+
+        check_consistent_length(X, y, sample_weight)
 
         if self.strategy == "constant":
             if self.constant is None:
