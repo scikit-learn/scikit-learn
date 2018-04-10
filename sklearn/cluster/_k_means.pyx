@@ -374,7 +374,9 @@ def _centers_sparse(X, np.ndarray[floating, ndim=1] sample_weights,
     centers : array, shape (n_clusters, n_features)
         The resulting centers
     """
-    cdef int n_features = X.shape[1]
+    cdef int n_samples, n_features
+    n_samples = X.shape[0]
+    n_features = X.shape[1]
     cdef int curr_label
 
     cdef np.ndarray[floating, ndim=1] data = X.data
@@ -387,9 +389,9 @@ def _centers_sparse(X, np.ndarray[floating, ndim=1] sample_weights,
     dtype = np.float32 if floating is float else np.float64
     centers = np.zeros((n_clusters, n_features), dtype=dtype)
     weights_sum_in_cluster = np.zeros((n_clusters,), dtype=dtype)
-    for i in range(n_clusters):
-        weights_sum_in_cluster[i] = sample_weights[labels==i].sum()
-
+    for i in range(n_samples):
+        c = labels[i]
+        weights_sum_in_cluster[c] += sample_weights[i]
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
         np.where(weights_sum_in_cluster == 0)[0]
     cdef int n_empty_clusters = empty_clusters.shape[0]
