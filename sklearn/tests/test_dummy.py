@@ -1,7 +1,6 @@
 from __future__ import division
 
 import numpy as np
-import pandas as pd
 import scipy.sparse as sp
 
 from sklearn.base import clone
@@ -103,7 +102,7 @@ def test_most_frequent_and_prior_strategy():
 
 def test_most_frequent_and_prior_strategy_with_pandas_dataframe():
     X = [[0], [0], [0], [0]]  # ignored
-    y = pd.DataFrame([1, 2, 1, 1])
+    y = [[1], [2], [1], [1]]
 
     for strategy in ("most_frequent", "prior"):
         clf = DummyClassifier(strategy=strategy, random_state=0)
