@@ -34,6 +34,31 @@ See :ref:`new_contributors` to get started.
 
 |
 
+Ways to contribute
+==================
+
+There are many ways to contribute to scikit-learn, with the most common ones
+being contribution of code or documentation to the project. Improving the
+documentation is no less important than improving the library itself.  If you
+find a typo in the documentation, or have made improvements, do not hesitate to
+send an email to the mailing list or preferably submit a GitHub pull request.
+Full documentation can be found under the doc/ directory.
+
+But there are many other ways to help. In particular answering queries on the
+`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
+investigating bugs, and :ref:`reviewing other developers' pull requests
+<code_review>` are very valuable contributions that decrease the burden on the
+project maintainers.
+
+Another way to contribute is to report issues you're facing, and give a "thumbs
+up" on issues that others reported and that are relevant to you.  It also helps
+us if you spread the word: reference the project from your blog and articles,
+link to it from your website, or simply say "I use it":
+
+.. raw:: html
+
+   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
 Submitting a bug report or a feature request
 ============================================
 
@@ -59,19 +84,28 @@ following rules before submitting:
 
 .. _filing_bugs:
 
-How to make a good bug report:
------------
-When you submit an issue to `Github <https://github.com/scikit-learn/scikit-learn/issues>`_, 
-abiding to the following guidelines will help to provide you with the best feedback: 
+How to make a good bug report
+-----------------------------
 
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See `Creating and highlighting code blocks
-   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
+When you submit an issue to `Github
+<https://github.com/scikit-learn/scikit-learn/issues>`_, please do your best to
+follow these guidelines! This will make it a lot easier to provide you with good
+feedback:
 
--  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by running the following code snippet::
+- The ideal bug report contains a **short reproducible code snippet**, this way
+  anyone can try to reproduce the bug easily (see `this
+  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  longer than around 50 lines, please link to a `gist
+  <https://gist.github.com>`_ or a github repo.
+
+- If not feasible to include a reproducible snippet, please be specific about
+  what **estimators and/or functions are involved and the shape of the data**.
+
+- If an exception is raised, please **provide the full traceback**.
+
+- Please include your **operating system type and version number**, as well as
+  your **Python, scikit-learn, numpy, and scipy versions**. This information
+  can be found by running the following code snippet::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -79,36 +113,10 @@ abiding to the following guidelines will help to provide you with the best feedb
      import scipy; print("SciPy", scipy.__version__)
      import sklearn; print("Scikit-Learn", sklearn.__version__)
 
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
-   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
-   please provide the traceback.
-
-Ways to contribute
-==================
-
-There are many ways to contribute to scikit-learn, with the most common ones
-being contribution of code or documentation to the project. Improving the
-documentation is no less important than improving the library itself.  If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
-Full documentation can be found under the doc/ directory.
-
-But there are many other ways to help. In particular answering queries on the
-`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
-investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuable contributions that decrease the burden on the
-project maintainers.
-
-Another way to contribute is to report issues you're facing, and give a "thumbs up"
-on issues that others reported and that are relevant to you.
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
-
-.. raw:: html
-
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+- Please ensure all **code snippets and error messages are formatted in
+  appropriate code blocks**.  See `Creating and highlighting code blocks
+  <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
+  for more details.
 
 
 .. _git_repo:
