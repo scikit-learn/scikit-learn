@@ -22,14 +22,28 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     QuantileTransformer or as a function and its inverse such as ``log`` and
     ``exp``.
 
-    The computation during ``fit`` is::
+    The computation during ``fit`` is
+
+    .. code-block:: python
+
         regressor.fit(X, func(y))
-    or::
+
+    or
+
+    .. code-block:: python
+
         regressor.fit(X, transformer.transform(y))
 
-    The computation during ``predict`` is::
+    The computation during ``predict`` is
+
+    .. code-block:: python
+
         inverse_func(regressor.predict(X))
-    or::
+
+    or
+
+    .. code-block:: python
+
         transformer.inverse_transform(regressor.predict(X))
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
