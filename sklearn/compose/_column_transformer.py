@@ -512,8 +512,8 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
-    transformers = [trans[0] for trans in estimators]
-    columns = [trans[1] for trans in estimators]
+    transformers = [trans[1] for trans in estimators]
+    columns = [trans[0] for trans in estimators]
     names = [trans[0] for trans in _name_estimators(transformers)]
 
     transformer_list = list(zip(names, transformers, columns))
@@ -530,7 +530,7 @@ def make_column_transformer(*transformers, **kwargs):
 
     Parameters
     ----------
-    *transformers : tuples of transformers and column selections
+    *transformers : tuples of column selections and transformers
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -544,8 +544,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, CategoricalEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (StandardScaler(), ['numerical_column']),
-    ...     (CategoricalEncoder(), ['categorical_column']))
+    ...     (['numerical_column'], StandardScaler()),
+    ...     (['categorical_column'], CategoricalEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=1, passthrough=None, transformer_weights=None,
              transformers=[('standardscaler',
