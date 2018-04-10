@@ -714,15 +714,17 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         scores_i = y_score[i]
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
-        out += (L / rank).mean()
-    
-    out /= n_samples
-    if sample_weight != None:
-        aux = 0.0
-        for weight in sample_weight:
-            aux += weight
-            out = out*weight
-        out /= aux
+        aux = (L / rank).mean()
+        if sample_weight is None:
+            out += aux
+        else:
+            aux = aux * sample_weight[i]
+            out += aux
+
+    if sample_weight is None:
+        out /= n_samples
+    else:
+        out /= np.sum(sample_weight)
     
     return out
 
