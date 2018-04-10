@@ -725,7 +725,7 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         out /= n_samples
     else:
         out /= np.sum(sample_weight)
-    
+
     return out
 
 
