@@ -336,8 +336,8 @@ floating point values instead of integer values::
 Density estimation, novelty detection
 =======================================
 
--See, section :ref:`outlier_detection` for more details on this usage.	
--
+See, section :ref:`outlier_detection` for more details on this usage.	
+
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
