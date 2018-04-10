@@ -61,6 +61,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
+    conda install pip --yes
+    pip install -U pytest
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
