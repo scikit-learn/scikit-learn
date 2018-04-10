@@ -171,6 +171,10 @@ def _check_sample_weights(X, sample_weights):
     if sample_weights is None:
         return np.ones(n_samples, dtype=X.dtype)
     else:
+        # verify that the number of samples is equal to the number of weights
+        if n_samples != len(sample_weights):
+            raise ValueError("n_samples=%d should be == len(sample_weights)=%d"
+                             % (n_samples, len(sample_weights)))
         # normalize the weights to sum up to n_samples
         scale = n_samples / sample_weights.sum()
         return (sample_weights * scale).astype(X.dtype)
@@ -309,14 +313,6 @@ def k_means(X, n_clusters, sample_weights=None, init='k-means++',
         raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
             _num_samples(X), n_clusters))
 
-    # set sample_weights if None passed
-    sample_weights = _check_sample_weights(X, sample_weights)
-
-    # verify that the number of samples is equal to the number of weights
-    if _num_samples(X) != len(sample_weights):
-        raise ValueError("n_samples=%d should be == len(sample_weights)=%d" % (
-            _num_samples(X), len(sample_weights)))
-
     tol = _tolerance(X, tol)
 
     # If the distances are precomputed every job will create a matrix of shape
@@ -440,11 +436,15 @@ def _kmeans_single_elkan(X, sample_weights, n_clusters, max_iter=300,
     centers = np.ascontiguousarray(centers)
     if verbose:
         print('Initialization complete')
-    centers, labels, n_iter = k_means_elkan(X, sample_weights, n_clusters,
-                                            centers, tol=tol,
+
+    checked_sample_weights = _check_sample_weights(X, sample_weights)
+    centers, labels, n_iter = k_means_elkan(X, checked_sample_weights,
+                                            n_clusters, centers, tol=tol,
                                             max_iter=max_iter, verbose=verbose)
-    inertia = np.sum((X - centers[labels]) ** 2 * np.expand_dims(
-            sample_weights, axis=-1), dtype=np.float64)
+    sq_distances = (X - centers[labels]) ** 2
+    if sample_weights is not None:
+        sq_distances *= checked_sample_weights[:, np.newaxis]
+    inertia = np.sum(sq_distances, dtype=np.float64)
     return labels, inertia, centers, n_iter
 
 
@@ -520,6 +520,8 @@ def _kmeans_single_lloyd(X, sample_weights, n_clusters, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
+
+    sample_weights = _check_sample_weights(X, sample_weights)
 
     best_labels, best_inertia, best_centers = None, None, None
     # init
@@ -609,7 +611,6 @@ def _labels_inertia_precompute_dense(X, sample_weights, x_squared_norms,
 
     """
     n_samples = X.shape[0]
-    sample_weights = _check_sample_weights(X, sample_weights)
 
     # Breakup nearest neighbor distance computation into batches to prevent
     # memory blowup in the case of a large number of samples and clusters.
