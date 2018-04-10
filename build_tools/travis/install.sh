@@ -61,8 +61,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
-    conda install pip --yes
-    pip install -U pytest
+
+    # for python 3.4, conda does not have recent pytest packages
+    if [[ "$PYTHON_VERSION" == "3.4" ]]; then
+        pip install --upgrade --no-deps pytest
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
