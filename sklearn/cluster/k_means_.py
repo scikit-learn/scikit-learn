@@ -441,10 +441,12 @@ def _kmeans_single_elkan(X, sample_weights, n_clusters, max_iter=300,
     centers, labels, n_iter = k_means_elkan(X, checked_sample_weights,
                                             n_clusters, centers, tol=tol,
                                             max_iter=max_iter, verbose=verbose)
-    sq_distances = (X - centers[labels]) ** 2
-    if sample_weights is not None:
-        sq_distances *= checked_sample_weights[:, np.newaxis]
-    inertia = np.sum(sq_distances, dtype=np.float64)
+    if sample_weights is None:
+        inertia = np.sum((X - centers[labels]) ** 2, dtype=np.float64)
+    else:
+        sq_distances = np.sum((X - centers[labels]) ** 2, axis=1,
+                              dtype=np.float64) * checked_sample_weights
+        inertia = np.sum(sq_distances, dtype=np.float64)
     return labels, inertia, centers, n_iter
 
 
