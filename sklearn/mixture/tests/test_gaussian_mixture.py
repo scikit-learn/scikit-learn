@@ -743,7 +743,6 @@ def test_gaussian_mixture_verbose():
 
 
 def test_warm_start():
-
     random_state = 0
     rng = np.random.RandomState(random_state)
     n_samples, n_features, n_components = 500, 2, 2
@@ -783,6 +782,55 @@ def test_warm_start():
 
     assert_true(not g.converged_)
     assert_true(h.converged_)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_convergence_detected_with_warm_start():
+    # We check that convergence is detected when warm_start=True
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    n_components = rand_data.n_components
+    X = rand_data.X['full']
+
+    for max_iter in (1, 2, 50):
+        gmm = GaussianMixture(n_components=n_components, warm_start=True,
+                              max_iter=max_iter, random_state=rng)
+        for _ in range(100):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                gmm.fit(X)
+                if gmm.converged_:
+                    break
+        assert_true(gmm.converged_)
+        assert_greater(max_iter, gmm.n_iter_)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_no_convergence_at_1st_iter_if_warm_start_and_max_iter_greater_1():
+    # When warm_start=True and max_iter > 1, if we change dataset, we don't
+    # want to detect convergence by mistake at the first iteration if
+    # lower_bound_ is very close to the lower_bound_ after the previous call
+    # to the fit method.
+    # Unlikely, but possible and problematic, so we might as well avoid it.
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    n_components = rand_data.n_components
+    X = rand_data.X['full']
+    idx = len(X) // 2
+    X1, X2 = X[:idx], X[idx:]
+    max_iter = 5
+
+    gmm = GaussianMixture(n_components=n_components, warm_start=True,
+                          max_iter=max_iter, tol=0., random_state=rng)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        gmm.fit(X1)
+    assert_true(not gmm.converged_)
+    assert_equal(gmm.n_iter_, max_iter - 1)
+    gmm.tol = np.infty
+    gmm.fit(X2)
+    assert_true(gmm.converged_)
+    assert_equal(gmm.n_iter_, 1)
 
 
 def test_score():
