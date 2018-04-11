@@ -456,6 +456,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         return_std : boolean, optional
             Whether to return the standard deviation of posterior prediction.
+            All zeros in this case.
 
         Returns
         -------
@@ -464,18 +465,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
             Standard deviation of predictive distribution of query points.
+            Always 0.
         """
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
 
-        y = np.ones((n_samples, 1)) * self.constant_
-        y_std = np.zeros((n_samples, 1))
+        y = np.ones((n_samples, self.n_outputs_)) * self.constant_
+        y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
             y_std = np.ravel(y_std)
 
-        if return_std:
-            return y, y_std
-        else:
-            return y
+        return (y, y_std) if return_std else y

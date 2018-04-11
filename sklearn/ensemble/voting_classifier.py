@@ -296,7 +296,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             probas = self._collect_probas(X)
             if self.flatten_transform is None:
                 warnings.warn("'flatten_transform' default value will be "
-                              "changed to True in 0.21."
+                              "changed to True in 0.21. "
                               "To silence this warning you may"
                               " explicitly set flatten_transform=False.",
                               DeprecationWarning)

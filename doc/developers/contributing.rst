@@ -34,15 +34,6 @@ See :ref:`new_contributors` to get started.
 
 |
 
-Submitting a bug report
-=======================
-
-In case you experience issues using this package, do not hesitate to submit a
-ticket to the
-`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
-also welcome to post feature requests or pull requests.
-
-
 Ways to contribute
 ==================
 
@@ -59,14 +50,73 @@ investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuable contributions that decrease the burden on the
 project maintainers.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs up"
-on issues that others reported and that are relevant to you.
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
+Another way to contribute is to report issues you're facing, and give a "thumbs
+up" on issues that others reported and that are relevant to you.  It also helps
+us if you spread the word: reference the project from your blog and articles,
+link to it from your website, or simply say "I use it":
 
 .. raw:: html
 
    <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
+Submitting a bug report or a feature request
+============================================
+
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
+   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
+
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   `new algorithm requirements
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
+
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
+   :ref:`filing_bugs`.
+
+.. _filing_bugs:
+
+How to make a good bug report
+-----------------------------
+
+When you submit an issue to `Github
+<https://github.com/scikit-learn/scikit-learn/issues>`_, please do your best to
+follow these guidelines! This will make it a lot easier to provide you with good
+feedback:
+
+- The ideal bug report contains a **short reproducible code snippet**, this way
+  anyone can try to reproduce the bug easily (see `this
+  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  longer than around 50 lines, please link to a `gist
+  <https://gist.github.com>`_ or a github repo.
+
+- If not feasible to include a reproducible snippet, please be specific about
+  what **estimators and/or functions are involved and the shape of the data**.
+
+- If an exception is raised, please **provide the full traceback**.
+
+- Please include your **operating system type and version number**, as well as
+  your **Python, scikit-learn, numpy, and scipy versions**. This information
+  can be found by running the following code snippet::
+
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
+
+- Please ensure all **code snippets and error messages are formatted in
+  appropriate code blocks**.  See `Creating and highlighting code blocks
+  <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
+  for more details.
 
 
 .. _git_repo:
@@ -285,20 +335,10 @@ You can also check for common programming errors with the following tools:
 
   see also :ref:`testing_coverage`
 
-* No pyflakes warnings, check with::
+* No flake8 warnings, check with::
 
-    $ pip install pyflakes
-    $ pyflakes path/to/module.py
-
-* No PEP8 warnings, check with::
-
-    $ pip install pep8
-    $ pep8 path/to/module.py
-
-* AutoPEP8 can help you fix some of the easy redundant errors::
-
-    $ pip install autopep8
-    $ autopep8 path/to/pep8.py
+    $ pip install flake8
+    $ flake8 path/to/module.py
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -340,47 +380,6 @@ and Cython optimizations.
      [doc quick]            Docs built, but excludes example gallery plots
      [doc build]            Docs built including example gallery plots
      ====================== ===================
-
-.. _filing_bugs:
-
-Filing Bugs
------------
-
-We use GitHub issues to track all bugs and feature requests; feel free to
-open an issue if you have found a bug or wish to see a feature implemented.
-
-It is recommended to check that your issue complies with the
-following rules before submitting:
-
--  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
-   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
-
--  If you are submitting an algorithm or feature request, please verify that
-   the algorithm fulfills our
-   `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
-
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See `Creating and highlighting code blocks
-   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
-
--  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by running the following code snippet::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
-
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
-   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
-   please provide the traceback.
 
 .. _new_contributors:
 
@@ -432,12 +431,17 @@ documents live in the source code repository under the ``doc/`` directory.
 You can edit the documentation using any text editor, and then generate the
 HTML output by building the documentation website.
 
-**Building the documentation**
+Building the documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
 ``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
+
+To build the documentation, you need to be in the ``doc`` folder::
+
+    cd doc
 
 It also requires having the version of scikit-learn installed that corresponds
 to the documentation, e.g.::
@@ -462,9 +466,20 @@ To build the PDF manual, run::
 
     make latexpdf
 
-**When you are writing documentation**, it is important to keep a good
-compromise between mathematical and algorithmic details, and give
-intuition to the reader on what the algorithm does.
+.. warning:: **Sphinx version**
+
+   While we do our best to have the documentation build under as many
+   versions of Sphinx as possible, the different versions tend to
+   behave slightly differently. To get the best results, you should
+   use the same version as the one we used on CircleCI. Look at this
+   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   to know the exact version.
+
+Guidelines for writing documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is important to keep a good compromise between mathematical and algorithmic
+details, and give intuition to the reader on what the algorithm does.
 
 Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waving explanation of what the
@@ -489,24 +504,6 @@ documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
-When you change the documentation in a pull request, CircleCI automatically
-builds it. To view the documentation generated by CircleCI:
-
-* navigate to the bottom of your pull request page to see the CI
-  statuses. You may need to click on "Show all checks" to see all the CI
-  statuses.
-* click on the CircleCI status with "python3" in the title.
-* add ``#artifacts`` at the end of the URL. Note: you need to wait for the
-  CircleCI build to finish before being able to look at the artifacts.
-* once the artifacts are visible, navigate to ``doc/_changed.html`` to see a
-  list of documentation pages that are likely to be affected by your pull
-  request. Navigate to ``doc/index.html`` to see the full generated html
-  documentation.
-
-If you often need to look at the documentation generated by CircleCI, e.g. when
-reviewing pull requests, you may find :ref:`this tip
-<viewing_rendered_html_documentation>` very handy.
-
 Finally, follow the formatting rules below to make it consistently good:
 
 * Add "See also" in docstrings for related classes/functions.
@@ -524,15 +521,26 @@ Finally, follow the formatting rules below to make it consistently good:
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
-.. warning:: **Sphinx version**
+Generated documentation on CircleCI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   While we do our best to have the documentation build under as many
-   versions of Sphinx as possible, the different versions tend to
-   behave slightly differently. To get the best results, you should
-   use the same version as the one we used on CircleCI. Look at this
-   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
-   to know the exact version.
+When you change the documentation in a pull request, CircleCI automatically
+builds it. To view the documentation generated by CircleCI:
 
+* navigate to the bottom of your pull request page to see the CI
+  statuses. You may need to click on "Show all checks" to see all the CI
+  statuses.
+* click on the CircleCI status with "python3" in the title.
+* add ``#artifacts`` at the end of the URL. Note: you need to wait for the
+  CircleCI build to finish before being able to look at the artifacts.
+* once the artifacts are visible, navigate to ``doc/_changed.html`` to see a
+  list of documentation pages that are likely to be affected by your pull
+  request. Navigate to ``doc/index.html`` to see the full generated html
+  documentation.
+
+If you often need to look at the documentation generated by CircleCI, e.g. when
+reviewing pull requests, you may find :ref:`this tip
+<viewing_rendered_html_documentation>` very handy.
 
 .. _testing_coverage:
 

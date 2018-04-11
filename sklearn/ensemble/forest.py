@@ -767,7 +767,7 @@ class RandomForestClassifier(ForestClassifier):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
@@ -788,23 +788,23 @@ class RandomForestClassifier(ForestClassifier):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -866,7 +866,7 @@ class RandomForestClassifier(ForestClassifier):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced",
         "balanced_subsample" or None, optional (default=None)
@@ -942,7 +942,7 @@ class RandomForestClassifier(ForestClassifier):
                 min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [ 0.17287856  0.80608704  0.01884792  0.00218648]
+    [0.17287856 0.80608704 0.01884792 0.00218648]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1045,7 +1045,7 @@ class RandomForestRegressor(ForestRegressor):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
@@ -1066,23 +1066,23 @@ class RandomForestRegressor(ForestRegressor):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1144,7 +1144,7 @@ class RandomForestRegressor(ForestRegressor):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     Attributes
     ----------
@@ -1182,7 +1182,7 @@ class RandomForestRegressor(ForestRegressor):
                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
-    [ 0.17339552  0.81594114  0.          0.01066333]
+    [0.17339552 0.81594114 0.         0.01066333]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-2.50699856]
 
@@ -1276,7 +1276,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
@@ -1297,23 +1297,23 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1375,7 +1375,7 @@ class ExtraTreesClassifier(ForestClassifier):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1525,7 +1525,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
@@ -1546,23 +1546,23 @@ class ExtraTreesRegressor(ForestRegressor):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1623,7 +1623,7 @@ class ExtraTreesRegressor(ForestRegressor):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     Attributes
     ----------
@@ -1736,23 +1736,23 @@ class RandomTreesEmbedding(BaseForest):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` is the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` is the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1814,7 +1814,7 @@ class RandomTreesEmbedding(BaseForest):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest.
+        new forest. See :term:`the Glossary <warm_start>`.
 
     Attributes
     ----------
