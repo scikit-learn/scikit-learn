@@ -453,7 +453,7 @@ def test_mice_transform_recovery(rank):
                           n_burn_in=10,
                           verbose=True).fit(X_train)
     X_test_est = imputer.transform(X_test)
-    assert_allclose(X_test_filled, X_test_est, atol=0.1)
+    assert_allclose(X_test_filled, X_test_est, rtol=1e-5, atol=0.1)
 
 
 def test_mice_additive_matrix():
