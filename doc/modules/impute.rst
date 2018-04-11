@@ -15,6 +15,10 @@ values. However, this comes at the price of losing data which may be valuable
 (even though incomplete). A better strategy is to impute the missing values,
 i.e., to infer them from the known part of the data.
 
+
+Univariate feature imputation
+=============================
+
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
 values, either using the mean, the median or the most frequent value of
 the row or column in which the missing values are located. This class
@@ -52,18 +56,19 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
+
+Multivariate feature imputation
+===============================
+
 A more sophisticated approach is to use the :class:`MICEImputer` class, which
-implements the multivariate imputation by chained equations technique. While
-the :class:`SimpleImputer` class fills in each missing value in a feature
-column by a constant that is a function of that feature only, MICE fills in
-each feature's missing values based on the values of the other features as
-well. It does so in a round-robin fashion: at each step, a feature column is
-designated as output and the other feature columns are treated as inputs. A
-regressor is fit on the non-missing values of the output feature column and the
-corresponding values in the input columns. Then, the regressor is applied so as
-to predict the unknown values of the output feature. This is repeated for each
-feature, and then is done for a number of imputation rounds. Here is an example
-snippet::
+implements the Multivariate Imputation by Chained Equations technique. MICE
+models each feature with missing values as a function of other features, and
+uses that estimate for imputation. It does so in a round-robin fashion: at
+each step, a feature column is designated as output `y` and the other feature
+columns are treated as inputs `X`. A regressor is fit on `(X, y)` for known `y`.
+Then, the regressor is used to predict the unknown values of `y`. This is
+repeated for each feature, and then is done for a number of imputation rounds.
+Here is an example snippet::
 
     >>> import numpy as np
     >>> from sklearn.impute import MICEImputer
