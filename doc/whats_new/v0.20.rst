@@ -53,7 +53,7 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
-- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its 
+- :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
   ``predict`` method. The returned standard deviations will be zeros.
 
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
@@ -161,6 +161,11 @@ Preprocessing
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
 
+- The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
+  now ignores any unknown classes. A warning is raised stating the unknown classes
+  classes found which are ignored.
+  :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -259,9 +264,9 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
   the parameter ``store_cv_values`` was not implemented though
   it was documented in ``cv_values`` as a way to set up the storage
-  of cross-validation values for different alphas. :issue:`10297` by 
+  of cross-validation values for different alphas. :issue:`10297` by
   :user:`Mabel Villalba-Jiménez <mabelvj>`.
-  
+
 - Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
   valued pseudocounts (alpha).
   :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
@@ -472,8 +477,8 @@ Outlier Detection models
 
 Covariance
 
-- The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and 
-  :class:`covariance.GraphLassoCV` have been renamed to 
+- The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and
+  :class:`covariance.GraphLassoCV` have been renamed to
   :func:`covariance.graphical_lasso`, :class:`covariance.GraphicalLasso` and
   :class:`covariance.GraphicalLassoCV` respectively and will be removed in version 0.22.
   :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
