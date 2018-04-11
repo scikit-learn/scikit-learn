@@ -657,7 +657,7 @@ instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values. It finds a decomposition of samples
 :math:`X` into two matrices :math:`W` and :math:`H` of non-negative elements,
 by optimizing the distance :math:`d` between :math:`X` and the matrix product
-:math:`WH`. The most widely used distance function is the squared Frobenius
+:math:`HW`. The most widely used distance function is the squared Frobenius
 norm, which is an obvious extension of the Euclidean norm to matrices:
 
 .. math::
@@ -720,7 +720,7 @@ and the intensity of the regularization with the :attr:`alpha`
 and the regularized objective function is:
 
 .. math::
-    d_{\mathrm{Fro}}(X, WH)
+    d_{\mathrm{Fro}}(X, HW)
     + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
     + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
     + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
