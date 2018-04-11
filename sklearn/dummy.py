@@ -465,7 +465,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
             Standard deviation of predictive distribution of query points.
-            Always 0.
         """
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
