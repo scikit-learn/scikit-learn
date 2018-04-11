@@ -64,7 +64,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # for python 3.4, conda does not have recent pytest packages
     if [[ "$PYTHON_VERSION" == "3.4" ]]; then
-        pip install --upgrade --no-deps pytest
+        pip install pytest==3.5
     fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
