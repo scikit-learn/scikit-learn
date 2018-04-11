@@ -308,15 +308,16 @@ def test_multilabel_binarizer_empty_sample():
 def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
-    Y = np.array([[0, 0]])
-    w = 'unknown class(es) [0] will be ignored'
+    Y = np.array([[1, 0], [0, 1]])
+    w = 'unknown class(es) [0, 4] will be ignored'
     matrix = assert_warns_message(UserWarning, w,
-                                  mlb.fit(y).transform, [[0]])
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
     assert_array_equal(matrix, Y)
 
-    mlb = MultiLabelBinarizer(classes=[1, 2])
+    Y = np.array([[1, 0, 0], [0, 1, 0]])
+    mlb = MultiLabelBinarizer(classes=[1, 2, 3])
     matrix = assert_warns_message(UserWarning, w,
-                                  mlb.fit(y).transform, [[0]])
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
     assert_array_equal(matrix, Y)
 
 
