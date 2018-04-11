@@ -109,8 +109,8 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         WH_data = _special_sparse_dot(W, H, X).data
         X_data = X.data
     else:
-        WH = np.dot(W, H)
-        WH_data = WH.ravel()
+        HW = np.dot(W, H)
+        WH_data = HW.ravel()
         X_data = X.ravel()
 
     # do not affect the zeros: here 0 ** (-1) = 0 and not infinity
@@ -125,7 +125,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     if beta == 1:
         # fast and memory efficient computation of np.sum(np.dot(W, H))
         sum_WH = np.dot(np.sum(W, axis=0), np.sum(H, axis=1))
-        # computes np.sum(X * log(X / WH)) only where X is nonzero
+        # computes np.sum(X * log(X / HW)) only where X is nonzero
         div = X_data / WH_data
         res = np.dot(X_data, np.log(div))
         # add full np.sum(np.dot(W, H)) - np.sum(X)
@@ -146,7 +146,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
                 sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
-            sum_WH_beta = np.sum(WH ** beta)
+            sum_WH_beta = np.sum(HW ** beta)
 
         sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
         res = (X_data ** beta).sum() - beta * sum_X_WH
@@ -164,8 +164,8 @@ def _special_sparse_dot(W, H, X):
     if sp.issparse(X):
         ii, jj = X.nonzero()
         dot_vals = np.multiply(W[ii, :], H.T[jj, :]).sum(axis=1)
-        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
-        return WH.tocsr()
+        HW = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
+        return HW.tocsr()
     else:
         return np.dot(W, H)
 
@@ -236,7 +236,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     """Algorithms for NMF initialization.
 
     Computes an initial guess for the non-negative
-    rank k matrix approximation for X: X = WH
+    rank k matrix approximation for X: X = HW
 
     Parameters
     ----------
@@ -278,10 +278,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     Returns
     -------
     W : array-like, shape (n_samples, n_components)
-        Initial guesses for solving X ~= WH
+        Initial guesses for solving X ~= HW
 
     H : array-like, shape (n_components, n_features)
-        Initial guesses for solving X ~= WH
+        Initial guesses for solving X ~= HW
 
     References
     ----------
@@ -527,7 +527,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
     else:
         # Numerator
-        # if X is sparse, compute WH only where X is non zero
+        # if X is sparse, compute HW only where X is non zero
         WH_safe_X = _special_sparse_dot(W, H, X)
         if sp.issparse(X):
             WH_safe_X_data = WH_safe_X.data
@@ -536,9 +536,9 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             WH_safe_X_data = WH_safe_X
             X_data = X
             # copy used in the Denominator
-            WH = WH_safe_X.copy()
+            HW = WH_safe_X.copy()
             if beta_loss - 1. < 0:
-                WH[WH == 0] = EPSILON
+                HW[HW == 0] = EPSILON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2. < 0:
@@ -571,7 +571,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             # computation of WHHt = dot(dot(W, H) ** beta_loss - 1, H.T)
             if sp.issparse(X):
                 # memory efficient computation
-                # (compute row by row, avoiding the dense matrix WH)
+                # (compute row by row, avoiding the dense matrix HW)
                 WHHt = np.empty(W.shape)
                 for i in range(X.shape[0]):
                     WHi = np.dot(W[i, :], H)
@@ -580,8 +580,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                     WHi **= beta_loss - 1
                     WHHt[i, :] = np.dot(WHi, H.T)
             else:
-                WH **= beta_loss - 1
-                WHHt = np.dot(WH, H.T)
+                HW **= beta_loss - 1
+                WHHt = np.dot(HW, H.T)
             denominator = WHHt
 
     # Add L1 and L2 regularization
@@ -617,9 +617,9 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
             WH_safe_X_data = WH_safe_X
             X_data = X
             # copy used in the Denominator
-            WH = WH_safe_X.copy()
+            HW = WH_safe_X.copy()
             if beta_loss - 1. < 0:
-                WH[WH == 0] = EPSILON
+                HW[HW == 0] = EPSILON
 
         # to avoid division by zero
         if beta_loss - 2. < 0:
@@ -653,7 +653,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
             # computation of WtWH = dot(W.T, dot(W, H) ** beta_loss - 1)
             if sp.issparse(X):
                 # memory efficient computation
-                # (compute column by column, avoiding the dense matrix WH)
+                # (compute column by column, avoiding the dense matrix HW)
                 WtWH = np.empty(H.shape)
                 for i in range(X.shape[1]):
                     WHi = np.dot(W, H[:, i])
@@ -662,8 +662,8 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
                     WHi **= beta_loss - 1
                     WtWH[:, i] = np.dot(W.T, WHi)
             else:
-                WH **= beta_loss - 1
-                WtWH = np.dot(W.T, WH)
+                HW **= beta_loss - 1
+                WtWH = np.dot(W.T, HW)
             denominator = WtWH
 
     # Add L1 and L2 regularization
@@ -689,7 +689,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
                                update_H=True, verbose=0):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
 
-    The objective function is _beta_divergence(X, WH) and is minimized with an
+    The objective function is _beta_divergence(X, HW) and is minimized with an
     alternating minimization of W and H. Each minimization is done with a
     Multiplicative Update.
 
@@ -707,7 +707,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     beta_loss : float or string, default 'frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
+        and the dot product HW. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros.
@@ -831,7 +831,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     The objective function is::
 
-        0.5 * ||X - WH||_Fro^2
+        0.5 * ||X - HW||_Fro^2
         + alpha * l1_ratio * ||vec(W)||_1
         + alpha * l1_ratio * ||vec(H)||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
@@ -843,7 +843,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
+    (0.5 * ||X - HW||_Fro^2) can be changed into another beta-divergence loss,
     by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
@@ -903,7 +903,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     beta_loss : float or string, default 'frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
+        and the dot product HW. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
@@ -1047,7 +1047,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     The objective function is::
 
-        0.5 * ||X - WH||_Fro^2
+        0.5 * ||X - HW||_Fro^2
         + alpha * l1_ratio * ||vec(W)||_1
         + alpha * l1_ratio * ||vec(H)||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
@@ -1059,7 +1059,7 @@ class NMF(BaseEstimator, TransformerMixin):
         ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
+    (0.5 * ||X - HW||_Fro^2) can be changed into another beta-divergence loss,
     by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
@@ -1107,7 +1107,7 @@ class NMF(BaseEstimator, TransformerMixin):
     beta_loss : float or string, default 'frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
+        and the dot product HW. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
@@ -1160,7 +1160,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     reconstruction_err_ : number
         Frobenius norm of the matrix difference, or beta-divergence, between
-        the training data ``X`` and the reconstructed data ``WH`` from
+        the training data ``X`` and the reconstructed data ``HW`` from
         the fitted model.
 
     n_iter_ : int
