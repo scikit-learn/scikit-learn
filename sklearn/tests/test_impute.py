@@ -437,16 +437,16 @@ def test_mice_transform_recovery(rank):
     d = 100
     A = rng.rand(n, rank)
     B = rng.rand(rank, d)
-    Xfilled = np.dot(A, B)
+    X_filled = np.dot(A, B)
     # half is randomly missing
     nan_mask = rng.rand(n, d) < 0.5
-    X_missing = Xfilled.copy()
+    X_missing = X_filled.copy()
     X_missing[nan_mask] = np.nan
 
     # split up data in half
     n = n // 2
     X_train = X_missing[:n]
-    X_test_filled = Xfilled[n:]
+    X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
     imputer = MICEImputer(n_imputations=10,
@@ -462,19 +462,19 @@ def test_mice_additive_matrix():
     d = 10
     A = rng.randn(n, d)
     B = rng.randn(n, d)
-    Xfilled = np.zeros(A.shape)
+    X_filled = np.zeros(A.shape)
     for i in range(d):
         for j in range(d):
-            Xfilled[:, (i+j) % d] += (A[:, i] + B[:, j]) / 2
+            X_filled[:, (i+j) % d] += (A[:, i] + B[:, j]) / 2
     # a quarter is randomly missing
     nan_mask = rng.rand(n, d) < 0.25
-    X_missing = Xfilled.copy()
+    X_missing = X_filled.copy()
     X_missing[nan_mask] = np.nan
 
     # split up data
     n = n // 2
     X_train = X_missing[:n]
-    X_test_filled = Xfilled[n:]
+    X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
     imputer = MICEImputer(n_imputations=25,
