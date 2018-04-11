@@ -35,7 +35,6 @@ random sampling procedures.
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
 
-
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
