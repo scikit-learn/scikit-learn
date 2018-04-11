@@ -715,11 +715,9 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
         aux = (L / rank).mean()
-        if sample_weight is None:
-            out += aux
-        else:
-            aux = aux * sample_weight[i]
-            out += aux
+        if sample_weight is not None:
+            aux = aux * sample_weight[i]    
+        out += aux
 
     if sample_weight is None:
         out /= n_samples

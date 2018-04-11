@@ -195,6 +195,9 @@ Metrics
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
   ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- :func:`label_ranking_average_precision_score` now supports vector ``sample_weight``
+  :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
