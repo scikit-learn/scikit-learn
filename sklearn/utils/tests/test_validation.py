@@ -9,6 +9,7 @@ from itertools import product
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from pytest import importorskip
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
 from sklearn.utils.testing import assert_raises
@@ -662,6 +663,38 @@ def test_suppress_validation():
     assert_all_finite(X)
     sklearn.set_config(assume_finite=False)
     assert_raises(ValueError, assert_all_finite, X)
+
+
+def test_check_dataframe_warns_on_dtype():
+    # Check that warn_on_dtype also works for DataFrames.
+    # https://github.com/scikit-learn/scikit-learn/issues/10948
+    pd = importorskip("pandas")
+
+    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], dtype=object)
+    assert_warns_message(DataConversionWarning,
+                         "Data with input dtype object were all converted to "
+                         "float64.",
+                         check_array, df, dtype=np.float64, warn_on_dtype=True)
+    assert_warns(DataConversionWarning, check_array, df,
+                 dtype='numeric', warn_on_dtype=True)
+    assert_no_warnings(check_array, df, dtype='object', warn_on_dtype=True)
+
+    # Also check that it raises a warning for mixed dtypes in a DataFrame.
+    df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
+    assert_warns(DataConversionWarning, check_array, df_mixed,
+                 dtype=np.float64, warn_on_dtype=True)
+    assert_warns(DataConversionWarning, check_array, df_mixed,
+                 dtype='numeric', warn_on_dtype=True)
+    assert_warns(DataConversionWarning, check_array, df_mixed,
+                 dtype=object, warn_on_dtype=True)
+
+    # Even with numerical dtypes, a conversion can be made because dtypes are
+    # uniformized throughout the array.
+    df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
+    assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
+                 dtype='numeric', warn_on_dtype=True)
+    assert_no_warnings(check_array, df_mixed_numeric.astype(int),
+                       dtype='numeric', warn_on_dtype=True)
 
 
 class DummyMemory(object):
