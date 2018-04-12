@@ -838,7 +838,7 @@ Perceptron
 ==========
 
 The :class:`Perceptron` is another simple classification algorithm suitable for
-large scale learning. It is a multiclass classifier. By default:
+large scale learning. By default:
 
     - It does not require a learning rate.
 
