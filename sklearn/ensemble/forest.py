@@ -745,7 +745,7 @@ class RandomForestClassifier(ForestClassifier):
     """A random forest classifier.
 
     A random forest is a meta estimator that fits a number of decision tree
-    classifiers on various sub-samples of the dataset and use averaging to
+    classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original
     input sample size but the samples are drawn with replacement if
@@ -1019,7 +1019,7 @@ class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
 
     A random forest is a meta estimator that fits a number of classifying
-    decision trees on various sub-samples of the dataset and use averaging
+    decision trees on various sub-samples of the dataset and uses averaging
     to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original
     input sample size but the samples are drawn with replacement if
@@ -1258,7 +1258,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     This class implements a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
-    of the dataset and use averaging to improve the predictive accuracy
+    of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
     Read more in the :ref:`User Guide <forest>`.
@@ -1502,7 +1502,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     This class implements a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
-    of the dataset and use averaging to improve the predictive accuracy
+    of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
     Read more in the :ref:`User Guide <forest>`.
