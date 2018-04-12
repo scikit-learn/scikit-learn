@@ -70,8 +70,6 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.parse import urlencode
 
 import pandas as pd
 
@@ -83,8 +81,8 @@ print(__doc__)
 # #############################################################################
 # Retrieve the data from Internet
 
-# The data is from 2003 - 2008. This is reasonably calm: (not too long ago so that we
-# get high-tech firms, and before the 2008 crash)
+# The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
+# that we get high-tech firms, and before the 2008 crash)
 start_date = datetime(2003, 1, 1).date()
 end_date = datetime(2008, 1, 1).date()
 
@@ -153,8 +151,8 @@ quotes = []
 
 for symbol in symbols:
     print('Fetching quote history for %r' % symbol, file=sys.stderr)
-    url = ('https://raw.githubusercontent.com/scikit-learn/examples-data/master/'
-           'financial-data/{}.csv')
+    url = ('https://raw.githubusercontent.com/scikit-learn/examples-data/'
+           'master/financial-data/{}.csv')
     quotes.append(pd.read_csv(url.format(symbol)))
 
 close_prices = np.vstack([q['close'] for q in quotes])
