@@ -109,9 +109,9 @@ classification with 100.000 samples (1.000 of them are used for model fitting)
 with 20 features. Of the 20 features, only 2 are informative and 10 are
 redundant. The figure shows the estimated probabilities obtained with
 logistic regression, a linear support-vector classifier (SVC), and linear SVC with
-both isotonic calibration and sigmoid calibration. The calibration performance
-is evaluated with Brier score :func:`brier_score_loss`, reported in the legend
-(the smaller the better).
+both isotonic calibration and sigmoid calibration. The Brier score is a metric which 
+is a combination of calibration loss and refinement loss, :func:`brier_score_loss`, 
+reported in the legend (the smaller the better).
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_002.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
