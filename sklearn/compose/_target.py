@@ -23,13 +23,16 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     ``exp``.
 
     The computation during ``fit`` is::
+
         regressor.fit(X, func(y))
     or::
-        regressor.fit(X, transformer.transform(y))
 
+        regressor.fit(X, transformer.transform(y))
     The computation during ``predict`` is::
+
         inverse_func(regressor.predict(X))
     or::
+
         transformer.inverse_transform(regressor.predict(X))
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
