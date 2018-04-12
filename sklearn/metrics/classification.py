@@ -24,6 +24,7 @@ from __future__ import division
 
 import warnings
 import numpy as np
+import math
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
