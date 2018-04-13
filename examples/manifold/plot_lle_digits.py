@@ -49,7 +49,7 @@ def plot_embedding(X, title=None):
     ax = plt.subplot(111)
     for i in range(X.shape[0]):
         plt.text(X[i, 0], X[i, 1], str(digits.target[i]),
-                 color=plt.cm.Set1(y[i] / 10.),
+                 color=plt.cm.Set1(digits.target[i] / 10.),
                  fontdict={'weight': 'bold', 'size': 9})
 
     if hasattr(offsetbox, 'AnnotationBbox'):
