@@ -1,4 +1,4 @@
-.. _metrics:
+﻿.. _metrics:
 
 Pairwise metrics, Affinities and Kernels
 ========================================
