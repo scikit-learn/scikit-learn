@@ -1925,7 +1925,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     mean squared difference between (1) the predicted probability assigned
     to the possible outcomes for item i, and (2) the actual outcome.
     
-    The Brier score is decomposed as the sum of a caliberation loss and a 
+    The Brier score is decomposed as the sum of a caliberation loss and a
     refinment loss. It is also know as the "two- component decomposition".
     The refinement measures the ability to distinguish between the classes 
     across threshold bins. The best case for refinment is for all threshold 
@@ -1934,10 +1934,9 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     Score is for a set of predictions, the better the predictions are calibrated. 
     
 
-    Note that the Brier score always
-    takes on a value between zero and one, since this is the largest
-    possible difference between a predicted probability (which must be
-    between zero and one) and the actual outcome (which can take on values
+    Note that the Brier score always takes on a value between zero and one, 
+    since this is the largest possible difference between a predicted probability 
+    (which must be between zero and one) and the actual outcome (which can take on values
     of only 0 and 1).
 
     The Brier score is appropriate for binary and categorical outcomes that
