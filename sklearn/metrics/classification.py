@@ -1995,7 +1995,6 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-# Caliberation by bin- two class
 
 def calibration_loss(y_true,y_prob, bin_size=2):
     """Compute Calibration score by bins. 
