@@ -1,4 +1,4 @@
-﻿.. _svm:
+.. _svm:
 
 =======================
 Support Vector Machines
@@ -340,7 +340,6 @@ One-class SVM is used for novelty detection, that is, given a set of
 samples, it will detect the soft boundary of that set so as to
 classify new points as belonging to that set or not. The class that
 implements this is called :class:`OneClassSVM`.
-
 
 See, section :ref:`outlier_detection` for more details on this usage.
 
