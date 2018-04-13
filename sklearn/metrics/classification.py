@@ -24,6 +24,7 @@ from __future__ import division
 
 import warnings
 import numpy as np
+import math
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
@@ -1924,14 +1925,23 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned
     to the possible outcomes for item i, and (2) the actual outcome.
-    Therefore, the lower the Brier score is for a set of predictions, the
-    better the predictions are calibrated. Note that the Brier score always
+    
+    The Brier score is decomposed as the sum of a caliberation loss and a 
+    refinment loss. It is also know as the "two- component decomposition".
+    The refinement measures the ability to distinguish between the classes 
+    across threshold bins. The best case for refinment is for all threshold 
+    bins the classes proportion is 100-0%, and worst case is when the 
+    proportion is 50%-50%. Therefore, assuming equal refinement, the lower the Brier 
+    Score is for a set of predictions, the better the predictions are calibrated. 
+    
+
+    Note that the Brier score always
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
     of only 0 and 1).
 
-    The Brier score is appropriate for binary and categorical outcomes that
+    The Brier score is appropriate for binary and categorical outcomes that 
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
