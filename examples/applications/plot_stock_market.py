@@ -82,7 +82,9 @@ print(__doc__)
 # Retrieve the data from Internet
 
 # The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
-# that we get high-tech firms, and before the 2008 crash)
+# that we get high-tech firms, and before the 2008 crash). This kind of
+# historical data can be obtained for from APIs like the quandl.com and
+# alphavantage.co ones.
 start_date = datetime(2003, 1, 1).date()
 end_date = datetime(2008, 1, 1).date()
 
