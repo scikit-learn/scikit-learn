@@ -21,6 +21,7 @@ from ..utils import Bunch
 from ..utils import check_random_state
 
 import numpy as np
+import pandas as pd
 
 from sklearn.externals.six.moves.urllib.request import urlretrieve
 
@@ -322,7 +323,7 @@ def load_wine(return_X_y=False):
                                 'proline'])
 
 
-def load_iris(return_X_y=False):
+def load_iris(return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -382,11 +383,17 @@ def load_iris(return_X_y=False):
     if return_X_y:
         return data, target
 
+    feature_names = ['sepal length (cm)', 'sepal width (cm)',
+                     'petal length (cm)', 'petal width (cm)']
+    if as_frame:
+        data_frame = pd.DataFrame(data, columns=feature_names)
+        target_series = pd.Series(target, name="class")
+        return data_frame, target_series
+
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'],
+                 feature_names=feature_names,
                  filename=iris_csv_filename)
 
 
