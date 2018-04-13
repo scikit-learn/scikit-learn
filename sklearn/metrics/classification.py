@@ -1940,7 +1940,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     between zero and one) and the actual outcome (which can take on values
     of only 0 and 1).
 
-    The Brier score is appropriate for binary and categorical outcomes that 
+    The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
