@@ -55,7 +55,7 @@ def plot_embedding(X, title=None):
     if hasattr(offsetbox, 'AnnotationBbox'):
         # only print thumbnails with matplotlib > 1.0
         shown_images = np.array([[1., 1.]])  # just something big
-        for i in range(digits.data.shape[0]):
+        for i in range(X.shape[0]):
             dist = np.sum((X[i] - shown_images) ** 2, 1)
             if np.min(dist) < 4e-3:
                 # don't show points that are too close
