@@ -26,8 +26,9 @@ import numpy as np
 from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss, balanced_accuracy_score,
-               explained_variance_score, brier_score_loss)
+               precision_score, recall_score, log_loss,
+               balanced_accuracy_score, explained_variance_score,
+               brier_score_loss)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -96,9 +97,32 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        super(_PredictScorer, self).__call__(estimator, X, y_true,
-                                             sample_weight=sample_weight)
         y_pred = estimator.predict(X)
+        return self.score_predictions(y_true, y_pred, sample_weight)
+
+    def score_predictions(self, y_true, y_pred, sample_weight=None):
+        """Evaluate predicted target values y_pred relative to y_true.
+
+        Parameters
+        ----------
+        y_pred : array-like
+            Prodicted values for y.
+
+        y_true : array-like
+            Gold standard target values for y.
+
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score function applied to prediction of estimator on X.
+        """
+        # We call __call__ with no arguments as it only serves to show
+        # deprecation warnings.
+        super(_PredictScorer, self).__call__(None, None, None,
+                                             sample_weight=sample_weight)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
@@ -109,7 +133,7 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
+    def __call__(self, clf, X, y_true, sample_weight=None):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -121,7 +145,7 @@ class _ProbaScorer(_BaseScorer):
         X : array-like or sparse matrix
             Test data that will be fed to clf.predict_proba.
 
-        y : array-like
+        y_true : array-like
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
@@ -133,21 +157,49 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        super(_ProbaScorer, self).__call__(clf, X, y,
-                                           sample_weight=sample_weight)
-        y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
-        if y_type == "binary":
-            y_pred = y_pred[:, 1]
-        if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+
+        return self.score_predictions(y_true, y_pred, sample_weight)
 
     def _factory_args(self):
         return ", needs_proba=True"
+
+    def score_predictions(self, y_true, y_pred, sample_weight=None):
+        """Evaluate predicted y_pred relative to y_true.
+
+        Parameters
+        ----------
+        y_pred : array-like
+            Predicted values for y by a classifier. These must be class labels,
+            not probabilities.
+
+        y_true : array-like
+            Gold standard target values for y. These must be class labels,
+            not probabilities.
+
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score function applied to prediction of estimator on X.
+        """
+        # We call __call__ with no arguments as it only serves to show
+        # deprecation warnings.
+        super(_ProbaScorer, self).__call__(None, None, None,
+                                           sample_weight=sample_weight)
+        y_type = type_of_target(y_true)
+        if y_type == "binary":
+            y_pred = y_pred[:, 1]
+        if sample_weight is not None:
+            return self._sign * self._score_func(y_true, y_pred,
+                                                 sample_weight=sample_weight,
+                                                 **self._kwargs)
+        else:
+            return self._sign * self._score_func(y_true,
+                                                 y_pred,
+                                                 **self._kwargs)
 
 
 class _ThresholdScorer(_BaseScorer):

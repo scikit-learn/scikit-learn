@@ -27,7 +27,8 @@ from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
-from ..metrics.scorer import check_scoring, _check_multimetric_scoring
+from ..metrics.scorer import (check_scoring, _check_multimetric_scoring,
+                              _PredictScorer, _ProbaScorer)
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -577,14 +578,46 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
 
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
-    scores = {}
+    def _is_proba(x):
+        return isinstance(x, _ProbaScorer)
 
-    for name, scorer in scorers.items():
+    def _is_predict(x):
+        return isinstance(x, _PredictScorer)
+
+    tmp_scores = {}
+
+    # The following two are special cases where we want to compute
+    # the `predict` and `predict_proba` only once.
+    # This is ugly but gives a good performance boost, see #10802
+    # for more details.
+    predict_scorers = [
+            (name, sc) for name, sc in scorers.items()
+            if _is_predict(sc)]
+    if predict_scorers:
+        y_pred = estimator.predict(X_test)
+        for (name, scorer) in predict_scorers:
+            tmp_scores[name] = scorer.score_predictions(y_test, y_pred)
+
+    proba_scorers = [
+            (name, sc) for name, sc in scorers.items()
+            if _is_proba(sc)]
+    if proba_scorers:
+        y_pred = estimator.predict_proba(X_test)
+        for (name, scorer) in proba_scorers:
+            tmp_scores[name] = scorer.score_predictions(y_test, y_pred)
+
+    other_scorers = [
+            (name, sc) for name, sc in scorers.items()
+            if not (_is_proba(sc) or _is_predict(sc))]
+    for name, scorer in other_scorers:
         if y_test is None:
-            score = scorer(estimator, X_test)
+            tmp_scores[name] = scorer(estimator, X_test)
         else:
-            score = scorer(estimator, X_test, y_test)
+            tmp_scores[name] = scorer(estimator, X_test, y_test)
 
+    scores = {}
+    for name in scorers:
+        score = tmp_scores[name]
         if hasattr(score, 'item'):
             try:
                 # e.g. unwrap memmapped scalars
