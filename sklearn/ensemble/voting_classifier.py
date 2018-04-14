@@ -57,8 +57,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     verbose: int, optional
         The verbosity level: if non zero, progress messages are printed.
         Above 50, the output is sent to stdout. The frequency of the messages
-        increases with the verbosity level. If it more than 10, all iterations
-        are reported.
+        increases with the verbosity level. If it more than 10, all ``fit``
+        calls are reported.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
