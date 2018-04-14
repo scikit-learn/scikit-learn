@@ -121,4 +121,5 @@ __all__ = [
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
+    'calibration_loss',
 ]
