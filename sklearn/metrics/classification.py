@@ -1995,7 +1995,6 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-
 def calibration_loss(y_true, y_prob, bin_size=2.0):
     
     """Compute Calibration score by bins. 
@@ -2040,8 +2039,7 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     pos_loss=0.0
     neg_loss=0.0
     
-    for bin_start in range(0,len(y_true)-bin_size + 1):
-        
+    for bin_start in range(0,len(y_true)-bin_size + 1):        
         
         bin_end= bin_start + bin_size
                
@@ -2049,14 +2047,12 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
         print(actual_per_pos_class)
         bin_error_pos = abs(y_prob[bin_start:bin_end]-actual_per_pos_class).sum()
         pos_loss += bin_error_pos
-        
-        
+                
         actual_per_neg_class= (bin_size - y_true[bin_start:bin_end].sum())/float(bin_size)
         print(actual_per_neg_class)
         bin_error_neg = abs((1-y_prob[bin_start:bin_end])-actual_per_neg_class).sum()
         neg_loss += bin_error_neg
-        
-    
+            
     pos_loss /= (len(y_true)-bin_size+1)
     neg_loss /= (len(y_true)-bin_size+1)
     loss = (0.5)*(pos_loss+neg_loss)
