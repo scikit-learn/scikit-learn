@@ -283,7 +283,8 @@ def test_mice_rank_one():
 
     imputer = MICEImputer(n_imputations=5,
                           n_burn_in=5,
-                          verbose=True)
+                          verbose=True,
+                          random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
     assert_allclose(X_filled, X, atol=0.001)
 
@@ -306,7 +307,8 @@ def test_mice_imputation_order(imputation_order):
                           min_value=0,
                           max_value=1,
                           verbose=False,
-                          imputation_order=imputation_order)
+                          imputation_order=imputation_order,
+                          random_state=rng)
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
     if imputation_order == 'roman':
@@ -335,7 +337,8 @@ def test_mice_predictors(predictor):
     imputer = MICEImputer(missing_values=0,
                           n_imputations=1,
                           n_burn_in=1,
-                          predictor=predictor)
+                          predictor=predictor,
+                          random_state=rng)
     imputer.fit_transform(X)
 
     # check that types are correct for predictors
@@ -359,7 +362,8 @@ def test_mice_clip():
                           n_imputations=1,
                           n_burn_in=1,
                           min_value=0.1,
-                          max_value=0.2)
+                          max_value=0.2,
+                          random_state=rng)
 
     Xt = imputer.fit_transform(X)
     assert_allclose(np.min(Xt[X == 0]), 0.1)
@@ -384,7 +388,8 @@ def test_mice_missing_at_transform(strategy):
     mice = MICEImputer(missing_values=0,
                        n_imputations=1,
                        n_burn_in=1,
-                       initial_strategy=strategy).fit(X_train)
+                       initial_strategy=strategy,
+                       random_state=rng).fit(X_train)
     initial_imputer = SimpleImputer(missing_values=0,
                                     strategy=strategy).fit(X_train)
 
@@ -403,7 +408,8 @@ def test_mice_transform_stochasticity():
 
     imputer = MICEImputer(missing_values=0,
                           n_imputations=1,
-                          n_burn_in=1)
+                          n_burn_in=1,
+                          random_state=rng)
     imputer.fit(X)
 
     X_fitted_1 = imputer.transform(X)
@@ -417,8 +423,8 @@ def test_mice_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
     X[:, 0] = np.nan
-    m1 = MICEImputer(n_imputations=10)
-    m2 = MICEImputer(n_imputations=10)
+    m1 = MICEImputer(n_imputations=10, random_state=rng)
+    m2 = MICEImputer(n_imputations=10, random_state=rng)
     pred1 = m1.fit(X).transform(X)
     pred2 = m2.fit_transform(X)
     # should exclude the first column entirely
@@ -451,7 +457,8 @@ def test_mice_transform_recovery(rank):
 
     imputer = MICEImputer(n_imputations=10,
                           n_burn_in=10,
-                          verbose=True).fit(X_train)
+                          verbose=True,
+                          random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, rtol=1e-5, atol=0.1)
 
