@@ -2025,7 +2025,6 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
-    
     >>> calibration_loss(y_true, y_prob, bin_size=1)
     0.175
     >>> calibration_loss(y_true, y_prob, bin_size=2) 
@@ -2033,23 +2032,22 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     >>> calibration_loss(y_true, y_prob, bin_size=3) 
     0.833
 
-    """    
+    """
 
     pos_loss=0.0
     neg_loss=0.0
-    
+
     for bin_start in range(0,len(y_true)-bin_size + 1):        
-        
+
         bin_end= bin_start + bin_size
-               
         actual_per_pos_class= (y_true[bin_start:bin_end].sum())/float(bin_size)
         bin_error_pos = abs(y_prob[bin_start:bin_end]-actual_per_pos_class).sum()
         pos_loss += bin_error_pos
-                
+
         actual_per_neg_class= (bin_size - y_true[bin_start:bin_end].sum())/float(bin_size)
         bin_error_neg = abs((1-y_prob[bin_start:bin_end])-actual_per_neg_class).sum()
         neg_loss += bin_error_neg
-            
+
     pos_loss /= (len(y_true)-bin_size+1)
     neg_loss /= (len(y_true)-bin_size+1)
     loss = (0.5)*(pos_loss+neg_loss)
