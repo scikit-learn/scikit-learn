@@ -2027,7 +2027,7 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     
     >>> calibration_loss(y_true, y_prob, bin_size=1)
-    0.174..
+    0.175..
     >>> calibration_loss(y_true, y_prob, bin_size=2) 
     0.53...
     >>> calibration_loss(y_true, y_prob, bin_size=3) 
@@ -2043,12 +2043,10 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
         bin_end= bin_start + bin_size
                
         actual_per_pos_class= (y_true[bin_start:bin_end].sum())/float(bin_size)
-        print(actual_per_pos_class)
         bin_error_pos = abs(y_prob[bin_start:bin_end]-actual_per_pos_class).sum()
         pos_loss += bin_error_pos
                 
         actual_per_neg_class= (bin_size - y_true[bin_start:bin_end].sum())/float(bin_size)
-        print(actual_per_neg_class)
         bin_error_neg = abs((1-y_prob[bin_start:bin_end])-actual_per_neg_class).sum()
         neg_loss += bin_error_neg
             
