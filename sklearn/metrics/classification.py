@@ -2038,19 +2038,19 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
 
         bin_end = bin_start + bin_size
         actual_per_pos_class = (y_true[bin_start:bin_end]
-                                .sum())/float(bin_size)
+                                .sum()) / float(bin_size)
         bin_error_pos = abs(y_prob[bin_start:bin_end]
-                            -actual_per_pos_class).sum()
+                            - actual_per_pos_class).sum()
         pos_loss += bin_error_pos
 
         actual_per_neg_class = (bin_size - y_true[bin_start:bin_end]
-                                .sum())/float(bin_size)
+                                .sum()) / float(bin_size)
         bin_error_neg = abs((1-y_prob[bin_start:bin_end])
-                            -actual_per_neg_class).sum()
+                            - actual_per_neg_class).sum()
         neg_loss += bin_error_neg
 
-    pos_loss /= (len(y_true)-bin_size+1)
-    neg_loss /= (len(y_true)-bin_size+1)
-    loss = (0.5)*(pos_loss+neg_loss)
+    pos_loss /= (len(y_true) - bin_size + 1)
+    neg_loss /= (len(y_true) - bin_size + 1)
+    loss = (0.5) * (pos_loss + neg_loss)
 
     return loss
