@@ -1917,10 +1917,10 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
 
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
+    
     """Compute the Brier score.
-
+    
     The smaller the Brier score, the better, hence the naming with "loss".
-
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned
     to the possible outcomes for item i, and (2) the actual outcome.
