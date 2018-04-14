@@ -429,7 +429,7 @@ def test_mice_no_missing():
 
 @pytest.mark.parametrize(
     "rank",
-    [5, 10]
+    [3, 5]
 )
 def test_mice_transform_recovery(rank):
     rng = np.random.RandomState(0)
