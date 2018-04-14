@@ -1994,13 +1994,12 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
-
 def calibration_loss(y_true, y_prob, bin_size=2.0):
     
-    """Compute Calibration score by bins. 
-    The calibration loss is defined as the measure to access the 
-    quality of learning methods and learned models. A calibration 
-    measure based on overlaping binning is CAL (Caruana and Niculescu-Mizil, 2004). 
+    """Compute Calibration score by bins.
+    The calibration loss is defined as the measure to access the quality of 
+    learning methods and learned models. A calibration measure based on 
+    overlaping binning is CAL (Caruana and Niculescu-Mizil, 2004). 
     
     Parameters
     ----------
