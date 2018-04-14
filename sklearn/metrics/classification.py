@@ -2001,7 +2001,7 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     The calibration loss is defined as the measure to access the quality of
     learning methods and learned models. A calibration measure based on
     overlaping binning is CAL (Caruana and Niculescu-Mizil, 2004).
-    
+
     Parameters
     ----------
     y_true : array, shape (n_samples,)
@@ -2012,8 +2012,7 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
 
     bin_size : int
         Size of the bin (samples) analysed in one iteration
-        
-        
+
     Returns
     -------
     score : float
