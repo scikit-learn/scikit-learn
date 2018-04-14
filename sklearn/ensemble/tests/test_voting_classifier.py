@@ -428,3 +428,30 @@ def test_transform():
             eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
             eclf2.transform(X)
     )
+
+
+def test_verbose(capfd):
+    """Check verbose option."""
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = GaussianNB()
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft').fit(X, y)
+    out, err = capfd.readouterr()
+    assert out == err == ''
+
+    VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft', verbose=49).fit(X, y)
+    out, err = capfd.readouterr()
+    assert out == '' and err != ''
+
+    VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft', verbose=51).fit(X, y)
+    out, err = capfd.readouterr()
+    assert out != '' and err == ''
