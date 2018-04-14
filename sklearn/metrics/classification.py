@@ -2017,8 +2017,8 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     -------
     score : float
         Calibration loss
-        
-     Examples
+
+    Examples
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import calibration_loss
@@ -2032,9 +2032,9 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     0.53
     >>> calibration_loss(y_true, y_prob, bin_size=3) 
     0.833
-       
+
     """    
-    
+
     pos_loss=0.0
     neg_loss=0.0
     
