@@ -2028,11 +2028,11 @@ def calibration_loss(y_true, y_prob, bin_size=2.0):
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     
     >>> calibration_loss(y_true, y_prob, bin_size=1)
-    0.175..
+    0.175
     >>> calibration_loss(y_true, y_prob, bin_size=2) 
-    0.53...
+    0.53
     >>> calibration_loss(y_true, y_prob, bin_size=3) 
-    0.833...
+    0.833
        
     """    
     
