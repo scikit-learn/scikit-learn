@@ -457,8 +457,8 @@ while. To save some time, you can use:
       useful if you are modifying a few examples.
 
 That should create all the documentation in the ``_build/html/stable``
-directory.  Set the environment variable `USE_MATHJAX=1` if you intend to view
-the documentation in an online setting.
+directory.  Set the environment variable `NO_MATHJAX=1` if you intend to view
+the documentation in an offline setting.
 
 To build the PDF manual, run::
 

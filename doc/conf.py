@@ -45,17 +45,17 @@ numpydoc_class_members_toctree = False
 
 
 # math compatibility layer for different sphinx versions and settings
-if os.environ.get('USE_MATHJAX'):
-    extensions.append('sphinx.ext.mathjax')
-    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
-                    'MathJax.js?config=TeX-AMS_SVG')
-else:
+if os.environ.get('NO_MATHJAX'):
     import sphinx
     from distutils.version import LooseVersion
     if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
         extensions.append('sphinx.ext.pngmath')
     else:
         extensions.append('sphinx.ext.imgmath')
+else:
+    extensions.append('sphinx.ext.mathjax')
+    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
+                    'MathJax.js?config=TeX-AMS_SVG')
 
 
 autodoc_default_flags = ['members', 'inherited-members']

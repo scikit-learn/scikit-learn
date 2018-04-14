@@ -133,8 +133,6 @@ then
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
-export USE_MATHJAX=1  # more efficient and better aesthetics than imgmath
-
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
