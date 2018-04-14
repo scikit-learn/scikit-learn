@@ -24,6 +24,7 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import NotFittedError
 
 from sklearn.linear_model import sgd_fast
 
@@ -466,6 +467,26 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # Provided intercept_ does match dataset.
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
+
+    def test_sgd_proba_access(self):
+        # Test for issue #10938
+
+        # Checks if predict_proba and predict_log_proba
+        # is accessible for refrencing before fitting 
+        # the SGD classifier
+        clf = SGDClassifier()
+        assert_false(hasattr(clf,"predict_proba"))
+        assert_false(hasattr(clf,"predict_log_proba"))
+
+        for loss in ["log", "modified_huber"]:
+            clf = SGDClassifier(loss=loss)
+            assert_true(hasattr(clf,"predict_proba"))
+            assert_true(hasattr(clf,"predict_log_proba"))
+
+            # Checks if not fitted check is performed while calling 
+            # the methods
+            assert_raises(NotFittedError, clf.predict_proba,[[3,2]])
+            assert_raises(NotFittedError, clf.predict_log_proba,[[3,2]])
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba
