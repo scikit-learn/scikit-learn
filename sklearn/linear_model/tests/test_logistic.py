@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 from scipy import linalg, optimize, sparse
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
@@ -17,6 +18,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model.logistic import (
@@ -99,6 +101,43 @@ def test_lr_liblinear_warning():
                          " 'solver' is set to 'liblinear'. Got 'n_jobs'"
                          " = 2.",
                          lr.fit, iris.data, target)
+
+
+@pytest.mark.parametrize('model, default_solver',
+                         [(LogisticRegression, 'liblinear'),
+                          (LogisticRegressionCV, 'lbfgs')])
+def test_logistic_regression_warnings(model, default_solver):
+    # Test logistic regression with the iris dataset
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    clf_solver_warning = model(multi_class='ovr')
+    clf_multi_class_warning = model(solver='lbfgs')
+    clf_no_warnings = model(solver='lbfgs',
+                            multi_class='multinomial')
+
+    solver_warning_msg = "Default solver will be changed from '{}' " \
+                         "to 'auto' solver in 0.22".format(default_solver)
+    multi_class_warning_msg = "Default multi_class will be changed from" \
+                              " 'ovr' to 'multinomial' in 0.22"
+
+    assert_warns_message(FutureWarning, solver_warning_msg,
+                         clf_solver_warning.fit, iris.data, target)
+    assert_warns_message(FutureWarning, multi_class_warning_msg,
+                         clf_multi_class_warning.fit, iris.data, target)
+    assert_no_warnings(clf_no_warnings.fit, iris.data, target)
+
+
+@pytest.mark.parametrize('model', [LogisticRegression, LogisticRegressionCV])
+def test_logistic_regression_auto(model):
+    # Test logistic regression with auto mode
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+    clf_solver_l1 = model(penalty='l1', solver='auto')
+    clf_solver_l2 = model(penalty='l2', solver='auto')
+
+    clf_solver_l1.fit(iris.data, target)
+    clf_solver_l2.fit(iris.data, target)
 
 
 def test_predict_3_classes():
