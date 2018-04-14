@@ -144,19 +144,19 @@ def test_kde_pipeline_gridsearch():
 
 
 def test_kde_sample_weights():
-    N = 10000
-    T = 100
-    W_neutral = 3 * np.ones(N)
+    n_samples = 2500
+    size_tests = 20
+    weights_neutral = 3 * np.ones(n_samples)
     for d in [1, 2, 10]:
         rng = np.random.RandomState(0)
-        X = rng.rand(N, d)
-        W = 1 + (10 * X.sum(axis=1)).astype(np.int8)
+        X = rng.rand(n_samples, d)
+        weights = 1 + (10 * X.sum(axis=1)).astype(np.int8)
         repetitions = []
-        for x, w in zip(X, W):
+        for x, w in zip(X, weights):
             for _ in range(w):
                 repetitions.append(x.tolist())
         X_repetitions = np.array(repetitions)
-        Y = rng.rand(T // d, d)
+        test_points = rng.rand(size_tests // d, d)
         for algorithm in ['auto', 'ball_tree', 'kd_tree']:
             for metric in ['euclidean', 'minkowski', 'manhattan',
                            'chebyshev']:
@@ -164,21 +164,30 @@ def test_kde_sample_weights():
                     kde = KernelDensity(algorithm=algorithm, metric=metric)
 
                     # Test that adding a constant sample weight has no effect
-                    kde.fit(X, sample_weight=W_neutral)
-                    y_test = kde.score_samples(Y)
-                    sample_test = kde.sample(random_state=1234)
+                    kde.fit(X, sample_weight=weights_neutral)
+                    scores_test_const_weight = kde.score_samples(test_points)
+                    sample_test_const_weight = kde.sample(random_state=1234)
                     kde.fit(X)
-                    y_ref = kde.score_samples(Y)
-                    sample_ref = kde.sample(random_state=1234)
-                    assert_allclose(y_test, y_ref)
-                    assert_allclose(sample_test, sample_ref)
+                    scores_ref_no_weight = kde.score_samples(test_points)
+                    sample_ref_no_weight = kde.sample(random_state=1234)
+                    assert_allclose(scores_test_const_weight, scores_ref_no_weight)
+                    assert_allclose(sample_test_const_weight, sample_ref_no_weight)
 
-                    # Test equivalence between sampling and sample weights
-                    kde.fit(X, sample_weight=W)
-                    y_test = kde.score_samples(Y)
-                    sample_test = kde.sample(random_state=1234)
+                    # Test equivalence between sampling and (integer) sample weights
+                    kde.fit(X, sample_weight=weights)
+                    scores_test_weight = kde.score_samples(test_points)
+                    sample_test_weight = kde.sample(random_state=1234)
                     kde.fit(X_repetitions)
-                    y_ref = kde.score_samples(Y)
-                    sample_ref = kde.sample(random_state=1234)
-                    assert_allclose(y_test, y_ref)
-                    assert_allclose(sample_test, sample_ref)
+                    scores_ref_sampling = kde.score_samples(test_points)
+                    sample_ref_sampling = kde.sample(random_state=1234)
+                    assert_allclose(scores_test_weight, scores_ref_sampling)
+                    assert_allclose(sample_test_weight, sample_ref_sampling)
+
+                    # Test that sample weights has effects
+                    assert np.max(np.abs(scores_ref_no_weight - scores_test_weight)) > 0.005
+
+                    # Test invariance with respect to arbitrary scaling
+                    scale_factor = rng.rand()
+                    kde.fit(X, sample_weight=(scale_factor * weights))
+                    scores_test_scaled_weight = kde.score_samples(test_points)
+                    assert_allclose(scores_test_scaled_weight, scores_test_weight)

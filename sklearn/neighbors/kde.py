@@ -129,7 +129,7 @@ class KernelDensity(BaseEstimator):
         if sample_weight is not None:
             if not hasattr(sample_weight, 'shape'):
                 sample_weight = np.array(sample_weight)
-            if len(sample_weight.shape) != 1:
+            if sample_weight.ndim != 1:
                 raise ValueError("the shape of sample_weight must be ({0},),"
                                  " but was {1}".format(X.shape[0],
                                                        sample_weight.shape))
