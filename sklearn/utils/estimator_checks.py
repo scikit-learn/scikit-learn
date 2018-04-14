@@ -1505,6 +1505,8 @@ def check_supervised_y_2d(name, estimator_orig):
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
 
+    # Clone original estimator again before setting random state
+    estimator = clone(estimator_orig)
     set_random_state(estimator)
     # Check that when a 2D y is given, a DataConversionWarning is
     # raised
