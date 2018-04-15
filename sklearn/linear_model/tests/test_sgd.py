@@ -475,18 +475,18 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # is accessible for refrencing before fitting 
         # the SGD classifier
         clf = SGDClassifier()
-        assert_false(hasattr(clf,"predict_proba"))
-        assert_false(hasattr(clf,"predict_log_proba"))
+        assert not(hasattr(clf, "predict_proba"))
+        assert not(hasattr(clf, "predict_log_proba"))
 
         for loss in ["log", "modified_huber"]:
             clf = SGDClassifier(loss=loss)
-            assert_true(hasattr(clf,"predict_proba"))
-            assert_true(hasattr(clf,"predict_log_proba"))
+            assert_true(hasattr(clf, "predict_proba"))
+            assert_true(hasattr(clf, "predict_log_proba"))
 
             # Checks if not fitted check is performed while calling 
             # the methods
-            assert_raises(NotFittedError, clf.predict_proba,[[3,2]])
-            assert_raises(NotFittedError, clf.predict_log_proba,[[3,2]])
+            assert_raises(NotFittedError, clf.predict_proba, [[3, 2]])
+            assert_raises(NotFittedError, clf.predict_log_proba, [[3, 2]])
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba

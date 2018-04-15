@@ -806,7 +806,6 @@ class SGDClassifier(BaseSGDClassifier):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
 
-
     @property
     def predict_proba(self):
         """Probability estimates.
