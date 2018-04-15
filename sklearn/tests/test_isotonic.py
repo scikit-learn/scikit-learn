@@ -396,7 +396,7 @@ def test_isotonic_ymin_ymax():
 
     assert(np.all(y >= 0))
 
-    
+
 def test_isotonic_y_not_inf():
     # Test from @LotusZephyr's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/10903
