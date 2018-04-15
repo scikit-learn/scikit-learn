@@ -165,29 +165,30 @@ def test_kde_sample_weights():
 
                     # Test that adding a constant sample weight has no effect
                     kde.fit(X, sample_weight=weights_neutral)
-                    scores_test_const_weight = kde.score_samples(test_points)
-                    sample_test_const_weight = kde.sample(random_state=1234)
+                    scores_const_weight = kde.score_samples(test_points)
+                    sample_const_weight = kde.sample(random_state=1234)
                     kde.fit(X)
-                    scores_ref_no_weight = kde.score_samples(test_points)
-                    sample_ref_no_weight = kde.sample(random_state=1234)
-                    assert_allclose(scores_test_const_weight, scores_ref_no_weight)
-                    assert_allclose(sample_test_const_weight, sample_ref_no_weight)
+                    scores_no_weight = kde.score_samples(test_points)
+                    sample_no_weight = kde.sample(random_state=1234)
+                    assert_allclose(scores_const_weight, scores_no_weight)
+                    assert_allclose(sample_const_weight, sample_no_weight)
 
-                    # Test equivalence between sampling and (integer) sample weights
+                    # Test equivalence between sampling and (integer) weights
                     kde.fit(X, sample_weight=weights)
-                    scores_test_weight = kde.score_samples(test_points)
-                    sample_test_weight = kde.sample(random_state=1234)
+                    scores_weight = kde.score_samples(test_points)
+                    sample_weight = kde.sample(random_state=1234)
                     kde.fit(X_repetitions)
                     scores_ref_sampling = kde.score_samples(test_points)
                     sample_ref_sampling = kde.sample(random_state=1234)
-                    assert_allclose(scores_test_weight, scores_ref_sampling)
-                    assert_allclose(sample_test_weight, sample_ref_sampling)
+                    assert_allclose(scores_weight, scores_ref_sampling)
+                    assert_allclose(sample_weight, sample_ref_sampling)
 
-                    # Test that sample weights has effects
-                    assert np.max(np.abs(scores_ref_no_weight - scores_test_weight)) > 0.005
+                    # Test that sample weights has a non-trivial effect
+                    diff = np.max(np.abs(scores_no_weight - scores_weight))
+                    assert diff > 0.005
 
                     # Test invariance with respect to arbitrary scaling
                     scale_factor = rng.rand()
                     kde.fit(X, sample_weight=(scale_factor * weights))
-                    scores_test_scaled_weight = kde.score_samples(test_points)
-                    assert_allclose(scores_test_scaled_weight, scores_test_weight)
+                    scores_scaled_weight = kde.score_samples(test_points)
+                    assert_allclose(scores_scaled_weight, scores_weight)
