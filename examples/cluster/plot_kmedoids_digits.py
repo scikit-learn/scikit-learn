@@ -20,7 +20,7 @@ print(__doc__)
 
 # Authors: Timo Erkkilä <timo.erkkila@gmail.com>
 #          Antti Lehmussola <antti.lehmussola@gmail.com>
-#          Kornel Kiełczewski <kornel.k@plusnet.pl>
+#          Kornel Kiełczewski <kornel.mail@gmail.com>
 # License: BSD 3 clause
 
 np.random.seed(42)
