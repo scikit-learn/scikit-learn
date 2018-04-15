@@ -396,6 +396,18 @@ def test_isotonic_ymin_ymax():
 
     assert(np.all(y >= 0))
 
+    
+def test_isotonic_y_not_inf():
+    # Test from @LotusZephyr's issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/10903
+    x = np.array([1.212, 1.424, -1.542, -1.457, 0.934, 1.267, -0.689, 1.277,
+                  1.836, -1.421, 0.456, -0.751, 0.361, 1.421, 0.913, 0.729,
+                  -1.927, 0.927, -1.727, -1.672])
+    y = isotonic_regression(x)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 1))
+
 
 def test_isotonic_zero_weight_loop():
     # Test from @ogrisel's issue:
