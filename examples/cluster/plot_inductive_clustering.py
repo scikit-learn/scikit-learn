@@ -37,11 +37,11 @@ class InductiveClusterer(BaseEstimator):
         self.classifier_.fit(X, y)
         return self
 
-    @if_delegate_has_method(delegate='classifier')
+    @if_delegate_has_method(delegate='classifier_')
     def predict(self, X):
         return self.classifier_.predict(X)
 
-    @if_delegate_has_method(delegate='classifier')
+    @if_delegate_has_method(delegate='classifier_')
     def decision_function(self, X):
         return self.classifier_.decision_function(X)
 
@@ -65,6 +65,8 @@ X, y = make_blobs(n_samples=N_SAMPLES,
 clusterer = AgglomerativeClustering(n_clusters=3)
 cluster_labels = clusterer.fit_predict(X)
 
+plt.figure(figsize=(12, 4))
+
 plt.subplot(131)
 plot_scatter(X, cluster_labels)
 plt.title("Ward Linkage")
@@ -78,7 +80,7 @@ X_new, y_new = make_blobs(n_samples=10,
 plt.subplot(132)
 plot_scatter(X, cluster_labels)
 plot_scatter(X_new, 'black', 1)
-plt.title("Ward Linkage and unknown instances")
+plt.title("Unknown instances")
 
 
 # Declare the inductive learning model that it will be used to
@@ -92,7 +94,6 @@ probable_clusters = inductiveLearner.predict(X_new)
 plt.subplot(133)
 plot_scatter(X, cluster_labels)
 plot_scatter(X_new, probable_clusters)
-plt.title("Inductive inference on cluster membership \n"
-          " of unknown instances using classification")
+plt.title("Classify unknown instances")
 
 plt.show()
