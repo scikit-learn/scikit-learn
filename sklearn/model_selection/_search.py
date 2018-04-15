@@ -244,10 +244,11 @@ class ParameterSampler(object):
             grid_size = len(param_grid)
 
             if grid_size < self.n_iter:
-                raise ValueError(
-                    "The total space of parameters %d is smaller "
-                    "than n_iter=%d. For exhaustive searches, use "
-                    "GridSearchCV." % (grid_size, self.n_iter))
+                warnings.warn(
+                    'The total space of parameters %d is smaller '
+                    'than n_iter=%d. For exhaustive searches, use '
+                    'GridSearchCV.' % (grid_size, self.n_iter), RuntimeWarning)
+                self.n_iter = grid_size
             for i in sample_without_replacement(grid_size, self.n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
