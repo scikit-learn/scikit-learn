@@ -2385,3 +2385,7 @@ def test_standard_scaler_with_std():
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_array_almost_equal(X_scaled.mean(), 0.0)
     assert_array_almost_equal(X_scaled.std(), 0.5)
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert_array_almost_equal(X_scaled.mean(), 0.0)
+    assert_array_almost_equal(X_scaled.std(), 1.0)
