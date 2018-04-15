@@ -667,7 +667,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                                           self.n_samples_seen_)
 
         if self.with_std:
-            if self.with_std != True and self.with_std != 2:
+            if self.with_std is not True and self.with_std is not 2:
                 raise ValueError("Invalid value for 'with_std': %s" %
                                  str(self.with_std))
             self.scale_ = _handle_zeros_in_scale(
