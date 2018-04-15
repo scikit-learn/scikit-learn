@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.validation import _num_samples
+from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
@@ -914,88 +915,56 @@ def _sort_cluster_centers_and_labels(centers, labels):
     return centers[sort_index, :], sorted_labels
 
 
-def test_k_means_weighted_vs_repeated():
+def test_weighted_vs_repeated():
     # a sample weight of N should yield the same result as an N-fold
     # repetition of the sample
     sample_weights = np.random.randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weights, axis=0)
-    km_weighted = KMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=sample_weights)
-    km_repeated = KMeans(n_clusters=n_clusters, random_state=42).fit(X_repeat)
-    centers_1, labels_1 = _sort_cluster_centers_and_labels(
-            km_repeated.cluster_centers_, km_repeated.labels_)
-    centers_2, labels_2 = _sort_cluster_centers_and_labels(
-            km_weighted.cluster_centers_, np.repeat(km_weighted.labels_,
-                                                    sample_weights))
-    assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
-    assert_almost_equal(centers_1, centers_2)
+    for estimator in [KMeans(n_clusters=n_clusters, random_state=42),
+                      MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
+                                      random_state=42)]:
+        est_weighted = clone(estimator).fit(X, sample_weights=sample_weights)
+        est_repeated = clone(estimator).fit(X_repeat)
+        centers_1, labels_1 = _sort_cluster_centers_and_labels(
+                est_repeated.cluster_centers_, est_repeated.labels_)
+        centers_2, labels_2 = _sort_cluster_centers_and_labels(
+                est_weighted.cluster_centers_, np.repeat(est_weighted.labels_,
+                                                         sample_weights))
+        assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
+        if not isinstance(estimator, MiniBatchKMeans):
+            assert_almost_equal(centers_1, centers_2)
 
 
-def test_k_means_unit_weights():
+def test_unit_weights_vs_no_weights():
     # not passing any sample weights should be equivalent
     # to all weights equal to one
     sample_weights = np.ones(n_samples)
-    km_1 = KMeans(n_clusters=n_clusters, random_state=42).fit(X)
-    km_2 = KMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=sample_weights)
-    centers_1, labels_1 = _sort_cluster_centers_and_labels(
-            km_1.cluster_centers_, km_1.labels_)
-    centers_2, labels_2 = _sort_cluster_centers_and_labels(
-            km_2.cluster_centers_, km_2.labels_)
-    assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
-    assert_almost_equal(centers_1, centers_2)
+    for estimator in [KMeans(n_clusters=n_clusters, random_state=42),
+                      MiniBatchKMeans(n_clusters=n_clusters, random_state=42)]:
+        est_1 = clone(estimator).fit(X)
+        est_2 = clone(estimator).fit(X, sample_weights=sample_weights)
+        centers_1, labels_1 = _sort_cluster_centers_and_labels(
+                est_1.cluster_centers_, est_1.labels_)
+        centers_2, labels_2 = _sort_cluster_centers_and_labels(
+                est_2.cluster_centers_, est_2.labels_)
+        assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
+        assert_almost_equal(centers_1, centers_2)
 
 
-def test_k_means_scaled_weights():
+def test_scaled_weights():
     # scaling all sample weights by a common factor
     # shouldn't change the result
     sample_weights = np.ones(n_samples)
-    km_1 = KMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=sample_weights)
-    km_2 = KMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=0.5*sample_weights)
-    centers_1, labels_1 = _sort_cluster_centers_and_labels(
-            km_1.cluster_centers_, km_1.labels_)
-    centers_2, labels_2 = _sort_cluster_centers_and_labels(
-            km_2.cluster_centers_, km_2.labels_)
-    assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
-    assert_almost_equal(centers_1, centers_2)
-
-
-def test_mb_k_means_weighted_vs_repeated():
-    # a sample weight of N should yield the same result as an N-fold
-    # repetition of the sample
-    sample_weights = np.random.randint(1, 5, size=n_samples)
-    X_repeat = np.repeat(X, sample_weights, axis=0)
-    km_weighted = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
-                                  random_state=42).fit(
-                                    X, sample_weights=sample_weights)
-    km_repeated = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
-                                  random_state=42).fit(X_repeat)
-    assert_almost_equal(v_measure_score(km_repeated.labels_,
-                                        np.repeat(km_weighted.labels_,
-                                                  sample_weights)), 1.0)
-
-
-def test_mb_k_means_unit_weights():
-    # not passing any sample weights should be equivalent
-    # to all weights equal to one
-    sample_weights = np.ones(n_samples)
-    km_1 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(X)
-    km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=sample_weights)
-    assert_almost_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
-
-
-def test_mb_k_means_scaled_weights():
-    # scaling all sample weights by a common factor
-    # shouldn't change the result
-    sample_weights = np.ones(n_samples)
-    km_1 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=sample_weights)
-    km_2 = MiniBatchKMeans(n_clusters=n_clusters, random_state=42).fit(
-            X, sample_weights=0.5*sample_weights)
-    assert_almost_equal(v_measure_score(km_1.labels_, km_2.labels_), 1.0)
+    for estimator in [KMeans(n_clusters=n_clusters, random_state=42),
+                      MiniBatchKMeans(n_clusters=n_clusters, random_state=42)]:
+        est_1 = clone(estimator).fit(X)
+        est_2 = clone(estimator).fit(X, sample_weights=0.5*sample_weights)
+        centers_1, labels_1 = _sort_cluster_centers_and_labels(
+                est_1.cluster_centers_, est_1.labels_)
+        centers_2, labels_2 = _sort_cluster_centers_and_labels(
+                est_2.cluster_centers_, est_2.labels_)
+        assert_almost_equal(v_measure_score(labels_1, labels_2), 1.0)
+        assert_almost_equal(centers_1, centers_2)
 
 
 def test_sample_weights_length():
