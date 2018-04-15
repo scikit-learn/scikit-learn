@@ -127,7 +127,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         sample_weight = np.array(sample_weight[order], dtype=np.float64)
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
-    if y_min is not None or y_max is not None:
+    if y_min is None or y_max is None:
         # Older versions of np.clip don't accept None as a bound, so use np.inf
         if y_min is None:
             y_min = 0
