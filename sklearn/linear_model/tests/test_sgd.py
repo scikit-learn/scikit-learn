@@ -472,7 +472,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Test for issue #10938
 
         # Checks if predict_proba and predict_log_proba
-        # is accessible for refrencing before fitting 
+        # is accessible for refrencing before fitting
         # the SGD classifier
         clf = SGDClassifier()
         assert not(hasattr(clf, "predict_proba"))
@@ -483,7 +483,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             assert_true(hasattr(clf, "predict_proba"))
             assert_true(hasattr(clf, "predict_log_proba"))
 
-            # Checks if not fitted check is performed while calling 
+            # Checks if not fitted check is performed while calling
             # the methods
             assert_raises(NotFittedError, clf.predict_proba, [[3, 2]])
             assert_raises(NotFittedError, clf.predict_log_proba, [[3, 2]])
