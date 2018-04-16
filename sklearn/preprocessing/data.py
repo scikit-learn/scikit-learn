@@ -104,9 +104,11 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     with_mean : boolean, True by default
         If True, center the data before scaling.
 
-    with_std : boolean, True by default
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : boolean, 1 or 2, True by default
+        If 1 or True, scale the data to unit variance (or equivalently,
+        unit standard deviation). 
+        Otherwise 2, scale the data to using scaling factor 2
+        standard deviation. See [1] for `with_std=2`.
 
     copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
@@ -134,7 +136,11 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-
+    
+    References
+    ----------
+    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
+    Statistics in medicine, 27(15), 2865-2873.
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
@@ -148,15 +154,21 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
         if with_std:
+            if with_std not in (1, 2, True):
+                raise ValueError("Invalid value for 'with_std': %s" %
+                                 str(with_std))
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
-            inplace_column_scale(X, 1 / np.sqrt(var))
+            inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
     else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.mean(X, axis)
         if with_std:
-            scale_ = np.std(X, axis)
+            if with_std not in (1, 2, True):
+                raise ValueError("Invalid value for 'with_std': %s" %
+                                 str(with_std))
+            scale_ = with_std * np.std(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -508,11 +520,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean or 2, True by default
-        If True, scale the data to unit variance (or equivalently,
+    with_std : boolean, 1 or 2, True by default
+        If 1 or True, scale the data to unit variance (or equivalently,
         unit standard deviation). 
         Otherwise 2, scale the data to using scaling factor 2
-        standard deviation. See [1] for `with_std==2`.
+        standard deviation. See [1] for `with_std=2`.
         
     Attributes
     ----------
@@ -667,7 +679,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                                           self.n_samples_seen_)
 
         if self.with_std:
-            if self.with_std is not True and self.with_std is not 2:
+            if self.with_std not in (1, 2, True):
                 raise ValueError("Invalid value for 'with_std': %s" %
                                  str(self.with_std))
             self.scale_ = _handle_zeros_in_scale(
