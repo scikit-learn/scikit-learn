@@ -86,6 +86,11 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Added :class:`MICEImputer`, which is a strategy for imputing missing
+  values by modeling each feature with missing values as a function of
+  other features in a round-robin fashion. :issue:`8478` by 
+  :user:`Sergey Feldman <sergeyf>`.
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
