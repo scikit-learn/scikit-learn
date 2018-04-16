@@ -142,12 +142,21 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- :class:`neighbors.RadiusNeighborsRegressor` and 
+  :class:`neighbors.RadiusNeighborsClassifier` are now
+  parallelized according to ``n_jobs`` regardless of ``algorithm``.
+  :issue:`8003` by :user:`Joël Billaud <recamshak>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
   :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
+
+- :class:`cluster.DBSCAN` now is parallelized according to ``n_jobs``
+  regardless of ``algorithm``.
+  :issue:`8003` by :user:`Joël Billaud <recamshak>`.
 
 Datasets
 

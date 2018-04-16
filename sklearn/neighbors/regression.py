@@ -238,6 +238,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -266,12 +270,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 **kwargs):
         super(RadiusNeighborsRegressor, self).__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
-              p=p, metric=metric, metric_params=metric_params, **kwargs)
+              p=p, metric=metric, metric_params=metric_params,
+              n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
