@@ -1,5 +1,6 @@
 import pickle
 import unittest
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -24,7 +25,6 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError
 
 from sklearn.linear_model import sgd_fast
 
@@ -474,19 +474,20 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Checks if predict_proba and predict_log_proba
         # is accessible for refrencing before fitting
         # the SGD classifier
-        clf = SGDClassifier()
-        assert not(hasattr(clf, "predict_proba"))
-        assert not(hasattr(clf, "predict_log_proba"))
-
-        for loss in ["log", "modified_huber"]:
+        for loss in SGDClassifier.loss_functions:
             clf = SGDClassifier(loss=loss)
-            assert_true(hasattr(clf, "predict_proba"))
-            assert_true(hasattr(clf, "predict_log_proba"))
-
-            # Checks if not fitted check is performed while calling
-            # the methods
-            assert_raises(NotFittedError, clf.predict_proba, [[3, 2]])
-            assert_raises(NotFittedError, clf.predict_log_proba, [[3, 2]])
+            if loss in ('log', 'modified_huber'):
+                assert (hasattr(clf, 'predict_proba'))
+                assert (hasattr(clf, 'predict_log_proba'))
+            else:
+                with pytest.raises(AttributeError,
+                                   message="probability estimates are not "
+                                   "available for loss={!r}".format(loss)):
+                    clf.predict_proba
+                with pytest.raises(AttributeError,
+                                   message="probability estimates are not  "
+                                   "available for loss={!r}".format(loss)):
+                    clf.predict_log_proba
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba
