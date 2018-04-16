@@ -142,6 +142,10 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- Clipped the values of proba between [0,1] in
+  :class:`calibration` for probability values to lie between [0,1].
+  :issue: `10903` by :user:`Aishwarya Srinivasan <aishgrt1>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
