@@ -249,7 +249,7 @@ class ParameterSampler(object):
                     'The total space of parameters %d is smaller '
                     'than n_iter=%d. Running %d iterations. For exhaustive '
                     'searches, use GridSearchCV.'
-                    % (grid_size, self.n_iter, grid_size), RuntimeWarning)
+                    % (grid_size, self.n_iter, grid_size), UserWarning)
                 n_iter = grid_size
             for i in sample_without_replacement(grid_size, n_iter,
                                                 random_state=rnd):

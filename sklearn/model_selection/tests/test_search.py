@@ -1394,7 +1394,7 @@ def test_parameters_sampler_replacement():
                         'than n_iter=%d. Running %d iterations. For '
                         'exhaustive searches, use GridSearchCV.'
                         % (grid_size, n_iter, grid_size))
-    assert_warns_message(RuntimeWarning, expected_warning,
+    assert_warns_message(UserWarning, expected_warning,
                          list, sampler)
 
     # degenerates to GridSearchCV if n_iter the same as grid_size
