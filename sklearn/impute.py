@@ -1,16 +1,23 @@
 """Transformers for missing value imputation"""
 # Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
+#          Sergey Feldman <sergeyfeldman@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
+
 import warnings
+from time import time
 
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
+from collections import namedtuple
 
 from .base import BaseEstimator, TransformerMixin
-from .utils import check_array
+from .base import clone
+from .preprocessing import normalize
+from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
@@ -20,8 +27,13 @@ from .externals import six
 zip = six.moves.zip
 map = six.moves.map
 
+MICETriplet = namedtuple('MICETriplet', ['feat_idx',
+                                         'neighbor_feat_idx',
+                                         'predictor'])
+
 __all__ = [
     'SimpleImputer',
+    'MICEImputer',
 ]
 
 
@@ -321,3 +333,541 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+
+class MICEImputer(BaseEstimator, TransformerMixin):
+    """MICE transformer to impute missing values.
+
+    Basic implementation of MICE (Multivariate Imputations by Chained
+    Equations) package from R. This version assumes all of the features are
+    Gaussian.
+
+    Parameters
+    ----------
+    missing_values : int or "NaN", optional (default="NaN")
+        The placeholder for the missing values. All occurrences of
+        ``missing_values`` will be imputed. For missing values encoded as
+        np.nan, use the string value "NaN".
+
+    imputation_order : str, optional (default="ascending")
+        The order in which the features will be imputed. Possible values:
+
+        "ascending"
+            From features with fewest missing values to most.
+        "descending"
+            From features with most missing values to fewest.
+        "roman"
+            Left to right.
+        "arabic"
+            Right to left.
+        "random"
+            A random order for each round.
+
+    n_imputations : int, optional (default=100)
+        Number of MICE rounds to perform, the results of which will be
+        used in the final average.
+
+    n_burn_in : int, optional (default=10)
+        Number of initial MICE rounds to perform the results of which
+        will not be returned.
+
+    predictor : estimator object, default=BayesianRidge()
+        The predictor to use at each step of the round-robin imputation.
+        It must support ``return_std`` in its ``predict`` method.
+
+    n_nearest_features : int, optional (default=None)
+        Number of other features to use to estimate the missing values of
+        the each feature column. Nearness between features is measured using
+        the absolute correlation coefficient between each feature pair (after
+        initial imputation). Can provide significant speed-up when the number
+        of features is huge. If ``None``, all features will be used.
+
+    initial_strategy : str, optional (default="mean")
+        Which strategy to use to initialize the missing values. Same as the
+        ``strategy`` parameter in :class:`sklearn.preprocessing.Imputer`
+        Valid values: {"mean", "median", or "most_frequent"}.
+
+    min_value : float, optional (default=None)
+        Minimum possible imputed value. Default of ``None`` will set minimum
+        to negative infinity.
+
+    max_value : float, optional (default=None)
+        Maximum possible imputed value. Default of ``None`` will set maximum
+        to positive infinity.
+
+    verbose : int, optional (default=0)
+        Verbosity flag, controls the debug messages that are issued
+        as functions are evaluated. The higher, the more verbose. Can be 0, 1,
+        or 2.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by ``np.random``.
+
+    Attributes
+    ----------
+    initial_imputer_ : object of class :class:`sklearn.preprocessing.Imputer`'
+        The imputer used to initialize the missing values.
+
+    imputation_sequence_ : list of tuples
+        Each tuple has ``(feat_idx, neighbor_feat_idx, predictor)``, where
+        ``feat_idx`` is the current feature to be imputed,
+        ``neighbor_feat_idx`` is the array of other features used to impute the
+        current feature, and ``predictor`` is the trained predictor used for
+        the imputation.
+
+    Notes
+    -----
+    The R version of MICE does not have inductive functionality, i.e. first
+    fitting on ``X_train`` and then transforming any ``X_test`` without
+    additional fitting. We do this by storing each feature's predictor during
+    the round-robin ``fit`` phase, and predicting without refitting (in order)
+    during the ``transform`` phase.
+
+    Features which contain all missing values at ``fit`` are discarded upon
+    ``transform``.
+
+    Features with missing values in transform which did not have any missing
+    values in fit will be imputed with the initial imputation method only.
+
+    References
+    ----------
+    .. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice:
+        Multivariate Imputation by Chained Equations in R". Journal of
+        Statistical Software 45: 1-67.
+        <https://www.jstatsoft.org/article/view/v045i03>`_
+    """
+
+    def __init__(self,
+                 missing_values='NaN',
+                 imputation_order='ascending',
+                 n_imputations=100,
+                 n_burn_in=10,
+                 predictor=None,
+                 n_nearest_features=None,
+                 initial_strategy="mean",
+                 min_value=None,
+                 max_value=None,
+                 verbose=False,
+                 random_state=None):
+
+        self.missing_values = missing_values
+        self.imputation_order = imputation_order
+        self.n_imputations = n_imputations
+        self.n_burn_in = n_burn_in
+        self.predictor = predictor
+        self.n_nearest_features = n_nearest_features
+        self.initial_strategy = initial_strategy
+        self.min_value = min_value
+        self.max_value = max_value
+        self.verbose = verbose
+        self.random_state = random_state
+
+    def _impute_one_feature(self,
+                            X_filled,
+                            mask_missing_values,
+                            feat_idx,
+                            neighbor_feat_idx,
+                            predictor=None,
+                            fit_mode=True):
+        """Impute a single feature from the others provided.
+
+        This function predicts the missing values of one of the features using
+        the current estimates of all the other features. The ``predictor`` must
+        support ``return_std=True`` in its ``predict`` method for this function
+        to work.
+
+        Parameters
+        ----------
+        X_filled : ndarray
+            Input data with the most recent imputations.
+
+        mask_missing_values : ndarray
+            Input data's missing indicator matrix.
+
+        feat_idx : int
+            Index of the feature currently being imputed.
+
+        neighbor_feat_idx : ndarray
+            Indices of the features to be used in imputing ``feat_idx``.
+
+        predictor : object
+            The predictor to use at this step of the round-robin imputation.
+            It must support ``return_std`` in its ``predict`` method.
+            If None, it will be cloned from self._predictor.
+
+        fit_mode : boolean, default=True
+            Whether to fit and predict with the predictor or just predict.
+
+        Returns
+        -------
+        X_filled : ndarray
+            Input data with ``X_filled[missing_row_mask, feat_idx]`` updated.
+
+        predictor : predictor with sklearn API
+            The fitted predictor used to impute
+            ``X_filled[missing_row_mask, feat_idx]``.
+        """
+
+        # if nothing is missing, just return the default
+        # (should not happen at fit time because feat_ids would be excluded)
+        missing_row_mask = mask_missing_values[:, feat_idx]
+        if not np.any(missing_row_mask):
+            return X_filled, predictor
+
+        if predictor is None and fit_mode is False:
+            raise ValueError("If fit_mode is False, then an already-fitted "
+                             "predictor should be passed in.")
+
+        if predictor is None:
+            predictor = clone(self._predictor)
+
+        if fit_mode:
+            X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
+                                    ~missing_row_mask)
+            y_train = safe_indexing(X_filled[:, feat_idx],
+                                    ~missing_row_mask)
+            predictor.fit(X_train, y_train)
+
+        # get posterior samples
+        X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
+                               missing_row_mask)
+        mus, sigmas = predictor.predict(X_test, return_std=True)
+        good_sigmas = sigmas > 0
+        imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
+        imputed_values[~good_sigmas] = mus[~good_sigmas]
+        imputed_values[good_sigmas] = self.random_state_.normal(
+            loc=mus[good_sigmas], scale=sigmas[good_sigmas])
+
+        # clip the values
+        imputed_values = np.clip(imputed_values,
+                                 self._min_value,
+                                 self._max_value)
+
+        # update the feature
+        X_filled[missing_row_mask, feat_idx] = imputed_values
+        return X_filled, predictor
+
+    def _get_neighbor_feat_idx(self,
+                               n_features,
+                               feat_idx,
+                               abs_corr_mat):
+        """Get a list of other features to predict ``feat_idx``.
+
+        If self.n_nearest_features is less than or equal to the total
+        number of features, then use a probability proportional to the absolute
+        correlation between ``feat_idx`` and each other feature to randomly
+        choose a subsample of the other features (without replacement).
+
+        Parameters
+        ----------
+        n_features : int
+            Number of features in ``X``.
+
+        feat_idx : int
+            Index of the feature currently being imputed.
+
+        abs_corr_mat : ndarray, shape (n_features, n_features)
+            Absolute correlation matrix of ``X``. The diagonal has been zeroed
+            out and each feature has been normalized to sum to 1. Can be None.
+
+        Returns
+        -------
+        neighbor_feat_idx : array-like
+            The features to use to impute ``feat_idx``.
+        """
+        if (self.n_nearest_features is not None and
+                self.n_nearest_features < n_features):
+            p = abs_corr_mat[:, feat_idx]
+            neighbor_feat_idx = self.random_state_.choice(
+                np.arange(n_features), self.n_nearest_features, replace=False,
+                p=p)
+        else:
+            inds_left = np.arange(feat_idx)
+            inds_right = np.arange(feat_idx + 1, n_features)
+            neighbor_feat_idx = np.concatenate((inds_left, inds_right))
+        return neighbor_feat_idx
+
+    def _get_ordered_idx(self, mask_missing_values):
+        """Decide in what order we will update the features.
+
+        As a homage to the MICE R package, we will have 4 main options of
+        how to order the updates, and use a random order if anything else
+        is specified.
+
+        Also, this function skips features which have no missing values.
+
+        Parameters
+        ----------
+        mask_missing_values : array-like, shape (n_samples, n_features)
+            Input data's missing indicator matrix, where "n_samples" is the
+            number of samples and "n_features" is the number of features.
+
+        Returns
+        -------
+        ordered_idx : ndarray, shape (n_features,)
+            The order in which to impute the features.
+        """
+        frac_of_missing_values = mask_missing_values.mean(axis=0)
+        missing_values_idx = np.nonzero(frac_of_missing_values)[0]
+        if self.imputation_order == 'roman':
+            ordered_idx = missing_values_idx
+        elif self.imputation_order == 'arabic':
+            ordered_idx = missing_values_idx[::-1]
+        elif self.imputation_order == 'ascending':
+            n = len(frac_of_missing_values) - len(missing_values_idx)
+            ordered_idx = np.argsort(frac_of_missing_values,
+                                     kind='mergesort')[n:][::-1]
+        elif self.imputation_order == 'descending':
+            n = len(frac_of_missing_values) - len(missing_values_idx)
+            ordered_idx = np.argsort(frac_of_missing_values,
+                                     kind='mergesort')[n:]
+        elif self.imputation_order == 'random':
+            ordered_idx = missing_values_idx
+            self.random_state_.shuffle(ordered_idx)
+        else:
+            raise ValueError("Got an invalid imputation order: '{0}'. It must "
+                             "be one of the following: 'roman', 'arabic', "
+                             "'ascending', 'descending', or "
+                             "'random'.".format(self.imputation_order))
+        return ordered_idx
+
+    def _get_abs_corr_mat(self, X_filled, tolerance=1e-6):
+        """Get absolute correlation matrix between features.
+
+        Parameters
+        ----------
+        X_filled : ndarray, shape (n_samples, n_features)
+            Input data with the most recent imputations.
+
+        tolerance : float, optional (default=1e-6)
+            ``abs_corr_mat`` can have nans, which will be replaced
+            with ``tolerance``.
+
+        Returns
+        -------
+        abs_corr_mat : ndarray, shape (n_features, n_features)
+            Absolute correlation matrix of ``X`` at the beginning of the
+            current round. The diagonal has been zeroed out and each feature's
+            absolute correlations with all others have been normalized to sum
+            to 1.
+        """
+        n_features = X_filled.shape[1]
+        if (self.n_nearest_features is None or
+                self.n_nearest_features >= n_features):
+            return None
+        abs_corr_mat = np.abs(np.corrcoef(X_filled.T))
+        # np.corrcoef is not defined for features with zero std
+        abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
+        # ensures exploration, i.e. at least some probability of sampling
+        abs_corr_mat[abs_corr_mat < tolerance] = tolerance
+        # features are not their own neighbors
+        np.fill_diagonal(abs_corr_mat, 0)
+        # needs to sum to 1 for np.random.choice sampling
+        abs_corr_mat = normalize(abs_corr_mat, norm='l1', axis=0, copy=False)
+        return abs_corr_mat
+
+    def _initial_imputation(self, X):
+        """Perform initial imputation for input X.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data, where "n_samples" is the number of samples and
+            "n_features" is the number of features.
+
+        Returns
+        -------
+        Xt : ndarray, shape (n_samples, n_features)
+            Input data, where "n_samples" is the number of samples and
+            "n_features" is the number of features.
+
+        X_filled : ndarray, shape (n_samples, n_features)
+            Input data with the most recent imputations.
+
+        mask_missing_values : ndarray, shape (n_samples, n_features)
+            Input data's missing indicator matrix, where "n_samples" is the
+            number of samples and "n_features" is the number of features.
+        """
+        X = check_array(X, dtype=FLOAT_DTYPES, order="F",
+                        force_all_finite='allow-nan'
+                        if self.missing_values == 'NaN'
+                        or np.isnan(self.missing_values) else True)
+
+        mask_missing_values = _get_mask(X, self.missing_values)
+        if self.initial_imputer_ is None:
+            self.initial_imputer_ = SimpleImputer(
+                                            missing_values=self.missing_values,
+                                            strategy=self.initial_strategy)
+            X_filled = self.initial_imputer_.fit_transform(X)
+        else:
+            X_filled = self.initial_imputer_.transform(X)
+
+        valid_mask = np.flatnonzero(np.logical_not(
+            np.isnan(self.initial_imputer_.statistics_)))
+        Xt = X[:, valid_mask]
+        mask_missing_values = mask_missing_values[:, valid_mask]
+
+        return Xt, X_filled, mask_missing_values
+
+    def fit_transform(self, X, y=None):
+        """Fits the imputer on X and return the transformed X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input data, where "n_samples" is the number of samples and
+            "n_features" is the number of features.
+
+        y : ignored.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples, n_features)
+             The imputed input data.
+        """
+        self.random_state_ = getattr(self, "random_state_",
+                                     check_random_state(self.random_state))
+
+        if self.predictor is None:
+            from .linear_model import BayesianRidge
+            self._predictor = BayesianRidge()
+        else:
+            self._predictor = clone(self.predictor)
+
+        self._min_value = np.nan if self.min_value is None else self.min_value
+        self._max_value = np.nan if self.max_value is None else self.max_value
+
+        self.initial_imputer_ = None
+        X, X_filled, mask_missing_values = self._initial_imputation(X)
+
+        # edge case: in case the user specifies 0 for n_imputations,
+        # then there is no need to do burn in and the result should be
+        # just the initial imputation (before clipping)
+        if self.n_imputations < 1:
+            return X_filled
+
+        X_filled = np.clip(X_filled, self._min_value, self._max_value)
+
+        # order in which to impute
+        # note this is probably too slow for large feature data (d > 100000)
+        # and a better way would be good.
+        # see: https://goo.gl/KyCNwj and subsequent comments
+        ordered_idx = self._get_ordered_idx(mask_missing_values)
+
+        abs_corr_mat = self._get_abs_corr_mat(X_filled)
+
+        # impute data
+        n_rounds = self.n_burn_in + self.n_imputations
+        n_samples, n_features = X_filled.shape
+        Xt = np.zeros((n_samples, n_features), dtype=X.dtype)
+        self.imputation_sequence_ = []
+        if self.verbose > 0:
+            print("[MICE] Completing matrix with shape %s" % (X.shape,))
+        start_t = time()
+        for i_rnd in range(n_rounds):
+            if self.imputation_order == 'random':
+                ordered_idx = self._get_ordered_idx(mask_missing_values)
+
+            for feat_idx in ordered_idx:
+                neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
+                                                                feat_idx,
+                                                                abs_corr_mat)
+                X_filled, predictor = self._impute_one_feature(
+                    X_filled, mask_missing_values, feat_idx, neighbor_feat_idx,
+                    predictor=None, fit_mode=True)
+                predictor_triplet = MICETriplet(feat_idx,
+                                                neighbor_feat_idx,
+                                                predictor)
+                self.imputation_sequence_.append(predictor_triplet)
+
+            if i_rnd >= self.n_burn_in:
+                Xt += X_filled
+            if self.verbose > 0:
+                print('[MICE] Ending imputation round '
+                      '%d/%d, elapsed time %0.2f'
+                      % (i_rnd + 1, n_rounds, time() - start_t))
+
+        Xt /= self.n_imputations
+        Xt[~mask_missing_values] = X[~mask_missing_values]
+        return Xt
+
+    def transform(self, X):
+        """Imputes all missing values in X.
+
+        Note that this is stochastic, and that if random_state is not fixed,
+        repeated calls, or permuted input, will yield different results.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            The input data to complete.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples, n_features)
+             The imputed input data.
+        """
+        check_is_fitted(self, 'initial_imputer_')
+
+        X, X_filled, mask_missing_values = self._initial_imputation(X)
+
+        # edge case: in case the user specifies 0 for n_imputations,
+        # then there is no need to do burn in and the result should be
+        # just the initial imputation (before clipping)
+        if self.n_imputations < 1:
+            return X_filled
+
+        X_filled = np.clip(X_filled, self._min_value, self._max_value)
+
+        n_rounds = self.n_burn_in + self.n_imputations
+        n_imputations = len(self.imputation_sequence_)
+        imputations_per_round = n_imputations // n_rounds
+        i_rnd = 0
+        Xt = np.zeros(X.shape, dtype=X.dtype)
+        if self.verbose > 0:
+            print("[MICE] Completing matrix with shape %s" % (X.shape,))
+        start_t = time()
+        for it, predictor_triplet in enumerate(self.imputation_sequence_):
+            X_filled, _ = self._impute_one_feature(
+                X_filled,
+                mask_missing_values,
+                predictor_triplet.feat_idx,
+                predictor_triplet.neighbor_feat_idx,
+                predictor=predictor_triplet.predictor,
+                fit_mode=False
+            )
+            if not (it + 1) % imputations_per_round:
+                if i_rnd >= self.n_burn_in:
+                    Xt += X_filled
+                if self.verbose > 1:
+                    print('[MICE] Ending imputation round '
+                          '%d/%d, elapsed time %0.2f'
+                          % (i_rnd + 1, n_rounds, time() - start_t))
+                i_rnd += 1
+
+        Xt /= self.n_imputations
+        Xt[~mask_missing_values] = X[~mask_missing_values]
+        return Xt
+
+    def fit(self, X, y=None):
+        """Fits the imputer on X and return self.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input data, where "n_samples" is the number of samples and
+            "n_features" is the number of features.
+
+        y : ignored
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self.fit_transform(X)
+        return self
