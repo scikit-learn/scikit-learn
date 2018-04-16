@@ -130,7 +130,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     if y_min is not None or y_max is not None:
         # Older versions of np.clip don't accept None as a bound, so use np.inf
         if y_min is None:
-            y_min = - np.inf
+            y_min = -np.inf
         if y_max is None:
             y_max = np.inf
         np.clip(y, y_min, y_max, y)
