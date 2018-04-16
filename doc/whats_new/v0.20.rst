@@ -141,6 +141,11 @@ Classifiers and regressors
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+  
+- :class:`neighbors.RadiusNeighborsRegressor` and
+  :class:`neighbors.RadiusNeighborsClassifier` are now
+  parallelized according to ``n_jobs`` regardless of ``algorithm``.
+  :issue:`8003` by :user:`Joël Billaud <recamshak>`.
 
 - Clipped the values of proba between [0,1] in
   :class:`calibration` for probability values to lie between [0,1].
