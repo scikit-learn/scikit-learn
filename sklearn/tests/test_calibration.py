@@ -13,7 +13,7 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_raises,
                                    ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import MultinomialNB, GaussianNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
@@ -245,6 +245,7 @@ def test_isotonic_calibration():
     X = [[1.97, 1.18], [1.34, 1.06], [2.22, 6.82], [-1.37, 0.87], [3.98, 0.32]]
     y = [True, False, True, True, False]
     X_test = [[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]]
+    clf = GaussianNB()
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)
     y_pred = clf_c.predict_proba(X_test)
