@@ -239,6 +239,19 @@ def test_sigmoid_calibration():
                   np.vstack((exF, exF)), exY)
 
 
+def test_isotonic_calibration():
+    # Test from @LotusZephyr's issue:	
+    # https://github.com/scikit-learn/scikit-learn/issues/10903
+    X = [[1.97, 1.18], [1.34, 1.06], [2.22, 6.82], [-1.37, 0.87], [3.98, 0.32]]
+    y = [True, False, True, True, False]
+    X_test = [[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]]
+    clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
+    clf_c.fit(X, y)
+    y_pred = clf_c.predict_proba(X_test)
+    assert(np.all(y_pred >= 0))
+    assert(np.all(y_pred <= 1))
+
+
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
