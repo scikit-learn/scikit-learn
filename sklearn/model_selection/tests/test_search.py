@@ -1388,11 +1388,11 @@ def test_parameters_sampler_replacement():
     # raise warning if n_iter is bigger than total parameter space
     params = {'first': [0, 1], 'second': ['a', 'b', 'c']}
     sampler = ParameterSampler(params, n_iter=7)
-    n_iter=7
-    grid_size=6
+    n_iter = 7
+    grid_size = 6
     expected_warning = ('The total space of parameters %d is smaller '
-                        'than n_iter=%d. Running %d iterations. For exhaustive '
-                        'searches, use GridSearchCV.' 
+                        'than n_iter=%d. Running %d iterations. '
+                        'For exhaustive searches, use GridSearchCV. '
                         % (grid_size, n_iter, grid_size))
     assert_warns_message(RuntimeWarning, expected_warning,
                          list, sampler)
