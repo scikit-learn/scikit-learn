@@ -388,7 +388,8 @@ class _CalibratedClassifier(object):
         # XXX : for some reason all probas can be 0
         proba[np.isnan(proba)] = 1. / n_classes
 
-        proba = np.clip(proba, 0.0, 1.0)
+        proba[proba > 1.0] = 1.0
+        proba[proba < 0.0] = 0.0
 
         return proba
 
