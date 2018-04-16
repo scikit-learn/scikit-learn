@@ -56,6 +56,7 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
+.. _mice:
 
 Multivariate feature imputation
 ===============================

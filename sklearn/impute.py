@@ -342,6 +342,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     Equations) package from R. This version assumes all of the features are
     Gaussian.
 
+    Read more in the :ref:`User Guide <mice>`.
+
     Parameters
     ----------
     missing_values : int or "NaN", optional (default="NaN")
