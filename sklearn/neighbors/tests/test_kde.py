@@ -145,7 +145,7 @@ def test_kde_pipeline_gridsearch():
 
 def test_kde_sample_weights():
     n_samples = 2500
-    size_tests = 20
+    size_test = 20
     weights_neutral = 3 * np.ones(n_samples)
     for d in [1, 2, 10]:
         rng = np.random.RandomState(0)
@@ -156,7 +156,8 @@ def test_kde_sample_weights():
             for _ in range(w):
                 repetitions.append(x.tolist())
         X_repetitions = np.array(repetitions)
-        test_points = rng.rand(size_tests // d, d)
+        n_samples_test = size_test // d
+        test_points = rng.rand(n_samples_test, d)
         for algorithm in ['auto', 'ball_tree', 'kd_tree']:
             for metric in ['euclidean', 'minkowski', 'manhattan',
                            'chebyshev']:
