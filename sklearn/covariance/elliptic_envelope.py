@@ -161,7 +161,6 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             Opposite of the Mahalanobis distances.
         """
         check_is_fitted(self, 'offset_')
-        X = check_array(X)
         return -self.mahalanobis(X)
 
     def predict(self, X):

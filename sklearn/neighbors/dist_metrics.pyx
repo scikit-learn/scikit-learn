@@ -330,7 +330,7 @@ cdef class DistanceMetric:
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
         return 0
 
-    cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         """Convert the reduced distance to the distance"""
         return rdist
 
@@ -418,7 +418,7 @@ cdef class EuclideanDistance(DistanceMetric):
                               ITYPE_t size) nogil except -1:
         return euclidean_rdist(x1, x2, size)
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -462,7 +462,7 @@ cdef class SEuclideanDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -551,7 +551,7 @@ cdef class MinkowskiDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return pow(rdist, 1. / self.p)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -610,7 +610,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return pow(rdist, 1. / self.p)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -683,7 +683,7 @@ cdef class MahalanobisDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -998,7 +998,7 @@ cdef class HaversineDistance(DistanceMetric):
         return 2 * asin(sqrt(sin_0 * sin_0
                              + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return 2 * asin(sqrt(rdist))
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:

@@ -144,6 +144,8 @@
 cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log
+from libc.stdlib cimport calloc, malloc, free
+from libc.string cimport memcpy
 from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
@@ -155,6 +157,8 @@ from typedefs import DTYPE, ITYPE
 
 from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+
+np.import_array()
 
 # some handy constants
 cdef DTYPE_t INF = np.inf
@@ -545,7 +549,7 @@ cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
 
 
 cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
-                           ITYPE_t i1, ITYPE_t i2):
+                           ITYPE_t i1, ITYPE_t i2) nogil:
     """swap the values at inex i1 and i2 of both darr and iarr"""
     cdef DTYPE_t dtmp = darr[i1]
     darr[i1] = darr[i2]
@@ -670,7 +674,7 @@ cdef class NeighborsHeap:
 
 
 cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
-                            ITYPE_t size) except -1:
+                            ITYPE_t size) nogil except -1:
     """
     Perform a recursive quicksort on the dist array, simultaneously
     performing the same swaps on the idx array.  The equivalent in
@@ -1341,7 +1345,7 @@ cdef class BinaryTree:
         else:
             return indices.reshape(X.shape[:X.ndim - 1] + (k,))
 
-    def query_radius(self, X, r, return_distance=False,
+    def query_radius(self, X, r, int return_distance=False,
                      int count_only=False, int sort_results=False):
         """
         query_radius(self, X, r, count_only = False):
@@ -1406,6 +1410,8 @@ cdef class BinaryTree:
         cdef DTYPE_t[::1] dist_arr_i
         cdef ITYPE_t[::1] idx_arr_i, counts
         cdef DTYPE_t* pt
+        cdef ITYPE_t** indices = NULL
+        cdef DTYPE_t** distances = NULL
 
         # validate X and prepare for query
         X = check_array(X, dtype=DTYPE, order='C')
@@ -1429,11 +1435,15 @@ cdef class BinaryTree:
         rarr_np = r.reshape(-1)  # store explicitly to keep in scope
         cdef DTYPE_t[::1] rarr = get_memview_DTYPE_1D(rarr_np)
 
-        # prepare variables for iteration
         if not count_only:
-            indices = np.zeros(Xarr.shape[0], dtype='object')
+            indices = <ITYPE_t**>calloc(Xarr.shape[0], sizeof(ITYPE_t*))
+            if indices == NULL:
+                raise MemoryError()
             if return_distance:
-                distances = np.zeros(Xarr.shape[0], dtype='object')
+                distances = <DTYPE_t**>calloc(Xarr.shape[0], sizeof(DTYPE_t*))
+                if distances == NULL:
+                    free(indices)
+                    raise MemoryError()
 
         np_idx_arr = np.zeros(self.data.shape[0], dtype=ITYPE)
         idx_arr_i = get_memview_ITYPE_1D(np_idx_arr)
@@ -1445,33 +1455,89 @@ cdef class BinaryTree:
         counts = get_memview_ITYPE_1D(counts_arr)
 
         pt = &Xarr[0, 0]
-        for i in range(Xarr.shape[0]):
-            counts[i] = self._query_radius_single(0, pt, rarr[i],
-                                                  &idx_arr_i[0],
-                                                  &dist_arr_i[0],
-                                                  0, count_only,
-                                                  return_distance)
-            pt += n_features
+        memory_error = False
+        with nogil:
+            for i in range(Xarr.shape[0]):
+                counts[i] = self._query_radius_single(0, pt, rarr[i],
+                                                      &idx_arr_i[0],
+                                                      &dist_arr_i[0],
+                                                      0, count_only,
+                                                      return_distance)
+                pt += n_features
 
-            if count_only:
-                pass
-            else:
+                if count_only:
+                    continue
+
                 if sort_results:
                     _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
                                        counts[i])
 
-                indices[i] = np_idx_arr[:counts[i]].copy()
-                if return_distance:
-                    distances[i] = np_dist_arr[:counts[i]].copy()
+                # equivalent to: indices[i] = np_idx_arr[:counts[i]].copy()
+                indices[i] = <ITYPE_t*>malloc(counts[i] * sizeof(ITYPE_t))
+                if indices[i] == NULL:
+                    memory_error = True
+                    break
+                memcpy(indices[i], &idx_arr_i[0], counts[i] * sizeof(ITYPE_t))
 
-        # deflatten results
-        if count_only:
-            return counts_arr.reshape(X.shape[:X.ndim - 1])
-        elif return_distance:
-            return (indices.reshape(X.shape[:X.ndim - 1]),
-                    distances.reshape(X.shape[:X.ndim - 1]))
-        else:
-            return indices.reshape(X.shape[:X.ndim - 1])
+                if return_distance:
+                    # equivalent to: distances[i] = np_dist_arr[:counts[i]].copy()
+                    distances[i] = <DTYPE_t*>malloc(counts[i] * sizeof(DTYPE_t))
+                    if distances[i] == NULL:
+                        memory_error = True
+                        break
+                    memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof(DTYPE_t))
+
+        try:
+            if memory_error:
+                raise MemoryError()
+
+            if count_only:
+                # deflatten results
+                return counts_arr.reshape(X.shape[:X.ndim - 1])
+            elif return_distance:
+                indices_npy = np.zeros(Xarr.shape[0], dtype='object')
+                distances_npy = np.zeros(Xarr.shape[0], dtype='object')
+                for i in range(Xarr.shape[0]):
+                    # make a new numpy array that wraps the existing data
+                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
+                    # make sure the data will be freed when the numpy array is garbage collected
+                    np.PyArray_UpdateFlags(indices_npy[i], indices_npy[i].flags.num | np.NPY_OWNDATA)
+                    # make sure the data is not freed twice
+                    indices[i] = NULL
+
+                    # make a new numpy array that wraps the existing data
+                    distances_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_DOUBLE, distances[i])
+                    # make sure the data will be freed when the numpy array is garbage collected
+                    np.PyArray_UpdateFlags(distances_npy[i], distances_npy[i].flags.num | np.NPY_OWNDATA)
+                    # make sure the data is not freed twice
+                    distances[i] = NULL
+
+                # deflatten results
+                return (indices_npy.reshape(X.shape[:X.ndim - 1]),
+                        distances_npy.reshape(X.shape[:X.ndim - 1]))
+            else:
+                indices_npy = np.zeros(Xarr.shape[0], dtype='object')
+                for i in range(Xarr.shape[0]):
+                    # make a new numpy array that wraps the existing data
+                    indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
+                    # make sure the data will be freed when the numpy array is garbage collected
+                    np.PyArray_UpdateFlags(indices_npy[i], indices_npy[i].flags.num | np.NPY_OWNDATA)
+                    # make sure the data is not freed twice
+                    indices[i] = NULL
+
+                # deflatten results
+                return indices_npy.reshape(X.shape[:X.ndim - 1])
+        except:
+            # free any buffer that is not owned by a numpy array
+            for i in range(Xarr.shape[0]):
+                free(indices[i])
+                if return_distance:
+                    free(distances[i])
+            raise
+        finally:
+            free(indices)
+            free(distances)
+
 
     def kernel_density(self, X, h, kernel='gaussian',
                        atol=0, rtol=1E-8,
@@ -1971,7 +2037,7 @@ cdef class BinaryTree:
                                       DTYPE_t* distances,
                                       ITYPE_t count,
                                       int count_only,
-                                      int return_distance) except -1:
+                                      int return_distance) nogil:
         """recursive single-tree radius query, depth-first"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
@@ -1999,8 +2065,7 @@ cdef class BinaryTree:
             else:
                 for i in range(node_info.idx_start, node_info.idx_end):
                     if (count < 0) or (count >= self.data.shape[0]):
-                        raise ValueError("Fatal: count too big: "
-                                         "this should never happen")
+                        return -1
                     indices[count] = idx_array[i]
                     if return_distance:
                         distances[count] = self.dist(pt, (data + n_features
@@ -2019,8 +2084,7 @@ cdef class BinaryTree:
                                      n_features)
                 if dist_pt <= reduced_r:
                     if (count < 0) or (count >= self.data.shape[0]):
-                        raise ValueError("Fatal: count out of range. "
-                                         "This should never happen.")
+                        return -1
                     if count_only:
                         pass
                     else:

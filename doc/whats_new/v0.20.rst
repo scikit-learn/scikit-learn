@@ -145,12 +145,21 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- :class:`neighbors.RadiusNeighborsRegressor` and 
+  :class:`neighbors.RadiusNeighborsClassifier` are now
+  parallelized according to ``n_jobs`` regardless of ``algorithm``.
+  :issue:`8003` by :user:`Joël Billaud <recamshak>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
   :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
+
+- :class:`cluster.DBSCAN` now is parallelized according to ``n_jobs``
+  regardless of ``algorithm``.
+  :issue:`8003` by :user:`Joël Billaud <recamshak>`.
 
 Datasets
 
@@ -425,6 +434,10 @@ Linear, kernelized and related models
   better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
   and :user:`Ting Neo <neokt>`.
 
+- Added convergence warning to :class:`svm.LinearSVC` and
+  :class:`linear_model.logistic.LogisticRegression` when ``verbose`` is set to 0.
+  :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
+
 Metrics
 
 - Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
@@ -443,6 +456,13 @@ Imputer
 - Deprecate :class:`preprocessing.Imputer` and move the corresponding module to
   :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+- The ``axis`` parameter in :class:`impute.SimpleImputer` was removed. The
+  behavior is equivalent to ``axis=0`` (impute along columns). Row-wise
+  imputation can be performed with FunctionTransformer (e.g.,
+  ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
+  :issue:`10829` by :user:`Guillaume Lemaitre <glemaitre>` and :user:`Gilberto
+  Olimpio <gilbertoolimpio>`.
 
 Outlier Detection models
 

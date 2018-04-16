@@ -22,7 +22,7 @@
         <strong>Applications</strong>: Spam detection, Image recognition.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVM<svm>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
+    :ref:`SVM<svm_classification>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
 
     .. raw:: html
 
@@ -52,7 +52,7 @@
         <strong>Applications</strong>: Drug response, Stock prices.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVR<svm>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
+    :ref:`SVR<svm_regression>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
 
     .. raw:: html
 

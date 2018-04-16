@@ -261,14 +261,14 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     >>> print(scaler.fit(data))
     MinMaxScaler(copy=True, feature_range=(0, 1))
     >>> print(scaler.data_max_)
-    [  1.  18.]
+    [ 1. 18.]
     >>> print(scaler.transform(data))
-    [[ 0.    0.  ]
-     [ 0.25  0.25]
-     [ 0.5   0.5 ]
-     [ 1.    1.  ]]
+    [[0.   0.  ]
+     [0.25 0.25]
+     [0.5  0.5 ]
+     [1.   1.  ]]
     >>> print(scaler.transform([[2, 2]]))
-    [[ 1.5  0. ]]
+    [[1.5 0. ]]
 
     See also
     --------
@@ -540,14 +540,14 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     >>> print(scaler.fit(data))
     StandardScaler(copy=True, with_mean=True, with_std=True)
     >>> print(scaler.mean_)
-    [ 0.5  0.5]
+    [0.5 0.5]
     >>> print(scaler.transform(data))
     [[-1. -1.]
      [-1. -1.]
      [ 1.  1.]
      [ 1.  1.]]
     >>> print(scaler.transform([[2, 2]]))
-    [[ 3.  3.]]
+    [[3. 3.]]
 
     See also
     --------
@@ -956,11 +956,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     The IQR is the range between the 1st quartile (25th quantile)
     and the 3rd quartile (75th quantile).
 
-    Centering and scaling happen independently on each feature (or each
-    sample, depending on the ``axis`` argument) by computing the relevant
-    statistics on the samples in the training set. Median and  interquartile
-    range are then stored to be used on later data using the ``transform``
-    method.
+    Centering and scaling happen independently on each feature by
+    computing the relevant statistics on the samples in the training
+    set. Median and interquartile range are then stored to be used on
+    later data using the ``transform`` method.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators. Typically this is done by removing the mean
@@ -1233,14 +1232,14 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)
-    array([[  1.,   0.,   1.,   0.,   0.,   1.],
-           [  1.,   2.,   3.,   4.,   6.,   9.],
-           [  1.,   4.,   5.,  16.,  20.,  25.]])
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
     >>> poly = PolynomialFeatures(interaction_only=True)
     >>> poly.fit_transform(X)
-    array([[  1.,   0.,   1.,   0.],
-           [  1.,   2.,   3.,   6.],
-           [  1.,   4.,   5.,  20.]])
+    array([[ 1.,  0.,  1.,  0.],
+           [ 1.,  2.,  3.,  6.],
+           [ 1.,  4.,  5., 20.]])
 
     Attributes
     ----------
@@ -1786,8 +1785,8 @@ def add_dummy_feature(X, value=1.0):
 
     >>> from sklearn.preprocessing import add_dummy_feature
     >>> add_dummy_feature([[0, 1], [1, 0]])
-    array([[ 1.,  0.,  1.],
-           [ 1.,  1.,  0.]])
+    array([[1., 0., 1.],
+           [1., 1., 0.]])
     """
     X = check_array(X, accept_sparse=['csc', 'csr', 'coo'], dtype=FLOAT_DTYPES)
     n_samples, n_features = X.shape
@@ -1954,7 +1953,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.feature_indices_
     array([0, 2, 5, 9])
     >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+    array([[1., 0., 0., 1., 0., 0., 1., 0., 0.]])
 
     See also
     --------
@@ -2952,8 +2951,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
-    array([[ 1.,  0.,  1.,  0.,  0.],
-           [ 0.,  1.,  0.,  0.,  0.]])
+    array([[1., 0., 1., 0., 0.],
+           [0., 1., 0., 0., 0.]])
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
