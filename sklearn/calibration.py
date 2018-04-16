@@ -375,9 +375,9 @@ class _CalibratedClassifier(object):
 
         for k, this_df, calibrator in \
                 zip(idx_pos_class, df.T, self.calibrators_):
-            proba[:, k] = calibrator.predict(this_df)
             if n_classes == 2:
                 k += 1
+            proba[:, k] = calibrator.predict(this_df)
 
         # Normalize the probabilities
         if n_classes == 2:
