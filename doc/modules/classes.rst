@@ -646,6 +646,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.MICEImputer
 
 .. _kernel_approximation_ref:
 
