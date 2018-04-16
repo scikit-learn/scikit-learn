@@ -240,7 +240,7 @@ def test_sigmoid_calibration():
 
 
 def test_isotonic_calibration():
-    # Test from @LotusZephyr's issue:	
+    # Test from @LotusZephyr's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/10903
     X = [[1.97, 1.18], [1.34, 1.06], [2.22, 6.82], [-1.37, 0.87], [3.98, 0.32]]
     y = [True, False, True, True, False]
