@@ -208,10 +208,8 @@ def test_load_iris_as_frame():
         data_frame, target_series = load_iris(as_frame=True)
         assert_equal(data_frame.shape, (150, 4))
         assert_equal(target_series.shape[0], 150)
-    except SkipTest as message:
-        # the only SkipTest thrown currently results from not
-        # being able to import pandas.
-        warnings.warn(message, SkipTestWarning)
+    except IOError as :
+        SkipTest("Pandas is needed to run the test")
 
 
 def test_load_wine():

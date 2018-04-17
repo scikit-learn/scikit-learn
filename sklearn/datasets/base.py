@@ -386,13 +386,10 @@ def load_iris(return_X_y=False, as_frame=False):
                      'petal length (cm)', 'petal width (cm)']
 
     if as_frame:
-        try:
-            from pandas import Series, DataFrame
-            data_frame = DataFrame(data, columns=feature_names)
-            target_series = Series(target, name="class")
-            return data_frame, target_series
-        except ImportError:
-            pass
+        from pandas import Series, DataFrame
+        data_frame = DataFrame(data, columns=feature_names)
+        target_series = pd.Series(target, name="class")
+        return data_frame, target_series
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
