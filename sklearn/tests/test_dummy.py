@@ -100,22 +100,18 @@ def test_most_frequent_and_prior_strategy():
                                       clf.class_prior_.reshape((1, -1)) > 0.5)
 
 
-def test_most_frequent_and_prior_strategy_with_pandas_dataframe():
-    X = [[0], [0], [0], [0]]  # ignored
-    y = [[1], [2], [1], [1]]
+def test_most_frequent_and_prior_strategy_with_2d_column_y():
+    X = [[0], [0], [0], [0]]
+    y_1d = [1, 2, 1, 1]
+    y_2d = [[1], [2], [1], [1]]
 
     for strategy in ("most_frequent", "prior"):
-        clf = DummyClassifier(strategy=strategy, random_state=0)
-        clf.fit(X, y)
-        assert_array_equal(clf.predict(X), np.ones(len(X)))
-        _check_predict_proba(clf, X, y)
-
-        if strategy == "prior":
-            assert_array_almost_equal(clf.predict_proba([X[0]]),
-                                      clf.class_prior_.reshape((1, -1)))
-        else:
-            assert_array_almost_equal(clf.predict_proba([X[0]]),
-                                      clf.class_prior_.reshape((1, -1)) > 0.5)
+        clf_1d = DummyClassifier(strategy=strategy, random_state=0)
+        clf_2d = DummyClassifier(strategy=strategy, random_state=0)
+        
+        clf_1d.fit(X, y_1d)
+        clf_2d.fit(X, y_2d)
+        assert_array_equal(clf_1d.predict(X), clf_2d.predict(X))
 
 def test_most_frequent_and_prior_strategy_multioutput():
     X = [[0], [0], [0], [0]]  # ignored
