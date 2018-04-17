@@ -11,11 +11,12 @@ from sklearn.utils.testing import assert_equal, assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_allclose
 
-rng = np.random.RandomState(0)
-X = rng.rand(100, 5)
+seed = 0
+X = np.random.RandomState(seed).rand(100, 5)
 
 
 def test_kmedoids_input_validation_and_fit_check():
+    rng = np.random.RandomState(seed)
     # Invalid parameters
     assert_raise_message(ValueError, "n_clusters should be a nonnegative "
                                      "integer. 0 was given",
@@ -61,6 +62,7 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
 
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
+    rng = np.random.RandomState(seed)
     X_iris = load_iris()['data']
 
     ref_model = KMeans(n_clusters=3)
@@ -99,6 +101,7 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
 
 
 def test_kmedoids_fit_predict_transform():
+    rng = np.random.RandomState(seed)
     model = KMedoids(random_state=rng)
 
     labels1 = model.fit_predict(X)
@@ -116,6 +119,7 @@ def test_kmedoids_fit_predict_transform():
 
 
 def test_callable_distance_metric():
+    rng = np.random.RandomState(seed)
     def my_metric(a, b):
         return np.sqrt(np.sum(np.power(a - b, 2)))
 
@@ -126,6 +130,7 @@ def test_callable_distance_metric():
 
 
 def test_outlier_robustness():
+    rng = np.random.RandomState(seed)
     kmeans = KMeans(n_clusters=2, random_state=rng)
     kmedoids = KMedoids(n_clusters=2, random_state=rng)
 
@@ -140,6 +145,7 @@ def test_outlier_robustness():
 
 
 def test_kmedoids_on_sparse_input():
+    rng = np.random.RandomState(seed)
     model = KMedoids(n_clusters=2, random_state=rng)
     row = np.array([1, 0])
     col = np.array([0, 4])
