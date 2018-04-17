@@ -28,7 +28,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         The number of clusters to form as well as the number of medoids to
         generate.
 
-
     metric : string, or callable, optional, default: 'euclidean'
         What distance metric to use. See :func:metrics.pairwise_distances
 
@@ -40,7 +39,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     max_iter : int, optional, default : 300
         Specify the maximum number of iterations when fitting.
 
-    random_state : int, optional, default: None
+    random_state : int, RandomState instance or None, optional
         Specify random state for the random number generator. Used to
         initialise medoids when init='random'.
 
@@ -57,7 +56,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Examples
     --------
-
     >>> from sklearn.cluster import KMedoids
     >>> import numpy as np
 
@@ -136,9 +134,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              "the following: " +
                              "%s" % init_methods)
 
-        # Check random state
-        self.random_state_ = check_random_state(self.random_state)
-
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
 
@@ -147,10 +142,13 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = (n_samples, n_features).
             Dataset to cluster.
 
+        y : Ignored
+
         Returns
         -------
         self
         """
+        random_state_ = check_random_state(self.random_state)
 
         self._check_init_args()
         X = check_array(X, accept_sparse=['csr', 'csc'])
@@ -160,7 +158,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              % (self.n_clusters, X.shape[0]))
 
         D = pairwise_distances(X, metric=self.metric)
-        medoid_idxs = self._initialize_medoids(D, self.n_clusters)
+        medoid_idxs = self._initialize_medoids(D, self.n_clusters, random_state_)
         labels = None
 
         # Continue the algorithm as long as
@@ -277,12 +275,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return inertia
 
-    def _initialize_medoids(self, D, n_clusters):
+    def _initialize_medoids(self, D, n_clusters, random_state_):
         """Select initial mediods randomly or heuristically"""
 
         if self.init == 'random':  # Random initialization
             # Pick random k medoids as the initial ones.
-            medoids = self.random_state_.choice(len(D), n_clusters)
+            medoids = random_state_.choice(len(D), n_clusters)
         else:  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
