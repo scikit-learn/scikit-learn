@@ -21,7 +21,6 @@ from ..utils import Bunch
 from ..utils import check_random_state
 
 import numpy as np
-import pandas as pd
 
 from sklearn.externals.six.moves.urllib.request import urlretrieve
 
@@ -385,10 +384,15 @@ def load_iris(return_X_y=False, as_frame=False):
 
     feature_names = ['sepal length (cm)', 'sepal width (cm)',
                      'petal length (cm)', 'petal width (cm)']
+
     if as_frame:
-        data_frame = pd.DataFrame(data, columns=feature_names)
-        target_series = pd.Series(target, name="class")
-        return data_frame, target_series
+        try:
+            from pandas import Series, DataFrame
+            data_frame = DataFrame(data, columns=feature_names)
+            target_series = Series(target, name="class")
+            return data_frame, target_series
+        except ImportError:
+            pass
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
