@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import SkipTest
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -200,6 +201,17 @@ def test_load_iris():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_iris))
+
+
+def test_load_iris_as_frame():
+    try:
+        data_frame, target_series = load_iris(as_frame=True)
+        assert_equal(data_frame.shape, (150, 4))
+        assert_equal(target_series.shape[0], 150)
+    except SkipTest as message:
+        # the only SkipTest thrown currently results from not
+        # being able to import pandas.
+        warnings.warn(message, SkipTestWarning)
 
 
 def test_load_wine():
