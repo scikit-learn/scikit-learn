@@ -9,7 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, safe_indexing
-from ._function_transformer import FunctionTransformer
+from ..preprocessing import FunctionTransformer
 
 __all__ = ['TransformedTargetRegressor']
 
@@ -23,13 +23,16 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     ``exp``.
 
     The computation during ``fit`` is::
+
         regressor.fit(X, func(y))
     or::
-        regressor.fit(X, transformer.transform(y))
 
+        regressor.fit(X, transformer.transform(y))
     The computation during ``predict`` is::
+
         inverse_func(regressor.predict(X))
     or::
+
         transformer.inverse_transform(regressor.predict(X))
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
@@ -76,7 +79,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.preprocessing import TransformedTargetRegressor
+    >>> from sklearn.compose import TransformedTargetRegressor
     >>> tt = TransformedTargetRegressor(regressor=LinearRegression(),
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
@@ -86,7 +89,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     >>> tt.score(X, y)
     1.0
     >>> tt.regressor_.coef_
-    array([ 2.])
+    array([2.])
 
     Notes
     -----
@@ -94,8 +97,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as ``y``.
 
-    See :ref:`examples/preprocessing/plot_transform_target.py
-    <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
+    See :ref:`examples/preprocessing/plot_transformed_target.py
+    <sphx_glr_auto_examples_preprocessing_plot_transformed_target.py>`.
 
     """
     def __init__(self, regressor=None, transformer=None,

@@ -503,11 +503,6 @@ class _DPGMMBase(_GMMBase):
         """Estimate model parameters with the variational
         algorithm.
 
-        For a full derivation and description of the algorithm see
-        doc/modules/dp-derivation.rst
-        or
-        http://scikit-learn.org/stable/modules/dp-derivation.html
-
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
         argument init_params to the empty string '' when creating
@@ -756,11 +751,6 @@ class VBGMM(_DPGMMBase):
 
     def _fit(self, X, y=None):
         """Estimate model parameters with the variational algorithm.
-
-        For a full derivation and description of the algorithm see
-        doc/modules/dp-derivation.rst
-        or
-        http://scikit-learn.org/stable/modules/dp-derivation.html
 
         A initialization step is performed before entering the EM
         algorithm. If you want to avoid this step, set the keyword

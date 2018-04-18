@@ -71,7 +71,7 @@ For example::
     >>> random_state = 0
     >>> random_state = check_random_state(random_state)
     >>> random_state.rand(4)
-    array([ 0.5488135 ,  0.71518937,  0.60276338,  0.54488318])
+    array([0.5488135 , 0.71518937, 0.60276338, 0.54488318])
 
 When developing your own scikit-learn compatible estimator, the following
 helpers are available.
