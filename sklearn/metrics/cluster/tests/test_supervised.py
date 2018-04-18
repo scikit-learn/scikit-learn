@@ -89,8 +89,13 @@ def test_future_warning():
         adjusted_mutual_info_score,
         normalized_mutual_info_score
     ]
+    expectedWarning = ("FutureWarning: From version 0.22, log_base=None will "
+                       "mean log_base=2 rather than the current default "
+                       "log_base='e'")
+
     for score_func in score_funcs:
         assert_warns(FutureWarning, score_func, [0, 0], [0, 1])
+        assert_raise_message(ValueError, expectedWarning, score_func, [0, 0])
 
 
 def test_homogeneous_but_not_complete_labeling():
