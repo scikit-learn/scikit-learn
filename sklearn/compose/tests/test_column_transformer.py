@@ -321,10 +321,10 @@ def test_column_transformer_get_set_params():
     ct.set_params(trans1__with_mean=False)
     assert_false(ct.get_params()['trans1__with_mean'])
 
-    ct.set_params(trans1=None)
+    ct.set_params(trans1='passthrough')
     exp = {'n_jobs': 1,
            'passthrough': None,
-           'trans1': None,
+           'trans1': 'passthrough',
            'trans2': ct.transformers[1][1],
            'trans2__copy': True,
            'trans2__with_mean': True,
@@ -365,21 +365,37 @@ def test_column_transformer_cloning():
     assert_true(hasattr(ct.transformers_[0][1], 'mean_'))
 
 
-def test_column_transformer_none():
+def test_column_transformer_special_strings():
 
-    # one None -> ignore
+    # one 'drop' -> ignore
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer(
-        [('trans1', Trans(), [0]), ('trans2', None, [1])])
+        [('trans1', Trans(), [0]), ('trans2', 'drop', [1])])
     exp = np.array([[0.], [1.], [2.]])
     assert_array_equal(ct.fit_transform(X_array), exp)
     assert_array_equal(ct.fit(X_array).transform(X_array), exp)
 
-    # all None -> return shape 0 array
+    # all 'drop' -> return shape 0 array
     ct = ColumnTransformer(
-        [('trans1', None, [0]), ('trans2', None, [1])])
+        [('trans1', 'drop', [0]), ('trans2', 'drop', [1])])
     assert_array_equal(ct.fit(X_array).transform(X_array).shape, (3, 0))
     assert_array_equal(ct.fit_transform(X_array).shape, (3, 0))
+
+    # 'passthrough'
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+    ct = ColumnTransformer(
+        [('trans1', Trans(), [0]), ('trans2', 'passthrough', [1])])
+    exp = X_array
+    assert_array_equal(ct.fit_transform(X_array), exp)
+    assert_array_equal(ct.fit(X_array).transform(X_array), exp)
+
+    # None itself is not valid
+    ct = ColumnTransformer(
+        [('trans1', Trans(), [0]), ('trans2', None, [1])])
+    assert_raise_message(TypeError, "All estimators should implement",
+                         ct.fit_transform, X_array)
+    assert_raise_message(TypeError, "All estimators should implement",
+                         ct.fit, X_array)
 
 
 def test_column_transformer_get_feature_names():
@@ -429,8 +445,8 @@ def test_column_transformer_passthrough():
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
 
-    # passthrough when all transformers are None
-    ct = ColumnTransformer([('trans1', None, [0])], passthrough='remainder')
+    # passthrough when all actual transformers are skipped
+    ct = ColumnTransformer([('trans1', 'drop', [0])], passthrough='remainder')
     assert_array_equal(ct.fit_transform(X_array), X_res_second)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_second)
 

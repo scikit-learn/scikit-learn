@@ -16,6 +16,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..pipeline import (
     _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
+from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
@@ -56,8 +57,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or None
-            If None, nothing is output for this triple. Estimator must support
-            `fit` and `transform`.
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns are pass them through untransformed,
+            respectively.
         column : string or int, array-like of string or int, slice or boolean \
 mask array
             Indexes the data on its second axis. Integers are interpreted as
@@ -175,7 +178,7 @@ or "remainder", optional
         self._set_params('_transformers', **kwargs)
         return self
 
-    def _iter(self, X=None, skip_none=True, fitted=False):
+    def _iter(self, X=None, fitted=False, replace_strings=False):
         """Generate (name, trans, column, weight) tuples
         """
         if fitted:
@@ -183,26 +186,44 @@ or "remainder", optional
         else:
             transformers = self.transformers
         get_weight = (self.transformer_weights or {}).get
-        return ((name, trans, _get_column(X, column) if X is not None else X,
-                 get_weight(name))
-                for name, trans, column in transformers
-                # skip transformer when it is None, unless skip_none=False
-                if not skip_none or trans is not None)
+
+        for name, trans, column in transformers:
+            if X is None:
+                sub = X
+            else:
+                sub = _get_column(X, column)
+
+            if replace_strings:
+                # replace 'passthrough' with identity transformer and
+                # skip in case of 'drop'
+                if trans == 'passthrough':
+                    trans2 = FunctionTransformer(
+                        validate=False, accept_sparse=True,
+                        check_inverse=False)
+                elif trans == 'drop':
+                    continue
+                else:
+                    trans2 = trans
+            else:
+                trans2 = trans
+
+            yield (name, trans2, sub, get_weight(name))
 
     def _validate_transformers(self):
-        names, transformers, _, _ = zip(*self._iter(skip_none=False))
+        names, transformers, _, _ = zip(*self._iter())
 
         # validate names
         self._validate_names(names)
 
         # validate estimators
         for t in transformers:
-            if t is None:
+            if t in ('drop', 'passthrough'):
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All estimators should implement fit and "
-                                "transform. '%s' (type %s) doesn't" %
+                                "transform, or can be 'drop' or 'passthrough' "
+                                "specifiers. '%s' (type %s) doesn't." %
                                 (t, type(t)))
 
     def _validate_passthrough(self, X):
@@ -248,6 +269,8 @@ or "remainder", optional
         check_is_fitted(self, 'transformers_')
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
+            if trans == 'drop':
+                continue
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
@@ -258,10 +281,22 @@ or "remainder", optional
 
     def _update_fitted_transformers(self, transformers):
         transformers = iter(transformers)
-        self.transformers_ = [
-            (name, None if old is None else next(transformers), column)
-            for name, old, column in self.transformers
-        ]
+        transformers_ = []
+
+        for name, old, column in self.transformers:
+            if old == 'drop':
+                trans = old
+            elif old == 'passthrough':
+                # FunctionTransformer is present in list of transformers,
+                # so get next transformer, but save original string
+                next(transformers)
+                trans = old
+            else:
+                trans = next(transformers)
+
+            transformers_.append((name, trans, column))
+
+        self.transformers_ = transformers_
 
     def _fit_transform(self, X, y, func, fitted=False):
         """
@@ -275,8 +310,8 @@ or "remainder", optional
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(clone(trans) if not fitted else trans,
                               X_sel, y, weight)
-                for name, trans, X_sel, weight in self._iter(X=X,
-                                                             fitted=fitted))
+                for name, trans, X_sel, weight in self._iter(
+                    X=X, fitted=fitted, replace_strings=True))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)

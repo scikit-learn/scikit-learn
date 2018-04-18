@@ -29,10 +29,9 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
-            if estimator is None:
-                continue
-            for key, value in six.iteritems(estimator.get_params(deep=True)):
-                out['%s__%s' % (name, key)] = value
+            if hasattr(estimator, 'get_params'):
+                for key, value in six.iteritems(estimator.get_params(deep=True)):
+                    out['%s__%s' % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
