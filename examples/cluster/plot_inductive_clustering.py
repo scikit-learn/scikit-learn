@@ -13,6 +13,7 @@ inferred targets, treating it as a supervised problem.
 """
 print(__doc__)
 
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering
@@ -86,14 +87,25 @@ plt.title("Unknown instances")
 # Declare the inductive learning model that it will be used to
 # predict cluster membership for unknown instances
 classifier = RandomForestClassifier(random_state=RANDOM_STATE)
-inductiveLearner = InductiveClusterer(clusterer, classifier).fit(X)
+inductive_learner = InductiveClusterer(clusterer, classifier).fit(X)
 
-probable_clusters = inductiveLearner.predict(X_new)
+probable_clusters = inductive_learner.predict(X_new)
 
 
 plt.subplot(133)
 plot_scatter(X, cluster_labels)
 plot_scatter(X_new, probable_clusters)
+
+# Plotting decision regions
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+
+Z = inductive_learner.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+plt.contourf(xx, yy, Z, alpha=0.4)
 plt.title("Classify unknown instances")
 
 plt.show()
