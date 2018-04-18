@@ -120,8 +120,8 @@ classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([[  1.967...e-04,   9.998...-01],
-           [  1.967...e-04,   9.998...-01]])
+    array([[1.967...e-04, 9.998...-01],
+           [1.967...e-04, 9.998...-01]])
 
 :class:`MLPClassifier` supports multi-class classification by
 applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_

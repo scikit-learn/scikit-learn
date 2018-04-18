@@ -361,9 +361,9 @@ def logsumexp(arr, axis=0):
     >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
-    9.4586297444267107
+    9.458...
     >>> logsumexp(a)
-    9.4586297444267107
+    9.458...
     """
     return scipy_logsumexp(arr, axis)
 
@@ -398,14 +398,14 @@ def weighted_mode(a, w, axis=0):
     >>> x = [4, 1, 4, 2, 4, 2]
     >>> weights = [1, 1, 1, 1, 1, 1]
     >>> weighted_mode(x, weights)
-    (array([ 4.]), array([ 3.]))
+    (array([4.]), array([3.]))
 
     The value 4 appears three times: with uniform weights, the result is
     simply the mode of the distribution.
 
     >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
     >>> weighted_mode(x, weights)
-    (array([ 2.]), array([ 3.5]))
+    (array([2.]), array([3.5]))
 
     The value 2 has the highest score: it appears twice with weights of
     1.5 and 2: the sum of these is 3.

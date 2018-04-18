@@ -260,7 +260,6 @@ Loaders
    datasets.load_files
    datasets.load_iris
    datasets.load_linnerud
-   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -648,6 +647,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.MICEImputer
 
 .. _kernel_approximation_ref:
 
@@ -1495,6 +1495,12 @@ To be removed in 0.21
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
    neighbors.LSHForest
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   datasets.load_mlcomp
 
 
 To be removed in 0.20
