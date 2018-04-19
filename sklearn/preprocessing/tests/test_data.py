@@ -2658,6 +2658,14 @@ def test_standard_scaler_with_std():
 def test_scale_with_invalid_std():
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
+    X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
+    assert_array_almost_equal(X_scaled.mean(), 0.0)
+    assert_array_almost_equal(X_scaled.std(), 0.5)
+    X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
+    assert_array_almost_equal(X_scaled.mean(), 0.0)
+    assert_array_almost_equal(X_scaled.std(), 1.0)
+
+    # Test for invalid cases
     cases = [-10, -1, 3, 10]
     for std_ in cases:
         assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
