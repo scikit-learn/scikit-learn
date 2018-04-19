@@ -682,10 +682,9 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     0.416...
 
     """
-    check_consistent_length(y_true, y_score)
+    check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
-    check_consistent_length(y_true, y_score, sample_weight)
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
