@@ -155,8 +155,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                              " got axis=%d" % axis)
         if with_std:
             if with_std not in (1, 2, True):
-                raise ValueError("Invalid value for 'with_std': %s" %
-                                 str(with_std))
+                raise ValueError("Invalid value for `with_std`: {}".format(
+                                 str(with_std)))
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
@@ -166,8 +166,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             mean_ = np.mean(X, axis)
         if with_std:
             if with_std not in (1, 2, True):
-                raise ValueError("Invalid value for 'with_std': %s" %
-                                 str(with_std))
+                raise ValueError("Invalid value for `with_std`: {}".format(
+                                 str(with_std)))
             scale_ = with_std * np.std(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
