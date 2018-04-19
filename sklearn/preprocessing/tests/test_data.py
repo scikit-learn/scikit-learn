@@ -2653,3 +2653,12 @@ def test_standard_scaler_with_std():
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_array_almost_equal(X_scaled.mean(), 0.0)
     assert_array_almost_equal(X_scaled.std(), 1.0)
+
+
+def test_scale_with_invalid_std():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    cases = [-10, -1, 3, 10]
+    for std_ in cases:
+        assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
+                                        r' \S+', scale, X, with_std=std_)
