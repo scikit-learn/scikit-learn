@@ -110,6 +110,9 @@ def test_iforest_error():
     assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
     assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
 
+    # test X_test n_features match X_train one:
+    assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
+
 
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
@@ -186,15 +189,15 @@ def test_iforest_works():
     # toy sample (the last two samples are outliers)
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [6, 3], [-4, 7]]
 
-    # Test LOF
-    clf = IsolationForest(random_state=rng, contamination=0.25)
-    clf.fit(X)
-    decision_func = - clf.decision_function(X)
-    pred = clf.predict(X)
-
-    # assert detect outliers:
-    assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
-    assert_array_equal(pred, 6 * [1] + 2 * [-1])
+    # Test IsolationForest
+    for contamination in [0.25, "auto"]:
+        clf = IsolationForest(random_state=rng, contamination=contamination)
+        clf.fit(X)
+        decision_func = - clf.decision_function(X)
+        pred = clf.predict(X)
+        # assert detect outliers:
+        assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
+        assert_array_equal(pred, 6 * [1] + 2 * [-1])
 
 
 def test_max_samples_consistency():
@@ -226,3 +229,28 @@ def test_iforest_average_path_length():
     assert_almost_equal(_average_path_length(999), result_two, decimal=10)
     assert_array_almost_equal(_average_path_length(np.array([1, 5, 999])),
                               [1., result_one, result_two], decimal=10)
+
+
+def test_score_samples():
+    X_train = [[1, 1], [1, 2], [2, 1]]
+    clf1 = IsolationForest(contamination=0.1).fit(X_train)
+    clf2 = IsolationForest().fit(X_train)
+    assert_array_equal(clf1.score_samples([[2., 2.]]),
+                       clf1.decision_function([[2., 2.]]) + clf1.offset_)
+    assert_array_equal(clf2.score_samples([[2., 2.]]),
+                       clf2.decision_function([[2., 2.]]) + clf2.offset_)
+    assert_array_equal(clf1.score_samples([[2., 2.]]),
+                       clf2.score_samples([[2., 2.]]))
+
+
+def test_deprecation():
+    assert_warns_message(DeprecationWarning,
+                         'default contamination parameter 0.1 will change '
+                         'in version 0.22 to "auto"',
+                         IsolationForest, )
+    X = [[0.0], [1.0]]
+    clf = IsolationForest().fit(X)
+    assert_warns_message(DeprecationWarning,
+                         "threshold_ attribute is deprecated in 0.20 and will"
+                         " be removed in 0.22.",
+                         getattr, clf, "threshold_")

@@ -91,7 +91,7 @@ class MidpointNormalize(Normalize):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
 
-##############################################################################
+# #############################################################################
 # Load and prepare data set
 #
 # dataset for grid search
@@ -118,7 +118,7 @@ scaler = StandardScaler()
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
 
-##############################################################################
+# #############################################################################
 # Train classifiers
 #
 # For an initial search, a logarithmic grid with basis
@@ -147,8 +147,8 @@ for C in C_2d_range:
         clf.fit(X_2d, y_2d)
         classifiers.append((C, gamma, clf))
 
-##############################################################################
-# visualization
+# #############################################################################
+# Visualization
 #
 # draw visualization of parameter effects
 

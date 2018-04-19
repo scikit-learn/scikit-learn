@@ -95,7 +95,7 @@ for n_clusters in range_n_clusters:
         size_cluster_i = ith_cluster_silhouette_values.shape[0]
         y_upper = y_lower + size_cluster_i
 
-        color = cm.spectral(float(i) / n_clusters)
+        color = cm.nipy_spectral(float(i) / n_clusters)
         ax1.fill_betweenx(np.arange(y_lower, y_upper),
                           0, ith_cluster_silhouette_values,
                           facecolor=color, edgecolor=color, alpha=0.7)
@@ -117,18 +117,19 @@ for n_clusters in range_n_clusters:
     ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
 
     # 2nd Plot showing the actual clusters formed
-    colors = cm.spectral(cluster_labels.astype(float) / n_clusters)
+    colors = cm.nipy_spectral(cluster_labels.astype(float) / n_clusters)
     ax2.scatter(X[:, 0], X[:, 1], marker='.', s=30, lw=0, alpha=0.7,
-                c=colors)
+                c=colors, edgecolor='k')
 
     # Labeling the clusters
     centers = clusterer.cluster_centers_
     # Draw white circles at cluster centers
-    ax2.scatter(centers[:, 0], centers[:, 1],
-                marker='o', c="white", alpha=1, s=200)
+    ax2.scatter(centers[:, 0], centers[:, 1], marker='o',
+                c="white", alpha=1, s=200, edgecolor='k')
 
     for i, c in enumerate(centers):
-        ax2.scatter(c[0], c[1], marker='$%d$' % i, alpha=1, s=50)
+        ax2.scatter(c[0], c[1], marker='$%d$' % i, alpha=1,
+                    s=50, edgecolor='k')
 
     ax2.set_title("The visualization of the clustered data.")
     ax2.set_xlabel("Feature space for the 1st feature")

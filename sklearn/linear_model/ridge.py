@@ -31,6 +31,7 @@ from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
+from ..exceptions import ConvergenceWarning
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
@@ -73,7 +74,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 
         if max_iter is None and info > 0 and verbose:
             warnings.warn("sparse_cg did not converge after %d iterations." %
-                          info)
+                          info, ConvergenceWarning)
 
     return coefs
 
@@ -218,11 +219,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    max_iter : int, optional
-        Maximum number of iterations for conjugate gradient solver.
-        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
-        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
-
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
@@ -248,8 +244,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
@@ -267,6 +263,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
+        1000.
 
     tol : float
         Precision of the solution.
@@ -357,11 +359,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             solver = 'cholesky'
         else:
             solver = 'sparse_cg'
-
-    elif solver == 'lsqr' and not hasattr(sp_linalg, 'lsqr'):
-        warnings.warn("""lsqr not available on this machine, falling back
-                      to sparse_cg.""")
-        solver = 'sparse_cg'
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
@@ -511,6 +508,10 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 class Ridge(_BaseRidge, RegressorMixin):
     """Linear least squares with l2 regularization.
 
+    Minimizes the objective function::
+
+    ||y - Xw||^2_2 + alpha * ||w||^2_2
+
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
@@ -530,18 +531,10 @@ class Ridge(_BaseRidge, RegressorMixin):
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-
-    max_iter : int, optional
-        Maximum number of iterations for conjugate gradient solver.
-        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
-        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -550,6 +543,17 @@ class Ridge(_BaseRidge, RegressorMixin):
         If you wish to standardize, please use
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
+
+    tol : float
+        Precision of the solution.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
@@ -569,8 +573,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
@@ -588,9 +592,6 @@ class Ridge(_BaseRidge, RegressorMixin):
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
-
-    tol : float
-        Precision of the solution.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -619,7 +620,10 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV, :class:`sklearn.kernel_ridge.KernelRidge`
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
+    :class:`sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
+        combines ridge regression with the kernel trick
 
     Examples
     --------
@@ -678,25 +682,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
-    class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
-
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set to false, no
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
-
-    max_iter : int, optional
-        Maximum number of iterations for conjugate gradient solver.
-        The default value is determined by scipy.sparse.linalg.
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -705,6 +694,24 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         If you wish to standardize, please use
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        The default value is determined by scipy.sparse.linalg.
+
+    tol : float
+        Precision of the solution.
+
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
@@ -724,8 +731,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its unbiased and more flexible version named SAGA. Both methods
@@ -739,9 +746,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
              Stochastic Average Gradient descent solver.
           .. versionadded:: 0.19
            SAGA solver.
-
-    tol : float
-        Precision of the solution.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -765,7 +769,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     See also
     --------
-    Ridge, RidgeClassifierCV
+    Ridge : Ridge regression
+    RidgeClassifierCV :  Ridge classifier with built-in cross validation
 
     Notes
     -----
@@ -773,6 +778,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
@@ -803,6 +809,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
+        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                  multi_output=True)
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
@@ -863,7 +872,7 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
+    http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
@@ -975,14 +984,14 @@ class _RidgeGCV(LinearModel):
             Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
@@ -1033,11 +1042,16 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
+        if np.any(self.alphas < 0):
+            raise ValueError("alphas cannot be negative. "
+                             "Got {} containing some "
+                             "negative value instead.".format(self.alphas))
+
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(alpha, y, v, Q, QT_y)
+                out, c = _errors(float(alpha), y, v, Q, QT_y)
             else:
-                out, c = _values(alpha, y, v, Q, QT_y)
+                out, c = _values(float(alpha), y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -1077,7 +1091,7 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = alphas
+        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -1094,14 +1108,14 @@ class _BaseRidgeCV(LinearModel):
             Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
@@ -1119,7 +1133,8 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+                                    normalize=self.normalize),
                               parameters, cv=self.cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
@@ -1199,18 +1214,18 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the `cv_values_` attribute (see
-        below). This flag is only compatible with `cv=None` (i.e. using
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
         Generalized Cross-Validation).
 
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and \
-        `cv=None`). After `fit()` has been called, this attribute will \
-        contain the mean squared errors (by default) or the values of the \
-        `{loss,score}_func` function (if provided in the constructor).
+        Cross-validation values for each alpha (if ``store_cv_values=True``\
+        and ``cv=None``). After ``fit()`` has been called, this attribute \
+        will contain the mean squared errors (by default) or the values \
+        of the ``{loss,score}_func`` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
@@ -1224,9 +1239,9 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeClassifierCV: Ridge classifier with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
     pass
 
@@ -1288,14 +1303,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
+    store_cv_values : boolean, default=False
+        Flag indicating if the cross-validation values corresponding to
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
+        Generalized Cross-Validation).
+
     Attributes
     ----------
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-    shape = [n_samples, n_responses, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and
-    `cv=None`). After `fit()` has been called, this attribute will contain \
-    the mean squared errors (by default) or the values of the \
-    `{loss,score}_func` function (if provided in the constructor).
+    cv_values_ : array, shape = [n_samples, n_targets, n_alphas], optional
+        Cross-validation values for each alpha (if ``store_cv_values=True`` and
+        ``cv=None``). After ``fit()`` has been called, this attribute will
+        contain the mean squared errors (by default) or the values of the
+        ``{loss,score}_func`` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
@@ -1309,9 +1329,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeCV: Ridge regression with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
 
     Notes
     -----
@@ -1319,11 +1339,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
-                 normalize=False, scoring=None, cv=None, class_weight=None):
+                 normalize=False, scoring=None, cv=None, class_weight=None,
+                 store_cv_values=False):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, cv=cv)
+            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
@@ -1336,7 +1358,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             and n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
@@ -1344,8 +1366,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
-            Returns self.
         """
+        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                  multi_output=True)
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):

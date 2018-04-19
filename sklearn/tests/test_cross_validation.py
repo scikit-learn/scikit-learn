@@ -1036,7 +1036,7 @@ def test_shufflesplit_reproducible():
 
 
 def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
+    clf = SVC(gamma="scale")
     clfp = SVC(kernel="precomputed")
 
     iris = load_iris()

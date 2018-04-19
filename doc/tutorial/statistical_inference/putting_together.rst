@@ -17,7 +17,7 @@ can predict variables. We can also create combined estimators:
    :align: right
 
 .. literalinclude:: ../../auto_examples/plot_digits_pipe.py
-    :lines: 26-66
+    :lines: 23-63
 
 
 
@@ -32,7 +32,7 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-.. literalinclude:: ../../auto_examples/applications/face_recognition.py
+.. literalinclude:: ../../auto_examples/applications/plot_face_recognition.py
 
 .. |prediction| image:: ../../images/plot_face_recognition_1.png
    :scale: 50

@@ -52,7 +52,7 @@ plt.xlabel('alpha')
 plt.axhline(np.max(scores), linestyle='--', color='.5')
 plt.xlim([alphas[0], alphas[-1]])
 
-##############################################################################
+# #############################################################################
 # Bonus: how much can you trust the selection of alpha?
 
 # To answer this question we use the LassoCV object that sets its alpha

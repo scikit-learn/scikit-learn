@@ -112,10 +112,10 @@ def test_kde_algorithm_metric_choice():
 
 def test_kde_score(n_samples=100, n_features=3):
     pass
-    #FIXME
-    #np.random.seed(0)
-    #X = np.random.random((n_samples, n_features))
-    #Y = np.random.random((n_samples, n_features))
+    # FIXME
+    # rng = np.random.RandomState(0)
+    # X = rng.random_sample((n_samples, n_features))
+    # Y = rng.random_sample((n_samples, n_features))
 
 
 def test_kde_badargs():

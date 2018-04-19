@@ -12,11 +12,11 @@ generated using a closed network and hand-injected attacks to produce a
 large number of different types of attack with normal activity in the
 background. As the initial goal was to produce a large training set for
 supervised learning algorithms, there is a large proportion (80.1%) of
-abnormal data which is unrealistic in real world, and inapropriate for
+abnormal data which is unrealistic in real world, and inappropriate for
 unsupervised anomaly detection which aims at detecting 'abnormal' data, ie
 1) qualitatively different from normal data
 2) in large minority among the observations.
-We thus transform the KDD Data set into two differents data set: SA and SF.
+We thus transform the KDD Data set into two different data sets: SA and SF.
 
 -SA is obtained by simply selecting all the normal data, and a small
 proportion of abnormal data to gives an anomaly proportion of 1%.

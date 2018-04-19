@@ -13,6 +13,7 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 
+from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
 )
@@ -172,6 +173,17 @@ def test_expected_mutual_info_overflow():
     assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
 
 
+def test_int_overflow_mutual_info_score():
+    # Test overflow in mutual_info_classif
+    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] * (3271 +
+                 204) + [4] * (814 + 39) + [5] * (316 + 20))
+    y = np.array([0] * 52632 + [1] * 2529 + [0] * 14660 + [1] * 793 +
+                 [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
+                 [1] * 20)
+
+    assert_all_finite(mutual_info_score(x.ravel(), y.ravel()))
+
+
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
@@ -251,14 +263,14 @@ def test_fowlkes_mallows_score_properties():
     score_original = fowlkes_mallows_score(labels_a, labels_b)
     assert_almost_equal(score_original, expected)
 
-    # symetric property
-    score_symetric = fowlkes_mallows_score(labels_b, labels_a)
-    assert_almost_equal(score_symetric, expected)
+    # symmetric property
+    score_symmetric = fowlkes_mallows_score(labels_b, labels_a)
+    assert_almost_equal(score_symmetric, expected)
 
     # permutation property
     score_permuted = fowlkes_mallows_score((labels_a + 1) % 3, labels_b)
     assert_almost_equal(score_permuted, expected)
 
-    # symetric and permutation(both together)
+    # symmetric and permutation(both together)
     score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)

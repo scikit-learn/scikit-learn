@@ -85,7 +85,7 @@ plt.plot(X[y <= 0, 0], X[y <= 0, 1], 'r.', markersize=12)
 
 plt.plot(X[y > 0, 0], X[y > 0, 1], 'b.', markersize=12)
 
-cs = plt.contour(x1, x2, y_true, [0.], colors='k', linestyles='dashdot')
+plt.contour(x1, x2, y_true, [0.], colors='k', linestyles='dashdot')
 
 cs = plt.contour(x1, x2, y_prob, [0.666], colors='b',
                  linestyles='solid')
