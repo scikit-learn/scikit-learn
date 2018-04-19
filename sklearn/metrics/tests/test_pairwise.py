@@ -540,6 +540,18 @@ def test_linear_kernel():
     assert_array_almost_equal(K.flat[::6], [linalg.norm(x) ** 2 for x in X])
 
 
+def test_linear_kernel_sparse_output():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    X_sparse = csr_matrix(X)
+    K = linear_kernel(X_sparse, X_sparse, dense_output=False)
+    assert_true(issparse(K))  # output will be sparse
+
+    # assert the sparse array is equal elementally to the dense array
+    K_dense = linear_kernel(X, X, dense_output=True)
+    assert_array_almost_equal(K.toarray(), K_dense)
+
+
 def test_rbf_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
