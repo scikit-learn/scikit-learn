@@ -2647,23 +2647,23 @@ def test_standard_scaler_with_std():
     X = rng.randint(0, 2, (100, 2))
     scaler = StandardScaler(copy=True, with_mean=True, with_std=2)
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_array_almost_equal(X_scaled.mean(), 0.0)
-    assert_array_almost_equal(X_scaled.std(), 0.5)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 0.5)
     scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_array_almost_equal(X_scaled.mean(), 0.0)
-    assert_array_almost_equal(X_scaled.std(), 1.0)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 1.0)
 
 
-def test_scale_with_invalid_std():
+def test_scale_with_std():
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
     X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
-    assert_array_almost_equal(X_scaled.mean(), 0.0)
-    assert_array_almost_equal(X_scaled.std(), 0.5)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 0.5)
     X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
-    assert_array_almost_equal(X_scaled.mean(), 0.0)
-    assert_array_almost_equal(X_scaled.std(), 1.0)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 1.0)
 
     # Test for invalid cases
     cases = [-10, -1, 3, 10]
