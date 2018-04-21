@@ -80,10 +80,11 @@ SKIP_DTYPE_CONVERSION_CHECK = [
              'GaussianRandomProjection', 'Isomap', 'LatentDirichletAllocation',
              'LinearDiscriminantAnalysis', 'LocallyLinearEmbedding',
              'MiniBatchDictionaryLearning', 'MiniBatchSparsePCA', 'NMF',
-             'PLSCanonical', 'PLSRegression', 'PLSSVD', 'RBFSampler',
+             'RBFSampler',
              'RandomizedLasso', 'RandomizedLogisticRegression', 'SelectFdr',
              'SelectFpr', 'SelectFwe', 'SelectKBest', 'SkewedChi2Sampler',
-             'SparsePCA', 'SparseRandomProjection', 'VarianceThreshold']
+             'SparsePCA', 'SparseRandomProjection', 'VarianceThreshold',
+             'BadTransformerWithoutMixin']
 
 
 def _yield_non_meta_checks(name, estimator):
