@@ -53,3 +53,4 @@ def test_missing_value_handling(est):
                 X_test[:, [i]][~np.isnan(X_test[:, i])])
             assert_array_equal(Xt_col_nonan,
                                Xt_col[~np.isnan(Xt_col.squeeze())])
+
