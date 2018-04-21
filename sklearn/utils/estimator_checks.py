@@ -72,7 +72,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-<<<<<<< HEAD
+
 ALLOW_NAN = ['QuantileTransformer', 'Imputer', 'SimpleImputer', 'MICEImputer']
 SKIP_DTYPE_CONVERSION_CHECK = [
              'AdditiveChi2Sampler', 'Binarizer', 'Birch',
