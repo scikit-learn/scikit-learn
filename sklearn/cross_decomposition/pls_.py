@@ -248,9 +248,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=FLOAT_DTYPES, copy=self.copy,
+        X = check_array(X, dtype=np.float64, copy=self.copy,
                         ensure_min_samples=2)
-        Y = check_array(Y, dtype=FLOAT_DTYPES, copy=self.copy, ensure_2d=False)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -394,14 +394,14 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=copy, dtype=np.float64)
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
+            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=np.float64)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self.y_mean_
@@ -429,7 +429,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         be an issue in high dimensional space.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=copy, dtype=np.float64)
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_
@@ -801,9 +801,9 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=FLOAT_DTYPES, copy=self.copy,
+        X = check_array(X, dtype=np.float64, copy=self.copy,
                         ensure_min_samples=2)
-        Y = check_array(Y, dtype=FLOAT_DTYPES, copy=self.copy, ensure_2d=False)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -850,7 +850,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             n_targets is the number of response variables.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
