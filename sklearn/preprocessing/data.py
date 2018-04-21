@@ -343,8 +343,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
-        data_min = np.min(X, axis=0)
-        data_max = np.max(X, axis=0)
+        data_min = np.nanmin(X, axis=0)
+        data_max = np.nanmax(X, axis=0)
 
         # First pass
         if not hasattr(self, 'n_samples_seen_'):
@@ -374,7 +374,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES, force_all_finite="allow-nan")
 
         X *= self.scale_
         X += self.min_
@@ -390,7 +390,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES, force_all_finite="allow-nan")
 
         X -= self.min_
         X /= self.scale_
