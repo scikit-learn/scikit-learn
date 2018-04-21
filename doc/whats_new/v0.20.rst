@@ -81,6 +81,9 @@ Preprocessing
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
   :user:`Maniteja Nandana <maniteja123>`.
 
+- :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
+  :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
   back to the original space via an inverse transform. :issue:`9041` by

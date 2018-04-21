@@ -13,7 +13,8 @@ iris = load_iris()
 
 @pytest.mark.parametrize(
     "est",
-    [MinMaxScaler()]
+    [MinMaxScaler(),
+     QuantileTransformer(n_quantiles=10, random_state=42)]
 )
 def test_missing_value_handling(est):
     # check that the preprocessing method let pass nan
