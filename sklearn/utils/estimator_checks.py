@@ -80,7 +80,7 @@ SKIP_DTYPE_CONVERSION_CHECK = [
              'GaussianRandomProjection', 'Isomap', 'LatentDirichletAllocation',
              'LinearDiscriminantAnalysis', 'LocallyLinearEmbedding',
              'MiniBatchDictionaryLearning', 'MiniBatchSparsePCA', 'NMF',
-             'RBFSampler', 
+             'PLSCanonical', 'PLSRegression', 'PLSSVD', 'RBFSampler', 
              'RandomizedLasso', 'RandomizedLogisticRegression', 'SelectFdr',
              'SelectFpr', 'SelectFwe', 'SelectKBest', 'SkewedChi2Sampler',
              'SparsePCA', 'SparseRandomProjection', 'VarianceThreshold',
