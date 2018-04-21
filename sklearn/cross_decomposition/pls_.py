@@ -248,7 +248,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=FLOAT_DTYPES, copy=self.copy)
+        X = check_array(X, dtype=FLOAT_DTYPES, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=FLOAT_DTYPES, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -800,7 +801,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=FLOAT_DTYPES, copy=self.copy)
+        X = check_array(X, dtype=FLOAT_DTYPES, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=FLOAT_DTYPES, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
