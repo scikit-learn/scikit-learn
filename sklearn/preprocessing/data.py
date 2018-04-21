@@ -340,7 +340,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
                             "You may consider to use MaxAbsScaler instead.")
 
         X = check_array(X, copy=self.copy, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow_nan')
 
         data_min = np.min(X, axis=0)
         data_max = np.max(X, axis=0)
