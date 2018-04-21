@@ -94,6 +94,9 @@ Preprocessing
   other features in a round-robin fashion. :issue:`8478` by 
   :user:`Sergey Feldman <sergeyf>`.
 
+- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values. :issue:`10404` 
+  by :user:`Lucija Gregov <LucijaGregov>`. 
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding

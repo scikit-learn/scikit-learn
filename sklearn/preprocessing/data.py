@@ -276,6 +276,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -340,10 +343,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
                             "You may consider to use MaxAbsScaler instead.")
 
         X = check_array(X, copy=self.copy, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite="allow-nan")
 
-        data_min = np.min(X, axis=0)
-        data_max = np.max(X, axis=0)
+        data_min = np.nanmin(X, axis=0)
+        data_max = np.nanmax(X, axis=0)
 
         # First pass
         if not hasattr(self, 'n_samples_seen_'):
@@ -373,7 +377,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
+                        force_all_finite="allow-nan")
 
         X *= self.scale_
         X += self.min_
@@ -389,7 +394,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
+                        force_all_finite="allow-nan")
 
         X -= self.min_
         X /= self.scale_

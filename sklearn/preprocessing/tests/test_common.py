@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
@@ -12,7 +13,8 @@ iris = load_iris()
 
 @pytest.mark.parametrize(
     "est",
-    [QuantileTransformer(n_quantiles=10, random_state=42)]
+    [MinMaxScaler(),
+     QuantileTransformer(n_quantiles=10, random_state=42)]
 )
 def test_missing_value_handling(est):
     # check that the preprocessing method let pass nan
