@@ -95,7 +95,7 @@ Preprocessing
   :user:`Sergey Feldman <sergeyf>`.
 
 - Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values. :issue:`10404` 
-  by :user:`Lucija Gregov <LucijaGregov>` 
+  by :user:`Lucija Gregov <LucijaGregov>`. 
 
 Model evaluation
 
