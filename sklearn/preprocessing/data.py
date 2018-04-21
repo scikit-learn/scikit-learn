@@ -25,7 +25,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import _argmax
+from ..utils.fixes import _argmax, nanpercentile
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -2194,6 +2194,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -2234,7 +2237,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(np.percentile(col, references))
+            self.quantiles_.append(nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2279,8 +2282,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(
-                    np.percentile(column_data, references))
+                self.quantiles_.append(nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2349,30 +2351,36 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             #  for inverse transform, match a uniform PDF
             X_col = output_distribution.cdf(X_col)
         # find index for lower and higher bounds
-        lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
-                            lower_bound_x)
-        upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
-                            upper_bound_x)
+        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+            lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
+                                lower_bound_x)
+            upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
+                                upper_bound_x)
 
+        isfinite_mask = ~np.isnan(X_col)
+        X_col_finite = X_col[isfinite_mask]
         if not inverse:
             # Interpolate in one direction and in the other and take the
             # mean. This is in case of repeated values in the features
             # and hence repeated quantiles
             #
             # If we don't do this, only one extreme of the duplicated is
-            # used (the upper when we do assending, and the
+            # used (the upper when we do ascending, and the
             # lower for descending). We take the mean of these two
-            X_col = .5 * (np.interp(X_col, quantiles, self.references_)
-                          - np.interp(-X_col, -quantiles[::-1],
-                                      -self.references_[::-1]))
+            X_col[isfinite_mask] = .5 * (
+                np.interp(X_col_finite, quantiles, self.references_)
+                - np.interp(-X_col_finite, -quantiles[::-1],
+                            -self.references_[::-1]))
         else:
-            X_col = np.interp(X_col, self.references_, quantiles)
+            X_col[isfinite_mask] = np.interp(X_col_finite,
+                                             self.references_, quantiles)
 
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
         # for forward transform, match the output PDF
         if not inverse:
-            X_col = output_distribution.ppf(X_col)
+            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+                X_col = output_distribution.ppf(X_col)
             # find the value to clip the data to avoid mapping to
             # infinity. Clip such that the inverse transform will be
             # consistent
@@ -2387,13 +2395,15 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
         X = check_array(X, accept_sparse='csc', copy=self.copy,
-                        dtype=[np.float64, np.float32])
+                        dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
-        if (not accept_sparse_negative and not self.ignore_implicit_zeros and
-                (sparse.issparse(X) and np.any(X.data < 0))):
-            raise ValueError('QuantileTransformer only accepts non-negative'
-                             ' sparse matrices.')
+        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+            if (not accept_sparse_negative and not self.ignore_implicit_zeros
+                    and (sparse.issparse(X) and np.any(X.data < 0))):
+                raise ValueError('QuantileTransformer only accepts'
+                                 ' non-negative sparse matrices.')
 
         # check the output PDF
         if self.output_distribution not in ('normal', 'uniform'):
@@ -2582,6 +2592,9 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
