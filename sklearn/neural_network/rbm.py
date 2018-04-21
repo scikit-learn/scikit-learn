@@ -22,7 +22,7 @@ from ..utils import gen_even_slices
 from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -121,7 +121,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "components_")
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -233,7 +233,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -304,7 +304,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "components_")
 
-        v = check_array(X, accept_sparse='csr')
+        v = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
@@ -334,7 +334,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
