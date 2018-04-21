@@ -73,7 +73,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 <<<<<<< HEAD
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer']
+ALLOW_NAN = ['QuantileTransformer', 'Imputer', 'SimpleImputer', 'MICEImputer']
 SKIP_DTYPE_CONVERSION_CHECK = [
              'AdditiveChi2Sampler', 'Binarizer', 'Birch',
              'CCA', 'DictionaryLearning', 'FactorAnalysis', 'FastICA',
@@ -86,10 +86,6 @@ SKIP_DTYPE_CONVERSION_CHECK = [
              'SelectFpr', 'SelectFwe', 'SelectKBest', 'SkewedChi2Sampler',
              'SparsePCA', 'SparseRandomProjection', 'VarianceThreshold',
              'BadTransformerWithoutMixin']
-=======
-
-ALLOW_NAN = ['QuantileTransformer', 'Imputer', 'SimpleImputer', 'MICEImputer']
->>>>>>> c3548a8e295a793c5400b54431d3f65864850b6e
 
 
 def _yield_non_meta_checks(name, estimator):
