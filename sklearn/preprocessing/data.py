@@ -273,7 +273,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     See also
     --------
     minmax_scale: Equivalent function without the estimator API.
-    
+
     Notes
     -----
 
@@ -378,7 +378,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES, 
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
         X *= self.scale_
@@ -395,7 +395,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES, 
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
         X -= self.min_
