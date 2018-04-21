@@ -273,9 +273,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     See also
     --------
     minmax_scale: Equivalent function without the estimator API.
-
+    
     Notes
     -----
+
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
