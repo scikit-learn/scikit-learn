@@ -2395,7 +2395,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
         X = check_array(X, accept_sparse='csc', copy=self.copy,
-                        dtype=[np.float64, np.float32],
+                        dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
