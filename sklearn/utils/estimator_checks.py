@@ -74,13 +74,13 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer']
 SKIP_DTYPE_CONVERSION_CHECK = [
-             'AdditiveChi2Sampler', 'BernoulliRBM', 'Binarizer', 'Birch',
+             'AdditiveChi2Sampler', 'Binarizer', 'Birch',
              'CCA', 'DictionaryLearning', 'FactorAnalysis', 'FastICA',
              'FeatureAgglomeration', 'FunctionTransformer',
              'GaussianRandomProjection', 'Isomap', 'LatentDirichletAllocation',
              'LinearDiscriminantAnalysis', 'LocallyLinearEmbedding',
              'MiniBatchDictionaryLearning', 'MiniBatchSparsePCA', 'NMF',
-             'RBFSampler',
+             'RBFSampler', 
              'RandomizedLasso', 'RandomizedLogisticRegression', 'SelectFdr',
              'SelectFpr', 'SelectFwe', 'SelectKBest', 'SkewedChi2Sampler',
              'SparsePCA', 'SparseRandomProjection', 'VarianceThreshold',
