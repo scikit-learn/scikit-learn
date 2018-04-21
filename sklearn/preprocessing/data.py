@@ -276,7 +276,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
 
