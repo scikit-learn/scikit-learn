@@ -73,6 +73,18 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer']
+SKIP_DTYPE_CONVERSION_CHECK = [
+             'AdditiveChi2Sampler', 'BernoulliRBM', 'Binarizer', 'Birch',
+             'CCA', 'DictionaryLearning', 'FactorAnalysis', 'FastICA',
+             'FeatureAgglomeration', 'FunctionTransformer',
+             'GaussianRandomProjection', 'Isomap', 'LatentDirichletAllocation',
+             'LinearDiscriminantAnalysis', 'LocallyLinearEmbedding',
+             'MiniBatchDictionaryLearning', 'MiniBatchSparsePCA', 'NMF',
+             'PLSCanonical', 'PLSRegression', 'PLSSVD', 'RBFSampler',
+             'RandomizedLasso', 'RandomizedLogisticRegression', 'SelectFdr',
+             'SelectFpr', 'SelectFwe', 'SelectKBest', 'SkewedChi2Sampler',
+             'SparsePCA', 'SparseRandomProjection', 'VarianceThreshold']
+
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
@@ -988,7 +1000,10 @@ def check_estimators_dtypes(name, estimator_orig):
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
-    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+    for X_train, dtype_out in [(X_train_32, np.float32),
+                               (X_train_64, np.float64),
+                               (X_train_int_64, np.float64),
+                               (X_train_int_32, np.float64)]:
         if name == 'PowerTransformer':
             # Box-Cox requires positive, non-zero data
             X_train = np.abs(X_train) + 1
@@ -998,7 +1013,16 @@ def check_estimators_dtypes(name, estimator_orig):
 
         for method in methods:
             if hasattr(estimator, method):
-                getattr(estimator, method)(X_train)
+                if (hasattr(estimator, 'transform') and
+                        method in ['transform', 'fit_transform']):
+                    X_tr = getattr(estimator, method)(X_train)
+
+                    if name not in SKIP_DTYPE_CONVERSION_CHECK:
+                        assert X_tr.dtype == dtype_out, \
+                            ('{}: transform dtype={} - expected dtype={}'
+                             .format(name, X_tr.dtype, dtype_out))
+                else:
+                    getattr(estimator, method)(X_train)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
