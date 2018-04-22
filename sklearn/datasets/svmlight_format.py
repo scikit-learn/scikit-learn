@@ -31,7 +31,7 @@ from ..utils import check_array, IS_PYPY
 if not IS_PYPY:
     from ._svmlight_format import _load_svmlight_file
 else:
-    from ._svmlight_format import _load_svmlight_file_pypy as _load_svmlight_file   # noqa
+    from ._svmlight_format_pypy import _load_svmlight_file
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
