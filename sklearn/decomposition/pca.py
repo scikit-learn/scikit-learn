@@ -243,7 +243,7 @@ class PCA(_BasePCA):
         from Tipping and Bishop 1999. See "Pattern Recognition and
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
-        computed the estimated data covariance and score samples.
+        compute the estimated data covariance and score samples.
 
         Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
@@ -326,7 +326,7 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
+            Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored

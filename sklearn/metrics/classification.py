@@ -499,7 +499,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     ----------
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
-       <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
+       <https://doi.org/10.1093/bioinformatics/16.5.412>`_
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_

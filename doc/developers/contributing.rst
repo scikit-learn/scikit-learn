@@ -34,15 +34,6 @@ See :ref:`new_contributors` to get started.
 
 |
 
-Submitting a bug report
-=======================
-
-In case you experience issues using this package, do not hesitate to submit a
-ticket to the
-`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
-also welcome to post feature requests or pull requests.
-
-
 Ways to contribute
 ==================
 
@@ -59,14 +50,73 @@ investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuable contributions that decrease the burden on the
 project maintainers.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs up"
-on issues that others reported and that are relevant to you.
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
+Another way to contribute is to report issues you're facing, and give a "thumbs
+up" on issues that others reported and that are relevant to you.  It also helps
+us if you spread the word: reference the project from your blog and articles,
+link to it from your website, or simply say "I use it":
 
 .. raw:: html
 
    <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
+Submitting a bug report or a feature request
+============================================
+
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
+   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
+
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   `new algorithm requirements
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
+
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
+   :ref:`filing_bugs`.
+
+.. _filing_bugs:
+
+How to make a good bug report
+-----------------------------
+
+When you submit an issue to `Github
+<https://github.com/scikit-learn/scikit-learn/issues>`_, please do your best to
+follow these guidelines! This will make it a lot easier to provide you with good
+feedback:
+
+- The ideal bug report contains a **short reproducible code snippet**, this way
+  anyone can try to reproduce the bug easily (see `this
+  <http://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
+  longer than around 50 lines, please link to a `gist
+  <https://gist.github.com>`_ or a github repo.
+
+- If not feasible to include a reproducible snippet, please be specific about
+  what **estimators and/or functions are involved and the shape of the data**.
+
+- If an exception is raised, please **provide the full traceback**.
+
+- Please include your **operating system type and version number**, as well as
+  your **Python, scikit-learn, numpy, and scipy versions**. This information
+  can be found by running the following code snippet::
+
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
+
+- Please ensure all **code snippets and error messages are formatted in
+  appropriate code blocks**.  See `Creating and highlighting code blocks
+  <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
+  for more details.
 
 
 .. _git_repo:
@@ -331,47 +381,6 @@ and Cython optimizations.
      [doc build]            Docs built including example gallery plots
      ====================== ===================
 
-.. _filing_bugs:
-
-Filing Bugs
------------
-
-We use GitHub issues to track all bugs and feature requests; feel free to
-open an issue if you have found a bug or wish to see a feature implemented.
-
-It is recommended to check that your issue complies with the
-following rules before submitting:
-
--  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
-   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
-
--  If you are submitting an algorithm or feature request, please verify that
-   the algorithm fulfills our
-   `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
-
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See `Creating and highlighting code blocks
-   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
-
--  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by running the following code snippet::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
-
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
-   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
-   please provide the traceback.
-
 .. _new_contributors:
 
 Issues for New Contributors
@@ -451,7 +460,9 @@ while. To save some time, you can use:
       matching ``your_regex_goes_here`` will be run. This is particularly
       useful if you are modifying a few examples.
 
-That should create all the documentation in the ``_build/html/stable`` directory.
+That should create all the documentation in the ``_build/html/stable``
+directory.  Set the environment variable `NO_MATHJAX=1` if you intend to view
+the documentation in an offline setting.
 
 To build the PDF manual, run::
 

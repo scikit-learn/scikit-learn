@@ -817,7 +817,7 @@ stored components::
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
-      A. Cichocki, P. Anh-Huy, 2009
+      A. Cichocki, A. Phan, 2009
 
     .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
       <https://arxiv.org/pdf/1010.1763.pdf>`_
