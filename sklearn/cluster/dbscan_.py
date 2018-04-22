@@ -14,6 +14,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
+from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -111,7 +112,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
 
-    X = check_array(X, accept_sparse='csr')
+    X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
     if sample_weight is not None:
         sample_weight = np.asarray(sample_weight)
         check_consistent_length(X, sample_weight)
@@ -279,7 +280,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         clust = dbscan(X, sample_weight=sample_weight,
                        **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
