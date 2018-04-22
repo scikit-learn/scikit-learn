@@ -414,6 +414,8 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Model evaluation and meta-estimators
+
 - Add improved error message in :func:`model_selection.cross_val_score` when
   multiple metrics are passed in ``scoring`` keyword.
   :issue:`11006` by :user:`Ming Li <minggli>`.
