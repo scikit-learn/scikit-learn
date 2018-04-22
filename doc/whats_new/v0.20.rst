@@ -91,11 +91,11 @@ Preprocessing
 
 - Added :class:`MICEImputer`, which is a strategy for imputing missing
   values by modeling each feature with missing values as a function of
-  other features in a round-robin fashion. :issue:`8478` by 
+  other features in a round-robin fashion. :issue:`8478` by
   :user:`Sergey Feldman <sergeyf>`.
 
-- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values. :issue:`10404` 
-  by :user:`Lucija Gregov <LucijaGregov>`. 
+- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values. :issue:`10404`
+  by :user:`Lucija Gregov <LucijaGregov>`.
 
 Model evaluation
 
@@ -413,6 +413,12 @@ Preprocessing
 - Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
+
+Model evaluation and meta-estimators
+
+- Add improved error message in :func:`model_selection.cross_val_score` when
+  multiple metrics are passed in ``scoring`` keyword.
+  :issue:`11006` by :user:`Ming Li <minggli>`.
 
 Datasets
 
