@@ -1621,13 +1621,14 @@ Then the DB index is defined as:
 .. math::
    DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
 
+A lower index value is indicative of a better clustering partition.
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis as follows:
 
   >>> from sklearn import datasets
   >>> iris = datasets.load_iris()
   >>> X = iris.data
-
-In normal usage, the Davies-Bouldin index is applied to the results of a
-cluster analysis.
 
   >>> from sklearn.cluster import KMeans
   >>> from sklearn.metrics import davies_bouldin_index
@@ -1641,9 +1642,6 @@ Advantages
 ~~~~~~~~~~
 
 - The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-
-- Contrary to Calinsky-Harabaz, Davies-Bouldin is bounded to values between 0
-  and 1.
 
 - The index is computed only quantities and features inherent to the dataset.
 
@@ -1660,20 +1658,20 @@ Drawbacks
 
 .. topic:: References
 
-* Davies, David L.; Bouldin, Donald W. (1979).
-  "A Cluster Separation Measure"
-  IEEE Transactions on Pattern Analysis and Machine Intelligence.
-  PAMI-1 (2): 224-227.
-  `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+ * Davies, David L.; Bouldin, Donald W. (1979).
+   "A Cluster Separation Measure"
+   IEEE Transactions on Pattern Analysis and Machine Intelligence.
+   PAMI-1 (2): 224-227.
+   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
 
-* Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
-  "On Clustering Validation Techniques"
-  Journal of Intelligent Information Systems, 17(2-3), 107-145.
-  `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+ * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
+   "On Clustering Validation Techniques"
+   Journal of Intelligent Information Systems, 17(2-3), 107-145.
+   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
 
-* `Wikipedia entry for Davies-Bouldin index
-  <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
-  
+ * `Wikipedia entry for Davies-Bouldin index
+   <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
+
 
 .. _contingency_matrix:
 
