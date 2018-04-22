@@ -204,10 +204,6 @@ Model evaluation and meta-estimators
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
 
-- Add improved error message in :func:`model_selection.cross_val_score` when
-  multiple metrics are passed in ``scoring`` keyword.
-  :issue:`11006` by :user:`Ming Li <minggli>`.
-
 Decomposition and manifold learning
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
@@ -417,6 +413,10 @@ Preprocessing
 - Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
+
+- Add improved error message in :func:`model_selection.cross_val_score` when
+  multiple metrics are passed in ``scoring`` keyword.
+  :issue:`11006` by :user:`Ming Li <minggli>`.
 
 Datasets
 
