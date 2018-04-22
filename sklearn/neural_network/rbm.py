@@ -304,7 +304,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "components_")
 
-        v = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        v = check_array(X, accept_sparse='csr')
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.

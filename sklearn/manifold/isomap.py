@@ -8,6 +8,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import check_array
 from ..utils.graph import graph_shortest_path
+from ..utils.validation import FLOAT_DTYPES
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
@@ -100,7 +101,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
@@ -203,7 +204,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to self.training_data_

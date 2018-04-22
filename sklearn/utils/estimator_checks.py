@@ -75,10 +75,10 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 
 ALLOW_NAN = ['QuantileTransformer', 'Imputer', 'SimpleImputer', 'MICEImputer']
 SKIP_DTYPE_CONVERSION_CHECK = [
-             'AdditiveChi2Sampler', 'Binarizer', 'Birch',
+             'AdditiveChi2Sampler', 'BernoulliRBM', 'Binarizer', 'Birch',
              'CCA', 'DictionaryLearning', 'FactorAnalysis', 'FastICA',
              'FeatureAgglomeration', 'FunctionTransformer',
-             'GaussianRandomProjection', 'Isomap', 'LatentDirichletAllocation',
+             'GaussianRandomProjection', 'LatentDirichletAllocation',
              'LinearDiscriminantAnalysis', 'LocallyLinearEmbedding',
              'MiniBatchDictionaryLearning', 'MiniBatchSparsePCA', 'NMF',
              'PLSCanonical', 'PLSRegression', 'PLSSVD', 'RBFSampler', 
