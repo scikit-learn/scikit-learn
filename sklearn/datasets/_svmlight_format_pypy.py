@@ -8,14 +8,15 @@
 import array
 
 import numpy as np
-import scipy.sparse as sp
+from ..externals import six
 
 COMMA = u','.encode('ascii')
 COLON = u':'.encode('ascii')
 
+
 def _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
                         offset, length):
-    qid_prefix = b('qid')
+    qid_prefix = six.b('qid')
     offset_max = offset + length if length > 0 else -1
 
     # Special-case float32 but use float64 for everything else;
