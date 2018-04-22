@@ -86,8 +86,6 @@ Here is an example snippet::
      [13.  6.]]
 
 
-
-
 .. _knnimpute:
 
 Nearest neighbors imputation
@@ -99,6 +97,7 @@ are imputed using values from ``n_neighbors`` nearest neighbors found in the
 training set. Note that if a sample has more than one feature missing, then
 the sample can potentially have multiple sets of ``n_neighbors``
 donors depending on the particular feature being imputed.
+
 Each missing feature is then imputed as the average, either weighted or
 unweighted, of these neighbors. Where the number of donor neighbors is less
 than ``n_neighbors``, the training set average for that feature is used
@@ -128,6 +127,10 @@ neighbors of the rows that contain the missing values::
 Any one of :class:`SimpleImputer`, :class:`MICEImputer`, and
 :class:`KNNImputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation.
+=======
+:class:`SimpleImputer`, :class:`MICEImputer`, and :class:`KNNImputer` can be 
+used in a Pipelineas a way to build a composite estimator that supports imputation.
+>>>>>>> 95f15ffd38f9908ac20cfffb3e6087f9beeb7e8b
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. [#] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
