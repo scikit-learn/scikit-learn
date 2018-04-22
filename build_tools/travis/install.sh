@@ -20,8 +20,7 @@ ls $HOME/.cache/pip
 if [[ "$DISTRIB" == "pypy" ]]; then
     ls ~/virtualenv/
     pip install numpy Cython Tempita
-    # use scipy 1.1 when it's released
-    pip install -vv git+https://github.com/scipy/scipy.git@b3162e187174fa0b1462f7b243c483285b38f45e
+    pip install -vv scipy==1.1.0rc1
     pip install -e .
 else 
     echo "skip non PyPy builds for now"
