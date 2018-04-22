@@ -14,7 +14,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..exceptions import NotFittedError, ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
@@ -449,7 +449,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         return self._fit(X)
 
     def _fit(self, X):
-        X = check_array(X, accept_sparse='csr', copy=self.copy)
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csr', copy=self.copy)
         threshold = self.threshold
         branching_factor = self.branching_factor
 
@@ -568,7 +568,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         labels : ndarray, shape(n_samples)
             Labelled data.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csr')
         self._check_fit(X)
         reduced_distance = safe_sparse_dot(X, self.subcluster_centers_.T)
         reduced_distance *= -2

@@ -20,7 +20,7 @@ from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -254,8 +254,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     """
     if check_input:
         if algorithm == 'lasso_cd':
-            dictionary = check_array(dictionary, order='C', dtype='float64')
-            X = check_array(X, order='C', dtype='float64')
+            dictionary = check_array(dictionary, order='C', dtype=FLOAT_DTYPES)
+            X = check_array(X, order='C', dtype=FLOAT_DTYPES)
         else:
             dictionary = check_array(dictionary)
             X = check_array(X)
@@ -707,9 +707,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     else:
         X_train = X
 
-    dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
+    dictionary = check_array(dictionary.T, order='F', dtype=FLOAT_DTYPES,
                              copy=False)
-    X_train = check_array(X_train, order='C', dtype=np.float64, copy=False)
+    X_train = check_array(X_train, order='C', dtype=FLOAT_DTYPES, copy=False)
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)

@@ -8,7 +8,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -233,7 +233,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        X = check_array(X, accept_sparse='csr', copy=self.copy_X,
+                        dtype=FLOAT_DTYPES)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)

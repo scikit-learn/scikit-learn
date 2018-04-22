@@ -41,7 +41,7 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
+from .utils.validation import check_array, check_is_fitted, FLOAT_DTYPES
 from .exceptions import DataDimensionalityWarning
 
 
@@ -345,7 +345,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self
 
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse=['csr', 'csc'])
 
         n_samples, n_features = X.shape
 
@@ -406,7 +406,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         X_new : numpy array or scipy sparse of shape [n_samples, n_components]
             Projected array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse=['csr', 'csc'])
 
         check_is_fitted(self, 'components_')
 

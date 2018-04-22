@@ -9,7 +9,7 @@ import numpy as np
 
 from ..base import TransformerMixin
 from ..utils import check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from scipy.sparse import issparse
 
 ###############################################################################
@@ -41,7 +41,7 @@ class AgglomerationTransform(TransformerMixin):
         check_is_fitted(self, "labels_")
 
         pooling_func = self.pooling_func
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
                              "during fitting.")

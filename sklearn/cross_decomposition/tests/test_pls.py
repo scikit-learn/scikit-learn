@@ -1,3 +1,4 @@
+
 import numpy as np
 from numpy.testing import assert_approx_equal
 
@@ -9,7 +10,6 @@ from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
-
 
 def test_pls():
     d = load_linnerud()
@@ -400,3 +400,33 @@ def test_pls_scaling():
     score_scaled = pls.score(X_scaled, Y)
 
     assert_approx_equal(score, score_scaled)
+
+
+# def test_transformer_xxx():
+#     transformer_orig = pls_.PLSCanonical()
+#
+#     X = np.array([[0., 0., 1.],
+#                   [1., 0., 0.],
+#                   [2., 2., 2.],
+#                   [3., 5., 4.]])
+#     Y = np.array([[0.1, -0.2],
+#                   [0.9, 1.1],
+#                   [6.2, 5.9],
+#                   [11.9, 12.3]])
+#
+#     if isinstance(X, np.ndarray):
+#         for dtype in [np.float32, np.float64]:
+#             X_cast = X.astype(dtype)
+#
+#             transformer = clone(transformer_orig)
+#             set_random_state(transformer)
+#
+#             if hasattr(transformer, 'fit_transform'):
+#                 X_trans = transformer.fit_transform(X_cast, Y)
+#             elif hasattr(transformer, 'fit_transform'):
+#                 transformer.fit(X_cast, Y)
+#                 X_trans = transformer.transform(X_cast)
+#
+#             # FIXME: should we check that the dtype of some attributes are the
+#             # same than dtype.
+#             assert X_trans.dtype == X_cast.dtype, 'transform dtype: {} - original dtype: {}'.format(X_trans.dtype, X_cast.dtype)

@@ -20,7 +20,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
 from ..utils.fixes import logsumexp
-from ..utils.validation import check_non_negative
+from ..utils.validation import check_non_negative, FLOAT_DTYPES
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
@@ -461,7 +461,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X :  array-like or sparse matrix
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csr')
         check_non_negative(X, whom)
         return X
 

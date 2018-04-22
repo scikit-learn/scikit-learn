@@ -12,8 +12,7 @@ from scipy.sparse.linalg import eigsh
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
 
 
@@ -639,7 +638,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X, dtype=float)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
@@ -702,7 +701,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "nbrs_")
 
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
         weights = barycenter_weights(X, self.nbrs_._fit_X[ind],

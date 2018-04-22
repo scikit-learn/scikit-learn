@@ -91,7 +91,9 @@ def _class_means(X, y):
     for group in classes:
         Xg = X[y == group, :]
         means.append(Xg.mean(0))
-    return np.asarray(means)
+    return np.asarray(means, dtype=X.dtype if X.dtype in FLOAT_DTYPES
+                      else FLOAT_DTYPES[0]
+                      )
 
 
 def _class_cov(X, y, priors=None, shrinkage=None):
@@ -290,6 +292,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
            0-471-05669-3.
         """
         self.means_ = _class_means(X, y)
+        print(_class_means(X, y))
         self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
         self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T)) +
@@ -426,7 +429,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array, shape (n_samples,)
             Target values.
         """
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
+                         dtype=FLOAT_DTYPES)
         self.classes_ = unique_labels(y)
 
         if self.priors is None:  # estimate priors from sample
@@ -644,7 +648,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, dtype=FLOAT_DTYPES)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape

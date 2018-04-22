@@ -1054,7 +1054,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
-        X = self._check_array(X, self.copy)
+        X = self._check_array(X, self.copy, dtype=FLOAT_DTYPES)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
 
@@ -1084,7 +1084,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'center_')
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
-        X = self._check_array(X, self.copy)
+        X = self._check_array(X, self.copy, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1108,7 +1108,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'center_')
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
-        X = self._check_array(X, self.copy)
+        X = self._check_array(X, self.copy, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1329,7 +1329,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         -------
         self : instance
         """
-        n_samples, n_features = check_array(X, accept_sparse=True).shape
+        n_samples, n_features = check_array(X, dtype=FLOAT_DTYPES, accept_sparse=True).shape
         combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
@@ -1538,7 +1538,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         return self
 
     def transform(self, X, y='deprecated', copy=None):
@@ -1561,7 +1561,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
                           DeprecationWarning)
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 
@@ -1591,7 +1591,7 @@ def binarize(X, threshold=0.0, copy=True):
     Binarizer: Performs binarization using the ``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
-    X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
+    X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy, dtype=FLOAT_DTYPES)
     if sparse.issparse(X):
         if threshold < 0:
             raise ValueError('Cannot binarize a sparse matrix with threshold '
@@ -1663,7 +1663,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         return self
 
     def transform(self, X, y='deprecated', copy=None):
