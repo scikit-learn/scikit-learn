@@ -63,6 +63,14 @@ matrix:
        env: DISTRIB="scipy-dev-wheels"
        if: type = cron
 
+addons:
+  apt:
+    packages:
+    - libatlas-dev
+    - libatlas-base-dev
+    - liblapack-dev
+    - gfortran
+
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
 after_success: source build_tools/travis/after_success.sh
