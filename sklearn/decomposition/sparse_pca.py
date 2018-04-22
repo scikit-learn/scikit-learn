@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 
 from ..utils import check_random_state, check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -115,7 +115,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -168,7 +168,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'components_')
 
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         if ridge_alpha != 'deprecated':
             warnings.warn("The ridge_alpha parameter on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21. "
@@ -285,7 +285,7 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
