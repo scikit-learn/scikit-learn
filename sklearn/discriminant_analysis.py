@@ -22,7 +22,7 @@ from .linear_model.base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, FLOAT_DTYPES
 from .utils.multiclass import check_classification_targets
 from .preprocessing import StandardScaler
 
@@ -484,7 +484,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                                       "solver (use 'svd' or 'eigen').")
         check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
 
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
@@ -698,7 +698,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     def _decision_function(self, X):
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]
