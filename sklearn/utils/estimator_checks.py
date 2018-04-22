@@ -73,7 +73,8 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['QuantileTransformer', 'Imputer', 'SimpleImputer', 'MICEImputer']
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
+             'MinMaxScaler', 'QuantileTransformer']
 SKIP_DTYPE_CONVERSION_CHECK = [
              'AdditiveChi2Sampler', 'BernoulliRBM', 'Binarizer', 'Birch',
              'CCA', 'DictionaryLearning', 'FactorAnalysis', 'FastICA',
