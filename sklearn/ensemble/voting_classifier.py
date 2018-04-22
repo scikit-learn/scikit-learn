@@ -54,11 +54,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    verbose: int, optional
-        The verbosity level: if non zero, progress messages are printed.
-        Above 50, the output is sent to stdout. The frequency of the messages
-        increases with the verbosity level. If it more than 10, all ``fit``
-        calls are reported.
+    verbose : bool, optional (default=False)
+        Enable progress messages of ``fit`` calls.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -127,7 +124,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', verbose=0, weights=None,
+    def __init__(self, estimators, voting='hard', verbose=False, weights=None,
                  n_jobs=1, flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
@@ -199,7 +196,12 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         transformed_y = self.le_.transform(y)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        if not self.verbose:
+            verbose_int = 0
+        else:
+            verbose_int = 100
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=verbose_int)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf is not None)

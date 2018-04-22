@@ -446,12 +446,12 @@ def test_verbose(capfd):
 
     VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='soft', verbose=49).fit(X, y)
+        voting='soft', verbose=False).fit(X, y)
     out, err = capfd.readouterr()
-    assert out == '' and err != ''
+    assert out == err == ''
 
     VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='soft', verbose=51).fit(X, y)
+        voting='soft', verbose=True).fit(X, y)
     out, err = capfd.readouterr()
     assert out != '' and err == ''
