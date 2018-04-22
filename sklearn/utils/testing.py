@@ -46,7 +46,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.externals.funcsigs import signature
-from sklearn.utils import deprecated
+from sklearn.utils import deprecated, IS_PYPY
 
 additional_names_in_all = []
 try:
@@ -613,8 +613,10 @@ def all_estimators(include_meta_estimators=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if (".tests." in modname or '_svmlight_format' in modname
-                or 'feature_extraction._hashing' in modname):
+        if ".tests." in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
