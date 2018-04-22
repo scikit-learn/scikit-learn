@@ -19,6 +19,7 @@ ls $HOME/.cache/pip
 
 if [[ "$DISTRIB" == "pypy" ]]; then
     ls ~/virtualenv/
+    python -m pip install --upgrade pip
     pip install numpy Cython Tempita
     pip install -vv scipy==1.1.0rc1
     pip install -e .
