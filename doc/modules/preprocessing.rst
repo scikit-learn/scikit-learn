@@ -596,40 +596,6 @@ Imputation of missing values
 
 Tools for imputing missing values are discussed at :ref:`impute`.
 
-The :class:`KNNImputer` class provides imputation for completing missing
-values using the k-Nearest Neighbors approach. Each sample's missing values
-are imputed from up to ``max_neighbors`` nearest neighbors found in the
-training set. Each missing feature is then imputed as the average, either
-weighted or unweighted, of the neighbors who have a value for it.
-When any of the neighbors themselves have the feature value missing then
-the remaining neighbors are used. Where all neighbors have that feature value
-missing, the training set average for that feature is used.
-For more information on the methodology, see ref. [#]_.
-
-The following snippet demonstrates how to replace missing values,
-encoded as ``np.nan``, using the mean feature value of the two nearest
-neighbors of the rows that contain the missing values::
-
-    >>> import numpy as np
-    >>> from sklearn.impute import KNNImputer
-    >>> nan = np.nan
-    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
-    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
-    >>> imputer.fit_transform(X)
-    array([[1. , 2. , 4. ],
-           [3. , 4. , 3. ],
-           [5.5, 6. , 5. ],
-           [8. , 8. , 7. ]])
-
-
-:class:`KNNImputer` can also be used in a Pipeline as a way to build a
-composite estimator that supports imputation.
-See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
-
-.. [#] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
-    Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing value
-    estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17 no. 6, 2001
-    Pages 520-525.
 
 .. _polynomial_features:
 
