@@ -45,6 +45,10 @@ matrix:
            CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" PILLOW_VERSION="4.3.0"
            COVERAGE=true
            CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
+    - python: pypy2.7
+      env: DISTRIB="pypy" PYTHON_VERSION="3.5" COVERAGE=false
+    - python: pypy3.5
+      env: DISTRIB="pypy" PYTHON_VERSION="3.5" COVERAGE=false
       if: type != cron
     # flake8 linting on diff wrt common ancestor with upstream/master
     - env: RUN_FLAKE8="true" SKIP_TESTS="true"

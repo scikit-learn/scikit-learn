@@ -43,6 +43,8 @@ matrix:
 
 
 install:
+  # avoid unnecessary CI runs
+  - python -c 'print("stopping build!"); asssert false'
   # If there is a newer build queued for the same PR, cancel this one.
   # The AppVeyor 'rollout builds' option is supposed to serve the same
   # purpose but is problematic because it tends to cancel builds pushed
