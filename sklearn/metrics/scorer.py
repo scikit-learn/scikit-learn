@@ -300,6 +300,10 @@ def check_scoring(estimator, scoring=None, allow_none=False):
                 "If no scoring is specified, the estimator passed should "
                 "have a 'score' method. The estimator %r does not."
                 % estimator)
+    elif isinstance(scoring, (list, tuple, set, dict)):
+        raise ValueError("For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead. "
+                         "{0} was passed.".format(scoring))
     else:
         raise ValueError("scoring value should either be a callable, string or"
                          " None. %r was passed" % scoring)
