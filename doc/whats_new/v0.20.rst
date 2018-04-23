@@ -224,6 +224,12 @@ Linear, kernelized and related models
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
+Utils
+
+- Avoid copying the data in :func:`utils.check_array` when the input data is a
+  memmap (and ``copy=False``). :issue:`10663` by :user:`Arthur Mensch
+  <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
+
 Miscellaneous
 
 - Add ``filename`` attribute to datasets that have a CSV file.
@@ -541,3 +547,7 @@ Changes to estimator checks
 
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
   Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Add tests in :func:`estimator_checks.check_estimator` to check that an
+  estimator can handle read-only memmap input data. :issue:`10663` by
+  :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
