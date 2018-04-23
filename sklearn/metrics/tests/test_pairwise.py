@@ -56,7 +56,8 @@ def assert_sparse_pairwise_equals_dense(X_dense, Y_dense, pairwise_func):
     K1 = pairwise_func(Xcsr, Ycsr, dense_output=False)
     assert_true(issparse(K1))
 
-    K2 = pairwise_func(X_dense, Y_dense, dense_output=False)
+    K2 = pairwise_func(X_dense, Y_dense, dense_output=True)
+    assert not issparse(K2)
     assert_array_almost_equal(K1.todense(), K2)
 
     # return for other assertions if needed
