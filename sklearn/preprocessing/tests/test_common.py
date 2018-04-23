@@ -13,6 +13,11 @@ from sklearn.utils.testing import assert_allclose
 iris = load_iris()
 
 
+def _get_valid_samples_by_column(X, col):
+    """Get non NaN samples in column of X"""
+    return X[:, [col]][~np.isnan(X[:, col])]
+
+
 @pytest.mark.parametrize(
     "est",
     [MinMaxScaler(),
@@ -45,14 +50,14 @@ def test_missing_value_handling_dense(est):
 
     for i in range(X.shape[1]):
         # train only on non-NaN
-        est.fit(X_train[:, [i]][~np.isnan(X_train[:, i])])
+        est.fit(_get_valid_samples_by_column(X_train, i))
         # check transforming with NaN works even when training without NaN
         Xt_col = est.transform(X_test[:, [i]])
         assert_array_equal(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
             Xt_col_nonan = est.transform(
-                X_test[:, [i]][~np.isnan(X_test[:, i])])
+                _get_valid_samples_by_column(X_test, i))
             assert_array_equal(Xt_col_nonan,
                                Xt_col[~np.isnan(Xt_col.squeeze())])
 
@@ -62,11 +67,16 @@ def test_missing_value_handling_dense(est):
     [QuantileTransformer(n_quantiles=10, random_state=42)]
 )
 @pytest.mark.parametrize(
-    "func_sparse_format",
+    "sparse_constructor",
     [sparse.csr_matrix,
-     sparse.csc_matrix]
+     sparse.csc_matrix,
+     sparse.bsr_matrix,
+     sparse.coo_matrix,
+     sparse.dia_matrix,
+     sparse.dok_matrix,
+     sparse.lil_matrix]
 )
-def test_missing_value_handling_sparse(est, func_sparse_format):
+def test_missing_value_handling_sparse(est, sparse_constructor):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
@@ -81,8 +91,8 @@ def test_missing_value_handling_sparse(est, func_sparse_format):
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
     # convert the array to a sparse array
-    X_train_sparse = func_sparse_format(X_train)
-    X_test_sparse = func_sparse_format(X_test)
+    X_train_sparse = sparse_constructor(X_train)
+    X_test_sparse = sparse_constructor(X_test)
 
     Xt = est.fit(X_train_sparse).transform(X_test_sparse)
     # missing values should still be missing, and only them
@@ -97,17 +107,17 @@ def test_missing_value_handling_sparse(est, func_sparse_format):
 
     for i in range(X.shape[1]):
         # train only on non-NaN
-        col_train_sparse = func_sparse_format(
-            X_train[:, [i]][~np.isnan(X_train[:, i])])
+        col_train_sparse = sparse_constructor(
+            _get_valid_samples_by_column(X_train, i))
         est.fit(col_train_sparse)
         # check transforming with NaN works even when training without NaN
-        col_test_sparse = func_sparse_format(X_test[:, [i]])
+        col_test_sparse = sparse_constructor(X_test[:, [i]])
         Xt_col = est.transform(col_test_sparse)
         assert_array_equal(Xt_col.A, Xt.A[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
-            col_test_sparse = func_sparse_format(
-                X_test[:, [i]][~np.isnan(X_test[:, i])])
+            col_test_sparse = sparse_constructor(
+                _get_valid_samples_by_column(X_test, i))
             Xt_col_nonan = est.transform(col_test_sparse)
             assert_array_equal(Xt_col_nonan.A,
                                Xt_col.A[~np.isnan(Xt_col.A.squeeze())])
