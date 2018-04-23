@@ -1,6 +1,6 @@
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clauseimport warnings
+# License: BSD 3 clause
 
 import sys
 import warnings
@@ -740,16 +740,6 @@ def test_gaussian_mixture_verbose():
             h.fit(X)
         finally:
             sys.stdout = old_stdout
-
-
-def test_gaussian_mixture_n_iter():
-    # check that n_iter is the number of iteration performed.
-    rng = np.random.RandomState(0)
-    X = RandomData(rng).X['full']
-    max_iter = 1
-    gm = GaussianMixture(max_iter=max_iter)
-    gm.fit(X)
-    assert gm.n_iter_ == max_iter
 
 
 def test_warm_start():
