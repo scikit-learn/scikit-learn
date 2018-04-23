@@ -739,7 +739,6 @@ def linear_kernel(X, Y=None, dense_output=True):
         ``False``, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.20
-           parameter ``dense_output`` for dense output.
 
     Returns
     -------

@@ -44,6 +44,25 @@ from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
 
+def assert_sparse_pairwise_equals_dense(X_dense, Y_dense, pairwise_func):
+    """Helper function to assert the sparse output of a pairwise function
+    is elementally equivalent to the dense output of the same function.
+    The ``pairwise_func`` parameter must take as an argument the
+    "dense_output" arg.
+    """
+    Xcsr = csr_matrix(X_dense)
+    Ycsr = csr_matrix(Y_dense)
+
+    K1 = pairwise_func(Xcsr, Ycsr, dense_output=False)
+    assert_true(issparse(K1))
+
+    K2 = pairwise_func(X_dense, Y_dense, dense_output=False)
+    assert_array_almost_equal(K1.todense(), K2)
+
+    # return for other assertions if needed
+    return K2
+
+
 def test_pairwise_distances():
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
@@ -543,13 +562,9 @@ def test_linear_kernel():
 def test_linear_kernel_sparse_output():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
-    X_sparse = csr_matrix(X)
-    K = linear_kernel(X_sparse, X_sparse, dense_output=False)
-    assert_true(issparse(K))  # output will be sparse
 
-    # assert the sparse array is equal elementally to the dense array
-    K_dense = linear_kernel(X, X, dense_output=True)
-    assert_array_almost_equal(K.toarray(), K_dense)
+    # assert the sparse output is equivalent to the dense output
+    assert_sparse_pairwise_equals_dense(X, X, linear_kernel)
 
 
 def test_rbf_kernel():
@@ -578,14 +593,10 @@ def test_cosine_similarity_sparse_output():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((3, 4))
-    Xcsr = csr_matrix(X)
-    Ycsr = csr_matrix(Y)
 
-    K1 = cosine_similarity(Xcsr, Ycsr, dense_output=False)
-    assert_true(issparse(K1))
-
-    K2 = pairwise_kernels(Xcsr, Y=Ycsr, metric="cosine")
-    assert_array_almost_equal(K1.todense(), K2)
+    K1 = assert_sparse_pairwise_equals_dense(X, Y, cosine_similarity)
+    K2 = pairwise_kernels(X, Y=Y, metric="cosine")
+    assert_array_almost_equal(K1, K2)
 
 
 def test_cosine_similarity():
