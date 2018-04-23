@@ -497,7 +497,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                                  "{}\n".format(array))
 
         # It is possible that the np.array(..) gave no warning. This happens
-        # when no dtype conversion happend, for example dtype = None. The
+        # when no dtype conversion happened, for example dtype = None. The
         # result is that np.array(..) produces an array of complex dtype
         # and we need to catch and raise exception for such cases.
         _ensure_no_complex_data(array)
