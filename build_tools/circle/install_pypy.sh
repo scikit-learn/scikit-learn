@@ -21,7 +21,7 @@ which python
 
 # run via python -m pip to be sure; creating a virtualenv fails with the PyPy2 container
 python -m pip install --upgrade pip
-python -m pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita
+python -m pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita pytest
 python -m pip install scipy==1.1.0rc1
 python -m pip install -e .
 
