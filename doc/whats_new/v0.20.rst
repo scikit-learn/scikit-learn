@@ -364,6 +364,11 @@ Decomposition, manifold learning and clustering
   by :user:`Jan Margeta <jmargeta>`, :user:`Guillaume Lemaitre <glemaitre>`,
   and :user:`Devansh D. <devanshdalal>`.
 
+- Fixed a bug in :class:`mixture.BaseMixture` where the reported `n_iter_` was
+  missing an iteration. It affected :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
+  Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
+
 Metrics
 
 - Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
