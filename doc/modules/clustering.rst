@@ -1621,7 +1621,8 @@ Then the DB index is defined as:
 .. math::
    DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
 
-A lower index value is indicative of a better clustering partition.
+Zero is the lowest possible score. Values closer to zero indicate a better
+partition.
 
 In normal usage, the Davies-Bouldin index is applied to the results of a
 cluster analysis as follows:
