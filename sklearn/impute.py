@@ -807,6 +807,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            The input data to complete.
+
+        Returns
+        -------
         Xt : array-like, shape (n_samples, n_features)
              The imputed input data.
         """

@@ -273,6 +273,9 @@ def test_imputation_copy():
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
 
+    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
+    # made, even if copy=False.
+
 
 def test_mice_rank_one():
     rng = np.random.RandomState(0)
@@ -624,5 +627,3 @@ def test_missing_indicator_error():
     indicator = clone(indicator).set_params(features="auto", sparse=sparse)
     err_msg = ("sparse can only boolean or 'auto' got {0}".format(sparse))
     assert_raises_regex(ValueError, err_msg, indicator.fit, X1)
-    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
-    # made, even if copy=False.
