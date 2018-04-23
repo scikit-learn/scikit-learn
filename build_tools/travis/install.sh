@@ -21,8 +21,8 @@ if [[ "$DISTRIB" == "pypy" ]]; then
     ls ~/virtualenv/
     python -m pip install --upgrade pip
     pip install numpy Cython Tempita
-    pip install -vv scipy==1.1.0rc1
-    pip install -e .
+    pip install -v scipy==1.1.0rc1
+    pip install -v -e .
 else 
     echo "skip non PyPy builds for now"
     exit 1
