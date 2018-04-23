@@ -4,7 +4,7 @@
 ENGLISH_STOP_WORDS = frozenset([
     "a", "about", "above", "across", "after", "afterwards", "again", "against",
     "all", "almost", "alone", "along", "already", "also", "although", "always",
-    "am", "among", "amongst", "amoungst", "amount", "an", "and", "another",
+    "am", "among", "amongst", "amongst", "amount", "an", "and", "another",
     "any", "anyhow", "anyone", "anything", "anyway", "anywhere", "are",
     "around", "as", "at", "back", "be", "became", "because", "become",
     "becomes", "becoming", "been", "before", "beforehand", "behind", "being",
