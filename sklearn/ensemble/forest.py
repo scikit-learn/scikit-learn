@@ -745,7 +745,7 @@ class RandomForestClassifier(ForestClassifier):
     """A random forest classifier.
 
     A random forest is a meta estimator that fits a number of decision tree
-    classifiers on various sub-samples of the dataset and use averaging to
+    classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original
     input sample size but the samples are drawn with replacement if
@@ -942,7 +942,7 @@ class RandomForestClassifier(ForestClassifier):
                 min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [ 0.17287856  0.80608704  0.01884792  0.00218648]
+    [0.17287856 0.80608704 0.01884792 0.00218648]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1019,7 +1019,7 @@ class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
 
     A random forest is a meta estimator that fits a number of classifying
-    decision trees on various sub-samples of the dataset and use averaging
+    decision trees on various sub-samples of the dataset and uses averaging
     to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original
     input sample size but the samples are drawn with replacement if
@@ -1182,7 +1182,7 @@ class RandomForestRegressor(ForestRegressor):
                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
-    [ 0.17339552  0.81594114  0.          0.01066333]
+    [0.17339552 0.81594114 0.         0.01066333]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-2.50699856]
 
@@ -1258,7 +1258,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     This class implements a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
-    of the dataset and use averaging to improve the predictive accuracy
+    of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
     Read more in the :ref:`User Guide <forest>`.
@@ -1502,7 +1502,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     This class implements a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
-    of the dataset and use averaging to improve the predictive accuracy
+    of the dataset and uses averaging to improve the predictive accuracy
     and control over-fitting.
 
     Read more in the :ref:`User Guide <forest>`.

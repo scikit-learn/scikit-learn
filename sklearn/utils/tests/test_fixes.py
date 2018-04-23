@@ -5,12 +5,17 @@
 
 import pickle
 
+import numpy as np
+import pytest
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.utils.fixes import divide
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import unique
+from sklearn.utils.fixes import nanpercentile
 
 
 def test_divide():
@@ -51,3 +56,14 @@ def test_unique():
     assert_array_equal(ind, [5, 1, 4, 0, 2])
     assert_array_equal(inv, [3, 1, 4, 4, 2, 0, 3])
     assert_array_equal(counts, [1, 1, 1, 2, 2])
+
+
+@pytest.mark.parametrize(
+    "a, q, expected_percentile",
+    [(np.array([1, 2, 3, np.nan]), [0, 50, 100], np.array([1., 2., 3.])),
+     (np.array([1, 2, 3, np.nan]), 50, 2.),
+     (np.array([np.nan, np.nan]), [0, 50], np.array([np.nan, np.nan]))]
+)
+def test_nanpercentile(a, q, expected_percentile):
+    percentile = nanpercentile(a, q)
+    assert_allclose(percentile, expected_percentile)

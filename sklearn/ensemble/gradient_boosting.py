@@ -1671,7 +1671,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -1701,7 +1701,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """

@@ -62,6 +62,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
 
+    # for python 3.4, conda does not have recent pytest packages
+    if [[ "$PYTHON_VERSION" == "3.4" ]]; then
+        pip install pytest==3.5
+    fi
+
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to use the numpy installed through apt-get

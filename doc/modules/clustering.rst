@@ -1496,7 +1496,7 @@ cluster analysis.
  * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
    Interpretation and Validation of Cluster Analysis". Computational
    and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <http://dx.doi.org/10.1016/0377-0427(87)90125-7>`_.
+   `doi:10.1016/0377-0427(87)90125-7 <https://doi.org/10.1016/0377-0427(87)90125-7>`_.
 
 
 Advantages
@@ -1527,9 +1527,9 @@ Calinski-Harabaz Index
 ----------------------
 
 If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) can be used to evaluate the
-model, where a higher Calinski-Harabaz score relates to a model with better
-defined clusters.
+(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+Ratio Criterion - can be used to evaluate the model, where a higher 
+Calinski-Harabaz score relates to a model with better defined clusters.
 
 For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
@@ -1589,7 +1589,7 @@ Drawbacks
 
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
-    `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+    `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
 
 .. _contingency_matrix:
 

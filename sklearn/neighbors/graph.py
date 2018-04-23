@@ -85,9 +85,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     >>> from sklearn.neighbors import kneighbors_graph
     >>> A = kneighbors_graph(X, 2, mode='connectivity', include_self=True)
     >>> A.toarray()
-    array([[ 1.,  0.,  1.],
-           [ 0.,  1.,  1.],
-           [ 1.,  0.,  1.]])
+    array([[1., 0., 1.],
+           [0., 1., 1.],
+           [1., 0., 1.]])
 
     See also
     --------
@@ -160,9 +160,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     >>> from sklearn.neighbors import radius_neighbors_graph
     >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity', include_self=True)
     >>> A.toarray()
-    array([[ 1.,  0.,  1.],
-           [ 0.,  1.,  0.],
-           [ 1.,  0.,  1.]])
+    array([[1., 0., 1.],
+           [0., 1., 0.],
+           [1., 0., 1.]])
 
     See also
     --------

@@ -242,13 +242,16 @@ class ParameterSampler(object):
             # look up sampled parameter settings in parameter grid
             param_grid = ParameterGrid(self.param_distributions)
             grid_size = len(param_grid)
+            n_iter = self.n_iter
 
-            if grid_size < self.n_iter:
-                raise ValueError(
-                    "The total space of parameters %d is smaller "
-                    "than n_iter=%d. For exhaustive searches, use "
-                    "GridSearchCV." % (grid_size, self.n_iter))
-            for i in sample_without_replacement(grid_size, self.n_iter,
+            if grid_size < n_iter:
+                warnings.warn(
+                    'The total space of parameters %d is smaller '
+                    'than n_iter=%d. Running %d iterations. For exhaustive '
+                    'searches, use GridSearchCV.'
+                    % (grid_size, self.n_iter, grid_size), UserWarning)
+                n_iter = grid_size
+            for i in sample_without_replacement(grid_size, n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
 
@@ -937,7 +940,7 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC()
+    >>> svc = svm.SVC(gamma="scale")
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -1381,7 +1384,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
+        A generator over parameter settings, constructed from
         param_distributions.
 
     """
