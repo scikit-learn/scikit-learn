@@ -2,7 +2,6 @@ import unittest
 import sys
 
 import numpy as np
-
 import scipy.sparse as sp
 
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -24,7 +23,8 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.validation import (check_X_y, check_array,
+                                      LARGE_SPARSE_SUPPORTED)
 
 
 class CorrectNotFittedError(ValueError):
@@ -161,6 +161,26 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class LargeSparseNotSetClassifier(BaseEstimator):
+    def fit(self, X, y):
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc", "coo"),
+                         accept_large_sparse=True,
+                         multi_output=True,
+                         y_numeric=True)
+        if sp.issparse(X):
+            if X.getformat() == "coo":
+                if X.col.dtype == "int64" or X.col.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+            elif X.getformat() in ["csc", "csr"]:
+                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+
+        return self
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -234,6 +254,15 @@ def test_check_estimator():
     finally:
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
+
+    # Large indices test on bad estimator
+    msg = ('Estimator LargeSparseNotSetClassifier doesn\'t seem to support '
+           r'\S{3}_64 matrix yet, also it has not been handled gracefully by '
+           'accept_large_sparse.')
+    # only supported by scipy version more than 0.14.0
+    if LARGE_SPARSE_SUPPORTED:
+        assert_raises_regex(AssertionError, msg, check_estimator,
+                            LargeSparseNotSetClassifier)
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
