@@ -172,6 +172,18 @@ def test_gaussian_mixture_attributes():
     assert_equal(gmm.n_init, n_init)
     assert_equal(gmm.init_params, init_params)
 
+def test_regression_10740():
+    # Regression test for #10740. Ensure that n_iter_ is the number of iterations done
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2)
+
+    n_components, tol, n_init, max_iter, reg_covar = 2, 1e-10, 3, 1, 1e-1
+    covariance_type, init_params = 'full', 'random'
+    gmm = GaussianMixture(n_components=n_components, tol=tol, n_init=n_init,
+                          max_iter=max_iter, reg_covar=reg_covar,
+                          covariance_type=covariance_type,
+                          init_params=init_params).fit(X)
+    assert_equal(gmm.n_iter_, max_iter)
 
 def test_check_X():
     from sklearn.mixture.base import _check_X
