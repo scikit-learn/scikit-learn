@@ -20,7 +20,8 @@ ls $HOME/.cache/pip
 if [[ "$DISTRIB" == "pypy" ]]; then
     ls ~/virtualenv/
     python -m pip install --upgrade pip
-    pip install numpy Cython Tempita
+    pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu \
+        numpy Cython Tempita
     pip install -v scipy==1.1.0rc1
     pip install -v -e .
 else 
