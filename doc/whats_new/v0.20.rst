@@ -158,6 +158,10 @@ Classifiers and regressors
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
 
+- Add `verbose` parameter in :class:`ensemble.VotingClassifier` to enable the
+  progress messages of ``fit`` calls.
+  :issue:`10360` by :user:`Martin Gubri <framartin>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
