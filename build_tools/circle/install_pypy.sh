@@ -6,20 +6,24 @@ set -e
 apt-get -yq update
 apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran
 
-# python executable is incorrect by default
-if command -v pypy3; then ln -s $(command -v pypy3) /usr/local/bin/python; fi
+pip install virtualenv
+
+# python executable in the PyPy container is incorrect
+# https://github.com/docker-library/pypy/issues/21
+if command -v pypy3; then
+    ln -s $(command -v pypy3) /usr/local/bin/python
+elif command -v pypy; then
+    ln -s $(command -v pypy) /usr/local/bin/python
+fi
 
 python --version
 which python
 
+# run via python -m pip to be sure; creating a virtualenv fails with the PyPy2 container
 python -m pip install --upgrade pip
-
-which pip
-
-
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita
-pip install scipy==1.1.0rc1
-pip install -e .
+python -m pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita
+python -m pip install scipy==1.1.0rc1
+python -m pip install -e .
 
 
-pytest sklearn/
+python -m pytest sklearn/
