@@ -1217,10 +1217,10 @@ def test_fit_grid_point():
             assert_equal(n_test_samples, test.size)
 
     # Should raise an error upon multimetric scorer
-    assert_raise_message(ValueError, "scoring value should either be a "
-                         "callable, string or None.", fit_grid_point, X, y,
-                         svc, params, train, test, {'score': scorer},
-                         verbose=True)
+    assert_raise_message(ValueError, "For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead.",
+                         fit_grid_point, X, y, svc, params, train, test,
+                         {'score': scorer}, verbose=True)
 
 
 def test_pickle():
@@ -1385,10 +1385,18 @@ def test_grid_search_failing_classifier_raise():
 
 
 def test_parameters_sampler_replacement():
-    # raise error if n_iter too large
+    # raise warning if n_iter is bigger than total parameter space
     params = {'first': [0, 1], 'second': ['a', 'b', 'c']}
     sampler = ParameterSampler(params, n_iter=7)
-    assert_raises(ValueError, list, sampler)
+    n_iter = 7
+    grid_size = 6
+    expected_warning = ('The total space of parameters %d is smaller '
+                        'than n_iter=%d. Running %d iterations. For '
+                        'exhaustive searches, use GridSearchCV.'
+                        % (grid_size, n_iter, grid_size))
+    assert_warns_message(UserWarning, expected_warning,
+                         list, sampler)
+
     # degenerates to GridSearchCV if n_iter the same as grid_size
     sampler = ParameterSampler(params, n_iter=6)
     samples = list(sampler)
