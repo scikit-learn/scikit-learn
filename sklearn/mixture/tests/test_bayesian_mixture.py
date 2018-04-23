@@ -419,3 +419,13 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.means_, bgmm2.means_ - 100)
             assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
+
+
+def test_bayesian_mixture_n_iter():
+    # check that n_iter is the number of iteration performed.
+    rng = np.random.RandomState(0)
+    X = RandomData(rng).X['full']
+    max_iter = 1
+    bgm = BayesianGaussianMixture(max_iter=max_iter)
+    bgm.fit(X)
+    assert bgm.n_iter_ == max_iter

@@ -742,6 +742,16 @@ def test_gaussian_mixture_verbose():
             sys.stdout = old_stdout
 
 
+def test_gaussian_mixture_n_iter():
+    # check that n_iter is the number of iteration performed.
+    rng = np.random.RandomState(0)
+    X = RandomData(rng).X['full']
+    max_iter = 1
+    gm = GaussianMixture(max_iter=max_iter)
+    gm.fit(X)
+    assert gm.n_iter_ == max_iter
+
+
 def test_warm_start():
 
     random_state = 0
