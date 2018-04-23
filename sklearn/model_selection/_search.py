@@ -697,7 +697,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurence of `name`.
+                # `"param_%s" % name` at the first occurrence of `name`.
                 # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_i] = value
 
