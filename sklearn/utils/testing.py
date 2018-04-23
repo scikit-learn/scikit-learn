@@ -46,7 +46,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
-from sklearn.externals.funcsigs import signature
+from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
