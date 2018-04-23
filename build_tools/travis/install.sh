@@ -17,18 +17,6 @@ echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
-if [[ "$DISTRIB" == "pypy" ]]; then
-    ls ~/virtualenv/
-    python -m pip install --upgrade pip
-    pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu \
-        numpy Cython Tempita
-    pip install -v scipy==1.1.0rc1
-    pip install -v -e .
-else 
-    echo "skip non PyPy builds for now"
-    exit 1
-fi
-
 export CC=/usr/lib/ccache/gcc
 export CXX=/usr/lib/ccache/g++
 # Useful for debugging how ccache is used

@@ -65,6 +65,30 @@ jobs:
           path: ~/log.txt
           destination: log.txt
 
+  pypy3:
+    docker:
+      - image: pypy:3-5.10.1
+     steps:
+      - checkout
+      #- run: if command -v pypy3; then ln -s $(command -v pypy3) /usr/local/bin/python; fi
+      - run: python --version && which python && which pip
+      - run: sudo -E apt-get -yq update && sudo -E apt-get -y install libatlas-dev libatlas-base-dev liblapack-dev gfortran
+      - run: pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita
+      - run: pip install scipy==1.1.0rc1
+      - run: pip install -e .
+
+  pypy2:
+    docker:
+      - image: pypy:2-5.10.0
+     steps:
+      - checkout
+      #- run: if command -v pypy3; then ln -s $(command -v pypy3) /usr/local/bin/python; fi
+      - run: python --version && which python && which pip
+      - run: sudo -E apt-get -yq update && sudo -E apt-get -y install libatlas-dev libatlas-base-dev liblapack-dev gfortran
+      - run: pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita
+      - run: pip install scipy==1.1.0rc1
+      - run: pip install -e .
+
   deploy:
     docker:
       - image: circleci/python:3.6.1
@@ -86,8 +110,10 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - python3
-      - python2
+      #- python3
+      #- python2
+      - pypy3
+      - pypy2
       - deploy:
           requires:
             - python3
