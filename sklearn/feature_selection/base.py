@@ -75,7 +75,8 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         return self._transform(X)
 
     def _transform(self, X, force_all_finite=True):
-        X = check_array(X, force_all_finite=force_all_finite, accept_sparse='csr')
+        X = check_array(X, force_all_finite=force_all_finite,
+                        accept_sparse='csr')
         mask = self.get_support()
         if not mask.any():
             warn("No features were selected: either the data is"
