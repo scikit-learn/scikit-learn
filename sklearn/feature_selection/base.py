@@ -72,7 +72,10 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        X = check_array(X, accept_sparse='csr')
+        return self._transform(X)
+
+    def _transform(self, X, force_all_finite=True):
+        X = check_array(X, force_all_finite=force_all_finite, accept_sparse='csr')
         mask = self.get_support()
         if not mask.any():
             warn("No features were selected: either the data is"

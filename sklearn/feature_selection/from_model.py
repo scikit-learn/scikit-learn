@@ -143,6 +143,9 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         return scores >= threshold
 
+    def transform(self, X):
+        return self._transform(X, False)
+
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
