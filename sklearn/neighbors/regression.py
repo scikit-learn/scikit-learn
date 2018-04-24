@@ -268,10 +268,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, **kwargs):
         super(RadiusNeighborsRegressor, self).__init__(
-            radius=radius,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            p=p, metric=metric, metric_params=metric_params, **kwargs)
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size,
+              p=p, metric=metric, metric_params=metric_params, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
