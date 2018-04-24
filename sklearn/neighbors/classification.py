@@ -283,14 +283,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
 
-    outlier_label : manual label, 'most_frequent', 'raise', optional
-        (default = 'raise')
+    outlier_label : manual label, 'most_frequent', None, optional
+        (default = None)
         - manual label: str or int label (should be the same type as y)
           or list of manual labels if multi ouputs are used.
           label given for outlier samples (samples with no neighbors in
           given radius).
         - 'most_frequent' : assign the most frequent label to outliers.
-        - 'raise' : when outlier is detected, ValueError is raised.
+        - None : when outlier is detected, ValueError is raised.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -325,7 +325,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label='raise', metric_params=None, **kwargs):
+                 outlier_label=None, metric_params=None, **kwargs):
         super(RadiusNeighborsClassifier, self).__init__(
             radius=radius,
             algorithm=algorithm,
@@ -362,8 +362,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 label_count = np.bincount(_y[:, k])
                 outlier_label_.append(classes_k[label_count.argmax()])
 
-        elif self.outlier_label == 'raise':
-            outlier_label_ = 'raise'
+        elif self.outlier_label is None:
+            outlier_label_ = None
 
         else:
             if (_is_arraylike(self.outlier_label) and
@@ -405,9 +405,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.array([len(nind) == 0 for nind in neigh_ind])
-        indecies = np.arange(n_samples)
-        outliers = indecies[outlier_mask]
-        inliers = indecies[~outlier_mask]
+        indices = np.arange(n_samples)
+        outliers = indices[outlier_mask]
+        inliers = indices[~outlier_mask]
 
         classes_ = self.classes_
         _y = self._y
@@ -416,7 +416,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             classes_ = [self.classes_]
         n_outputs = len(classes_)
 
-        if self.outlier_label_ == 'raise' and outliers.size > 0:
+        if self.outlier_label_ is None and outliers.size > 0:
             raise ValueError('No neighbors found for test samples %r, '
                              'you can try to use larger radius, '
                              'give a label for outliers, '
@@ -471,9 +471,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.array([len(nind) == 0 for nind in neigh_ind])
-        indecies = np.arange(n_samples)
-        outliers = indecies[outlier_mask]
-        inliers = indecies[~outlier_mask]
+        indices = np.arange(n_samples)
+        outliers = indices[outlier_mask]
+        inliers = indices[~outlier_mask]
 
         classes_ = self.classes_
         _y = self._y
@@ -481,7 +481,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-        if self.outlier_label_ == 'raise' and outliers.size > 0:
+        if self.outlier_label_ is None and outliers.size > 0:
             raise ValueError('No neighbors found for test samples %r, '
                              'you can try to use larger radius, '
                              'give a label for outliers, '

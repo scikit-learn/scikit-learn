@@ -334,7 +334,7 @@ def test_radius_neighbors_classifier_when_no_neighbors():
 
     weight_func = _weight_func
 
-    for outlier_label in [0, -1, 'raise']:
+    for outlier_label in [0, -1, None]:
         for algorithm in ALGORITHMS:
             for weights in ['uniform', 'distance', weight_func]:
                 rnc = neighbors.RadiusNeighborsClassifier
@@ -343,7 +343,7 @@ def test_radius_neighbors_classifier_when_no_neighbors():
                 clf.fit(X, y)
                 assert_array_equal(np.array([1, 2]),
                                    clf.predict(z1))
-                if outlier_label == 'raise':
+                if outlier_label is None:
                     assert_raises(ValueError, clf.predict, z2)
                 elif False:
                     assert_array_equal(np.array([1, outlier_label]),
@@ -1403,7 +1403,7 @@ def test_radius_neighbors_outliers():
     assert_equal(pred[1, 0], 0)
     assert_equal(pred[1, 1], 1)
 
-    # test inconsistent outlier label list legth
+    # test inconsistent outlier label list length
     def check_exception():
         clf = RNC(radius=1, outlier_label=[0, 1, 2])
         clf.fit(X, y_multi)

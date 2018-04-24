@@ -15,10 +15,8 @@ import warnings
 import numpy as np
 from scipy.sparse import issparse
 
-from .base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedFloatMixin
+from .base import _check_weights, _get_weights, NeighborsBase, KNeighborsMixin
+from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 
