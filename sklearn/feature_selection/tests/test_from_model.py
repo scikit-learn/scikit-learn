@@ -198,3 +198,16 @@ def test_threshold_without_refitting():
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])
+
+
+def test_transform_accepts_infinite_data():
+    # Test that transform doesn't check for np.inf and np.nan values.
+    est = RandomForestClassifier()
+    model = SelectFromModel(estimator=est)
+    model.fit(data, y)
+
+    X_len = len(model.get_support())
+    X = np.arange(X_len).reshape(1, X_len)
+    X.fill(np.inf)
+
+    model.transform(X)
