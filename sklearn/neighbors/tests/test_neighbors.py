@@ -62,6 +62,13 @@ def _weight_func(dist):
     return retval ** 2
 
 
+def test_float_n_neighbors():
+    # Test float values for parameter n_neighbors
+    neigh = neighbors.NearestNeighbors(n_neighbors=3.)
+    X = [[1,0],[0,1]]
+    assert_raises(ValueError,neigh.fit, X )
+
+
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                  n_query_pts=2, n_neighbors=5):
     # Test unsupervised neighbors methods
