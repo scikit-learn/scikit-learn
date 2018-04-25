@@ -326,7 +326,7 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
+            Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored

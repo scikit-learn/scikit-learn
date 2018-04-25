@@ -1034,17 +1034,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         instance used by `np.random`. Used when ``solver`` == 'sag' or
         'liblinear'.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
         default: 'liblinear'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones.
+          'saga' are faster for large ones.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-            handle multinomial loss; 'liblinear' is limited to one-versus-rest
-            schemes.
+          handle multinomial loss; 'liblinear' is limited to one-versus-rest
+          schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
-            'liblinear' and 'saga' handle L1 penalty.
+          'liblinear' and 'saga' handle L1 penalty.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1421,19 +1421,19 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+    solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
         default: 'lbfgs'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones.
+          'saga' are faster for large ones.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
-            handle multinomial loss; 'liblinear' is limited to one-versus-rest
-            schemes.
+          handle multinomial loss; 'liblinear' is limited to one-versus-rest
+          schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
-            'liblinear' and 'saga' handle L1 penalty.
+          'liblinear' and 'saga' handle L1 penalty.
         - 'liblinear' might be slower in LogisticRegressionCV because it does
-            not handle warm-starting.
+          not handle warm-starting.
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can preprocess the data
