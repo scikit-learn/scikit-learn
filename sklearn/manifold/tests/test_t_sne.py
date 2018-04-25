@@ -299,7 +299,8 @@ def test_trustworthiness_precomputed_deprecation():
 
     # Use of the flag `precomputed` in trustworthiness parameters has been
     # deprecated, but will still work until v0.23.
-    X = np.arange(100).reshape(50, 2)
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
     assert_equal(assert_warns(DeprecationWarning, trustworthiness,
                               pairwise_distances(X), X, precomputed=True), 1.)
     assert_equal(assert_warns(DeprecationWarning, trustworthiness,
@@ -315,7 +316,8 @@ def test_trustworthiness_precomputed_deprecation():
 def test_trustworthiness_not_euclidean_metric():
     # Test trustworthiness with a metric different from 'euclidean' and
     # 'precomputed'
-    X = np.arange(100).reshape(50, 2)
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
     assert_equal(trustworthiness(X, X, metric='cosine'),
                  trustworthiness(pairwise_distances(X, metric='cosine'), X,
                                  metric='precomputed'))
