@@ -214,7 +214,7 @@ Metrics
 
 - Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
   False and both inputs are sparse, will return a sparse matrix.
-  :issue:`10980` by :user:`Taylor G Smith <tgsmith61591>`.
+  :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
 Linear, kernelized and related models
 
