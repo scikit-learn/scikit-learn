@@ -218,6 +218,10 @@ Metrics
 - :func:`metrics.label_ranking_average_precision_score` now supports vector ``sample_weight``.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
 
+- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
+  False and both inputs are sparse, will return a sparse matrix.
+  :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
