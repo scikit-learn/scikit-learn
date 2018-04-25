@@ -187,7 +187,7 @@ Preprocessing
   
 - Enable the call to :meth:`get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
-  vocabulary. :issue:`10908` by :user:`chkoar <chkoar>`.
+  vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
 Model evaluation and meta-estimators
 
