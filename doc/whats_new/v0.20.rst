@@ -157,6 +157,10 @@ Classifiers and regressors
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
+  
+- Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
+  in :class:`discriminant_analysis`.
+  :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
 
 Cluster
 
