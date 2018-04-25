@@ -35,7 +35,7 @@ Data Set Characteristics:
 This is a copy of UCI ML iris datasets.
 http://archive.ics.uci.edu/ml/datasets/Iris
 
-The famous Iris database, first used by Sir R.A Fisher
+The famous Iris database, first used by Sir R.A. Fisher
 
 This is perhaps the best known database to be found in the
 pattern recognition literature.  Fisher's paper is a classic in the field and
@@ -46,10 +46,10 @@ latter are NOT linearly separable from each other.
 
 References
 ----------
-   - Fisher,R.A. "The use of multiple measurements in taxonomic problems"
+   - Fisher, R.A. "The use of multiple measurements in taxonomic problems"
      Annual Eugenics, 7, Part II, 179-188 (1936); also in "Contributions to
      Mathematical Statistics" (John Wiley, NY, 1950).
-   - Duda,R.O., & Hart,P.E. (1973) Pattern Classification and Scene Analysis.
+   - Duda, R.O., & Hart, P.E. (1973) Pattern Classification and Scene Analysis.
      (Q327.D83) John Wiley & Sons.  ISBN 0-471-22361-1.  See page 218.
    - Dasarathy, B.V. (1980) "Nosing Around the Neighborhood: A New System
      Structure and Classification Rule for Recognition in Partially Exposed

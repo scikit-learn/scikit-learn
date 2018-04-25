@@ -209,12 +209,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     >>> X = [[0, 1], [1, 1]]
     >>> # distance between rows of X
     >>> euclidean_distances(X, X)
-    array([[ 0.,  1.],
-           [ 1.,  0.]])
+    array([[0., 1.],
+           [1., 0.]])
     >>> # get distance to origin
     >>> euclidean_distances(X, [[0, 0]])
-    array([[ 1.        ],
-           [ 1.41421356]])
+    array([[1.        ],
+           [1.41421356]])
 
     See also
     --------
@@ -302,9 +302,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -433,9 +433,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -505,21 +505,21 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
     >>> manhattan_distances([[3]], [[3]])#doctest:+ELLIPSIS
-    array([[ 0.]])
+    array([[0.]])
     >>> manhattan_distances([[3]], [[2]])#doctest:+ELLIPSIS
-    array([[ 1.]])
+    array([[1.]])
     >>> manhattan_distances([[2]], [[3]])#doctest:+ELLIPSIS
-    array([[ 1.]])
+    array([[1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
          [[1, 2], [0, 3]])#doctest:+ELLIPSIS
-    array([[ 0.,  2.],
-           [ 4.,  4.]])
+    array([[0., 2.],
+           [4., 4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = 2 * np.ones((2, 2))
     >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
-    array([[ 1.,  1.],
-           [ 1.,  1.]]...)
+    array([[1., 1.],
+           [1., 1.]])
     """
     if size_threshold is not None:
         warnings.warn('Use of the "size_threshold" is deprecated '
@@ -700,11 +700,11 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
     >>> X = [[0, 1], [1, 1]]
     >>> Y = [[0, 1], [2, 1]]
     >>> paired_distances(X, Y)
-    array([ 0.,  1.])
+    array([0., 1.])
 
     See also
     --------
-    pairwise_distances : pairwise distances.
+    pairwise_distances : Computes the distance between every pair of samples
     """
 
     if metric in PAIRED_DISTANCES:
@@ -1159,7 +1159,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
-      'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+      'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
       'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
@@ -1216,6 +1216,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
+    See also
+    --------
+    paired_distances : Computes the distances between corresponding
+                       elements of two arrays
     """
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):

@@ -650,7 +650,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
-            raise ValueError('y has less than 2 classes')
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:

@@ -12,7 +12,7 @@ each figure, we plot the results for three different values of the weight
 concentration prior.
 
 The ``BayesianGaussianMixture`` class can adapt its number of mixture
-componentsautomatically. The parameter ``weight_concentration_prior`` has a
+components automatically. The parameter ``weight_concentration_prior`` has a
 direct link with the resulting number of components with non-zero weights.
 Specifying a low value for the concentration prior will make the model put most
 of the weight on few components set the remaining components weights very close

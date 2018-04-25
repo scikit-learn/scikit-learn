@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
@@ -368,7 +369,7 @@ def test_pca_validation():
 
                 assert_raises_regex(ValueError,
                                     "n_components={}L? must be between "
-                                    "{}L? and min\(n_samples, n_features\)="
+                                    r"{}L? and min\(n_samples, n_features\)="
                                     "{}L? with svd_solver=\'{}\'"
                                     .format(n_components,
                                             lower_limit[solver],
@@ -383,11 +384,19 @@ def test_pca_validation():
                 assert_raises_regex(ValueError,
                                     "n_components={}L? must be "
                                     "strictly less than "
-                                    "min\(n_samples, n_features\)={}L?"
+                                    r"min\(n_samples, n_features\)={}L?"
                                     " with svd_solver=\'arpack\'"
                                     .format(n_components, smallest_d),
                                     PCA(n_components, svd_solver=solver)
                                     .fit, data)
+
+        n_components = 1.0
+        type_ncom = type(n_components)
+        assert_raise_message(ValueError,
+                             "n_components={} must be of type int "
+                             "when greater than or equal to 1, was of type={}"
+                             .format(n_components, type_ncom),
+                             PCA(n_components, svd_solver=solver).fit, data)
 
 
 def test_n_components_none():
@@ -451,6 +460,26 @@ def test_randomized_pca_inverse():
     Y_inverse = pca.inverse_transform(Y)
     relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
     assert_less(relative_max_delta, 1e-5)
+
+
+def test_n_components_mle():
+    # Ensure that n_components == 'mle' doesn't raise error for auto/full
+    # svd_solver and raises error for arpack/randomized svd_solver
+    rng = np.random.RandomState(0)
+    n_samples = 600
+    n_features = 10
+    X = rng.randn(n_samples, n_features)
+    n_components_dict = {}
+    for solver in solver_list:
+        pca = PCA(n_components='mle', svd_solver=solver)
+        if solver in ['auto', 'full']:
+            pca.fit(X)
+            n_components_dict[solver] = pca.n_components_
+        else:  # arpack/randomized solver
+            error_message = ("n_components='mle' cannot be a string with "
+                             "svd_solver='{}'".format(solver))
+            assert_raise_message(ValueError, error_message, pca.fit, X)
+    assert_equal(n_components_dict['auto'], n_components_dict['full'])
 
 
 def test_pca_dim():

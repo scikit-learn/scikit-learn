@@ -35,6 +35,7 @@ from functools import partial
 import pickle
 from io import StringIO
 
+import pytest
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -941,6 +942,35 @@ def test_pickling_transformer():
         orig.fit_transform(X).toarray())
 
 
+def test_transformer_idf_setter():
+    X = CountVectorizer().fit_transform(JUNK_FOOD_DOCS)
+    orig = TfidfTransformer().fit(X)
+    copy = TfidfTransformer()
+    copy.idf_ = orig.idf_
+    assert_array_equal(
+        copy.transform(X).toarray(),
+        orig.transform(X).toarray())
+
+
+def test_tfidf_vectorizer_setter():
+    orig = TfidfVectorizer(use_idf=True)
+    orig.fit(JUNK_FOOD_DOCS)
+    copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=True)
+    copy.idf_ = orig.idf_
+    assert_array_equal(
+        copy.transform(JUNK_FOOD_DOCS).toarray(),
+        orig.transform(JUNK_FOOD_DOCS).toarray())
+
+
+def test_tfidfvectorizer_invalid_idf_attr():
+    vect = TfidfVectorizer(use_idf=True)
+    vect.fit(JUNK_FOOD_DOCS)
+    copy = TfidfVectorizer(vocabulary=vect.vocabulary_, use_idf=True)
+    expected_idf_len = len(vect.idf_)
+    invalid_idf = [1.0] * (expected_idf_len + 1)
+    assert_raises(ValueError, setattr, copy, 'idf_', invalid_idf)
+
+
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
     vect = CountVectorizer(vocabulary=vocab)
@@ -995,3 +1025,26 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
+
+
+@pytest.mark.parametrize("vec", [
+        HashingVectorizer(ngram_range=(2, 1)),
+        CountVectorizer(ngram_range=(2, 1)),
+        TfidfVectorizer(ngram_range=(2, 1))
+    ])
+def test_vectorizers_invalid_ngram_range(vec):
+    # vectorizers could be initialized with invalid ngram range
+    # test for raising error message
+    invalid_range = vec.ngram_range
+    message = ("Invalid value for ngram_range=%s "
+               "lower boundary larger than the upper boundary."
+               % str(invalid_range))
+
+    assert_raise_message(
+        ValueError, message, vec.fit, ["good news everyone"])
+    assert_raise_message(
+        ValueError, message, vec.fit_transform, ["good news everyone"])
+
+    if isinstance(vec, HashingVectorizer):
+        assert_raise_message(
+            ValueError, message, vec.transform, ["good news everyone"])

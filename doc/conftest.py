@@ -65,7 +65,7 @@ def pytest_runtest_setup(item):
         setup_rcv1()
     elif fname.endswith('datasets/twenty_newsgroups.rst'):
         setup_twenty_newsgroups()
-    elif fname.endswith('datasets/working_with_text_data.rst'):
+    elif fname.endswith('tutorial/text_analytics/working_with_text_data.rst'):
         setup_working_with_text_data()
 
 

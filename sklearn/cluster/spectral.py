@@ -256,6 +256,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
+
+    # The first eigen vector is constant only for fully connected graphs
+    # and should be kept for spectral clustering (drop_first = False)
+    # See spectral_embedding documentation.
     maps = spectral_embedding(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
@@ -437,7 +441,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64)
+                        dtype=np.float64, ensure_min_samples=2)
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
@@ -445,7 +449,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           "set ``affinity=precomputed``.")
 
         if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True,
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
+                                            include_self=True,
                                             n_jobs=self.n_jobs)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':

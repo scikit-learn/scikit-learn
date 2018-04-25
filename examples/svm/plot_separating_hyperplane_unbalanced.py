@@ -29,14 +29,17 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
+from sklearn.datasets import make_blobs
 
-# we create 40 separable points
-rng = np.random.RandomState(0)
+# we create two clusters of random points
 n_samples_1 = 1000
 n_samples_2 = 100
-X = np.r_[1.5 * rng.randn(n_samples_1, 2),
-          0.5 * rng.randn(n_samples_2, 2) + [2, 2]]
-y = [0] * (n_samples_1) + [1] * (n_samples_2)
+centers = [[0.0, 0.0], [2.0, 2.0]]
+clusters_std = [1.5, 0.5]
+X, y = make_blobs(n_samples=[n_samples_1, n_samples_2],
+                  centers=centers,
+                  cluster_std=clusters_std,
+                  random_state=0, shuffle=False)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear', C=1.0)
@@ -75,3 +78,4 @@ b = ax.contour(XX, YY, Z, colors='r', levels=[0], alpha=0.5, linestyles=['-'])
 
 plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"],
            loc="upper right")
+plt.show()
