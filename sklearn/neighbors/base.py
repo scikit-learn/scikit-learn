@@ -258,6 +258,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "Expected n_neighbors > 0. Got %d" %
                     self.n_neighbors
                 )
+            else:
+            	if isinstance(self.n_neighbors,float):
+            		raise ValueError(
+            			"Expected integer value for n_neighbors")
 
         return self
 
