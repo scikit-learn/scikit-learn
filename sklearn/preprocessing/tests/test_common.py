@@ -78,8 +78,3 @@ def test_missing_value_handling(est, support_sparse):
             Xt_sparse = (est_sparse.fit(sparse_constructor(X_train))
                          .transform(sparse_constructor(X_test)))
             assert_allclose(Xt_dense, Xt_sparse.A)
-            # check that inverse transform lead to the input data
-            Xt_inv_sparse = est_sparse.inverse_transform(Xt_sparse)
-            assert_array_equal(np.isnan(Xt_inv_sparse.A), np.isnan(X_test))
-            assert_allclose(Xt_inv_sparse.A[~np.isnan(Xt_inv_sparse.A)],
-                            X_test[~np.isnan(X_test)])
