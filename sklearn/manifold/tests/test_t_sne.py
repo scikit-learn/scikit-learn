@@ -295,7 +295,7 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
 
 
 def test_trustworthiness_precomputed_deprecation():
-    # NOTE: Remove this test in v0.23
+    # FIXME: Remove this test in v0.23
 
     # Use of the flag `precomputed` in trustworthiness parameters has been
     # deprecated, but will still work until v0.23.
