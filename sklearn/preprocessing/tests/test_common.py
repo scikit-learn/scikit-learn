@@ -70,7 +70,7 @@ def test_missing_value_handling(est, support_sparse):
         est_sparse = clone(est)
 
         Xt_dense = est_dense.fit(X_train).transform(X_test)
-        Xt_inv_dense = est_dense.transform(Xt_dense)
+        Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
         for sparse_constructor in (sparse.csr_matrix, sparse.csc_matrix,
                                    sparse.bsr_matrix, sparse.coo_matrix,
                                    sparse.dia_matrix, sparse.dok_matrix,
@@ -79,5 +79,5 @@ def test_missing_value_handling(est, support_sparse):
             Xt_sparse = (est_sparse.fit(sparse_constructor(X_train))
                          .transform(sparse_constructor(X_test)))
             assert_allclose(Xt_sparse.A, Xt_dense)
-            Xt_inv_sparse = est_sparse.transform(Xt_sparse)
+            Xt_inv_sparse = est_sparse.inverse_transform(Xt_sparse)
             assert_allclose(Xt_inv_sparse.A, Xt_inv_dense)
