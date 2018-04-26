@@ -162,6 +162,9 @@ Classifiers and regressors
   in :class:`discriminant_analysis`.
   :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
 
+- :func:`manifold.t_sne.trustworthiness` accepts metrics other than
+  Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
@@ -235,6 +238,15 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Decomposition, manifold learning and clustering
+
+- Deprecate ``precomputed`` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
+  ``metric`` should be used with any compatible metric including
+  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  pairwise distances or squared distances. :issue:`9775` by
+  :user:`William de Vazelhes <wdevazelhes>`.
 
 Utils
 
@@ -477,6 +489,15 @@ Linear, kernelized and related models
 - Added convergence warning to :class:`svm.LinearSVC` and
   :class:`linear_model.logistic.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
+
+Decomposition, manifold learning and clustering
+
+- Deprecate ``precomputed`` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
+  ``metric`` should be used with any compatible metric including
+  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  pairwise distances or squared distances. :issue:`9775` by
+  :user:`William de Vazelhes <wdevazelhes>`.
 
 Metrics
 
