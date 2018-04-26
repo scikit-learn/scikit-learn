@@ -339,6 +339,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.RidgeCV` where using integer ``alphas``
   raised an error. :issue:`10393` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
 
+- Fixed condition triggering gap computation in :class:`linear_model.Lasso`
+  and :class:`linear_model.ElasticNet` when working with sparse matrices.
+  :issue:`10992` by `Alexandre Gramfort`_.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
