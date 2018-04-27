@@ -2791,7 +2791,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
 
         check_positive : bool
-            If True, check that all data is postive and non-zero.
+            If True, check that all data is positive and non-zero.
 
         check_shape : bool
             If True, check that n_features matches the length of self.lambdas_

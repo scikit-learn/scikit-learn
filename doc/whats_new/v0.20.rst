@@ -157,6 +157,13 @@ Classifiers and regressors
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
+  
+- Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
+  in :class:`discriminant_analysis`.
+  :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
+
+- :func:`manifold.t_sne.trustworthiness` accepts metrics other than
+  Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
 
 Cluster
 
@@ -180,6 +187,10 @@ Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
+  
+- Enable the call to :meth:`get_feature_names` in unfitted
+  :class:`feature_extraction.text.CountVectorizer` initialized with a
+  vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
 Model evaluation and meta-estimators
 
@@ -218,11 +229,30 @@ Metrics
 - :func:`metrics.label_ranking_average_precision_score` now supports vector ``sample_weight``.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
 
+- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
+  False and both inputs are sparse, will return a sparse matrix.
+  :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Decomposition, manifold learning and clustering
+
+- Deprecate ``precomputed`` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
+  ``metric`` should be used with any compatible metric including
+  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  pairwise distances or squared distances. :issue:`9775` by
+  :user:`William de Vazelhes <wdevazelhes>`.
+
+Utils
+
+- Avoid copying the data in :func:`utils.check_array` when the input data is a
+  memmap (and ``copy=False``). :issue:`10663` by :user:`Arthur Mensch
+  <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
 
 Miscellaneous
 
@@ -309,6 +339,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.RidgeCV` where using integer ``alphas``
   raised an error. :issue:`10393` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
 
+- Fixed condition triggering gap computation in :class:`linear_model.Lasso`
+  and :class:`linear_model.ElasticNet` when working with sparse matrices.
+  :issue:`10992` by `Alexandre Gramfort`_.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -357,6 +391,11 @@ Decomposition, manifold learning and clustering
   the spectrum was using a division instead of a multiplication. :issue:`8129`
   by :user:`Jan Margeta <jmargeta>`, :user:`Guillaume Lemaitre <glemaitre>`,
   and :user:`Devansh D. <devanshdalal>`.
+
+- Fixed a bug in :class:`mixture.BaseMixture` where the reported `n_iter_` was
+  missing an iteration. It affected :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
+  Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
 Metrics
 
@@ -455,6 +494,15 @@ Linear, kernelized and related models
   :class:`linear_model.logistic.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
 
+Decomposition, manifold learning and clustering
+
+- Deprecate ``precomputed`` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
+  ``metric`` should be used with any compatible metric including
+  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  pairwise distances or squared distances. :issue:`9775` by
+  :user:`William de Vazelhes <wdevazelhes>`.
+
 Metrics
 
 - Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
@@ -541,3 +589,7 @@ Changes to estimator checks
 
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
   Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Add tests in :func:`estimator_checks.check_estimator` to check that an
+  estimator can handle read-only memmap input data. :issue:`10663` by
+  :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
