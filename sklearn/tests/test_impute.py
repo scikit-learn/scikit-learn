@@ -579,38 +579,20 @@ def test_missing_indicator():
                                          missing_values)
 
 
-def test_missing_indicator_error():
-    X1 = np.array([
-          [-1,  1,  3],
-          [4,  0, -1],
-          [8,  1,  0]
-    ])
-    X2 = np.array([
-          [5, -1, -1],
-          [-1,  2,  3],
-          [2,  4,  0]
-    ])
+@pytest.mark.parametrize(
+    "X_fit, X_trans, params, msg_err",
+    [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
+      {'features': 'missing-only', 'sparse': 'auto'},
+      'have missing values in transform but have no missing values in fit'),
+     (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
+      {'features': 'random', 'sparse': 'auto'},
+      "'features' has to be either 'missing-only' or 'all'"),
+     (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
+      {'features': 'all', 'sparse': 'random'},
+      "'sparse' has to be a boolean or 'auto'")]
+)
+def test_missing_indicator_error_new(X_fit, X_trans, params, msg_err):
     indicator = MissingIndicator(missing_values=-1)
-    indicator.fit(X1)
-    missing_features_fit = np.sum(X1 == -1, axis=0).nonzero()[0]
-    missing_features_tr = np.where(np.any(X2 == -1, axis=0))[0]
-    extra_missing_features = np.setdiff1d(missing_features_tr,
-                                          missing_features_fit)
-    err_msg = ("The features \{0} have missing values "
-               "in transform but have no missing values "
-               "in fit.".format(extra_missing_features))
-    assert_raises_regex(ValueError, err_msg, indicator.transform, X2)
-
-    # features is incorrect keyword
-    features = "temp"
-    indicator = clone(indicator).set_params(features=features)
-    err_msg = ("'features' has to be either 'missing-only' or 'all'. "
-               "Got %s instead" % features)
-    assert_raises_regex(ValueError, err_msg, indicator.fit, X1)
-
-    sparse = "temp"
-    indicator = clone(indicator).set_params(features="missing-only",
-                                            sparse=sparse)
-    err_msg = ("'sparse' has to be a boolean or 'auto'. Got {!r} instead"
-               .format(sparse))
-    assert_raises_regex(ValueError, err_msg, indicator.fit, X1)
+    indicator.set_params(**params)
+    with pytest.raises(ValueError, match=msg_err):
+        indicator.fit(X_fit).transform(X_trans)
