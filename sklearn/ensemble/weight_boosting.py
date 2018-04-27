@@ -44,6 +44,7 @@ from sklearn.utils.validation import has_fit_parameter, check_is_fitted
 __all__ = [
     'AdaBoostClassifier',
     'AdaBoostRegressor',
+    'TradaboostClassifier',
 ]
 
 
@@ -70,7 +71,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.learning_rate = learning_rate
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, transfer_mask=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -89,6 +90,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
 
+        transfer_mask: array-like of shape = [n_samples], optional
+            Transfer mask, True indicating transfer sample, False indicating
+            original sample. If not None, transfer sample weights are
+            initialized to 1 / m_transfer_samples, original sample weights are
+            initialized to 1 / n_original_samples.
         Returns
         -------
         self : object
@@ -109,10 +115,19 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
                          y_numeric=is_regressor(self))
 
-        if sample_weight is None:
+        if sample_weight is None and transfer_mask is None:
             # Initialize weights to 1 / n_samples
             sample_weight = np.empty(X.shape[0], dtype=np.float64)
             sample_weight[:] = 1. / X.shape[0]
+        elif sample_weight is None:
+            # Intialize original sample weights to 1/n_original_samples,
+            # Intialize transfer sample weights to 1/m_transfer_samples
+            transfer_mask = check_array(transfer_mask, ensure_2d=False)
+            sample_weight = np.empty(X.shape[0], dtype=np.float64)
+            n_original_samples = sum(transfer_mask)
+            m_transfer_samples = X.shape[0] - sum(transfer_mask)
+            sample_weight[transfer_mask == 1] = 1. / m_transfer_samples
+            sample_weight[transfer_mask == 0] = 1. / n_original_samples
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
@@ -131,23 +146,32 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_ = []
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
+        self.sample_weights_ = dict()
 
         random_state = check_random_state(self.random_state)
 
         for iboost in range(self.n_estimators):
             # Boosting step
-            sample_weight, estimator_weight, estimator_error = self._boost(
-                iboost,
-                X, y,
-                sample_weight,
-                random_state)
-
+            if transfer_mask is not None:
+                sample_weight, estimator_weight, estimator_error = self._boost(
+                    iboost,
+                    X, y,
+                    sample_weight,
+                    random_state,
+                    transfer_mask=transfer_mask)
+            else:
+                sample_weight, estimator_weight, estimator_error = self._boost(
+                    iboost,
+                    X, y,
+                    sample_weight,
+                    random_state)
             # Early termination
             if sample_weight is None:
                 break
 
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
+            self.sample_weights_[iboost] = sample_weight.copy()
 
             # Stop if error is zero
             if estimator_error == 0:
@@ -166,7 +190,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return self
 
     @abstractmethod
-    def _boost(self, iboost, X, y, sample_weight, random_state):
+    def _boost(self, iboost, X, y, sample_weight, random_state,
+               transfer_mask=None):
         """Implement a single boost.
 
         Warning: This method needs to be overridden by subclasses.
@@ -188,6 +213,10 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         random_state : RandomState
             The current random number generator
+
+        transfer_mask: array-like of shape = [n_samples], optional
+            Transfer index, True indicating transfer sample, False indicating
+            original sample.
 
         Returns
         -------
@@ -1121,3 +1150,133 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
+
+
+class TradaboostClassifier(AdaBoostClassifier):
+    def fit(self, X, y, sample_weight=None, transfer_mask=None):
+        """Build a boosted classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+            The training input samples. Sparse matrix can be CSC, CSR, COO,
+            DOK, or LIL. DOK and LIL are converted to CSR.
+
+        y : array-like of shape = [n_samples]
+            The target values (class labels).
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights. If None, the sample weights are initialized to
+            ``1 / n_samples``.
+
+        transfer_mask: array-like of shape = [n_samples], optional
+            Transfer index, True indicating transfer sample, False indicating
+            original sample.
+
+        Returns
+        -------
+        self : object
+        """
+        # Check that algorithm is supported
+        if self.algorithm not in ('Tradaboost'):
+            raise ValueError("algorithm %s is not supported" % self.algorithm)
+
+        # Fit
+        return super(AdaBoostClassifier, self).fit(
+            X, y, sample_weight, transfer_mask=transfer_mask)
+
+    def _boost(self, iboost, X, y, sample_weight, random_state,
+               transfer_mask=None):
+        """Implement a single boost.
+
+        Perform a single boost according to the real multi-class SAMME.R
+        algorithm or to the discrete SAMME algorithm and return the updated
+        sample weights.
+
+        Parameters
+        ----------
+        iboost : int
+            The index of the current boost iteration.
+
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+            The training input samples. Sparse matrix can be CSC, CSR, COO,
+            DOK, or LIL. DOK and LIL are converted to CSR.
+
+        y : array-like of shape = [n_samples]
+            The target values (class labels).
+
+        sample_weight : array-like of shape = [n_samples]
+            The current sample weights.
+
+        random_state : RandomState
+            The current random number generator
+
+        transfer_mask: array-like of shape = [n_samples], optional
+            Transfer index, True indicating transfer sample, False indicating
+            original sample.
+
+        Returns
+        -------
+        sample_weight : array-like of shape = [n_samples] or None
+            The reweighted sample weights.
+            If None then boosting has terminated early.
+
+        estimator_weight : float
+            The weight for the current boost.
+            If None then boosting has terminated early.
+
+        estimator_error : float
+            The classification error for the current boost.
+            If None then boosting has terminated early.
+        """
+        if self.algorithm == "Tradaboost":
+            return self._boost_tradaboost(iboost, X, y, sample_weight,
+                                          random_state,
+                                          transfer_mask)
+
+    def _boost_tradaboost(self, iboost, X, y, sample_weight, random_state,
+                          transfer_mask):
+        """Implement a single boost using Tradaboost algorithm."""
+        estimator = self._make_estimator(random_state=random_state)
+
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+        y_predict_proba = estimator.predict_proba(X)
+
+        if iboost == 0:
+            self.classes_ = getattr(estimator, 'classes_', None)
+            self.n_classes_ = len(self.classes_)
+
+        y_predict = self.classes_.take(np.argmax(y_predict_proba, axis=1),
+                                       axis=0)
+
+        # Instances incorrectly classified
+        incorrect = y_predict != y
+        incorrect_original = y_predict[np.logical_not(transfer_mask)] != y[
+            np.logical_not(transfer_mask)]
+
+        # Error fraction
+        estimator_error = np.mean(
+            np.average(incorrect_original,
+                       weights=sample_weight[np.logical_not(transfer_mask)],
+                       axis=0))
+
+        # Stop if classification is perfect
+        if estimator_error <= 0:
+            return sample_weight, 1., 0.
+
+        # Displace zero probabilities so the log is defined.
+        # Also fix negative elements which may occur with
+        # negative sample weights.
+        proba = y_predict_proba  # alias for readability
+        proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+
+        # Boost weight beta
+        beta = estimator_error / (1. - estimator_error)
+        estimator_weight = self.learning_rate * np.log(1/beta)
+
+        # Only boost the weights if it will fit again
+        if not iboost == self.n_estimators - 1:
+            sample_weight *= np.power(beta,
+                                np.where(transfer_mask, 1, -1) * incorrect)
+        return sample_weight, estimator_weight, estimator_error
