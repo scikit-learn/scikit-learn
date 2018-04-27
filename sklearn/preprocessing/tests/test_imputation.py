@@ -8,8 +8,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
-from sklearn.preprocessing.imputation import Imputer
 
+from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree

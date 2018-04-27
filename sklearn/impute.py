@@ -906,6 +906,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         features with missing values in transform but have no missing values in
         fit This is applicable only when ``features="missing-only"``.
 
+    Attributes
+    ----------
+    features_ : ndarray, shape (n_missing_features,) or (n_features,)
+        The features indices which will be returned when calling ``transform``.
+        They are computed during ``fit``. For ``features='all'``, it is
+        to ``range(n_features)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -925,11 +932,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     array([[0., 1.],
            [1., 0.],
            [0., 0.]])
-
-    Attributes
-    ----------
-    features_ : ndarray, shape (n_missing_features,)
-        The features containing missing values.
 
     """
 

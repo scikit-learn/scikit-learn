@@ -100,27 +100,37 @@ dataset. This transformation is useful in conjunction with imputation. When
 using imputation, preserving the information about which values had been
 missing can be informative.
 
-The ``features`` parameter is used to choose the features for which the mask is
-constructed.  By default, it is 'auto' which means the binary matrix has
-features with missing values during fit time. When it is 'all' the matrix has
-all the features.
+``NaN`` is usually used as the placeholder for missing values. However, it
+enforces the data type to be float. The parameter ``missing_values`` allows to
+specify other placeholder such as integer. In the following example, we will
+use ``-1`` as missing values::
 
-    >>> from sklearn.impute import MissingIndicator
-    >>> import numpy as np
-    >>> X1 = np.array([
-    ...   [-1, -1,  1,  3],
-    ...   [ 4, -1,  0, -1],
-    ...   [ 8, -1,  1,  0],
-    ... ])
-    >>> indicator = MissingIndicator(missing_values=-1)
-    >>> X1_tr = indicator.fit_transform(X1)
-    >>> X1_tr
-    array([[1, 1, 0],
-           [0, 1, 1],
-           [0, 1, 0]])
-    >>> indicator = MissingIndicator(missing_values=-1, features="all")
-    >>> X1_tr = indicator.fit_transform(X1)
-    >>> X1_tr
-    array([[1, 1, 0, 0],
-           [0, 1, 0, 1],
-           [0, 1, 0, 0]])
+  >>> from sklearn.impute import MissingIndicator
+  >>> X = np.array([[-1, -1, 1, 3],
+  ...               [4, -1, 0, -1],
+  ...               [8, -1, 1, 0]])
+  >>> indicator = MissingIndicator(missing_values=-1)
+  >>> mask_missing_values_only = indicator.fit_transform(X)
+  >>> mask_missing_values_only
+  array([[1, 1, 0],
+         [0, 1, 1],
+         [0, 1, 0]])
+
+The ``features`` parameter is used to choose the features for which the mask is
+constructed. By default, it is ``'missing-only'`` which returns the imputer
+mask of the features containing missing values at ``fit`` time::
+
+  >>> indicator.features_
+  array([0, 1, 3])
+
+The ``features`` parameter can be set to ``'all'`` to returned all features
+whether or not they contain missing values::
+    
+  >>> indicator = MissingIndicator(missing_values=-1, features="all")
+  >>> mask_all = indicator.fit_transform(X)
+  >>> mask_all
+  array([[1, 1, 0, 0],
+         [0, 1, 0, 1],
+         [0, 1, 0, 0]])
+  >>> indicator.features_
+  array([0, 1, 2, 3])
