@@ -13,6 +13,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import pairwise_distances, pairwise_distances_argmin
 from ..utils import check_array, check_random_state
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
@@ -47,6 +48,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     ----------
     cluster_centers_ : array, shape = (n_clusters, n_features)
         Cluster centers, i.e. medoids (elements from the original dataset)
+
+    medoid_indices_ : array, shape = (n_clusters,)
+        The indices of the medoid rows in X
 
     labels_ : array, shape = (n_samples,)
         Labels of each point
@@ -182,7 +186,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Expose labels_ which are the assignments of
         # the training data to clusters
         self.labels_ = labels
-        self.cluster_centers_ = X[medoid_idxs]
+        self.medoid_indices_ = medoid_idxs
+        self.cluster_centers_ = X[medoid_idxs] if (self.metric != "precomputed") else None
         self.inertia_ = self._compute_inertia(self.transform(X))
 
         # Return self to enable method chaining
@@ -220,22 +225,29 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
-            Data to transform.
+        X : {array-like, sparse matrix}, \
+            shape = (n_samples1, n_samples) if metric == "precomputed", or, \
+            shape = (n_samples, n_features)
+                Data to transform.
 
         Returns
         -------
         X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
-        check_is_fitted(self, "cluster_centers_")
+        if self.metric == "precomputed":
+            return X[:,self.medoid_indices_]
 
-        return pairwise_distances(X, Y=self.cluster_centers_,
-                                  metric=self.metric)
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc'])
+            check_is_fitted(self, "cluster_centers_")
+
+            Y = self.cluster_centers_
+            return pairwise_distances(X, Y=Y,
+                                metric=self.metric)
 
     def predict(self, X):
-        """Predict the closest cluster for each sample in X
+        """Predict the closest cluster for each sample in X.
 
         Parameters
         ----------
@@ -247,6 +259,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_samples,)
             Index of the cluster each sample belongs to.
         """
+        if self.metric == "precomputed":
+            return np.argmin(X[:, self.medoid_indices_], axis=1)
+
         check_is_fitted(self, "cluster_centers_")
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
@@ -281,10 +296,96 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         if self.init == 'random':  # Random initialization
             # Pick random k medoids as the initial ones.
             medoids = random_state_.choice(len(D), n_clusters)
-        else:  # Initialization by heuristic
+        elif self.init == 'k-medoids++':
+            medoids = self._kpp_init(D, n_clusters, random_state_)
+        elif self.init == "heuristic":  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             medoids = np.argpartition(np.sum(D, axis=1),
                                       range(0, n_clusters))[:n_clusters]
+        else:
+            raise ValueError("init value '{init}' not recognized".format(init=self.init))
 
         return medoids
+
+    def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
+        """Init n_clusters seeds similar to k-means++
+
+        Parameters
+        -----------
+        D : array, shape (n_samples, n_samples)
+            The distance matrix we will use to select medoid indices.
+
+        n_clusters : integer
+            The number of seeds to choose
+
+        x_squared_norms : array, shape (n_samples,)
+            Squared Euclidean norm of each data point.
+
+        random_state : RandomState
+            The generator used to initialize the centers.
+
+        n_local_trials : integer, optional
+            The number of seeding trials for each center (except the first),
+            of which the one reducing inertia the most is greedily chosen.
+            Set to None to make the number of trials depend logarithmically
+            on the number of seeds (2+log(k)); this is the default.
+
+        Notes
+        -----
+        Selects initial cluster centers for k-medoid clustering in a smart way
+        to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
+        "k-means++: the advantages of careful seeding". ACM-SIAM symposium
+        on Discrete algorithms. 2007
+
+        Version ported from http://www.stanford.edu/~darthur/kMeansppTest.zip,
+        which is the implementation used in the aforementioned paper.
+        """
+        n_samples, _ = D.shape
+
+        centers = np.empty(n_clusters, dtype=int)
+
+        # Set the number of local seeding trials if none is given
+        if n_local_trials is None:
+            # This is what Arthur/Vassilvitskii tried, but did not report
+            # specific results for other than mentioning in the conclusion
+            # that it helped.
+            n_local_trials = 2 + int(np.log(n_clusters))
+
+        center_id = random_state_.randint(n_samples)
+        centers[0] = center_id
+
+        # Initialize list of closest distances and calculate current potential
+        closest_dist_sq = D[centers[0],:]**2
+        current_pot = closest_dist_sq.sum()
+
+        # pick the remaining n_clusters-1 points
+        for c in range(1, n_clusters):
+            rand_vals = random_state_.random_sample(n_local_trials) * current_pot
+            candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
+                                        rand_vals)
+
+            # Compute distances to center candidates
+            distance_to_candidates = D[candidate_ids, :]**2
+
+            # Decide which candidate is the best
+            best_candidate = None
+            best_pot = None
+            best_dist_sq = None
+            for trial in range(n_local_trials):
+                # Compute potential when including center candidate
+                new_dist_sq = np.minimum(closest_dist_sq,
+                                         distance_to_candidates[trial])
+                new_pot = new_dist_sq.sum()
+
+                # Store result if it is the best local trial so far
+                if (best_candidate is None) or (new_pot < best_pot):
+                    best_candidate = candidate_ids[trial]
+                    best_pot = new_pot
+                    best_dist_sq = new_dist_sq
+
+            centers[c] = best_candidate
+            current_pot = best_pot
+            closest_dist_sq = best_dist_sq
+
+        return centers

@@ -44,13 +44,77 @@ def test_kmedoids_input_validation_and_fit_check():
                                      "than the number of samples 5.",
                          KMedoids(n_clusters=8).fit, Xsmall)
 
+def test_kmedoids_pp():
+    """initial clusters should be well-separated"""
+    rng = np.random.RandomState(seed)
+    kmedoids = KMedoids(n_clusters=3,
+        init = "k-medoids++",
+        random_state=rng)
+    X = [[10, 0],
+        [11, 0],
+        [0, 10],
+        [0, 11],
+        [10, 10],
+        [11, 10],
+        [12, 10],
+        [10, 11],
+    ]
+    D = euclidean_distances(X)
+
+    centers = kmedoids._initialize_medoids(D, 3, random_state_=rng)
+
+    inter_medoid_distances = D[centers][:,centers]
+    assert np.all((inter_medoid_distances > 5 ) | (inter_medoid_distances == 0)), inter_medoid_distances
+
+def test_precomputed():
+    rng = np.random.RandomState(seed)
+    X_1 = [
+        [1.0, 0.0],
+        [1.1, 0.0],
+        [0.0, 1.0],
+        [0.0, 1.1]
+    ]
+    D_1 = euclidean_distances(X_1)
+    X_2 = [
+        [1.1, 0.0],
+        [0.0, 0.9]
+    ]
+    D_2 = euclidean_distances(X_2, X_1)
+
+    kmedoids = KMedoids(n_clusters=2, metric="precomputed", random_state=rng).fit(D_1)
+
+    assert_allclose(kmedoids.inertia_, 0.2)
+    assert_array_equal(kmedoids.medoid_indices_, [2,0])
+    assert_array_equal(kmedoids.labels_, [1,1,0,0])
+
+    med_1, med_2 = tuple(kmedoids.medoid_indices_)
+    predictions = kmedoids.predict(D_2)
+    assert_array_equal(predictions, [med_1 // 2, med_2 // 2], "predict closest cluster")
+
+    transformed = kmedoids.transform(D_2)
+    assert_array_equal(transformed, D_2[:, kmedoids.medoid_indices_])
+
+def test_precomputed_distance():
+    rng = np.random.RandomState(seed)
+    D = [
+        [0,1,1],
+        [1,0,1],
+        [1,1,0]
+    ]
+
+    kmedoids = KMedoids(n_clusters=2, random_state = rng, metric="precomputed").fit(D)
+    assert_array_equal(kmedoids.labels_, [0,1,0])
+    assert_array_equal(kmedoids.medoid_indices_, [0,1])
+    assert kmedoids.cluster_centers_ == None
+    assert kmedoids.inertia_ == 1
 
 def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
+    n_clusters = 3
     for metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
         if metric == 'precomputed':
             continue
 
-        model = KMedoids(n_clusters=3, metric=metric)
+        model = KMedoids(n_clusters=n_clusters, metric=metric)
         Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
         model.fit(Xnaive)
@@ -58,20 +122,23 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
         assert_array_equal(model.cluster_centers_,
                            [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         assert_array_equal(model.labels_, [0, 1, 2])
-        assert_equal(model.inertia_, 0.0)
+        assert model.inertia_ == 0.
 
+        # diagonal must be zero, off-diagonals must be positive
+        X_new = model.transform(Xnaive)
+        for c in range(n_clusters):
+            assert_equal(X_new[c, c], 0)
+            for c2 in range(n_clusters):
+                if c != c2:
+                    assert_greater(X_new[c, c2], 0)
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
     rng = np.random.RandomState(seed)
     X_iris = load_iris()['data']
 
-    ref_model = KMeans(n_clusters=3)
+    ref_model = KMeans(n_clusters=3).fit(X_iris)
 
-    ref_model.fit(X_iris)
-
-    avg_dist_to_closest_centroid = np.sum(np.min(
-        euclidean_distances(X_iris, Y=ref_model.cluster_centers_), axis=1)
-    ) / X_iris.shape[0]
+    avg_dist_to_closest_centroid = ref_model.transform(X_iris).min(axis=1).mean()
 
     for init in ['random', 'heuristic']:
         for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
@@ -140,7 +207,7 @@ def test_outlier_robustness():
     kmeans.fit(X)
     kmedoids.fit(X)
 
-    assert_array_equal(kmeans.labels_, [1, 1, 1, 1, 1, 1, 0])
+    assert_array_equal(kmeans.labels_, [0, 0, 0, 0, 0, 0, 1])
     assert_array_equal(kmedoids.labels_, [0, 0, 0, 1, 1, 1, 1])
 
 
