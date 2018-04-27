@@ -69,14 +69,14 @@ jobs:
 
   pypy3:
     docker:
-      - image: pypy:3-5.10.1
+      - image: pypy:3-6.0.0
     steps:
       - checkout
       - run: ./build_tools/circle/install_pypy.sh
 
   pypy2:
     docker:
-      - image: pypy:2-5.10.0
+      - image: pypy:2-6.0.0
     steps:
       - checkout
       - run: ./build_tools/circle/install_pypy.sh
