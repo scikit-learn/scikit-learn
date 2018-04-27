@@ -5,12 +5,10 @@ import pytest
 import numpy as np
 from scipy import sparse
 
-from sklearn.base import clone
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_false
-from sklearn.impute import _get_mask
 
 from sklearn.impute import SimpleImputer
 from sklearn.impute import MICEImputer
@@ -496,88 +494,6 @@ def test_mice_additive_matrix():
     assert_allclose(X_test_filled, X_test_est, atol=0.01)
 
 
-def test_missing_indicator():
-    X1_orig = np.array([
-        [np.nan,  np.nan,   1,   3],
-        [4,  np.nan,   0,  np.nan],
-        [8,  np.nan,   1,  0],
-        [0,  np.nan,   0,  15],
-        [16,  np.nan,   1,  19]
-    ])
-    X2_orig = np.array([
-        [5,  1,   1,   np.nan],
-        [np.nan,  np.nan,   2,  3],
-        [2,  3,   4,  0],
-        [0,  np.nan,   5,  np.nan],
-        [11,  np.nan,   1,  1]
-    ])
-
-    def assert_type(actual, X_is_sparse, sparse_param, missing_values):
-        if sparse_param is True:
-            assert actual == sparse.csc_matrix
-        elif (sparse_param == "auto" and missing_values == 0):
-            assert actual == np.ndarray
-        elif sparse_param is False:
-            assert actual == np.ndarray
-        else:
-            if X_is_sparse:
-                assert actual == sparse.csc_matrix
-            else:
-                assert actual == np.ndarray
-
-    def assert_mask(actual, expected):
-        if hasattr(actual, 'toarray'):
-            assert_array_equal(actual.toarray(), expected)
-        else:
-            assert_array_equal(actual, expected)
-
-    def _check_missing_indicator(X1, X2, retype, sparse_param, missing_values):
-        mask_X2 = _get_mask(X2, missing_values)
-        mask_X1 = _get_mask(X1, missing_values)
-
-        expect_feat_missing = np.where(np.any(mask_X1, axis=0))[0]
-
-        X1_in = retype(X1)
-        X2_in = retype(X2)
-        # features = "missing-only":
-        indicator = MissingIndicator(missing_values=missing_values,
-                                     sparse=sparse_param)
-        X1_tr = indicator.fit_transform(X1_in)
-        X2_tr = indicator.transform(X2_in)
-        features = indicator.features_
-        assert_array_equal(expect_feat_missing, features)
-        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
-                    missing_values)
-        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
-                    missing_values)
-        if len(features) != 0:
-            assert_mask(X2_tr, mask_X2[:, features])
-            assert_mask(X1_tr, mask_X1[:, features])
-        else:
-            assert_mask(X2_tr, mask_X2)
-            assert_mask(X1_tr, mask_X1)
-
-        # features = "all"
-        indicator = clone(indicator).set_params(features="all")
-        X1_tr = indicator.fit_transform(X1_in)
-        X2_tr = indicator.transform(X2_in)
-        features = np.arange(X2.shape[1])
-        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
-                    missing_values)
-        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
-                    missing_values)
-        assert_mask(X2_tr, mask_X2[:, features])
-        assert_mask(X1_tr, mask_X1[:, features])
-
-    for X1, X2, missing_values in [(X1_orig, X2_orig, np.nan),
-                                   (X1_orig + 1, X2_orig + 1, 0)]:
-        for retype in [lambda x: x.tolist(), np.array, sparse.csr_matrix,
-                       sparse.csc_matrix, sparse.lil_matrix]:
-            for sparse_param in [True, False, 'auto']:
-                _check_missing_indicator(X1, X2, retype, sparse_param,
-                                         missing_values)
-
-
 @pytest.mark.parametrize(
     "X_fit, X_trans, params, msg_err",
     [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
@@ -590,8 +506,102 @@ def test_missing_indicator():
       {'features': 'all', 'sparse': 'random'},
       "'sparse' has to be a boolean or 'auto'")]
 )
-def test_missing_indicator_error_new(X_fit, X_trans, params, msg_err):
+def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
     indicator = MissingIndicator(missing_values=-1)
     indicator.set_params(**params)
     with pytest.raises(ValueError, match=msg_err):
         indicator.fit(X_fit).transform(X_trans)
+
+
+@pytest.mark.parametrize(
+    "missing_values, dtype",
+    [(np.nan, np.float64),
+     (0, np.int32),
+     (-1, np.int32)])
+@pytest.mark.parametrize(
+    "arr_type",
+    [np.array, sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix,
+     sparse.lil_matrix, sparse.bsr_matrix])
+@pytest.mark.parametrize(
+    "param_features, n_features, features_indices",
+    [('missing-only', 2, np.array([0, 1])),
+     ('all', 3, np.array([0, 1, 2]))])
+def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
+                               n_features, features_indices):
+    X_fit = np.array([[missing_values, missing_values, 1],
+                      [4, missing_values, 2]])
+    X_trans = np.array([[missing_values, missing_values, 1],
+                        [4, 12, 10]])
+    X_fit_expected = np.array([[1, 1, 0], [0, 1, 0]])
+    X_trans_expected = np.array([[1, 1, 0], [0, 0, 0]])
+
+    # convert the input to the right array format and right dtype
+    X_fit = arr_type(X_fit).astype(dtype)
+    X_trans = arr_type(X_trans).astype(dtype)
+    X_fit_expected = X_fit_expected.astype(dtype)
+    X_trans_expected = X_trans_expected.astype(dtype)
+
+    indicator = MissingIndicator(missing_values=missing_values,
+                                 features=param_features,
+                                 sparse=False)
+    X_fit_mask = indicator.fit_transform(X_fit)
+    X_trans_mask = indicator.transform(X_trans)
+
+    assert X_fit_mask.shape[1] == n_features
+    assert X_trans_mask.shape[1] == n_features
+
+    assert_array_equal(indicator.features_, features_indices)
+    assert_allclose(X_fit_mask, X_fit_expected[:, features_indices])
+    assert_allclose(X_trans_mask, X_trans_expected[:, features_indices])
+
+    assert X_fit_mask.dtype == dtype
+    assert X_trans_mask.dtype == dtype
+    assert isinstance(X_fit_mask, np.ndarray)
+    assert isinstance(X_trans_mask, np.ndarray)
+
+    indicator.set_params(sparse=True)
+    X_fit_mask_sparse = indicator.fit_transform(X_fit)
+    X_trans_mask_sparse = indicator.transform(X_trans)
+
+    assert X_fit_mask_sparse.format == 'csc'
+    assert X_trans_mask_sparse.format == 'csc'
+    assert_allclose(X_fit_mask_sparse.toarray(), X_fit_mask)
+    assert_allclose(X_trans_mask_sparse.toarray(), X_trans_mask)
+
+
+@pytest.mark.parametrize("param_sparse", [True, False, 'auto'])
+@pytest.mark.parametrize("missing_values", [np.nan, 0])
+@pytest.mark.parametrize(
+    "arr_type",
+    [np.array, sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix])
+def test_missing_indicator_sparse_param(arr_type, missing_values,
+                                        param_sparse):
+    # check the format of the output with different sparse parameter
+    X_fit = np.array([[missing_values, missing_values, 1],
+                      [4, missing_values, 2]])
+    X_trans = np.array([[missing_values, missing_values, 1],
+                        [4, 12, 10]])
+    X_fit = arr_type(X_fit).astype(np.float64)
+    X_trans = arr_type(X_trans).astype(np.float64)
+
+    indicator = MissingIndicator(missing_values=missing_values,
+                                 sparse=param_sparse)
+    X_fit_mask = indicator.fit_transform(X_fit)
+    X_trans_mask = indicator.transform(X_trans)
+
+    if param_sparse is True:
+        assert X_fit_mask.format == 'csc'
+        assert X_trans_mask.fomat == 'csc'
+    elif param_sparse == 'auto' and missing_values == 0:
+        assert isinstance(X_fit_mask, np.ndarray)
+        assert isinstance(X_trans_mask, np.ndarray)
+    elif param_sparse is False:
+        assert isinstance(X_fit_mask, np.ndarray)
+        assert isinstance(X_trans_mask, np.ndarray)
+    else:
+        if sparse.isparse(X_fit):
+            assert X_fit_mask.format == 'csc'
+            assert X_trans_mask.fomat == 'csc'
+        else:
+            assert isinstance(X_fit_mask, np.ndarray)
+            assert isinstance(X_trans_mask, np.ndarray)

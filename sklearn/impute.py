@@ -942,39 +942,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.error_on_new = error_on_new
 
-    def fit(self, X, y=None):
-        """Fit the transformer on X.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Input data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite='allow-nan')
-        self._n_features = X.shape[1]
-
-        if self.features not in ('missing-only', 'all'):
-            raise ValueError("'features' has to be either 'missing-only' or "
-                             "'all'. Got {} instead.".format(self.features))
-
-        if not ((isinstance(self.sparse, six.string_types) and
-                self.sparse == "auto") or isinstance(self.sparse, bool)):
-            raise ValueError("'sparse' has to be a boolean or 'auto'. "
-                             "Got {!r} instead.".format(self.sparse))
-
-        self.features_ = (self._get_missing_features_info(X)[1]
-                          if self.features == 'missing-only'
-                          else np.arange(self._n_features))
-
-        return self
-
     def _get_missing_features_info(self, X):
         """Compute the imputer mask and the indices of the features
         containing missing values.
@@ -1030,6 +997,39 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 imputer_mask = sparse.csc_matrix(imputer_mask)
 
         return imputer_mask, features_with_missing
+
+    def fit(self, X, y=None):
+        """Fit the transformer on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X = check_array(X, accept_sparse=('csc', 'csr'),
+                        force_all_finite='allow-nan')
+        self._n_features = X.shape[1]
+
+        if self.features not in ('missing-only', 'all'):
+            raise ValueError("'features' has to be either 'missing-only' or "
+                             "'all'. Got {} instead.".format(self.features))
+
+        if not ((isinstance(self.sparse, six.string_types) and
+                self.sparse == "auto") or isinstance(self.sparse, bool)):
+            raise ValueError("'sparse' has to be a boolean or 'auto'. "
+                             "Got {!r} instead.".format(self.sparse))
+
+        self.features_ = (self._get_missing_features_info(X)[1]
+                          if self.features == 'missing-only'
+                          else np.arange(self._n_features))
+
+        return self
 
     def transform(self, X):
         """Generate missing values indicator for X.
