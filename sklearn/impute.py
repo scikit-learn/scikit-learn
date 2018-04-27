@@ -933,8 +933,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, missing_values="NaN", features="missing-only", sparse="auto",
-                 error_on_new=True):
+    def __init__(self, missing_values="NaN", features="missing-only",
+                 sparse="auto", error_on_new=True):
         self.missing_values = missing_values
         self.features = features
         self.sparse = sparse
