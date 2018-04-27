@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.impute import _get_mask
 
 from sklearn.impute import SimpleImputer
