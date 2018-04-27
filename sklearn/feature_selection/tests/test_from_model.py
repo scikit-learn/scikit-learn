@@ -1,5 +1,6 @@
 import numpy as np
 
+from sklearn.impute import SimpleImputer
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
@@ -202,8 +203,9 @@ def test_threshold_without_refitting():
 
 def test_transform_accepts_infinite_data():
     # Test that transform doesn't check for np.inf and np.nan values.
-    est = RandomForestClassifier()
+    est = SimpleImputer(strategy='mean', missing_values='NaN')
     model = SelectFromModel(estimator=est)
+    data[2, :] = np.nan
     model.fit(data, y)
 
     X_len = len(model.get_support())
