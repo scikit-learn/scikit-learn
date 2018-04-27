@@ -931,12 +931,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError('resize with smaller n_estimators %d < %d' %
                              (total_n_estimators, self.estimators_[0]))
 
-        self.estimators_.resize((total_n_estimators, self.loss_.K))
-        self.train_score_.resize(total_n_estimators)
+        self.estimators_ = np.resize(self.estimators_,
+                                     (total_n_estimators, self.loss_.K))
+        self.train_score_ = np.resize(self.train_score_, total_n_estimators)
         if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
             if hasattr(self, 'oob_improvement_'):
-                self.oob_improvement_.resize(total_n_estimators)
+                self.oob_improvement_ = np.resize(self.oob_improvement_,
+                                                  total_n_estimators)
             else:
                 self.oob_improvement_ = np.zeros((total_n_estimators,),
                                                  dtype=np.float64)
