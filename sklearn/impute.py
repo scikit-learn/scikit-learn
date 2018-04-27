@@ -885,57 +885,55 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         ``missing_values`` will be represented as ones.
 
-    features : {'auto' (default), 'all', array-like of int}
-        If "all", mask will represent all features.
-        If "auto", mask will only represent features with missing values
-        during fit time.
-        If mask/indices, mask will only represent features in the
-        indices or mask.
+    features : str, optional
+        Whether the imputer mask should represent all or a subset of
+        features.
 
-    sparse : boolean or "auto", optional (default="auto")
-        If True, the transformed ``X`` will be a sparse matrix.
-        If False, the transformed ``X`` will be a numpy array.
-        If "auto", the transformed ``X`` will be of same type as input.
+        - If "missing-only" (default), the imputer mask will only represent
+          features containing missing values during fit time.
+        - If "all", the imputer mask will represent all features.
 
-    error_on_new : boolean, optional (default=True)
-        If True, transform will raise an error when there are features with
-        missing values in transform but have no missing values in fit
-        This is applicable only when ``features`` = "auto"
+    sparse : boolean or "auto", optional
+        Whether the imputer mask format should be sparse or dense.
+
+        - If "auto" (default), the imputer mask will be of same type as
+          input.
+        - If True, the imputer mask will be a sparse matrix.
+        - If False, the imputer mask will be a numpy array.
+
+    error_on_new : boolean, optional
+        If True (default), transform will raise an error when there are
+        features with missing values in transform but have no missing values in
+        fit This is applicable only when ``features="missing-only"``.
 
     Examples
     --------
-    >>> from sklearn.impute import MissingIndicator
     >>> import numpy as np
-    >>> X1 = np.array([
-    ...       [np.nan,  1,  3],
-    ...       [ 4,  0, np.nan],
-    ...       [ 8,  1,  0]
-    ... ])
-    >>> X2 = np.array([
-    ...       [ 5, 1, np.nan],
-    ...       [np.nan,  2,  3],
-    ...       [ 2,  4,  0]
-    ... ])
+    >>> from sklearn.impute import MissingIndicator
+    >>> X1 = np.array([[np.nan, 1, 3],
+    ...                [4, 0, np.nan],
+    ...                [8, 1, 0]])
+    >>> X2 = np.array([[5, 1, np.nan],
+    ...                [np.nan, 2, 3],
+    ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
     >>> indicator.fit(X1)
-    MissingIndicator(error_on_new=True, features='auto', missing_values='NaN',
-             sparse='auto')
+    MissingIndicator(error_on_new=True, features='missing-only',
+             missing_values='NaN', sparse='auto')
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr
-    array([[0, 1],
-           [1, 0],
-           [0, 0]])
+    array([[0., 1.],
+           [1., 0.],
+           [0., 0.]])
 
     Attributes
     ----------
-    features_  : array of shape(n_missing_features,)
-        The features with missing values.
+    features_ : ndarray, shape (n_missing_features,)
+        The features containing missing values.
 
-    n_features_ : int
-        The number of features in the input.
     """
 
-    def __init__(self, missing_values="NaN", features="auto", sparse="auto",
+    def __init__(self, missing_values="NaN", features="missing-only", sparse="auto",
                  error_on_new=True):
         self.missing_values = missing_values
         self.features = features
@@ -956,59 +954,115 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        self._validate_params()
-
         X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=False)
-        self.n_features_ = X.shape[1]
+                        force_all_finite='allow-nan')
+        self._n_features = X.shape[1]
 
-        if isinstance(self.features, six.string_types):
-            if self.features == "auto":
-                _, self.features_ = self._get_missing_features_info(X)
-            else:  # self.features == "all"
-                self.features_ = np.arange(self.n_features_)
-        else:
-            self.features_ = self.features
+        if self.features not in ('missing-only', 'all'):
+            raise ValueError("'features' has to be either 'missing-only' or "
+                             "'all'. Got {} instead.".format(self.features))
+
+        if not ((isinstance(self.sparse, six.string_types) and
+                self.sparse == "auto") or isinstance(self.sparse, bool)):
+            raise ValueError("'sparse' has to be a boolean or 'auto'. "
+                             "Got {!r} instead.".format(self.sparse))
+
+        self.features_ = (self._get_missing_features_info(X)[1]
+                          if self.features == 'missing-only'
+                          else np.arange(self._n_features))
 
         return self
+
+    def _get_missing_features_info(self, X):
+        """Compute the imputer mask and the indices of the features
+        containing missing values.
+
+        Parameters
+        ----------
+        X : {ndarray or sparse matrix}, shape (n_samples, n_features)
+            The input data with missing values. Note that ``X`` has been
+            checked in ``fit`` and ``transform`` before to call this function.
+
+        Returns
+        -------
+        imputer_mask : {ndarray or sparse matrix}, shape \
+(n_samples, n_features) or (n_samples, n_features_with_missing)
+            The imputer mask of the original data.
+
+        features_with_missing : ndarray, shape (n_features_with_missing)
+            The features containing missing values.
+
+        """
+        if sparse.issparse(X) and self.missing_values != 0:
+            mask = _get_mask(X.data, self.missing_values)
+
+            # The imputer mask will be constructed with the same sparse format
+            # as X.
+            sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                                  else sparse.csc_matrix)
+            imputer_mask = sparse_constructor(
+                (mask, X.indices.copy(), X.indptr.copy()),
+                shape=X.shape, dtype=X.dtype)
+
+            missing_values_mask = imputer_mask.copy()
+            missing_values_mask.eliminate_zeros()
+            features_with_missing = (
+                np.flatnonzero(np.diff(missing_values_mask.indptr))
+                if missing_values_mask.format == 'csc'
+                else np.unique(missing_values_mask.indices))
+
+            if self.sparse is False:
+                imputer_mask = imputer_mask.toarray()
+            elif imputer_mask.format == 'csr':
+                imputer_mask = imputer_mask.tocsc()
+        else:
+            if sparse.issparse(X):
+                # case of sparse matrix with 0 as missing values. Implicit and
+                # explicit zeros are considered as missing values.
+                X = X.toarray()
+            imputer_mask = _get_mask(X, self.missing_values).astype(X.dtype,
+                                                                    copy=False)
+            features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
+
+            if self.sparse is True:
+                imputer_mask = sparse.csc_matrix(imputer_mask)
+
+        return imputer_mask, features_with_missing
 
     def transform(self, X):
         """Generate missing values indicator for X.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
 
         Returns
         -------
-        Xt : array or sparse matrix, shape = [n_samples, n_features]
-             The missing indicator for input data
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+             The missing indicator for input data.
 
         """
-        check_is_fitted(self, "features_", "n_features_")
+        check_is_fitted(self, "features_")
 
         X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=False)
-        if X.shape[1] != self.n_features_:
+                        force_all_finite='allow-nan')
+        if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
                              "than during fitting.")
 
-        imputer_mask, features_ = self._get_missing_features_info(X)
+        imputer_mask, features = self._get_missing_features_info(X)
 
-        if isinstance(self.features, six.string_types):
-            if self.features == "auto":
-                features = np.setdiff1d(features_,
-                                        self.features_)
-                if self.error_on_new and features.size > 0:
-                    raise ValueError("The features %s have missing values "
-                                     "in transform but have no missing values "
-                                     "in fit" % features)
+        if self.features == "missing-only":
+            features_diff_fit_trans = np.setdiff1d(features, self.features_)
+            if (self.error_on_new and features_diff_fit_trans.size > 0):
+                raise ValueError("The features {} have missing values "
+                                 "in transform but have no missing values "
+                                 "in fit.".format(features_diff_fit_trans))
 
-        if not (isinstance(self.features, six.string_types) and
-                self.features == "all") and len(self.features_) != 0:
-            # no need to slice when all features have missing values
-            imputer_mask = imputer_mask[:, self.features_]
+            if (self.features_.size > 0 and
+                    self.features_.size < self._n_features):
+                imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
 
@@ -1017,58 +1071,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
 
         Returns
         -------
-        Xt : array or sparse matrix, shape = [n_samples, n_features]
-             The missing indicator for input data
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+             The missing indicator for input data.
 
         """
-        self.fit(X, y)
-        return self.transform(X)
-
-    def _validate_params(self):
-        if (isinstance(self.features, six.string_types) and
-                self.features not in ["auto", "all"]):
-            raise ValueError("Can only use these options: 'auto', 'all'"
-                             " got {0}".format(self.features))
-        elif not isinstance(self.features, six.string_types):
-            self.features = check_array(self.features, ensure_2d=False)
-            if (isinstance(self.features, np.ndarray) and
-                    self.features.dtype.kind != 'i'):
-                raise ValueError("Features should be an array of integers")
-
-        if not ((isinstance(self.sparse, six.string_types) and
-                self.sparse == "auto") or isinstance(self.sparse, bool)):
-            raise ValueError("sparse can only boolean or 'auto'"
-                             " got {0}".format(self.sparse))
-
-    def _get_missing_features_info(self, X):
-        if sparse.issparse(X) and self.missing_values != 0:
-            #  sparse matrix and missing values is not zero
-            imputer_mask = _get_mask(X.data, self.missing_values)
-            imputer_mask = X.__class__((imputer_mask, X.indices.copy(),
-                                        X.indptr.copy()), shape=X.shape,
-                                       dtype=X.dtype)
-            feat_with_missing = imputer_mask.sum(axis=0).nonzero()[1]
-        else:
-            #  sparse with zero as missing value and dense matrix
-            if sparse.issparse(X):
-                X = X.toarray()
-            imputer_mask = _get_mask(X, self.missing_values)
-            #  convert boolean mask to binary mask
-            imputer_mask = imputer_mask.astype(int, copy=False)
-            feat_with_missing = imputer_mask.sum(axis=0).nonzero()[0]
-
-        if ((self.sparse == 'auto' and sparse.issparse(imputer_mask)) or
-                self.sparse is True):
-            imputer_mask = sparse.csc_matrix(imputer_mask)
-        elif self.sparse is False and sparse.issparse(imputer_mask):
-            imputer_mask = imputer_mask.toarray()
-
-        if isinstance(feat_with_missing, np.matrix):
-            feat_with_missing = feat_with_missing.A1
-
-        return imputer_mask, feat_with_missing
+        return self.fit(X, y).transform(X)
