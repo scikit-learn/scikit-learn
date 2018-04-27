@@ -1217,10 +1217,10 @@ def test_fit_grid_point():
             assert_equal(n_test_samples, test.size)
 
     # Should raise an error upon multimetric scorer
-    assert_raise_message(ValueError, "scoring value should either be a "
-                         "callable, string or None.", fit_grid_point, X, y,
-                         svc, params, train, test, {'score': scorer},
-                         verbose=True)
+    assert_raise_message(ValueError, "For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead.",
+                         fit_grid_point, X, y, svc, params, train, test,
+                         {'score': scorer}, verbose=True)
 
 
 def test_pickle():
