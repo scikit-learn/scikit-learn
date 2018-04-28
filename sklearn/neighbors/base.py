@@ -258,6 +258,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "Expected n_neighbors > 0. Got %d" %
                     self.n_neighbors
                 )
+            if type(self.n_neighbors) is not int:
+                raise TypeError(
+                    "n_neighbors does not take %s value, "
+                    "enter integer value" %
+                    type(self.n_neighbors))
 
         return self
 

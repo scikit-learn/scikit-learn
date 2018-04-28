@@ -108,6 +108,13 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
+def test_n_neighbors_datatype():
+    # Test to check whether n_neighbors is integer
+    x = [[1, 1], [1, 1]]
+    neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.)
+    assert_raises(TypeError, neighbors_.fit, x)
+
+
 def test_precomputed(random_state=42):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
