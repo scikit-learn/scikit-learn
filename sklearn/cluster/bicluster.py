@@ -239,8 +239,8 @@ class SpectralCoclustering(BaseSpectral):
         are used.
 
     random_state : int, RandomState instance or None (default)
-        Used for randomizing the singular value decomposition. Use an int
-        to make the randomness deterministic.
+        Used for randomizing the singular value decomposition and the k-means
+        initialization. Use an int to make the randomness deterministic.
         See :term:`random_state <Glossary>`.
 
     Attributes
@@ -370,8 +370,8 @@ class SpectralBiclustering(BaseSpectral):
         are used.
 
     random_state : int, RandomState instance or None (default)
-        Used for randomizing the singular value decomposition. Use an int
-        to make the randomness deterministic.
+        Used for randomizing the singular value decomposition and the k-means
+        initialization. Use an int to make the randomness deterministic.
         See :term:`random_state <Glossary>`.
 
     Attributes

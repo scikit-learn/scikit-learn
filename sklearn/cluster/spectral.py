@@ -39,6 +39,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         matrix search if machine precision convergence is not reached
 
     random_state : int, RandomState instance or None (default)
+        Determines random number generation for rotation matrix initialization.
         Use an int to make the randomness deterministic.
         See :term:`random_state <Glossary>`.
 
