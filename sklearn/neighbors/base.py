@@ -259,7 +259,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.n_neighbors
                 )
             else:
-                if not np.issubdtype(type(self.n_neighbors), int):
+                if not np.issubdtype(type(self.n_neighbors), np.integer):
                     raise TypeError(
                         "n_neighbors does not take %s value, "
                         "enter integer value" %
