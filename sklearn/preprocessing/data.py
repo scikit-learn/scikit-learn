@@ -1825,7 +1825,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True):
+def _transform_selected(X, transform, dtype=np.float64, selected="all", copy=True):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -1835,6 +1835,9 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
     transform : callable
         A callable transform(X) -> X_transformed
+
+    dtype : number type, default=np.float
+        Desired dtype of output.
 
     copy : boolean, optional
         Copy X even if it could be avoided.
@@ -1872,9 +1875,9 @@ def _transform_selected(X, transform, selected="all", copy=True):
         X_not_sel = X[:, ind[not_sel]]
 
         if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-            return sparse.hstack((X_sel, X_not_sel))
+            return sparse.hstack((X_sel, X_not_sel), dtype=dtype)
         else:
-            return np.hstack((X_sel, X_not_sel))
+            return np.hstack((X_sel, X_not_sel)).astype(dtype)
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -2061,7 +2064,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        return _transform_selected(X, self._fit_transform,
+        return _transform_selected(X, self._fit_transform, self.dtype,
                                    self.categorical_features, copy=True)
 
     def _transform(self, X):
@@ -2117,7 +2120,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
-        return _transform_selected(X, self._transform,
+        return _transform_selected(X, self._transform, self.dtype,
                                    self.categorical_features, copy=True)
 
 
