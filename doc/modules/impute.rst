@@ -130,7 +130,7 @@ estimator that supports imputation.
 =======
 :class:`SimpleImputer`, :class:`MICEImputer`, and :class:`KNNImputer` can be 
 used in a Pipelineas a way to build a composite estimator that supports imputation.
->>>>>>> 95f15ffd38f9908ac20cfffb3e6087f9beeb7e8b
+
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. [#] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
