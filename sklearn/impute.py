@@ -1041,7 +1041,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Returns
         -------
         Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
-             The missing indicator for input data.
+            The missing indicator for input data. The data type of ``Xt``
+            will be boolean.
 
         """
         check_is_fitted(self, "features_")
@@ -1078,7 +1079,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Returns
         -------
         Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
-             The missing indicator for input data.
+            The missing indicator for input data. The data type of ``Xt``
+            will be boolean.
 
         """
         return self.fit(X, y).transform(X)
