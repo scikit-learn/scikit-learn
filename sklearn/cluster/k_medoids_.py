@@ -4,6 +4,7 @@
 # Authors: Timo Erkkilä <timo.erkkila@gmail.com>
 #          Antti Lehmussola <antti.lehmussola@gmail.com>
 #          Kornel Kiełczewski <kornel.mail@gmail.com>
+#          Zane Dufour <zane.dufour@gmail.com>
 # License: BSD 3 clause
 
 import warnings
@@ -47,6 +48,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     Attributes
     ----------
     cluster_centers_ : array, shape = (n_clusters, n_features)
+            or None if metric == 'precomputed'
         Cluster centers, i.e. medoids (elements from the original dataset)
 
     medoid_indices_ : array, shape = (n_clusters,)
@@ -143,7 +145,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features).
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features), \
+                or (n_samples, n_samples) if metric == 'precomputed'
             Dataset to cluster.
 
         y : Ignored
@@ -225,10 +228,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, \
-            shape = (n_samples1, n_samples) if metric == "precomputed", or, \
-            shape = (n_samples, n_features)
-                Data to transform.
+        X : {array-like, sparse matrix}, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Data to transform.
 
         Returns
         -------
@@ -251,7 +253,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
             New data to predict.
 
         Returns
@@ -291,7 +294,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return inertia
 
     def _initialize_medoids(self, D, n_clusters, random_state_):
-        """Select initial mediods randomly or heuristically"""
+        """Select initial mediods randomly, with k-medoids++, or heuristically"""
 
         if self.init == 'random':  # Random initialization
             # Pick random k medoids as the initial ones.
@@ -309,7 +312,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return medoids
 
     def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
-        """Init n_clusters seeds similar to k-means++
+        """Init n_clusters seeds with a method similar to k-means++
 
         Parameters
         -----------
