@@ -112,9 +112,9 @@ use ``-1`` as missing values::
   >>> indicator = MissingIndicator(missing_values=-1)
   >>> mask_missing_values_only = indicator.fit_transform(X)
   >>> mask_missing_values_only
-  array([[1, 1, 0],
-         [0, 1, 1],
-         [0, 1, 0]])
+  array([[ True,  True, False],
+         [False,  True,  True],
+         [False,  True, False]])
 
 The ``features`` parameter is used to choose the features for which the mask is
 constructed. By default, it is ``'missing-only'`` which returns the imputer
@@ -129,8 +129,8 @@ whether or not they contain missing values::
   >>> indicator = MissingIndicator(missing_values=-1, features="all")
   >>> mask_all = indicator.fit_transform(X)
   >>> mask_all
-  array([[1, 1, 0, 0],
-         [0, 1, 0, 1],
-         [0, 1, 0, 0]])
+  array([[ True,  True, False, False],
+         [False,  True, False,  True],
+         [False,  True, False, False]])
   >>> indicator.features_
   array([0, 1, 2, 3])

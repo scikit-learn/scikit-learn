@@ -929,9 +929,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
              missing_values='NaN', sparse='auto')
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr
-    array([[0., 1.],
-           [1., 0.],
-           [0., 0.]])
+    array([[False,  True],
+           [ True, False],
+           [False, False]])
 
     """
 
@@ -971,7 +971,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                                   else sparse.csc_matrix)
             imputer_mask = sparse_constructor(
                 (mask, X.indices.copy(), X.indptr.copy()),
-                shape=X.shape, dtype=X.dtype)
+                shape=X.shape, dtype=bool)
 
             missing_values_mask = imputer_mask.copy()
             missing_values_mask.eliminate_zeros()
@@ -989,8 +989,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 # case of sparse matrix with 0 as missing values. Implicit and
                 # explicit zeros are considered as missing values.
                 X = X.toarray()
-            imputer_mask = _get_mask(X, self.missing_values).astype(X.dtype,
-                                                                    copy=False)
+            imputer_mask = _get_mask(X, self.missing_values)
             features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
 
             if self.sparse is True:

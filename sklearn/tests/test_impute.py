@@ -554,8 +554,8 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     assert_allclose(X_fit_mask, X_fit_expected[:, features_indices])
     assert_allclose(X_trans_mask, X_trans_expected[:, features_indices])
 
-    assert X_fit_mask.dtype == dtype
-    assert X_trans_mask.dtype == dtype
+    assert X_fit_mask.dtype == bool
+    assert X_trans_mask.dtype == bool
     assert isinstance(X_fit_mask, np.ndarray)
     assert isinstance(X_trans_mask, np.ndarray)
 
@@ -563,6 +563,8 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     X_fit_mask_sparse = indicator.fit_transform(X_fit)
     X_trans_mask_sparse = indicator.transform(X_trans)
 
+    assert X_fit_mask_sparse.dtype == bool
+    assert X_trans_mask_sparse.dtype == bool
     assert X_fit_mask_sparse.format == 'csc'
     assert X_trans_mask_sparse.format == 'csc'
     assert_allclose(X_fit_mask_sparse.toarray(), X_fit_mask)
