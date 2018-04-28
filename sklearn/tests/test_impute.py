@@ -618,9 +618,11 @@ def test_knn_imputation_default():
         [np.nan, 4,      5,      5],
         [6,      np.nan, 6,      7],
         [8,      8,      8,      8],
+        [19,     19,     19,     19],
         [np.nan, np.nan, np.nan, 19],
     ])
     statistics_mean = np.nanmean(X, axis=0)
+    r7c0, r7c1, r7c2, _ = statistics_mean
 
     X_imputed = np.array([
         [1,      0,      0,      1],
@@ -629,12 +631,13 @@ def test_knn_imputation_default():
         [4,      4,      5,      5],
         [6,      3,      6,      7],
         [8,      8,      8,      8],
-        [4,      3,      4,      19],
+        [19,     19,     19,     19],
+        [r7c0,   r7c1,   r7c2,   19],
     ])
 
     imputer = KNNImputer()
-    assert_array_equal(imputer.fit_transform(X), X_imputed)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed, decimal=6)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean, decimal=6)
 
     # Test with all neighboring donors also having missing feature values
     X = np.array([
@@ -980,7 +983,8 @@ def test_metric_type():
 
     # Test with a metric type without NaN support
     imputer = KNNImputer(metric="euclidean")
-    assert_raises(ValueError, imputer.fit, X)
+    bad_metric_msg = "The selected metric does not support NaN values."
+    assert_raise_message(ValueError, bad_metric_msg, imputer.fit, X)
 
 
 def test_callable_metric():

@@ -98,6 +98,7 @@ def get_results(dataset):
             (mice_impute_scores.mean(), mice_impute_scores.std()),
             (knn_impute_scores.mean(), knn_impute_scores.std()))
 
+
 results_diabetes = np.array(get_results(load_diabetes()))
 mses_diabetes = results_diabetes[:, 0] * -1
 stds_diabetes = results_diabetes[:, 1]

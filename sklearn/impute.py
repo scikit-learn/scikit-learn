@@ -23,6 +23,7 @@ from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
 from .metrics import pairwise_distances
+from .metrics.pairwise import _MASKED_METRICS
 
 from .neighbors.base import _check_weights
 from .neighbors.base import _get_weights
@@ -1009,12 +1010,13 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             dist_pdonors = dist_pdonors.reshape(-1,
                                                 len(pdonors_row_idx))
 
-            # Argpartition to seperate actual donors from the rest
+            # Argpartition to separate actual donors from the rest
             pdonors_idx = np.argpartition(
                 dist_pdonors, self.n_neighbors - 1, axis=1)
 
             # Get final donors row index from pdonors
             donors_idx = pdonors_idx[:, :self.n_neighbors]
+
             # Get weights or None
             dist_pdonors_rows = np.arange(len(donors_idx))[:, None]
             weight_matrix = _get_weights(
@@ -1022,7 +1024,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                     dist_pdonors_rows, donors_idx], self.weights)
             donor_row_idx_ravel = donors_idx.ravel()
 
-            # Retrieve donor cells and calculate kNN score
+            # Retrieve donor values and calculate kNN score
             fitted_X_temp = fitted_X[pdonors_row_idx]
             donors = fitted_X_temp[donor_row_idx_ravel, c].reshape(
                 (-1, self.n_neighbors))
@@ -1050,9 +1052,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             Returns self.
         """
 
-        # Check parameters
+        # Check data integrity and calling arguments
         force_all_finite = False if self.missing_values in ["NaN",
                                                             np.nan] else True
+        if not force_all_finite:
+            if self.metric not in _MASKED_METRICS and not callable(
+                    self.metric):
+                raise ValueError(
+                    "The selected metric does not support NaN values.")
         X = check_array(X, accept_sparse=False, dtype=np.float64,
                         force_all_finite=force_all_finite, copy=self.copy)
         self.weights = _check_weights(self.weights)
@@ -1107,6 +1114,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                                             np.nan] else True
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
+
         # Check for +/- inf
         if np.any(np.isinf(X)):
             raise ValueError("+/- inf values are not allowed in data to be "
@@ -1143,18 +1151,11 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             # Mask for fitted_X
             mask_fx = _get_mask(self.fitted_X_, self.missing_values)
 
-            # Get row index of missing and distance from donors
-            dist_temp = pairwise_distances(X[row_has_missing],
-                                           self.fitted_X_,
-                                           metric=self.metric,
-                                           squared=False,
-                                           missing_values=self.missing_values)
-            dist = np.empty((n_rows_X, n_rows_X))
-            dist[row_has_missing] = dist_temp.copy()
-            dist[~row_has_missing] = np.nan
-
-            # Delete temp var binding
-            del dist_temp
+            # Pairwise distances between receivers and fitted samples
+            dist = np.empty((len(X), len(self.fitted_X_)))
+            dist[row_has_missing] = pairwise_distances(
+                X[row_has_missing], self.fitted_X_, metric=self.metric,
+                squared=False, missing_values=self.missing_values)
 
             # Find and impute missing
             X = self._impute(dist, X, self.fitted_X_, mask, mask_fx)
