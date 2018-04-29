@@ -127,10 +127,10 @@ plt.bar(index + bar_width, [f_one_lr_f_beta, f_one_ada_f_beta], bar_width,
 
 plt.xticks(
     index + bar_width / 2,
-    ('f1 score logistic regression', 'f1 score adaboost'))
+    ('f1 logistic regression', 'f1 adaboost'))
 
 plt.ylabel('scores')
-plt.title('Classifiers f1 score before and after calibration')
+plt.title('f1 score before and after calibration')
 plt.legend()
 
 plt.subplot(2, 1, 2)
@@ -144,13 +144,13 @@ plt.bar(index + bar_width,
 
 plt.xticks(
     index + bar_width / 2,
-    ('true positive rate logistic regression',
-     'true negative rate logistic regression',
-     'true positive rate adaboost',
-     'true negative rate adaboost')
+    ('tpr logistic regression',
+     'tnr logistic regression',
+     'tpr adaboost',
+     'tnr adaboost')
 )
 plt.ylabel('scores')
-plt.title('Classifiers tpr and tnr before and after calibration')
+plt.title('tpr and tnr before and after calibration')
 plt.legend()
 
 plt.show()

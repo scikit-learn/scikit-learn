@@ -298,7 +298,7 @@ rate. As seen after calibration both classifiers achieve better true positive ra
 while their respective true negative rates have decreased slightly or remained
 stable.
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_decision_threshold_calibration_000.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_decision_threshold_calibration_001.png
    :target: ../auto_examples/calibration/plot_decision_threshold_calibration.html
    :align: center
 
