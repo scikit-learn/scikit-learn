@@ -270,15 +270,15 @@ Here is a simple usage example::
 
    >>> from sklearn.calibration import CutoffClassifier
    >>> from sklearn.datasets import load_breast_cancer
-   >>> from sklearn.linear_model import LogisticRegression
+   >>> from sklearn.naive_bayes import GaussianNB
    >>> from sklearn.model_selection import train_test_split
    >>>
    >>> X, y = load_breast_cancer(return_X_y=True)
    >>> X_train, X_test, y_train, y_test = train_test_split(
    ...     X, y, train_size=0.6, random_state=42)
-   >>> clf = CutoffClassifier(LogisticRegression(), cv=3).fit(X_train, y_train)
+   >>> clf = CutoffClassifier(GaussianNB(), cv=3).fit(X_train, y_train)
    >>> clf.decision_threshold_
-   0.93181185424849922
+   0.93244970838859154
 
 .. topic:: Examples:
  * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`
