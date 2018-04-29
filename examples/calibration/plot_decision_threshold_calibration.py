@@ -120,37 +120,32 @@ bar_width = 0.2
 
 plt.subplot(2, 1, 1)
 index = np.asarray([1, 2])
-plt.bar(index, [f_one_lr, f_one_ada], bar_width, color='r', label='Before')
+plt.bar(index, [f_one_lr, f_one_ada], bar_width, color='r',
+        label='Before calibration')
 
 plt.bar(index + bar_width, [f_one_lr_f_beta, f_one_ada_f_beta], bar_width,
-        color='b', label='After')
+        color='b', label='After calibration')
 
-plt.xticks(
-    index + bar_width / 2,
-    ('f1 logistic regression', 'f1 adaboost'))
+plt.xticks(index + bar_width / 2, ('f1 logistic', 'f1 adaboost'))
 
 plt.ylabel('scores')
-plt.title('f1 score before and after calibration')
-plt.legend()
+plt.title('f1 score')
+plt.legend(bbox_to_anchor=(.5, -.2), loc='center', borderaxespad=0.)
 
 plt.subplot(2, 1, 2)
 index = np.asarray([1, 2, 3, 4])
 plt.bar(index, [tpr_lr, tnr_lr, tpr_ada, tnr_ada],
-        bar_width, color='r', label='Before')
+        bar_width, color='r', label='Before calibration')
 
 plt.bar(index + bar_width,
         [tpr_lr_max_tpr, tnr_lr_max_tpr, tpr_ada_max_tpr, tnr_ada_max_tpr],
-        bar_width, color='b', label='After')
+        bar_width, color='b', label='After calibration')
 
 plt.xticks(
     index + bar_width / 2,
-    ('tpr logistic regression',
-     'tnr logistic regression',
-     'tpr adaboost',
-     'tnr adaboost')
-)
+    ('tpr logistic', 'tnr logistic', 'tpr adaboost', 'tnr adaboost'))
 plt.ylabel('scores')
-plt.title('tpr and tnr before and after calibration')
-plt.legend()
+plt.title('true positive & true negative rate')
 
+plt.subplots_adjust(hspace=0.6)
 plt.show()
