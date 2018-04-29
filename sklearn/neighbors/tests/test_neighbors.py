@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -111,8 +112,10 @@ def test_unsupervised_inputs():
 def test_n_neighbors_datatype():
     # Test to check whether n_neighbors is integer
     x = [[1, 1], [1, 1]]
+    expected_msg = "n_neighbors does not take <class 'float'> value, enter integer value"
+
     neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.)
-    assert_raises(TypeError, neighbors_.fit, x)
+    assert_raises_regex(TypeError, expected_msg, neighbors_.fit, x)
 
 
 def test_precomputed(random_state=42):
