@@ -3,6 +3,7 @@ import warnings
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.testing import assert_allclose_dense_sparse
+from ..utils.validation import _assert_all_finite
 from ..externals.six import string_types
 
 
@@ -40,17 +41,44 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         kwargs forwarded. If inverse_func is None, then inverse_func
         will be the identity function.
 
-    validate : bool, optional default=True
+    validate : bool or 'array-or-frame', optional default=True
         Indicate that the input X array should be checked before calling
-        func. If validate is false, there will be no input validation.
-        If it is true, then X will be converted to a 2-dimensional NumPy
-        array or sparse matrix. If this conversion is not possible or X
-        contains NaN or infinity, an exception is raised.
+        func. The possibilities are:
+
+        - If True, then X will be converted to a 2-dimensional NumPy array or
+          sparse matrix. If the conversion is not possible an exception is
+          raised.
+        - If False, then there is no input validation
+        - If 'array-or-frame', X will be pass-through if this is a pandas
+          DataFrame or converted to a 2-dimensional array or sparse matrix. In
+          this latest case, an exception will be raised if the conversion
+          failed.
+
+        .. deprecated:: 0.20
+           ``validate=True`` as default will be replaced by
+           ``validate='array-or-frame'`` in 0.22.
+
+        .. versionadded:: 0.20
+           ``validate`` takes the option ``'array-or-frame'``.
 
     accept_sparse : boolean, optional
         Indicate that func accepts a sparse matrix as input. If validate is
         False, this has no effect. Otherwise, if accept_sparse is false,
         sparse matrix inputs will cause an exception to be raised.
+
+    force_all_finite : boolean or 'allow-nan', optional default=True
+        Whether to raise an error on np.inf and np.nan in X. The possibilities
+        are:
+
+        - If True, force all values of X to be finite.
+        - If False, accept both np.inf and np.nan in X.
+        - If 'allow-nan', accept only np.nan values in X. Values cannot be
+          infinite.
+
+        Applied only when ``validate=True``.
+
+        .. versionadded:: 0.20
+           ``force_all_finite`` was added to let pass NaN.
 
     pass_y : bool, optional default=False
         Indicate that transform should forward the y argument to the
@@ -72,17 +100,49 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Dictionary of additional keyword arguments to pass to inverse_func.
 
     """
-    def __init__(self, func=None, inverse_func=None, validate=True,
-                 accept_sparse=False, pass_y='deprecated', check_inverse=True,
-                 kw_args=None, inv_kw_args=None):
+    def __init__(self, func=None, inverse_func=None, validate=None,
+                 accept_sparse=False, force_all_finite=True,
+                 pass_y='deprecated', check_inverse=True, kw_args=None,
+                 inv_kw_args=None):
         self.func = func
         self.inverse_func = inverse_func
         self.validate = validate
         self.accept_sparse = accept_sparse
+        self.force_all_finite = force_all_finite
         self.pass_y = pass_y
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
+
+    def _check_input(self, X):
+        # FIXME: Future warning to be removed in 0.22
+        if self.validate is None:
+            self.validate = True
+            warnings.warn("The default validate=True will be replaced by "
+                          "validate='array-or-frame' in 0.22.", FutureWarning)
+
+        if ((not isinstance(self.validate, bool)) and
+                self.validate != 'array-or-frame'):
+            raise ValueError("'validate' should be a boolean or "
+                             "'array-or-frame'. Got {!r} instead."
+                             .format(self.validate))
+        if ((not isinstance(self.force_all_finite, bool)) and
+                self.force_all_finite != 'allow-nan'):
+            raise ValueError("'force_all_finite' should be a boolean "
+                             "or 'allow-nan'. Got {!r} instead."
+                             .format(self.force_all_finite))
+
+        if self.validate:
+            if hasattr(X, 'loc') and self.validate == 'array-or-frame':
+                if self.force_all_finite:
+                    _assert_all_finite(X.values, allow_nan=False
+                                       if self.force_all_finite is True
+                                       else True)
+                return X
+            else:
+                return check_array(X, accept_sparse=self.accept_sparse,
+                                   force_all_finite=self.force_all_finite)
+        return X
 
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
@@ -111,8 +171,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        if self.validate:
-            X = check_array(X, self.accept_sparse)
+        X = self._check_input(X)
         if (self.check_inverse and not (self.func is None or
                                         self.inverse_func is None)):
             self._check_inverse_transform(X)
@@ -165,8 +224,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                                kw_args=self.inv_kw_args)
 
     def _transform(self, X, y=None, func=None, kw_args=None):
-        if self.validate:
-            X = check_array(X, self.accept_sparse)
+        X = self._check_input(X)
 
         if func is None:
             func = _identity
