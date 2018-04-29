@@ -275,13 +275,10 @@ Here is a simple usage example::
    >>>
    >>> X, y = load_breast_cancer(return_X_y=True)
    >>> X_train, X_test, y_train, y_test = train_test_split(
-   >>>     X, y, train_size=0.6, random_state=42)
-   >>> n_calibration_samples = int(len(X_train) * 0.2)
-   >>> clf = CutoffClassifier(LogisticRegression(), cv=3).fit(
-   >>>           X_train[n_calibration_samples:], y_train[n_calibration_samples:]
-   >>> )
+   ...     X, y, train_size=0.6, random_state=42)
+   >>> clf = CutoffClassifier(LogisticRegression(), cv=3).fit(X_train, y_train)
    >>> clf.decision_threshold_
-   1.3422651585209107
+   0.93181185424849922
 
 .. topic:: Examples:
  * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`
