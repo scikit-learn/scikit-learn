@@ -17,8 +17,9 @@ distinction must be made:
   detecting anomalies in new observations.
 
 :outlier detection:
-  The training data contains outliers, and we need to fit the central
-  mode of the training data, ignoring the deviant observations.
+  The training data contains outliers, and we need to fit the regions where
+  the training data is the most concentrated, ignoring the deviant
+  observations.
 
 The scikit-learn project provides a set of machine learning tools that
 can be used both for novelty or outliers detection. This strategy is
@@ -44,19 +45,69 @@ inliers::
     estimator.decision_function(X_test)
 
 Note that :class:`neighbors.LocalOutlierFactor` does not support
-``predict`` and ``decision_function`` methods, as this algorithm is
-purely transductive and is thus not designed to deal with new data.
+``predict``, ``decision_function`` and ``score_samples`` methods by default
+but only a ``fit_predict`` method, as this estimator was originally meant to
+be applied for outlier detection. The scores of abnormality of the training
+samples are accessible through the ``negative_outlier_factor_`` attribute. If
+you really want to use :class:`neighbors.LocalOutlierFactor` for novelty
+detection, i.e. predict labels or compute the score of abnormality of new
+unseen data, you can instantiate the estimator with the ``novelty`` parameter
+set to ``True`` before fitting the estimator.
+
+.. warning:: **Novelty detection with :class:`neighbors.LocalOutlierFactor`**
+
+  When ``novelty`` is set to ``True`` be aware that you must only use
+  ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
+  and not on the training samples as this would lead to wrong results.
+
 
 Overview of outlier detection methods
 =====================================
+
+A comparison of the outlier detection algorithms in scikit-learn. Local
+Outlier Factor (LOF) does not show a decision boundary in black as it
+has no predict method to be applied on new data when it is used for outlier
+detection.
 
 .. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
    :target: ../auto_examples/plot_anomaly_comparison.html
    :align: center
    :scale: 50
 
-   A comparison of the outlier detection algorithms in scikit-learn
+The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus does
+not perform very well for outlier detection. This estimator is best suited for
+novelty detection when the training set is not contaminated by outliers.
+That said, outlier detection in high-dimension, or without any assumptions on
+the distribution of the inlying data is very challenging, and a One-class SVM
+might give useful results in these situations depending on the value of its
+hyperparameters.
 
+:class:`covariance.EllipticEnvelope` learns an ellipse and degrades when the
+data is not unimodal. :class:`neighbors.LocalOutlierFactor` performs well in
+every cases.
+
+:class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
+seem to perform reasonably well for multi-modal data sets. The advantage of
+:class:`neighbors.LocalOutlierFactor` over the other estimators is shown for
+the third data set, where the two modes have different densities. This
+advantage is explained by the local aspect of LOF, meaning that it only
+compares the score of abnormality of one sample with the scores of its
+neighbors.
+
+Finally, for the last data set, it is hard to say that one sample is more
+abnormal than another sample as they are uniformly distributed in a
+hypercube. Except for the :class:`svm.OneClassSVM`, all estimators present
+decent solutions for this situation. In such a case, it would be wise to look
+more closely at the scores of abnormality of the samples as a good estimator
+should assign similar scores to all the samples.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
+    for a comparison of the :class:`svm.OneClassSVM`, the
+    :class:`ensemble.IsolationForest`, the
+    :class:`neighbors.LocalOutlierFactor` and
+    :class:`covariance.EllipticEnvelope`.
 
 Novelty Detection
 =================
@@ -189,7 +240,7 @@ This strategy is illustrated below.
    * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
      an illustration of the use of IsolationForest.
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
+   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
      comparison of :class:`ensemble.IsolationForest` with
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
@@ -237,20 +288,24 @@ where abnormal samples have different underlying densities.
 The question is not, how isolated the sample is, but how isolated it is
 with respect to the surrounding neighborhood.
 
+WHen applying LOF for outlier detection, there are no ``predict``,
+``decision_function`` and ``score_samples`` methods but only a ``fit_predict`` method. The scores of abnormality of the training samples are accessible
+through the ``negative_outlier_factor_`` attribute.
+
 This strategy is illustrated below.
 
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_001.png
-   :target: ../auto_examples/neighbors/plot_lof.html
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_outlier_detection_001.png
+   :target: ../auto_examples/neighbors/sphx_glr_plot_lof_outlier_detection.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
-   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof.py` for
-     an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
+   for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
-     comparison with other anomaly detection methods.
+   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
+   for a comparison with other anomaly detection methods.
 
 .. topic:: References:
 
@@ -259,72 +314,25 @@ This strategy is illustrated below.
       <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
-One-class SVM versus Elliptic Envelope versus Isolation Forest versus LOF
--------------------------------------------------------------------------
+Novelty detection with Local Outlier Factor
+===========================================
 
-Strictly-speaking, the One-class SVM is not an outlier-detection method,
-but a novelty-detection method: its training set should not be
-contaminated by outliers as it may fit them. That said, outlier detection
-in high-dimension, or without any assumptions on the distribution of the
-inlying data is very challenging, and a One-class SVM gives useful
-results in these situations.
+To use :class:`neighbors.LocalOutlierFactor` for novelty detection, i.e.
+predict labels or compute the score of abnormality of new unseen data, you need to instantiate the estimator with the ``novelty`` parameter
+set to ``True`` before fitting the estimator::
 
-The examples below illustrate how the performance of the
-:class:`covariance.EllipticEnvelope` degrades as the data is less and
-less unimodal. The :class:`svm.OneClassSVM` works better on data with
-multiple modes and :class:`ensemble.IsolationForest` and
-:class:`neighbors.LocalOutlierFactor` perform well in every cases.
+  lof = LocalOutlierFactor(novelty=True)
+  lof.fit(X_train)
 
-.. |outlier1| image:: ../auto_examples/covariance/images/sphx_glr_plot_outlier_detection_001.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
+.. warning:: **Novelty detection with :class:`neighbors.LocalOutlierFactor`**
 
-.. |outlier2| image:: ../auto_examples/covariance/images/sphx_glr_plot_outlier_detection_002.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
+  When ``novelty`` is set to ``True`` be aware that you must only use
+  ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
+  and not on the training samples as this would lead to wrong results.
 
-.. |outlier3| image:: ../auto_examples/covariance/images/sphx_glr_plot_outlier_detection_003.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
+This strategy is illustrated below.
 
-.. list-table:: **Comparing One-class SVM, Isolation Forest, LOF, and Elliptic Envelope**
-   :widths: 40 60
-
-   *
-      - For a inlier mode well-centered and elliptic, the
-        :class:`svm.OneClassSVM` is not able to benefit from the
-        rotational symmetry of the inlier population. In addition, it
-        fits a bit the outliers present in the training set. On the
-        opposite, the decision rule based on fitting an
-        :class:`covariance.EllipticEnvelope` learns an ellipse, which
-        fits well the inlier distribution. The :class:`ensemble.IsolationForest`
-        and :class:`neighbors.LocalOutlierFactor` perform as well.
-      - |outlier1| 
-
-   *
-      - As the inlier distribution becomes bimodal, the
-        :class:`covariance.EllipticEnvelope` does not fit well the
-        inliers. However, we can see that :class:`ensemble.IsolationForest`,
-        :class:`svm.OneClassSVM` and :class:`neighbors.LocalOutlierFactor`
-        have difficulties to detect the two modes,
-        and that the :class:`svm.OneClassSVM`
-        tends to overfit: because it has no model of inliers, it
-        interprets a region where, by chance some outliers are
-        clustered, as inliers.
-      - |outlier2|
-
-   *
-      - If the inlier distribution is strongly non Gaussian, the
-        :class:`svm.OneClassSVM` is able to recover a reasonable
-        approximation as well as :class:`ensemble.IsolationForest`
-        and :class:`neighbors.LocalOutlierFactor`,
-        whereas the :class:`covariance.EllipticEnvelope` completely fails.
-      - |outlier3|
-
-.. topic:: Examples:
-
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
-     comparison of the :class:`svm.OneClassSVM` (tuned to perform like
-     an outlier detection method), the :class:`ensemble.IsolationForest`,
-     the :class:`neighbors.LocalOutlierFactor`
-     and a covariance-based outlier detection :class:`covariance.EllipticEnvelope`.
+  .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
+     :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
+     :align: center
+     :scale: 75%
