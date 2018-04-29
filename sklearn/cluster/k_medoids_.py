@@ -209,7 +209,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 warnings.warn("Cluster %d is empty!" % k)
                 continue
 
-            in_cluster_distances = D[cluster_k_idxs, cluster_k_idxs[:, None]]
+            in_cluster_distances = D[cluster_k_idxs, cluster_k_idxs[:, np.newaxis]]
 
             # Calculate all costs from each point to all others in the cluster
             in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
