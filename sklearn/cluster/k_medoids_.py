@@ -78,18 +78,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmedoids.inertia_
     8.0
 
-    >>> kmedoids = KMedoids(n_clusters=2, random_state=0,
-    ...                     metric='manhattan').fit(X)
-    >>> kmedoids.labels_
-    array([0, 0, 0, 1, 1, 1])
-    >>> kmedoids.predict([[0,0], [4,4]])
-    array([0, 1])
-    >>> kmedoids.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
-    >>> kmedoids.inertia_
-    8.0
-
     References
     ----------
     Kaufman, L. and Rousseeuw, P.J., Statistical Data Analysis Based on
