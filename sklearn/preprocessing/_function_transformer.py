@@ -117,23 +117,25 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     def _check_input(self, X):
         # FIXME: Future warning to be removed in 0.22
         if self.validate is None:
-            self.validate = True
+            self._validate = True
             warnings.warn("The default validate=True will be replaced by "
                           "validate='array-or-frame' in 0.22.", FutureWarning)
+        else:
+            self._validate = self.validate
 
-        if ((not isinstance(self.validate, bool)) and
-                self.validate != 'array-or-frame'):
+        if ((not isinstance(self._validate, bool)) and
+                self._validate != 'array-or-frame'):
             raise ValueError("'validate' should be a boolean or "
                              "'array-or-frame'. Got {!r} instead."
-                             .format(self.validate))
+                             .format(self._validate))
         if ((not isinstance(self.force_all_finite, bool)) and
                 self.force_all_finite != 'allow-nan'):
             raise ValueError("'force_all_finite' should be a boolean "
                              "or 'allow-nan'. Got {!r} instead."
                              .format(self.force_all_finite))
 
-        if self.validate:
-            if hasattr(X, 'loc') and self.validate == 'array-or-frame':
+        if self._validate:
+            if hasattr(X, 'loc') and self._validate == 'array-or-frame':
                 if self.force_all_finite:
                     _assert_all_finite(X.values, allow_nan=False
                                        if self.force_all_finite is True
