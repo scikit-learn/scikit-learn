@@ -103,7 +103,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         The KMeans algorithm minimizes the within-cluster sum-of-squares
         criterion. It scales well to large number of samples.
 
-
     Notes
     -----
         Since all pairwise distances are calculated and stored in memory for
