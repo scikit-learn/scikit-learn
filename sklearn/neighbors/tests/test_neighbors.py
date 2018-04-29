@@ -113,7 +113,9 @@ def test_n_neighbors_datatype():
     # Test to check whether n_neighbors is integer
     x = [[1, 1], [1, 1]]
     n = 3.
-    expected_msg = "n_neighbors does not take " + str(type(n)) + " value, enter integer value"
+    expected_msg = "n_neighbors does not take " \
+                   + str(type(n)) \
+                   + " value, enter integer value"
 
     neighbors_ = neighbors.NearestNeighbors(n_neighbors=n)
     assert_raises_regex(TypeError, expected_msg, neighbors_.fit, x)
