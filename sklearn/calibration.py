@@ -36,7 +36,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Meta estimator that calibrates the decision threshold (cutoff point)
     that is used for prediction. The methods for picking cutoff points make use
-    of traditional binary classification evaluation statistic such as the
+    of traditional binary classification evaluation statistics such as the
     true positive and true negative rates and F-scores.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
@@ -49,16 +49,16 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     base_estimator : obj
         The classifier whose decision threshold will be adapted according to
         the acquired cutoff point. The estimator must have a decision_function
-        or a predict_proba.
+        or a predict_proba
 
     method : str
-        The method to use for choosing the cutoff point.
+        The method to use for choosing the cutoff point
 
         - 'roc', selects the point on the roc curve that is closest to the
         ideal corner (0, 1)
 
         - 'f_beta', selects a decision threshold that maximizes the f_beta
-        score.
+        score
 
         - 'max_tpr', selects the point that yields the highest true positive
         rate with true negative rate at least equal to the value of the
@@ -72,16 +72,16 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         beta value to be used in case method == 'f_beta'
 
     scoring : str or None, optional (default=None)
-        The method to be used for acquiring the score.
+        The method to be used for acquiring the score
 
         - 'decision_function'. base_estimator.decision_function will be used
-        for scoring.
+        for scoring
 
         - 'predict_proba'. base_estimator.predict_proba will be used for
         scoring
 
         - None. base_estimator.decision_function will be used first and if not
-        available base_estimator.predict_proba.
+        available base_estimator.predict_proba
 
     pos_label : object, optional (default=1)
         Object representing the positive label
@@ -89,7 +89,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     cv : int, cross-validation generator, iterable or 'prefit', optional
         (default='prefit'). Determines the cross-validation splitting strategy.
         If cv='prefit' the base estimator is assumed to be fitted and all data
-        will be used for the calibration of the probability threshold.
+        will be used for the calibration of the probability threshold
 
     threshold : float in [0, 1] or None, (default=None)
         In case method is 'max_tpr' or 'max_tnr' this parameter must be set to
@@ -128,12 +128,12 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Training data
 
         y : array-like, shape (n_samples,)
-            Target values. There must be two 2 distinct values.
+            Target values. There must be two 2 distinct values
 
         Returns
         -------
         self : object
-            Instance of self.
+            Instance of self
         """
         if not hasattr(self.base_estimator, 'decision_function') and \
                 not hasattr(self.base_estimator, 'predict_proba'):
@@ -207,12 +207,12 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The samples.
+            The samples
 
         Returns
         -------
         C : array, shape (n_samples,)
-            The predicted class.
+            The predicted class
         """
         X = check_array(X)
         check_is_fitted(self, ["label_encoder_", "decision_threshold_"])
@@ -237,10 +237,10 @@ class _CutoffClassifier(object):
     base_estimator : obj
         The classifier whose decision threshold will be adapted according to
         the acquired cutoff point. The estimator must have a decision_function
-        or a predict_proba.
+        or a predict_proba
 
     method : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
-        The method to use for choosing the cutoff point.
+        The method to use for choosing the cutoff point
 
     beta : float in [0, 1]
         beta value to be used in case method == 'f_beta'
@@ -249,10 +249,10 @@ class _CutoffClassifier(object):
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
-        predict_proba.
+        predict_proba
 
     pos_label : object
-        Label considered as positive during the roc_curve construction.
+        Label considered as positive during the roc_curve construction
 
     threshold : float in [0, 1]
         minimum required value for the true negative rate (specificity) in case
@@ -280,15 +280,15 @@ class _CutoffClassifier(object):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data.
+            Training data
 
         y : array-like, shape (n_samples,)
-            Target values.
+            Target values
 
         Returns
         -------
         self : object
-            Instance of self.
+            Instance of self
         """
         y_score = _get_binary_score(self.base_estimator, X, self.scoring,
                                     self.pos_label)
@@ -330,19 +330,19 @@ def _get_binary_score(clf, X, scoring=None, pos_label=1):
     ----------
     clf : object
         Classifier object to be used for acquiring the scores. Needs to have
-        a decision_function or a predict_proba method.
+        a decision_function or a predict_proba method
 
     X : array-like, shape (n_samples, n_features)
-        The samples.
+        The samples
 
     pos_label : int, optional (default=1)
-        The positive label. Can either be 0 or 1.
+        The positive label. Can either be 0 or 1
 
     scoring : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
-        predict_proba.
+        predict_proba
     """
     if not scoring:
         try:
