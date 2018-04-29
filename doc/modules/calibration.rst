@@ -205,3 +205,109 @@ a similar decrease in log-loss.
     .. [5] On the combination of forecast probabilities for
            consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
            Wilks, D. S., 1990a
+
+
+Decision Threshold calibration
+==============================
+
+Often Machine Learning classifiers base their predictions on real-valued decision
+functions or probability estimates that carry the inherited biases of their models.
+Additionally when using a machine learning model the evaluation criteria can differ
+from the optimisation objectives used by the model during training.
+
+When predicting between two classes it is commonly advised that an appropriate
+decision threshold is estimated based on some cutoff criteria rather than arbitrarily
+using the midpoint of the space of possible values. Estimating a decision threshold
+for a specific use case can help to increase the overall accuracy of the model and
+provide better handling for sensitive classes.
+
+.. currentmodule:: sklearn.calibration
+
+For example the :class:`LogisticRegression` classifier is predicting the class
+for which the :func:`decision_function` returns the highest value. For a binary
+classification task that sets decision threshold to ``0``.
+
+:class:`CutoffClassifier` can be used as a wrapper around a model for binary
+classification to help obtain a more appropriate decision threshold and use it
+for predicting new samples.
+
+Usage
+-----
+
+To use the :class:`CutoffClassifier` you need to provide an estimator that has
+a ``decision_function`` or a ``predict_proba`` method. The ``scoring`` parameter
+controls whether the first will be preferred over the second if both are available.
+
+The wrapped estimator can be pre-trained, in which case ``cv='prefit'``, or not. If
+the classifier is not trained then a cross-validation loop specified by the parameter
+``cv`` can be used to obtain a decision threshold by averaging all decision thresholds
+calculated on the hold-out parts of each cross validation iteration. Finally the model
+is trained on all the provided data. When using ``cv='prefit'`` you need to make sure
+to use a hold-out part of your data for calibration.
+
+The methods for finding appropriate decision thresholds are based either on precision
+recall estimates or true positive and true negative rates. Specifically:
+
+* ``f_beta``
+   selects a decision threshold that maximizes the f_beta score. The value of
+   beta is specified by the parameter ``beta``
+
+* ``roc``
+   selects the decision threshold for the point on the roc curve that is
+   closest to the ideal corner (0, 1)
+
+* ``max_tpr``
+   selects the decision threshold for the point that yields the highest true positive
+   rate while maintaining a minimum, specified by the parameter ``threshold``, for the
+   true negative rate
+
+* ``max_tnr``
+   selects the decision threshold for the point that yields the highest true
+   negative rate while maintaining a minimum, specified by the parameter ``threshold``,
+   for the true positive rate
+
+Here is a simple usage example::
+
+   >>> from sklearn.calibration import CutoffClassifier
+   >>> from sklearn.datasets import load_breast_cancer
+   >>> from sklearn.linear_model import LogisticRegression
+   >>> from sklearn.model_selection import train_test_split
+   >>>
+   >>> X, y = load_breast_cancer(return_X_y=True)
+   >>> X_train, X_test, y_train, y_test = train_test_split(
+   >>>     X, y, train_size=0.6, random_state=42)
+   >>> n_calibration_samples = int(len(X_train) * 0.2)
+   >>> clf = CutoffClassifier(LogisticRegression(), cv=3).fit(
+   >>>           X_train[n_calibration_samples:], y_train[n_calibration_samples:]
+   >>> )
+   >>> clf.decision_threshold_
+   1.3422651585209107
+
+.. topic:: Examples:
+ * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`
+
+The following image shows the results of using the :class:`CutoffClassifier`
+for finding a decision threshold for a :class:`LogisticRegression` classifier
+and an :class:`AdaBoostClassifier` for two use cases.
+
+In the first one we want to increase the overall accuracy of the classifiers on
+the breast cancer dataset. As you can see after calibration the `f1 score` of
+:class:`LogisticRegression` has increased slightly whereas the accuracy of
+:class:`AdaBoostClassifier` has stayed the same.
+
+In the second case we want to find a decision threshold that yields maximum
+true positive rate while maintaining a minimum value of ``0.7`` for the true negative
+rate. As seen after calibration both classifiers achieve better true positive rate
+while their respective true negative rates have decreased slightly or remained
+stable.
+
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_decision_threshold_calibration_000.png
+   :target: ../auto_examples/calibration/plot_decision_threshold_calibration.html
+   :align: center
+
+
+Notes
+-----
+
+Calibrating the decision threshold of a classifier does not guarantee increased performance.
+The generalisation ability of the obtained decision threshold has to be evaluated.
