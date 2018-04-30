@@ -197,8 +197,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                         X[test], y[test]
                     ).decision_threshold_
                 )
-            self.decision_threshold_ = sum(decision_thresholds) /\
-                len(decision_thresholds)
+            self.decision_threshold_ = np.mean(decision_thresholds)
             self.base_estimator.fit(X, y)
         return self
 
