@@ -20,8 +20,8 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss, confusion_matrix,\
-    f1_score
+from sklearn.metrics import (brier_score_loss, log_loss, confusion_matrix,
+    f1_score)
 from sklearn.calibration import CalibratedClassifierCV, CutoffClassifier
 from sklearn.calibration import _get_binary_score
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration

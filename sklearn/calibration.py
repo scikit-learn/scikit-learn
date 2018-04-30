@@ -297,8 +297,8 @@ class _CutoffClassifier(object):
             precision, recall, thresholds = precision_recall_curve(
                 y, y_score, pos_label=self.pos_label
             )
-            f_beta = (1 + self.beta**2) * (precision * recall) /\
-                     (self.beta**2 * precision + recall)
+            f_beta = ((1 + self.beta**2) * (precision * recall) /
+                      (self.beta**2 * precision + recall))
             self.decision_threshold_ = thresholds[np.argmax(f_beta)]
             return self
 
