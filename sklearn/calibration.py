@@ -74,7 +74,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     beta : float in [0, 1], optional (default=None)
         beta value to be used in case method == 'f_beta'
 
-    scoring : str or None, optional (default=None)
+    strategy : str or None, optional (default=None)
         The method to be used for acquiring the score
 
         'decision_function'
@@ -113,12 +113,12 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
            Clinical chemistry, 1993
 
     """
-    def __init__(self, base_estimator, method='roc', beta=None, scoring=None,
+    def __init__(self, base_estimator, method='roc', beta=None, strategy=None,
                  pos_label=1, cv=3, threshold=None):
         self.base_estimator = base_estimator
         self.method = method
         self.beta = beta
-        self.scoring = scoring
+        self.strategy = strategy
         self.pos_label = pos_label
         self.cv = cv
         self.threshold = threshold
@@ -148,10 +148,10 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             raise ValueError('method can either be "roc" or "max_tpr" or '
                              '"max_tnr. Got %s instead' % self.method)
 
-        if self.scoring not in [None, 'decision_function', 'predict_proba']:
+        if self.strategy not in [None, 'decision_function', 'predict_proba']:
             raise ValueError('scoring param can either be "decision_function" '
                              'or "predict_proba" or None. Got %s instead' %
-                             self.scoring)
+                             self.strategy)
 
         if self.method == 'max_tpr' or self.method == 'max_tnr':
             if not self.threshold or not \
@@ -181,7 +181,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         if self.cv == 'prefit':
             self.decision_threshold_ = _CutoffClassifier(
-                self.base_estimator, self.method, self.beta, self.scoring,
+                self.base_estimator, self.method, self.beta, self.strategy,
                 self.pos_label, self.threshold
             ).fit(X, y).decision_threshold_
         else:
@@ -194,7 +194,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                     _CutoffClassifier(estimator,
                                       self.method,
                                       self.beta,
-                                      self.scoring,
+                                      self.strategy,
                                       self.pos_label,
                                       self.threshold).fit(
                         X[test], y[test]
@@ -221,7 +221,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X = check_array(X)
         check_is_fitted(self, ["label_encoder_", "decision_threshold_"])
 
-        y_score = _get_binary_score(self.base_estimator, X, self.scoring,
+        y_score = _get_binary_score(self.base_estimator, X, self.strategy,
                                     self.pos_label)
         return self.label_encoder_.inverse_transform(
             (y_score > self.decision_threshold_).astype(int)
@@ -249,7 +249,7 @@ class _CutoffClassifier(object):
     beta : float in [0, 1]
         beta value to be used in case method == 'f_beta'
 
-    scoring : str or None, optional (default=None)
+    strategy : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
@@ -268,12 +268,12 @@ class _CutoffClassifier(object):
     decision_threshold_ : float
         Acquired decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, beta, scoring, pos_label,
+    def __init__(self, base_estimator, method, beta, strategy, pos_label,
                  threshold):
         self.base_estimator = base_estimator
         self.method = method
         self.beta = beta
-        self.scoring = scoring
+        self.strategy = strategy
         self.pos_label = pos_label
         self.threshold = threshold
 
@@ -294,7 +294,7 @@ class _CutoffClassifier(object):
         self : object
             Instance of self
         """
-        y_score = _get_binary_score(self.base_estimator, X, self.scoring,
+        y_score = _get_binary_score(self.base_estimator, X, self.strategy,
                                     self.pos_label)
         if self.method == 'f_beta':
             precision, recall, thresholds = precision_recall_curve(
@@ -324,7 +324,7 @@ class _CutoffClassifier(object):
         return self
 
 
-def _get_binary_score(clf, X, scoring=None, pos_label=1):
+def _get_binary_score(clf, X, strategy=None, pos_label=1):
     """Binary classification score for the positive label (0 or 1)
 
     Returns the score that a binary classifier outputs for the positive label
@@ -342,20 +342,20 @@ def _get_binary_score(clf, X, scoring=None, pos_label=1):
     pos_label : int, optional (default=1)
         The positive label. Can either be 0 or 1
 
-    scoring : str or None, optional (default=None)
+    strategy : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
         predict_proba
     """
-    if not scoring:
+    if not strategy:
         try:
             y_score = clf.decision_function(X)
             if pos_label == 0:
                 y_score = - y_score
         except (NotImplementedError, AttributeError):
             y_score = clf.predict_proba(X)[:, pos_label]
-    elif scoring == 'decision_function':
+    elif strategy == 'decision_function':
         y_score = clf.decision_function(X)
         if pos_label == 0:
             y_score = - y_score

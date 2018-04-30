@@ -76,13 +76,13 @@ f_one_ada = f1_score(y_test, y_pred_ada)
 # objective 1: we want to calibrate the decision threshold in order to achieve
 # better f1 score
 lr_f_beta = CutoffClassifier(
-    lr, method='f_beta', beta=1, cv='prefit', scoring='predict_proba'
+    lr, method='f_beta', beta=1, cv='prefit', strategy='predict_proba'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 y_pred_lr_f_beta = lr_f_beta.predict(X_test)
 f_one_lr_f_beta = f1_score(y_test, y_pred_lr_f_beta)
 
 ada_f_beta = CutoffClassifier(
-    ada, method='f_beta', beta=1, cv='prefit', scoring='predict_proba'
+    ada, method='f_beta', beta=1, cv='prefit', strategy='predict_proba'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 y_pred_ada_f_beta = ada_f_beta.predict(X_test)
 f_one_ada_f_beta = f1_score(y_test, y_pred_ada_f_beta)
@@ -90,7 +90,7 @@ f_one_ada_f_beta = f1_score(y_test, y_pred_ada_f_beta)
 # objective 2: we want to maximize the true positive rate while the true
 # negative rate is at least 0.7
 lr_max_tpr = CutoffClassifier(
-    lr, method='max_tpr', cv='prefit', threshold=0.7, scoring='predict_proba'
+    lr, method='max_tpr', cv='prefit', threshold=0.7, strategy='predict_proba'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 y_pred_lr_max_tpr = lr_max_tpr.predict(X_test)
 tn_lr_max_tpr, fp_lr_max_tpr, fn_lr_max_tpr, tp_lr_max_tpr = \
@@ -99,7 +99,7 @@ tpr_lr_max_tpr = tp_lr_max_tpr / (tp_lr_max_tpr + fn_lr_max_tpr)
 tnr_lr_max_tpr = tn_lr_max_tpr / (tn_lr_max_tpr + fp_lr_max_tpr)
 
 ada_max_tpr = CutoffClassifier(
-    ada, method='max_tpr', cv='prefit', threshold=0.7, scoring='predict_proba'
+    ada, method='max_tpr', cv='prefit', threshold=0.7, strategy='predict_proba'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
 y_pred_ada_max_tpr = ada_max_tpr.predict(X_test)
 tn_ada_max_tpr, fp_ada_max_tpr, fn_ada_max_tpr, tp_ada_max_tpr = \

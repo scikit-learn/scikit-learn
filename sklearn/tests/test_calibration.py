@@ -60,7 +60,7 @@ def test_cutoff_prefit():
     assert_greater(tpr_roc + tnr_roc, tpr + tnr)
 
     clf_f1 = CutoffClassifier(
-        lr, method='f_beta', beta=1, cv='prefit', scoring='predict_proba').fit(
+        lr, method='f_beta', beta=1, cv='prefit', strategy='predict_proba').fit(
         X_test[:calibration_samples], y_test[:calibration_samples]
     )
 
@@ -165,27 +165,27 @@ def test_get_binary_score():
 
     assert_array_equal(
         y_pred_score,
-        _get_binary_score(lr, X_test, scoring='decision_function', pos_label=1)
+        _get_binary_score(lr, X_test, strategy='decision_function', pos_label=1)
     )
 
     assert_array_equal(
         - y_pred_score,
-        _get_binary_score(lr, X_test, scoring='decision_function', pos_label=0)
+        _get_binary_score(lr, X_test, strategy='decision_function', pos_label=0)
     )
 
     assert_array_equal(
         y_pred_proba[:, 1],
-        _get_binary_score(lr, X_test, scoring='predict_proba', pos_label=1)
+        _get_binary_score(lr, X_test, strategy='predict_proba', pos_label=1)
     )
 
     assert_array_equal(
         y_pred_proba[:, 0],
-        _get_binary_score(lr, X_test, scoring='predict_proba', pos_label=0)
+        _get_binary_score(lr, X_test, strategy='predict_proba', pos_label=0)
     )
 
     assert_array_equal(
         y_pred_score,
-        _get_binary_score(lr, X_test, scoring=None, pos_label=1)
+        _get_binary_score(lr, X_test, strategy=None, pos_label=1)
     )
 
     # classifier that does not have a decision_function
@@ -193,7 +193,7 @@ def test_get_binary_score():
     y_pred_proba_rf = rf.predict_proba(X_test)
     assert_array_equal(
         y_pred_proba_rf[:, 1],
-        _get_binary_score(rf, X_test, scoring=None, pos_label=1)
+        _get_binary_score(rf, X_test, strategy=None, pos_label=1)
     )
 
 

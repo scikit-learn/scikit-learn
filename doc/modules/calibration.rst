@@ -235,7 +235,7 @@ Usage
 -----
 
 To use the :class:`CutoffClassifier` you need to provide an estimator that has
-a ``decision_function`` or a ``predict_proba`` method. The ``scoring`` parameter
+a ``decision_function`` or a ``predict_proba`` method. The ``strategy`` parameter
 controls whether the first will be preferred over the second if both are available.
 
 The wrapped estimator can be pre-trained, in which case ``cv = 'prefit'``, or not. If
