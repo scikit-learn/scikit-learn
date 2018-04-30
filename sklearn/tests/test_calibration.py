@@ -21,7 +21,7 @@ from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (brier_score_loss, log_loss, confusion_matrix,
-                             f1_score)
+                             f1_score, recall_score)
 from sklearn.calibration import CalibratedClassifierCV, CutoffClassifier
 from sklearn.calibration import _get_binary_score
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
@@ -68,6 +68,16 @@ def test_cutoff_prefit():
     y_pred_f1 = clf_f1.predict(X_test[calibration_samples:])
     assert_greater(f1_score(y_test[calibration_samples:], y_pred_f1),
                    f1_score(y_test[calibration_samples:], y_pred))
+
+    clf_fbeta = CutoffClassifier(
+        lr, method='f_beta', strategy='predict_proba', beta=2,
+        cv='prefit').fit(
+        X_test[:calibration_samples], y_test[:calibration_samples]
+    )
+
+    y_pred_fbeta = clf_fbeta.predict(X_test[calibration_samples:])
+    assert_greater(recall_score(y_test[calibration_samples:], y_pred_fbeta),
+                   recall_score(y_test[calibration_samples:], y_pred))
 
     clf_max_tpr = CutoffClassifier(
         lr, method='max_tpr', threshold=0.7, cv='prefit'
