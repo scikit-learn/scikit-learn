@@ -295,14 +295,14 @@ class _CutoffClassifier(object):
                                     self.pos_label)
         if self.method == 'f_beta':
             precision, recall, thresholds = precision_recall_curve(
-                y, y_score, self.pos_label
+                y, y_score, pos_label=self.pos_label
             )
             f_beta = (1 + self.beta**2) * (precision * recall) /\
                      (self.beta**2 * precision + recall)
             self.decision_threshold_ = thresholds[np.argmax(f_beta)]
             return self
 
-        fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
+        fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=self.pos_label)
 
         if self.method == 'roc':
             # we find the threshold of the point (fpr, tpr) with the smallest
