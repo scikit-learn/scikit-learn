@@ -263,7 +263,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     raise TypeError(
                         "n_neighbors does not take %s value, "
                         "enter integer value" %
-                        str(type(self.n_neighbors)).split("'")[1])
+                        type(self.n_neighbors))
 
         return self
 
