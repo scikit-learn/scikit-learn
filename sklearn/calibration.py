@@ -54,19 +54,22 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     method : str
         The method to use for choosing the cutoff point
 
-        - 'roc', selects the point on the roc curve that is closest to the
-        ideal corner (0, 1)
+        'roc'
+            selects the point on the roc curve that is closest to the ideal
+            corner (0, 1)
 
-        - 'f_beta', selects a decision threshold that maximizes the f_beta
-        score
+        'f_beta'
+            selects a decision threshold that maximizes the f_beta score
 
-        - 'max_tpr', selects the point that yields the highest true positive
-        rate with true negative rate at least equal to the value of the
-        parameter threshold
+        'max_tpr'
+            selects the point that yields the highest true positive rate with
+            true negative rate at least equal to the value of the parameter
+            threshold
 
-        - 'max_tnr', selects the point that yields the highest true negative
-        rate with true positive rate at least equal to the value of the
-        parameter threshold
+        'max_tnr'
+            selects the point that yields the highest true negative rate with
+            true positive rate at least equal to the value of the parameter
+            threshold
 
     beta : float in [0, 1], optional (default=None)
         beta value to be used in case method == 'f_beta'
@@ -74,14 +77,15 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     scoring : str or None, optional (default=None)
         The method to be used for acquiring the score
 
-        - 'decision_function'. base_estimator.decision_function will be used
-        for scoring
+        'decision_function'
+            base_estimator.decision_function will be used for scoring
 
-        - 'predict_proba'. base_estimator.predict_proba will be used for
-        scoring
+        'predict_proba'
+            base_estimator.predict_proba will be used for scoring
 
-        - None. base_estimator.decision_function will be used first and if not
-        available base_estimator.predict_proba
+        None
+            base_estimator.decision_function will be used first and if not
+            available base_estimator.predict_proba
 
     pos_label : object, optional (default=1)
         Object representing the positive label

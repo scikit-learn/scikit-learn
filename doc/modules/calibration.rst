@@ -238,33 +238,39 @@ To use the :class:`CutoffClassifier` you need to provide an estimator that has
 a ``decision_function`` or a ``predict_proba`` method. The ``scoring`` parameter
 controls whether the first will be preferred over the second if both are available.
 
-The wrapped estimator can be pre-trained, in which case ``cv='prefit'``, or not. If
+The wrapped estimator can be pre-trained, in which case ``cv = 'prefit'``, or not. If
 the classifier is not trained then a cross-validation loop specified by the parameter
 ``cv`` can be used to obtain a decision threshold by averaging all decision thresholds
 calculated on the hold-out parts of each cross validation iteration. Finally the model
-is trained on all the provided data. When using ``cv='prefit'`` you need to make sure
+is trained on all the provided data. When using ``cv = 'prefit'`` you need to make sure
 to use a hold-out part of your data for calibration.
 
 The methods for finding appropriate decision thresholds are based either on precision
 recall estimates or true positive and true negative rates. Specifically:
 
+.. currentmodule:: sklearn.metrics
+
 * ``f_beta``
-   selects a decision threshold that maximizes the f_beta score. The value of
-   beta is specified by the parameter ``beta``
+   selects a decision threshold that maximizes the :func:`fbeta_score`. The value of
+   beta is specified by the parameter ``beta``. The ``beta`` parameter determines
+   the weight of precision. When ``beta = 1`` both precision recall get the same
+   weight therefore the maximization target in this case is the :func:`f1_score`.
+   if ``beta < 1`` more weight is given to precision whereas if ``beta > 1`` more
+   weight is given to recall.
 
 * ``roc``
-   selects the decision threshold for the point on the roc curve that is
+   selects the decision threshold for the point on the :func:`roc_curve` that is
    closest to the ideal corner (0, 1)
 
 * ``max_tpr``
-   selects the decision threshold for the point that yields the highest true positive
-   rate while maintaining a minimum, specified by the parameter ``threshold``, for the
-   true negative rate
+   selects the decision threshold for the point that yields the highest true
+   positive rate while maintaining a minimum true negative rate, specified by
+   the parameter ``threshold``
 
 * ``max_tnr``
    selects the decision threshold for the point that yields the highest true
-   negative rate while maintaining a minimum, specified by the parameter ``threshold``,
-   for the true positive rate
+   negative rate while maintaining a minimum true positive rate, specified by
+   the parameter ``threshold``
 
 Here is a simple usage example::
 
@@ -276,7 +282,8 @@ Here is a simple usage example::
    >>> X, y = load_breast_cancer(return_X_y=True)
    >>> X_train, X_test, y_train, y_test = train_test_split(
    ...     X, y, train_size=0.6, random_state=42)
-   >>> clf = CutoffClassifier(GaussianNB(), cv=3).fit(X_train, y_train)
+   >>> clf = CutoffClassifier(GaussianNB(), method='roc', cv=3).fit(
+   ...     X_train, y_train)
 
 .. topic:: Examples:
  * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`
@@ -285,16 +292,11 @@ The following image shows the results of using the :class:`CutoffClassifier`
 for finding a decision threshold for a :class:`LogisticRegression` classifier
 and an :class:`AdaBoostClassifier` for two use cases.
 
-In the first one we want to increase the overall accuracy of the classifiers on
-the breast cancer dataset. As you can see after calibration the `f1 score` of
-:class:`LogisticRegression` has increased slightly whereas the accuracy of
-:class:`AdaBoostClassifier` has stayed the same.
+In the first case we want to increase the overall accuracy of the classifiers on
+the breast cancer dataset. In the second case we want to find a decision threshold
+that yields maximum true positive rate while maintaining a minimum value of
+``0.7`` for the true negative rate.
 
-In the second case we want to find a decision threshold that yields maximum
-true positive rate while maintaining a minimum value of ``0.7`` for the true negative
-rate. As seen after calibration both classifiers achieve better true positive rate
-while their respective true negative rates have decreased slightly or remained
-stable.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_decision_threshold_calibration_001.png
    :target: ../auto_examples/calibration/plot_decision_threshold_calibration.html

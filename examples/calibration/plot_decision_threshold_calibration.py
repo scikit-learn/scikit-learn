@@ -14,8 +14,18 @@ during the decision threshold calibration can be the true positive and / or
 the true negative rate as well as the f beta score.
 
 In this example the decision threshold calibration is applied on two
-classifiers trained on the breast cancer dataset. The goal is to maximize the
-true positive rate while maintaining a minimum true negative rate.
+classifiers trained on the breast cancer dataset. The goal in the first case is
+to maximize the f1 score of the classifiers whereas in the second the goals is
+to maximize the true positive rate while maintaining a minimum true negative
+rate.
+
+As you can see after calibration the f1 score of the LogisticRegression
+classifiers has increased slightly whereas the accuracy of the
+AdaBoostClassifier classifier has stayed the same.
+
+For the second goal as seen after calibration both classifiers achieve better
+true positive rate while their respective true negative rates have decreased
+slightly or remained stable.
 """
 
 # Author: Prokopios Gryllos <prokopis.gryllos@sentiance.com>
