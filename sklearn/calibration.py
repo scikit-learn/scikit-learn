@@ -162,10 +162,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  repr(self.threshold))
 
         if self.method == 'f_beta':
-            if not self.beta or not isinstance(self.beta, (int, float)) \
-                    or not self.beta >= 0 or not self.beta <= 1:
-                raise ValueError('parameter beta must be a number in [0, 1]. '
-                                 'Got %s instead' % repr(self.beta))
+            if not self.beta or not isinstance(self.beta, (int, float)):
+                raise ValueError('parameter beta must be a real number.'
+                                 'Got %s instead' % type(self.beta))
 
         X, y = check_X_y(X, y)
 
