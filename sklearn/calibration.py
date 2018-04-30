@@ -71,9 +71,6 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             true positive rate at least equal to the value of the parameter
             threshold
 
-    beta : float in [0, 1], optional (default=None)
-        beta value to be used in case method == 'f_beta'
-
     strategy : str or None, optional (default=None)
         The method to be used for acquiring the score
 
@@ -87,6 +84,14 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             base_estimator.decision_function will be used first and if not
             available base_estimator.predict_proba
 
+    beta : float in [0, 1], optional (default=None)
+        beta value to be used in case method == 'f_beta'
+
+    threshold : float in [0, 1] or None, (default=None)
+        In case method is 'max_tpr' or 'max_tnr' this parameter must be set to
+        specify the threshold for the true negative rate or true positive rate
+        respectively that needs to be achieved
+
     pos_label : object, optional (default=1)
         Object representing the positive label
 
@@ -94,11 +99,6 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         (default='prefit'). Determines the cross-validation splitting strategy.
         If cv='prefit' the base estimator is assumed to be fitted and all data
         will be used for the calibration of the probability threshold
-
-    threshold : float in [0, 1] or None, (default=None)
-        In case method is 'max_tpr' or 'max_tnr' this parameter must be set to
-        specify the threshold for the true negative rate or true positive rate
-        respectively that needs to be achieved
 
     Attributes
     ----------
@@ -113,15 +113,15 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
            Clinical chemistry, 1993
 
     """
-    def __init__(self, base_estimator, method='roc', beta=None, strategy=None,
-                 pos_label=1, cv=3, threshold=None):
+    def __init__(self, base_estimator, method='roc', strategy=None, beta=None,
+                 threshold=None, pos_label=1, cv=3):
         self.base_estimator = base_estimator
         self.method = method
-        self.beta = beta
         self.strategy = strategy
+        self.beta = beta
+        self.threshold = threshold
         self.pos_label = pos_label
         self.cv = cv
-        self.threshold = threshold
 
     def fit(self, X, y):
         """Fit model
@@ -181,8 +181,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         if self.cv == 'prefit':
             self.decision_threshold_ = _CutoffClassifier(
-                self.base_estimator, self.method, self.beta, self.strategy,
-                self.pos_label, self.threshold
+                self.base_estimator, self.method, self.strategy, self.beta,
+                self.threshold, self.pos_label
             ).fit(X, y).decision_threshold_
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -191,12 +191,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             for train, test in cv.split(X, y):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
                 decision_thresholds.append(
-                    _CutoffClassifier(estimator,
-                                      self.method,
-                                      self.beta,
-                                      self.strategy,
-                                      self.pos_label,
-                                      self.threshold).fit(
+                    _CutoffClassifier(estimator, self.method, self.strategy,
+                                      self.beta, self.threshold,
+                                      self.pos_label).fit(
                         X[test], y[test]
                     ).decision_threshold_
                 )
@@ -246,36 +243,36 @@ class _CutoffClassifier(object):
     method : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
         The method to use for choosing the cutoff point
 
-    beta : float in [0, 1]
-        beta value to be used in case method == 'f_beta'
-
     strategy : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
         predict_proba
 
-    pos_label : object
-        Label considered as positive during the roc_curve construction
+    beta : float in [0, 1]
+        beta value to be used in case method == 'f_beta'
 
     threshold : float in [0, 1]
         minimum required value for the true negative rate (specificity) in case
         method 'max_tpr' is used or for the true positive rate (sensitivity) in
         case method 'max_tnr' is used
 
+    pos_label : object
+        Label considered as positive during the roc_curve construction
+
     Attributes
     ----------
     decision_threshold_ : float
         Acquired decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, beta, strategy, pos_label,
-                 threshold):
+    def __init__(self, base_estimator, method, strategy, beta, threshold,
+                 pos_label):
         self.base_estimator = base_estimator
         self.method = method
-        self.beta = beta
         self.strategy = strategy
-        self.pos_label = pos_label
+        self.beta = beta
         self.threshold = threshold
+        self.pos_label = pos_label
 
     def fit(self, X, y):
         """Select a decision threshold for the fitted model's positive class

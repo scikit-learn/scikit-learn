@@ -60,7 +60,8 @@ def test_cutoff_prefit():
     assert_greater(tpr_roc + tnr_roc, tpr + tnr)
 
     clf_f1 = CutoffClassifier(
-        lr, method='f_beta', beta=1, cv='prefit', strategy='predict_proba').fit(
+        lr, method='f_beta', strategy='predict_proba', beta=1,
+        cv='prefit').fit(
         X_test[:calibration_samples], y_test[:calibration_samples]
     )
 
@@ -69,7 +70,7 @@ def test_cutoff_prefit():
                    f1_score(y_test[calibration_samples:], y_pred))
 
     clf_max_tpr = CutoffClassifier(
-        lr, method='max_tpr', cv='prefit', threshold=0.7
+        lr, method='max_tpr', threshold=0.7, cv='prefit'
     ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
 
     y_pred_max_tpr = clf_max_tpr.predict(X_test[calibration_samples:])
@@ -86,7 +87,7 @@ def test_cutoff_prefit():
     assert_greater_equal(tnr_max_tpr, 0.7)
 
     clf_max_tnr = CutoffClassifier(
-        lr, method='max_tnr', cv='prefit', threshold=0.7
+        lr, method='max_tnr', threshold=0.7, cv='prefit'
     ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
 
     y_pred_clf = clf_max_tnr.predict(X_test[calibration_samples:])
@@ -164,23 +165,23 @@ def test_get_binary_score():
     y_pred_score = lr.decision_function(X_test)
 
     assert_array_equal(
-        y_pred_score,
-        _get_binary_score(lr, X_test, strategy='decision_function', pos_label=1)
+        y_pred_score, _get_binary_score(
+            lr, X_test, strategy='decision_function', pos_label=1)
     )
 
     assert_array_equal(
-        - y_pred_score,
-        _get_binary_score(lr, X_test, strategy='decision_function', pos_label=0)
+        - y_pred_score, _get_binary_score(
+            lr, X_test, strategy='decision_function', pos_label=0)
     )
 
     assert_array_equal(
-        y_pred_proba[:, 1],
-        _get_binary_score(lr, X_test, strategy='predict_proba', pos_label=1)
+        y_pred_proba[:, 1], _get_binary_score(
+            lr, X_test, strategy='predict_proba', pos_label=1)
     )
 
     assert_array_equal(
-        y_pred_proba[:, 0],
-        _get_binary_score(lr, X_test, strategy='predict_proba', pos_label=0)
+        y_pred_proba[:, 0], _get_binary_score(
+            lr, X_test, strategy='predict_proba', pos_label=0)
     )
 
     assert_array_equal(
