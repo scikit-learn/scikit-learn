@@ -17,8 +17,8 @@ import numpy as np
 from scipy.optimize import fmin_bfgs
 from sklearn.preprocessing import LabelEncoder
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin,\
-    MetaEstimatorMixin, clone
+from .base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                   MetaEstimatorMixin, clone)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
