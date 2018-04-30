@@ -126,6 +126,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
         y = column_or_1d(y, warn=True)
+        # transform of empty array is empty array
+        if _num_samples(y) == 0:
+            return np.array([])
 
         classes = np.unique(y)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
@@ -147,6 +150,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : numpy array of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
+        # inverse transform of empty array is empty array
+        if _num_samples(y) == 0:
+            return np.array([])
 
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
         if len(diff):

@@ -26,8 +26,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -363,6 +363,12 @@ def test_check_inputs():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y,
                   sample_weight=([1] * len(y)) + [0, 1])
+
+    weight = [0, 0, 0, 1, 1, 1]
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    msg = ("y contains 1 class after sample_weight trimmed classes with "
+           "zero weights, while a minimum of 2 classes are required.")
+    assert_raise_message(ValueError, msg, clf.fit, X, y, sample_weight=weight)
 
 
 def test_check_inputs_predict():

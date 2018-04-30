@@ -59,6 +59,7 @@ from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
 
+from .scorer import check_scoring
 from .scorer import make_scorer
 from .scorer import SCORERS
 from .scorer import get_scorer
@@ -71,6 +72,7 @@ __all__ = [
     'average_precision_score',
     'balanced_accuracy_score',
     'calinski_harabaz_score',
+    'check_scoring',
     'classification_report',
     'cluster',
     'cohen_kappa_score',

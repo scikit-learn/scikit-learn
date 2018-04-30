@@ -467,7 +467,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
+    Cichocki, Andrzej, and Phan, Anh-Huy. "Fast local algorithms for
     large scale nonnegative matrix and tensor factorizations."
     IEICE transactions on fundamentals of electronics, communications and
     computer sciences 92.3: 708-721, 2009.
@@ -823,7 +823,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    """Compute Non-negative Matrix Factorization (NMF)
+    r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -891,7 +891,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver.
+        'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+            Alternating Least Squares (Fast HALS).
         'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
@@ -958,8 +959,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2, \
-        init='random', random_state=0)
+    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    ... init='random', random_state=0)
 
     References
     ----------
@@ -1039,7 +1040,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
 
 class NMF(BaseEstimator, TransformerMixin):
-    """Non-Negative Matrix Factorization (NMF)
+    r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for

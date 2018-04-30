@@ -13,7 +13,6 @@ import sys
 import re
 import pkgutil
 
-from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
@@ -29,7 +28,7 @@ from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     set_checking_parameters,
     check_parameters_default_constructible,
-    check_no_fit_attributes_set_in_init,
+    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
 
 
@@ -65,7 +64,7 @@ def test_non_meta_estimators():
             continue
         estimator = Estimator()
         # check this on class
-        yield check_no_fit_attributes_set_in_init, name, Estimator
+        yield check_no_attributes_set_in_init, name, estimator
 
         for check in _yield_all_checks(name, estimator):
             set_checking_parameters(estimator)
@@ -89,11 +88,8 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            if PY3:
-                with open('setup.py') as f:
-                    exec(f.read(), dict(__name__='__main__'))
-            else:
-                execfile('setup.py', dict(__name__='__main__'))
+            with open('setup.py') as f:
+                exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)

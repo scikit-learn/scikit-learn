@@ -4,7 +4,7 @@ Contributing to scikit-learn
 
 **Note: This document is a 'getting started' summary for contributing code,
 documentation, testing, and filing issues.** Visit the [**Contributing
-page**](http://scikit-learn.org/stable/developers/contributing.html)
+page**](http://scikit-learn.org/dev/developers/contributing.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.
@@ -143,25 +143,11 @@ tools:
   $ pytest --cov sklearn path/to/tests_for_package
   ```
 
--  No pyflakes warnings, check with:
+-  No flake8 warnings, check with:
 
   ```bash
-  $ pip install pyflakes
-  $ pyflakes path/to/module.py
-  ```
-
--  No PEP8 warnings, check with:
-
-  ```bash
-  $ pip install pep8
-  $ pep8 path/to/module.py
-  ```
-
--  AutoPEP8 can help you fix some of the easy redundant errors:
-
-  ```bash
-  $ pip install autopep8
-  $ autopep8 path/to/pep8.py
+  $ pip install flake8
+  $ flake8 path/to/module.py
   ```
 
 Bonus points for contributions that include a performance analysis with
@@ -182,7 +168,7 @@ following rules before submitting:
 
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
-   [new algorithm requirements](http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published).
+   [new algorithm requirements](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -231,7 +217,7 @@ You can edit the documentation using any text editor and then generate
 the HTML output by typing ``make html`` from the doc/ directory.
 Alternatively, ``make`` can be used to quickly generate the
 documentation without the example gallery. The resulting HTML files will
-be placed in ``_build/html/`` and are viewable in a web browser. See the
+be placed in ``_build/html/stable`` and are viewable in a web browser. See the
 ``README`` file in the ``doc/`` directory for more information.
 
 For building the documentation, you will need
@@ -249,6 +235,6 @@ illustrating it.
 Further Information
 -------------------
 
-Visit the [Contributing Code](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
+Visit the [Contributing Code](http://scikit-learn.org/stable/developers/contributing.html#coding-guidelines)
 section of the website for more information including conforming to the
 API spec and profiling contributed code.
