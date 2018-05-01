@@ -139,8 +139,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self : object
             Instance of self
         """
-        if not hasattr(self.base_estimator, 'decision_function') and \
-                not hasattr(self.base_estimator, 'predict_proba'):
+        if (not hasattr(self.base_estimator, 'decision_function') and
+                not hasattr(self.base_estimator, 'predict_proba')):
             raise TypeError('The base_estimator needs to implement either a '
                             'decision_function or a predict_proba method')
 
@@ -154,9 +154,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                              'Got {} instead'.format(self.strategy))
 
         if self.method == 'max_tpr' or self.method == 'max_tnr':
-            if not self.threshold or not \
-                    isinstance(self.threshold, (int, float)) \
-                    or not self.threshold >= 0 or not self.threshold <= 1:
+            if (not self.threshold or not
+                    isinstance(self.threshold, (int, float))
+                    or not self.threshold >= 0 or not self.threshold <= 1):
                 raise ValueError('parameter threshold must be a number in'
                                  '[0, 1]. '
                                  'Got {} instead'.format(self.threshold))
