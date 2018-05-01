@@ -56,7 +56,7 @@ unseen data, you can instantiate the estimator with the ``novelty`` parameter
 set to ``True`` before fitting the estimator. In this case, ``fit_predict`` is
 not available.
 
-.. warning:: **Novelty detection with :class:`neighbors.LocalOutlierFactor`**
+.. warning:: **Novelty detection with Local Outlier Factor**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
@@ -303,11 +303,9 @@ This strategy is illustrated below.
 
 .. topic:: Examples:
 
-   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
-   for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py` for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
-   for a comparison with other anomaly detection methods.
+   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a comparison with other anomaly detection methods.
 
 .. topic:: References:
 
@@ -326,9 +324,9 @@ set to ``True`` before fitting the estimator::
   lof = LocalOutlierFactor(novelty=True)
   lof.fit(X_train)
 
-Note that in this case, ``fit_predict`` is not available.
+Note that ``fit_predict`` is not available in this case.
 
-.. warning:: **Novelty detection with :class:`neighbors.LocalOutlierFactor`**
+.. warning:: **Novelty detection with Local Outlier Factor`**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
@@ -336,9 +334,22 @@ Note that in this case, ``fit_predict`` is not available.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
+The behavior of LOF is summarized in the following table.
+
+====================  ================================  =====================
+Method                Outlier detection                 Novelty detection
+====================  ================================  =====================
+`fit_predict`         OK                                Not available
+`predict`             Not available                     Use only on test data
+`decision_function`   Not available                     Use only on test data
+`score_samples`       Use `negative_outlier_factor_`    Use only on test data
+====================  ================================  =====================
+
+
 This strategy is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
      :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
+
