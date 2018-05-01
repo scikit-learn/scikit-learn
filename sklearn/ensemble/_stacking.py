@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
@@ -10,9 +11,11 @@ from ..base import MetaEstimatorMixin
 from .base import _parallel_fit_estimator
 
 from sklearn.externals.joblib import Parallel, delayed
+from sklearn.externals.six import with_metaclass
 from sklearn.externals.six import string_types
 
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
 
 from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
@@ -24,19 +27,25 @@ from ..utils.validation import has_fit_parameter
 from ..utils.validation import check_is_fitted
 
 
-class StackingClassifier(_BaseComposition, MetaEstimatorMixin, ClassifierMixin,
-                         TransformerMixin):
+class BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
+                                  MetaEstimatorMixin, TransformerMixin)):
 
-    def __init__(self, estimators=None, classifier=None, cv=3,
+    def __init__(self, estimators=None, meta_estimator=None, cv=3,
                  method_estimators='auto', n_jobs=1, random_state=None,
                  verbose=0):
         self.estimators = estimators
-        self.classifier = classifier
+        self.meta_estimator = meta_estimator
         self.cv = cv
         self.method_estimators = method_estimators
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+
+    def _validate_meta_estimator(self, default=None):
+        if self.meta_estimator is not None:
+            self.meta_estimator_ = clone(self.meta_estimator)
+        else:
+            self.meta_estimator_ = clone(default)
 
     @property
     def named_estimators(self):
@@ -64,15 +73,7 @@ class StackingClassifier(_BaseComposition, MetaEstimatorMixin, ClassifierMixin,
 
     def fit(self, X, y, sample_weight=None):
 
-        random_state = check_random_state(self.random_state)
-
-        if self.classifier is None:
-            self.classifier_ = LogisticRegression(random_state=random_state)
-        else:
-            if not is_classifier(self.classifier):
-                raise AttributeError('`classifier` attribute should be a '
-                                     'classifier.')
-            self.classifier_ = clone(self.classifier)
+        self._validate_meta_esimator()
 
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError('Invalid `estimators` attribute, `estimators`'
@@ -121,6 +122,7 @@ class StackingClassifier(_BaseComposition, MetaEstimatorMixin, ClassifierMixin,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
+        random_state = check_random_state(self.random_state)
         cv = check_cv(self.cv)
         if hasattr(cv, 'random_state'):
             cv.random_state = random_state
@@ -131,7 +133,7 @@ class StackingClassifier(_BaseComposition, MetaEstimatorMixin, ClassifierMixin,
                                        verbose=self.verbose)
             for est, meth in zip(estimators_, self.method_estimators_))
         X_meta = self._concatenate_predictions(X_meta)
-        self.classifier_.fit(X_meta, y)
+        self.meta_estimator_.fit(X_meta, y)
 
         return self
 
@@ -141,12 +143,56 @@ class StackingClassifier(_BaseComposition, MetaEstimatorMixin, ClassifierMixin,
             getattr(est, meth)(X)
             for est, meth in zip(self.estimators_, self.method_estimators_)])
 
-    @if_delegate_has_method(delegate='classifier_')
+    @if_delegate_has_method(delegate='meta_estimator_')
     def predict(self, X):
-        check_is_fitted(self, ['estimators_', 'classifier_'])
-        return self.classifier_.predict(self.transform(X))
+        check_is_fitted(self, ['estimators_', 'meta_estimator_'])
+        return self.meta_estimator_.predict(self.transform(X))
 
-    @if_delegate_has_method(delegate='classifier_')
+    @if_delegate_has_method(delegate='meta_estimator_')
     def predict_proba(self, X):
-        check_is_fitted(self, ['estimators_', 'classifier_'])
-        return self.classifier_.predict_proba(self.transform(X))
+        check_is_fitted(self, ['estimators_', 'meta_estimator_'])
+        return self.meta_estimator_.predict_proba(self.transform(X))
+
+
+class StackingClassifier(BaseStacking, ClassifierMixin):
+
+    def __init__(self, estimators=None, meta_estimator=None, cv=3,
+                 method_estimators='auto', n_jobs=1, random_state=None,
+                 verbose=0):
+        super(StackingClassifier, self).__init__(
+            estimators=estimators,
+            meta_estimator=meta_estimator,
+            cv=cv,
+            method_estimators=method_estimators,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose)
+
+    def _validate_meta_esimator(self):
+        super(StackingClassifier, self)._validate_meta_estimator(
+            default=LogisticRegression(random_state=self.random_state))
+        if not is_classifier(self.meta_estimator_):
+            raise AttributeError('`meta_estimator` attribute should be a '
+                                 'classifier.')
+
+
+class StackingRegressor(BaseStacking, RegressorMixin):
+
+    def __init__(self, estimators=None, meta_estimator=None, cv=3,
+                 method_estimators='auto', n_jobs=1, random_state=None,
+                 verbose=0):
+        super(StackingRegressor, self).__init__(
+            estimators=estimators,
+            meta_estimator=meta_estimator,
+            cv=cv,
+            method_estimators=method_estimators,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose)
+
+    def _validate_meta_esimator(self):
+        super(StackingRegressor, self)._validate_meta_estimator(
+            default=LinearRegression())
+        if not is_regressor(self.meta_estimator_):
+            raise AttributeError('`meta_estimator` attribute should be a '
+                                 'regressor.')
