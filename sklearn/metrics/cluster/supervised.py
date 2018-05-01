@@ -343,10 +343,10 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
-      1.0...
+      1.000000
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
       ...                                                  # doctest: +ELLIPSIS
-      1.0...
+      1.000000
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
@@ -418,7 +418,7 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
       1.0
       >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      1.0
+      0.999...
 
     If classes members are split across different clusters, the
     assignment cannot be complete::

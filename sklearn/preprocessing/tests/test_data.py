@@ -1094,9 +1094,7 @@ def test_quantile_transform_subsampling():
 
     # sparse support
 
-    # TODO: rng should be seeded once we drop support for older versions of
-    # scipy (< 0.13) that don't support seeding.
-    X = sparse.rand(n_samples, 1, density=.99, format='csc')
+    X = sparse.rand(n_samples, 1, density=.99, format='csc', random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
@@ -1210,6 +1208,20 @@ def test_quantile_transform_and_inverse():
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
+
+
+def test_quantile_transform_nan():
+    X = np.array([[np.nan, 0,  0, 1],
+                  [np.nan, np.nan, 0, 0.5],
+                  [np.nan, 1, 1, 0]])
+
+    transformer = QuantileTransformer(n_quantiles=10, random_state=42)
+    transformer.fit_transform(X)
+
+    # check that the quantile of the first column is all NaN
+    assert np.isnan(transformer.quantiles_[:, 0]).all()
+    # all other column should not contain NaN
+    assert not np.isnan(transformer.quantiles_[:, 1:]).any()
 
 
 def test_robust_scaler_invalid_range():
@@ -1775,7 +1787,8 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
+                        SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
     assert_true(pipeline._pairwise)

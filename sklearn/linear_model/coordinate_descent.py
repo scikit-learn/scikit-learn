@@ -235,8 +235,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5])
     >>> print(coef_path)
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
+    [[0.         0.         0.46874778]
+     [0.2159048  0.4425765  0.23689075]]
 
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
@@ -246,8 +246,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
     ...                                             coef_path_lars[:, ::-1])
     >>> print(coef_path_continuous([5., 1., .5]))
-    [[ 0.          0.          0.46915237]
-     [ 0.2159048   0.4425765   0.23668876]]
+    [[0.         0.         0.46915237]
+     [0.2159048  0.4425765  0.23668876]]
 
 
     See also
@@ -580,6 +580,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -626,11 +627,11 @@ class ElasticNet(LinearModel, RegressorMixin):
           max_iter=1000, normalize=False, positive=False, precompute=False,
           random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(regr.coef_) # doctest: +ELLIPSIS
-    [ 18.83816048  64.55968825]
+    [18.83816048 64.55968825]
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    1.45126075617
+    1.451...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
-    [ 1.45126076]
+    [1.451...]
 
 
     Notes
@@ -762,8 +763,12 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
+            self.coef_ = coef_[0]
+            self.dual_gap_ = dual_gaps_[0]
+        else:
+            self.coef_ = coef_
+            self.dual_gap_ = dual_gaps_
 
-        self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
         self._set_intercept(X_offset, y_offset, X_scale)
 
         # workaround since _set_intercept will cast self.coef_ into X.dtype
@@ -855,6 +860,7 @@ class Lasso(ElasticNet):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
@@ -898,9 +904,9 @@ class Lasso(ElasticNet):
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [ 0.85  0.  ]
-    >>> print(clf.intercept_)
-    0.15
+    [0.85 0.  ]
+    >>> print(clf.intercept_)  # doctest: +ELLIPSIS
+    0.15...
 
     See also
     --------
@@ -1524,11 +1530,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.19947279427
+    0.1994727942696716
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    0.398882965428
+    0.398...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
-    [ 0.39888297]
+    [0.398...]
 
 
     Notes
@@ -1648,6 +1654,7 @@ class MultiTaskElasticNet(Lasso):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -1687,10 +1694,10 @@ class MultiTaskElasticNet(Lasso):
             l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
             selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.45663524  0.45612256]
-     [ 0.45663524  0.45612256]]
+    [[0.45663524 0.45612256]
+     [0.45663524 0.45612256]]
     >>> print(clf.intercept_)
-    [ 0.0872422  0.0872422]
+    [0.0872422 0.0872422]
 
     See also
     --------
@@ -1838,6 +1845,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     warm_start : bool, optional
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -1875,10 +1883,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
             normalize=False, random_state=None, selection='cyclic', tol=0.0001,
             warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.89393398  0.        ]
-     [ 0.89393398  0.        ]]
+    [[0.89393398 0.        ]
+     [0.89393398 0.        ]]
     >>> print(clf.intercept_)
-    [ 0.10606602  0.10606602]
+    [0.10606602 0.10606602]
 
     See also
     --------
@@ -2049,10 +2057,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
            n_jobs=1, normalize=False, random_state=None, selection='cyclic',
            tol=0.0001, verbose=0)
     >>> print(clf.coef_)
-    [[ 0.52875032  0.46958558]
-     [ 0.52875032  0.46958558]]
+    [[0.52875032 0.46958558]
+     [0.52875032 0.46958558]]
     >>> print(clf.intercept_)
-    [ 0.00166409  0.00166409]
+    [0.00166409 0.00166409]
 
     See also
     --------

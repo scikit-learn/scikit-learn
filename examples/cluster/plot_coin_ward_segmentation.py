@@ -1,7 +1,7 @@
 """
-=========================================================================
-A demo of structured Ward hierarchical clustering on a raccoon face image
-=========================================================================
+======================================================================
+A demo of structured Ward hierarchical clustering on an image of coins
+======================================================================
 
 Compute the segmentation of a 2D image with Ward hierarchical
 clustering. The clustering is spatially constrained in order
@@ -17,12 +17,11 @@ print(__doc__)
 import time as time
 
 import numpy as np
-import scipy as sp
 from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib.pyplot as plt
 
-from skimage import img_as_float
+from skimage.data import coins
 from skimage.transform import rescale
 
 from sklearn.feature_extraction.image import grid_to_graph
@@ -31,33 +30,29 @@ from sklearn.cluster import AgglomerativeClustering
 
 # #############################################################################
 # Generate data
-try:  # SciPy >= 0.16 have face in misc
-    from scipy.misc import face
-    orig_face = img_as_float(face(gray=True))
-except ImportError:
-    orig_face = img_as_float(sp.face(gray=True))
+orig_coins = coins()
 
-# Resize it to 10% of the original size to speed up the processing
+# Resize it to 20% of the original size to speed up the processing
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
-smoothened_face = gaussian_filter(orig_face, sigma=4.5)
-rescaled_face = rescale(smoothened_face, 0.1, mode="reflect")
+smoothened_coins = gaussian_filter(orig_coins, sigma=2)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect")
 
-X = np.reshape(rescaled_face, (-1, 1))
+X = np.reshape(rescaled_coins, (-1, 1))
 
 # #############################################################################
 # Define the structure A of the data. Pixels connected to their neighbors.
-connectivity = grid_to_graph(*rescaled_face.shape)
+connectivity = grid_to_graph(*rescaled_coins.shape)
 
 # #############################################################################
 # Compute clustering
 print("Compute structured hierarchical clustering...")
 st = time.time()
-n_clusters = 15  # number of regions
+n_clusters = 27  # number of regions
 ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
                                connectivity=connectivity)
 ward.fit(X)
-label = np.reshape(ward.labels_, rescaled_face.shape)
+label = np.reshape(ward.labels_, rescaled_coins.shape)
 print("Elapsed time: ", time.time() - st)
 print("Number of pixels: ", label.size)
 print("Number of clusters: ", np.unique(label).size)
@@ -65,10 +60,10 @@ print("Number of clusters: ", np.unique(label).size)
 # #############################################################################
 # Plot the results on an image
 plt.figure(figsize=(5, 5))
-plt.imshow(rescaled_face, cmap=plt.cm.gray)
+plt.imshow(rescaled_coins, cmap=plt.cm.gray)
 for l in range(n_clusters):
     plt.contour(label == l,
-                colors=[plt.cm.spectral(l / float(n_clusters)), ])
+                colors=[plt.cm.nipy_spectral(l / float(n_clusters)), ])
 plt.xticks(())
 plt.yticks(())
 plt.show()
