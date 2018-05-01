@@ -1273,6 +1273,36 @@ def test_same_knn_parallel():
         yield check_same_knn_parallel, algorithm
 
 
+def test_same_radius_neighbors_parallel():
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    def check_same_radius_neighbors_parallel(algorithm):
+        clf = neighbors.RadiusNeighborsClassifier(radius=10,
+                                                  algorithm=algorithm)
+        clf.fit(X_train, y_train)
+        y = clf.predict(X_test)
+        dist, ind = clf.radius_neighbors(X_test)
+        graph = clf.radius_neighbors_graph(X_test, mode='distance').toarray()
+
+        clf.set_params(n_jobs=3)
+        clf.fit(X_train, y_train)
+        y_parallel = clf.predict(X_test)
+        dist_parallel, ind_parallel = clf.radius_neighbors(X_test)
+        graph_parallel = \
+            clf.radius_neighbors_graph(X_test, mode='distance').toarray()
+
+        assert_array_equal(y, y_parallel)
+        for i in range(len(dist)):
+            assert_array_almost_equal(dist[i], dist_parallel[i])
+            assert_array_equal(ind[i], ind_parallel[i])
+        assert_array_almost_equal(graph, graph_parallel)
+
+    for algorithm in ALGORITHMS:
+        yield check_same_radius_neighbors_parallel, algorithm
+
+
 def test_dtype_convert():
     classifier = neighbors.KNeighborsClassifier(n_neighbors=1)
     CLASSES = 15

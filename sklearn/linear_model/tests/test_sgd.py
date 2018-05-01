@@ -1,5 +1,6 @@
 import pickle
 import unittest
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -466,6 +467,29 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # Provided intercept_ does match dataset.
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
+
+    def test_sgd_predict_proba_method_access(self):
+        # Checks that SGDClassifier predict_proba and predict_log_proba methods
+        # can either be accessed or raise an appropriate error message
+        # otherwise. See
+        # https://github.com/scikit-learn/scikit-learn/issues/10938 for more
+        # details.
+        for loss in SGDClassifier.loss_functions:
+            clf = SGDClassifier(loss=loss)
+            if loss in ('log', 'modified_huber'):
+                assert hasattr(clf, 'predict_proba')
+                assert hasattr(clf, 'predict_log_proba')
+            else:
+                message = ("probability estimates are not "
+                           "available for loss={!r}".format(loss))
+                assert not hasattr(clf, 'predict_proba')
+                assert not hasattr(clf, 'predict_log_proba')
+                with pytest.raises(AttributeError,
+                                   message=message):
+                    clf.predict_proba
+                with pytest.raises(AttributeError,
+                                   message=message):
+                    clf.predict_log_proba
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba

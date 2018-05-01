@@ -64,10 +64,10 @@ operation on a single array-like dataset::
 Scaled data has zero mean and unit variance::
 
   >>> X_scaled.mean(axis=0)
-  array([ 0.,  0.,  0.])
+  array([0., 0., 0.])
 
   >>> X_scaled.std(axis=0)
-  array([ 1.,  1.,  1.])
+  array([1., 1., 1.])
 
 ..    >>> print_options = np.set_printoptions(print_options)
 
@@ -83,10 +83,10 @@ This class is hence suitable for use in the early steps of a
   StandardScaler(copy=True, with_mean=True, with_std=True)
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
-  array([ 1. ...,  0. ...,  0.33...])
+  array([1. ..., 0. ..., 0.33...])
 
   >>> scaler.scale_                                       # doctest: +ELLIPSIS
-  array([ 0.81...,  0.81...,  1.24...])
+  array([0.81..., 0.81..., 1.24...])
 
   >>> scaler.transform(X_train)                           # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
@@ -127,15 +127,15 @@ Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
   >>> min_max_scaler = preprocessing.MinMaxScaler()
   >>> X_train_minmax = min_max_scaler.fit_transform(X_train)
   >>> X_train_minmax
-  array([[ 0.5       ,  0.        ,  1.        ],
-         [ 1.        ,  0.5       ,  0.33333333],
-         [ 0.        ,  1.        ,  0.        ]])
+  array([[0.5       , 0.        , 1.        ],
+         [1.        , 0.5       , 0.33333333],
+         [0.        , 1.        , 0.        ]])
 
 The same instance of the transformer can then be applied to some new test data
 unseen during the fit call: the same scaling and shifting operations will be
 applied to be consistent with the transformation performed on the train data::
 
-  >>> X_test = np.array([[ -3., -1.,  4.]])
+  >>> X_test = np.array([[-3., -1.,  4.]])
   >>> X_test_minmax = min_max_scaler.transform(X_test)
   >>> X_test_minmax
   array([[-1.5       ,  0.        ,  1.66666667]])
@@ -144,10 +144,10 @@ It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
   >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
-  array([ 0.5       ,  0.5       ,  0.33...])
+  array([0.5       , 0.5       , 0.33...])
 
   >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
-  array([ 0.        ,  0.5       ,  0.33...])
+  array([0.        , 0.5       , 0.33...])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
 full formula is::
@@ -178,7 +178,7 @@ Here is how to use the toy data from the previous example with this scaler::
   >>> X_test_maxabs                 # doctest: +NORMALIZE_WHITESPACE
   array([[-1.5, -1. ,  2. ]])
   >>> max_abs_scaler.scale_         # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([ 2.,  1.,  2.])
+  array([2.,  1.,  2.])
 
 
 As with :func:`scale`, the module further provides convenience functions
@@ -328,9 +328,9 @@ lognormal distribution to a normal distribution::
   >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
   >>> X_lognormal                                         # doctest: +ELLIPSIS
-  array([[ 1.28...,  1.18...,  0.84...],
-         [ 0.94...,  1.60...,  0.38...],
-         [ 1.35...,  0.21...,  1.09...]])
+  array([[1.28..., 1.18..., 0.84...],
+         [0.94..., 1.60..., 0.38...],
+         [1.35..., 0.21..., 1.09...]])
   >>> pt.fit_transform(X_lognormal)                   # doctest: +ELLIPSIS
   array([[ 0.49...,  0.17..., -0.15...],
          [-0.05...,  0.58..., -0.57...],
@@ -358,13 +358,13 @@ Using the earlier example with the iris dataset::
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([[ 4.3...,   2...,     1...,     0.1...],
-         [ 4.31...,  2.02...,  1.01...,  0.1...],
-         [ 4.32...,  2.05...,  1.02...,  0.1...],
+  array([[4.3...,   2...,     1...,     0.1...],
+         [4.31...,  2.02...,  1.01...,  0.1...],
+         [4.32...,  2.05...,  1.02...,  0.1...],
          ...,
-         [ 7.84...,  4.34...,  6.84...,  2.5...],
-         [ 7.87...,  4.37...,  6.87...,  2.5...],
-         [ 7.9...,   4.4...,   6.9...,   2.5...]])
+         [7.84...,  4.34...,  6.84...,  2.5...],
+         [7.87...,  4.37...,  6.87...,  2.5...],
+         [7.9...,   4.4...,   6.9...,   2.5...]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
@@ -467,17 +467,17 @@ as each sample is treated independently of others::
   Binarizer(copy=True, threshold=0.0)
 
   >>> binarizer.transform(X)
-  array([[ 1.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+  array([[1., 0., 1.],
+         [1., 0., 0.],
+         [0., 1., 0.]])
 
 It is possible to adjust the threshold of the binarizer::
 
   >>> binarizer = preprocessing.Binarizer(threshold=1.1)
   >>> binarizer.transform(X)
-  array([[ 0.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  0.,  0.]])
+  array([[0., 0., 1.],
+         [1., 0., 0.],
+         [0., 0., 0.]])
 
 As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
@@ -518,7 +518,7 @@ new feature of integers (0 to n_categories - 1)::
     CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
               encoding='ordinal', handle_unknown='error')
     >>> enc.transform([['female', 'from US', 'uses Safari']])
-    array([[ 0.,  1.,  1.]])
+    array([[0., 1., 1.]])
 
 Such integer representation can, however, not be used directly with all
 scikit-learn estimators, as these expect continuous input, and would interpret
@@ -542,8 +542,8 @@ Continuing the example above::
             encoding='onehot', handle_unknown='error')
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
-  array([[ 1.,  0.,  0.,  1.,  0.,  1.],
-         [ 0.,  1.,  1.,  0.,  0.,  1.]])
+  array([[1., 0., 0., 1., 0., 1.],
+         [0., 1., 1., 0., 0., 1.]])
 
 By default, the values each feature can take is inferred automatically
 from the dataset and can be found in the ``categories_`` attribute::
@@ -567,7 +567,7 @@ dataset::
               dtype=<... 'numpy.float64'>, encoding='onehot',
               handle_unknown='error')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+    array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
 If there is a possibility that the training data might have missing categorical
 features, it can often be better to specify ``handle_unknown='ignore'`` instead
@@ -583,7 +583,7 @@ columns for this feature will be all zeros
     CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
               encoding='onehot', handle_unknown='ignore')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
-    array([[ 1.,  0.,  0.,  0.,  0.,  0.]])
+    array([[1., 0., 0., 0., 0., 0.]])
 
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
@@ -594,54 +594,7 @@ as a dict, not as scalars.
 Imputation of missing values
 ============================
 
-For various reasons, many real world datasets contain missing values, often
-encoded as blanks, NaNs or other placeholders. Such datasets however are
-incompatible with scikit-learn estimators which assume that all values in an
-array are numerical, and that all have and hold meaning. A basic strategy to use
-incomplete datasets is to discard entire rows and/or columns containing missing
-values. However, this comes at the price of losing data which may be valuable
-(even though incomplete). A better strategy is to impute the missing values,
-i.e., to infer them from the known part of the data.
-
-The :class:`Imputer` class provides basic strategies for imputing missing
-values, either using the mean, the median or the most frequent value of
-the row or column in which the missing values are located. This class
-also allows for different missing values encodings.
-
-The following snippet demonstrates how to replace missing values,
-encoded as ``np.nan``, using the mean value of the columns (axis 0)
-that contain the missing values::
-
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import Imputer
-    >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
-    Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
-    >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
-    >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
-    [[ 4.          2.        ]
-     [ 6.          3.666...]
-     [ 7.          6.        ]]
-
-The :class:`Imputer` class also supports sparse matrices::
-
-    >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
-    >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
-    >>> imp.fit(X)
-    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
-    >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
-    >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
-    [[ 4.          2.        ]
-     [ 6.          3.666...]
-     [ 7.          6.        ]]
-
-Note that, here, missing values are encoded by 0 and are thus implicitly stored
-in the matrix. This format is thus suitable when there are many more missing
-values than observed values.
-
-:class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+Tools for imputing missing values are discussed at :ref:`impute`.
 
 .. _polynomial_features:
 
@@ -659,9 +612,9 @@ Often it's useful to add complexity to the model by considering nonlinear featur
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[  1.,   0.,   1.,   0.,   0.,   1.],
-           [  1.,   2.,   3.,   4.,   6.,   9.],
-           [  1.,   4.,   5.,  16.,  20.,  25.]])
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
 
 The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
@@ -674,9 +627,9 @@ In some cases, only interaction terms among features are required, and it can be
            [6, 7, 8]])
     >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
     >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[   1.,    0.,    1.,    2.,    0.,    0.,    2.,    0.],
-           [   1.,    3.,    4.,    5.,   12.,   15.,   20.,   60.],
-           [   1.,    6.,    7.,    8.,   42.,   48.,   56.,  336.]])
+    array([[  1.,   0.,   1.,   2.,   0.,   0.,   2.,   0.],
+           [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
+           [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
@@ -699,8 +652,8 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[ 0.        ,  0.69314718],
-           [ 1.09861229,  1.38629436]])
+    array([[0.        , 0.69314718],
+           [1.09861229, 1.38629436]])
 
 You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
 by setting ``check_inverse=True`` and calling ``fit`` before

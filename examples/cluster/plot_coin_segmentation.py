@@ -1,7 +1,7 @@
 """
-===================================================
-Segmenting the picture of a raccoon face in regions
-===================================================
+================================================
+Segmenting the picture of greek coins in regions
+================================================
 
 This example uses :ref:`spectral_clustering` on a graph created from
 voxel-to-voxel difference on an image to break this image into multiple
@@ -25,37 +25,32 @@ print(__doc__)
 import time
 
 import numpy as np
-import scipy as sp
 from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
-from skimage import img_as_float
+from skimage.data import coins
 from skimage.transform import rescale
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
 
 
-# load the raccoon face as a numpy array
-try:  # SciPy >= 0.16 have face in misc
-    from scipy.misc import face
-    orig_face = img_as_float(face(gray=True))
-except ImportError:
-    orig_face = img_as_float(sp.face(gray=True))
+# load the coins as a numpy array
+orig_coins = coins()
 
-# Resize it to 10% of the original size to speed up the processing
+# Resize it to 20% of the original size to speed up the processing
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
-smoothened_face = gaussian_filter(orig_face, sigma=4.5)
-rescaled_face = rescale(smoothened_face, 0.1, mode="reflect")
+smoothened_coins = gaussian_filter(orig_coins, sigma=2)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect")
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
-graph = image.img_to_graph(rescaled_face)
+graph = image.img_to_graph(rescaled_coins)
 
 # Take a decreasing function of the gradient: an exponential
 # The smaller beta is, the more independent the segmentation is of the
 # actual image. For beta=1, the segmentation is close to a voronoi
-beta = 5
+beta = 10
 eps = 1e-6
 graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 
@@ -71,13 +66,13 @@ for assign_labels in ('kmeans', 'discretize'):
     labels = spectral_clustering(graph, n_clusters=N_REGIONS,
                                  assign_labels=assign_labels, random_state=42)
     t1 = time.time()
-    labels = labels.reshape(rescaled_face.shape)
+    labels = labels.reshape(rescaled_coins.shape)
 
     plt.figure(figsize=(5, 5))
-    plt.imshow(rescaled_face, cmap=plt.cm.gray)
+    plt.imshow(rescaled_coins, cmap=plt.cm.gray)
     for l in range(N_REGIONS):
         plt.contour(labels == l,
-                    colors=[plt.cm.spectral(l / float(N_REGIONS))])
+                    colors=[plt.cm.nipy_spectral(l / float(N_REGIONS))])
     plt.xticks(())
     plt.yticks(())
     title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))
