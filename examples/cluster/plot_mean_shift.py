@@ -55,8 +55,9 @@ for cluster_assignment in ('nearest_centroid', 'attractor'):
         my_members = labels == k
         cluster_center = cluster_centers[k]
         plt.plot(X[my_members, 0], X[my_members, 1], col + '.')
-        plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                 markeredgecolor='k', markersize=14)
+        plt.plot(cluster_center[0], cluster_center[1], 'o',
+                 markerfacecolor=col, markeredgecolor='k',
+                 markersize=14)
     plt.title('Estimated number of clusters: {}\n'.format(n_clusters_) +
               'cluster_assignment = {}'.format(cluster_assignment))
 plt.show()

@@ -53,7 +53,7 @@ def test_mean_shift():
         n_clusters_ = len(labels_unique)
         assert_equal(n_clusters_, n_clusters)
 
-        cluster_centers, labels = \
+        cluster_centers, labels, _, _ = \
             mean_shift(X, bandwidth=bandwidth,
                        cluster_assignment=cluster_assignment)
         labels_unique = np.unique(labels)

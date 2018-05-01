@@ -199,7 +199,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
-    When using bin seeding, cluster_assignment='attractor' uses 
+    When using bin seeding, cluster_assignment='attractor' uses
     5^n_features as many seeds and is therefore this much slower.
 
     References
