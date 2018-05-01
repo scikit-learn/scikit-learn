@@ -49,7 +49,7 @@ Functions
    get_config
    set_config
 
-.. _calibration_ref:
+.. _probability_calibration_ref:
 
 :mod:`sklearn.calibration`: Probability Calibration
 ===================================================
@@ -58,7 +58,7 @@ Functions
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`calibration` section for further details.
+**User guide:** See the :ref:`probability_calibration` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -74,6 +74,25 @@ Functions
    :template: function.rst
 
    calibration.calibration_curve
+
+.. _decision_threshold_calibration_ref:
+
+:mod:`sklearn.calibration`: Decision Threshold Calibration
+==========================================================
+
+.. automodule:: sklearn.calibration
+      :no-members:
+      :no-inherited-members:
+
+**User guide:** See the :ref:`decision_threshold_calibration` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+      :toctree: generated/
+      :template: class.rst
+
+      calibration.CutoffClassifier
 
 .. _cluster_ref:
 

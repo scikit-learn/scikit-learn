@@ -1,4 +1,4 @@
-.. _calibration:
+.. _probability_calibration:
 
 =======================
 Probability calibration
@@ -207,10 +207,15 @@ a similar decrease in log-loss.
            Wilks, D. S., 1990a
 
 
+.. _decision_threshold_calibration:
+
+==============================
 Decision Threshold calibration
 ==============================
 
-Often Machine Learning classifiers base their predictions on real-valued decision
+.. currentmodule:: sklearn.calibration
+
+:class:`CutoffClassifier` Often Machine Learning classifiers base their predictions on real-valued decision
 functions or probability estimates that carry the inherited biases of their models.
 Additionally when using a machine learning model the evaluation criteria can differ
 from the optimisation objectives used by the model during training.
@@ -222,10 +227,6 @@ for a specific use case can help to increase the overall accuracy of the model a
 provide better handling for sensitive classes.
 
 .. currentmodule:: sklearn.calibration
-
-For example the :class:`LogisticRegression` classifier is predicting the class
-for which the :func:`decision_function` returns the highest value. For a binary
-classification task that sets decision threshold to ``0``.
 
 :class:`CutoffClassifier` can be used as a wrapper around a model for binary
 classification to help obtain a more appropriate decision threshold and use it
@@ -285,23 +286,31 @@ Here is a simple usage example::
    >>> clf = CutoffClassifier(GaussianNB(), method='roc', cv=3).fit(
    ...     X_train, y_train)
 
+
 .. topic:: Examples:
- * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`
+
+ * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`: Decision
+   threshold calibration on the breast cancer dataset
+
 
 The following image shows the results of using the :class:`CutoffClassifier`
 for finding a decision threshold for a :class:`LogisticRegression` classifier
 and an :class:`AdaBoostClassifier` for two use cases.
 
-In the first case we want to increase the overall accuracy of the classifiers on
-the breast cancer dataset. In the second case we want to find a decision threshold
-that yields maximum true positive rate while maintaining a minimum value of
-``0.7`` for the true negative rate.
-
-
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_decision_threshold_calibration_001.png
    :target: ../auto_examples/calibration/plot_decision_threshold_calibration.html
    :align: center
 
+In the first case we want to increase the overall accuracy of the classifiers on
+the breast cancer dataset. In the second case we want to find a decision threshold
+that yields maximum true positive rate while maintaining a minimum value
+for the true negative rate.
+
+.. topic:: References:
+
+    * Receiver-operating characteristic (ROC) plots: a fundamental
+      evaluation tool in clinical medicine, MH Zweig, G Campbell -
+      Clinical chemistry, 1993
 
 Notes
 -----
