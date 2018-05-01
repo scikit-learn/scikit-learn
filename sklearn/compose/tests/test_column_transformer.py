@@ -304,7 +304,7 @@ def test_column_transformer_get_set_params():
                             ('trans2', StandardScaler(), [1])])
 
     exp = {'n_jobs': 1,
-           'remainder': 'drop',
+           'unspecified': 'drop',
            'trans1': ct.transformers[0][1],
            'trans1__copy': True,
            'trans1__with_mean': True,
@@ -323,7 +323,7 @@ def test_column_transformer_get_set_params():
 
     ct.set_params(trans1='passthrough')
     exp = {'n_jobs': 1,
-           'remainder': 'drop',
+           'unspecified': 'drop',
            'trans1': 'passthrough',
            'trans2': ct.transformers[1][1],
            'trans2__copy': True,
@@ -419,7 +419,7 @@ def test_column_transformer_special_strings():
                              ct.fit, X_array)
 
 
-def test_column_transformer_remainder():
+def test_column_transformer_unspecified():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
@@ -432,40 +432,44 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
 
     # specify to passthrough remaining columns
-    ct = ColumnTransformer([('trans1', Trans(), [0])], remainder='passthrough')
+    ct = ColumnTransformer([('trans1', Trans(), [0])],
+                           unspecified='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
 
     # column order is not preserved (passed through added to end)
-    ct = ColumnTransformer([('trans1', Trans(), [1])], remainder='passthrough')
+    ct = ColumnTransformer([('trans1', Trans(), [1])],
+                           unspecified='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both[:, ::-1])
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
 
     # passthrough when all actual transformers are skipped
-    ct = ColumnTransformer([('trans1', 'drop', [0])], remainder='passthrough')
+    ct = ColumnTransformer([('trans1', 'drop', [0])],
+                           unspecified='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_second)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_second)
 
     # error on invalid arg
-    ct = ColumnTransformer([('trans1', Trans(), [0])], remainder=1)
+    ct = ColumnTransformer([('trans1', Trans(), [0])], unspecified=1)
     assert_raise_message(
         ValueError,
-        "remainder keywords needs to be one of \'drop\' or \'passthrough\'",
+        "unspecified keywords needs to be one of \'drop\' or \'passthrough\'",
         ct.fit, X_array)
     assert_raise_message(
         ValueError,
-        "remainder keywords needs to be one of \'drop\' or \'passthrough\'",
+        "unspecified keywords needs to be one of \'drop\' or \'passthrough\'",
         ct.fit_transform, X_array)
 
 
 @pytest.mark.parametrize("key", [[0], np.array([0]), slice(0, 1),
                                  np.array([True, False])])
-def test_column_transformer_remainder_numpy(key):
+def test_column_transformer_unspecified_numpy(key):
     # test different ways that columns are specified with passthrough
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_both = X_array
 
-    ct = ColumnTransformer([('trans1', Trans(), key)], remainder='passthrough')
+    ct = ColumnTransformer([('trans1', Trans(), key)],
+                           unspecified='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
 
@@ -473,7 +477,7 @@ def test_column_transformer_remainder_numpy(key):
 @pytest.mark.parametrize("key", [[0], slice(0, 1), np.array([True, False]),
                                  ['first'], slice(None, 'first'),
                                  slice('first', 'first')])
-def test_column_transformer_remainder_pandas(key):
+def test_column_transformer_unspecified_pandas(key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip('pandas')
 
@@ -481,6 +485,7 @@ def test_column_transformer_remainder_pandas(key):
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
     X_res_both = X_array
 
-    ct = ColumnTransformer([('trans1', Trans(), key)], remainder='passthrough')
+    ct = ColumnTransformer([('trans1', Trans(), key)],
+                           unspecified='passthrough')
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
