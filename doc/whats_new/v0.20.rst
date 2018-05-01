@@ -262,7 +262,8 @@ Miscellaneous
 
 - :class:`preprocessing.FunctionTransformer` is accepting pandas DataFrame in
   ``func`` without converting to a NumPy array when
-  ``validate='array-or-frame``. :issue:`10655` by :user:`Guillaume Lemaitre
+  ``validate='array-or-frame``. In addition the parameter ``force_all_finite``
+  was added to let pass NaN. :issue:`10655` by :user:`Guillaume Lemaitre
   <glemaitre>`.
   
 Bug fixes

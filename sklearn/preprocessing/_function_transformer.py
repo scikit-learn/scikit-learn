@@ -45,14 +45,18 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Indicate that the input X array should be checked before calling
         func. The possibilities are:
 
-        - If True, then X will be converted to a 2-dimensional NumPy array or
-          sparse matrix. If the conversion is not possible an exception is
-          raised.
-        - If False, then there is no input validation
-        - If 'array-or-frame', X will be pass-through if this is a pandas
+        - If 'array-or-frame', X will be passed through if it is a pandas
           DataFrame or converted to a 2-dimensional array or sparse matrix. In
           this latest case, an exception will be raised if the conversion
           failed.
+        - If True, then X will be converted to a 2-dimensional NumPy array or
+          sparse matrix. If the conversion is not possible an exception is
+          raised.
+        - If False, then there is no input validation.
+
+        When X is validated, the parameters ``accept_sparse`` and
+        ``force_all_finite`` will control the validation for the sparsity and
+        the finiteness of X, respectively.
 
         .. deprecated:: 0.20
            ``validate=True`` as default will be replaced by
@@ -75,7 +79,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         - If 'allow-nan', accept only np.nan values in X. Values cannot be
           infinite.
 
-        Applied only when ``validate=True``.
+        This parameter is discarded when ``validate=False``.
 
         .. versionadded:: 0.20
            ``force_all_finite`` was added to let pass NaN.
@@ -118,8 +122,11 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         # FIXME: Future warning to be removed in 0.22
         if self.validate is None:
             self._validate = True
-            warnings.warn("The default validate=True will be replaced by "
-                          "validate='array-or-frame' in 0.22.", FutureWarning)
+            if hasattr(X, 'loc'):
+                warnings.warn("The default validate=True will be replaced by "
+                              "validate='array-or-frame' in 0.22. A pandas "
+                              "DataFrame will not be converted to a 2D "
+                              "NumPy array.", FutureWarning)
         else:
             self._validate = self.validate
 
