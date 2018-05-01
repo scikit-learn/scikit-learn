@@ -47,9 +47,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     base_estimator : obj
-        The classifier whose decision threshold will be adapted according to
-        the acquired cutoff point. The estimator must have a decision_function
-        or a predict_proba
+        The binary classifier whose decision threshold will be adapted
+        according to the acquired cutoff point. The estimator must have a
+        decision_function or a predict_proba
 
     method : str
         The method to use for choosing the cutoff point
@@ -234,9 +234,9 @@ class _CutoffClassifier(object):
     Parameters
     ----------
     base_estimator : obj
-        The classifier whose decision threshold will be adapted according to
-        the acquired cutoff point. The estimator must have a decision_function
-        or a predict_proba
+        The binary classifier whose decision threshold will be adapted
+        according to the acquired cutoff point. The estimator must have a
+        decision_function or a predict_proba
 
     method : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
         The method to use for choosing the cutoff point
