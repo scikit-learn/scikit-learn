@@ -56,10 +56,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             Like in FeatureUnion and Pipeline, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
             search.
-        transformer : estimator or None
+        transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns are pass them through untransformed,
+            indicate to drop the columns or pass them through untransformed,
             respectively.
         column : string or int, array-like of string or int, slice or boolean \
 mask array
@@ -69,17 +69,13 @@ mask array
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
-    passthrough : array-like of string or int, slice or boolean mask array, \
-or "remainder", optional
-        By default only the specified columns are transformed and combined
-        in the output. With this keyword additional columns can be specified
-        that should be passed through untransformed. This selection of columns
-        is concatenated with the output of the transformers. See explanation
-        of `column` above for details on the format.
-        ``passthrough='remainder'`` can be used to automatically select all
-        columns that were not specified in `transformers`. Even if a
-        `transformer` is set to None the column(s) will not be included in
-        'remainder'.
+    remainder : {'passthrough', 'drop'}, default 'drop'
+        By default, only the specified columns in `transformers` are
+        transformed and combined in the output (default of ``'drop'``).
+        By specifying ``remainder='passthrough'``, all remaining columns that
+        were not specified in `transformers` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformers.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -127,10 +123,10 @@ or "remainder", optional
 
     """
 
-    def __init__(self, transformers, passthrough=None, n_jobs=1,
+    def __init__(self, transformers, remainder='drop', n_jobs=1,
                  transformer_weights=None):
         self.transformers = transformers
-        self.passthrough = passthrough
+        self.remainder = remainder
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
 
@@ -226,24 +222,23 @@ or "remainder", optional
                                 "specifiers. '%s' (type %s) doesn't." %
                                 (t, type(t)))
 
-    def _validate_passthrough(self, X):
+    def _validate_remainder(self, X):
         """Generate list of passthrough columns for 'remainder' case.
         """
+        if self.remainder not in ('drop', 'passthrough'):
+            raise ValueError(
+                "The remainder keywords needs to be one of 'drop' or "
+                "'passthrough'. {0:r} was passed instead")
+
         n_columns = X.shape[1]
 
-        if (isinstance(self.passthrough, six.string_types)
-                and self.passthrough == 'remainder'):
+        if self.remainder == 'passthrough':
             cols = []
             for _, _, columns in self.transformers:
                 cols.extend(_get_column_indices(X, columns))
             self._passthrough = sorted(list(set(range(n_columns)) - set(cols)))
         else:
-            if (isinstance(self.passthrough, int)
-                    or isinstance(self.passthrough, six.string_types)):
-                raise ValueError("Scalar value for 'passthrough' is not "
-                                 "accepted (except 'remainder'). Specify a "
-                                 "list, slice or boolean mask array instead")
-            self._passthrough = self.passthrough
+            self._passthrough = None
 
     @property
     def named_transformers_(self):
@@ -337,7 +332,7 @@ or "remainder", optional
 
         """
         self._validate_transformers()
-        self._validate_passthrough(X)
+        self._validate_remainder(X)
 
         transformers = self._fit_transform(X, y, _fit_one_transformer)
 
@@ -366,7 +361,7 @@ or "remainder", optional
 
         """
         self._validate_transformers()
-        self._validate_passthrough(X)
+        self._validate_remainder(X)
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
@@ -582,7 +577,7 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], CategoricalEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, passthrough=None, transformer_weights=None,
+    ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
