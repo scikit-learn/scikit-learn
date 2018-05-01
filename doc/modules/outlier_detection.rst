@@ -48,17 +48,21 @@ Note that :class:`neighbors.LocalOutlierFactor` does not support
 ``predict``, ``decision_function`` and ``score_samples`` methods by default
 but only a ``fit_predict`` method, as this estimator was originally meant to
 be applied for outlier detection. The scores of abnormality of the training
-samples are accessible through the ``negative_outlier_factor_`` attribute. If
-you really want to use :class:`neighbors.LocalOutlierFactor` for novelty
+samples are accessible through the ``negative_outlier_factor_`` attribute.
+
+If you really want to use :class:`neighbors.LocalOutlierFactor` for novelty
 detection, i.e. predict labels or compute the score of abnormality of new
 unseen data, you can instantiate the estimator with the ``novelty`` parameter
-set to ``True`` before fitting the estimator.
+set to ``True`` before fitting the estimator. In this case, ``fit_predict`` is
+not available.
 
 .. warning:: **Novelty detection with :class:`neighbors.LocalOutlierFactor`**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
   and not on the training samples as this would lead to wrong results.
+  The scores of abnormality of the training samples are always accessible
+  through the ``negative_outlier_factor_`` attribute.
 
 
 Overview of outlier detection methods
@@ -82,9 +86,7 @@ the distribution of the inlying data is very challenging, and a One-class SVM
 might give useful results in these situations depending on the value of its
 hyperparameters.
 
-:class:`covariance.EllipticEnvelope` learns an ellipse and degrades when the
-data is not unimodal. :class:`neighbors.LocalOutlierFactor` performs well in
-every cases.
+:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns an ellipse. It thus degrades when the data is not unimodal. Notice however that this estimator is robust to outliers.
 
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
 seem to perform reasonably well for multi-modal data sets. The advantage of
@@ -96,10 +98,10 @@ neighbors.
 
 Finally, for the last data set, it is hard to say that one sample is more
 abnormal than another sample as they are uniformly distributed in a
-hypercube. Except for the :class:`svm.OneClassSVM`, all estimators present
-decent solutions for this situation. In such a case, it would be wise to look
-more closely at the scores of abnormality of the samples as a good estimator
-should assign similar scores to all the samples.
+hypercube. Except for the :class:`svm.OneClassSVM` which overfits a little, all
+estimators present decent solutions for this situation. In such a case, it
+would be wise to look more closely at the scores of abnormality of the samples
+as a good estimator should assign similar scores to all the samples.
 
 .. topic:: Examples:
 
@@ -288,7 +290,7 @@ where abnormal samples have different underlying densities.
 The question is not, how isolated the sample is, but how isolated it is
 with respect to the surrounding neighborhood.
 
-WHen applying LOF for outlier detection, there are no ``predict``,
+When applying LOF for outlier detection, there are no ``predict``,
 ``decision_function`` and ``score_samples`` methods but only a ``fit_predict`` method. The scores of abnormality of the training samples are accessible
 through the ``negative_outlier_factor_`` attribute.
 
@@ -324,11 +326,15 @@ set to ``True`` before fitting the estimator::
   lof = LocalOutlierFactor(novelty=True)
   lof.fit(X_train)
 
+Note that in this case, ``fit_predict`` is not available.
+
 .. warning:: **Novelty detection with :class:`neighbors.LocalOutlierFactor`**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
   and not on the training samples as this would lead to wrong results.
+  The scores of abnormality of the training samples are always accessible
+  through the ``negative_outlier_factor_`` attribute.
 
 This strategy is illustrated below.
 
