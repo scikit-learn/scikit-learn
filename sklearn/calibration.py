@@ -146,32 +146,32 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         if self.method not in ['roc', 'f_beta', 'max_tpr', 'max_tnr']:
             raise ValueError('method can either be "roc" or "max_tpr" or '
-                             '"max_tnr. Got %s instead' % self.method)
+                             '"max_tnr. Got {} instead'.format(self.method))
 
         if self.strategy not in [None, 'decision_function', 'predict_proba']:
             raise ValueError('scoring param can either be "decision_function" '
-                             'or "predict_proba" or None. Got %s instead' %
-                             self.strategy)
+                             'or "predict_proba" or None. '
+                             'Got {} instead'.format(self.strategy))
 
         if self.method == 'max_tpr' or self.method == 'max_tnr':
             if not self.threshold or not \
                     isinstance(self.threshold, (int, float)) \
                     or not self.threshold >= 0 or not self.threshold <= 1:
                 raise ValueError('parameter threshold must be a number in'
-                                 '[0, 1]. Got %s instead' %
-                                 repr(self.threshold))
+                                 '[0, 1]. '
+                                 'Got {} instead'.format(self.threshold))
 
         if self.method == 'f_beta':
             if not self.beta or not isinstance(self.beta, (int, float)):
                 raise ValueError('parameter beta must be a real number.'
-                                 'Got %s instead' % type(self.beta))
+                                 'Got {} instead'.format(type(self.beta)))
 
         X, y = check_X_y(X, y)
 
         y_type = type_of_target(y)
         if y_type != 'binary':
-            raise ValueError('Expected target of binary type. Got %s ' %
-                             y_type)
+            raise ValueError('Expected target of binary type. Got {}'.format(
+                y_type))
 
         self.label_encoder_ = LabelEncoder().fit(y)
 
