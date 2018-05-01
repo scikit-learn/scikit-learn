@@ -182,7 +182,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     labels : array, shape=[n_samples]
         Cluster labels for each point.
 
-    seeds : array, shape=[n_seeds]
+    seeds : array, shape=[n_seeds, n_features]
         The seeds that were used as initial kernel locations. Seeds without
         any points within the bandwidth have been removed.
 
@@ -431,6 +431,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
     labels_ :
         Labels of each point.
 
+    seeds_ : array, shape=[n_seeds, n_features]
+        The seeds that were used as initial kernel locations. Seeds without
+        any points within the bandwidth have been removed.
+
+    seed_labels_ : array, shape=[n_seeds]
+        The label for each seed under cluster_assignment='attractor'.
+
     Notes
     -----
 
@@ -444,6 +451,11 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     Scalability can be boosted by using fewer seeds, for example by using
     a higher value of min_bin_freq in the get_bin_seeds function.
+
+    With cluster_assignment = 'nearest_centroid', the default bin size equals
+    the bandwidth, whereas for cluster_assignment = 'nearest_centroid' the
+    default bin size is 0.2 times the bandwidth. This setting gives
+    'attractor' approximately 5^n_features times as many seeds.
 
     Note that the estimate_bandwidth function is much less scalable than the
     mean shift algorithm and will be the bottleneck if it is used.
@@ -504,10 +516,12 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        assert self.cluster_assignment in ('nearest_centroid', 'attractor')
         if self.cluster_assignment == 'nearest_centroid':
             labels = pairwise_distances_argmin(X, self.cluster_centers_)
-        if self.cluster_assignment == 'attractor':
+        elif self.cluster_assignment == 'attractor':
             labels = self.seed_labels_[
                 pairwise_distances_argmin(X, self.seeds_)]
+        else:
+            raise ValueError("Not valid cluster assignment.")
+
         return labels

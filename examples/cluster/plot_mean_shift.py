@@ -21,8 +21,9 @@ from sklearn.datasets.samples_generator import make_blobs
 
 # #############################################################################
 # Generate sample data
-centers = [[1, 1], [-1, -1], [1, -1]]
-X, _ = make_blobs(n_samples=10000, centers=centers, cluster_std=0.6)
+X, _ = make_blobs(n_samples=1500,
+                  cluster_std=[1.0, 2.5, 0.5],
+                  random_state=580)
 
 # #############################################################################
 # Compute clustering with MeanShift
