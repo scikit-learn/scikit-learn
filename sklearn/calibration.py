@@ -144,11 +144,11 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             raise TypeError('The base_estimator needs to implement either a '
                             'decision_function or a predict_proba method')
 
-        if self.method not in ['roc', 'f_beta', 'max_tpr', 'max_tnr']:
+        if self.method not in ('roc', 'f_beta', 'max_tpr', 'max_tnr'):
             raise ValueError('method can either be "roc" or "max_tpr" or '
                              '"max_tnr. Got {} instead'.format(self.method))
 
-        if self.strategy not in [None, 'decision_function', 'predict_proba']:
+        if self.strategy not in (None, 'decision_function', 'predict_proba'):
             raise ValueError('scoring param can either be "decision_function" '
                              'or "predict_proba" or None. '
                              'Got {} instead'.format(self.strategy))
@@ -344,7 +344,9 @@ def _get_binary_score(clf, X, strategy=None, pos_label=1):
         predict_proba
     """
     if len(clf.classes_) != 2:
-        raise ValueError('Expected binary classifier')
+        raise ValueError('Expected binary classifier. Found {} classes'.format(
+            len(clf.classes_)
+        ))
 
     if strategy not in (None, 'decision_function', 'predict_proba'):
         raise ValueError('scoring param can either be "decision_function" '
