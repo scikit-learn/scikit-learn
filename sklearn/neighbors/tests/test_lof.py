@@ -167,6 +167,24 @@ def test_novelty_errors():
     assert_raises_regex(ValueError, msg, clf.fit_predict, X)
 
 
+def test_novelty_training_scores():
+    # check that the scores of the training samples are still accessible
+    # when novelty=True through the negative_outlier_factor_ attribute
+    X = iris.data
+
+    # fit with novelty=False
+    clf_1 = neighbors.LocalOutlierFactor()
+    clf_1.fit(X)
+    scores_1 = clf_1.negative_outlier_factor_
+
+    # fit with novelty=True
+    clf_2 = neighbors.LocalOutlierFactor(novelty=True)
+    clf_2.fit(X)
+    scores_2 = clf_2.negative_outlier_factor_
+
+    assert_array_almost_equal(scores_1, scores_2)
+
+
 def test_deprecation():
     assert_warns_message(DeprecationWarning,
                          'default contamination parameter 0.1 will change '
