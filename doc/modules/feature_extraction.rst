@@ -153,8 +153,9 @@ each transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
   ...      ('title_bow', CountVectorizer(), 'title')])
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, unspecified='drop', transformer_weights=None,
-      transformers=...)
+  ColumnTransformer(n_jobs=1, transformer_weights=None,
+      transformers=...,
+      unspecified='drop')
 
   >>> column_trans.get_feature_names()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -181,6 +182,20 @@ Apart from a scalar or a single item list, the column selection can be specified
 as a list of multiple items, an integer array, a slice, or a boolean mask.
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
+
+The :func:`~sklearn.compose.make_columntransformer` function is available
+to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
+Specifically, the names will be given automatically. The equivalent for the
+above example would be::
+
+  >>> from sklearn.compose import make_column_transformer
+  >>> column_trans = make_column_transformer(
+  ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
+  ...     ('title', CountVectorizer()))
+  >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ColumnTransformer(n_jobs=1, transformer_weights=None,
+           transformers=[('countvectorizer-1', ...,
+           unspecified='drop')
 
 .. topic:: Examples:
 

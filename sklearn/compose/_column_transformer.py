@@ -59,7 +59,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or pass them through untransformed,
+            indicate to drop the columns or to pass them through untransformed,
             respectively.
         column : string or int, array-like of string or int, slice or boolean \
 mask array
@@ -193,17 +193,13 @@ mask array
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
                 if trans == 'passthrough':
-                    trans2 = FunctionTransformer(
+                    trans = FunctionTransformer(
                         validate=False, accept_sparse=True,
                         check_inverse=False)
                 elif trans == 'drop':
                     continue
-                else:
-                    trans2 = trans
-            else:
-                trans2 = trans
 
-            yield (name, trans2, sub, get_weight(name))
+            yield (name, trans, sub, get_weight(name))
 
     def _validate_transformers(self):
         names, transformers, _, _ = zip(*self._iter())
@@ -577,13 +573,14 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], CategoricalEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, unspecified='drop', transformer_weights=None,
+    ColumnTransformer(n_jobs=1, transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
                            ('categoricalencoder',
                             CategoricalEncoder(...),
-                            ['categorical_column'])])
+                            ['categorical_column'])],
+             unspecified='drop')
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)
