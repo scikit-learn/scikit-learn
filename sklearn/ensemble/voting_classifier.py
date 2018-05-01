@@ -17,20 +17,12 @@ import warnings
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
+from .base import _parallel_fit_estimator
 from ..preprocessing import LabelEncoder
 from ..externals.joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
-
-
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
-    """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
-    else:
-        estimator.fit(X, y)
-    return estimator
 
 
 class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):

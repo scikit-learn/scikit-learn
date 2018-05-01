@@ -780,6 +780,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
 
+    print('{}- {}'.format(estimator.__class__,
+                          test))
+
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
