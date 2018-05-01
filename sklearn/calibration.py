@@ -106,6 +106,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Decision threshold for the positive class. Determines the output of
         predict
 
+    std_ : float
+        Standard deviation of the obtained decision thresholds for when the
+        provided base estimator is not pre-trained and the decision_threshold_
+        is computed as the mean of the decision threshold of each
+        cross-validation iteration. If the base estimator is pre-trained then
+        std_ = 0
+
     References
     ----------
     .. [1] Receiver-operating characteristic (ROC) plots: a fundamental
@@ -183,6 +190,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 self.base_estimator, self.method, self.strategy, self.beta,
                 self.threshold, self.pos_label
             ).fit(X, y).decision_threshold_
+            self.std_ = .0
         else:
             cv = check_cv(self.cv, y, classifier=True)
             decision_thresholds = []
@@ -197,6 +205,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                     ).decision_threshold_
                 )
             self.decision_threshold_ = np.mean(decision_thresholds)
+            self.std_ = np.std(decision_thresholds)
+
             self.base_estimator.fit(X, y)
         return self
 
@@ -214,7 +224,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             The predicted class
         """
         X = check_array(X)
-        check_is_fitted(self, ["label_encoder_", "decision_threshold_"])
+        check_is_fitted(self,
+                        ["label_encoder_", "decision_threshold_", "std_"])
 
         y_score = _get_binary_score(self.base_estimator, X, self.strategy,
                                     self.pos_label)
