@@ -343,16 +343,24 @@ def _get_binary_score(clf, X, strategy=None, pos_label=1):
         decision_function will be used first and if not available
         predict_proba
     """
+    if len(clf.classes_) != 2:
+        raise ValueError('Expected binary classifier')
+
+    if strategy not in (None, 'decision_function', 'predict_proba'):
+        raise ValueError('scoring param can either be "decision_function" '
+                         'or "predict_proba" or None. '
+                         'Got {} instead'.format(strategy))
+
     if not strategy:
         try:
             y_score = clf.decision_function(X)
-            if pos_label == 0:
-                y_score = - y_score
+            if pos_label == clf.classes_[0]:
+                y_score = -y_score
         except (NotImplementedError, AttributeError):
             y_score = clf.predict_proba(X)[:, pos_label]
     elif strategy == 'decision_function':
         y_score = clf.decision_function(X)
-        if pos_label == 0:
+        if pos_label == clf.classes_[0]:
             y_score = - y_score
     else:
         y_score = clf.predict_proba(X)[:, pos_label]

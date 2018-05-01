@@ -199,6 +199,8 @@ def test_get_binary_score():
         _get_binary_score(lr, X_test, strategy=None, pos_label=1)
     )
 
+    assert_raises(ValueError, _get_binary_score, lr, X_test, strategy='foo')
+
     # classifier that does not have a decision_function
     rf = RandomForestClassifier().fit(X_train, y_train)
     y_pred_proba_rf = rf.predict_proba(X_test)
@@ -206,6 +208,14 @@ def test_get_binary_score():
         y_pred_proba_rf[:, 1],
         _get_binary_score(rf, X_test, strategy=None, pos_label=1)
     )
+
+    X_non_binary, y_non_binary = make_classification(
+        n_samples=20, n_features=6, random_state=42, n_classes=4,
+        n_informative=4
+    )
+
+    rf_non_bin = RandomForestClassifier().fit(X_non_binary, y_non_binary)
+    assert_raises(ValueError, _get_binary_score, rf_non_bin, X_non_binary)
 
 
 @ignore_warnings
