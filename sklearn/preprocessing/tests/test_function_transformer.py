@@ -209,12 +209,21 @@ def test_function_transformer_finiteness_pandas(X, force_all_finite):
         transformer.fit_transform(X_df)
 
 
-def test_function_transformer_future_warning():
+@pytest.mark.parametrize(
+    "is_dataframe",
+    [True, False]
+)
+def test_function_transformer_future_warning(is_dataframe):
     # FIXME: to be removed in 0.22
     X = np.random.randn(100, 10)
     transformer = FunctionTransformer()
-    with pytest.warns(FutureWarning):
-        transformer.fit_transform(X)
+    if is_dataframe:
+        pd = pytest.importorskip('pandas')
+        X_df = pd.DataFrame(X)
+        with pytest.warns(FutureWarning):
+            transformer.fit_transform(X_df)
+    else:
+        assert_no_warnings(transformer.fit, X)
 
 
 def test_function_transformer_frame():
