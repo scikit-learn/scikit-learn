@@ -15,7 +15,7 @@ the true negative rate as well as the f beta score.
 
 In this example the decision threshold calibration is applied on two
 classifiers trained on the breast cancer dataset. The goal in the first case is
-to maximize the f1 score of the classifiers whereas in the second the goals is
+to maximize the f1 score of the classifiers whereas in the second the goal is
 to maximize the true positive rate while maintaining a minimum true negative
 rate.
 
