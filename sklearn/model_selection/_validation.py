@@ -29,7 +29,7 @@ from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
-from ._split import check_cv
+from ._split import check_cv, StratifiedShuffleSplit
 from ..preprocessing import LabelEncoder
 
 
@@ -1007,7 +1007,7 @@ def _shuffle(y, groups, random_state):
 def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
                    exploit_incremental_learning=False, n_jobs=1,
-                   pre_dispatch="all", verbose=0, shuffle=False,
+                   pre_dispatch="all", verbose=0, shuffle=False, stratify=False,
                    random_state=None):
     """Learning curve.
 
@@ -1089,6 +1089,12 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
+    stratify : boolean, optional
+        Whether to stratify training data before taking prefixes of it,
+        :class:`StratifiedShuffleSplit` is used.
+        Stratification is done based on the y labels.
+        If shuffle=False or y is None, then stratify must be False.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -1116,6 +1122,15 @@ def learning_curve(estimator, X, y, groups=None,
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
+    if stratify:
+        if not shuffle:
+            raise ValueError(
+                "Stratified train/test split is not implemented for "
+                "shuffle=False")
+        elif y is None:
+            raise ValueError(
+                "Stratified train/test split is not implemented for "
+                "y=None")
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -1150,7 +1165,16 @@ def learning_curve(estimator, X, y, groups=None,
         train_test_proportions = []
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
-                train_test_proportions.append((train[:n_train_samples], test))
+                if stratify and n_train_samples < n_max_training_samples:
+                    inner_cv = StratifiedShuffleSplit(
+                        train_size=n_train_samples, test_size=None,
+                        random_state=random_state)
+                    cur_train_index, useless_test_index = next(
+                        inner_cv.split(X=train, y=y[train]))
+                    cur_train = train[cur_train_index]
+                else:
+                    cur_train = train[:n_train_samples]
+                train_test_proportions.append((cur_train, test))
 
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test,

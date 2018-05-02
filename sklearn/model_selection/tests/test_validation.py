@@ -1184,6 +1184,79 @@ def test_learning_curve_with_shuffle():
                               test_scores_batch.mean(axis=1))
 
 
+def test_learning_curve_with_stratify():
+    def max_diff_in_ones_between_strata(X, y, stratify, folds_count=5,
+                                        iters_count=10, random_state=0):
+        ones_counter = []
+
+        class MockCountingEstimator(BaseEstimator):
+            """ Dummy classifier: it stores (in global var for this class)
+            count of non-zero-labeled elements in passed y """
+            def fit(self, X_subset, y_subset=None):
+                cur_ones_count = np.count_nonzero(y_subset)
+                ones_counter.append(cur_ones_count)
+                return self
+
+            def score(self, X, y):
+                return 0
+
+        counting_estimator = MockCountingEstimator()
+        cv = StratifiedKFold(folds_count)
+        train_sizes = np.linspace(1.0 / iters_count, 1.0,
+                                  iters_count)
+
+        learning_curve(counting_estimator, X, y, cv=cv,
+                       train_sizes=train_sizes, shuffle=True,
+                       stratify=stratify,
+                       random_state=random_state)
+
+        # extract max possible diff of ones count between strata
+        # inside each training CV fold
+        max_diff = 0
+        for i in range(folds_count):
+            # ones_counter stores accumulated count,
+            # not count in each stratum, so we'll need to minus it
+            prev_sum = 0
+            for j in range(iters_count - 1):
+                cur_count = ones_counter[i * iters_count + j] - prev_sum
+                prev_sum += cur_count
+                next_count = ones_counter[i * iters_count + j + 1] - prev_sum
+                cur_diff = abs(next_count - cur_count)
+                if cur_diff > max_diff:
+                    max_diff = cur_diff
+        return max_diff
+
+    ones = 25
+    zeros = 2475
+    X = np.random.rand(ones + zeros, 2)
+    y = np.array([1] * ones + [0] * zeros)
+    cv = StratifiedKFold(5)
+
+    # Check that without stratify it is possible to have training sets
+    # with just one classes for some random seeds
+    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None,
+                                            shuffle=False)
+
+    # e.g. for this data without stratify it works only with random_state=2,
+    # but not 0 or 1
+    learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1], shuffle=True,
+                   random_state=2)
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv,
+                  train_sizes=[0.1], shuffle=True, random_state=0)
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv,
+                  train_sizes=[0.1], shuffle=True, random_state=1)
+
+    # ...but with stratify=True it works for all random seeds
+    for rand_state in range(10):
+        learning_curve(estimator, X, y, cv=cv, train_sizes=[0.1], shuffle=True,
+                       stratify=True, random_state=rand_state)
+
+    # Check that stratify indeed makes strata with almost equal counts of ones
+    # (i.e. differing by not more than 2)
+    assert_greater(max_diff_in_ones_between_strata(X, y, stratify=False), 1)
+    assert_less(max_diff_in_ones_between_strata(X, y, stratify=True), 2)
+
+
 def test_validation_curve():
     X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
