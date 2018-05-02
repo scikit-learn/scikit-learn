@@ -9,7 +9,6 @@ jobs:
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3
     steps:
-      - python -c 'assert false'
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
@@ -50,7 +49,6 @@ jobs:
       - SCIKIT_IMAGE_VERSION: 0.9.3
       - PANDAS_VERSION: 0.13.1
     steps:
-      - python -c 'assert false'
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
@@ -72,14 +70,14 @@ jobs:
       - image: pypy:3-6.0.0
     steps:
       - checkout
-      - run: ./build_tools/circle/install_pypy.sh
+      - run: ./build_tools/circle/build_test_pypy.sh
 
   pypy2:
     docker:
       - image: pypy:2-6.0.0
     steps:
       - checkout
-      - run: ./build_tools/circle/install_pypy.sh
+      - run: ./build_tools/circle/build_test_pypy.sh
 
   deploy:
     docker:

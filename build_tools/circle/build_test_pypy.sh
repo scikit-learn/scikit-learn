@@ -11,19 +11,21 @@ pip install virtualenv
 # python executable in the PyPy container is incorrect
 # https://github.com/docker-library/pypy/issues/21
 if command -v pypy3; then
-    ln -s $(command -v pypy3) /usr/local/bin/python
+    virtualenv -p $(command -v pypy3) pypy-env
 elif command -v pypy; then
-    ln -s $(command -v pypy) /usr/local/bin/python
+    virtualenv -p $(command -v pypy) pypy-env
 fi
+
+source activate pypy-env/bin/activate
 
 python --version
 which python
 
 # run via python -m pip to be sure; creating a virtualenv fails with the PyPy2 container
-python -m pip install --upgrade pip
-python -m pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita pytest
-python -m pip install scipy==1.1.0rc1
-python -m pip install -e .
+pip install --upgrade pip
+pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita pytest
+pip install scipy==1.1.0rc1
+pip install -e .
 
 
-python -m pytest sklearn/
+pytest sklearn/
