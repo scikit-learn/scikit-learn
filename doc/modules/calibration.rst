@@ -292,7 +292,7 @@ Here is a simple usage example::
    ...                        cv=3).fit(X_train, y_train)
    >>> y_pred = clf.predict(X_test)
    >>> precision_score(y_test, y_pred)                   # doctest: +ELLIPSIS
-   0.95945945945945943
+   0.959...
 
 .. topic:: Examples:
 
