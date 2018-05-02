@@ -51,8 +51,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         according to the acquired cutoff point. The estimator must have a
         decision_function or a predict_proba
 
-    method : str
-        The method to use for choosing the cutoff point
+    strategy : str, optional (default='roc')
+        The strategy to use for choosing the cutoff point
 
         'roc'
             selects the point on the roc curve that is closest to the ideal
@@ -71,7 +71,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             true positive rate at least equal to the value of the parameter
             threshold
 
-    strategy : str or None, optional (default=None)
+    method : str or None, optional (default=None)
         The method to be used for acquiring the score
 
         'decision_function'
@@ -85,12 +85,12 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             available base_estimator.predict_proba
 
     beta : float in [0, 1], optional (default=None)
-        beta value to be used in case method == 'f_beta'
+        beta value to be used in case strategy == 'f_beta'
 
     threshold : float in [0, 1] or None, (default=None)
-        In case method is 'max_tpr' or 'max_tnr' this parameter must be set to
-        specify the threshold for the true negative rate or true positive rate
-        respectively that needs to be achieved
+        In case strategy is 'max_tpr' or 'max_tnr' this parameter must be set
+        to specify the threshold for the true negative rate or true positive
+        rate respectively that needs to be achieved
 
     pos_label : object, optional (default=1)
         Object representing the positive label
@@ -120,11 +120,11 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
            Clinical chemistry, 1993
 
     """
-    def __init__(self, base_estimator, method='roc', strategy=None, beta=None,
+    def __init__(self, base_estimator, strategy='roc', method=None, beta=None,
                  threshold=None, pos_label=1, cv=3):
         self.base_estimator = base_estimator
-        self.method = method
         self.strategy = strategy
+        self.method = method
         self.beta = beta
         self.threshold = threshold
         self.pos_label = pos_label
@@ -151,16 +151,16 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             raise TypeError('The base_estimator needs to implement either a '
                             'decision_function or a predict_proba method')
 
-        if self.method not in ('roc', 'f_beta', 'max_tpr', 'max_tnr'):
-            raise ValueError('method can either be "roc" or "max_tpr" or '
-                             '"max_tnr. Got {} instead'.format(self.method))
+        if self.strategy not in ('roc', 'f_beta', 'max_tpr', 'max_tnr'):
+            raise ValueError('strategy can either be "roc" or "max_tpr" or '
+                             '"max_tnr. Got {} instead'.format(self.strategy))
 
-        if self.strategy not in (None, 'decision_function', 'predict_proba'):
-            raise ValueError('scoring param can either be "decision_function" '
+        if self.method not in (None, 'decision_function', 'predict_proba'):
+            raise ValueError('method param can either be "decision_function" '
                              'or "predict_proba" or None. '
-                             'Got {} instead'.format(self.strategy))
+                             'Got {} instead'.format(self.method))
 
-        if self.method == 'max_tpr' or self.method == 'max_tnr':
+        if self.strategy == 'max_tpr' or self.strategy == 'max_tnr':
             if (not self.threshold or not
                     isinstance(self.threshold, (int, float))
                     or not self.threshold >= 0 or not self.threshold <= 1):
@@ -168,7 +168,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  '[0, 1]. '
                                  'Got {} instead'.format(self.threshold))
 
-        if self.method == 'f_beta':
+        if self.strategy == 'f_beta':
             if not self.beta or not isinstance(self.beta, (int, float)):
                 raise ValueError('parameter beta must be a real number.'
                                  'Got {} instead'.format(type(self.beta)))
@@ -187,7 +187,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         if self.cv == 'prefit':
             self.decision_threshold_ = _CutoffClassifier(
-                self.base_estimator, self.method, self.strategy, self.beta,
+                self.base_estimator, self.strategy, self.method, self.beta,
                 self.threshold, self.pos_label
             ).fit(X, y).decision_threshold_
             self.std_ = .0
@@ -198,7 +198,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             for train, test in cv.split(X, y):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
                 decision_thresholds.append(
-                    _CutoffClassifier(estimator, self.method, self.strategy,
+                    _CutoffClassifier(estimator, self.strategy, self.method,
                                       self.beta, self.threshold,
                                       self.pos_label).fit(
                         X[test], y[test]
@@ -227,7 +227,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         check_is_fitted(self,
                         ["label_encoder_", "decision_threshold_", "std_"])
 
-        y_score = _get_binary_score(self.base_estimator, X, self.strategy,
+        y_score = _get_binary_score(self.base_estimator, X, self.method,
                                     self.pos_label)
         return self.label_encoder_.inverse_transform(
             (y_score > self.decision_threshold_).astype(int)
@@ -249,22 +249,22 @@ class _CutoffClassifier(object):
         according to the acquired cutoff point. The estimator must have a
         decision_function or a predict_proba
 
-    method : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
+    strategy : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
         The method to use for choosing the cutoff point
 
-    strategy : str or None, optional (default=None)
+    method : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
         predict_proba
 
     beta : float in [0, 1]
-        beta value to be used in case method == 'f_beta'
+        beta value to be used in case strategy == 'f_beta'
 
     threshold : float in [0, 1]
         minimum required value for the true negative rate (specificity) in case
-        method 'max_tpr' is used or for the true positive rate (sensitivity) in
-        case method 'max_tnr' is used
+        strategy 'max_tpr' is used or for the true positive rate (sensitivity)
+        in case method 'max_tnr' is used
 
     pos_label : object
         Label considered as positive during the roc_curve construction
@@ -274,11 +274,11 @@ class _CutoffClassifier(object):
     decision_threshold_ : float
         Acquired decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, strategy, beta, threshold,
+    def __init__(self, base_estimator, strategy, method, beta, threshold,
                  pos_label):
         self.base_estimator = base_estimator
-        self.method = method
         self.strategy = strategy
+        self.method = method
         self.beta = beta
         self.threshold = threshold
         self.pos_label = pos_label
@@ -300,9 +300,9 @@ class _CutoffClassifier(object):
         self : object
             Instance of self
         """
-        y_score = _get_binary_score(self.base_estimator, X, self.strategy,
+        y_score = _get_binary_score(self.base_estimator, X, self.method,
                                     self.pos_label)
-        if self.method == 'f_beta':
+        if self.strategy == 'f_beta':
             precision, recall, thresholds = precision_recall_curve(
                 y, y_score, pos_label=self.pos_label
             )
@@ -313,13 +313,13 @@ class _CutoffClassifier(object):
 
         fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=self.pos_label)
 
-        if self.method == 'roc':
+        if self.strategy == 'roc':
             # we find the threshold of the point (fpr, tpr) with the smallest
             # euclidean distance from the "ideal" corner (0, 1)
             self.decision_threshold_ = thresholds[
                 np.argmin(fpr ** 2 + (tpr - 1) ** 2)
             ]
-        elif self.method == 'max_tpr':
+        elif self.strategy == 'max_tpr':
             indices = np.where(1 - fpr >= self.threshold)[0]
             max_tpr_index = np.argmax(tpr[indices])
             self.decision_threshold_ = thresholds[indices[max_tpr_index]]
@@ -330,7 +330,7 @@ class _CutoffClassifier(object):
         return self
 
 
-def _get_binary_score(clf, X, strategy=None, pos_label=1):
+def _get_binary_score(clf, X, method=None, pos_label=1):
     """Binary classification score for the positive label (0 or 1)
 
     Returns the score that a binary classifier outputs for the positive label
@@ -348,7 +348,7 @@ def _get_binary_score(clf, X, strategy=None, pos_label=1):
     pos_label : int, optional (default=1)
         The positive label. Can either be 0 or 1
 
-    strategy : str or None, optional (default=None)
+    method : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
@@ -359,19 +359,19 @@ def _get_binary_score(clf, X, strategy=None, pos_label=1):
             len(clf.classes_)
         ))
 
-    if strategy not in (None, 'decision_function', 'predict_proba'):
+    if method not in (None, 'decision_function', 'predict_proba'):
         raise ValueError('scoring param can either be "decision_function" '
                          'or "predict_proba" or None. '
-                         'Got {} instead'.format(strategy))
+                         'Got {} instead'.format(method))
 
-    if not strategy:
+    if not method:
         try:
             y_score = clf.decision_function(X)
             if pos_label == clf.classes_[0]:
                 y_score = -y_score
         except (NotImplementedError, AttributeError):
             y_score = clf.predict_proba(X)[:, pos_label]
-    elif strategy == 'decision_function':
+    elif method == 'decision_function':
         y_score = clf.decision_function(X)
         if pos_label == clf.classes_[0]:
             y_score = - y_score

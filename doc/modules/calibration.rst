@@ -215,16 +215,17 @@ Decision Threshold calibration
 
 .. currentmodule:: sklearn.calibration
 
-:class:`CutoffClassifier` Often Machine Learning classifiers base their predictions on real-valued decision
-functions or probability estimates that carry the inherited biases of their models.
-Additionally when using a machine learning model the evaluation criteria can differ
-from the optimisation objectives used by the model during training.
+Often Machine Learning classifiers base their
+predictions on real-valued decision functions or probability estimates that
+carry the inherited biases of their models. Additionally when using a machine
+learning model the evaluation criteria can differ from the optimisation
+objectives used by the model during training.
 
 When predicting between two classes it is commonly advised that an appropriate
-decision threshold is estimated based on some cutoff criteria rather than arbitrarily
-using the midpoint of the space of possible values. Estimating a decision threshold
-for a specific use case can help to increase the overall accuracy of the model and
-provide better handling for sensitive classes.
+decision threshold is estimated based on some cutoff criteria rather than
+arbitrarily using the midpoint of the space of possible values. Estimating a
+decision threshold for a specific use case can help to increase the overall
+accuracy of the model and provide better handling for sensitive classes.
 
 .. currentmodule:: sklearn.calibration
 
@@ -236,32 +237,35 @@ Usage
 -----
 
 To use the :class:`CutoffClassifier` you need to provide an estimator that has
-a ``decision_function`` or a ``predict_proba`` method. The ``strategy`` parameter
-controls whether the first will be preferred over the second if both are available.
+a ``decision_function`` or a ``predict_proba`` method. The ``method``
+parameter controls whether the first will be preferred over the second if both
+are available.
 
-The wrapped estimator can be pre-trained, in which case ``cv = 'prefit'``, or not. If
-the classifier is not trained then a cross-validation loop specified by the parameter
-``cv`` can be used to obtain a decision threshold by averaging all decision thresholds
-calculated on the hold-out parts of each cross validation iteration. Finally the model
-is trained on all the provided data. When using ``cv = 'prefit'`` you need to make sure
-to use a hold-out part of your data for calibration.
+The wrapped estimator can be pre-trained, in which case ``cv = 'prefit'``, or
+not. If the classifier is not trained then a cross-validation loop specified by
+the parameter ``cv`` can be used to obtain a decision threshold by averaging
+all decision thresholds calculated on the hold-out parts of each cross
+validation iteration. Finally the model is trained on all the provided data.
+When using ``cv = 'prefit'`` you need to make sure to use a hold-out part of
+your data for calibration.
 
-The methods for finding appropriate decision thresholds are based either on precision
-recall estimates or true positive and true negative rates. Specifically:
+The strategies, controlled by the parameter ``strategy``, for finding
+appropriate decision thresholds are based either on precision recall estimates
+or true positive and true negative rates. Specifically:
 
 .. currentmodule:: sklearn.metrics
 
 * ``f_beta``
-   selects a decision threshold that maximizes the :func:`fbeta_score`. The value of
-   beta is specified by the parameter ``beta``. The ``beta`` parameter determines
-   the weight of precision. When ``beta = 1`` both precision recall get the same
-   weight therefore the maximization target in this case is the :func:`f1_score`.
-   if ``beta < 1`` more weight is given to precision whereas if ``beta > 1`` more
-   weight is given to recall.
+   selects a decision threshold that maximizes the :func:`fbeta_score`. The
+   value of beta is specified by the parameter ``beta``. The ``beta`` parameter
+   determines the weight of precision. When ``beta = 1`` both precision recall
+   get the same weight therefore the maximization target in this case is the
+   :func:`f1_score`. if ``beta < 1`` more weight is given to precision whereas
+   if ``beta > 1`` more weight is given to recall.
 
 * ``roc``
-   selects the decision threshold for the point on the :func:`roc_curve` that is
-   closest to the ideal corner (0, 1)
+   selects the decision threshold for the point on the :func:`roc_curve` that
+   is closest to the ideal corner (0, 1)
 
 * ``max_tpr``
    selects the decision threshold for the point that yields the highest true
@@ -278,20 +282,24 @@ Here is a simple usage example::
    >>> from sklearn.calibration import CutoffClassifier
    >>> from sklearn.datasets import load_breast_cancer
    >>> from sklearn.naive_bayes import GaussianNB
+   >>> from sklearn.metrics import precision_score
    >>> from sklearn.model_selection import train_test_split
-   >>>
+
    >>> X, y = load_breast_cancer(return_X_y=True)
    >>> X_train, X_test, y_train, y_test = train_test_split(
    ...     X, y, train_size=0.6, random_state=42)
-   >>> clf = CutoffClassifier(GaussianNB(), method='roc', cv=3).fit(
-   ...     X_train, y_train)
-
+   >>> clf = CutoffClassifier(GaussianNB(), strategy='f_beta', beta=0.6,
+   ...                        cv=3).fit(X_train, y_train)
+   >>> y_pred = clf.predict(X_test)
+   >>> precision_score(y_test, y_pred)                   # doctest: +ELLIPSIS
+   0.95945945945945943
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_calibration_plot_decision_threshold_calibration.py`: Decision
    threshold calibration on the breast cancer dataset
 
+.. currentmodule:: sklearn.calibration
 
 The following image shows the results of using the :class:`CutoffClassifier`
 for finding a decision threshold for a :class:`LogisticRegression` classifier
@@ -301,10 +309,10 @@ and an :class:`AdaBoostClassifier` for two use cases.
    :target: ../auto_examples/calibration/plot_decision_threshold_calibration.html
    :align: center
 
-In the first case we want to increase the overall accuracy of the classifiers on
-the breast cancer dataset. In the second case we want to find a decision threshold
-that yields maximum true positive rate while maintaining a minimum value
-for the true negative rate.
+In the first case we want to increase the overall accuracy of the classifier on
+the breast cancer dataset. In the second case we want to find a decision
+threshold that yields maximum true positive rate while maintaining a minimum
+value for the true negative rate.
 
 .. topic:: References:
 
@@ -315,5 +323,6 @@ for the true negative rate.
 Notes
 -----
 
-Calibrating the decision threshold of a classifier does not guarantee increased performance.
-The generalisation ability of the obtained decision threshold has to be evaluated.
+Calibrating the decision threshold of a classifier does not guarantee increased
+performance. The generalisation ability of the obtained decision threshold has
+to be evaluated.

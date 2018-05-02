@@ -59,6 +59,7 @@ calibration_samples = int(len(X_train) * calibration_samples_percentage)
 
 lr = LogisticRegression().fit(
     X_train[:-calibration_samples], y_train[:-calibration_samples])
+
 y_pred_lr = lr.predict(X_test)
 tn_lr, fp_lr, fn_lr, tp_lr = confusion_matrix(y_test, y_pred_lr).ravel()
 tpr_lr = tp_lr / (tp_lr + fn_lr)
@@ -67,6 +68,7 @@ f_one_lr = f1_score(y_test, y_pred_lr)
 
 ada = AdaBoostClassifier().fit(
     X_train[:-calibration_samples], y_train[:-calibration_samples])
+
 y_pred_ada = ada.predict(X_test)
 tn_ada, fp_ada, fn_ada, tp_ada = confusion_matrix(y_test, y_pred_ada).ravel()
 tpr_ada = tp_ada / (tp_ada + fn_ada)
@@ -76,22 +78,25 @@ f_one_ada = f1_score(y_test, y_pred_ada)
 # objective 1: we want to calibrate the decision threshold in order to achieve
 # better f1 score
 lr_f_beta = CutoffClassifier(
-    lr, method='f_beta', strategy='predict_proba', beta=1, cv='prefit'
-).fit(X_train[calibration_samples:], y_train[calibration_samples:])
+    lr, strategy='f_beta', method='predict_proba', beta=1, cv='prefit').fit(
+    X_train[calibration_samples:], y_train[calibration_samples:])
+
 y_pred_lr_f_beta = lr_f_beta.predict(X_test)
 f_one_lr_f_beta = f1_score(y_test, y_pred_lr_f_beta)
 
 ada_f_beta = CutoffClassifier(
-    ada, method='f_beta', strategy='predict_proba', beta=1, cv='prefit'
+    ada, strategy='f_beta', method='predict_proba', beta=1, cv='prefit'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
+
 y_pred_ada_f_beta = ada_f_beta.predict(X_test)
 f_one_ada_f_beta = f1_score(y_test, y_pred_ada_f_beta)
 
 # objective 2: we want to maximize the true positive rate while the true
 # negative rate is at least 0.7
 lr_max_tpr = CutoffClassifier(
-    lr, method='max_tpr', strategy='predict_proba', threshold=0.7, cv='prefit'
+    lr, strategy='max_tpr', method='predict_proba', threshold=0.7, cv='prefit'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
+
 y_pred_lr_max_tpr = lr_max_tpr.predict(X_test)
 tn_lr_max_tpr, fp_lr_max_tpr, fn_lr_max_tpr, tp_lr_max_tpr = \
     confusion_matrix(y_test, y_pred_lr_max_tpr).ravel()
@@ -99,9 +104,9 @@ tpr_lr_max_tpr = tp_lr_max_tpr / (tp_lr_max_tpr + fn_lr_max_tpr)
 tnr_lr_max_tpr = tn_lr_max_tpr / (tn_lr_max_tpr + fp_lr_max_tpr)
 
 ada_max_tpr = CutoffClassifier(
-    ada, method='max_tpr', strategy='predict_proba', threshold=0.7,
-    cv='prefit'
+    ada, strategy='max_tpr', method='predict_proba', threshold=0.7, cv='prefit'
 ).fit(X_train[calibration_samples:], y_train[calibration_samples:])
+
 y_pred_ada_max_tpr = ada_max_tpr.predict(X_test)
 tn_ada_max_tpr, fp_ada_max_tpr, fn_ada_max_tpr, tp_ada_max_tpr = \
     confusion_matrix(y_test, y_pred_ada_max_tpr).ravel()
@@ -124,9 +129,9 @@ print('Logistic Regression classifier: tpr = {}, tnr = {}, f1 = {}'.format(
 print('AdaBoost classifier: tpr = {}, tnr = {}, f1 = {}'.format(
     tpr_ada_max_tpr, tnr_ada_max_tpr, f_one_ada_f_beta))
 
-#######
-# plots
-#######
+#########
+# plots #
+#########
 bar_width = 0.2
 
 plt.subplot(2, 1, 1)

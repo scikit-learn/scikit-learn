@@ -38,7 +38,7 @@ def test_cutoff_prefit():
                                                         random_state=42)
     lr = LogisticRegression().fit(X_train, y_train)
 
-    clf_roc = CutoffClassifier(lr, method='roc', cv='prefit').fit(
+    clf_roc = CutoffClassifier(lr, strategy='roc', cv='prefit').fit(
         X_test[:calibration_samples], y_test[:calibration_samples]
     )
 
@@ -60,7 +60,7 @@ def test_cutoff_prefit():
     assert_greater(tpr_roc + tnr_roc, tpr + tnr)
 
     clf_f1 = CutoffClassifier(
-        lr, method='f_beta', strategy='predict_proba', beta=1,
+        lr, strategy='f_beta', method='predict_proba', beta=1,
         cv='prefit').fit(
         X_test[:calibration_samples], y_test[:calibration_samples]
     )
@@ -70,7 +70,7 @@ def test_cutoff_prefit():
                    f1_score(y_test[calibration_samples:], y_pred))
 
     clf_fbeta = CutoffClassifier(
-        lr, method='f_beta', strategy='predict_proba', beta=2,
+        lr, strategy='f_beta', method='predict_proba', beta=2,
         cv='prefit').fit(
         X_test[:calibration_samples], y_test[:calibration_samples]
     )
@@ -80,7 +80,7 @@ def test_cutoff_prefit():
                    recall_score(y_test[calibration_samples:], y_pred))
 
     clf_max_tpr = CutoffClassifier(
-        lr, method='max_tpr', threshold=0.7, cv='prefit'
+        lr, strategy='max_tpr', threshold=0.7, cv='prefit'
     ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
 
     y_pred_max_tpr = clf_max_tpr.predict(X_test[calibration_samples:])
@@ -97,7 +97,7 @@ def test_cutoff_prefit():
     assert_greater_equal(tnr_max_tpr, 0.7)
 
     clf_max_tnr = CutoffClassifier(
-        lr, method='max_tnr', threshold=0.7, cv='prefit'
+        lr, strategy='max_tnr', threshold=0.7, cv='prefit'
     ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
 
     y_pred_clf = clf_max_tnr.predict(X_test[calibration_samples:])
@@ -123,14 +123,14 @@ def test_cutoff_prefit():
     )
     assert_raises(ValueError, clf_roc.fit, X_non_binary, y_non_binary)
 
-    clf_foo = CutoffClassifier(lr, method='f_beta', beta='foo')
+    clf_foo = CutoffClassifier(lr, strategy='f_beta', beta='foo')
     assert_raises(ValueError, clf_foo.fit, X_train, y_train)
 
-    clf_foo = CutoffClassifier(lr, method='foo')
+    clf_foo = CutoffClassifier(lr, strategy='foo')
     assert_raises(ValueError, clf_foo.fit, X_train, y_train)
 
     for method in ['max_tpr', 'max_tnr']:
-        clf_missing_info = CutoffClassifier(lr, method=method)
+        clf_missing_info = CutoffClassifier(lr, strategy=method)
         assert_raises(ValueError, clf_missing_info.fit, X_train, y_train)
 
 
@@ -142,7 +142,7 @@ def test_cutoff_cv():
                                                         train_size=0.6,
                                                         random_state=42)
     lr = LogisticRegression().fit(X_train, y_train)
-    clf_roc = CutoffClassifier(LogisticRegression(), method='roc', cv=3).fit(
+    clf_roc = CutoffClassifier(LogisticRegression(), strategy='roc', cv=3).fit(
         X_train, y_train
     )
 
@@ -176,37 +176,37 @@ def test_get_binary_score():
 
     assert_array_equal(
         y_pred_score, _get_binary_score(
-            lr, X_test, strategy='decision_function', pos_label=1)
+            lr, X_test, method='decision_function', pos_label=1)
     )
 
     assert_array_equal(
         - y_pred_score, _get_binary_score(
-            lr, X_test, strategy='decision_function', pos_label=0)
+            lr, X_test, method='decision_function', pos_label=0)
     )
 
     assert_array_equal(
         y_pred_proba[:, 1], _get_binary_score(
-            lr, X_test, strategy='predict_proba', pos_label=1)
+            lr, X_test, method='predict_proba', pos_label=1)
     )
 
     assert_array_equal(
         y_pred_proba[:, 0], _get_binary_score(
-            lr, X_test, strategy='predict_proba', pos_label=0)
+            lr, X_test, method='predict_proba', pos_label=0)
     )
 
     assert_array_equal(
         y_pred_score,
-        _get_binary_score(lr, X_test, strategy=None, pos_label=1)
+        _get_binary_score(lr, X_test, method=None, pos_label=1)
     )
 
-    assert_raises(ValueError, _get_binary_score, lr, X_test, strategy='foo')
+    assert_raises(ValueError, _get_binary_score, lr, X_test, method='foo')
 
     # classifier that does not have a decision_function
     rf = RandomForestClassifier().fit(X_train, y_train)
     y_pred_proba_rf = rf.predict_proba(X_test)
     assert_array_equal(
         y_pred_proba_rf[:, 1],
-        _get_binary_score(rf, X_test, strategy=None, pos_label=1)
+        _get_binary_score(rf, X_test, method=None, pos_label=1)
     )
 
     X_non_binary, y_non_binary = make_classification(
