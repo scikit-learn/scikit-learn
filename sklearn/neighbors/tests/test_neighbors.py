@@ -115,9 +115,11 @@ def test_n_neighbors_datatype():
     n = 3.
     expected_msg = "n_neighbors does not take .*float.* " \
                    "value, enter integer value"
+    msg = "Expected n_neighbors > 0. Got -3"
 
     neighbors_ = neighbors.NearestNeighbors(n_neighbors=n)
     assert_raises_regex(TypeError, expected_msg, neighbors_.fit, x)
+    assert_raises_regex(ValueError, msg, neighbors_.kneighbors, X=x, n_neighbors=-3)
     assert_raises_regex(TypeError, expected_msg, neighbors_.kneighbors, X=x, n_neighbors=n)
 
 
