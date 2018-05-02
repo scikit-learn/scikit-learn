@@ -119,8 +119,10 @@ def test_n_neighbors_datatype():
 
     neighbors_ = neighbors.NearestNeighbors(n_neighbors=n)
     assert_raises_regex(TypeError, expected_msg, neighbors_.fit, x)
-    assert_raises_regex(ValueError, msg, neighbors_.kneighbors, X=x, n_neighbors=-3)
-    assert_raises_regex(TypeError, expected_msg, neighbors_.kneighbors, X=x, n_neighbors=n)
+    assert_raises_regex(ValueError, msg,
+                        neighbors_.kneighbors, X=x, n_neighbors=-3)
+    assert_raises_regex(TypeError, expected_msg,
+                        neighbors_.kneighbors, X=x, n_neighbors=n)
 
 
 def test_precomputed(random_state=42):
