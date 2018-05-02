@@ -866,7 +866,7 @@ class TSNE(BaseEstimator):
         self.n_iter_ = it
 
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f"
+            print("[t-SNE] KL divergence after %d iterations: %f"
                   % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)
