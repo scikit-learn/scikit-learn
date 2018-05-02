@@ -16,7 +16,7 @@ elif command -v pypy; then
     virtualenv -p $(command -v pypy) pypy-env
 fi
 
-source activate pypy-env/bin/activate
+source pypy-env/bin/activate
 
 python --version
 which python
