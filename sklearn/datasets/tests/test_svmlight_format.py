@@ -117,7 +117,8 @@ def test_load_compressed():
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
         with open(datafile, "rb") as f:
-            shutil.copyfileobj(f, gzip.open(tmp.name, "wb"))
+            with gzip.open(tmp.name, "wb") as fh_out:
+                shutil.copyfileobj(f, fh_out)
         Xgz, ygz = load_svmlight_file(tmp.name)
         # because we "close" it manually and write to it,
         # we need to remove it manually.
@@ -128,7 +129,8 @@ def test_load_compressed():
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
         with open(datafile, "rb") as f:
-            shutil.copyfileobj(f, BZ2File(tmp.name, "wb"))
+            with BZ2File(tmp.name, "wb") as fh_out:
+                shutil.copyfileobj(f, fh_out)
         Xbz, ybz = load_svmlight_file(tmp.name)
         # because we "close" it manually and write to it,
         # we need to remove it manually.
