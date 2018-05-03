@@ -1007,8 +1007,8 @@ def _shuffle(y, groups, random_state):
 def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
                    exploit_incremental_learning=False, n_jobs=1,
-                   pre_dispatch="all", verbose=0, shuffle=False, stratify=False,
-                   random_state=None):
+                   pre_dispatch="all", verbose=0, shuffle=False,
+                   stratify=False, random_state=None):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1090,8 +1090,10 @@ def learning_curve(estimator, X, y, groups=None,
         based on``train_sizes``.
 
     stratify : boolean, optional
-        Whether to stratify training data before taking prefixes of it,
-        :class:`StratifiedShuffleSplit` is used.
+        Whether to stratify training data before taking prefixes of it;
+        when True, each training set will be sampled such that the proportion
+        of each class matches the full training data (for the current iteration
+        of cross-validation) as well as possible.
         Stratification is done based on the y labels.
         If shuffle=False or y is None, then stratify must be False.
 
