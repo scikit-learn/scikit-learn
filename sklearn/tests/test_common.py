@@ -13,6 +13,8 @@ import sys
 import re
 import pkgutil
 
+import pytest
+
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
@@ -49,26 +51,52 @@ def test_all_estimators():
     # properly
     assert_greater(len(estimators), 0)
 
-    for name, Estimator in estimators:
-        # some can just not be sensibly default constructed
-        yield check_parameters_default_constructible, name, Estimator
+
+@pytest.mark.parametrize(
+        'name, Estimator',
+        all_estimators(include_meta_estimators=True)
+)
+def test_parameters_default_constructible(name, Estimator):
+
+    # some can just not be sensibly default constructed
+    check_parameters_default_constructible(name, Estimator)
 
 
-def test_non_meta_estimators():
-    # input validation etc for non-meta estimators
-    estimators = all_estimators()
-    for name, Estimator in estimators:
+def _tested_non_meta_estimators():
+    for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
         if name.startswith("_"):
             continue
-        estimator = Estimator()
-        # check this on class
-        yield check_no_attributes_set_in_init, name, estimator
+        yield name, Estimator
 
-        for check in _yield_all_checks(name, estimator):
-            set_checking_parameters(estimator)
-            yield check, name, estimator
+
+def _carthesian_product_checks(check_generator, estimators):
+    for name, Estimator in estimators:
+        estimator = Estimator()
+        for check in check_generator(name, estimator):
+            yield name, Estimator, check
+
+
+@pytest.mark.parametrize(
+        "name, Estimator, check",
+        _carthesian_product_checks(_yield_all_checks,
+                                   _tested_non_meta_estimators())
+)
+def test_non_meta_estimators(name, Estimator, check):
+    # input validation etc for non-meta estimators
+    estimator = Estimator()
+    set_checking_parameters(estimator)
+    check(name, estimator)
+
+
+@pytest.mark.parametrize("name, Estimator",
+                         _tested_non_meta_estimators())
+def test_no_attributes_set_in_init(name, Estimator):
+    # input validation etc for non-meta estimators
+    estimator = Estimator()
+    # check this on class
+    check_no_attributes_set_in_init(name, estimator)
 
 
 def test_configure():
