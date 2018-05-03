@@ -43,8 +43,6 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, cloneable
-    # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
 
     # Meta sanity-check to make sure that the estimator introspection runs
@@ -57,8 +55,7 @@ def test_all_estimators():
         all_estimators(include_meta_estimators=True)
 )
 def test_parameters_default_constructible(name, Estimator):
-
-    # some can just not be sensibly default constructed
+    # Test that estimators are default-constructible
     check_parameters_default_constructible(name, Estimator)
 
 
@@ -71,7 +68,7 @@ def _tested_non_meta_estimators():
         yield name, Estimator
 
 
-def _carthesian_product_checks(check_generator, estimators):
+def _cartesian_product_checks(check_generator, estimators):
     for name, Estimator in estimators:
         estimator = Estimator()
         for check in check_generator(name, estimator):
@@ -80,11 +77,11 @@ def _carthesian_product_checks(check_generator, estimators):
 
 @pytest.mark.parametrize(
         "name, Estimator, check",
-        _carthesian_product_checks(_yield_all_checks,
-                                   _tested_non_meta_estimators())
+        _cartesian_product_checks(_yield_all_checks,
+                                  _tested_non_meta_estimators())
 )
 def test_non_meta_estimators(name, Estimator, check):
-    # input validation etc for non-meta estimators
+    # Common tests for non-meta estimators
     estimator = Estimator()
     set_checking_parameters(estimator)
     check(name, estimator)
@@ -123,19 +120,21 @@ def test_configure():
         os.chdir(cwd)
 
 
-def test_class_weight_balanced_linear_classifiers():
+def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
-        linear_classifiers = [
-            (name, clazz)
-            for name, clazz in classifiers
+        for name, clazz in classifiers:
             if ('class_weight' in clazz().get_params().keys() and
-                issubclass(clazz, LinearClassifierMixin))]
+                    issubclass(clazz, LinearClassifierMixin)):
+                yield name, clazz
 
-    for name, Classifier in linear_classifiers:
-        yield check_class_weight_balanced_linear_classifier, name, Classifier
+
+@pytest.mark.parametrize("name, Classifier",
+                         _tested_linear_classifiers())
+def test_class_weight_balanced_linear_classifiers(name, Classifier):
+    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @ignore_warnings
