@@ -7,7 +7,7 @@ from sklearn.datasets import load_iris
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal, assert_raise_message
+from sklearn.utils.testing import assert_equal, assert_raise_message, assert_warns_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_allclose
 
@@ -43,6 +43,12 @@ def test_kmedoids_input_validation_and_fit_check():
     assert_raise_message(ValueError, "The number of medoids (8) must be less "
                                      "than the number of samples 5.",
                          KMedoids(n_clusters=8).fit, Xsmall)
+
+def test_kmedoids_empty_clusters():
+    rng = np.random.RandomState(seed)
+    X = [[1],[1],[1]]
+    kmedoids = KMedoids(n_clusters=2, random_state=rng)
+    assert_warns_message(UserWarning, "Cluster 1 is empty!", kmedoids.fit, X)
 
 def test_kmedoids_pp():
     """initial clusters should be well-separated"""
