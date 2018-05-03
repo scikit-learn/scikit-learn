@@ -20,6 +20,13 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension('nth_element',
+                         sources=['nth_element.pyx',
+                                  os.path.join('src', 'nth_element.cpp')],
+                         include_dirs=['src'],
+                         language="c++",
+                         libraries=libraries)
+
     config.add_extension('dist_metrics',
                          sources=['dist_metrics.pyx'],
                          include_dirs=[numpy.get_include(),
