@@ -236,8 +236,8 @@ def get_scorer(scoring):
             valid = False  # Don't raise here to make the error message elegant
         if not valid:
             raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s'
-                             % (scoring, sorted(scorers)))
+                             'For valid options use sorted(SCORERS.keys())'
+                             % (scoring))
     else:
         scorer = scoring
     return scorer
