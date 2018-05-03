@@ -1,36 +1,29 @@
 """
 ===============================================================
-Model selection with Probabilistic PCA and Factor Analysis (FA)
+Factor Analysis (with rotation) to visualize patterns
 ===============================================================
 
-Probabilistic PCA and Factor Analysis are probabilistic models.
-The consequence is that the likelihood of new data can be used
-for model selection and covariance estimation.
-Here we compare PCA and FA with cross-validation on low rank data corrupted
-with homoscedastic noise (noise variance
-is the same for each feature) or heteroscedastic noise (noise variance
-is the different for each feature). In a second step we compare the model
-likelihood to the likelihoods obtained from shrinkage covariance estimators.
-
-One can observe that with homoscedastic noise both FA and PCA succeed
-in recovering the size of the low rank subspace. The likelihood with PCA
-is higher than FA in this case. However PCA fails and overestimates
-the rank when heteroscedastic noise is present. Under appropriate
-circumstances the low rank models are more likely than shrinkage models.
-
-The automatic estimation from
-Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
-by Thomas P. Minka is also compared.
-
+Investigating the Iris dataset, we see that sepal length, petal
+length and petal width are highly correlated. Sepal width is
+less redundant. Matrix decomposition techniques can uncover
+these latent patterns. Applying rotations to the resulting
+components does not inherently improve the predictve value
+of the derived latent space, but can help visualise their
+structure; here, for example, the varimax rotation, which
+is found by maximizing the squared variances of the weights,
+finds a structure where the second component only loads
+positively on sepal width.
 """
 
 # Authors: Jona Sassenhagen
 # License: BSD 3 clause
 
+from __future__ import print_function
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.decomposition import FactorAnalysis
+from sklearn.decomposition import FactorAnalysis, PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 
@@ -42,14 +35,32 @@ data = load_iris()
 X = StandardScaler().fit_transform(data["data"])
 feature_names = data["feature_names"]
 
-n_comps = 2
+###############################################################################
+# Plot covariance of Iris features
+ax = plt.axes()
+
+im = ax.imshow(np.corrcoef(X.T), cmap="RdBu_r", vmin=-1, vmax=1)
+
+ax.set_xticks([0, 1, 2, 3])
+ax.set_xticklabels(list(feature_names), rotation=90)
+ax.set_yticks([0, 1, 2, 3])
+ax.set_yticklabels(list(feature_names))
+
+plt.colorbar(im).ax.set_ylabel("$r$", rotation=0)
+ax.set_title("Iris feature correlation matrix")
 
 # #############################################################################
 # Run factor analysis with Varimax rotation
-fig, axes = plt.subplots(ncols=2, figsize=(10, 8))
+n_comps = 2
 
-for ax, method in zip(axes, (None, "varimax")):
-    fa = FactorAnalysis(n_components=n_comps, rotation=method).fit(X)
+methods = ("PCA", None, "varimax")
+fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8))
+
+for ax, method in zip(axes, methods):
+    if method == "PCA":
+        fa = PCA(n_components=n_comps).fit(X)
+    else:
+        fa = FactorAnalysis(n_components=n_comps, rotation=method).fit(X)
 
     components = fa.components_.T
     print(method, ":\n", components, end="\n\n")
@@ -61,6 +72,8 @@ for ax, method in zip(axes, (None, "varimax")):
         ax.set_yticklabels(feature_names)
     else:
         ax.set_yticklabels([])
-    ax.set_xlabel("Rotation: " + str(method))
+    ax.set_title(str(method))
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Comp. 1", "Comp. 2"])
 fig.suptitle("Factors")
 plt.show()
