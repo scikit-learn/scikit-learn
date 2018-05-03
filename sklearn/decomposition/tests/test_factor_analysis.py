@@ -83,3 +83,24 @@ def test_factor_analysis():
         precision = fa.get_precision()
         assert_array_almost_equal(np.dot(cov, precision),
                                   np.eye(X.shape[1]), 12)
+
+    # test rotation
+    n_comps = 2
+    for method in ("varimax", 'quartimax'):
+        fa_var = FactorAnalysis(n_components=n_comps, rotation=method)
+        fa_var.fit_transform(X)
+    assert_raises(NotImplementedError,
+                  FactorAnalysis(rotation='not_implemented').fit_transform, X)
+
+    # test against R's psych::principal with rotate="varimax"
+    # R's factor analysis returns quite different values; therefore, we only
+    # test the rotation itself
+    factors = np.array(
+        [[0.89421016, -0.35854928, -0.27770122, 0.03773647],
+         [-0.45081822, -0.89132754, 0.0932195, -0.01787973],
+         [0.99500666, -0.02031465, 0.05426497, -0.11539407],
+         [0.96822861, -0.06299656, 0.24411001, 0.07540887]])
+    r_solution = np.array([[0.962, 0.052], [-0.141, 0.989],
+                           [0.949, -0.300], [0.937, -0.251]])
+    rotated = fa_var._ortho_rotation(factors[:, :n_comps], method='varimax').T
+    assert_array_almost_equal(np.abs(rotated), np.abs(r_solution), decimal=3)

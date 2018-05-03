@@ -88,6 +88,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
+    rotation : None | 'varimax' | 'orthomax'
+        If not None, apply the indicated rotation. Currently, varimax and
+        orthomax are implemented.
+
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -127,7 +131,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',
-                 iterated_power=3, random_state=0):
+                 iterated_power=3, rotation=None, random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -140,6 +144,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.noise_variance_init = noise_variance_init
         self.iterated_power = iterated_power
         self.random_state = random_state
+        self.rotation = rotation
 
     def fit(self, X, y=None):
         """Fit the FactorAnalysis model to X using EM
@@ -159,8 +164,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         n_components = self.n_components
-        if n_components is None:
+        if self.rotation is not None:
+            rot_components = (n_components if n_components is not None
+                              else n_features)
             n_components = n_features
+        elif n_components is None:
+            n_components = n_features
+
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
@@ -228,6 +238,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                           ConvergenceWarning)
 
         self.components_ = W
+        if self.rotation is not None:
+            self._rotate(method=self.rotation, n_components=rot_components)
         self.noise_variance_ = psi
         self.loglike_ = loglike
         self.n_iter_ = i + 1
@@ -347,3 +359,38 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
+
+    def _rotate(self, method="varimax", n_components=None, tol=1e-6):
+        "Rotate the factor analysis solution."
+        implemented = {"varimax", "quartimax"}
+        if method in implemented:
+            self.components_ = self._ortho_rotation(
+                self.components_.T, method=method, eps=tol)[:n_components]
+        else:
+            raise NotImplementedError("'method' must be in %s, not %s"
+                                      % (implemented, method))
+
+    def _ortho_rotation(self, components, method='varimax', eps=1e-6,
+                        itermax=100):
+        """Return rotated components."""
+        if (method == 'varimax'):
+            gamma = 1.0
+        elif (method == 'quartimax'):
+            gamma = 0.0
+
+        nrow, ncol = components.shape
+        rotation_matrix = np.eye(ncol)
+        var = 0
+
+        for _ in range(itermax):
+            comp_rot = np.dot(components, rotation_matrix)
+            tmp = np.diag((comp_rot ** 2).sum(axis=0)) / nrow * gamma
+            u, s, v = np.linalg.svd(
+                np.dot(components.T, comp_rot ** 3 - np.dot(comp_rot, tmp)))
+            rotation_matrix = np.dot(u, v)
+            var_new = np.sum(s)
+            if var != 0 and (var_new < var * (1 + eps)):
+                break
+            var = var_new
+
+        return np.dot(components, rotation_matrix).T
