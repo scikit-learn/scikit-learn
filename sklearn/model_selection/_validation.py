@@ -1127,12 +1127,10 @@ def learning_curve(estimator, X, y, groups=None,
     if stratify:
         if not shuffle:
             raise ValueError(
-                "Stratified train/test split is not implemented for "
-                "shuffle=False")
+                "Stratification is not implemented for shuffle=False")
         elif y is None:
             raise ValueError(
-                "Stratified train/test split is not implemented for "
-                "y=None")
+                "Stratification is meaningless for y=None")
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
