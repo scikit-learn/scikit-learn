@@ -158,6 +158,9 @@ from typedefs import DTYPE, ITYPE
 from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
+cdef extern from "numpy/arrayobject.h":
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+
 np.import_array()
 
 # some handy constants
@@ -1501,14 +1504,14 @@ cdef class BinaryTree:
                     # make a new numpy array that wraps the existing data
                     indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    np.PyArray_UpdateFlags(indices_npy[i], indices_npy[i].flags.num | np.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(indices_npy[i], np.NPY_OWNDATA)
                     # make sure the data is not freed twice
                     indices[i] = NULL
 
                     # make a new numpy array that wraps the existing data
                     distances_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_DOUBLE, distances[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    np.PyArray_UpdateFlags(distances_npy[i], distances_npy[i].flags.num | np.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(distances_npy[i], np.NPY_OWNDATA)
                     # make sure the data is not freed twice
                     distances[i] = NULL
 
@@ -1521,7 +1524,7 @@ cdef class BinaryTree:
                     # make a new numpy array that wraps the existing data
                     indices_npy[i] = np.PyArray_SimpleNewFromData(1, &counts[i], np.NPY_INTP, indices[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    np.PyArray_UpdateFlags(indices_npy[i], indices_npy[i].flags.num | np.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(indices_npy[i], np.NPY_OWNDATA)
                     # make sure the data is not freed twice
                     indices[i] = NULL
 
