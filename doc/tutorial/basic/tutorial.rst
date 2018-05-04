@@ -101,13 +101,13 @@ For instance, in the case of the digits dataset, ``digits.data`` gives
 access to the features that can be used to classify the digits samples::
 
   >>> print(digits.data)  # doctest: +NORMALIZE_WHITESPACE
-  [[  0.   0.   5. ...,   0.   0.   0.]
-   [  0.   0.   0. ...,  10.   0.   0.]
-   [  0.   0.   0. ...,  16.   9.   0.]
-   ...,
-   [  0.   0.   1. ...,   6.   0.   0.]
-   [  0.   0.   2. ...,  12.   0.   0.]
-   [  0.   0.  10. ...,  12.   1.   0.]]
+  [[ 0.   0.   5. ...   0.   0.   0.]
+   [ 0.   0.   0. ...  10.   0.   0.]
+   [ 0.   0.   0. ...  16.   9.   0.]
+   ...
+   [ 0.   0.   1. ...   6.   0.   0.]
+   [ 0.   0.   2. ...  12.   0.   0.]
+   [ 0.   0.  10. ...  12.   1.   0.]]
 
 and ``digits.target`` gives the ground truth for the digit dataset, that
 is the number corresponding to each digit image that we are trying to
@@ -123,7 +123,7 @@ learn::
     digits, each original sample is an image of shape ``(8, 8)`` and can be
     accessed using::
 
-      >>> digits.images[0]
+      >>> digits.images[0]  # doctest: +NORMALIZE_WHITESPACE
       array([[  0.,   0.,   5.,  13.,   9.,   1.,   0.,   0.],
              [  0.,   0.,  13.,  15.,  10.,  15.,   5.,   0.],
              [  0.,   3.,  15.,   2.,   0.,  11.,   8.,   0.],

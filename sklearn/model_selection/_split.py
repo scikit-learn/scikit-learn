@@ -1096,7 +1096,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     See also
     --------
-    RepeatedStratifiedKFold: Repeates Stratified K-Fold n times.
+    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
         super(RepeatedKFold, self).__init__(

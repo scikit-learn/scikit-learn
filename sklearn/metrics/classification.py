@@ -499,7 +499,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     ----------
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
-       <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
+       <https://doi.org/10.1093/bioinformatics/16.5.412>`_
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
@@ -708,7 +708,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.8,  0. ,  0. ])
+    array([0.8, 0. , 0. ])
 
 
     """
@@ -819,7 +819,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
-    array([ 0.71...,  0.        ,  0.        ])
+    array([0.71..., 0.        , 0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1012,9 +1012,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    (array([ 0. ,  0. ,  0.66...]),
-     array([ 0.,  0.,  1.]),
-     array([ 0. ,  0. ,  0.8]),
+    (array([0.        , 0.        , 0.66...]),
+     array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
 
     """
@@ -1255,7 +1254,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.22...
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
-    array([ 0.66...,  0.        ,  0.        ])
+    array([0.66..., 0.        , 0.        ])
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1352,7 +1351,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
-    array([ 1.,  0.,  0.])
+    array([1., 0., 0.])
 
 
     """

@@ -1302,7 +1302,7 @@ class ParserElement(object):
 
     def setFailAction( self, fn ):
         """Define action to perform if parsing fails at this expression.
-           Fail acton fn is a callable function that takes the arguments
+           Fail action fn is a callable function that takes the arguments
            C{fn(s,loc,expr,err)} where:
             - s = string being parsed
             - loc = location where expression match was attempted and failed
@@ -1604,7 +1604,7 @@ class ParserElement(object):
            (see L{I{parseWithTabs}<parseWithTabs>})
          - define your parse action using the full C{(s,loc,toks)} signature, and
            reference the input string using the parse action's C{s} argument
-         - explictly expand the tabs in your input string before calling
+         - explicitly expand the tabs in your input string before calling
            C{parseString}
         
         Example::
