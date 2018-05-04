@@ -800,7 +800,7 @@ def test_convergence_detected_with_warm_start():
             if gmm.converged_:
                 break
         assert_true(gmm.converged_)
-        assert_greater(max_iter, gmm.n_iter_)
+        assert_greater_equal(max_iter, gmm.n_iter_)
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -822,11 +822,11 @@ def test_no_convergence_at_1st_iter_if_warm_start_and_max_iter_greater_1():
                           max_iter=max_iter, tol=0., random_state=rng)
     gmm.fit(X1)
     assert_true(not gmm.converged_)
-    assert_equal(gmm.n_iter_, max_iter - 1)
+    assert_equal(gmm.n_iter_, max_iter)
     gmm.tol = np.infty
     gmm.fit(X2)
     assert_true(gmm.converged_)
-    assert_equal(gmm.n_iter_, 1)
+    assert_equal(gmm.n_iter_, 2)
 
 
 def test_score():
