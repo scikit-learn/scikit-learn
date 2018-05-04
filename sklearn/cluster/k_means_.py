@@ -59,7 +59,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     random_state : int, RandomState instance
         The generator used to initialize the centers. Use an int to make the
         randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     n_local_trials : integer, optional
         The number of seeding trials for each center (except the first),
@@ -230,7 +230,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -470,7 +470,7 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -659,7 +659,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     x_squared_norms :  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -775,7 +775,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -1053,7 +1053,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         Determines random number generation for centroid initialization and to
         pick new clusters amongst observations with uniform probability. Use
         an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     random_reassign : boolean, optional
         If True, centers with very low counts are randomly reassigned
@@ -1265,7 +1265,7 @@ class MiniBatchKMeans(KMeans):
     random_state : int, RandomState instance or None (default)
         Determines random number generation for centroid initialization and
         random reassignment. Use an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     tol : float, default: 0.0
         Control early stopping based on the relative center changes as

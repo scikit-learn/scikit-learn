@@ -51,7 +51,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
         The generator used to randomly select the samples from input points
         for bandwidth estimation. Use an int to make the randomness
         deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.

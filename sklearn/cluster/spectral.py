@@ -41,7 +41,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     random_state : int, RandomState instance or None (default)
         Determines random number generation for rotation matrix initialization.
         Use an int to make the randomness deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -199,7 +199,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
         the K-Means initialization. Use an int to make the randomness
         deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -312,7 +312,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
         the K-Means initialization. Use an int to make the randomness
         deterministic.
-        See :term:`random_state <Glossary>`.
+        See :term:`Glossary <random_state>`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
