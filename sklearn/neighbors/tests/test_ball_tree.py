@@ -1,4 +1,6 @@
 import pickle
+import itertools
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
@@ -43,58 +45,44 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
-def test_ball_tree_query():
+@pytest.mark.parametrize('metric', METRICS)
+@pytest.mark.parametrize('k', (1, 3, 5))
+@pytest.mark.parametrize('dualtree', (True, False))
+@pytest.mark.parametrize('breadth_first', (True, False))
+def test_ball_tree_query(metric, k, dualtree, breadth_first):
     rng = check_random_state(0)
     X = rng.random_sample((40, DIMENSION))
     Y = rng.random_sample((10, DIMENSION))
 
-    def check_neighbors(dualtree, breadth_first, k, metric, kwargs):
-        bt = BallTree(X, leaf_size=1, metric=metric, **kwargs)
-        dist1, ind1 = bt.query(Y, k, dualtree=dualtree,
-                               breadth_first=breadth_first)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
+    kwargs = METRICS[metric]
 
-        # don't check indices here: if there are any duplicate distances,
-        # the indices may not match.  Distances should not have this problem.
-        assert_array_almost_equal(dist1, dist2)
+    bt = BallTree(X, leaf_size=1, metric=metric, **kwargs)
+    dist1, ind1 = bt.query(Y, k, dualtree=dualtree,
+                           breadth_first=breadth_first)
+    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
-    for (metric, kwargs) in METRICS.items():
-        for k in (1, 3, 5):
-            for dualtree in (True, False):
-                for breadth_first in (True, False):
-                    check_neighbors(dualtree, breadth_first, k, metric, kwargs)
+    # don't check indices here: if there are any duplicate distances,
+    # the indices may not match.  Distances should not have this problem.
+    assert_array_almost_equal(dist1, dist2)
 
 
-def test_ball_tree_query_boolean_metrics():
+@pytest.mark.parametrize('metric',
+                         itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
+def test_ball_tree_query_metrics(metric):
     rng = check_random_state(0)
-    X = rng.random_sample((40, 10)).round(0)
-    Y = rng.random_sample((10, 10)).round(0)
+    if metric in BOOLEAN_METRICS:
+        X = rng.random_sample((40, 10)).round(0)
+        Y = rng.random_sample((10, 10)).round(0)
+    elif metric in DISCRETE_METRICS:
+        X = (4 * rng.random_sample((40, 10))).round(0)
+        Y = (4 * rng.random_sample((10, 10))).round(0)
+
     k = 5
 
-    def check_neighbors(metric):
-        bt = BallTree(X, leaf_size=1, metric=metric)
-        dist1, ind1 = bt.query(Y, k)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
-        assert_array_almost_equal(dist1, dist2)
-
-    for metric in BOOLEAN_METRICS:
-        check_neighbors(metric)
-
-
-def test_ball_tree_query_discrete_metrics():
-    rng = check_random_state(0)
-    X = (4 * rng.random_sample((40, 10))).round(0)
-    Y = (4 * rng.random_sample((10, 10))).round(0)
-    k = 5
-
-    def check_neighbors(metric):
-        bt = BallTree(X, leaf_size=1, metric=metric)
-        dist1, ind1 = bt.query(Y, k)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
-        assert_array_almost_equal(dist1, dist2)
-
-    for metric in DISCRETE_METRICS:
-        check_neighbors(metric)
+    bt = BallTree(X, leaf_size=1, metric=metric)
+    dist1, ind1 = bt.query(Y, k)
+    dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
+    assert_array_almost_equal(dist1, dist2)
 
 
 def test_ball_tree_query_radius(n_samples=100, n_features=10):

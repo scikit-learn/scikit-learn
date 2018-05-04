@@ -1,5 +1,7 @@
 from __future__ import division
 
+import functools
+
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -123,11 +125,10 @@ def test_basic_property_of_random_matrix(random_matrix):
 
 
 @pytest.mark.parametrize("random_matrix", all_sparse_random_matrix)
-def test_basic_property_of_random_matrix(random_matrix):
+def test_basic_property_of_sparse_random_matrix(random_matrix):
     check_input_with_sparse_random_matrix(random_matrix)
 
-    def random_matrix_dense(n_components, n_features, random_state):
-        return random_matrix(n_components, n_features, random_state=random_state, density=1.0)
+    random_matrix_dense = functools.partial(random_matrix, density=1.0)
 
     check_zero_mean_and_unit_norm(random_matrix_dense)
 

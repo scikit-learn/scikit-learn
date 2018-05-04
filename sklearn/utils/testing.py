@@ -52,10 +52,6 @@ from sklearn.utils import deprecated
 import pytest
 
 
-def raises(exception):
-    return pytest.mark.xfail(raises=exception)
-
-
 additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
@@ -105,13 +101,7 @@ assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
 assert_true = _dummy.assertTrue
 assert_false = _dummy.assertFalse
-
-
-def assert_raises(exception, fct, *args, **kwargs):
-    with pytest.raises(exception):
-        return fct(*args, **kwargs)
-
-
+assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
 assert_in = _dummy.assertIn
@@ -701,16 +691,10 @@ def if_matplotlib(func):
     return run_test
 
 
-def skip_if_32bit(func):
-    """Test decorator that skips tests on 32bit platforms."""
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        bits = 8 * struct.calcsize("P")
-        if bits == 32:
-            raise SkipTest('Test skipped on 32bit platforms.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
+skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+                                   reason='skipped on 32bit platforms')
+skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
+                                 reason='skip on travis')
 
 
 def if_safe_multiprocessing_with_blas(func):
@@ -752,15 +736,9 @@ def clean_warning_registry():
             getattr(mod, reg).clear()
 
 
-# def check_skip_network():
-    # if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
-        # raise SkipTest("Text tutorial requires large dataset download")
-
-
-# def check_skip_travis():
-    # """Skip test if being run on Travis."""
-    # if os.environ.get('TRAVIS') == "true":
-        # raise SkipTest("This test needs to be skipped on Travis")
+def check_skip_network():
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
+        raise SkipTest("Text tutorial requires large dataset download")
 
 
 def _delete_folder(folder_path, warn=False):
@@ -790,13 +768,6 @@ class TempMemmap(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
-
-
-with_network = pytest.mark.skipif(
-        int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)),
-        reason="skip_network tests")
-with_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
-                                 reason='skip on travis')
 
 
 def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):

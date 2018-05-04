@@ -62,13 +62,8 @@ benchmarks/bench_covertype_data/
 !*/src/*.cpp
 *.sln
 *.pyproj
-<<<<<<< HEAD
-.cache
-.eggs
-=======
 
 # Used by py.test
 .cache
 .pytest_cache/
 _configtest.o.d
->>>>>>> master

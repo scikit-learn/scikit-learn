@@ -195,19 +195,18 @@ def check_hyperparameters_equal(kernel1, kernel2):
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_clone(kernel):
     # Test that sklearn's clone works correctly on kernels.
-    for kernel in kernels:
-        kernel_cloned = clone(kernel)
+    kernel_cloned = clone(kernel)
 
-        # XXX: Should this be fixed?
-        # This differs from the sklearn's estimators equality check.
-        assert_equal(kernel, kernel_cloned)
-        assert_not_equal(id(kernel), id(kernel_cloned))
+    # XXX: Should this be fixed?
+    # This differs from the sklearn's estimators equality check.
+    assert_equal(kernel, kernel_cloned)
+    assert_not_equal(id(kernel), id(kernel_cloned))
 
-        # Check that all constructor parameters are equal.
-        assert_equal(kernel.get_params(), kernel_cloned.get_params())
+    # Check that all constructor parameters are equal.
+    assert_equal(kernel.get_params(), kernel_cloned.get_params())
 
-        # Check that all hyperparameters are equal.
-        yield check_hyperparameters_equal, kernel, kernel_cloned
+    # Check that all hyperparameters are equal.
+    check_hyperparameters_equal(kernel, kernel_cloned)
 
 
 def test_kernel_clone_after_set_params():

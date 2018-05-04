@@ -783,7 +783,8 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_dense_input(name):
 
 @pytest.mark.parametrize("name", SPARSE_TREES)
 def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
-    check_min_weight_fraction_leaf_with_min_samples_leaf(name, "multilabel", True)
+    check_min_weight_fraction_leaf_with_min_samples_leaf(
+            name, "multilabel", True)
 
 
 def test_min_impurity_split():
@@ -1362,23 +1363,26 @@ def check_sparse_input(tree, dataset, max_depth=None):
                 assert_array_almost_equal(s.predict_log_proba(X_sparse_test),
                                           y_log_proba)
 
-tree_type_dataset_combination = product(SPARSE_TREES, ("clf_small", "toy",
-                                                     "digits", "multilabel",
-                                                     "sparse-pos",
-                                                     "sparse-neg",
-                                                     "sparse-mix", "zeros"))
-@pytest.mark.parametrize("tree_type, dataset", tree_type_dataset_combination)
+
+@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize(
+        "dataset",
+        ("clf_small", "toy", "digits", "multilabel",
+         "sparse-pos", "sparse-neg", "sparse-mix",
+         "zeros")
+)
 def test_sparse_input(tree_type, dataset):
     max_depth = 3 if dataset == "digits" else None
     check_sparse_input(tree_type, dataset, max_depth)
 
 
-@pytest.mark.parametrize("tree_type, dataset", product(SPARSE_TREES, ["boston", "reg_small"]))
-def test_sparse_input(tree_type, dataset):
+@pytest.mark.parametrize("tree_type",
+                         set(SPARSE_TREES).intersection(REG_TREES))
+@pytest.mark.parametrize("dataset", ["boston", "reg_small"])
+def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    if tree_type in REG_TREES:
-        check_sparse_input(tree_type, dataset, 2)
+    check_sparse_input(tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):
@@ -1425,14 +1429,6 @@ def check_sparse_parameters(tree, dataset):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-tree_type_dataset_combinations = product(SPARSE_TREES, ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
-
-
-@pytest.mark.parametrize("tree_type, dataset", tree_type_dataset_combinations)
-def test_sparse_parameters(tree_type, dataset):
-    check_sparse_parameters(tree_type, dataset)
-
-
 def check_sparse_criterion(tree, dataset):
     TreeEstimator = ALL_TREES[tree]
     X = DATASETS[dataset]["X"]
@@ -1453,9 +1449,13 @@ def check_sparse_criterion(tree, dataset):
         assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-@pytest.mark.parametrize("tree_type, dataset", tree_type_dataset_combinations)
-def test_sparse_criterion(tree_type, dataset):
-    check_sparse_criterion(tree_type, dataset)
+@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize("dataset",
+                         ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
+@pytest.mark.parametrize("check",
+                         [check_sparse_parameters, check_sparse_criterion])
+def test_sparse(tree_type, dataset, check):
+    check(tree_type, dataset)
 
 
 def check_explicit_sparse_zeros(tree, max_depth=3,
@@ -1606,7 +1606,7 @@ def test_public_apply_all_trees(name):
 
 
 @pytest.mark.parametrize("name", SPARSE_TREES)
-def test_public_apply_all_trees(name):
+def test_public_apply_sparse_trees(name):
     check_public_apply_sparse(name)
 
 
@@ -1629,16 +1629,15 @@ def test_presort_sparse():
         check_presort_sparse(est, sparse_matrix(X), y)
 
 
-def test_invalid_presort():
-    classes = (DecisionTreeRegressor, DecisionTreeClassifier)
+@pytest.mark.parametrize('cls',
+                         (DecisionTreeRegressor, DecisionTreeClassifier))
+def test_invalid_presort(cls):
     allowed_presort = ('auto', True, False)
     invalid_presort = 'invalid'
     msg = ("'presort' should be in {}. "
            "Got {!r} instead.".format(allowed_presort, invalid_presort))
-    for cls in classes:
-        est = cls(presort=invalid_presort)
-        assert_raise_message(ValueError, msg,
-                             est.fit, X, y)
+    est = cls(presort=invalid_presort)
+    assert_raise_message(ValueError, msg, est.fit, X, y)
 
 
 def test_decision_path_hardcoded():

@@ -93,7 +93,7 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install pytest-cov coverage codecov
+    pip install coverage codecov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then

@@ -4,24 +4,12 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-<<<<<<< HEAD
-PYTEST ?= py.test
-=======
 PYTEST ?= pytest
->>>>>>> master
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
 
-<<<<<<< HEAD
-ifeq ($(BITS),32)
-  PYTEST:=$(PYTEST) -c setup32.cfg
-endif
-
-
-=======
->>>>>>> master
 all: clean inplace test
 
 clean-ctags:
@@ -36,32 +24,19 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-<<<<<<< HEAD
-	$(PYTEST) -s -v sklearn
-test-sphinxext:
-	$(PYTEST) -s -v doc/sphinxext/
-test-doc:
-ifeq ($(BITS),64)
-	$(PYTEST) -s -v --doctest-glob='*.rst'
-=======
 	$(PYTEST) --showlocals -v sklearn
 test-sphinxext:
 	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
 	$(PYTEST) $(shell find doc -name '*.rst' | sort)
->>>>>>> master
 endif
 
 test-coverage:
 	rm -rf coverage .coverage
-<<<<<<< HEAD
-	$(PYTEST) -s -v --cov=sklearn
-=======
 	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
->>>>>>> master
 
-test: test-code test-doc
+test: test-code test-sphinxext test-doc
 
 trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
