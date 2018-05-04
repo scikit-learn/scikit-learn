@@ -40,9 +40,6 @@ selection = SelectKBest(k=1)
 
 combined_features = FeatureUnion([("pca", pca), ("univ_select", selection)])
 
-# Use combined features to transform dataset:
-X_features = combined_features.fit(X, y).transform(X)
-
 svm = SVC(kernel="linear")
 
 # Do grid search over k, n_components and C:
