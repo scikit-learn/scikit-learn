@@ -10,6 +10,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 
 import pickle
 from collections import defaultdict
+import itertools
 from itertools import combinations
 from itertools import product
 
@@ -17,6 +18,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
+
+import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -114,9 +117,9 @@ def check_classification_toy(name):
     assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
 
 
-def test_classification_toy():
-    for name in FOREST_CLASSIFIERS:
-        yield check_classification_toy, name
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_classification_toy(name):
+    check_classification_toy(name)
 
 
 def check_iris_criterion(name, criterion):
@@ -138,9 +141,10 @@ def check_iris_criterion(name, criterion):
                                % (criterion, score))
 
 
-def test_iris():
-    for name, criterion in product(FOREST_CLASSIFIERS, ("gini", "entropy")):
-        yield check_iris_criterion, name, criterion
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('criterion', ("gini", "entropy"))
+def test_iris(name, criterion):
+    check_iris_criterion(name, criterion)
 
 
 def check_boston_criterion(name, criterion):
@@ -162,9 +166,10 @@ def check_boston_criterion(name, criterion):
                                 "and score = %f" % (criterion, score))
 
 
-def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
-        yield check_boston_criterion, name, criterion
+@pytest.mark.parametrize('name', FOREST_REGRESSORS)
+@pytest.mark.parametrize('criterion', ("mse", "mae", "friedman_mse"))
+def test_boston(name, criterion):
+    check_boston_criterion(name, criterion)
 
 
 def check_regressor_attributes(name):
@@ -178,9 +183,9 @@ def check_regressor_attributes(name):
     assert_false(hasattr(r, "n_classes_"))
 
 
-def test_regressor_attributes():
-    for name in FOREST_REGRESSORS:
-        yield check_regressor_attributes, name
+@pytest.mark.parametrize('name', FOREST_REGRESSORS)
+def test_regressor_attributes(name):
+    check_regressor_attributes(name)
 
 
 def check_probability(name):
@@ -196,9 +201,9 @@ def check_probability(name):
                                   np.exp(clf.predict_log_proba(iris.data)))
 
 
-def test_probability():
-    for name in FOREST_CLASSIFIERS:
-        yield check_probability, name
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_probability(name):
+    check_probability(name)
 
 
 def check_importances(name, criterion, dtype, tolerance):
@@ -241,17 +246,18 @@ def check_importances(name, criterion, dtype, tolerance):
         assert_less(np.abs(importances - importances_bis).mean(), tolerance)
 
 
-def test_importances():
-    for dtype in (np.float64, np.float32):
-        tolerance = 0.01
-        for name, criterion in product(FOREST_CLASSIFIERS,
-                                       ["gini", "entropy"]):
-            yield check_importances, name, criterion, dtype, tolerance
-
-        for name, criterion in product(FOREST_REGRESSORS,
-                                       ["mse", "friedman_mse", "mae"]):
-            tolerance = 0.05 if criterion == "mae" else 0.01
-            yield check_importances, name, criterion, dtype, tolerance
+@pytest.mark.parametrize('dtype', (np.float64, np.float32))
+@pytest.mark.parametrize(
+        'name, criterion',
+        itertools.chain(product(FOREST_CLASSIFIERS,
+                                ["gini", "entropy"]),
+                        product(FOREST_REGRESSORS,
+                                ["mse", "friedman_mse", "mae"])))
+def test_importances(dtype, name, criterion):
+    tolerance = 0.01
+    if name in FOREST_REGRESSORS and criterion == "mae":
+        tolerance = 0.05
+    check_importances(name, criterion, dtype, tolerance)
 
 
 def test_importances_asymptotic():

@@ -33,31 +33,19 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
 
-@pytest.fixture(scope="module")
-def data_home():
-    try:
-        path = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
-        yield path
-    finally:
-        _remove_dir(path)
-
-
-@pytest.fixture(scope="module")
-def load_files_root():
-    try:
-        path = tempfile.mkdtemp(prefix="scikit_learn_load_files_test_")
-        yield path
-    finally:
-        _remove_dir(path)
-
-
 def _remove_dir(path):
     if os.path.isdir(path):
         shutil.rmtree(path)
 
 
-def teardown_module():
-    """Test fixture (clean up) run once after all tests of this module"""
+@pytest.fixture(scope="module")
+def data_home(tmpdir_factory):
+    return tmpdir_factory.mktemp("scikit_learn_data_home_test")
+
+
+@pytest.fixture(scope="module")
+def load_files_root(tmpdir_factory):
+    return tmpdir_factory.mktemp("scikit_learn_load_files_test")
 
 
 @pytest.fixture

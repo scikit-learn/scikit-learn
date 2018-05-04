@@ -1,8 +1,6 @@
 """Test functionality of mldata fetching utilities."""
 
 import os
-import shutil
-import tempfile
 import scipy as sp
 
 from sklearn import datasets
@@ -18,19 +16,10 @@ from sklearn.utils.testing import assert_array_equal
 import pytest
 
 
-tmpdir = None
-
-
 @pytest.fixture
-def tmpdata():
-    try:
-        global tmpdir
-        tmpdir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(tmpdir, 'mldata'))
-        yield tmpdir
-    finally:
-        if tmpdir is not None:
-            shutil.rmtree(tmpdir)
+def tmpdata(tmpdir):
+    os.makedirs(tmpdir.join('mldata'))
+    yield tmpdir
 
 
 def test_mldata_filename():
@@ -74,7 +63,7 @@ def test_fetch_one_column(tmpdata):
         x = sp.arange(6).reshape(2, 3)
         datasets.mldata.urlopen = mock_mldata_urlopen({dataname: {'x': x}})
 
-        dset = fetch_mldata(dataname, data_home=tmpdir)
+        dset = fetch_mldata(dataname, data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "data"]:
             assert_in(n, dset)
         assert_not_in("target", dset)
@@ -83,7 +72,7 @@ def test_fetch_one_column(tmpdata):
         assert_array_equal(dset.data, x)
 
         # transposing the data array
-        dset = fetch_mldata(dataname, transpose_data=False, data_home=tmpdir)
+        dset = fetch_mldata(dataname, transpose_data=False, data_home=tmpdata)
         assert_equal(dset.data.shape, (3, 2))
     finally:
         datasets.mldata.urlopen = _urlopen_ref
@@ -110,7 +99,7 @@ def test_fetch_multiple_column(tmpdata):
             ),
         })
 
-        dset = fetch_mldata(dataname, data_home=tmpdir)
+        dset = fetch_mldata(dataname, data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
             assert_in(n, dset)
         assert_not_in("x", dset)
@@ -126,7 +115,7 @@ def test_fetch_multiple_column(tmpdata):
             dataname: ({'y': y, 'x': x, 'z': z},
                        ['y', 'x', 'z']), })
 
-        dset = fetch_mldata(dataname, data_home=tmpdir)
+        dset = fetch_mldata(dataname, data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
             assert_in(n, dset)
         assert_not_in("x", dset)
@@ -144,7 +133,7 @@ def test_fetch_multiple_column(tmpdata):
         })
 
         dset = fetch_mldata(dataname, target_name=2, data_name=0,
-                            data_home=tmpdir)
+                            data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "x"]:
             assert_in(n, dset)
         assert_not_in("y", dset)
@@ -155,7 +144,7 @@ def test_fetch_multiple_column(tmpdata):
 
         # by name
         dset = fetch_mldata(dataname, target_name='y', data_name='z',
-                            data_home=tmpdir)
+                            data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data", "x"]:
             assert_in(n, dset)
         assert_not_in("y", dset)

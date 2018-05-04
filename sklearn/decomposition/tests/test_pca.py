@@ -2,6 +2,8 @@ import numpy as np
 import scipy as sp
 from itertools import product
 
+import pytest
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
@@ -721,10 +723,10 @@ def test_pca_bad_solver():
     assert_raises(ValueError, pca.fit, X)
 
 
-def test_pca_dtype_preservation():
-    for svd_solver in solver_list:
-        yield check_pca_float_dtype_preservation, svd_solver
-        yield check_pca_int_dtype_upcast_to_double, svd_solver
+@pytest.mark.parametrize('svd_solver', solver_list)
+def test_pca_dtype_preservation(svd_solver):
+    check_pca_float_dtype_preservation(svd_solver)
+    check_pca_int_dtype_upcast_to_double(svd_solver)
 
 
 def check_pca_float_dtype_preservation(svd_solver):

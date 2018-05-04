@@ -5,6 +5,8 @@ from scipy.linalg import block_diag
 from scipy.sparse import csr_matrix
 from scipy.special import psi
 
+import pytest
+
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
                                                _dirichlet_expectation_2d)
@@ -402,16 +404,17 @@ def check_verbosity(verbose, evaluate_every, expected_lines,
     assert_equal(expected_perplexities, n_perplexity)
 
 
-def test_verbosity():
-    for verbose, evaluate_every, expected_lines, expected_perplexities in [
-        (False, 1, 0, 0),
-        (False, 0, 0, 0),
-        (True, 0, 3, 0),
-        (True, 1, 3, 3),
-        (True, 2, 3, 1),
-    ]:
-        yield (check_verbosity, verbose, evaluate_every, expected_lines,
-               expected_perplexities)
+@pytest.mark.parametrize(
+        'verbose,evaluate_every,expected_lines,expected_perplexities',
+        [(False, 1, 0, 0),
+         (False, 0, 0, 0),
+         (True, 0, 3, 0),
+         (True, 1, 3, 3),
+         (True, 2, 3, 1)])
+def test_verbosity(verbose, evaluate_every, expected_lines,
+                   expected_perplexities):
+    check_verbosity(verbose, evaluate_every, expected_lines,
+                    expected_perplexities)
 
 
 def test_lda_n_topics_deprecation():
