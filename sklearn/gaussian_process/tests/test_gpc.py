@@ -93,7 +93,6 @@ def test_random_starts():
     # Test that an increasing number of random-starts of GP fitting only
     # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
-    np.random.seed(0)
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features) * 2 - 1
     y = (np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1)) > 0

@@ -4,7 +4,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils.testing import assert_raises, assert_true, assert_equal
+from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
+                                   ignore_warnings)
 
 
 def test_feature_hasher_dicts():
@@ -19,6 +20,7 @@ def test_feature_hasher_dicts():
     assert_array_equal(X1.toarray(), X2.toarray())
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_feature_hasher_strings():
     # mix byte and Unicode strings; note that "foo" is a duplicate in row 0
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
@@ -106,3 +108,61 @@ def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hasher_alternate_sign():
+    X = [list("Thequickbrownfoxjumped")]
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+                       input_type='string').fit_transform(X)
+    assert Xt.data.min() < 0 and Xt.data.max() > 0
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+                       input_type='string').fit_transform(X)
+    assert Xt.data.min() > 0
+
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+                       input_type='string').fit_transform(X)
+    assert Xt.data.min() > 0
+    Xt_2 = FeatureHasher(alternate_sign=False, non_negative=False,
+                         input_type='string').fit_transform(X)
+    # With initially positive features, the non_negative option should
+    # have no impact when alternate_sign=False
+    assert_array_equal(Xt.data, Xt_2.data)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hash_collisions():
+    X = [list("Thequickbrownfoxjumped")]
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+                       n_features=1, input_type='string').fit_transform(X)
+    # check that some of the hashed tokens are added
+    # with an opposite sign and cancel out
+    assert abs(Xt.data[0]) < len(X[0])
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+                       n_features=1, input_type='string').fit_transform(X)
+    assert abs(Xt.data[0]) < len(X[0])
+
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+                       n_features=1, input_type='string').fit_transform(X)
+    assert Xt.data[0] == len(X[0])
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hasher_negative():
+    X = [{"foo": 2, "bar": -4, "baz": -1}.items()]
+    Xt = FeatureHasher(alternate_sign=False, non_negative=False,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() > 0)
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() > 0)

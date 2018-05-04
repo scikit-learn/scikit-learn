@@ -28,11 +28,11 @@ from ..externals import six
 from ..externals.six import u, b
 from ..externals.six.moves import range, zip
 from ..utils import check_array
-from ..utils.fixes import frombuffer_empty
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
-                       multilabel=False, zero_based="auto", query_id=False):
+                       multilabel=False, zero_based="auto", query_id=False,
+                       offset=0, length=-1):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -77,6 +77,12 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
+        n_features is only required if ``offset`` or ``length`` are passed a
+        non-default value.
+
+    dtype : numpy data type, default np.float64
+        Data type of dataset to be loaded. This will be the data type of the
+        output numpy arrays ``X`` and ``y``.
 
     multilabel : boolean, optional, default False
         Samples may have several labels each (see
@@ -89,14 +95,22 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         If set to "auto", a heuristic check is applied to determine this from
         the file contents. Both kinds of files occur "in the wild", but they
         are unfortunately not self-identifying. Using "auto" or True should
-        always be safe.
+        always be safe when no ``offset`` or ``length`` is passed.
+        If ``offset`` or ``length`` are passed, the "auto" mode falls back
+        to ``zero_based=True`` to avoid having the heuristic check yield
+        inconsistent results on different segments of the file.
 
     query_id : boolean, default False
         If True, will return the query_id array for each file.
 
-    dtype : numpy data type, default np.float64
-        Data type of dataset to be loaded. This will be the data type of the
-        output numpy arrays ``X`` and ``y``.
+    offset : integer, optional, default 0
+        Ignore the offset first bytes by seeking forward, then
+        discarding the following bytes up until the next new line
+        character.
+
+    length : integer, optional, default -1
+        If strictly positive, stop reading any new line of data once the
+        position in the file has reached the (offset + length) bytes threshold.
 
     Returns
     -------
@@ -130,7 +144,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         X, y = get_data()
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                                     zero_based, query_id))
+                                     zero_based, query_id, offset, length))
 
 
 def _gen_open(f):
@@ -150,30 +164,34 @@ def _gen_open(f):
         return open(f, "rb")
 
 
-def _open_and_load(f, dtype, multilabel, zero_based, query_id):
+def _open_and_load(f, dtype, multilabel, zero_based, query_id,
+                   offset=0, length=-1):
     if hasattr(f, "read"):
         actual_dtype, data, ind, indptr, labels, query = \
-            _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+            _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
+                                offset, length)
     # XXX remove closing when Python 2.7+/3.1+ required
     else:
         with closing(_gen_open(f)) as f:
             actual_dtype, data, ind, indptr, labels, query = \
-                _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+                _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
+                                    offset, length)
 
     # convert from array.array, give data the right dtype
     if not multilabel:
-        labels = frombuffer_empty(labels, np.float64)
-    data = frombuffer_empty(data, actual_dtype)
-    indices = frombuffer_empty(ind, np.intc)
+        labels = np.frombuffer(labels, np.float64)
+    data = np.frombuffer(data, actual_dtype)
+    indices = np.frombuffer(ind, np.intc)
     indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
-    query = frombuffer_empty(query, np.int64)
+    query = np.frombuffer(query, np.int64)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
     return data, indices, indptr, labels, query
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
-                        multilabel=False, zero_based="auto", query_id=False):
+                        multilabel=False, zero_based="auto", query_id=False,
+                        offset=0, length=-1):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -206,6 +224,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         in any of the input files, but setting it to a lower value will cause
         an exception to be raised.
 
+    dtype : numpy data type, default np.float64
+        Data type of dataset to be loaded. This will be the data type of the
+        output numpy arrays ``X`` and ``y``.
+
     multilabel : boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
@@ -217,14 +239,22 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         If set to "auto", a heuristic check is applied to determine this from
         the file contents. Both kinds of files occur "in the wild", but they
         are unfortunately not self-identifying. Using "auto" or True should
-        always be safe.
+        always be safe when no offset or length is passed.
+        If offset or length are passed, the "auto" mode falls back
+        to zero_based=True to avoid having the heuristic check yield
+        inconsistent results on different segments of the file.
 
     query_id : boolean, defaults to False
         If True, will return the query_id array for each file.
 
-    dtype : numpy data type, default np.float64
-        Data type of dataset to be loaded. This will be the data type of the
-        output numpy arrays ``X`` and ``y``.
+    offset : integer, optional, default 0
+        Ignore the offset first bytes by seeking forward, then
+        discarding the following bytes up until the next new line
+        character.
+
+    length : integer, optional, default -1
+        If strictly positive, stop reading any new line of data once the
+        position in the file has reached the (offset + length) bytes threshold.
 
     Returns
     -------
@@ -246,16 +276,27 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     --------
     load_svmlight_file
     """
-    r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id))
+    if (offset != 0 or length > 0) and zero_based == "auto":
+        # disable heuristic search to avoid getting inconsistent results on
+        # different segments of the file
+        zero_based = True
+
+    if (offset != 0 or length > 0) and n_features is None:
+        raise ValueError(
+            "n_features is required when offset or length is specified.")
+
+    r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id),
+                        offset=offset, length=length)
          for f in files]
 
-    if (zero_based is False
-            or zero_based == "auto" and all(np.min(tmp[1]) > 0 for tmp in r)):
-        for ind in r:
-            indices = ind[1]
+    if (zero_based is False or
+            zero_based == "auto" and all(len(tmp[1]) and np.min(tmp[1]) > 0
+                                         for tmp in r)):
+        for _, indices, _, _, _ in r:
             indices -= 1
 
-    n_f = max(ind[1].max() for ind in r) + 1
+    n_f = max(ind[1].max() if len(ind[1]) else 0 for ind in r) + 1
+
     if n_features is None:
         n_features = n_f
     elif n_features < n_f:

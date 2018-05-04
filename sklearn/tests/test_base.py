@@ -1,8 +1,6 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
-import sys
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -15,6 +13,8 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -59,19 +59,6 @@ class ModifyInitParams(BaseEstimator):
     """
     def __init__(self, a=np.array([0])):
         self.a = a.copy()
-
-
-class DeprecatedAttributeEstimator(BaseEstimator):
-    def __init__(self, a=None, b=None):
-        self.a = a
-        if b is not None:
-            DeprecationWarning("b is deprecated and renamed 'a'")
-            self.a = b
-
-    @property
-    @deprecated("Parameter 'b' is deprecated and renamed to 'a'")
-    def b(self):
-        return self._b
 
 
 class Buggy(BaseEstimator):
@@ -219,19 +206,6 @@ def test_get_params():
     assert_raises(ValueError, test.set_params, a__a=2)
 
 
-def test_get_params_deprecated():
-    # deprecated attribute should not show up as params
-    est = DeprecatedAttributeEstimator(a=1)
-
-    assert_true('a' in est.get_params())
-    assert_true('a' in est.get_params(deep=True))
-    assert_true('a' in est.get_params(deep=False))
-
-    assert_true('b' not in est.get_params())
-    assert_true('b' not in est.get_params(deep=True))
-    assert_true('b' not in est.get_params(deep=False))
-
-
 def test_is_classifier():
     svc = SVC()
     assert_true(is_classifier(svc))
@@ -252,6 +226,32 @@ def test_set_params():
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
     # assert_raises(AttributeError, bad_pipeline.set_params,
     #               bad__stupid_param=True)
+
+
+def test_set_params_passes_all_parameters():
+    # Make sure all parameters are passed together to set_params
+    # of nested estimator. Regression test for #9944
+
+    class TestDecisionTree(DecisionTreeClassifier):
+        def set_params(self, **kwargs):
+            super(TestDecisionTree, self).set_params(**kwargs)
+            # expected_kwargs is in test scope
+            assert kwargs == expected_kwargs
+            return self
+
+    expected_kwargs = {'max_depth': 5, 'min_samples_leaf': 2}
+    for est in [Pipeline([('estimator', TestDecisionTree())]),
+                GridSearchCV(TestDecisionTree(), {})]:
+        est.set_params(estimator__max_depth=5,
+                       estimator__min_samples_leaf=2)
+
+
+def test_set_params_updates_valid_params():
+    # Check that set_params tries to set SVC().C, not
+    # DecisionTreeClassifier().C
+    gscv = GridSearchCV(DecisionTreeClassifier(), {})
+    gscv.set_params(estimator=SVC(), estimator__C=42.0)
+    assert gscv.estimator.C == 42.0
 
 
 def test_score_sample_weight():
@@ -300,7 +300,7 @@ def test_clone_pandas_dataframe():
         def fit(self, X, y=None):
             pass
 
-        def transform(self, X, y=None):
+        def transform(self, X):
             pass
 
     # build and clone estimator
@@ -314,9 +314,17 @@ def test_clone_pandas_dataframe():
     assert_equal(e.scalar_param, cloned_e.scalar_param)
 
 
-class TreeNoVersion(DecisionTreeClassifier):
-    def __getstate__(self):
-        return self.__dict__
+def test_pickle_version_warning_is_not_raised_with_matching_version():
+    iris = datasets.load_iris()
+    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
+    tree_pickle = pickle.dumps(tree)
+    assert_true(b"version" in tree_pickle)
+    tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
+
+    # test that we can predict with the restored decision tree classifier
+    score_of_original = tree.score(iris.data, iris.target)
+    score_of_restored = tree_restored.score(iris.data, iris.target)
+    assert_equal(score_of_original, score_of_restored)
 
 
 class TreeBadVersion(DecisionTreeClassifier):
@@ -324,38 +332,121 @@ class TreeBadVersion(DecisionTreeClassifier):
         return dict(self.__dict__.items(), _sklearn_version="something")
 
 
-def test_pickle_version_warning():
-    # check that warnings are raised when unpickling in a different version
+pickle_error_message = (
+    "Trying to unpickle estimator {estimator} from "
+    "version {old_version} when using version "
+    "{current_version}. This might "
+    "lead to breaking code or invalid results. "
+    "Use at your own risk.")
 
-    # first, check no warning when in the same version:
+
+def test_pickle_version_warning_is_issued_upon_different_version():
     iris = datasets.load_iris()
-    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
-    tree_pickle = pickle.dumps(tree)
-    assert_true(b"version" in tree_pickle)
-    assert_no_warnings(pickle.loads, tree_pickle)
-
-    # check that warning is raised on different version
     tree = TreeBadVersion().fit(iris.data, iris.target)
     tree_pickle_other = pickle.dumps(tree)
-    message = ("Trying to unpickle estimator TreeBadVersion from "
-               "version {0} when using version {1}. This might lead to "
-               "breaking code or invalid results. "
-               "Use at your own risk.".format("something",
-                                              sklearn.__version__))
+    message = pickle_error_message.format(estimator="TreeBadVersion",
+                                          old_version="something",
+                                          current_version=sklearn.__version__)
     assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
 
-    # check that not including any version also works:
+
+class TreeNoVersion(DecisionTreeClassifier):
+    def __getstate__(self):
+        return self.__dict__
+
+
+def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
+    iris = datasets.load_iris()
     # TreeNoVersion has no getstate, like pre-0.18
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
     assert_false(b"version" in tree_pickle_noversion)
-    message = message.replace("something", "pre-0.18")
-    message = message.replace("TreeBadVersion", "TreeNoVersion")
+    message = pickle_error_message.format(estimator="TreeNoVersion",
+                                          old_version="pre-0.18",
+                                          current_version=sklearn.__version__)
     # check we got the warning about using pre-0.18 pickle
     assert_warns_message(UserWarning, message, pickle.loads,
                          tree_pickle_noversion)
 
-    # check that no warning is raised for external estimators
-    TreeNoVersion.__module__ = "notsklearn"
-    assert_no_warnings(pickle.loads, tree_pickle_noversion)
+
+def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
+    iris = datasets.load_iris()
+    tree = TreeNoVersion().fit(iris.data, iris.target)
+    tree_pickle_noversion = pickle.dumps(tree)
+    try:
+        module_backup = TreeNoVersion.__module__
+        TreeNoVersion.__module__ = "notsklearn"
+        assert_no_warnings(pickle.loads, tree_pickle_noversion)
+    finally:
+        TreeNoVersion.__module__ = module_backup
+
+
+class DontPickleAttributeMixin(object):
+    def __getstate__(self):
+        data = self.__dict__.copy()
+        data["_attribute_not_pickled"] = None
+        return data
+
+    def __setstate__(self, state):
+        state["_restored"] = True
+        self.__dict__.update(state)
+
+
+class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+    def __init__(self, attribute_pickled=5):
+        self.attribute_pickled = attribute_pickled
+        self._attribute_not_pickled = None
+
+
+def test_pickling_when_getstate_is_overwritten_by_mixin():
+    estimator = MultiInheritanceEstimator()
+    estimator._attribute_not_pickled = "this attribute should not be pickled"
+
+    serialized = pickle.dumps(estimator)
+    estimator_restored = pickle.loads(serialized)
+    assert_equal(estimator_restored.attribute_pickled, 5)
+    assert_equal(estimator_restored._attribute_not_pickled, None)
+    assert_true(estimator_restored._restored)
+
+
+def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
+    try:
+        estimator = MultiInheritanceEstimator()
+        text = "this attribute should not be pickled"
+        estimator._attribute_not_pickled = text
+        old_mod = type(estimator).__module__
+        type(estimator).__module__ = "notsklearn"
+
+        serialized = estimator.__getstate__()
+        assert_dict_equal(serialized, {'_attribute_not_pickled': None,
+                                       'attribute_pickled': 5})
+
+        serialized['attribute_pickled'] = 4
+        estimator.__setstate__(serialized)
+        assert_equal(estimator.attribute_pickled, 4)
+        assert_true(estimator._restored)
+    finally:
+        type(estimator).__module__ = old_mod
+
+
+class SingleInheritanceEstimator(BaseEstimator):
+    def __init__(self, attribute_pickled=5):
+        self.attribute_pickled = attribute_pickled
+        self._attribute_not_pickled = None
+
+    def __getstate__(self):
+        data = self.__dict__.copy()
+        data["_attribute_not_pickled"] = None
+        return data
+
+
+@ignore_warnings(category=(UserWarning))
+def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
+    estimator = SingleInheritanceEstimator()
+    estimator._attribute_not_pickled = "this attribute should not be pickled"
+
+    serialized = pickle.dumps(estimator)
+    estimator_restored = pickle.loads(serialized)
+    assert_equal(estimator_restored.attribute_pickled, 5)
+    assert_equal(estimator_restored._attribute_not_pickled, None)

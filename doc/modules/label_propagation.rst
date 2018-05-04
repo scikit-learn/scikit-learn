@@ -52,8 +52,8 @@ differ in modifications to the similarity matrix that graph and the
 clamping effect on the label distributions.
 Clamping allows the algorithm to change the weight of the true ground labeled
 data to some degree. The :class:`LabelPropagation` algorithm performs hard
-clamping of input labels, which means :math:`\alpha=1`. This clamping factor
-can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
+clamping of input labels, which means :math:`\alpha=0`. This clamping factor
+can be relaxed, to say :math:`\alpha=0.2`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
 change its confidence of the distribution within 20 percent.
 

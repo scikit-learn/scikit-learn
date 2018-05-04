@@ -8,14 +8,10 @@
 
 import numpy as np
 import scipy.sparse as sp
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    from ..utils.arpack import svds
+from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, as_float_array, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -59,9 +55,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
-    random_state : int or RandomState, optional
-        (Seed for) pseudo-random number generator. If not given, the
-        numpy.random singleton is used.
+    random_state : int, RandomState instance or None, optional, default = None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
@@ -93,11 +91,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
     >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    [0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
     >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
     0.249...
     >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
-    [ 2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
+    [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
 
     See also
     --------
@@ -112,7 +110,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    SVD suffers from a problem called "sign indeterminancy", which means the
+    SVD suffers from a problem called "sign indeterminacy", which means the
     sign of the ``components_`` and the output from transform depend on the
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
@@ -134,6 +132,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -150,17 +150,15 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = as_float_array(X, copy=False)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
         random_state = check_random_state(self.random_state)
-
-        # If sparse and not csr or csc, convert to csr
-        if sp.issparse(X) and X.getformat() not in ["csr", "csc"]:
-            X = X.tocsr()
 
         if self.algorithm == "arpack":
             U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)

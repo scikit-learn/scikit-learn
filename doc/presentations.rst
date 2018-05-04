@@ -37,7 +37,7 @@ Videos
   <http://videolectures.net/icml2010_varaquaux_scik/>`_ by `Gael Varoquaux`_ at
   ICML 2010
 
-    A three minute video from a very early stage of the scikit, explaining the
+    A three minute video from a very early stage of scikit-learn, explaining the
     basic idea and approach we are following.
 
 - `Introduction to statistical learning with scikit-learn <http://archive.org/search.php?query=scikit-learn>`_
@@ -68,7 +68,7 @@ Videos
 
     Interactive demonstration of some scikit-learn features. 75 minutes.
 
-- `scikit-learn tutorial <https://vimeo.com/53062607>`_ by `Jake Vanderplas`_ at PyData NYC 2012
+- `scikit-learn tutorial <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_ by `Jake Vanderplas`_ at PyData NYC 2012
 
     Presentation using the online tutorial, 45 minutes.
 

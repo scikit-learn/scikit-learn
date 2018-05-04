@@ -6,8 +6,8 @@
 Model evaluation: quantifying the quality of predictions
 ========================================================
 
-There are 3 different approaches to evaluate the quality of predictions of a
-model:
+There are 3 different APIs for evaluating the quality of a model's
+predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
@@ -54,33 +54,43 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-
-===========================     =========================================     ==================================
-Scoring                         Function                                      Comment
-===========================     =========================================     ==================================
+==============================    =============================================     ==================================
+Scoring                           Function                                          Comment
+==============================    =============================================     ==================================
 **Classification**
-'accuracy'                      :func:`metrics.accuracy_score`
-'average_precision'             :func:`metrics.average_precision_score`
-'f1'                            :func:`metrics.f1_score`                      for binary targets
-'f1_micro'                      :func:`metrics.f1_score`                      micro-averaged
-'f1_macro'                      :func:`metrics.f1_score`                      macro-averaged
-'f1_weighted'                   :func:`metrics.f1_score`                      weighted average
-'f1_samples'                    :func:`metrics.f1_score`                      by multilabel sample
-'neg_log_loss'                  :func:`metrics.log_loss`                      requires ``predict_proba`` support
-'precision' etc.                :func:`metrics.precision_score`               suffixes apply as with 'f1'
-'recall' etc.                   :func:`metrics.recall_score`                  suffixes apply as with 'f1'
-'roc_auc'                       :func:`metrics.roc_auc_score`
+'accuracy'                        :func:`metrics.accuracy_score`
+'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`           for binary targets
+'average_precision'               :func:`metrics.average_precision_score`
+'brier_score_loss'                :func:`metrics.brier_score_loss`
+'f1'                              :func:`metrics.f1_score`                          for binary targets
+'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
+'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
+'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
+'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
+'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
+'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
+'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'           :func:`metrics.adjusted_rand_score`
+'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
+'completeness_score'              :func:`metrics.completeness_score`
+'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'               :func:`metrics.homogeneity_score`
+'mutual_info_score'               :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                 :func:`metrics.v_measure_score`
 
 **Regression**
-'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
-'r2'                            :func:`metrics.r2_score`
-===========================     =========================================     ==================================
+'explained_variance'              :func:`metrics.explained_variance_score`
+'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
+'r2'                              :func:`metrics.r2_score`
+==============================    =============================================     ==================================
+
 
 Usage examples:
 
@@ -88,13 +98,13 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(probability=True, random_state=0)
+    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
     >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.06...])
+    array([-0.09..., -0.16..., -0.07...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'completeness_score', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -110,7 +120,7 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metric` also exposes a set of simple functions
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
 measuring a prediction error given ground truth and prediction:
 
 - functions ending with ``_score`` return a value to
@@ -164,24 +174,23 @@ Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
 
     >>> import numpy as np
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
+    >>> def my_custom_loss_func(y_true, y_pred):
+    ...     diff = np.abs(y_true - y_pred).max()
     ...     return np.log(1 + diff)
     ...
-    >>> # loss_func will negate the return value of my_custom_loss_func,
-    >>> #  which will be np.log(2), 0.693, given the values for ground_truth
-    >>> #  and predictions defined below.
-    >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1, 1]]
-    >>> predictions  = [0, 1]
+    >>> # score will negate the return value of my_custom_loss_func,
+    >>> # which will be np.log(2), 0.693, given the values for X
+    >>> # and y defined below.
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> X = [[1], [1]]
+    >>> y  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
-    >>> clf = clf.fit(ground_truth, predictions)
-    >>> loss(clf,ground_truth, predictions) # doctest: +ELLIPSIS
-    -0.69...
-    >>> score(clf,ground_truth, predictions) # doctest: +ELLIPSIS
+    >>> clf = clf.fit(X, y)
+    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
     0.69...
+    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    -0.69...
 
 
 .. _diy_scoring:
@@ -203,6 +212,51 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. _multimetric_scoring:
+
+Using multiple metric evaluation
+--------------------------------
+
+Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
+``RandomizedSearchCV`` and ``cross_validate``.
+
+There are two ways to specify multiple scoring metrics for the ``scoring``
+parameter:
+
+- As an iterable of string metrics::
+      >>> scoring = ['accuracy', 'precision']
+
+- As a ``dict`` mapping the scorer name to the scoring function::
+      >>> from sklearn.metrics import accuracy_score
+      >>> from sklearn.metrics import make_scorer
+      >>> scoring = {'accuracy': make_scorer(accuracy_score),
+      ...            'prec': 'precision'}
+
+Note that the dict values can either be scorer functions or one of the
+predefined metric strings.
+
+Currently only those scorer functions that return a single score can be passed
+inside the dict. Scorer functions that return multiple values are not
+permitted and will require a wrapper to return a single metric::
+
+    >>> from sklearn.model_selection import cross_validate
+    >>> from sklearn.metrics import confusion_matrix
+    >>> # A sample toy binary classification dataset
+    >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
+    >>> svm = LinearSVC(random_state=0)
+    >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
+    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
+    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
+    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> # Getting the test set true positive scores
+    >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
+    [16 14  9]
+    >>> # Getting the test set false negative scores
+    >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
+    [1 3 7]
 
 .. _classification_metrics:
 
@@ -223,9 +277,9 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   matthews_corrcoef
    precision_recall_curve
    roc_curve
+   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -236,6 +290,7 @@ Others also work in the multiclass case:
    cohen_kappa_score
    confusion_matrix
    hinge_loss
+   matthews_corrcoef
 
 
 Some also work in the multilabel case:
@@ -357,6 +412,87 @@ In the multilabel case with binary label indicators: ::
     for an example of accuracy score usage using permutations of
     the dataset.
 
+.. _balanced_accuracy_score:
+
+Balanced accuracy score
+-----------------------
+
+The :func:`balanced_accuracy_score` function computes the
+`balanced accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which
+avoids inflated performance estimates on imbalanced datasets. It is defined as the
+arithmetic mean of `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true positive rate) and `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true negative rate), or the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
+obtained on either class.
+
+If the classifier performs equally well on either class, this term reduces to the
+conventional accuracy (i.e., the number of correct predictions divided by the total
+number of predictions). In contrast, if the conventional accuracy is above chance only
+because the classifier takes advantage of an imbalanced test set, then the balanced
+accuracy, as appropriate, will drop to 50%.
+
+If :math:`\hat{y}_i\in\{0,1\}` is the predicted value of
+the :math:`i`-th sample and :math:`y_i\in\{0,1\}` is the corresponding true value,
+then the balanced accuracy is defined as
+
+.. math::
+
+   \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{2} \left(\frac{\sum_i 1(\hat{y}_i = 1 \land y_i = 1)}{\sum_i 1(y_i = 1)} + \frac{\sum_i 1(\hat{y}_i = 0 \land y_i = 0)}{\sum_i 1(y_i = 0)}\right)
+
+where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+Under this definition, the balanced accuracy coincides with :func:`roc_auc_score`
+given binary ``y_true`` and ``y_pred``:
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import balanced_accuracy_score, roc_auc_score
+  >>> y_true = [0, 1, 0, 0, 1, 0]
+  >>> y_pred = [0, 1, 0, 0, 0, 1]
+  >>> balanced_accuracy_score(y_true, y_pred)
+  0.625
+  >>> roc_auc_score(y_true, y_pred)
+  0.625
+
+(but in general, :func:`roc_auc_score` takes as its second argument non-binary scores).
+
+.. note::
+
+    Currently this score function is only defined for binary classification problems, you
+    may need to wrap it by yourself if you want to use it for multilabel problems.
+
+    There is no clear consensus on the definition of a balanced accuracy for the
+    multiclass setting. Here are some definitions that can be found in the literature:
+
+    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
+      the recall for each class is computed independently and the average is taken over all classes.
+      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
+      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
+      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
+    * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
+      and the recall for each class is computed. Those values are then averaged over the total
+      number of classes to get the balanced accuracy.
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+      is computed for each class and then averaged over total number of classes.
+
+    Note that none of these different definitions are currently implemented within
+    the :func:`balanced_accuracy_score` function.
+
+.. topic:: References:
+
+  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
+     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
+     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     IJCNN 2015.
+  .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
+     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     IJCV 2010.
+  .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
+     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
+     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
+     2015.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
+     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+
 .. _cohen_kappa:
 
 Cohen's kappa
@@ -466,7 +602,7 @@ and inferred labels::
     for an example of classification report usage for text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
 
@@ -572,10 +708,25 @@ The :func:`precision_recall_curve` computes a precision-recall curve
 from the ground truth label and a score given by the classifier
 by varying a decision threshold.
 
-The :func:`average_precision_score` function computes the average precision
-(AP) from prediction scores. This score corresponds to the area under the
-precision-recall curve. The value is between 0 and 1 and higher is better.
-With random predictions, the AP is the fraction of positive samples.
+The :func:`average_precision_score` function computes the
+`average precision <http://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
+(AP) from prediction scores. The value is between 0 and 1 and higher is better.
+AP is defined as
+
+.. math::
+    \text{AP} = \sum_n (R_n - R_{n-1}) P_n
+
+where :math:`P_n` and :math:`R_n` are the precision and recall at the
+nth threshold. With random predictions, the AP is the fraction of positive
+samples.
+
+References [Manning2008]_ and [Everingham2010]_ present alternative variants of
+AP that interpolate the precision-recall curve. Currently,
+:func:`average_precision_score` does not implement any interpolated variant.
+References [Davis2006]_ and [Flach2015]_ describe why a linear interpolation of
+points on the precision-recall curve provides an overly-optimistic measure of
+classifier performance. This linear interpolation is used when computing area
+under the curve with the trapezoidal rule in :func:`auc`.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -602,7 +753,7 @@ binary classification and multilabel indicator format.
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
 
@@ -610,9 +761,23 @@ binary classification and multilabel indicator format.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`
-    for an example of :func:`precision_recall_curve` usage to select
-    features for sparse linear models.
+
+.. topic:: References:
+
+  .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
+     <http://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+     2008.
+  .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
+     `The Pascal Visual Object Classes (VOC) Challenge
+     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+     IJCV 2010.
+  .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
+     <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+     ICML 2006.
+  .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
+     <http://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+     NIPS 2015.
+
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -665,7 +830,7 @@ Here are some small examples in binary classification::
   >>> metrics.fbeta_score(y_true, y_pred, beta=2) # doctest: +ELLIPSIS
   0.55...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
-  (array([ 0.66...,  1.        ]), array([ 1. ,  0.5]), array([ 0.71...,  0.83...]), array([2, 2]...))
+  (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]))
 
 
   >>> import numpy as np
@@ -675,13 +840,13 @@ Here are some small examples in binary classification::
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
   >>> precision  # doctest: +ELLIPSIS
-  array([ 0.66...,  0.5       ,  1.        ,  1.        ])
+  array([0.66..., 0.5       , 1.        , 1.        ])
   >>> recall
-  array([ 1. ,  0.5,  0.5,  0. ])
+  array([1. , 0.5, 0.5, 0. ])
   >>> threshold
-  array([ 0.35,  0.4 ,  0.8 ])
+  array([0.35, 0.4 , 0.8 ])
   >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-  0.79...
+  0.83...
 
 
 
@@ -746,7 +911,7 @@ Then the metrics are defined as:
   0.23...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
   ... # doctest: +ELLIPSIS
-  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
+  (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...))
 
 For multiclass classification with a "negative class", it is possible to exclude some labels:
 
@@ -901,13 +1066,39 @@ for binary classes.  Quoting Wikipedia:
     prediction, 0 an average random prediction and -1 an inverse prediction.
     The statistic is also known as the phi coefficient."
 
-If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
-number of true positives, true negatives, false positives and false negatives,
-the MCC coefficient is defined as
+
+In the binary (two-class) case, :math:`tp`, :math:`tn`, :math:`fp` and
+:math:`fn` are respectively the number of true positives, true negatives, false
+positives and false negatives, the MCC is defined as
 
 .. math::
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
+
+In the multiclass case, the Matthews correlation coefficient can be `defined
+<http://rk.kvl.dk/introduction/index.html>`_ in terms of a
+:func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
+definition consider the following intermediate variables:
+
+* :math:`t_k=\sum_{i}^{K} C_{ik}` the number of times class :math:`k` truly occurred,
+* :math:`p_k=\sum_{i}^{K} C_{ki}` the number of times class :math:`k` was predicted,
+* :math:`c=\sum_{k}^{K} C_{kk}` the total number of samples correctly predicted,
+* :math:`s=\sum_{i}^{K} \sum_{j}^{K} C_{ij}` the total number of samples.
+
+Then the multiclass MCC is defined as:
+
+.. math::
+    MCC = \frac{
+        c \times s - \sum_{k}^{K} p_k \times t_k
+    }{\sqrt{
+        (s^2 - \sum_{k}^{K} p_k^2) \times
+        (s^2 - \sum_{k}^{K} t_k^2)
+    }}
+
+When there are more than two labels, the value of the MCC will no longer range
+between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
+depending on the number and distribution of ground true labels. The maximum
+value is always +1.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -946,11 +1137,11 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
+    array([0. , 0. , 0.5, 0.5, 1. ])
     >>> tpr
-    array([ 0.5,  0.5,  1. ,  1. ])
+    array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
 
 This figure shows an example of such an ROC curve:
 
@@ -980,6 +1171,10 @@ Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification,
 if the predicted outputs have been binarized.
+
+In applications where a high false positive rate is not tolerable the parameter
+``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+to the given limit.
 
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
@@ -1080,7 +1275,7 @@ predictions.
    BS = \frac{1}{N} \sum_{t=1}^{N}(f_t - o_t)^2
 
 where : :math:`N` is the total number of predictions, :math:`f_t` is the
-predicted probablity of the actual outcome :math:`o_t`.
+predicted probability of the actual outcome :math:`o_t`.
 
 Here is a small example of usage of this function:::
 
@@ -1109,7 +1304,7 @@ Here is a small example of usage of this function:::
 .. topic:: References:
 
   * G. Brier, `Verification of forecasts expressed in terms of probability
-    <http://docs.lib.noaa.gov/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
     Monthly weather review 78.1 (1950)
 
 .. _multilabel_ranking_metrics:
@@ -1173,29 +1368,33 @@ implements label ranking average precision (LRAP). This metric is linked to
 the :func:`average_precision_score` function, but is based on the notion of
 label ranking instead of precision and recall.
 
-Label ranking average precision (LRAP) is the average over each ground truth
-label assigned to each sample, of the ratio of true vs. total labels with lower
-score. This metric will yield better scores if you are able to give better rank
-to the labels associated with each sample. The obtained score is always strictly
-greater than 0, and the best value is 1. If there is exactly one relevant
-label per sample, label ranking average precision is equivalent to the `mean
+Label ranking average precision (LRAP) averages over the samples the answer to
+the following question: for each ground truth label, what fraction of
+higher-ranked labels were true labels? This performance measure will be higher
+if you are able to give better rank to the labels associated with each sample.
+The obtained score is always strictly greater than 0, and the best value is 1.
+If there is exactly one relevant label per sample, label ranking average
+precision is equivalent to the `mean
 reciprocal rank <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_.
 
 Formally, given a binary indicator matrix of the ground truth labels
-:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
-score associated with each label
-:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}`
+and the score associated with each label
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
 the average precision is defined as
 
 .. math::
   LRAP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0}
     \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
 
 
-with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
-:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
-and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
+where
+:math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
+:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`,
+:math:`|\cdot|` computes the cardinality of the set (i.e., the number of
+elements in the set), and :math:`||\cdot||_0` is the :math:`\ell_0` "norm"
+(which computes the number of nonzero elements in a vector).
 
 Here is a small example of usage of this function::
 
@@ -1214,8 +1413,8 @@ Ranking loss
 The :func:`label_ranking_loss` function computes the ranking loss which
 averages over the samples the number of label pairs that are incorrectly
 ordered, i.e. true labels have a lower score than false labels, weighted by
-the inverse number of false and true labels. The lowest achievable
-ranking loss is zero.
+the inverse of the number of ordered pairs of false and true labels.
+The lowest achievable ranking loss is zero.
 
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
@@ -1225,10 +1424,12 @@ the ranking loss is defined as
 
 .. math::
   \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|(n_\text{labels} - |y_i|)}
-    \left|\left\{(k, l): \hat{f}_{ik} < \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
+    \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
-where :math:`|\cdot|` is the :math:`\ell_0` norm or the cardinality of the set.
+where :math:`|\cdot|` computes the cardinality of the set (i.e., the number of
+elements in the set) and :math:`||\cdot||_0` is the :math:`\ell_0` "norm"
+(which computes the number of nonzero elements in a vector).
 
 Here is a small example of usage of this function::
 
@@ -1314,7 +1515,7 @@ function::
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
     ... # doctest: +ELLIPSIS
-    array([ 0.967...,  1.        ])
+    array([0.967..., 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.990...
@@ -1349,10 +1550,10 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> mean_absolute_error(y_true, y_pred)
   0.75
   >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-  array([ 0.5,  1. ])
+  array([0.5, 1. ])
   >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
   ... # doctest: +ELLIPSIS
-  0.849...
+  0.85...
 
 .. _mean_squared_error:
 
@@ -1498,7 +1699,7 @@ Here is a small example of usage of the :func:`r2_score` function::
   0.936...
   >>> r2_score(y_true, y_pred, multioutput='raw_values')
   ... # doctest: +ELLIPSIS
-  array([ 0.965...,  0.908...])
+  array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
   ... # doctest: +ELLIPSIS
   0.925...
@@ -1539,7 +1740,7 @@ implements several such simple strategies for classification:
   set class distribution.
 - ``most_frequent`` always predicts the most frequent label in the training set.
 - ``prior`` always predicts the class that maximizes the class prior
-  (like ``most_frequent`) and ``predict_proba`` returns the class prior.
+  (like ``most_frequent``) and ``predict_proba`` returns the class prior.
 - ``uniform`` generates predictions uniformly at random.
 - ``constant`` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring, when the positive class
@@ -1574,7 +1775,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.97...
 

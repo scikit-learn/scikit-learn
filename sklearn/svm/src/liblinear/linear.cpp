@@ -2910,6 +2910,8 @@ void free_model_content(struct model *model_ptr)
 		free(model_ptr->w);
 	if(model_ptr->label != NULL)
 		free(model_ptr->label);
+	if(model_ptr->n_iter != NULL)
+	    free(model_ptr->n_iter);
 }
 
 void free_and_destroy_model(struct model **model_ptr_ptr)

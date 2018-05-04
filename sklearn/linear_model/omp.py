@@ -6,7 +6,7 @@
 # License: BSD 3 clause
 
 import warnings
-from distutils.version import LooseVersion
+from math import sqrt
 
 import numpy as np
 from scipy import linalg
@@ -17,13 +17,6 @@ from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
-
-import scipy
-solve_triangular_args = {}
-if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
-    # check_finite=False is an optimization available only in scipy >=0.12
-    solve_triangular_args = {'check_finite': False}
-
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -90,14 +83,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
-    if solve_triangular_args:
-        # new scipy, don't need to initialize because check_finite=False
-        L = np.empty((max_features, max_features), dtype=X.dtype)
-    else:
-        # old scipy, we need the garbage upper triangle to be non-Inf
-        L = np.zeros((max_features, max_features), dtype=X.dtype)
 
-    L[0, 0] = 1.
+    L = np.empty((max_features, max_features), dtype=X.dtype)
+
     if return_path:
         coefs = np.empty_like(L)
 
@@ -107,6 +95,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
             # atom already selected or inner product too small
             warnings.warn(premature, RuntimeWarning, stacklevel=2)
             break
+
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
@@ -114,19 +103,25 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
                                     L[n_active, :n_active],
                                     trans=0, lower=1,
                                     overwrite_b=True,
-                                    **solve_triangular_args)
+                                    check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = linalg.norm(X[:, lam]) ** 2 - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = linalg.norm(X[:, lam])
+
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
                          overwrite_b=False)
+
         if return_path:
             coefs[:n_active, n_active - 1] = gamma
         residual = y - np.dot(X[:, :n_active], gamma)
@@ -211,12 +206,9 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
-    if solve_triangular_args:
-        # new scipy, don't need to initialize because check_finite=False
-        L = np.empty((max_features, max_features), dtype=Gram.dtype)
-    else:
-        # old scipy, we need the garbage upper triangle to be non-Inf
-        L = np.zeros((max_features, max_features), dtype=Gram.dtype)
+
+    L = np.empty((max_features, max_features), dtype=Gram.dtype)
+
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -233,18 +225,22 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                                     L[n_active, :n_active],
                                     trans=0, lower=1,
                                     overwrite_b=True,
-                                    **solve_triangular_args)
+                                    check_finite=False)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = Gram[lam, lam] - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=3)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = sqrt(Gram[lam, lam])
+
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
         Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], Xy[:n_active], lower=True,
                          overwrite_b=False)
         if return_path:
@@ -269,7 +265,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
-    """Orthogonal Matching Pursuit (OMP)
+    r"""Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
     An instance of the problem has the form:
@@ -543,6 +539,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     """Orthogonal Matching Pursuit model (OMP)
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
     n_nonzero_coefs : int, optional
@@ -557,23 +555,19 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to `False`.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+    normalize : boolean, optional, default True
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
-
-    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -606,7 +600,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Lars
     LassoLars
     decomposition.sparse_encode
-
+    OrthogonalMatchingPursuitCV
     """
     def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
@@ -625,7 +619,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             Training data.
 
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
 
         Returns
@@ -695,15 +689,13 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to `False`.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+    normalize : boolean, optional, default True
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -750,6 +742,8 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     """Cross-validated Orthogonal Matching Pursuit model (OMP)
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
     copy : bool, optional
@@ -762,15 +756,13 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to `False`.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+    normalize : boolean, optional, default True
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -796,8 +788,6 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
-
-    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -847,7 +837,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             Training data.
 
         y : array-like, shape [n_samples]
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------

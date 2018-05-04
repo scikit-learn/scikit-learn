@@ -62,8 +62,9 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     plt.plot(xx, yy_up, 'k--')
 
     plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-                facecolors='none', zorder=10)
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired)
+                facecolors='none', zorder=10, edgecolors='k')
+    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired,
+                edgecolors='k')
 
     plt.axis('tight')
     x_min = -4.8

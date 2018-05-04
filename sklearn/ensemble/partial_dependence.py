@@ -53,13 +53,13 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
         raise ValueError('percentile values must be in [0, 1]')
 
     axes = []
+    emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
     for col in range(X.shape[1]):
         uniques = np.unique(X[:, col])
         if uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique vals
             axis = uniques
         else:
-            emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
             # create axis based on percentiles and grid resolution
             axis = np.linspace(emp_percentiles[0, col],
                                emp_percentiles[1, col],

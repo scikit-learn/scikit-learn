@@ -12,12 +12,13 @@ import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import (assert_true, assert_greater,
                                    assert_raise_message, assert_warns_message,
-                                   ignore_warnings)
+                                   ignore_warnings, assert_raises)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
 

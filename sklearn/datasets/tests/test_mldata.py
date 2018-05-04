@@ -45,7 +45,6 @@ def test_mldata_filename():
 
 def test_download(tmpdata):
     """Test that fetch_mldata is able to download and cache a data set."""
-
     _urlopen_ref = datasets.mldata.urlopen
     datasets.mldata.urlopen = mock_mldata_urlopen({
         'mock': {

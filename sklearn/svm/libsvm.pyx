@@ -54,7 +54,7 @@ LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 def fit(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -88,8 +88,8 @@ def fit(
         set to polynomial), 3 by default.
 
     gamma : float64, optional
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF). 0.1 by default.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float64, optional
         Independent parameter in poly/sigmoid kernel. 0 by default.
@@ -295,7 +295,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     degree : int
         Degree of the polynomial kernel.
     gamma : float
-        Gamma parameter in RBF kernel.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
 
@@ -341,7 +342,7 @@ def predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -461,7 +462,7 @@ def decision_function(
 def cross_validation(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int n_fold, svm_type=0, str kernel='rbf', int degree=3,
+    int n_fold, svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -494,8 +495,8 @@ def cross_validation(
         set to polynomial)
 
     gamma : float
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float
         Independent parameter in poly/sigmoid kernel.

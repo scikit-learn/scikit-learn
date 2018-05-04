@@ -3,11 +3,10 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-from sklearn.externals.funcsigs import signature
-
 import pytest
 import numpy as np
 
+from sklearn.utils.fixes import signature
 from sklearn.gaussian_process.kernels import _approx_fprime
 
 from sklearn.metrics.pairwise \
@@ -196,44 +195,50 @@ def check_hyperparameters_equal(kernel1, kernel2):
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_clone(kernel):
     # Test that sklearn's clone works correctly on kernels.
-    bounds = (1e-5, 1e5)
-    kernel_cloned = clone(kernel)
+    for kernel in kernels:
+        kernel_cloned = clone(kernel)
 
-    # XXX: Should this be fixed?
-    # This differs from the sklearn's estimators equality check.
-    assert_equal(kernel, kernel_cloned)
-    assert_not_equal(id(kernel), id(kernel_cloned))
+        # XXX: Should this be fixed?
+        # This differs from the sklearn's estimators equality check.
+        assert_equal(kernel, kernel_cloned)
+        assert_not_equal(id(kernel), id(kernel_cloned))
 
-    # Check that all constructor parameters are equal.
-    assert_equal(kernel.get_params(), kernel_cloned.get_params())
+        # Check that all constructor parameters are equal.
+        assert_equal(kernel.get_params(), kernel_cloned.get_params())
 
-    # Check that all hyperparameters are equal.
-    check_hyperparameters_equal(kernel, kernel_cloned)
+        # Check that all hyperparameters are equal.
+        yield check_hyperparameters_equal, kernel, kernel_cloned
 
+
+def test_kernel_clone_after_set_params():
     # This test is to verify that using set_params does not
     # break clone on kernels.
     # This used to break because in kernels such as the RBF, non-trivial
     # logic that modified the length scale used to be in the constructor
     # See https://github.com/scikit-learn/scikit-learn/issues/6961
     # for more details.
-    params = kernel.get_params()
-    # RationalQuadratic kernel is isotropic.
-    isotropic_kernels = (ExpSineSquared, RationalQuadratic)
-    if 'length_scale' in params and not isinstance(kernel,
-                                                   isotropic_kernels):
-        length_scale = params['length_scale']
-        if np.iterable(length_scale):
-            params['length_scale'] = length_scale[0]
-            params['length_scale_bounds'] = bounds
-        else:
-            params['length_scale'] = [length_scale] * 2
-            params['length_scale_bounds'] = bounds * 2
-        kernel_cloned.set_params(**params)
-        kernel_cloned_clone = clone(kernel_cloned)
-        assert_equal(kernel_cloned_clone.get_params(),
-                     kernel_cloned.get_params())
-        assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
-        check_hyperparameters_equal(kernel_cloned, kernel_cloned_clone)
+    bounds = (1e-5, 1e5)
+    for kernel in kernels:
+        kernel_cloned = clone(kernel)
+        params = kernel.get_params()
+        # RationalQuadratic kernel is isotropic.
+        isotropic_kernels = (ExpSineSquared, RationalQuadratic)
+        if 'length_scale' in params and not isinstance(kernel,
+                                                       isotropic_kernels):
+            length_scale = params['length_scale']
+            if np.iterable(length_scale):
+                params['length_scale'] = length_scale[0]
+                params['length_scale_bounds'] = bounds
+            else:
+                params['length_scale'] = [length_scale] * 2
+                params['length_scale_bounds'] = bounds * 2
+            kernel_cloned.set_params(**params)
+            kernel_cloned_clone = clone(kernel_cloned)
+            assert_equal(kernel_cloned_clone.get_params(),
+                         kernel_cloned.get_params())
+            assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
+            yield (check_hyperparameters_equal, kernel_cloned,
+                   kernel_cloned_clone)
 
 
 def test_matern_kernel():
@@ -279,8 +284,9 @@ def test_set_get_params():
         index = 0
         params = kernel.get_params()
         for hyperparameter in kernel.hyperparameters:
-            if hyperparameter.bounds == "fixed":
-                continue
+            if isinstance("string", type(hyperparameter.bounds)):
+                if hyperparameter.bounds == "fixed":
+                    continue
             size = hyperparameter.n_elements
             if size > 1:  # anisotropic kernels
                 assert_almost_equal(np.exp(kernel.theta[index:index + size]),
@@ -294,8 +300,9 @@ def test_set_get_params():
         index = 0
         value = 10  # arbitrary value
         for hyperparameter in kernel.hyperparameters:
-            if hyperparameter.bounds == "fixed":
-                continue
+            if isinstance("string", type(hyperparameter.bounds)):
+                if hyperparameter.bounds == "fixed":
+                    continue
             size = hyperparameter.n_elements
             if size > 1:  # anisotropic kernels
                 kernel.set_params(**{hyperparameter.name: [value] * size})

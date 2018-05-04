@@ -4,58 +4,50 @@ import pickle
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-import scipy
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree
-from sklearn.utils.testing import SkipTest, assert_raises_regex
+from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_raises_regex
 
 
 def dist_func(x1, x2, p):
     return np.sum((x1 - x2) ** p) ** (1. / p)
 
 
-def cmp_version(version1, version2):
-    version1 = tuple(map(int, version1.split('.')[:2]))
-    version2 = tuple(map(int, version2.split('.')[:2]))
+class TestMetrics(object):
+    n1 = 20
+    n2 = 25
+    d = 4
+    zero_frac = 0.5
+    rseed = 0
+    dtype = np.float64
+    rng = check_random_state(rseed)
+    X1 = rng.random_sample((n1, d)).astype(dtype)
+    X2 = rng.random_sample((n2, d)).astype(dtype)
 
-    if version1 < version2:
-        return -1
-    elif version1 > version2:
-        return 1
-    else:
-        return 0
+    # make boolean arrays: ones and zeros
+    X1_bool = X1.round(0)
+    X2_bool = X2.round(0)
 
+    V = rng.random_sample((d, d))
+    VI = np.dot(V, V.T)
 
-class TestMetrics:
-    def __init__(self, n1=20, n2=25, d=4, zero_frac=0.5,
-                 rseed=0, dtype=np.float64):
-        np.random.seed(rseed)
-        self.X1 = np.random.random((n1, d)).astype(dtype)
-        self.X2 = np.random.random((n2, d)).astype(dtype)
+    metrics = {'euclidean': {},
+               'cityblock': {},
+               'minkowski': dict(p=(1, 1.5, 2, 3)),
+               'chebyshev': {},
+               'seuclidean': dict(V=(rng.random_sample(d),)),
+               'wminkowski': dict(p=(1, 1.5, 3),
+                                  w=(rng.random_sample(d),)),
+               'mahalanobis': dict(VI=(VI,)),
+               'hamming': {},
+               'canberra': {},
+               'braycurtis': {}}
 
-        # make boolean arrays: ones and zeros
-        self.X1_bool = self.X1.round(0)
-        self.X2_bool = self.X2.round(0)
-
-        V = np.random.random((d, d))
-        VI = np.dot(V, V.T)
-
-        self.metrics = {'euclidean': {},
-                        'cityblock': {},
-                        'minkowski': dict(p=(1, 1.5, 2, 3)),
-                        'chebyshev': {},
-                        'seuclidean': dict(V=(np.random.random(d),)),
-                        'wminkowski': dict(p=(1, 1.5, 3),
-                                           w=(np.random.random(d),)),
-                        'mahalanobis': dict(VI=(VI,)),
-                        'hamming': {},
-                        'canberra': {},
-                        'braycurtis': {}}
-
-        self.bool_metrics = ['matching', 'jaccard', 'dice',
-                             'kulsinski', 'rogerstanimoto', 'russellrao',
-                             'sokalmichener', 'sokalsneath']
+    bool_metrics = ['matching', 'jaccard', 'dice',
+                    'kulsinski', 'rogerstanimoto', 'russellrao',
+                    'sokalmichener', 'sokalsneath']
 
     def test_cdist(self):
         for metric, argdict in self.metrics.items():
@@ -70,8 +62,6 @@ class TestMetrics:
             yield self.check_cdist_bool, metric, D_true
 
     def check_cdist(self, metric, kwargs, D_true):
-        if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
-            raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1, self.X2)
         assert_array_almost_equal(D12, D_true)
@@ -94,8 +84,6 @@ class TestMetrics:
             yield self.check_pdist_bool, metric, D_true
 
     def check_pdist(self, metric, kwargs, D_true):
-        if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
-            raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1)
         assert_array_almost_equal(D12, D_true)
@@ -189,7 +177,7 @@ def test_input_data_size():
         assert x.shape[0] == 3
         return np.sum((x - y) ** 2)
 
-    rng = np.random.RandomState(0)
+    rng = check_random_state(0)
     X = rng.rand(10, 3)
 
     pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)

@@ -29,39 +29,53 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
-#from sklearn.linear_model import SGDClassifier
+from sklearn.datasets import make_blobs
 
-# we create 40 separable points
-rng = np.random.RandomState(0)
+# we create two clusters of random points
 n_samples_1 = 1000
 n_samples_2 = 100
-X = np.r_[1.5 * rng.randn(n_samples_1, 2),
-          0.5 * rng.randn(n_samples_2, 2) + [2, 2]]
-y = [0] * (n_samples_1) + [1] * (n_samples_2)
+centers = [[0.0, 0.0], [2.0, 2.0]]
+clusters_std = [1.5, 0.5]
+X, y = make_blobs(n_samples=[n_samples_1, n_samples_2],
+                  centers=centers,
+                  cluster_std=clusters_std,
+                  random_state=0, shuffle=False)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear', C=1.0)
 clf.fit(X, y)
 
-w = clf.coef_[0]
-a = -w[0] / w[1]
-xx = np.linspace(-5, 5)
-yy = a * xx - clf.intercept_[0] / w[1]
-
-
-# get the separating hyperplane using weighted classes
+# fit the model and get the separating hyperplane using weighted classes
 wclf = svm.SVC(kernel='linear', class_weight={1: 10})
 wclf.fit(X, y)
 
-ww = wclf.coef_[0]
-wa = -ww[0] / ww[1]
-wyy = wa * xx - wclf.intercept_[0] / ww[1]
-
 # plot separating hyperplanes and samples
-h0 = plt.plot(xx, yy, 'k-', label='no weights')
-h1 = plt.plot(xx, wyy, 'k--', label='with weights')
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
 plt.legend()
 
-plt.axis('tight')
+# plot the decision functions for both classifiers
+ax = plt.gca()
+xlim = ax.get_xlim()
+ylim = ax.get_ylim()
+
+# create grid to evaluate model
+xx = np.linspace(xlim[0], xlim[1], 30)
+yy = np.linspace(ylim[0], ylim[1], 30)
+YY, XX = np.meshgrid(yy, xx)
+xy = np.vstack([XX.ravel(), YY.ravel()]).T
+
+# get the separating hyperplane
+Z = clf.decision_function(xy).reshape(XX.shape)
+
+# plot decision boundary and margins
+a = ax.contour(XX, YY, Z, colors='k', levels=[0], alpha=0.5, linestyles=['-'])
+
+# get the separating hyperplane for weighted classes
+Z = wclf.decision_function(xy).reshape(XX.shape)
+
+# plot decision boundary and margins for weighted classes
+b = ax.contour(XX, YY, Z, colors='r', levels=[0], alpha=0.5, linestyles=['-'])
+
+plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"],
+           loc="upper right")
 plt.show()

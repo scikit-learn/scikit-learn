@@ -3,18 +3,18 @@ The :mod:`sklearn.datasets` module includes utilities to load datasets,
 including methods to load and fetch popular reference datasets. It also
 features some artificial data generators.
 """
-
+from .base import load_breast_cancer
+from .base import load_boston
 from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
 from .base import load_iris
-from .base import load_breast_cancer
 from .base import load_linnerud
-from .base import load_boston
-from .base import get_data_home
-from .base import clear_data_home
 from .base import load_sample_images
 from .base import load_sample_image
+from .base import load_wine
+from .base import get_data_home
+from .base import clear_data_home
 from .covtype import fetch_covtype
 from .kddcup99 import fetch_kddcup99
 from .mlcomp import load_mlcomp
@@ -78,6 +78,7 @@ __all__ = ['clear_data_home',
            'load_sample_images',
            'load_svmlight_file',
            'load_svmlight_files',
+           'load_wine',
            'make_biclusters',
            'make_blobs',
            'make_circles',
