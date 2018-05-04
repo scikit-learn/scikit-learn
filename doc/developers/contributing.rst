@@ -304,21 +304,6 @@ rules before submitting a pull request:
 
     $ make
 
-* The full test suite takes fairly long to run. For faster iterations,
-  it is possibly to select a subset of tests to run using pytest selectors.
-  In particular, one can run a `single test based on its node ID
-  <https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_::
-
-    $ pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
-
-  or use the `-k pytest parameter
-  <https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
-  to select tests based on their name. For instance,::
-
-    $ pytest sklearn/tests/test_common.py -v -k LogisticRegression
-
-  will run all common tests for the ``LogisticRegression`` estimator.
-
 * When adding additional functionality, provide at least one example script
   in the ``examples/`` folder. Have a look at other examples for reference.
   Examples should demonstrate why the new functionality is useful in
