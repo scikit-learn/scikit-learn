@@ -111,18 +111,17 @@ def test_unsupervised_inputs():
 
 def test_n_neighbors_datatype():
     # Test to check whether n_neighbors is integer
-    x = [[1, 1], [1, 1], [1, 1]]
-    n = 3.
+    X = [[1, 1], [1, 1], [1, 1]]
     expected_msg = "n_neighbors does not take .*float.* " \
                    "value, enter integer value"
     msg = "Expected n_neighbors > 0. Got -3"
 
-    neighbors_ = neighbors.NearestNeighbors(n_neighbors=n)
-    assert_raises_regex(TypeError, expected_msg, neighbors_.fit, x)
+    neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.)
+    assert_raises_regex(TypeError, expected_msg, neighbors_.fit, X)
     assert_raises_regex(ValueError, msg,
-                        neighbors_.kneighbors, X=x, n_neighbors=-3)
+                        neighbors_.kneighbors, X=X, n_neighbors=-3)
     assert_raises_regex(TypeError, expected_msg,
-                        neighbors_.kneighbors, X=x, n_neighbors=n)
+                        neighbors_.kneighbors, X=X, n_neighbors=3.)
 
 
 def test_precomputed(random_state=42):
