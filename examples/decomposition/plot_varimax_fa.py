@@ -63,7 +63,8 @@ for ax, method in zip(axes, methods):
         fa = FactorAnalysis(n_components=n_comps, rotation=method).fit(X)
 
     components = fa.components_.T
-    print(method, ":\n", components, end="\n\n")
+    print("\n\n %s :\n" % method)
+    print(components)
 
     vmax = np.abs(components).max()
     ax.imshow(components, cmap="RdBu_r", vmax=vmax, vmin=-vmax)
