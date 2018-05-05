@@ -38,6 +38,7 @@ def test_spectral_clustering(eigen_solver, assign_labels):
                   [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
                   [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]])
 
+
     for mat in (S, sparse.csr_matrix(S)):
         model = SpectralClustering(random_state=0, n_clusters=2,
                                    affinity='precomputed',
@@ -47,6 +48,19 @@ def test_spectral_clustering(eigen_solver, assign_labels):
         labels = model.labels_
         if labels[0] == 0:
             labels = 1 - labels
+
+    for eigen_solver in ('arpack', 'lobpcg'):
+        for assign_labels in ('kmeans', 'discretize'):
+            for mat in (S, sparse.csr_matrix(S)):
+                model = SpectralClustering(random_state=0, n_clusters=2,
+                                           affinity='precomputed',
+                                           eigen_solver=eigen_solver,
+                                           assign_labels=assign_labels
+                                           ).fit(mat)
+                labels = model.labels_
+                if labels[0] == 0:
+                    labels = 1 - labels
+
 
         assert adjusted_rand_score(labels, [1, 1, 1, 0, 0, 0, 0]) == 1
 
@@ -106,7 +120,12 @@ def test_affinities():
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
     X, y = make_blobs(n_samples=20, random_state=0,
+
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01
+                      )
+
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -204,6 +223,7 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
 
 
+
 def test_n_components():
     # Test that after adding n_components, result is different and
     # n_components = n_clusters by default
@@ -222,3 +242,16 @@ def test_n_components():
     labels_diff_ncomp = SpectralClustering(n_components=2,
                                            random_state=0).fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
+
+def test_np_matrix_input():
+    # Test whether np.matrix input works correctly when given as input
+    rng = np.random.RandomState(42)
+    X = np.random.rand(10, 10)
+    sim = np.tril(X) + np.tril(X, -1).T
+    sim_matrix = np.matrix(sim)
+
+    labels_array = spectral_clustering(sim, random_state=42)
+    labels_matrix = spectral_clustering(sim_matrix, random_state=42)
+
+    assert labels_array.all() == labels_matrix.all()
+

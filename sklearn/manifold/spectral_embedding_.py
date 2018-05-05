@@ -59,6 +59,8 @@ def _graph_connected_component(graph, node_id):
         for i in indices:
             if sparse.issparse(graph):
                 neighbors = graph[i].toarray().ravel()
+            elif isinstance(graph, np.matrix):
+                neighbors = np.asarray(graph)[i]
             else:
                 neighbors = graph[i]
             np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
