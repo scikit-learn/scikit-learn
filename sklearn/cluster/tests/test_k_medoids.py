@@ -178,8 +178,7 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
             avg_dist_to_closest_medoid = model.inertia_ / X_iris.shape[0]
             # We want distance-to-closest-medoid to be reduced from average
             # distance by more than 50%
-            assert_greater(0.5 * avg_dist_to_random_medoid,
-                           avg_dist_to_closest_medoid)
+            assert avg_dist_to_random_medoid > 2 * avg_dist_to_closest_medoid
             # When K-Medoids is using Euclidean distance,
             # we can compare its performance to
             # K-Means. We want to average distance to cluster centers
