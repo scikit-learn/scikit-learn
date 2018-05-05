@@ -285,6 +285,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     outlier_label : {manual label, 'most_frequent'}, optional (default = None)
         label for outlier samples (samples with no neighbors in given radius).
+
         - manual label: str or int label (should be the same type as y)
           or list of manual labels if multi ouputs are used.
         - 'most_frequent' : assign the most frequent label to outliers.
