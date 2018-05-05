@@ -149,10 +149,10 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
         # diagonal must be zero, off-diagonals must be positive
         X_new = model.transform(Xnaive)
         for c in range(n_clusters):
-            assert_equal(X_new[c, c], 0)
+            assert X_new[c, c] == 0
             for c2 in range(n_clusters):
                 if c != c2:
-                    assert_greater(X_new[c, c2], 0)
+                    assert X_new[c, c2] > 0
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
     rng = np.random.RandomState(seed)
