@@ -122,7 +122,10 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
                        ('cor', NoWeightClassifier())],
       'auto', None, ValueError, 'does not support sample weight'),
      (X_iris, y_iris, [('lr', None), ('svm', None)],
-      'auto', None, ValueError, 'All estimators are None')]
+      'auto', None, ValueError, 'All estimators are None'),
+     (X_iris, y_iris, [('lr', LogisticRegression()), ('svm', LinearSVC())],
+      'auto', RandomForestRegressor(),
+      AttributeError, 'attribute should be a classifier.')]
 )
 def test_stacking_classifier_error(X, y, estimators, methods, final_estimator,
                                    type_err, msg_err):
