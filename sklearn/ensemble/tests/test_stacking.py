@@ -27,6 +27,7 @@ from sklearn.ensemble import StackingRegressor
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import LeaveOneOut
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
@@ -34,7 +35,7 @@ X_iris, y_iris = load_iris(return_X_y=True)
 
 @pytest.mark.parametrize(
     "cv",
-    [3, StratifiedKFold(shuffle=True, random_state=42)]
+    [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()]
 )
 @pytest.mark.parametrize(
     "final_estimator",
@@ -60,7 +61,7 @@ def test_stacking_classifier_iris(cv, final_estimator):
 
 @pytest.mark.parametrize(
     "cv",
-    [3, StratifiedKFold(shuffle=True, random_state=42)]
+    [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()]
 )
 @pytest.mark.parametrize(
     "final_estimator",
@@ -89,9 +90,6 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
     def fit(self, X, y):
         return self.reg.fit(X, y)
 
-    def predict(self, X):
-        return np.ones(X.shape[0])
-
 
 class NoWeightClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self):
@@ -99,9 +97,6 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         return self.clf.fit(X, y)
-
-    def predict(self, X):
-        return np.ones(X.shape[0])
 
 
 @pytest.mark.parametrize(
@@ -114,8 +109,8 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
      (X_iris, y_iris, [('lr', LogisticRegression()), ('svm', LinearSVC())],
       ['predict'], RandomForestClassifier(),
       AttributeError, 'When "method_estimators" is a list'),
-     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
-                               ('svm', LinearSVR())],
+     (X_iris, y_iris, [('lr', LinearRegression()),
+                       ('svm', LinearSVR())],
       ['predict', 'predict_proba'], None,
       ValueError, 'does not implement the method'),
      (X_iris, y_iris, [('lr', LogisticRegression()),
@@ -134,6 +129,41 @@ def test_stacking_classifier_error(X, y, estimators, methods, final_estimator,
                                  method_estimators=methods,
                                  final_estimator=final_estimator)
         clf.fit(X, y, sample_weight=np.ones(X.shape[0]))
+
+
+@pytest.mark.parametrize(
+    "X, y, estimators, methods, final_estimator, type_err, msg_err",
+    [(X_diabetes, y_diabetes, None, 'auto', RandomForestRegressor(),
+      AttributeError, 'Invalid `estimators`'),
+     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
+                               ('svm', LinearSVR())],
+      'random', RandomForestRegressor(),
+      AttributeError, 'When "method_estimators" is a string'),
+     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
+                               ('svm', LinearSVR())],
+      ['predict'], RandomForestRegressor(),
+      AttributeError, 'When "method_estimators" is a list'),
+     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
+                               ('svm', LinearSVR())],
+      ['predict', 'predict_proba'], None,
+      ValueError, 'does not implement the method'),
+     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
+                               ('cor', NoWeightRegressor())],
+      'auto', None, ValueError, 'does not support sample weight'),
+     (X_diabetes, y_diabetes, [('lr', None), ('svm', None)],
+      'auto', None, ValueError, 'All estimators are None'),
+     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
+                               ('svm', LinearSVR())],
+      'auto', RandomForestClassifier(),
+      AttributeError, 'attribute should be a regressor.')]
+)
+def test_stacking_regressor_error(X, y, estimators, methods, final_estimator,
+                                  type_err, msg_err):
+    with pytest.raises(type_err, match=msg_err):
+        reg = StackingRegressor(estimators=estimators,
+                                method_estimators=methods,
+                                final_estimator=final_estimator)
+        reg.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
 @pytest.mark.parametrize(
