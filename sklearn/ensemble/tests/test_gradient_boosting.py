@@ -10,6 +10,8 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 
+import pytest
+
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
@@ -75,10 +77,10 @@ def check_classification_toy(presort, loss):
     assert_equal(leaves.shape, (6, 10, 1))
 
 
-def test_classification_toy():
-    for presort, loss in product(('auto', True, False),
-                                 ('deviance', 'exponential')):
-        yield check_classification_toy, presort, loss
+@pytest.mark.parametrize('presort', ('auto', True, False))
+@pytest.mark.parametrize('loss', ('deviance', 'exponential'))
+def test_classification_toy(presort, loss):
+    check_classification_toy(presort, loss)
 
 
 def test_classifier_parameter_checks():
@@ -213,9 +215,10 @@ def check_classification_synthetic(presort, loss):
     assert_less(error_rate, 0.08)
 
 
-def test_classification_synthetic():
-    for presort, loss in product(('auto', True, False), ('deviance', 'exponential')):
-        yield check_classification_synthetic, presort, loss
+@pytest.mark.parametrize('presort', ('auto', True, False))
+@pytest.mark.parametrize('loss', ('deviance', 'exponential'))
+def test_classification_synthetic(presort, loss):
+    check_classification_synthetic(presort, loss)
 
 
 def check_boston(presort, loss, subsample):
@@ -248,11 +251,11 @@ def check_boston(presort, loss, subsample):
         last_y_pred = y_pred
 
 
-def test_boston():
-    for presort, loss, subsample in product(('auto', True, False),
-                                            ('ls', 'lad', 'huber'),
-                                            (1.0, 0.5)):
-        yield check_boston, presort, loss, subsample
+@pytest.mark.parametrize('presort', ('auto', True, False))
+@pytest.mark.parametrize('loss', ('ls', 'lad', 'huber'))
+@pytest.mark.parametrize('subsample', (1.0, 0.5))
+def test_boston(presort, loss, subsample):
+    check_boston(presort, loss, subsample)
 
 
 def check_iris(presort, subsample, sample_weight):
@@ -270,12 +273,13 @@ def check_iris(presort, subsample, sample_weight):
     assert_equal(leaves.shape, (150, 100, 3))
 
 
-def test_iris():
-    ones = np.ones(len(iris.target))
-    for presort, subsample, sample_weight in product(('auto', True, False),
-                                                     (1.0, 0.5),
-                                                     (None, ones)):
-        yield check_iris, presort, subsample, sample_weight
+@pytest.mark.parametrize('presort', ('auto', True, False))
+@pytest.mark.parametrize('subsample', (1.0, 0.5))
+@pytest.mark.parametrize('sample_weight', (None, 1))
+def test_iris(presort, subsample, sample_weight):
+    if sample_weight == 1:
+        sample_weight = np.ones(len(iris.target))
+    check_iris(presort, subsample, sample_weight)
 
 
 def test_regression_synthetic():
@@ -1211,18 +1215,20 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
 
 
 @skip_if_32bit
-def test_sparse_input():
-    ests = (GradientBoostingClassifier, GradientBoostingRegressor)
-    sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
-
+@pytest.mark.parametrize(
+        'EstimatorClass',
+        (GradientBoostingClassifier, GradientBoostingRegressor))
+@pytest.mark.parametrize(
+        'sparse_matrix',
+        (csr_matrix, csc_matrix, coo_matrix))
+def test_sparse_input(EstimatorClass, sparse_matrix):
     y, X = datasets.make_multilabel_classification(random_state=0,
                                                    n_samples=50,
                                                    n_features=1,
                                                    n_classes=20)
     y = y[:, 0]
 
-    for EstimatorClass, sparse_matrix in product(ests, sparse_matrices):
-        yield check_sparse_input, EstimatorClass, X, sparse_matrix(X), y
+    check_sparse_input(EstimatorClass, X, sparse_matrix(X), y)
 
 
 def test_gradient_boosting_early_stopping():
