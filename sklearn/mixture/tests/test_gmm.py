@@ -498,10 +498,11 @@ def check_positive_definite_covars(covariance_type):
             assert_greater(np.linalg.det(c), 0)
 
 
-def test_positive_definite_covars():
+@pytest.mark.parametrize('covariance_type',
+                         ["full", "tied", "diag", "spherical"])
+def test_positive_definite_covars(covariance_type):
     # Check positive definiteness for all covariance types
-    for covariance_type in ["full", "tied", "diag", "spherical"]:
-        yield check_positive_definite_covars, covariance_type
+    check_positive_definite_covars(covariance_type)
 
 
 # This function tests the deprecated old GMM class

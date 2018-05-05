@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
-from itertools import product
+
+import pytest
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
@@ -151,47 +152,45 @@ def test_ridge_regression_convergence_fail():
                  tol=0., max_iter=None, verbose=1)
 
 
-def test_ridge_sample_weights():
+@pytest.mark.parametrize('n_samples, n_features', ((6, 5), (5, 10)))
+@pytest.mark.parametrize('alpha', (1.0, 1e-2))
+@pytest.mark.parametrize('intercept', (True, False))
+@pytest.mark.parametrize('solver', ('svd', 'cholesky', 'lsqr', 'sparse_cg'))
+def test_ridge_sample_weights(n_samples, n_features, alpha, intercept, solver):
     # TODO: loop over sparse data as well
 
     rng = np.random.RandomState(0)
-    param_grid = product((1.0, 1e-2), (True, False),
-                         ('svd', 'cholesky', 'lsqr', 'sparse_cg'))
 
-    for n_samples, n_features in ((6, 5), (5, 10)):
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    sample_weight = 1.0 + rng.rand(n_samples)
 
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        sample_weight = 1.0 + rng.rand(n_samples)
+    # Ridge with explicit sample_weight
+    est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver)
+    est.fit(X, y, sample_weight=sample_weight)
+    coefs = est.coef_
+    inter = est.intercept_
 
-        for (alpha, intercept, solver) in param_grid:
+    # Closed form of the weighted regularized least square
+    # theta = (X^T W X + alpha I)^(-1) * X^T W y
+    W = np.diag(sample_weight)
+    if intercept is False:
+        X_aug = X
+        Id = np.eye(n_features)
+    else:
+        dummy_column = np.ones(shape=(n_samples, 1))
+        X_aug = np.concatenate((dummy_column, X), axis=1)
+        Id = np.eye(n_features + 1)
+        Id[0, 0] = 0
 
-            # Ridge with explicit sample_weight
-            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver)
-            est.fit(X, y, sample_weight=sample_weight)
-            coefs = est.coef_
-            inter = est.intercept_
+    cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * Id,
+                            X_aug.T.dot(W).dot(y))
 
-            # Closed form of the weighted regularized least square
-            # theta = (X^T W X + alpha I)^(-1) * X^T W y
-            W = np.diag(sample_weight)
-            if intercept is False:
-                X_aug = X
-                I = np.eye(n_features)
-            else:
-                dummy_column = np.ones(shape=(n_samples, 1))
-                X_aug = np.concatenate((dummy_column, X), axis=1)
-                I = np.eye(n_features + 1)
-                I[0, 0] = 0
-
-            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * I,
-                                    X_aug.T.dot(W).dot(y))
-
-            if intercept is False:
-                assert_array_almost_equal(coefs, cf_coefs)
-            else:
-                assert_array_almost_equal(coefs, cf_coefs[1:])
-                assert_almost_equal(inter, cf_coefs[0])
+    if intercept is False:
+        assert_array_almost_equal(coefs, cf_coefs)
+    else:
+        assert_array_almost_equal(coefs, cf_coefs[1:])
+        assert_almost_equal(inter, cf_coefs[0])
 
 
 def test_ridge_shapes():
@@ -483,15 +482,13 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-def test_dense_sparse():
-    for test_func in (_test_ridge_loo,
-                      _test_ridge_cv,
-                      _test_ridge_cv_normalize,
-                      _test_ridge_diabetes,
-                      _test_multi_ridge_diabetes,
-                      _test_ridge_classifiers,
-                      _test_tolerance):
-        yield check_dense_sparse, test_func
+@pytest.mark.parametrize(
+        'test_func',
+        (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
+         _test_ridge_diabetes, _test_multi_ridge_diabetes,
+         _test_ridge_classifiers, _test_tolerance))
+def test_dense_sparse(test_func):
+    check_dense_sparse(test_func)
 
 
 def test_ridge_cv_sparse_svd():

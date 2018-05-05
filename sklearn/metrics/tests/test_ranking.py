@@ -2,7 +2,6 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
-from itertools import product
 import warnings
 from scipy.sparse import csr_matrix
 
@@ -923,18 +922,29 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
     assert_almost_equal(score_lrap, score_my_lrap)
 
 
-def test_label_ranking_avp():
-    for fn in [label_ranking_average_precision_score, _my_lrap]:
-        yield check_lrap_toy, fn
-        yield check_lrap_without_tie_and_increasing_score, fn
-        yield check_lrap_only_ties, fn
-        yield check_zero_or_all_relevant_labels, fn
-        yield check_lrap_error_raised, label_ranking_average_precision_score
+@pytest.mark.parametrize(
+        'check',
+        (check_lrap_toy,
+         check_lrap_without_tie_and_increasing_score,
+         check_lrap_only_ties,
+         check_zero_or_all_relevant_labels))
+@pytest.mark.parametrize(
+        'func',
+        (label_ranking_average_precision_score, _my_lrap))
+def test_label_ranking_avp(check, func):
+    check(func)
 
-    for n_samples, n_classes, random_state in product((1, 2, 8, 20),
-                                                      (2, 5, 10),
-                                                      range(1)):
-        yield (check_alternative_lrap_implementation,
+
+def test_lrap_error_raised():
+    check_lrap_error_raised(label_ranking_average_precision_score)
+
+
+@pytest.mark.parametrize('n_samples', (1, 2, 8, 20))
+@pytest.mark.parametrize('n_classes', (2, 5, 10))
+@pytest.mark.parametrize('random_state', range(1))
+def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
+
+    check_alternative_lrap_implementation(
                label_ranking_average_precision_score,
                n_classes, n_samples, random_state)
 

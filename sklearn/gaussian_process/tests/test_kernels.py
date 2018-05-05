@@ -209,7 +209,8 @@ def test_kernel_clone(kernel):
     check_hyperparameters_equal(kernel, kernel_cloned)
 
 
-def test_kernel_clone_after_set_params():
+@pytest.mark.parametrize('kernel', kernels)
+def test_kernel_clone_after_set_params(kernel):
     # This test is to verify that using set_params does not
     # break clone on kernels.
     # This used to break because in kernels such as the RBF, non-trivial
@@ -217,27 +218,25 @@ def test_kernel_clone_after_set_params():
     # See https://github.com/scikit-learn/scikit-learn/issues/6961
     # for more details.
     bounds = (1e-5, 1e5)
-    for kernel in kernels:
-        kernel_cloned = clone(kernel)
-        params = kernel.get_params()
-        # RationalQuadratic kernel is isotropic.
-        isotropic_kernels = (ExpSineSquared, RationalQuadratic)
-        if 'length_scale' in params and not isinstance(kernel,
-                                                       isotropic_kernels):
-            length_scale = params['length_scale']
-            if np.iterable(length_scale):
-                params['length_scale'] = length_scale[0]
-                params['length_scale_bounds'] = bounds
-            else:
-                params['length_scale'] = [length_scale] * 2
-                params['length_scale_bounds'] = bounds * 2
-            kernel_cloned.set_params(**params)
-            kernel_cloned_clone = clone(kernel_cloned)
-            assert_equal(kernel_cloned_clone.get_params(),
-                         kernel_cloned.get_params())
-            assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
-            yield (check_hyperparameters_equal, kernel_cloned,
-                   kernel_cloned_clone)
+    kernel_cloned = clone(kernel)
+    params = kernel.get_params()
+    # RationalQuadratic kernel is isotropic.
+    isotropic_kernels = (ExpSineSquared, RationalQuadratic)
+    if 'length_scale' in params and not isinstance(kernel,
+                                                   isotropic_kernels):
+        length_scale = params['length_scale']
+        if np.iterable(length_scale):
+            params['length_scale'] = length_scale[0]
+            params['length_scale_bounds'] = bounds
+        else:
+            params['length_scale'] = [length_scale] * 2
+            params['length_scale_bounds'] = bounds * 2
+        kernel_cloned.set_params(**params)
+        kernel_cloned_clone = clone(kernel_cloned)
+        assert_equal(kernel_cloned_clone.get_params(),
+                     kernel_cloned.get_params())
+        assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
+        check_hyperparameters_equal(kernel_cloned, kernel_cloned_clone)
 
 
 def test_matern_kernel():

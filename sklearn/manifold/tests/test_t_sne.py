@@ -3,6 +3,8 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
 
+import pytest
+
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.testing import assert_less_equal
@@ -807,9 +809,9 @@ def assert_uniform_grid(Y, try_name=None):
     assert_less(largest_to_mean, 2, msg=try_name)
 
 
-def test_uniform_grid():
-    for method in ['barnes_hut', 'exact']:
-        yield check_uniform_grid, method
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+def test_uniform_grid(method):
+    check_uniform_grid(method)
 
 
 def test_bh_match_exact():

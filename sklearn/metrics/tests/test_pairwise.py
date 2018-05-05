@@ -4,6 +4,8 @@ from numpy import linalg
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
+import pytest
+
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -196,16 +198,24 @@ def check_pairwise_parallel(func, metric, kwds):
         assert_array_almost_equal(S, S2)
 
 
-def test_pairwise_parallel():
-    wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
-    metrics = [(pairwise_distances, 'euclidean', {}),
-               (pairwise_distances, wminkowski, wminkowski_kwds),
-               (pairwise_distances, 'wminkowski', wminkowski_kwds),
-               (pairwise_kernels, 'polynomial', {'degree': 1}),
-               (pairwise_kernels, callable_rbf_kernel, {'gamma': .1}),
-               ]
-    for func, metric, kwds in metrics:
-        yield check_pairwise_parallel, func, metric, kwds
+_wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
+
+
+def callable_rbf_kernel(x, y, **kwds):
+    # Callable version of pairwise.rbf_kernel.
+    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+    return K
+
+
+@pytest.mark.parametrize(
+        'func, metric, kwds',
+        [(pairwise_distances, 'euclidean', {}),
+         (pairwise_distances, wminkowski, _wminkowski_kwds),
+         (pairwise_distances, 'wminkowski', _wminkowski_kwds),
+         (pairwise_kernels, 'polynomial', {'degree': 1}),
+         (pairwise_kernels, callable_rbf_kernel, {'gamma': .1})])
+def test_pairwise_parallel(func, metric, kwds):
+    check_pairwise_parallel(func, metric, kwds)
 
 
 def test_pairwise_callable_nonstrict_metric():
@@ -213,12 +223,6 @@ def test_pairwise_callable_nonstrict_metric():
     # Knowing that the callable is a strict metric would allow the diagonal to
     # be left uncalculated and set to 0.
     assert_equal(pairwise_distances([[1.]], metric=lambda x, y: 5)[0, 0], 5)
-
-
-def callable_rbf_kernel(x, y, **kwds):
-    # Callable version of pairwise.rbf_kernel.
-    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-    return K
 
 
 def test_pairwise_kernels():    # Test the pairwise_kernels helper function.
