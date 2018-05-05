@@ -292,7 +292,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             medoids = np.argpartition(np.sum(D, axis=1),
-                                      range(0, n_clusters))[:n_clusters]
+                                      n_clusters-1)[:n_clusters]
         else:
             raise ValueError("init value '{init}' not recognized".format(init=self.init))
 
