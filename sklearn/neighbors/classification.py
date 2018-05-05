@@ -283,14 +283,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
 
-    outlier_label : manual label, 'most_frequent', None, optional
-        (default = None)
+    outlier_label : {manual label, 'most_frequent'}, optional (default = None)
+        label for outlier samples (samples with no neighbors in given radius).
         - manual label: str or int label (should be the same type as y)
           or list of manual labels if multi ouputs are used.
-          label given for outlier samples (samples with no neighbors in
-          given radius).
         - 'most_frequent' : assign the most frequent label to outliers.
         - None : when outlier is detected, ValueError is raised.
+
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -306,7 +305,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> print(neigh.predict([[1.5]]))
     [0]
     >>> print(neigh.predict_proba([[1.0]]))
-    [[ 0.66666667  0.33333333]]
+    [[0.66666667 0.33333333]]
 
     See also
     --------
@@ -356,21 +355,19 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-        if self.outlier_label == 'most_frequent':
+        if self.outlier_label is None:
+            outlier_label_ = None
+        elif self.outlier_label == 'most_frequent':
             outlier_label_ = []
             for k, classes_k in enumerate(classes_):
                 label_count = np.bincount(_y[:, k])
                 outlier_label_.append(classes_k[label_count.argmax()])
-
-        elif self.outlier_label is None:
-            outlier_label_ = None
-
         else:
             if (_is_arraylike(self.outlier_label) and
                not isinstance(self.outlier_label, string_types)):
                 if len(self.outlier_label) != len(classes_):
                     raise ValueError('The length of outlier_label: {} is '
-                                     'inconsistent with output '
+                                     'inconsistent with the output '
                                      'length: {}'.format(self.outlier_label,
                                                          len(classes_)))
                 outlier_label_ = self.outlier_label
@@ -404,7 +401,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_samples = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        outlier_mask = np.array([len(nind) == 0 for nind in neigh_ind])
+        outlier_mask = np.zeros(n_samples, dtype=np.bool)
+        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
         indices = np.arange(n_samples)
         outliers = indices[outlier_mask]
         inliers = indices[~outlier_mask]
@@ -470,7 +468,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_samples = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        outlier_mask = np.array([len(nind) == 0 for nind in neigh_ind])
+        outlier_mask = np.zeros(n_samples, dtype=np.bool)
+        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
         indices = np.arange(n_samples)
         outliers = indices[outlier_mask]
         inliers = indices[~outlier_mask]
@@ -515,8 +514,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             if outliers.size > 0:
                 label_index = np.where(classes_k == self.outlier_label_[k])
                 if label_index[0].size != 0:
-                    proba_k[outliers,
-                            label_index[0][0]] = 1.0
+                    proba_k[outliers, label_index[0][0]] = 1.0
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
