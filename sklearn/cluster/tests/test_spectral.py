@@ -125,7 +125,10 @@ def test_affinities():
 
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
                       )
+<<<<<<< HEAD
 
+=======
+>>>>>>> PEP8 fixes
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -245,7 +248,6 @@ def test_n_components():
 
 def test_np_matrix_input():
     # Test whether np.matrix input works correctly when given as input
-    rng = np.random.RandomState(42)
     X = np.random.rand(10, 10)
     sim = np.tril(X) + np.tril(X, -1).T
     sim_matrix = np.matrix(sim)
