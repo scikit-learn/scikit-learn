@@ -43,7 +43,7 @@ def test_spectral_clustering():
                                            affinity='precomputed',
                                            eigen_solver=eigen_solver,
                                            assign_labels=assign_labels
-                                          ).fit(mat)
+                                           ).fit(mat)
                 labels = model.labels_
                 if labels[0] == 0:
                     labels = 1 - labels
@@ -107,7 +107,7 @@ def test_affinities():
     # on OSX and Linux
     X, y = make_blobs(n_samples=20, random_state=0,
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
-                     )
+                      )
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -207,7 +207,6 @@ def test_spectral_clustering_with_arpack_amg_solvers():
 
 def test_np_matrix_input():
     # Test whether np.matrix input works correctly when given as input
-    rng = np.random.RandomState(42)
     X = np.random.rand(10, 10)
     sim = np.tril(X) + np.tril(X, -1).T
     sim_matrix = np.matrix(sim)
