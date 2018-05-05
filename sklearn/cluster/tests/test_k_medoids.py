@@ -181,8 +181,8 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
             assert avg_dist_to_random_medoid > 2 * avg_dist_to_closest_medoid
             # When K-Medoids is using Euclidean distance,
             # we can compare its performance to
-            # K-Means. We want to average distance to cluster centers
-            # be similar between K-Means and K-Medoids
+            # K-Means. We want the average distance to cluster centers
+            # to be similar between K-Means and K-Medoids
             if distance_metric == "euclidean":
                 assert_allclose(avg_dist_to_closest_medoid,
                                 avg_dist_to_closest_centroid, rtol=0.1)
