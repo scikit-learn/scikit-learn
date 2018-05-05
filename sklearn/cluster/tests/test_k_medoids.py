@@ -1,5 +1,6 @@
 """Testing for K-Medoids"""
 import numpy as np
+import warnings
 from scipy.sparse import csc_matrix
 
 from sklearn.cluster import KMedoids, KMeans
@@ -43,6 +44,21 @@ def test_kmedoids_input_validation_and_fit_check():
     assert_raise_message(ValueError, "The number of medoids (8) must be less "
                                      "than the number of samples 5.",
                          KMedoids(n_clusters=8).fit, Xsmall)
+
+def test_update_medoid_idxs_empty_cluster():
+    """Label is unchanged for an empty cluster."""
+    rng = np.random.RandomState(seed)
+    D = np.zeros((3, 3))
+    labels = np.array([0, 0, 0])
+    medoid_idxs = np.array([0, 1])
+    kmedoids = KMedoids(n_clusters=2)
+
+    # Swallow empty cluster warning
+    with warnings.catch_warnings() as w:
+        warnings.simplefilter("ignore")
+        kmedoids._update_medoid_idxs_in_place(D, labels, medoid_idxs)
+
+    assert_array_equal(medoid_idxs, [0, 1])
 
 def test_kmedoids_empty_clusters():
     rng = np.random.RandomState(seed)
