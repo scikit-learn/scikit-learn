@@ -64,8 +64,6 @@ will be displayed as a color background behind the line number.
 Useful pytest aliases and flags
 -------------------------------
 
-We recommend using pytest to run unit tests.
-
 The full test suite takes fairly long to run. For faster iterations,
 it is possibly to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
@@ -79,7 +77,7 @@ to select tests based on their name. For instance,::
 
   pytest sklearn/tests/test_common.py -v -k LogisticRegression
 
-will run all common tests for the ``LogisticRegression`` estimator.
+will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 
 When a unit tests fail, the following tricks can make debugging easier:
 

@@ -68,7 +68,7 @@ def _tested_non_meta_estimators():
         yield name, Estimator
 
 
-def _cartesian_product_checks(check_generator, estimators):
+def _combine_checks(check_generator, estimators):
     for name, Estimator in estimators:
         estimator = Estimator()
         for check in check_generator(name, estimator):
@@ -77,8 +77,8 @@ def _cartesian_product_checks(check_generator, estimators):
 
 @pytest.mark.parametrize(
         "name, Estimator, check",
-        _cartesian_product_checks(_yield_all_checks,
-                                  _tested_non_meta_estimators())
+        _combine_checks(_yield_all_checks,
+                        _tested_non_meta_estimators())
 )
 def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
