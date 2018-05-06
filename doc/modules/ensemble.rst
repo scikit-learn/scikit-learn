@@ -1071,3 +1071,83 @@ must support ``predict_proba`` method)::
 Optionally, weights can be provided for the individual classifiers::
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
+
+
+.. _stacking:
+
+Stacked generalization
+======================
+
+Stacked generalization is a method for combining estimators to reduce their
+biases [W1992]. More precisely, the predictions of each individual estimators
+are stacked together and used by another estimator to compute the final
+prediction. This final estimator is trained through cross-validation.
+
+The :class:`StackingClassifier` and :class:`StackingRegressor` provides such
+strategies which can be applied to classification and regression problem.
+
+The ``estimators`` parameter corresponds to the list of the estimators which
+are stacked together. It should be given as a list of name and instance of
+estimators::
+
+  >>> from sklearn.linear_model import RidgeCV, LassoCV
+  >>> from sklearn.svm import SVR
+  >>> estimators = [('ridge', RidgeCV()),
+  ...               ('lasso', LassoCV(random_state=42)),
+  ...               ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))]
+
+The ``final_estimator`` will combine the prediction of the ``estimators``. It
+needs to be a classifier or a regressor when using :class:`StackingClassifier`
+or :class:`StackingRegressor`, respectively::
+
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>> from sklearn.ensemble import StackingRegressor
+  >>> reg = StackingRegressor(
+  ...     estimators=estimators,
+  ...     final_estimator=GradientBoostingRegressor(random_state=42))
+
+To train the ``estimators`` and ``final_estimator``, the ``fit`` method needs
+to be called on the training data::
+
+  >>> from sklearn.datasets import load_boston
+  >>> X, y = load_boston(return_X_y=True)
+  >>> from sklearn.model_selection import train_test_split
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+  >>> reg.fit(X_train, y_train)  # doctest: +ELLIPSIS
+  StackingRegressor(...)
+
+During this fitting, the ``estimators`` are fitted on the whole training data
+``X_train``. To generalize and avoid over-fitting, the ``final_estimator`` is
+trained by cross-validation using internally
+:func:`sklearn.model_selection.cross_val_predict`.
+
+Note that the output of the ``estimators`` is controlled by the parameter
+``method_estimators``. It corresponds to the method called by each
+estimator. This parameter is either a list of string of the methods name or
+``'auto'`` which will automatically called the method depending of the
+availability and a pre-determined order of preference.
+
+It is possible to get the final predictions using the ``predict`` or
+``predict_proba`` depending if you are using :func:`StackingClassifier` or
+:func:`StackingRegressor`::
+
+   >>> y_pred = reg.predict(X_test)
+   >>> from sklearn.metrics import r2_score
+   >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
+   R2 score: 0.85
+
+Note that it is also possible to get the output of the stacked outputs of the
+``estimators`` using the ``transform`` method::
+
+  >>> reg.transform(X_test[:5])  # doctest: +ELLIPSIS
+  array([[28.78..., 28.43...  , 22.62...],
+         [35.96..., 32.58..., 23.68...],
+         [14.97..., 14.05..., 16.45...],
+         [25.19..., 25.54..., 22.92...],
+         [18.93..., 19.26..., 17.03... ]])
+
+.. topic:: References
+           
+   .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
+      (1992): 241-259.
+

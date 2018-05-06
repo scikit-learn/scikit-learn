@@ -257,7 +257,14 @@ class BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
 
 
 class StackingClassifier(BaseStacking, ClassifierMixin):
-    """Stacked of estimator using a classifier.
+    """Stacked of estimators using a final classifier.
+
+    Stacked generalization consists in stacking the output of individual
+    estimator and use a classifier to compute the final prediction. Stacking
+    allows to combine the strength of each individual estimator. It should be
+    noted that the final estimator is trained through cross-validation.
+
+    Read more in the :ref:`User Guide <stacking>`.
 
     Parameters
     ----------
@@ -311,6 +318,11 @@ class StackingClassifier(BaseStacking, ClassifierMixin):
 
     method_estimators_ : list of string
         The method used by each base estimator.
+
+    References
+    ----------
+    .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
+       (1992): 241-259.
 
     Examples
     --------
@@ -368,7 +380,14 @@ class StackingClassifier(BaseStacking, ClassifierMixin):
 
 
 class StackingRegressor(BaseStacking, RegressorMixin):
-    """Stacked of estimator using a regressor.
+    """Stacked of estimators using a final regressor.
+
+    Stacked generalization consists in stacking the output of individual
+    estimator and use a regressor to compute the final prediction. Stacking
+    allows to combine the strength of each individual estimator. It should be
+    noted that the final estimator is trained through cross-validation.
+
+    Read more in the :ref:`User Guide <stacking>`.
 
     Parameters
     ----------
@@ -422,6 +441,11 @@ class StackingRegressor(BaseStacking, RegressorMixin):
 
     method_estimators_ : list of string
         The method used by each base estimator.
+
+    References
+    ----------
+    .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
+       (1992): 241-259.
 
     Examples
     --------
