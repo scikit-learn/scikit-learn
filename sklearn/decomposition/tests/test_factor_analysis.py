@@ -86,9 +86,15 @@ def test_factor_analysis():
 
     # test rotation
     n_comps = 2
-    for method in ("varimax", 'quartimax'):
+
+    results = []
+    for method in (None, "varimax", 'quartimax'):
         fa_var = FactorAnalysis(n_components=n_comps, rotation=method)
-        fa_var.fit_transform(X)
+        results.append(fa_var.fit_transform(X))
+    assert_raises(AssertionError, assert_array_equal, results[0], results[1])
+    assert_raises(AssertionError, assert_array_equal, results[0], results[2])
+    assert_raises(AssertionError, assert_array_equal, results[1], results[2])
+
     assert_raises(NotImplementedError,
                   FactorAnalysis(rotation='not_implemented').fit_transform, X)
 

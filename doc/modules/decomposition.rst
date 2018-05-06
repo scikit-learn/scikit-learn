@@ -578,7 +578,7 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`PCA` is that
+The main advantage for Factor Analysis (over :class:`PCA`) is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
@@ -595,10 +595,14 @@ of heteroscedastic noise:
     :align: center
     :scale: 75%
 
+Factor Analysis is often followed by a rotation of the factors, usually to improve
+interpretability. See e.g., the first example below.s
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+
 
 .. _ICA:
 
