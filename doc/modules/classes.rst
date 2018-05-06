@@ -410,6 +410,8 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
 
 .. autosummary::
