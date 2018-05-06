@@ -176,7 +176,7 @@ def test_stacking_regressor_error(X, y, estimators, methods, final_estimator,
 def test_stacking_named_estimators(stacking_estimator):
     estimators = stacking_estimator.named_estimators
     assert len(estimators) == 2
-    assert list(estimators.keys()) == ['lr', 'svm']
+    assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
 
 
 @pytest.mark.parametrize(
