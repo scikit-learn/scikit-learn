@@ -16,21 +16,21 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
+        assert_warns
 )
 from numpy.testing import assert_array_almost_equal
 
 
-score_funcs = [
-    adjusted_rand_score,
-    homogeneity_score,
-    completeness_score,
-    v_measure_score,
-    adjusted_mutual_info_score,
-    normalized_mutual_info_score,
-]
-
-
 def test_error_messages_on_wrong_input():
+    score_funcs = [
+        adjusted_rand_score,
+        homogeneity_score,
+        completeness_score,
+        v_measure_score,
+        mutual_info_score,
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
     for score_func in score_funcs:
         expected = ('labels_true and labels_pred must have same size,'
                     ' got 2 and 3')
@@ -45,8 +45,19 @@ def test_error_messages_on_wrong_input():
         assert_raise_message(ValueError, expected, score_func,
                              [0, 1, 0], [[1, 1], [0, 0]])
 
+    expected = ("Unsupported value for 'log_base': f; allowed"
+                " values are 2, 10 or 'e'")
+    assert_raise_message(ValueError, expected, entropy, [0, 0],
+                         log_base='f')
+
 
 def test_perfect_matches():
+    score_funcs = [
+        adjusted_rand_score,
+        homogeneity_score,
+        completeness_score,
+        v_measure_score
+    ]
     for score_func in score_funcs:
         assert_equal(score_func([], []), 1.0)
         assert_equal(score_func([0], [1]), 1.0)
@@ -55,6 +66,36 @@ def test_perfect_matches():
         assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
         assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
         assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
+
+    score_funcs = [
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
+    for score_func in score_funcs:
+        assert_equal(score_func([], [], log_base='e'), 1.0)
+        assert_equal(score_func([0], [1], log_base='e'), 1.0)
+        assert_equal(score_func([0, 0, 0], [0, 0, 0], log_base='e'), 1.0)
+        assert_equal(score_func([0, 1, 0], [42, 7, 42], log_base='e'), 1.0)
+        assert_equal(score_func([0., 1., 0.], [42., 7., 42.], log_base='e'),
+                     1.0)
+        assert_equal(score_func([0., 1., 2.], [42., 7., 2.], log_base='e'),
+                     1.0)
+        assert_equal(score_func([0, 1, 2], [42, 7, 2], log_base='e'), 1.0)
+
+
+def test_future_warning():
+    score_funcs = [
+        mutual_info_score,
+        adjusted_mutual_info_score,
+        normalized_mutual_info_score
+    ]
+    expectedWarning = ("FutureWarning: From version 0.22, log_base=None will "
+                       "mean log_base=2 rather than the current default "
+                       "log_base='e'")
+
+    for score_func in score_funcs:
+        assert_warns(FutureWarning, score_func, [0, 0], [0, 1])
+        assert_raise_message(ValueError, expectedWarning, score_func, [0, 0])
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -87,7 +128,7 @@ def test_not_complete_and_not_homogeneous_labeling():
     assert_almost_equal(v, 0.52, 2)
 
 
-def test_non_consicutive_labels():
+def test_non_consecutive_labels():
     # regression tests for labels with gaps
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 2, 2, 2],
@@ -140,29 +181,29 @@ def test_adjusted_mutual_info_score():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     # Mutual information
-    mi = mutual_info_score(labels_a, labels_b)
+    mi = mutual_info_score(labels_a, labels_b, log_base='e')
     assert_almost_equal(mi, 0.41022, 5)
     # with provided sparse contingency
     C = contingency_matrix(labels_a, labels_b, sparse=True)
-    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    mi = mutual_info_score(labels_a, labels_b, contingency=C, log_base='e')
     assert_almost_equal(mi, 0.41022, 5)
     # with provided dense contingency
     C = contingency_matrix(labels_a, labels_b)
-    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    mi = mutual_info_score(labels_a, labels_b, contingency=C, log_base='e')
     assert_almost_equal(mi, 0.41022, 5)
     # Expected mutual information
     n_samples = C.sum()
-    emi = expected_mutual_information(C, n_samples)
+    emi = expected_mutual_information(C, n_samples, log_base='e')
     assert_almost_equal(emi, 0.15042, 5)
     # Adjusted mutual information
-    ami = adjusted_mutual_info_score(labels_a, labels_b)
+    ami = adjusted_mutual_info_score(labels_a, labels_b, log_base='e')
     assert_almost_equal(ami, 0.27502, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
     assert_equal(ami, 1.0)
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
-    ami = adjusted_mutual_info_score(a110, b110)
+    ami = adjusted_mutual_info_score(a110, b110, log_base='e')
     # This is not accurate to more than 2 places
     assert_almost_equal(ami, 0.37, 2)
 
@@ -170,7 +211,8 @@ def test_adjusted_mutual_info_score():
 def test_expected_mutual_info_overflow():
     # Test for regression where contingency cell exceeds 2**16
     # leading to overflow in np.outer, resulting in EMI > 1
-    assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
+    assert expected_mutual_information(np.array([[70000]]), 70000,
+                                       log_base='e') <= 1
 
 
 def test_int_overflow_mutual_info_score():
@@ -181,13 +223,18 @@ def test_int_overflow_mutual_info_score():
                  [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
                  [1] * 20)
 
-    assert_all_finite(mutual_info_score(x.ravel(), y.ravel()))
+    assert_all_finite(mutual_info_score(x.ravel(), y.ravel(), log_base='e'))
 
 
 def test_entropy():
-    ent = entropy([0, 0, 42.])
-    assert_almost_equal(ent, 0.6365141, 5)
-    assert_almost_equal(entropy([]), 1)
+    h = entropy([0, 0, 42.], log_base='e')
+    assert_almost_equal(h, 0.6365141, 5)
+    h = entropy([0, 0, 42.], log_base=2)
+    assert_almost_equal(h, 0.9182958, 5)
+    h = entropy([], log_base='e')
+    assert_almost_equal(h, 1)
+    h = entropy([], log_base=2)
+    assert_almost_equal(h, 1)
 
 
 def test_contingency_matrix():
@@ -219,10 +266,13 @@ def test_exactly_zero_info_score():
     for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = (np.ones(i, dtype=np.int),
                               np.arange(i, dtype=np.int))
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                     log_base='e'), 0.0)
         assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b,
+                     log_base='e'), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                     log_base='e'), 0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
@@ -231,9 +281,12 @@ def test_v_measure_and_mutual_information(seed=36):
         random_state = np.random.RandomState(seed)
         labels_a, labels_b = (random_state.randint(0, 10, i),
                               random_state.randint(0, 10, i))
-        assert_almost_equal(v_measure_score(labels_a, labels_b),
-                            2.0 * mutual_info_score(labels_a, labels_b) /
-                            (entropy(labels_a) + entropy(labels_b)), 0)
+
+        v_m = v_measure_score(labels_a, labels_b)
+        mi = mutual_info_score(labels_a, labels_b, log_base='e')
+        h_a = entropy(labels_a, log_base='e')
+        h_b = entropy(labels_b, log_base='e')
+        assert_almost_equal(v_m, 2.0 * mi / (h_a + h_b), 0)
 
 
 def test_fowlkes_mallows_score():

@@ -15,10 +15,9 @@ better.
 
 from __future__ import division
 
-from math import log
-
 import numpy as np
 from scipy import sparse as sp
+import warnings
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
@@ -26,6 +25,7 @@ from ...utils.fixes import comb
 
 
 def comb2(n):
+    """Shorthand for comb (= N choose k) with k==2"""
     # the exact version is faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
@@ -105,6 +105,26 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
             # don't use += as contingency is integer
             contingency = contingency + eps
     return contingency
+
+
+def log(x, log_base=None):
+    """Calculate the logarithm of x base log_base."""
+    if log_base is None:
+        # NOTE: when deprecation ends we need to change explicitly
+        # setting `log_base` from `e` to 2
+        warnings.warn("From version 0.22, log_base=None will mean "
+                      "log_base=2 rather than the current default "
+                      "log_base='e'", FutureWarning)
+        log_base = 'e'
+    if log_base is 2:
+        return np.log2(x)
+    elif log_base is 'e':
+        return np.log(x)
+    elif log_base is 10:
+        return np.log10(x)
+    else:
+        raise ValueError("Unsupported value for 'log_base': {}; allowed "
+                         "values are 2, 10 or 'e'".format(log_base))
 
 
 # clustering measures
@@ -527,8 +547,9 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-def mutual_info_score(labels_true, labels_pred, contingency=None):
-    r"""Mutual Information between two clusterings.
+def mutual_info_score(labels_true, labels_pred, contingency=None,
+                      log_base=None):
+    """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`|U_i|` is the number of the samples
@@ -566,10 +587,18 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
 
+    log_base : {None, 2, 10, 'e'}
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+        From version 0.22, ``log_base=None`` will mean ``log_base=2`` rather
+        than the current default ``log_base='e'``.
+
+       .. versionadded:: 0.20
+
     Returns
     -------
     mi : float
-       Mutual information, a non-negative value
+       Mutual information, a non-negative value.
 
     See also
     --------
@@ -598,17 +627,24 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
-    log_contingency_nm = np.log(nz_val)
+
+    # Special limit cases: empty sets are a perfect match hence return 1.0.
+    if (pi.size == 0 or pj.size == 0):
+        return 1.0
+
+    log_contingency_nm = log(nz_val, log_base)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
     outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
-    log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
-    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
-          contingency_nm * log_outer)
+    log_pi = log(pi.sum(), log_base)
+    log_pj = log(pj.sum(), log_base)
+    log_outer = -log(outer, log_base) + log_pi + log_pj
+    mi = (contingency_nm * (log_contingency_nm -
+          log(contingency_sum, log_base)) + contingency_nm * log_outer)
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred):
+def adjusted_mutual_info_score(labels_true, labels_pred, log_base=None):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -641,6 +677,14 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
+    log_base : {None, 2, 10, 'e'}
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+        From version 0.22, ``log_base=None`` will mean ``log_base=2`` rather
+        than the current default ``log_base='e'``.
+
+       .. versionadded:: 0.20
+
     Returns
     -------
     ami: float(upperlimited by 1.0)
@@ -666,7 +710,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
       1.0
 
     If classes members are completely split across different clusters,
-    the assignment is totally in-complete, hence the AMI is null::
+    the assignment is totally in-complete, hence the AMI is zero::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
@@ -695,16 +739,19 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
-                           contingency=contingency)
+                           contingency=contingency,
+                           log_base=log_base)
     # Calculate the expected value for the mutual information
-    emi = expected_mutual_information(contingency, n_samples)
+    emi = expected_mutual_information(contingency, n_samples,
+                                      log_base=log_base)
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true = entropy(labels_true, log_base=log_base)
+    h_pred = entropy(labels_pred, log_base=log_base)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred):
+def normalized_mutual_info_score(labels_true, labels_pred, log_base=None):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
@@ -733,6 +780,14 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    log_base : {None, 2, 10, 'e'}
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+        From version 0.22, ``log_base=None`` will mean ``log_base=2`` rather
+        than the current default ``log_base='e'``.
+
+       .. versionadded:: 0.20
 
     Returns
     -------
@@ -776,10 +831,12 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
-                           contingency=contingency)
+                           contingency=contingency,
+                           log_base=log_base)
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
-    h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+    h_true = entropy(labels_true, log_base=log_base)
+    h_pred = entropy(labels_pred, log_base=log_base)
     nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
     return nmi
 
@@ -859,8 +916,24 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     return tk / np.sqrt(pk * qk) if tk != 0. else 0.
 
 
-def entropy(labels):
-    """Calculates the entropy for a labeling."""
+def entropy(labels, log_base=None):
+    """Calculates the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : int array, shape = [n_samples]
+
+    log_base : {None, 2, 10, 'e'}
+        Base of the log function: 'e' for results in nats, 2 for results in
+        bits, 10 for results in dits. If value is ``None``, it is set to 'e'.
+
+       .. versionadded:: 0.20
+
+    Returns
+    -------
+    h : float
+        Entropy, a non-negative value.
+    """
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
@@ -869,4 +942,4 @@ def entropy(labels):
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    return -np.sum((pi / pi_sum) * (log(pi, log_base) - log(pi_sum, log_base)))
