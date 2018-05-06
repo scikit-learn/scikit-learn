@@ -62,7 +62,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
            ``validate=True`` as default will be replaced by
            ``validate='array-or-frame'`` in 0.22.
 
-        .. versionadded:: 0.20
+        .. versionchanged:: 0.20
            ``validate`` takes the option ``'array-or-frame'``.
 
     accept_sparse : boolean, optional
@@ -71,18 +71,15 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         sparse matrix inputs will cause an exception to be raised.
 
     force_all_finite : boolean or 'allow-nan', optional default=True
-        Whether to raise an error on np.inf and np.nan in X. The possibilities
-        are:
+        Whether to raise an error on np.inf and np.nan in X. If validate is
+        False, this has not effect. The possibilities are:
 
         - If True, force all values of X to be finite.
         - If False, accept both np.inf and np.nan in X.
         - If 'allow-nan', accept only np.nan values in X. Values cannot be
           infinite.
 
-        This parameter is discarded when ``validate=False``.
-
         .. versionadded:: 0.20
-           ``force_all_finite`` was added to let pass NaN.
 
     pass_y : bool, optional default=False
         Indicate that transform should forward the y argument to the
