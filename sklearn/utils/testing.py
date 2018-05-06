@@ -540,7 +540,7 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
                    "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
-                   "RegressorChain"]
+                   "RegressorChain", "StackingClassifier", "StackingRegressor"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
@@ -560,7 +560,8 @@ DONT_TEST = ['SparseCoder', 'DictVectorizer',
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
              'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration', 'VotingClassifier']
+             '_SigmoidCalibration', 'VotingClassifier',
+             'StackingClassifier', 'StackingRegressor']
 
 
 def all_estimators(include_meta_estimators=False,

@@ -3,7 +3,7 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
@@ -32,9 +32,15 @@ from ..utils.validation import has_fit_parameter
 from ..utils.validation import check_is_fitted
 
 
-class BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
-                                  MetaEstimatorMixin, TransformerMixin)):
+class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
+                                   MetaEstimatorMixin, TransformerMixin)):
+    """Base class for stacking method.
 
+    Warning: This class should not be used directly. Use derived classes
+    instead.
+    """
+
+    @abstractmethod
     def __init__(self, estimators=None, final_estimator=None, cv=None,
                  method_estimators='auto', n_jobs=1, random_state=None,
                  verbose=0):
@@ -100,7 +106,7 @@ class BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
         eclf.set_params(rf=None)
 
         """
-        super(BaseStacking, self)._set_params('estimators', **params)
+        super(_BaseStacking, self)._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
@@ -112,7 +118,7 @@ class BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """
-        return super(BaseStacking, self)._get_params('estimators', deep=deep)
+        return super(_BaseStacking, self)._get_params('estimators', deep=deep)
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -256,7 +262,7 @@ class BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
         return self.final_estimator_.predict(self.transform(X))
 
 
-class StackingClassifier(BaseStacking, ClassifierMixin):
+class StackingClassifier(_BaseStacking, ClassifierMixin):
     """Stacked of estimators using a final classifier.
 
     Stacked generalization consists in stacking the output of individual
@@ -379,7 +385,7 @@ class StackingClassifier(BaseStacking, ClassifierMixin):
         return self.final_estimator_.predict_proba(self.transform(X))
 
 
-class StackingRegressor(BaseStacking, RegressorMixin):
+class StackingRegressor(_BaseStacking, RegressorMixin):
     """Stacked of estimators using a final regressor.
 
     Stacked generalization consists in stacking the output of individual
