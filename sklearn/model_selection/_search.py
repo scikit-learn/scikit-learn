@@ -242,13 +242,16 @@ class ParameterSampler(object):
             # look up sampled parameter settings in parameter grid
             param_grid = ParameterGrid(self.param_distributions)
             grid_size = len(param_grid)
+            n_iter = self.n_iter
 
-            if grid_size < self.n_iter:
-                raise ValueError(
-                    "The total space of parameters %d is smaller "
-                    "than n_iter=%d. For exhaustive searches, use "
-                    "GridSearchCV." % (grid_size, self.n_iter))
-            for i in sample_without_replacement(grid_size, self.n_iter,
+            if grid_size < n_iter:
+                warnings.warn(
+                    'The total space of parameters %d is smaller '
+                    'than n_iter=%d. Running %d iterations. For exhaustive '
+                    'searches, use GridSearchCV.'
+                    % (grid_size, self.n_iter, grid_size), UserWarning)
+                n_iter = grid_size
+            for i in sample_without_replacement(grid_size, n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
 
@@ -694,7 +697,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurence of `name`.
+                # `"param_%s" % name` at the first occurrence of `name`.
                 # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_i] = value
 
@@ -937,7 +940,7 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC()
+    >>> svc = svm.SVC(gamma="scale")
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -1123,6 +1126,12 @@ class RandomizedSearchCV(BaseSearchCV):
     is given as a distribution, sampling with replacement is used.
     It is highly recommended to use continuous distributions for continuous
     parameters.
+
+    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
+    accept a custom RNG instance and always use the singleton RNG from
+    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
+    deterministic iteration whenever ``scipy.stats`` distributions are used to
+    define the parameter search space.
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
 
@@ -1381,7 +1390,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
+        A generator over parameter settings, constructed from
         param_distributions.
 
     """

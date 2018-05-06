@@ -150,7 +150,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
     upper_bounds_ = np.empty(n_samples, dtype=dtype)
     cdef floating[:] upper_bounds = upper_bounds_
 
-    # Get the inital set of upper bounds and lower bounds for each sample.
+    # Get the initial set of upper bounds and lower bounds for each sample.
     update_labels_distances_inplace(X_p, centers_p, center_half_distances,
                                     labels, lower_bounds, upper_bounds,
                                     n_samples, n_features, n_clusters)
