@@ -88,9 +88,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    rotation : None | 'varimax' | 'orthomax'
+    rotation : None | 'varimax' | 'quartimax'
         If not None, apply the indicated rotation. Currently, varimax and
-        orthomax are implemented.
+        quartimax are implemented.
 
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
