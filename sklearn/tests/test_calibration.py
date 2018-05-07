@@ -253,9 +253,9 @@ def test_isotonic_calibration_prob_not_inf():
       y_train = pickle.load(f)
 
     clf = GaussianNB()
-    clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
-    clf_c.fit(X_train, y_train)
-    y_pred = clf_c.predict_proba(X_test)
+    clf_c = CalibratedClassifierCV(clf, method='isotonic')
+    clf_fit = clf_c.fit(X_train, y_train)
+    y_pred = clf_fit.predict_proba(X_test)[:,1]
     assert(np.all(y_pred >= 0))
     assert(np.all(y_pred <= 1))
 
