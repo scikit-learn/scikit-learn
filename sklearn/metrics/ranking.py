@@ -912,16 +912,6 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
         have a score between 0 and 1.
 
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
-    check_consistent_length(y_true, y_score)
-    y_type = type_of_target(y_true)
-    supported_fmt = ("multilabel-indicator", "continuous-multioutput",
-                     "multiclass-multioutput")
-    if y_type not in supported_fmt:
-        raise ValueError(
-            "Only {} formats are supported. Got {} instead".format(
-                supported_fmt, y_type))
     discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_basis))
     if k is not None:
         discount[k:] = 0
@@ -1021,7 +1011,17 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     4.682...
 
     """
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+    y_type = type_of_target(y_true)
+    supported_fmt = ("multilabel-indicator", "continuous-multioutput",
+                     "multiclass-multioutput")
+    if y_type not in supported_fmt:
+        raise ValueError(
+            "Only {} formats are supported. Got {} instead".format(
+                supported_fmt, y_type))
+
     return np.average(
         _dcg_sample_scores(y_true, y_score, k=k, log_basis=log_basis),
         weights=sample_weight)
@@ -1144,6 +1144,8 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     1.0
 
     """
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     gain = _ndcg_sample_scores(y_true, y_score, k=k)
     return np.average(gain, weights=sample_weight)
