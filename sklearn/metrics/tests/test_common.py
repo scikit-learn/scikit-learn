@@ -49,7 +49,8 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
-from sklearn.metrics import ndcg_score, dcg_score
+from sklearn.metrics import ndcg_score
+from sklearn.metrics import dcg_score
 
 # TODO Curve are currently not covered by invariance test
 # from sklearn.metrics import precision_recall_curve
@@ -314,7 +315,7 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "coverage_error", "label_ranking_loss",
 
     "ndcg_score",
-    "dcg_score"
+    "dcg_score",
 
     "label_ranking_average_precision_score",
 ]
