@@ -28,6 +28,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import calibration_loss
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
@@ -1635,3 +1636,10 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+def test_calibration_loss():
+    # Check calibration_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    calibration_loss_val = calibration_loss(y_true, y_pred, bin_size=2)
+    assert_almost_equal(calibration_loss_val, 0.469)
