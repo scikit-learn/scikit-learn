@@ -194,6 +194,11 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
+  now ignores any unknown classes. A warning is raised stating the unknown classes
+  classes found which are ignored.
+  :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -214,8 +219,8 @@ Model evaluation and meta-estimators
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
-  return estimators fitted on each split. :issue:`9686` by
-  :user:`Aurélien Bellet <bellet>`.
+  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
+  <bellet>`.
 
 Decomposition and manifold learning
 
@@ -226,8 +231,7 @@ Decomposition and manifold learning
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
-  ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by
-  :user:`Hanmin Qin <qinhanmin2014>`.
+  ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - :func:`metrics.label_ranking_average_precision_score` now supports vector ``sample_weight``.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
@@ -373,8 +377,8 @@ Decomposition, manifold learning and clustering
 - Fixed a bug in :func:`datasets.fetch_kddcup99`, where data were not properly
   shuffled. :issue:`9731` by `Nicolas Goix`_.
 
-- Fixed a bug in :class:`decomposition.PCA` where users will get unexpected
-  error with large datasets when ``n_components='mle'`` on Python 3 versions.
+- Fixed a bug in :class:`decomposition.PCA` where users will get unexpected error
+  with large datasets when ``n_components='mle'`` on Python 3 versions.
   :issue:`9886` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - Fixed a bug when setting parameters on meta-estimator, involving both a
@@ -395,6 +399,11 @@ Decomposition, manifold learning and clustering
   by :user:`Jan Margeta <jmargeta>`, :user:`Guillaume Lemaitre <glemaitre>`,
   and :user:`Devansh D. <devanshdalal>`.
 
+- Fixed a bug in :class:`mixture.BaseMixture` where the reported `n_iter_` was
+  missing an iteration. It affected :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
+  Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
+
 - Fixed a bug in :class:`mixture.BaseMixture` and its subclasses
   :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
   where the ``lower_bound_`` was not the max lower bound across all
@@ -403,11 +412,6 @@ Decomposition, manifold learning and clustering
   the previous call to the fit method is now only used to check for convergence
   if ``max_iter=1``. :issue:`10869` by :user:`Aurélien Géron <ageron>`.
 
-- Fixed a bug in :class:`mixture.BaseMixture` where the reported `n_iter_` was
-  missing an iteration. It affected :class:`mixture.GaussianMixture` and
-  :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
-  Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
-
 Metrics
 
 - Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
@@ -415,14 +419,13 @@ Metrics
   :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
 
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
-  non-integer sample weights. :issue:`9786` by
-  :user:`Hanmin Qin <qinhanmin2014>`.
+  non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - Fixed a bug where :func:`metrics.roc_curve` sometimes starts on y-axis instead
   of (0, 0), which is inconsistent with the document and other implementations.
-  Note that this will not influence the result from
-  :func:`metrics.roc_auc_score`. :issue:`10093` by
-  :user:`alexryndin <alexryndin>` and :user:`Hanmin Qin <qinhanmin2014>`.
+  Note that this will not influence the result from :func:`metrics.roc_auc_score`
+  :issue:`10093` by :user:`alexryndin <alexryndin>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
 
 - Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
   :func:`mutual_info_score`.
@@ -458,8 +461,8 @@ Utils
 Preprocessing
 
 - Fixed bugs in :class:`preprocessing.LabelEncoder` which would sometimes throw
-  errors when ``transform`` or ``inverse_transform`` was called with empty
-  arrays. :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
+  errors when ``transform`` or ``inverse_transform`` was called with empty arrays.
+  :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
 
 - Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
@@ -517,16 +520,16 @@ Decomposition, manifold learning and clustering
 
 Metrics
 
-- Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer
-  required for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True``
-  can hide bugs due to floating point error in the input.
+- Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
+  for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
+  due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Cluster
 
 - Deprecate ``pooling_func`` unused parameter in
-  :class:`cluster.AgglomerativeClustering`. :issue:`9875` by
-  :user:`Kumar Ashutosh <thechargedneutron>`.
+  :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
+  <thechargedneutron>`.
 
 Imputer
 
@@ -551,10 +554,10 @@ Outlier Detection models
   ``score_samples`` and ``decision_function`` methods.
   The ``contamination`` parameter of :class:`ensemble.IsolationForest` and
   :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
-  to define this ``offset_`` such that outliers (resp. inliers) have negative
-  (resp. positive) ``decision_function`` values. By default, ``contamination``
-  is kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to
-  "auto", thus using method-specific score offsets.
+  to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
+  positive) ``decision_function`` values. By default, ``contamination`` is
+  kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to "auto",
+  thus using method-specific score offsets.
   In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
@@ -564,8 +567,7 @@ Covariance
 - The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and
   :class:`covariance.GraphLassoCV` have been renamed to
   :func:`covariance.graphical_lasso`, :class:`covariance.GraphicalLasso` and
-  :class:`covariance.GraphicalLassoCV` respectively and will be removed in
-  version 0.22.
+  :class:`covariance.GraphicalLassoCV` respectively and will be removed in version 0.22.
   :issue:`9993` by :user:`Artiem Krinitsyn <artiemq>`
 
 Misc
