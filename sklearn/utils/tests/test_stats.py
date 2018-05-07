@@ -14,8 +14,10 @@ _cases = (
 )
 
 
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
 @pytest.mark.parametrize("values, method, expected", _cases)
 def test_cases_rankdata(values, method, expected):
-    r = rankdata(values, method=method)
-    assert_array_equal(r, expected)
+
+    # Test deprecated backport to be removed in 0.21
+    with ignore_warnings():
+        r = rankdata(values, method=method)
+        assert_array_equal(r, expected)

@@ -918,13 +918,13 @@ def check_1d_input(name, X, X_2d, y):
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
-@ignore_warnings
 def test_1d_input(name):
     X = iris.data[:, 0]
     X_2d = iris.data[:, 0].reshape((-1, 1))
     y = iris.target
 
-    check_1d_input(name, X, X_2d, y)
+    with ignore_warnings():
+        check_1d_input(name, X, X_2d, y)
 
 
 def check_class_weights(name):

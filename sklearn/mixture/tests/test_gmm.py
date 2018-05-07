@@ -162,9 +162,9 @@ def test_GMM_attributes():
     with pytest.raises(ValueError):
         g._set_covars([])
     with pytest.raises(ValueError):
-        g._set_covars( np.zeros((n_components - 2, n_features)))
+        g._set_covars(np.zeros((n_components - 2, n_features)))
     with pytest.raises(ValueError):
-        mixture.GMM( n_components=20, covariance_type='badcovariance_type')
+        mixture.GMM(n_components=20, covariance_type='badcovariance_type')
 
 
 class GMMTester():

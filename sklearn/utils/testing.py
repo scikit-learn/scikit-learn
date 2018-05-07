@@ -697,32 +697,27 @@ skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                  reason='skip on travis')
 
 
-def if_safe_multiprocessing_with_blas(func):
-    """Decorator for tests involving both BLAS calls and multiprocessing.
+#  Decorator for tests involving both BLAS calls and multiprocessing.
+#
+#  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
+#  some implementation of BLAS (or other libraries that manage an internal
+#  posix thread pool) can cause a crash or a freeze of the Python process.
+#
+#  In practice all known packaged distributions (from Linux distros or
+#  Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
+#  only impact OSX users.
+#
+#  This wrapper makes it possible to skip tests that can possibly cause
+#  this crash under OS X with.
+#
+#  Under Python 3.4+ it is possible to use the `forkserver` start method
+#  for multiprocessing to avoid this issue. However it can cause pickling
+#  errors on interactively defined functions. It therefore not enabled by
+#  default.
 
-    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
-    some implementation of BLAS (or other libraries that manage an internal
-    posix thread pool) can cause a crash or a freeze of the Python process.
-
-    In practice all known packaged distributions (from Linux distros or
-    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
-    only impact OSX users.
-
-    This wrapper makes it possible to skip tests that can possibly cause
-    this crash under OS X with.
-
-    Under Python 3.4+ it is possible to use the `forkserver` start method
-    for multiprocessing to avoid this issue. However it can cause pickling
-    errors on interactively defined functions. It therefore not enabled by
-    default.
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        if sys.platform == 'darwin':
-            raise SkipTest(
-                "Possible multi-process bug with some BLAS")
-        return func(*args, **kwargs)
-    return run_test
+if_safe_multiprocessing_with_blas = pytest.mark.skipif(
+        sys.platform == 'darwin',
+        reason="Possible multi-process bug with some BLAS")
 
 
 def clean_warning_registry():
