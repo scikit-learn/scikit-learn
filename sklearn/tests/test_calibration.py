@@ -244,13 +244,13 @@ def test_isotonic_calibration_prob_not_inf():
     # Test from @LotusZephyr's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/10903
     with open('data_X_train.pickle', 'rb') as f:
-      X_train = pickle.load(f)
+        X_train = pickle.load(f)
 
     with open('data_X_test.pickle', 'rb') as f:
-      X_test = pickle.load(f)
+        X_test = pickle.load(f)
 
     with open('data_y_train.pickle', 'rb') as f:
-      y_train = pickle.load(f)
+        y_train = pickle.load(f)
 
     clf = GaussianNB()
     clf_c = CalibratedClassifierCV(clf, method='isotonic')
