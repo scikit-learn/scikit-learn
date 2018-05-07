@@ -1643,4 +1643,4 @@ def test_calibration_loss():
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
     calibration_loss_val = calibration_loss(y_true, y_pred, bin_size=2)
-    assert_almost_equal(calibration_loss_val, 0.469)
+    assert_almost_equal(calibration_loss_val, 0.4699999999999)
