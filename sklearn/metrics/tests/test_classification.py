@@ -1637,6 +1637,7 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
 
+
 def test_calibration_loss():
     # Check calibration_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
