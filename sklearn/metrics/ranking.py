@@ -882,11 +882,11 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+    y_true : ndarray, shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : array, shape = [n_samples, n_labels], dtype = float
+    y_score : ndarray, shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -901,7 +901,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
 
     Returns
     -------
-    discounted_cumulative_gain : array, shape = [n_samples,], dtype = float
+    discounted_cumulative_gain : ndarray, shape (n_samples,)
         The DCG score for each sample.
 
     See also
@@ -912,19 +912,22 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
         have a score between 0 and 1.
 
     """
-    check_array(y_true, ensure_2d=False)
-    check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score)
     y_type = type_of_target(y_true)
-    if y_type not in ("multilabel-indicator", "continuous-multioutput",
-                      "multiclass-multioutput"):
-        raise ValueError("{0} format is not supported".format(y_type))
+    supported_fmt = ("multilabel-indicator", "continuous-multioutput",
+                     "multiclass-multioutput")
+    if y_type not in supported_fmt:
+        raise ValueError(
+            "Only {} formats are supported. Got {} instead".format(
+                supported_fmt, y_type))
     discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_basis))
     if k is not None:
         discount[k:] = 0
     discount_cumsum = np.cumsum(discount)
-    cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum) for
-                        y_t, y_s in zip(y_true, y_score)]
+    cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum)
+                        for y_t, y_s in zip(y_true, y_score)]
     return np.asarray(cumulative_gains)
 
 
@@ -938,7 +941,7 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     discount_sums = np.zeros(len(counts))
     discount_sums[0] = discount_cumsum[groups[0]]
     discount_sums[1:] = np.diff(discount_cumsum[groups])
-    return(ranked * discount_sums).sum()
+    return (ranked * discount_sums).sum()
 
 
 def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
@@ -952,11 +955,11 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+    y_true : ndarray, shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : array, shape = [n_samples, n_labels], dtype = float
+    y_score : ndarray, shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -969,7 +972,7 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
         Basis of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    sample_weight : array-like of shape = [n_samples], optional, dtype = float.
+    sample_weight : ndarray, shape (n_samples,), optional (default=None)
         Sample weights. If None, all samples are given the same weight.
 
     Returns
@@ -1037,11 +1040,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+    y_true : ndarray, shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : array, shape = [n_samples, n_labels], dtype = float
+    y_score : ndarray, shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1052,7 +1055,7 @@ def _ndcg_sample_scores(y_true, y_score, k=None):
 
     Returns
     -------
-    normalized_discounted_cumulative_gain : array, shape = [n_samples,]
+    normalized_discounted_cumulative_gain : ndarray, shape (n_samples,)
         The NDCG score for each sample (float in [0., 1.]).
 
     See also
@@ -1081,11 +1084,11 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+    y_true : ndarray, shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : array, shape = [n_samples, n_labels], dtype = float
+    y_score : ndarray, shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1094,7 +1097,7 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    sample_weight : array-like of shape = [n_samples], optional, dtype = float.
+    sample_weight : ndarray, shape (n_samples,), optional (default=None)
         Sample weights. If None, all samples are given the same weight.
 
     Returns

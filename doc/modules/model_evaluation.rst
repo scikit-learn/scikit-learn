@@ -1491,8 +1491,6 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
 
-
-
 .. _regression_metrics:
 
 Regression metrics
