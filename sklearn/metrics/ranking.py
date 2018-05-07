@@ -934,6 +934,16 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     return (ranked * discount_sums).sum()
 
 
+def _check_dcg_target_type(y_true):
+    y_type = type_of_target(y_true)
+    supported_fmt = ("multilabel-indicator", "continuous-multioutput",
+                     "multiclass-multioutput")
+    if y_type not in supported_fmt:
+        raise ValueError(
+            "Only {} formats are supported. Got {} instead".format(
+                supported_fmt, y_type))
+
+
 def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     """Compute Discounted Cumulative Gain.
 
@@ -1014,14 +1024,7 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
-    y_type = type_of_target(y_true)
-    supported_fmt = ("multilabel-indicator", "continuous-multioutput",
-                     "multiclass-multioutput")
-    if y_type not in supported_fmt:
-        raise ValueError(
-            "Only {} formats are supported. Got {} instead".format(
-                supported_fmt, y_type))
-
+    _check_dcg_target_type(y_true)
     return np.average(
         _dcg_sample_scores(y_true, y_score, k=k, log_basis=log_basis),
         weights=sample_weight)
@@ -1147,5 +1150,6 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+    _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k)
     return np.average(gain, weights=sample_weight)
