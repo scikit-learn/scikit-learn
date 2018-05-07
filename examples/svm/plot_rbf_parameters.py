@@ -31,7 +31,7 @@ subsequent search.
 
 Note that the heat map plot has a special colorbar with a midpoint value close
 to the score values of the best performing models so as to make it easy to tell
-them appart in the blink of an eye.
+them apart in the blink of an eye.
 
 The behavior of the model is very sensitive to the ``gamma`` parameter. If
 ``gamma`` is too large, the radius of the area of influence of the support

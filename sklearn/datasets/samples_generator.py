@@ -705,7 +705,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     Parameters
     ----------
     n_samples : int or array-like, optional (default=100)
-        If int, it is the the total number of points equally divided among
+        If int, it is the total number of points equally divided among
         clusters.
         If array-like, each element of the sequence indicates
         the number of samples per cluster.
