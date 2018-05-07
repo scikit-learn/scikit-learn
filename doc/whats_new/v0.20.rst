@@ -192,6 +192,11 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
+  now ignores any unknown classes. A warning is raised stating the unknown classes
+  classes found which are ignored.
+  :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
