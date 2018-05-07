@@ -112,6 +112,9 @@ logistic regression, a linear support-vector classifier (SVC), and linear SVC wi
 both isotonic calibration and sigmoid calibration. 
 The Brier score is a metric which is a combination of calibration loss and refinement loss,
 :func:`brier_score_loss`, reported in the legend (the smaller the better).
+Calibration loss is defined as the mean squared deviation from empirical probabilities
+derived from slope of ROC segments. Refinement loss can be defined as the expected
+optimal loss as measured by the area under the optimal cost curve.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_002.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
