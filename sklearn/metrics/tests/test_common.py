@@ -213,7 +213,8 @@ METRIC_UNDEFINED_BINARY = [
     "label_ranking_loss",
     "label_ranking_average_precision_score",
 
-    "dcg_score", "ndcg_score"
+    "dcg_score",
+    "ndcg_score"
 ]
 
 # Those metrics don't support multiclass inputs
@@ -312,7 +313,8 @@ THRESHOLDED_MULTILABEL_METRICS = [
 
     "coverage_error", "label_ranking_loss",
 
-    "ndcg_score", "dcg_score"
+    "ndcg_score",
+    "dcg_score"
 
     "label_ranking_average_precision_score",
 ]

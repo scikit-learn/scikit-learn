@@ -22,7 +22,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_true
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -1098,12 +1097,12 @@ def _test_dcg_score_for(y_true, y_score):
     discount = np.log2(np.arange(y_true.shape[1]) + 2)
     ideal = _dcg_sample_scores(y_true, y_true)
     score = _dcg_sample_scores(y_true, y_score)
-    assert_true((score <= ideal).all())
-    assert_true((_dcg_sample_scores(y_true, y_true, k=5) <= ideal).all())
-    assert_equal(ideal.shape, (y_true.shape[0], ))
-    assert_equal(score.shape, (y_true.shape[0], ))
-    assert_array_almost_equal(
-        ideal, (np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
+    assert (score <= ideal).all()
+    assert (_dcg_sample_scores(y_true, y_true, k=5) <= ideal).all()
+    assert ideal.shape == (y_true.shape[0], )
+    assert score.shape == (y_true.shape[0], )
+    assert ideal == pytest.approx(
+        (np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
 
 
 def test_dcg_ties():
@@ -1111,10 +1110,10 @@ def test_dcg_ties():
     y_score = np.zeros(y_true.shape)
     dcg = _dcg_sample_scores(y_true, y_score)
     discounts = 1 / np.log2(np.arange(2, 7))
-    assert_array_almost_equal(dcg, [discounts.sum() * y_true.mean()])
+    assert dcg == pytest.approx([discounts.sum() * y_true.mean()])
     y_score[0, 3:] = 1
     dcg = _dcg_sample_scores(y_true, y_score)
-    assert_array_almost_equal(dcg, [
+    assert dcg == pytest.approx([
         discounts[:2].sum() * y_true[0, 3:].mean() +
         discounts[2:].sum() * y_true[0, :3].mean()
     ])
@@ -1124,9 +1123,9 @@ def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
     y_score = y_true + np.random.RandomState(0).uniform(
         -.2, .2, size=y_true.shape)
-    assert_almost_equal(1., ndcg_score(y_true, y_score))
+    assert ndcg_score(y_true, y_score) == pytest.approx(1.)
     y_score += 1000
-    assert_almost_equal(1., ndcg_score(y_true, y_score))
+    assert ndcg_score(y_true, y_score) == pytest.approx(1.)
 
 
 def test_ndcg_toy_examples():
@@ -1134,28 +1133,25 @@ def test_ndcg_toy_examples():
     y_score = np.tile(np.arange(6, -1, -1), (5, 1))
     y_score_noisy = y_score + np.random.RandomState(0).uniform(
         -.2, .2, size=y_score.shape)
-    assert_array_almost_equal(
-        _dcg_sample_scores(y_true, y_score), 3 / np.log2(np.arange(2, 7)))
-    assert_array_almost_equal(
-        _dcg_sample_scores(y_true, y_score_noisy),
+    assert _dcg_sample_scores(y_true, y_score) == pytest.approx(
         3 / np.log2(np.arange(2, 7)))
-    assert_array_almost_equal(
-        _ndcg_sample_scores(y_true, y_score), 1 / np.log2(np.arange(2, 7)))
-    assert_array_almost_equal(
-        _dcg_sample_scores(
-            y_true, y_score, log_basis=10), 3 / np.log10(np.arange(2, 7)))
-    assert_almost_equal(
-        ndcg_score(y_true, y_score), (1 / np.log2(np.arange(2, 7))).mean())
-    assert_almost_equal(
-        dcg_score(y_true, y_score), (3 / np.log2(np.arange(2, 7))).mean())
+    assert _dcg_sample_scores(y_true, y_score_noisy) == pytest.approx(
+        3 / np.log2(np.arange(2, 7)))
+    assert _ndcg_sample_scores(y_true, y_score) == pytest.approx(
+        1 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(y_true, y_score, log_basis=10) == pytest.approx(
+        3 / np.log10(np.arange(2, 7)))
+    assert ndcg_score(y_true, y_score) == pytest.approx(
+        (1 / np.log2(np.arange(2, 7))).mean())
+    assert dcg_score(y_true, y_score) == pytest.approx(
+        (3 / np.log2(np.arange(2, 7))).mean())
     y_true = 3 * np.ones((5, 7))
     expected_dcg_score = (3 / np.log2(np.arange(2, 9))).sum()
-    assert_array_almost_equal(
-        _dcg_sample_scores(y_true, y_score),
+    assert _dcg_sample_scores(y_true, y_score) == pytest.approx(
         expected_dcg_score * np.ones(5))
-    assert_array_almost_equal(_ndcg_sample_scores(y_true, y_score), np.ones(5))
-    assert_almost_equal(dcg_score(y_true, y_score), expected_dcg_score)
-    assert_almost_equal(ndcg_score(y_true, y_score), 1.)
+    assert _ndcg_sample_scores(y_true, y_score) == pytest.approx(np.ones(5))
+    assert dcg_score(y_true, y_score) == pytest.approx(expected_dcg_score)
+    assert ndcg_score(y_true, y_score) == pytest.approx(1.)
 
 
 def test_ndcg_score():
@@ -1169,16 +1165,16 @@ def test_ndcg_score():
 def _test_ndcg_score_for(y_true, y_score):
     ideal = _ndcg_sample_scores(y_true, y_true)
     score = _ndcg_sample_scores(y_true, y_score)
-    assert_true((score <= ideal).all())
+    assert (score <= ideal).all()
     all_zero = (y_true == 0).all(axis=1)
-    assert_array_almost_equal(ideal[~all_zero], np.ones((~all_zero).sum()))
-    assert_array_almost_equal(ideal[all_zero], np.zeros(all_zero.sum()))
-    assert_array_almost_equal(score[~all_zero],
-                              _dcg_sample_scores(y_true, y_score)[~all_zero] /
-                              _dcg_sample_scores(y_true, y_true)[~all_zero])
-    assert_array_almost_equal(score[all_zero], np.zeros(all_zero.sum()))
-    assert_equal(ideal.shape, (y_true.shape[0], ))
-    assert_equal(score.shape, (y_true.shape[0], ))
+    assert ideal[~all_zero] == pytest.approx(np.ones((~all_zero).sum()))
+    assert ideal[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
+    assert score[~all_zero] == pytest.approx(
+        _dcg_sample_scores(y_true, y_score)[~all_zero] /
+        _dcg_sample_scores(y_true, y_true)[~all_zero])
+    assert score[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
+    assert ideal.shape == (y_true.shape[0], )
+    assert score.shape == (y_true.shape[0], )
 
 
 def test_partial_roc_auc_score():
@@ -1201,6 +1197,6 @@ def test_partial_roc_auc_score():
 
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(1e-4, 1, 5):
-        assert_almost_equal(
-            roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
-            _partial_roc_auc_score(y_true, y_pred, max_fpr))
+        assert roc_auc_score(
+            y_true, y_pred, max_fpr=max_fpr) == pytest.approx(
+                _partial_roc_auc_score(y_true, y_pred, max_fpr))
