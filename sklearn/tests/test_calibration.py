@@ -4,6 +4,7 @@
 from __future__ import division
 import numpy as np
 from scipy import sparse
+import pickle
 from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
