@@ -912,6 +912,7 @@ averaged.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
 
+.. currentmodule:: sklearn.ensemble
 
  .. _voting_classifier:
 
@@ -941,7 +942,7 @@ E.g., if the prediction for a given sample is
 the VotingClassifier (with ``voting='hard'``) would classify the sample
 as "class 1" based on the majority class label.
 
-In the cases of a tie, the `VotingClassifier` will select the class based
+In the cases of a tie, the :class:`VotingClassifier` will select the class based
 on the ascending sort order. E.g., in the following scenario
 
 - classifier 1 -> class 2
@@ -1045,8 +1046,9 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 Using the `VotingClassifier` with `GridSearch`
 ----------------------------------------------
 
-The `VotingClassifier` can also be used together with `GridSearch` in order
-to tune the hyperparameters of the individual estimators::
+The :class:`VotingClassifier` can also be used together with
+:class:`sklearn.model_selection.GridSearch` in order to tune the
+hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
    >>> clf1 = LogisticRegression(random_state=1)
@@ -1128,8 +1130,8 @@ estimator. This parameter is either a list of string of the methods name or
 availability and a pre-determined order of preference.
 
 It is possible to get the final predictions using the ``predict`` or
-``predict_proba`` depending if you are using :func:`StackingClassifier` or
-:func:`StackingRegressor`::
+``predict_proba`` depending if you are using :class:`StackingClassifier` or
+:class:`StackingRegressor`::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
