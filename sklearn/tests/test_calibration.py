@@ -255,7 +255,7 @@ def test_isotonic_calibration_prob_not_inf():
     clf = GaussianNB()
     clf_c = CalibratedClassifierCV(clf, method='isotonic')
     clf_fit = clf_c.fit(X_train, y_train)
-    y_pred = clf_fit.predict_proba(X_test)[:,1]
+    y_pred = clf_fit.predict_proba(X_test)[:, 1]
     assert(np.all(y_pred >= 0))
     assert(np.all(y_pred <= 1))
 
