@@ -193,7 +193,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             cluster_k_idxs = np.where(labels == k)[0]
 
             if len(cluster_k_idxs) == 0:
-                warnings.warn("Cluster %d is empty!" % k)
+                warnings.warn("Cluster {k} is empty! self.labels_[self.medoid_indices_[{k}]] "
+                              "may not be labeled with its corresponding cluster ({k}).".format(k=k))
                 continue
 
             in_cluster_distances = D[cluster_k_idxs, cluster_k_idxs[:, np.newaxis]]
