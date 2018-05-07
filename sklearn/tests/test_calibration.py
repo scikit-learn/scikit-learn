@@ -239,15 +239,21 @@ def test_sigmoid_calibration():
                   np.vstack((exF, exF)), exY)
 
 
-def test_isotonic_calibration():
+def test_isotonic_calibration_prob_not_inf():
     # Test from @LotusZephyr's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/10903
-    X = [[1.97, 1.18], [1.34, 1.06], [2.22, 6.82], [-1.37, 0.87], [3.98, 0.32]]
-    y = [True, False, True, True, False]
-    X_test = [[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]]
+    with open('data_X_train.pickle', 'rb') as f:
+      X_train = pickle.load(f)
+
+    with open('data_X_test.pickle', 'rb') as f:
+      X_test = pickle.load(f)
+
+    with open('data_y_train.pickle', 'rb') as f:
+      y_train = pickle.load(f)
+
     clf = GaussianNB()
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
-    clf_c.fit(X, y)
+    clf_c.fit(X_train, y_train)
     y_pred = clf_c.predict_proba(X_test)
     assert(np.all(y_pred >= 0))
     assert(np.all(y_pred <= 1))
