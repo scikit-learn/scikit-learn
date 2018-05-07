@@ -799,8 +799,8 @@ def test_convergence_detected_with_warm_start():
             gmm.fit(X)
             if gmm.converged_:
                 break
-        assert_true(gmm.converged_)
-        assert_greater_equal(max_iter, gmm.n_iter_)
+        assert gmm.converged_
+        assert max_iter >= gmm.n_iter_
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -821,12 +821,12 @@ def test_no_convergence_at_1st_iter_if_warm_start_and_max_iter_greater_1():
     gmm = GaussianMixture(n_components=n_components, warm_start=True,
                           max_iter=max_iter, tol=0., random_state=rng)
     gmm.fit(X1)
-    assert_true(not gmm.converged_)
-    assert_equal(gmm.n_iter_, max_iter)
+    assert not gmm.converged_
+    assert gmm.n_iter_ == max_iter
     gmm.tol = np.infty
     gmm.fit(X2)
-    assert_true(gmm.converged_)
-    assert_equal(gmm.n_iter_, 2)
+    assert gmm.converged_
+    assert gmm.n_iter_ == 2
 
 
 def test_score():
@@ -1024,4 +1024,4 @@ def test_init():
         gmm2 = GaussianMixture(n_components=n_components, n_init=10,
                                max_iter=1, random_state=random_state).fit(X)
 
-        assert_greater_equal(gmm2.lower_bound_, gmm1.lower_bound_)
+        assert gmm2.lower_bound_ >= gmm1.lower_bound_
