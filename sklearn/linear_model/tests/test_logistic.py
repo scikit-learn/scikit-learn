@@ -1236,13 +1236,13 @@ def test_warm_start_converge_LR():
     for i in range(5):
         lr1.fit(Z, Y)
         p1 = lr1.predict_proba(Z)
-        lr1_loss.append(sklearn.metrics.log_loss(Y, p1))
+        lr1_loss.append(log_loss(Y, p1))
 
     lr2_loss = []
     for i in range(5):
         lr2.fit(Z, Y)
         p2 = lr2.predict_proba(Z)
-        lr2_loss.append(sklearn.metrics.log_loss(Y, p2))
+        lr2_loss.append(log_loss(Y, p2))
 
     for i in range(5):
         assert_almost_equal(lr1_loss[i], lr2_loss[i], decimal=4)
