@@ -121,7 +121,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_nonnegative_int(self.max_iter, "max_iter")
 
         # Check init
-        init_methods = ['random', 'heuristic']
+        init_methods = ['random', 'heuristic', 'k-medoids++']
         if self.init not in init_methods:
             raise ValueError("init needs to be one of " +
                              "the following: " +
