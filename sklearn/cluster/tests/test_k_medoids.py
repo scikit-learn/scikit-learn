@@ -36,7 +36,7 @@ def test_kmedoids_input_validation_and_fit_check():
                          KMedoids(n_clusters=1, max_iter=None).fit, X)
 
     assert_raise_message(ValueError, "init needs to be one of the following: "
-                                     "['random', 'heuristic']",
+                                     "['random', 'heuristic', 'k-medoids++']",
                          KMedoids(init=None).fit, X)
 
     # Trying to fit 3 samples to 8 clusters
