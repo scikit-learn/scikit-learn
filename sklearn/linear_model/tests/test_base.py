@@ -12,6 +12,7 @@ from itertools import product
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.base import LinearRegression
@@ -90,6 +91,16 @@ def test_linear_regression_sample_weights():
             else:
                 assert_array_almost_equal(coefs1, coefs2[1:])
                 assert_almost_equal(inter1, coefs2[0])
+
+
+def test_raises_value_error_if_positive_and_sparse():
+    # X, y must not be sparse if positive == True
+    X = sparse.eye(10)
+    y = np.ones(10)
+
+    reg = LinearRegression(positive=True)
+
+    assert_raises(TypeError, reg.fit, X, y)
 
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():
@@ -176,6 +187,46 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     n_features = X.shape[1]
 
     ols = LinearRegression()
+    ols.fit(X, Y)
+    assert_equal(ols.coef_.shape, (2, n_features))
+    Y_pred = ols.predict(X)
+    ols.fit(X, y.ravel())
+    y_pred = ols.predict(X)
+    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_linear_regression_positive():
+    # Test nonnegative LinearRegression on a simple dataset.
+    # a simple dataset
+    X = [[1], [2]]
+    Y = [1, 2]
+
+    reg = LinearRegression(positive=True)
+    reg.fit(X, Y)
+
+    assert_array_almost_equal(reg.coef_, [1])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [1, 2])
+
+    # test it also for degenerate input
+    X = [[1]]
+    Y = [0]
+
+    reg = LinearRegression(positive=True)
+    reg.fit(X, Y)
+    assert_array_almost_equal(reg.coef_, [0])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [0])
+
+
+def test_linear_regression_positive_multiple_outcome(random_state=0):
+    # Test multiple-outcome nonnegative linear regressions
+    random_state = check_random_state(random_state)
+    X, y = make_sparse_uncorrelated(random_state=random_state)
+    Y = np.vstack((y, y)).T
+    n_features = X.shape[1]
+
+    ols = LinearRegression(positive=True)
     ols.fit(X, Y)
     assert_equal(ols.coef_.shape, (2, n_features))
     Y_pred = ols.predict(X)

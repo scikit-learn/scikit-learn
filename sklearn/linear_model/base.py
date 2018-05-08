@@ -20,6 +20,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+import scipy.optimize as sopt
 from scipy import linalg
 from scipy import sparse
 
@@ -421,6 +422,13 @@ class LinearRegression(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
         an estimator with ``normalize=False``.
 
+    positive : bool, optional, default False
+        If positive, restrict regression coefficients to be positive.
+
+    max_iter : int, optional, default None
+        The maximum number of iterations. If None, use scipy.optimize.nnls
+        default. Ignored if positive is False.
+
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
@@ -447,10 +455,12 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=1):
+    def __init__(self, fit_intercept=True, normalize=False, positive=False,
+                 max_iter=1000, copy_X=True, n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
+        self.positive = positive
+        self.max_iter = max_iter
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
@@ -461,10 +471,11 @@ class LinearRegression(LinearModel, RegressorMixin):
         Parameters
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
-            Training data
+            Training data. If positive parameter is True, X must not be sparse.
 
         y : numpy array of shape [n_samples, n_targets]
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary. If positive
+            parameter is True, y must not be sparse.
 
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
@@ -478,7 +489,10 @@ class LinearRegression(LinearModel, RegressorMixin):
         """
 
         n_jobs_ = self.n_jobs
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+
+        # scipy.optimize.nnls expects matrix
+        accept_sparse = False if self.positive else ['csr', 'csc', 'coo']
+        X, y = check_X_y(X, y, accept_sparse=accept_sparse,
                          y_numeric=True, multi_output=True)
 
         if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
@@ -492,7 +506,16 @@ class LinearRegression(LinearModel, RegressorMixin):
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
-        if sp.issparse(X):
+        if self.positive:
+            if y.ndim < 2:
+                self.coef_, self._residues = sopt.nnls(X, y, self.max_iter)
+            else:
+                # scipy.optimize.nnls cannot handle y with shape (M, K)
+                outs = Parallel(n_jobs=n_jobs_)(
+                        delayed(sopt.nnls)(X, y[:, j].ravel(), self.max_iter)
+                        for j in range(y.shape[1]))
+                self.coef_, self._residues = map(np.vstack, zip(*outs))
+        elif sp.issparse(X):
             if y.ndim < 2:
                 out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
