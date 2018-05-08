@@ -425,10 +425,6 @@ class LinearRegression(LinearModel, RegressorMixin):
     positive : bool, optional, default False
         If positive, restrict regression coefficients to be positive.
 
-    max_iter : int, optional, default None
-        The maximum number of iterations. If None, use scipy.optimize.nnls
-        default. Ignored if positive is False.
-
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
@@ -456,11 +452,10 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, normalize=False, positive=False,
-                 max_iter=1000, copy_X=True, n_jobs=1):
+                 copy_X=True, n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.positive = positive
-        self.max_iter = max_iter
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
@@ -508,11 +503,11 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = sopt.nnls(X, y, self.max_iter)
+                self.coef_, self._residues = sopt.nnls(X, y)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                        delayed(sopt.nnls)(X, y[:, j].ravel(), self.max_iter)
+                        delayed(sopt.nnls)(X, y[:, j].ravel())
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
