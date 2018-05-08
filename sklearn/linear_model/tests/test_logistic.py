@@ -1211,7 +1211,7 @@ def test_warm_start_converge_LR():
             [-0.78170885, -1.66963585],
             [2.24057471, -0.74555021],
             [-1.74809665,  2.25340192],
-            [-1.74958841,  2.2566389 ],
+            [-1.74958841,  2.2566389],
             [2.25984734, -1.75106702],
             [0.50598996, -0.77338402],
             [1.21968303,  0.57530831],
@@ -1223,14 +1223,14 @@ def test_warm_start_converge_LR():
 
     # Set dependant variable values
     Y = np.array([1, 0, 0, 1, 0, 0, 0, 0,
-                0, 0, 1, 1, 1, 0, 0, 1, 
-                0, 0, 1, 1], dtype=np.int32)
+                  0, 0, 1, 1, 1, 0, 0, 1,
+                  0, 0, 1, 1], dtype=np.int32)
     lr1 = LogisticRegression(C=1000000, multi_class='multinomial',
-                        solver='sag', tol=0.0001, warm_start=False,
-                        verbose=0)
+                             solver='sag', tol=0.0001, warm_start=False,
+                             verbose=0)
     lr2 = LogisticRegression(C=1000000, multi_class='multinomial',
-                        solver='sag', tol=0.0001, warm_start=True,
-                        verbose=0)
+                             solver='sag', tol=0.0001, warm_start=True,
+                             verbose=0)
 
     lr1_loss = []
     for i in range(5):
@@ -1245,4 +1245,4 @@ def test_warm_start_converge_LR():
         lr2_loss.append(sklearn.metrics.log_loss(Y, p2))
 
     for i in range(5):
-        assert_almost_equal(lr1_loss[i], lr2_loss[i], decimal = 4)
+        assert_almost_equal(lr1_loss[i], lr2_loss[i], decimal=4)
