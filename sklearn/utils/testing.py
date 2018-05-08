@@ -49,9 +49,6 @@ from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated
 
-import pytest
-
-
 additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
@@ -691,10 +688,31 @@ def if_matplotlib(func):
     return run_test
 
 
-skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
-                                   reason='skipped on 32bit platforms')
-skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
-                                 reason='skip on travis')
+try:
+    import pytest
+
+    skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+                                       reason='skipped on 32bit platforms')
+    skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
+                                     reason='skip on travis')
+
+except ImportError:
+
+    def skip_if_32bit(func):
+        """Test decorator that skips tests on 32bit platforms."""
+        @wraps(func)
+        def run_test(*args, **kwargs):
+            bits = 8 * struct.calcsize("P")
+            if bits == 32:
+                raise SkipTest('Test skipped on 32bit platforms.')
+            else:
+                return func(*args, **kwargs)
+        return run_test
+
+    def skip_travis():
+        """Skip test if being run on Travis."""
+        if os.environ.get('TRAVIS') == "true":
+            raise SkipTest("This test needs to be skipped on Travis")
 
 
 def if_safe_multiprocessing_with_blas(func):
