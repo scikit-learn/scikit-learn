@@ -287,9 +287,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         label for outlier samples (samples with no neighbors in given radius).
 
         - manual label: str or int label (should be the same type as y)
-          or list of manual labels if multi ouputs are used.
-        - 'most_frequent' : assign the most frequent label to outliers.
-        - None : when outlier is detected, ValueError is raised.
+          or list of manual labels if multi-output is used.
+        - 'most_frequent' : assign the most frequent label of y to outliers.
+        - None : when any outlier is detected, ValueError will be raised.
 
 
     metric_params : dict, optional (default = None)
