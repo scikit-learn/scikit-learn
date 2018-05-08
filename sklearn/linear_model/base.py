@@ -423,7 +423,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         an estimator with ``normalize=False``.
 
     positive : bool, optional, default False
-        If positive, restrict regression coefficients to be positive.
+        When set to ``True``, forces the coefficients to be positive.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.

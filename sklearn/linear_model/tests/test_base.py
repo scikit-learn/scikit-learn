@@ -228,7 +228,7 @@ def test_linear_regression_positive_multiple_outcome(random_state=0):
 
     ols = LinearRegression(positive=True)
     ols.fit(X, Y)
-    assert_equal(ols.coef_.shape, (2, n_features))
+    assert ols.coef_.shape == (2, n_features)
     Y_pred = ols.predict(X)
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
