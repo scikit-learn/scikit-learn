@@ -130,31 +130,29 @@ def test_precomputed_distance():
     assert kmedoids.cluster_centers_ == None
     assert kmedoids.inertia_ == 1
 
-def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
+def test_kmedoids_fit_naive():
     n_clusters = 3
-    for metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
-        if metric == 'precomputed':
-            continue
+    metric = 'euclidean'
 
-        model = KMedoids(n_clusters=n_clusters, metric=metric)
-        Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    model = KMedoids(n_clusters=n_clusters, metric=metric)
+    Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-        model.fit(Xnaive)
+    model.fit(Xnaive)
 
-        assert_array_equal(model.cluster_centers_,
-                           [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        assert_array_equal(model.labels_, [0, 1, 2])
-        assert model.inertia_ == 0.
+    assert_array_equal(model.cluster_centers_,
+                       [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    assert_array_equal(model.labels_, [0, 1, 2])
+    assert model.inertia_ == 0.
 
-        # diagonal must be zero, off-diagonals must be positive
-        X_new = model.transform(Xnaive)
-        for c in range(n_clusters):
-            assert X_new[c, c] == 0
-            for c2 in range(n_clusters):
-                if c != c2:
-                    assert X_new[c, c2] > 0
+    # diagonal must be zero, off-diagonals must be positive
+    X_new = model.transform(Xnaive)
+    for c in range(n_clusters):
+        assert X_new[c, c] == 0
+        for c2 in range(n_clusters):
+            if c != c2:
+                assert X_new[c, c2] > 0
 
-def test_kmedoids_iris_with_all_pairwise_distance_functions():
+def test_kmedoids_iris():
     rng = np.random.RandomState(seed)
     X_iris = load_iris()['data']
 
@@ -162,31 +160,27 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
 
     avg_dist_to_closest_centroid = ref_model.transform(X_iris).min(axis=1).mean()
 
-    for init in ['random', 'heuristic']:
-        for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
-            if distance_metric == 'precomputed':
-                continue
+    for init in ['random', 'heuristic', 'k-medoids++']:
+        distance_metric='euclidean'
+        model = KMedoids(n_clusters=3,
+                         metric=distance_metric,
+                         init=init,
+                         random_state=rng)
+        model.fit(X_iris)
 
-            model = KMedoids(n_clusters=3,
-                             metric=distance_metric,
-                             init=init,
-                             random_state=rng)
-            model.fit(X_iris)
-
-            distances = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X_iris)
-            avg_dist_to_random_medoid = np.mean(distances.ravel())
-            avg_dist_to_closest_medoid = model.inertia_ / X_iris.shape[0]
-            # We want distance-to-closest-medoid to be reduced from average
-            # distance by more than 50%
-            assert avg_dist_to_random_medoid > 2 * avg_dist_to_closest_medoid
-            # When K-Medoids is using Euclidean distance,
-            # we can compare its performance to
-            # K-Means. We want the average distance to cluster centers
-            # to be similar between K-Means and K-Medoids
-            if distance_metric == "euclidean":
-                assert_allclose(avg_dist_to_closest_medoid,
-                                avg_dist_to_closest_centroid, rtol=0.1)
-
+        distances = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X_iris)
+        avg_dist_to_random_medoid = np.mean(distances.ravel())
+        avg_dist_to_closest_medoid = model.inertia_ / X_iris.shape[0]
+        # We want distance-to-closest-medoid to be reduced from average
+        # distance by more than 50%
+        assert avg_dist_to_random_medoid > 2 * avg_dist_to_closest_medoid
+        # When K-Medoids is using Euclidean distance,
+        # we can compare its performance to
+        # K-Means. We want the average distance to cluster centers
+        # to be similar between K-Means and K-Medoids
+        if distance_metric == "euclidean":
+            assert_allclose(avg_dist_to_closest_medoid,
+                            avg_dist_to_closest_centroid, rtol=0.1)
 
 def test_kmedoids_fit_predict_transform():
     rng = np.random.RandomState(seed)
