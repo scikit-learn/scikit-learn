@@ -140,6 +140,26 @@ Classes
    SpectralBiclustering
    SpectralCoclustering
 
+.. _compose_ref:
+
+:mod:`sklearn.compose`: Composite Estimators
+============================================
+
+.. automodule:: sklearn.compose
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    compose.TransformedTargetRegressor
+
 .. _covariance_ref:
 
 :mod:`sklearn.covariance`: Covariance Estimators
@@ -239,7 +259,6 @@ Loaders
    datasets.load_files
    datasets.load_iris
    datasets.load_linnerud
-   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -627,6 +646,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.MICEImputer
 
 .. _kernel_approximation_ref:
 
@@ -1225,7 +1245,6 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
-   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -1475,6 +1494,12 @@ To be removed in 0.21
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
    neighbors.LSHForest
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   datasets.load_mlcomp
 
 
 To be removed in 0.20

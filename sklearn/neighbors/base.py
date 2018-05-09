@@ -258,6 +258,12 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "Expected n_neighbors > 0. Got %d" %
                     self.n_neighbors
                 )
+            else:
+                if not np.issubdtype(type(self.n_neighbors), np.integer):
+                    raise TypeError(
+                        "n_neighbors does not take %s value, "
+                        "enter integer value" %
+                        type(self.n_neighbors))
 
         return self
 
@@ -311,7 +317,7 @@ class KNeighborsMixin(object):
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
-        (array([[ 0.5]]), array([[2]]...))
+        (array([[0.5]]), array([[2]]))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
@@ -327,6 +333,17 @@ class KNeighborsMixin(object):
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
+        elif n_neighbors <= 0:
+            raise ValueError(
+                "Expected n_neighbors > 0. Got %d" %
+                n_neighbors
+            )
+        else:
+            if not np.issubdtype(type(n_neighbors), np.integer):
+                raise TypeError(
+                    "n_neighbors does not take %s value, "
+                    "enter integer value" %
+                    type(n_neighbors))
 
         if X is not None:
             query_is_train = False
@@ -456,9 +473,9 @@ class KNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.toarray()
-        array([[ 1.,  0.,  1.],
-               [ 0.,  1.,  1.],
-               [ 1.,  0.,  1.]])
+        array([[1., 0., 1.],
+               [0., 1., 1.],
+               [1., 0., 1.]])
 
         See also
         --------
@@ -552,7 +569,7 @@ class RadiusNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
         >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
-        [ 1.5  0.5]
+        [1.5 0.5]
         >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS
         [1 2]
 
@@ -619,10 +636,18 @@ class RadiusNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            results = self._tree.query_radius(X, radius,
-                                              return_distance=return_distance)
+
+            n_jobs = _get_n_jobs(self.n_jobs)
+            results = Parallel(n_jobs, backend='threading')(
+                delayed(self._tree.query_radius, check_pickle=False)(
+                    X[s], radius, return_distance)
+                for s in gen_even_slices(X.shape[0], n_jobs)
+            )
             if return_distance:
-                results = results[::-1]
+                neigh_ind, dist = tuple(zip(*results))
+                results = np.hstack(dist), np.hstack(neigh_ind)
+            else:
+                results = np.hstack(results)
         else:
             raise ValueError("internal: _fit_method not recognized")
 
@@ -684,9 +709,9 @@ class RadiusNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.toarray()
-        array([[ 1.,  0.,  1.],
-               [ 0.,  1.,  0.],
-               [ 1.,  0.,  1.]])
+        array([[1., 0., 1.],
+               [0., 1., 0.],
+               [1., 0., 1.]])
 
         See also
         --------

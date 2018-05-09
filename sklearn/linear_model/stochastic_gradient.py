@@ -802,8 +802,6 @@ class SGDClassifier(BaseSGDClassifier):
             average=average, n_iter=n_iter)
 
     def _check_proba(self):
-        check_is_fitted(self, "t_")
-
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
@@ -848,6 +846,8 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
+        check_is_fitted(self, "t_")
+
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
