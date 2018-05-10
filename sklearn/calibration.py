@@ -111,7 +111,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         provided base estimator is not pre-trained and the decision_threshold_
         is computed as the mean of the decision threshold of each
         cross-validation iteration. If the base estimator is pre-trained then
-        std_ = 0
+        std_ = None
 
     classes_ : array, shape (n_classes)
         The class labels.
@@ -194,7 +194,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 self.base_estimator, self.strategy, self.method, self.beta,
                 self.threshold, self.pos_label
             ).fit(X, y).decision_threshold_
-            self.std_ = .0
+            self.std_ = None
         else:
             cv = check_cv(self.cv, y, classifier=True)
             decision_thresholds = []
