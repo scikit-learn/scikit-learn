@@ -113,6 +113,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         cross-validation iteration. If the base estimator is pre-trained then
         std_ = 0
 
+    classes_ : array, shape (n_classes)
+        The class labels.
+
     References
     ----------
     .. [1] Receiver-operating characteristic (ROC) plots: a fundamental
@@ -181,6 +184,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 y_type))
 
         self.label_encoder_ = LabelEncoder().fit(y)
+        self.classes_ = self.label_encoder_.classes_
 
         y = self.label_encoder_.transform(y)
         self.pos_label = self.label_encoder_.transform([self.pos_label])[0]
@@ -224,8 +228,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             The predicted class
         """
         X = check_array(X)
-        check_is_fitted(self,
-                        ["label_encoder_", "decision_threshold_", "std_"])
+        check_is_fitted(
+            self, ["label_encoder_", "decision_threshold_", "std_", "classes_"]
+        )
 
         y_score = _get_binary_score(self.base_estimator, X, self.method,
                                     self.pos_label)
