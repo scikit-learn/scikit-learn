@@ -9,7 +9,7 @@ the learning objective of a model can differ from the user's needs hence using
 an arbitrary decision threshold as defined by the model can be not ideal.
 
 The CutoffClassifier can be used to calibrate the decision threshold of a model
-in order to increase the classifiers trustworthiness. Optimization objectives
+in order to increase the classifier's trustworthiness. Optimization objectives
 during the decision threshold calibration can be the true positive and / or
 the true negative rate as well as the f beta score.
 
