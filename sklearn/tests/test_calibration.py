@@ -154,7 +154,7 @@ def test_cutoff_cv():
     )
 
     assert clf_roc.decision_threshold_ != 0
-    assert clf_roc.std_ != 0
+    assert clf_roc.std_ is not None and clf_roc.std_ != 0
 
     y_pred = lr.predict(X_test)
     y_pred_roc = clf_roc.predict(X_test)
