@@ -3,6 +3,8 @@
 # License: BSD 3 clause
 
 from __future__ import division
+
+import pytest
 import numpy as np
 from scipy import sparse
 from sklearn.model_selection import LeaveOneOut, train_test_split
@@ -57,7 +59,7 @@ def test_cutoff_prefit():
     tnr_roc = tn_roc / (tn_roc + fp_roc)
 
     # check that the sum of tpr and tnr has improved
-    assert_greater(tpr_roc + tnr_roc, tpr + tnr)
+    assert tpr_roc + tnr_roc > tpr + tnr
 
     clf_f1 = CutoffClassifier(
         lr, strategy='f_beta', method='predict_proba', beta=1,
@@ -66,8 +68,8 @@ def test_cutoff_prefit():
     )
 
     y_pred_f1 = clf_f1.predict(X_test[calibration_samples:])
-    assert_greater(f1_score(y_test[calibration_samples:], y_pred_f1),
-                   f1_score(y_test[calibration_samples:], y_pred))
+    assert (f1_score(y_test[calibration_samples:], y_pred_f1) >
+            f1_score(y_test[calibration_samples:], y_pred))
 
     clf_fbeta = CutoffClassifier(
         lr, strategy='f_beta', method='predict_proba', beta=2,
@@ -76,8 +78,8 @@ def test_cutoff_prefit():
     )
 
     y_pred_fbeta = clf_fbeta.predict(X_test[calibration_samples:])
-    assert_greater(recall_score(y_test[calibration_samples:], y_pred_fbeta),
-                   recall_score(y_test[calibration_samples:], y_pred))
+    assert (recall_score(y_test[calibration_samples:], y_pred_fbeta) >
+            recall_score(y_test[calibration_samples:], y_pred))
 
     clf_max_tpr = CutoffClassifier(
         lr, strategy='max_tpr', threshold=0.7, cv='prefit'
@@ -92,9 +94,9 @@ def test_cutoff_prefit():
     tnr_max_tpr = tn_max_tpr / (tn_max_tpr + fp_max_tpr)
 
     # check that the tpr increases with tnr >= min_val_tnr
-    assert_greater(tpr_max_tpr, tpr)
-    assert_greater(tpr_max_tpr, tpr_roc)
-    assert_greater_equal(tnr_max_tpr, 0.7)
+    assert tpr_max_tpr > tpr
+    assert tpr_max_tpr > tpr_roc
+    assert tnr_max_tpr >= 0.7
 
     clf_max_tnr = CutoffClassifier(
         lr, strategy='max_tnr', threshold=0.7, cv='prefit'
@@ -109,29 +111,34 @@ def test_cutoff_prefit():
     tpr_clf_max_tnr = tp_clf / (tp_clf + fn_clf)
 
     # check that the tnr increases with tpr >= min_val_tpr
-    assert_greater(tnr_clf_max_tnr, tnr)
-    assert_greater(tnr_clf_max_tnr, tnr_roc)
-    assert_greater_equal(tpr_clf_max_tnr, 0.7)
+    assert tnr_clf_max_tnr > tnr
+    assert tnr_clf_max_tnr > tnr_roc
+    assert tpr_clf_max_tnr >= 0.7
 
     # check error cases
     clf_bad_base_estimator = CutoffClassifier([])
-    assert_raises(TypeError, clf_bad_base_estimator.fit, X_train, y_train)
+    with pytest.raises(TypeError):
+        clf_bad_base_estimator.fit(X_train, y_train)
 
     X_non_binary, y_non_binary = make_classification(
         n_samples=20, n_features=6, random_state=42, n_classes=4,
         n_informative=4
     )
-    assert_raises(ValueError, clf_roc.fit, X_non_binary, y_non_binary)
+    with pytest.raises(ValueError):
+        clf_roc.fit(X_non_binary, y_non_binary)
 
     clf_foo = CutoffClassifier(lr, strategy='f_beta', beta='foo')
-    assert_raises(ValueError, clf_foo.fit, X_train, y_train)
+    with pytest.raises(ValueError):
+        clf_foo.fit(X_train, y_train)
 
     clf_foo = CutoffClassifier(lr, strategy='foo')
-    assert_raises(ValueError, clf_foo.fit, X_train, y_train)
+    with pytest.raises(ValueError):
+        clf_foo.fit(X_train, y_train)
 
     for method in ['max_tpr', 'max_tnr']:
         clf_missing_info = CutoffClassifier(lr, strategy=method)
-        assert_raises(ValueError, clf_missing_info.fit, X_train, y_train)
+        with pytest.raises(ValueError):
+            clf_missing_info.fit(X_train, y_train)
 
 
 def test_cutoff_cv():
@@ -164,7 +171,7 @@ def test_cutoff_cv():
     tnr_roc = tn_roc / (tn_roc + fp_roc)
 
     # check that the sum of tpr + tnr has improved
-    assert_greater(tpr_roc + tnr_roc, tpr + tnr)
+    assert tpr_roc + tnr_roc > tpr + tnr
 
 
 def test_get_binary_score():
@@ -202,7 +209,8 @@ def test_get_binary_score():
         _get_binary_score(lr, X_test, method=None, pos_label=1)
     )
 
-    assert_raises(ValueError, _get_binary_score, lr, X_test, method='foo')
+    with pytest.raises(ValueError):
+        _get_binary_score(lr, X_test, method='foo')
 
     # classifier that does not have a decision_function
     rf = RandomForestClassifier().fit(X_train, y_train)
@@ -218,7 +226,8 @@ def test_get_binary_score():
     )
 
     rf_non_bin = RandomForestClassifier().fit(X_non_binary, y_non_binary)
-    assert_raises(ValueError, _get_binary_score, rf_non_bin, X_non_binary)
+    with pytest.raises(ValueError):
+        _get_binary_score(rf_non_bin, X_non_binary)
 
 
 @ignore_warnings
