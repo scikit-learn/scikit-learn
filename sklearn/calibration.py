@@ -353,6 +353,12 @@ def _get_binary_score(clf, X, method=None, pos_label=1):
         "decision_function" or "predict_proba" or None. If None then
         decision_function will be used first and if not available
         predict_proba
+
+    Returns
+    -------
+    y_score : array-like, shape (n_samples,)
+        The return value of the provided classifier's decision_function or
+        predict_proba depending on the method used.
     """
     if len(clf.classes_) != 2:
         raise ValueError('Expected binary classifier. Found {} classes'.format(
