@@ -96,7 +96,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Object representing the positive label
 
     cv : int, cross-validation generator, iterable or 'prefit', optional
-        (default='prefit'). Determines the cross-validation splitting strategy.
+        (default=3). Determines the cross-validation splitting strategy.
         If cv='prefit' the base estimator is assumed to be fitted and all data
         will be used for the calibration of the probability threshold
 
