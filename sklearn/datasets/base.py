@@ -360,6 +360,8 @@ def load_iris(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    Notes
+    -----
         .. versionchanged:: 0.20
             Fixed two wrong data points according to Fisher's paper.
 
@@ -704,6 +706,8 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    Notes
+    -----
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
