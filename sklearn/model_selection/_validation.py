@@ -614,7 +614,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                       method='predict'):
     """Generate cross-validated estimates for each input data point
 
-    NB: It is not appropriate to pass these predictions into an evaluation
+    It is not appropriate to pass these predictions into an evaluation
     metric. Use :func:`cross_validate` to measure generalization error.
 
     Read more in the :ref:`User Guide <cross_validation>`.
