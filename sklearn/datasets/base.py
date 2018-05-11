@@ -361,7 +361,7 @@ def load_iris(return_X_y=False):
         .. versionadded:: 0.18
 
         .. versionchanged:: 0.20
-            Fixed three wrong data points according to Fisher's paper.
+            Fixed two wrong data points according to Fisher's paper.
 
     Examples
     --------
