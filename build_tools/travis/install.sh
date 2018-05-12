@@ -55,8 +55,17 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
     fi
 
+    if [[ -n "$PILLOW_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
+    fi
+
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
+
+    # for python 3.4, conda does not have recent pytest packages
+    if [[ "$PYTHON_VERSION" == "3.4" ]]; then
+        pip install pytest==3.5
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis

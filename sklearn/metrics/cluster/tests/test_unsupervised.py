@@ -136,15 +136,15 @@ def test_correct_labelsize():
     # n_labels = n_samples
     y = np.arange(X.shape[0])
     assert_raises_regexp(ValueError,
-                         'Number of labels is %d\. Valid values are 2 '
-                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         r'Number of labels is %d\. Valid values are 2 '
+                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert_raises_regexp(ValueError,
-                         'Number of labels is %d\. Valid values are 2 '
-                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         r'Number of labels is %d\. Valid values are 2 '
+                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
 

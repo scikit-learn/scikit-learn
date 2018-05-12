@@ -18,6 +18,7 @@ from scipy import linalg
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
+from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):
@@ -263,26 +264,25 @@ class EmpiricalCovariance(BaseEstimator):
 
         return result
 
-    def mahalanobis(self, observations):
+    def mahalanobis(self, X):
         """Computes the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
-        observations : array-like, shape = [n_observations, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
             distribution than the data used in fit.
 
         Returns
         -------
-        mahalanobis_distance : array, shape = [n_observations,]
+        dist : array, shape = [n_samples,]
             Squared Mahalanobis distances of the observations.
 
         """
         precision = self.get_precision()
         # compute mahalanobis distances
-        centered_obs = observations - self.location_
-        mahalanobis_dist = np.sum(
-            np.dot(centered_obs, precision) * centered_obs, 1)
+        dist = pairwise_distances(X, self.location_[np.newaxis, :],
+                                  metric='mahalanobis', VI=precision)
 
-        return mahalanobis_dist
+        return np.reshape(dist, (len(X),)) ** 2
