@@ -408,7 +408,7 @@ def test_radius_neighbors_classifier_outlier_labeling():
         clf = RNC(radius=1, outlier_label=4)
         clf.fit(X, y)
         clf.predict_proba([[1], [15]])
-    assert_warns(check_warning)
+    assert_warns(UserWarning, check_warning)
 
     # test multi output same outlier label
     y_multi = [[0, 1], [2, 1], [2, 2], [1, 2], [1, 2],
