@@ -14,6 +14,7 @@ from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 from ..externals.six import string_types
 
+import warnings
 from .base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
@@ -184,7 +185,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+        p : array of shape = [n_samples, n_classes], or a list with n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
@@ -404,9 +405,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.zeros(n_samples, dtype=np.bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
-        indices = np.arange(n_samples)
-        outliers = indices[outlier_mask]
-        inliers = indices[~outlier_mask]
+        outliers = np.flatnonzero(outlier_mask)
+        inliers = np.flatnonzero(~outlier_mask)
 
         classes_ = self.classes_
         _y = self._y
@@ -459,7 +459,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+        p : array of shape = [n_samples, n_classes], or a list with n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
@@ -471,9 +471,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.zeros(n_samples, dtype=np.bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
-        indices = np.arange(n_samples)
-        outliers = indices[outlier_mask]
-        inliers = indices[~outlier_mask]
+        outliers = np.flatnonzero(outlier_mask)
+        inliers = np.flatnonzero(~outlier_mask)
 
         classes_ = self.classes_
         _y = self._y
@@ -516,6 +515,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 label_index = np.where(classes_k == self.outlier_label_[k])
                 if label_index[0].size != 0:
                     proba_k[outliers, label_index[0][0]] = 1.0
+                else:
+                    warnings.warn('Outlier label {} is not in training '
+                                  'classes. All class probabilities of '
+                                  'outliers will be assigned with 0.'
+                                  ''.format(self.outlier_label_[k]))
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]

@@ -125,6 +125,12 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- :class:`neighbors.RadiusNeighborsClassifier` now supports
+  predicting probabilities by using predict_proba() and supports more
+  outlier_label options: 'most_frequent', different oulier_labels
+  for multi-outputs.
+  :issue:`9629` by :user:`Wenbo Zhao <webber26232>`.
+
 Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
