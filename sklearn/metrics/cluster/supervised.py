@@ -209,7 +209,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
 
-    prod_comb = (sum_comb_c * sum_comb_k) / comb(n_samples, 2)
+    prod_comb = (sum_comb_c * sum_comb_k) / comb2(n_samples)
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
@@ -343,10 +343,10 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
-      1.0...
+      1.000000
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
       ...                                                  # doctest: +ELLIPSIS
-      1.0...
+      1.000000
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
@@ -418,7 +418,7 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
       1.0
       >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      1.0
+      0.999...
 
     If classes members are split across different clusters, the
     assignment cannot be complete::
@@ -528,7 +528,7 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Mutual Information between two clusterings.
+    r"""Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`|U_i|` is the number of the samples
@@ -852,11 +852,12 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples, = labels_true.shape
 
-    c = contingency_matrix(labels_true, labels_pred, sparse=True)
+    c = contingency_matrix(labels_true, labels_pred,
+                           sparse=True).astype(np.int64)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return tk / np.sqrt(pk * qk) if tk != 0. else 0.
+    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0. else 0.
 
 
 def entropy(labels):

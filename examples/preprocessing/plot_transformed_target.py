@@ -7,7 +7,7 @@ Effect of transforming the targets in regression model
 ======================================================
 
 In this example, we give an overview of the
-:class:`sklearn.preprocessing.TransformedTargetRegressor`. Two examples
+:class:`sklearn.compose.TransformedTargetRegressor`. Two examples
 illustrate the benefit of transforming the targets before learning a linear
 regression model. The first example uses synthetic data while the second
 example is based on the Boston housing data set.
@@ -31,7 +31,7 @@ print(__doc__)
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
-from sklearn.preprocessing import TransformedTargetRegressor
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
 
 ###############################################################################

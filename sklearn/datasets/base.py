@@ -144,11 +144,10 @@ def load_files(container_path, description=None, categories=None,
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
 
-    random_state : int, RandomState instance or None, optional (default=0)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default=0)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -702,6 +701,9 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+        .. versionchanged:: 0.20
+            Fixed a wrong data point at [445, 0].
+
     Examples
     --------
     >>> from sklearn.datasets import load_boston
@@ -767,16 +769,9 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # Try to import imread from scipy. We do this lazily here to prevent
-    # this module from depending on PIL.
-    try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread
-    except ImportError:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+    # import PIL only when needed
+    from ..externals._pilutil import imread
+
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()

@@ -43,6 +43,8 @@ from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
+import pytest
+
 
 def test_pairwise_distances():
     # Test the pairwise_distance helper function.
@@ -560,20 +562,28 @@ def test_laplacian_kernel():
     assert_true(np.all(K - np.diag(np.diag(K)) < 1))
 
 
-def test_cosine_similarity_sparse_output():
-    # Test if cosine_similarity correctly produces sparse output.
-
+@pytest.mark.parametrize('metric, pairwise_func',
+                         [('linear', linear_kernel),
+                          ('cosine', cosine_similarity)])
+def test_pairwise_similarity_sparse_output(metric, pairwise_func):
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((3, 4))
     Xcsr = csr_matrix(X)
     Ycsr = csr_matrix(Y)
 
-    K1 = cosine_similarity(Xcsr, Ycsr, dense_output=False)
+    # should be sparse
+    K1 = pairwise_func(Xcsr, Ycsr, dense_output=False)
     assert_true(issparse(K1))
 
-    K2 = pairwise_kernels(Xcsr, Y=Ycsr, metric="cosine")
+    # should be dense, and equal to K1
+    K2 = pairwise_func(X, Y, dense_output=True)
+    assert not issparse(K2)
     assert_array_almost_equal(K1.todense(), K2)
+
+    # show the kernel output equal to the sparse.todense()
+    K3 = pairwise_kernels(X, Y=Y, metric=metric)
+    assert_array_almost_equal(K1.todense(), K3)
 
 
 def test_cosine_similarity():
