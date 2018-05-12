@@ -1114,7 +1114,7 @@ def learning_curve(estimator, X, y, groups=None,
 
     Returns
     -------
-    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
