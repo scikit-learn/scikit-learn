@@ -283,7 +283,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             positive scores represent inliers.
 
         """
-        # We substract self.offset_ to make 0 be the threshold value for being
+        # We subtract self.offset_ to make 0 be the threshold value for being
         # an outlier:
 
         return self.score_samples(X) - self.offset_

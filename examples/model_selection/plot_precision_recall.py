@@ -137,7 +137,7 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # ................................
 from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
-from sklearn.externals.funcsigs import signature
+from sklearn.utils.fixes import signature
 
 precision, recall, _ = precision_recall_curve(y_test, y_score)
 
