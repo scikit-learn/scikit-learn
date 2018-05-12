@@ -45,6 +45,35 @@ def test_kmedoids_input_validation_and_fit_check():
                                      "than the number of samples 5.",
                          KMedoids(n_clusters=8).fit, Xsmall)
 
+def test_random_deterministic():
+    """Result of random init method should be determined for a given RandomState."""
+    rng = np.random.RandomState(seed)
+
+    X = load_iris()["data"]
+    D = euclidean_distances(X)
+
+    medoids = KMedoids(
+        init="random",
+        )._initialize_medoids(D, 4, rng)
+    assert_array_equal(medoids, [47, 117, 67, 103])
+
+def test_heuristic_deterministic():
+    """Result of heuristic init method should not depend on rnadom state."""
+    rng1 = np.random.RandomState(1)
+    rng2 = np.random.RandomState(2)
+    X = load_iris()["data"]
+    D = euclidean_distances(X)
+
+    medoids_1 = KMedoids(
+        init="heuristic",
+        )._initialize_medoids(D, 10, rng1)
+
+    medoids_2 = KMedoids(
+        init="heuristic",
+        )._initialize_medoids(D, 10, rng2)
+
+    assert_array_equal(medoids_1, medoids_2)
+
 def test_update_medoid_idxs_empty_cluster():
     """Label is unchanged for an empty cluster."""
     rng = np.random.RandomState(seed)
