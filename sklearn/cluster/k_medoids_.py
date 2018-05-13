@@ -196,8 +196,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             cluster_k_idxs = np.where(labels == k)[0]
 
             if len(cluster_k_idxs) == 0:
-                warnings.warn("Cluster {k} is empty! self.labels_[self.medoid_indices_[{k}]] "
-                              "may not be labeled with its corresponding cluster ({k}).".format(k=k))
+                warnings.warn("Cluster {k} is empty! "
+                              "self.labels_[self.medoid_indices_[{k}]] may not be labeled "
+                              "with its corresponding cluster ({k}).".format(k=k))
                 continue
 
             in_cluster_distances = D[cluster_k_idxs, cluster_k_idxs[:, np.newaxis]]
@@ -229,7 +230,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             X transformed in the new space of distances to cluster centers.
         """
         if self.metric == "precomputed":
-            return X[:,self.medoid_indices_]
+            return X[:, self.medoid_indices_]
 
         else:
             X = check_array(X, accept_sparse=['csr', 'csc'])
@@ -237,7 +238,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             Y = self.cluster_centers_
             return pairwise_distances(X, Y=Y,
-                                metric=self.metric)
+                                      metric=self.metric)
 
     def predict(self, X):
         """Predict the closest cluster for each sample in X.
@@ -291,7 +292,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Pick random k medoids as the initial ones.
             medoids = random_state_.choice(len(D), n_clusters)
         elif self.init == 'k-medoids++':
-            medoids = self._kpp_init(D, n_clusters, random_state_)
+            medoids = self._kpp_init(D, random_state_)
         elif self.init == "heuristic":  # Initialization by heuristic
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
@@ -302,7 +303,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return medoids
 
-    def _kpp_init(self, D, n_clusters, random_state_, n_local_trials=None):
+    def _kpp_init(self, D, random_state_, n_local_trials=None):
         """Init n_clusters seeds with a method similar to k-means++
 
         Parameters
@@ -337,27 +338,27 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         n_samples, _ = D.shape
 
-        centers = np.empty(n_clusters, dtype=int)
+        centers = np.empty(self.n_clusters, dtype=int)
 
         # Set the number of local seeding trials if none is given
         if n_local_trials is None:
             # This is what Arthur/Vassilvitskii tried, but did not report
             # specific results for other than mentioning in the conclusion
             # that it helped.
-            n_local_trials = 2 + int(np.log(n_clusters))
+            n_local_trials = 2 + int(np.log(self.n_clusters))
 
         center_id = random_state_.randint(n_samples)
         centers[0] = center_id
 
         # Initialize list of closest distances and calculate current potential
-        closest_dist_sq = D[centers[0],:]**2
+        closest_dist_sq = D[centers[0], :]**2
         current_pot = closest_dist_sq.sum()
 
-        # pick the remaining n_clusters-1 points
-        for c in range(1, n_clusters):
+        # pick the remaining self.n_clusters-1 points
+        for cluster_index in range(1, self.n_clusters):
             rand_vals = random_state_.random_sample(n_local_trials) * current_pot
             candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
-                                        rand_vals)
+                                            rand_vals)
 
             # Compute distances to center candidates
             distance_to_candidates = D[candidate_ids, :]**2
@@ -378,7 +379,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     best_pot = new_pot
                     best_dist_sq = new_dist_sq
 
-            centers[c] = best_candidate
+            centers[cluster_index] = best_candidate
             current_pot = best_pot
             closest_dist_sq = best_dist_sq
 

@@ -96,7 +96,7 @@ def test_kmedoids_empty_clusters():
     assert_warns_message(UserWarning, "Cluster 1 is empty!", kmedoids.fit, X)
 
 def test_kmedoids_pp():
-    """initial clusters should be well-separated"""
+    """Initial clusters should be well-separated for k-medoids++"""
     rng = np.random.RandomState(seed)
     kmedoids = KMedoids(n_clusters=3,
         init = "k-medoids++",
@@ -113,6 +113,8 @@ def test_kmedoids_pp():
     D = euclidean_distances(X)
 
     centers = kmedoids._initialize_medoids(D, 3, random_state_=rng)
+
+    assert len(centers) == 3
 
     inter_medoid_distances = D[centers][:,centers]
     assert np.all((inter_medoid_distances > 5 ) | (inter_medoid_distances == 0)), inter_medoid_distances
