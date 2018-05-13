@@ -91,9 +91,9 @@ class ParameterGrid(object):
 
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
-            raise TypeError('Object passed as parameter is not a dict or '\
+            raise TypeError('Object passed as parameter is not a dict or '
                             'a list ({0})'.format(param_grid))
-        
+
         if isinstance(param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
@@ -102,8 +102,8 @@ class ParameterGrid(object):
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError('Object passed as parameter is not a dict ({0})'
-                                .format(grid))
+                raise TypeError('Object passed as parameter is not a '\
+                                'dict ({0})'.format(grid))
             for key in grid:
                 if not isinstance(grid[key], Iterable):
                     raise TypeError('Dict entry is not iterable ({0}, {1})'
