@@ -102,7 +102,7 @@ class ParameterGrid(object):
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError('Object passed as parameter is not a '\
+                raise TypeError('Object passed as parameter is not a '
                                 'dict ({0})'.format(grid))
             for key in grid:
                 if not isinstance(grid[key], Iterable):
