@@ -158,8 +158,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
-        self.n_iter_ = 0
-        for self.n_iter_ in range(0, self.max_iter):
+        for n_iter_ in range(0, self.max_iter):
             old_medoid_idxs = np.copy(medoid_idxs)
             labels = np.argmin(D[medoid_idxs, :], axis=0)
 
@@ -167,7 +166,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             if np.all(old_medoid_idxs == medoid_idxs):
                 break
-            elif self.n_iter_ == self.max_iter - 1:
+            elif n_iter_ == self.max_iter - 1:
                 warnings.warn("Maximum number of iteration reached before "
                               "convergence. Consider increasing max_iter to "
                               "improve the fit.",
