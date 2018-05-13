@@ -90,6 +90,7 @@ def test_update_medoid_idxs_empty_cluster():
     assert_array_equal(medoid_idxs, [0, 1])
 
 def test_kmedoids_empty_clusters():
+    """When a cluster is empty, it should throw a warning."""
     rng = np.random.RandomState(seed)
     X = [[1],[1],[1]]
     kmedoids = KMedoids(n_clusters=2, random_state=rng)
@@ -120,6 +121,7 @@ def test_kmedoids_pp():
     assert np.all((inter_medoid_distances > 5 ) | (inter_medoid_distances == 0)), inter_medoid_distances
 
 def test_precomputed():
+    """Test the 'precomputed' distance metric."""
     rng = np.random.RandomState(seed)
     X_1 = [
         [1.0, 0.0],
@@ -134,11 +136,12 @@ def test_precomputed():
     ]
     D_2 = euclidean_distances(X_2, X_1)
 
-    kmedoids = KMedoids(n_clusters=2, metric="precomputed", random_state=rng).fit(D_1)
+    kmedoids = KMedoids(metric="precomputed", n_clusters=2, random_state=rng).fit(D_1)
 
     assert_allclose(kmedoids.inertia_, 0.2)
     assert_array_equal(kmedoids.medoid_indices_, [2,0])
     assert_array_equal(kmedoids.labels_, [1,1,0,0])
+    assert kmedoids.cluster_centers_ == None
 
     med_1, med_2 = tuple(kmedoids.medoid_indices_)
     predictions = kmedoids.predict(D_2)
@@ -146,20 +149,6 @@ def test_precomputed():
 
     transformed = kmedoids.transform(D_2)
     assert_array_equal(transformed, D_2[:, kmedoids.medoid_indices_])
-
-def test_precomputed_distance():
-    rng = np.random.RandomState(seed)
-    D = [
-        [0,1,1],
-        [1,0,1],
-        [1,1,0]
-    ]
-
-    kmedoids = KMedoids(n_clusters=2, random_state = rng, metric="precomputed").fit(D)
-    assert_array_equal(kmedoids.labels_, [0,1,0])
-    assert_array_equal(kmedoids.medoid_indices_, [0,1])
-    assert kmedoids.cluster_centers_ == None
-    assert kmedoids.inertia_ == 1
 
 def test_kmedoids_fit_naive():
     n_clusters = 3
@@ -209,9 +198,8 @@ def test_kmedoids_iris():
         # we can compare its performance to
         # K-Means. We want the average distance to cluster centers
         # to be similar between K-Means and K-Medoids
-        if distance_metric == "euclidean":
-            assert_allclose(avg_dist_to_closest_medoid,
-                            avg_dist_to_closest_centroid, rtol=0.1)
+        assert_allclose(avg_dist_to_closest_medoid,
+                        avg_dist_to_closest_centroid, rtol=0.1)
 
 def test_kmedoids_fit_predict_transform():
     rng = np.random.RandomState(seed)
