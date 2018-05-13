@@ -34,6 +34,7 @@ reconstructed image, contrary to the L1 penalization. Note in particular
 the circular artifact separating the pixels in the corners, that have
 contributed to fewer projections than the central disk.
 """
+from __future__ import division
 
 print(__doc__)
 
@@ -112,7 +113,7 @@ def generate_synthetic_data():
 
 # Generate synthetic images, and projections
 l = 128
-proj_operator = build_projection_operator(l, l / 7.)
+proj_operator = build_projection_operator(l, l // 7)
 data = generate_synthetic_data()
 proj = proj_operator * data.ravel()[:, np.newaxis]
 proj += 0.15 * np.random.randn(*proj.shape)
