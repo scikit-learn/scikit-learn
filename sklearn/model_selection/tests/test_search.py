@@ -127,6 +127,25 @@ def assert_grid_iter_equals_getitem(grid):
 
 
 def test_parameter_grid():
+
+    # Test constructor's validator
+    assert_raise_message(
+        TypeError, 
+        'Object passed as parameter is not a dict or a list (0)', 
+        ParameterGrid, 0
+    )
+
+    assert_raise_message(
+        TypeError, 
+        'Object passed as parameter is not a dict (0)', 
+        ParameterGrid, [{'foo': [0]}, 0]
+    )
+
+    assert_raise_message(
+        TypeError, 'Dict entry is not iterable (foo, 0)', 
+        ParameterGrid, {'foo': 0}
+    )
+
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
