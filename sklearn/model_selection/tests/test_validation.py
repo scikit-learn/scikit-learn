@@ -1219,8 +1219,10 @@ def test_learning_curve_with_stratify():
             # ones_counter stores accumulated count, not count in each stratum,
             # so we'll need to account it by iterating over consecutive pairs
             # e.g. from [2 2 7 9 10 12] => [2 0 5 2 1 2]
-            strata_ones = [cur - prev for prev, cur in
-                           zip(np.insert(cur_iter_ones, 0, 0), cur_iter_ones)]
+            strata_ones = [cur_iter_ones[0]]
+            for i in range(len(cur_iter_ones) - 1):
+                strata_ones.append(cur_iter_ones[i+1] - cur_iter_ones[i])
+
             cur_max_diff = max(strata_ones) - min(strata_ones)
             max_diff = max(max_diff, cur_max_diff)
         return max_diff
