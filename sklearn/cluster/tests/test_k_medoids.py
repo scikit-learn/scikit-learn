@@ -90,7 +90,7 @@ def test_update_medoid_idxs_empty_cluster():
 def test_kmedoids_empty_clusters():
     """When a cluster is empty, it should throw a warning."""
     rng = np.random.RandomState(seed)
-    X = [[1],[1],[1]]
+    X = [[1], [1], [1]]
     kmedoids = KMedoids(n_clusters=2, random_state=rng)
     assert_warns_message(UserWarning, "Cluster 1 is empty!", kmedoids.fit, X)
 
@@ -98,25 +98,25 @@ def test_kmedoids_pp():
     """Initial clusters should be well-separated for k-medoids++"""
     rng = np.random.RandomState(seed)
     kmedoids = KMedoids(n_clusters=3,
-        init = "k-medoids++",
-        random_state=rng)
+                        init="k-medoids++",
+                        random_state=rng)
     X = [[10, 0],
-        [11, 0],
-        [0, 10],
-        [0, 11],
-        [10, 10],
-        [11, 10],
-        [12, 10],
-        [10, 11],
-    ]
+         [11, 0],
+         [0, 10],
+         [0, 11],
+         [10, 10],
+         [11, 10],
+         [12, 10],
+         [10, 11],
+        ]
     D = euclidean_distances(X)
 
     centers = kmedoids._initialize_medoids(D, 3, random_state_=rng)
 
     assert len(centers) == 3
 
-    inter_medoid_distances = D[centers][:,centers]
-    assert np.all((inter_medoid_distances > 5 ) | (inter_medoid_distances == 0)), inter_medoid_distances
+    inter_medoid_distances = D[centers][:, centers]
+    assert np.all((inter_medoid_distances > 5) | (inter_medoid_distances == 0))
 
 def test_precomputed():
     """Test the 'precomputed' distance metric."""
@@ -137,8 +137,8 @@ def test_precomputed():
     kmedoids = KMedoids(metric="precomputed", n_clusters=2, random_state=rng).fit(D_1)
 
     assert_allclose(kmedoids.inertia_, 0.2)
-    assert_array_equal(kmedoids.medoid_indices_, [2,0])
-    assert_array_equal(kmedoids.labels_, [1,1,0,0])
+    assert_array_equal(kmedoids.medoid_indices_, [2, 0])
+    assert_array_equal(kmedoids.labels_, [1, 1, 0, 0])
     assert kmedoids.cluster_centers_ == None
 
     med_1, med_2 = tuple(kmedoids.medoid_indices_)
