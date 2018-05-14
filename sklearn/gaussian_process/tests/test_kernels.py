@@ -3,9 +3,10 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
+from sklearn.externals.funcsigs import signature
+
 import numpy as np
 
-from sklearn.utils.fixes import signature
 from sklearn.gaussian_process.kernels import _approx_fprime
 
 from sklearn.metrics.pairwise \

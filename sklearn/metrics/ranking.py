@@ -418,7 +418,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
-        # the presence of floating point errors
+        # the presense of floating point errors
         fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
@@ -639,7 +639,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     return fpr, tpr, thresholds
 
 
-def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
+def label_ranking_average_precision_score(y_true, y_score):
     """Compute ranking-based average precision
 
     Label ranking average precision (LRAP) is the average over each ground
@@ -664,9 +664,6 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    sample_weight : array-like of shape = [n_samples], optional
-        Sample weights.
-
     Returns
     -------
     score : float
@@ -682,7 +679,7 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     0.416...
 
     """
-    check_consistent_length(y_true, y_score, sample_weight)
+    check_consistent_length(y_true, y_score)
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
 
@@ -713,17 +710,9 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         scores_i = y_score[i]
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
-        aux = (L / rank).mean()
-        if sample_weight is not None:
-            aux = aux * sample_weight[i]
-        out += aux
+        out += (L / rank).mean()
 
-    if sample_weight is None:
-        out /= n_samples
-    else:
-        out /= np.sum(sample_weight)
-
-    return out
+    return out / n_samples
 
 
 def coverage_error(y_true, y_score, sample_weight=None):

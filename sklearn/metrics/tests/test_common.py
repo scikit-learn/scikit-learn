@@ -306,7 +306,6 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "macro_average_precision_score",
 
     "coverage_error", "label_ranking_loss",
-    "label_ranking_average_precision_score",
 ]
 
 # Classification metrics with  "multilabel-indicator" format

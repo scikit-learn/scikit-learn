@@ -101,7 +101,7 @@ def _detect_compressor(fileobj):
     # Read the magic number in the first bytes of the file.
     if hasattr(fileobj, 'peek'):
         # Peek allows to read those bytes without moving the cursor in the
-        # file which.
+        # file whic.
         first_bytes = fileobj.peek(_MAX_PREFIX_LEN)
     else:
         # Fallback to seek if the fileobject is not peekable.
