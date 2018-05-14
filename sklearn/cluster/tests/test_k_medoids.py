@@ -9,7 +9,6 @@ from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_raise_message, assert_warns_message
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_allclose
 
 seed = 0
