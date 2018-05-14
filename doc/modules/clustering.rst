@@ -1598,7 +1598,7 @@ Davies-Bouldin Index
 --------------------
 
 If the ground truth labels are not known, the Davies-Bouldin index
-(:func:`sklearn.metrics.davies_bouldin_index`) can be used to evaluate the
+(:func:`sklearn.metrics.davies_bouldin_score`) can be used to evaluate the
 model, where a lower Davies-Bouldin index relates to a model with better
 separation between the clusters.
 
@@ -1632,10 +1632,10 @@ cluster analysis as follows:
   >>> X = iris.data
 
   >>> from sklearn.cluster import KMeans
-  >>> from sklearn.metrics import davies_bouldin_index
+  >>> from sklearn.metrics import davies_bouldin_score
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
-  >>> davies_bouldin_index(X, labels)  # doctest: +ELLIPSIS
+  >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
   0.6623...
 
 

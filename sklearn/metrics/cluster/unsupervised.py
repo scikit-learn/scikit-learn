@@ -261,10 +261,10 @@ def calinski_harabaz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
-def davies_bouldin_index(X, labels):
-    """Computes the Davies-Bouldin Index.
+def davies_bouldin_score(X, labels):
+    """Computes the Davies-Bouldin score.
 
-    The index is defined as the ratio of within-cluster distances to
+    The score is defined as the ratio of within-cluster distances to
     between-cluster distances.
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
@@ -281,7 +281,7 @@ def davies_bouldin_index(X, labels):
     Returns
     -------
     score: float
-        The resulting Davies-Bouldin index.
+        The resulting Davies-Bouldin score.
 
     References
     ----------
@@ -310,6 +310,6 @@ def davies_bouldin_index(X, labels):
     if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
         return 0.0
 
-    index = (intra_dists[:, None] + intra_dists) / centroid_distances
-    index[index == np.inf] = np.nan
-    return np.mean(np.nanmax(index, axis=1))
+    score = (intra_dists[:, None] + intra_dists) / centroid_distances
+    score[score == np.inf] = np.nan
+    return np.mean(np.nanmax(score, axis=1))
