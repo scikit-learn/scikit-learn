@@ -208,7 +208,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method
       Andrew V. Knyazev
-      https://doi.org/10.1137%2FS1064827500366124
+      http://dx.doi.org/10.1137%2FS1064827500366124
     """
     adjacency = check_symmetric(adjacency)
 

@@ -97,9 +97,8 @@ class Perceptron(BaseSGDClassifier):
     Notes
     -----
 
-    ``Perceptron`` is a classification algorithm which shares the same
-    underlying implementation with ``SGDClassifier``. In fact,
-    ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
+    `Perceptron` and `SGDClassifier` share the same underlying implementation.
+    In fact, `Perceptron()` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
 
     See also

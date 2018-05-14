@@ -5,7 +5,6 @@ import warnings
 import numpy
 from pickle import loads
 from pickle import dumps
-from functools import partial
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -20,7 +19,6 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
-from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals.six import b, u
 from sklearn.externals._pilutil import pillow_installed
@@ -29,6 +27,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_equal
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -140,7 +139,11 @@ def test_load_digits():
     assert_equal(numpy.unique(digits.target).size, 10)
 
     # test return_X_y option
-    check_return_X_y(digits, partial(load_digits))
+    X_y_tuple = load_digits(return_X_y=True)
+    bunch = load_digits()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_digits_n_class_lt_10():
@@ -174,7 +177,11 @@ def test_load_diabetes():
     assert_true(res.DESCR)
 
     # test return_X_y option
-    check_return_X_y(res, partial(load_diabetes))
+    X_y_tuple = load_diabetes(return_X_y=True)
+    bunch = load_diabetes()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_linnerud():
@@ -187,7 +194,11 @@ def test_load_linnerud():
     assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
-    check_return_X_y(res, partial(load_linnerud))
+    X_y_tuple = load_linnerud(return_X_y=True)
+    bunch = load_linnerud()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_iris():
@@ -199,7 +210,11 @@ def test_load_iris():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    check_return_X_y(res, partial(load_iris))
+    X_y_tuple = load_iris(return_X_y=True)
+    bunch = load_iris()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_wine():
@@ -210,7 +225,11 @@ def test_load_wine():
     assert_true(res.DESCR)
 
     # test return_X_y option
-    check_return_X_y(res, partial(load_wine))
+    X_y_tuple = load_wine(return_X_y=True)
+    bunch = load_wine()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_breast_cancer():
@@ -222,7 +241,11 @@ def test_load_breast_cancer():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    check_return_X_y(res, partial(load_breast_cancer))
+    X_y_tuple = load_breast_cancer(return_X_y=True)
+    bunch = load_breast_cancer()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_boston():
@@ -234,7 +257,11 @@ def test_load_boston():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    check_return_X_y(res, partial(load_boston))
+    X_y_tuple = load_boston(return_X_y=True)
+    bunch = load_boston()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_loads_dumps_bunch():
