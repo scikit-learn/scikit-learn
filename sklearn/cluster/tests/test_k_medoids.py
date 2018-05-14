@@ -1,6 +1,6 @@
 """Testing for K-Medoids"""
-import numpy as np
 import warnings
+import numpy as np
 from scipy.sparse import csc_matrix
 
 from sklearn.cluster import KMedoids, KMeans
