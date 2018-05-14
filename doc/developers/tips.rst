@@ -64,8 +64,22 @@ will be displayed as a color background behind the line number.
 Useful pytest aliases and flags
 -------------------------------
 
-We recommend using pytest to run unit tests. When a unit tests fail, the
-following tricks can make debugging easier:
+The full test suite takes fairly long to run. For faster iterations,
+it is possibly to select a subset of tests using pytest selectors.
+In particular, one can run a `single test based on its node ID
+<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_::
+
+  pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
+
+or use the `-k pytest parameter
+<https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
+to select tests based on their name. For instance,::
+
+  pytest sklearn/tests/test_common.py -v -k LogisticRegression
+
+will run all :term:`common tests` for the ``LogisticRegression`` estimator.
+
+When a unit tests fail, the following tricks can make debugging easier:
 
   1. The command line argument ``pytest -l`` instructs pytest to print the local
      variables when a failure occurs.

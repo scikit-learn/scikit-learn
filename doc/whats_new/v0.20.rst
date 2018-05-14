@@ -192,6 +192,11 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
+  now ignores any unknown classes. A warning is raised stating the unknown classes
+  classes found which are ignored.
+  :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -415,6 +420,12 @@ Metrics
 - Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
   :func:`mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- Fixed a bug in :func:`metrics.cluster.fowlkes_mallows_score` to avoid integer
+  overflow. Casted return value of `contingency_matrix` to `int64` and computed
+  product of square roots rather than square root of product.
+  :issue:`9515` by :user:`Alan Liddell <aliddell>` and
+  :user:`Manh Dao <manhdao>`.
 
 Neighbors
 
