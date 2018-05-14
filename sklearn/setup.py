@@ -64,6 +64,26 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries,
                          )
 
+    # add cython extension module for aode
+    config.add_library('libaode-skl',
+                       sources=[join('src', 'libaode', 'aode_helper.cpp'), join('src', 'libaode', 'aode_helper.h')],
+                       depends=[join('src', 'libaode', 'aode_helper.cpp'), join('src', 'libaode', 'aode_helper.h')],
+                       # Force C++ linking in case gcc is picked up instead
+                       # of g++ under windows with some versions of MinGW
+                       extra_link_args=['-lstdc++'],
+                       )
+
+    aode_sources = [i for i in libraries]
+    aode_sources.append('libaode-skl')
+    aode_depends = [join('src', 'libaode', 'aode_helper.h'), join('src', 'libaode', 'aode_helper.cpp')]
+
+    config.add_extension('_aode',
+                         sources=['_aode.pyx'],
+                         include_dirs=[numpy.get_include(), join('src', 'libaode')],
+                         libraries=aode_sources,
+                         depends=aode_depends
+                         )
+
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
     if (not blas_info) or (
