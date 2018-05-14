@@ -171,6 +171,7 @@ def test_kmedoids_fit_naive():
                 assert X_new[c, c2] > 0
 
 def test_kmedoids_iris():
+    """Test kmedoids on the Iris dataset"""
     rng = np.random.RandomState(seed)
     X_iris = load_iris()['data']
 
@@ -179,7 +180,7 @@ def test_kmedoids_iris():
     avg_dist_to_closest_centroid = ref_model.transform(X_iris).min(axis=1).mean()
 
     for init in ['random', 'heuristic', 'k-medoids++']:
-        distance_metric='euclidean'
+        distance_metric = 'euclidean'
         model = KMedoids(n_clusters=3,
                          metric=distance_metric,
                          init=init,
