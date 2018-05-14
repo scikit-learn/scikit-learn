@@ -75,7 +75,6 @@ def test_heuristic_deterministic():
 
 def test_update_medoid_idxs_empty_cluster():
     """Label is unchanged for an empty cluster."""
-    rng = np.random.RandomState(seed)
     D = np.zeros((3, 3))
     labels = np.array([0, 0, 0])
     medoid_idxs = np.array([0, 1])
