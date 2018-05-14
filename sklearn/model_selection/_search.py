@@ -107,7 +107,8 @@ class ParameterGrid(object):
             for key in grid:
                 if not isinstance(grid[key], Iterable):
                     raise TypeError('Parameter grid value is not iterable '
-                                    '({!r}, {!r})'.format(key, grid[key]))
+                                    '(key={!r}, value={!r})'
+                                    .format(key, grid[key]))
 
         self.param_grid = param_grid
 

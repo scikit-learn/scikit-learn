@@ -142,7 +142,7 @@ def test_parameter_grid():
     )
 
     assert_raise_message(
-        TypeError, "Parameter grid value is not iterable ('foo', 0)",
+        TypeError, "Parameter grid value is not iterable (key='foo', value=0)",
         ParameterGrid, {'foo': 0}
     )
 
