@@ -1215,13 +1215,13 @@ def test_learning_curve_with_stratify():
         ones_counter = np.asarray(ones_counter).reshape(folds_count,
                                                         iters_count)
         max_diff = 0
-        for cur_iteration in ones_counter:
+        for cur_iter_ones in ones_counter:
             # ones_counter stores accumulated count, not count in each stratum,
             # so we'll need to account it by iterating over consecutive pairs
             # e.g. from [2 2 7 9 10 12] => [2 0 5 2 1 2]
-            ones_in_stratum = [cur - prev for prev, cur in
-                               zip([0, *cur_iteration], cur_iteration)]
-            cur_max_diff = max(ones_in_stratum) - min(ones_in_stratum)
+            strata_ones = [cur - prev for prev, cur in
+                           zip(np.insert(cur_iter_ones, 0, 0), cur_iter_ones)]
+            cur_max_diff = max(strata_ones) - min(strata_ones)
             max_diff = max(max_diff, cur_max_diff)
         return max_diff
 
