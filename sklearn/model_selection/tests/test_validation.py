@@ -1210,20 +1210,19 @@ def test_learning_curve_with_stratify():
                        stratify=stratify,
                        random_state=random_state)
 
-        # extract max possible diff of ones count between strata
+        # Extract max possible diff of ones count between strata
         # inside each training CV fold
+        ones_counter = np.asarray(ones_counter).reshape(folds_count,
+                                                        iters_count)
         max_diff = 0
-        for i in range(folds_count):
-            # ones_counter stores accumulated count,
-            # not count in each stratum, so we'll need to minus it
-            prev_sum = 0
-            for j in range(iters_count - 1):
-                cur_count = ones_counter[i * iters_count + j] - prev_sum
-                prev_sum += cur_count
-                next_count = ones_counter[i * iters_count + j + 1] - prev_sum
-                cur_diff = abs(next_count - cur_count)
-                if cur_diff > max_diff:
-                    max_diff = cur_diff
+        for cur_iteration in ones_counter:
+            # ones_counter stores accumulated count, not count in each stratum,
+            # so we'll need to account it by iterating over consecutive pairs
+            # e.g. from [2 2 7 9 10 12] => [2 0 5 2 1 2]
+            ones_in_stratum = [cur - prev for prev, cur in
+                               zip([0, *cur_iteration], cur_iteration)]
+            cur_max_diff = max(ones_in_stratum) - min(ones_in_stratum)
+            max_diff = max(max_diff, cur_max_diff)
         return max_diff
 
     ones = 25
@@ -1253,8 +1252,8 @@ def test_learning_curve_with_stratify():
 
     # Check that stratify indeed makes strata with almost equal counts of ones
     # (i.e. differing by not more than 2)
-    assert_greater(max_diff_in_ones_between_strata(X, y, stratify=False), 1)
-    assert_less(max_diff_in_ones_between_strata(X, y, stratify=True), 2)
+    assert(max_diff_in_ones_between_strata(X, y, stratify=False) > 1)
+    assert(max_diff_in_ones_between_strata(X, y, stratify=True) <= 1)
 
 
 def test_validation_curve():
