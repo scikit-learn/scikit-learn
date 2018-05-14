@@ -790,9 +790,10 @@ by black points below.
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
-    - A sparse radius neighborhood graph (where missing
-      entries are presumed to be out of eps) can be precomputed in a memory-efficient
-      way and dbscan can be run over this with ``metric='precomputed'``.
+    - A sparse radius neighborhood graph (where missing entries are presumed to
+      be out of eps) can be precomputed in a memory-efficient way and dbscan
+      can be run over this with ``metric='precomputed'``.  See
+      :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
 
     - The dataset can be compressed, either by removing exact duplicates if
       these occur in your data, or by using BIRCH. Then you only have a
