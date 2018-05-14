@@ -82,7 +82,7 @@ def test_update_medoid_idxs_empty_cluster():
     kmedoids = KMedoids(n_clusters=2)
 
     # Swallow empty cluster warning
-    with warnings.catch_warnings() as w:
+    with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         kmedoids._update_medoid_idxs_in_place(D, labels, medoid_idxs)
 
