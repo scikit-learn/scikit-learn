@@ -131,18 +131,18 @@ def test_parameter_grid():
     # Test constructor's validator
     assert_raise_message(
         TypeError,
-        'Object passed as parameter is not a dict or a list (0)',
+        'Parameter grid is not a dict or a list (0)',
         ParameterGrid, 0
     )
 
     assert_raise_message(
         TypeError,
-        'Object passed as parameter is not a dict (0)',
+        'Parameter grid is not a dict (0)',
         ParameterGrid, [{'foo': [0]}, 0]
     )
 
     assert_raise_message(
-        TypeError, 'Dict entry is not iterable (foo, 0)',
+        TypeError, "Parameter grid value is not iterable ('foo', 0)",
         ParameterGrid, {'foo': 0}
     )
 
