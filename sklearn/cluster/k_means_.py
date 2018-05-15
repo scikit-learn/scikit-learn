@@ -171,7 +171,7 @@ def _check_sample_weight(X, sample_weight):
     if sample_weight is None:
         return np.ones(n_samples, dtype=X.dtype)
     else:
-        # verify that the number of samples is equal to the number of weights
+        sample_weight = np.asarray(sample_weight)
         if n_samples != len(sample_weight):
             raise ValueError("n_samples=%d should be == len(sample_weight)=%d"
                              % (n_samples, len(sample_weight)))
