@@ -196,7 +196,7 @@ k-means++ initialization scheme, which has been implemented in scikit-learn
 random initialization, as shown in the reference.
 
 The algorithm supports sample weights, which can be given by a parameter
-``sample_weights``. This allows to assign more weight to some samples when
+``sample_weight``. This allows to assign more weight to some samples when
 computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.

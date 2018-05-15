@@ -104,7 +104,7 @@ cdef update_labels_distances_inplace(
 
 
 def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
-                  np.ndarray[floating, ndim=1, mode='c'] sample_weights,
+                  np.ndarray[floating, ndim=1, mode='c'] sample_weight,
                   int n_clusters,
                   np.ndarray[floating, ndim=2, mode='c'] init,
                   float tol=1e-4, int max_iter=30, verbose=False):
@@ -114,7 +114,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
     ----------
     X_ : nd-array, shape (n_samples, n_features)
 
-    sample_weights : nd-array, shape (n_samples,)
+    sample_weight : nd-array, shape (n_samples,)
         The weights for each observation in X.
 
     n_clusters : int
@@ -224,7 +224,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
             print("end inner loop")
 
         # compute new centers
-        new_centers = _centers_dense(X_, sample_weights, labels_,
+        new_centers = _centers_dense(X_, sample_weight, labels_,
                                      n_clusters, upper_bounds_)
         bounds_tight[:] = 0
 
@@ -244,7 +244,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
         if verbose:
             print('Iteration %i, inertia %s'
                     % (iteration, np.sum((X_ - centers_[labels]) ** 2 *
-                                         sample_weights[:,np.newaxis])))
+                                         sample_weight[:,np.newaxis])))
         center_shift_total = np.sum(center_shift)
         if center_shift_total ** 2 < tol:
             if verbose:
