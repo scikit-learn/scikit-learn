@@ -1658,4 +1658,3 @@ def test_calibration_loss():
     assert_raises(ValueError, calibration_loss, y_true, y_pred[1:])
     assert_raises(ValueError, calibration_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, calibration_loss, y_true, y_pred - 1.)
-
