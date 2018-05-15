@@ -1214,17 +1214,10 @@ def test_learning_curve_with_stratify():
         # inside each training CV fold
         ones_counter = np.asarray(ones_counter).reshape(folds_count,
                                                         iters_count)
-        max_diff = 0
-        for cur_iter_ones in ones_counter:
-            # ones_counter stores accumulated count, not count in each stratum,
-            # so we'll need to account it by iterating over consecutive pairs
-            # e.g. from [2 2 7 9 10 12] => [2 0 5 2 1 2]
-            strata_ones = [cur_iter_ones[0]]
-            for i in range(len(cur_iter_ones) - 1):
-                strata_ones.append(cur_iter_ones[i+1] - cur_iter_ones[i])
-
-            cur_max_diff = max(strata_ones) - min(strata_ones)
-            max_diff = max(max_diff, cur_max_diff)
+        # ones_counter stores accumulated count, not count in each stratum,
+        # so we need to take this into account: e.g. [1 1 6 8 9] => [1 0 5 2 1]
+        strata_ones = np.hstack((ones_counter[:, [0]], np.diff(ones_counter)))
+        max_diff = np.max(np.max(strata_ones, 1) - np.min(strata_ones, 1))
         return max_diff
 
     ones = 25
