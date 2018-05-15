@@ -1994,3 +1994,118 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_true = np.array(y_true == pos_label, int)
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def calibration_loss(y_true, y_prob, reducer="sum", nbins=10, normalize=True,
+                     sample_weight=None, pos_label=None):
+    """Compute  calibration loss.
+
+    Across all items in a set N predictions, the calibration loss measures
+    the aggregated difference between (1) the average predicted probability
+    assigned to the possible outcomes for item i, and (2) the frequencies
+    of the actual outcome.
+    Therefore, the lower the calibration loss is for a set of predictions, the
+    better the predictions are calibrated.
+
+    The aggregation method can be either:
+    - 'sum' for sum_k P_k delta_k (default)
+    - 'max' for max_k delta_k
+    where k denotes a bin number and delta_k = abs(avg_freq_true_k - center_k)
+
+    TODO: point to reference
+
+    The calibration loss is appropriate for binary and categorical outcomes
+    that can be structured as true or false, but is inappropriate for ordinal
+    variables which can take on three or more values.
+    Which label is considered to be the positive label is controlled via the
+    parameter pos_label, which defaults to 1.
+
+    Read more in the :ref:`User Guide <calibration>`.
+
+    Parameters
+    ----------
+    y_true : array, shape (n_samples,)
+        True targets.
+
+    y_prob : array, shape (n_samples,)
+        Probabilities of the positive class.
+
+    reducer: string, must be among 'l1', 'l2', 'max'
+        Aggregation method.
+
+    nbins: int, positive, optional (default=10)
+        Number of bins. Computation requires nbins full passes on both
+        y_prob and y_true but larger nbins can increase the accuracy of the
+        calibration loss, provided sufficient data in bins.
+
+    normalize : bool, optional (default=True)
+        If true, return the mean loss per sample.
+        Otherwise, return the sum of the per-sample losses.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    pos_label : int or str, default=None
+        Label of the positive class. If None, the maximum label is used as
+        positive class
+
+    Returns
+    -------
+    score : float
+        calibration loss
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import calibration_loss
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> calibration_loss(y_true, y_pred, nbins=nbins, reducer="sum")  # doctest: +ELLIPSIS
+    0.0...
+    >>> calibration_loss(y_true, y_pred, nbins=nbins, reducer="max")  # doctest: +ELLIPSIS
+    0.0...
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> calibration_loss(y_true, y_pred, nbins=nbins, reducer="sum")  # doctest: +ELLIPSIS
+    0.25...
+    >>> calibration_loss(y_true, y_pred, nbins=nbins, reducer="max")  # doctest: +ELLIPSIS
+    0.25...
+
+    References
+    ----------
+    .. TODO
+    """
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob, sample_weight)
+
+    if pos_label is None:
+        pos_label = y_true.max()
+    y_true = np.array(y_true == pos_label, int)
+    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
+    step_size = 1 / float(nbins)
+    loss = 0.
+    count = 0.
+    for x in np.arange(0, 1, step_size):
+        bin_center = x + step_size / 2
+        in_range = (x <= y_prob) & (y_prob < x + step_size)
+        if sample_weight is None:
+            delta_count = in_range.sum()
+            avg_pred_true = (in_range * y_true).sum() / float(delta_count)
+        else:
+            delta_count = (in_range * sample_weight).sum()
+            avg_pred_true = ((in_range * y_true * sample_weight).sum()
+                             / float(delta_count))
+        count += delta_count
+        if reducer == "max":
+            loss = max(loss, abs(avg_pred_true - bin_center))
+        elif reducer == "sum":
+            delta_loss = abs(avg_pred_true - bin_center) * delta_count
+            if not np.isnan(delta_loss):
+                loss += delta_loss
+        else:
+            raise ValueError("reducer is neither 'sum' nor 'max'")
+    if reducer == "sum" and normalize:
+        loss /= count
+    return loss
