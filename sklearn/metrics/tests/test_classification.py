@@ -1640,7 +1640,7 @@ def test_brier_score_loss():
 
 def test_calibration_loss():
     # Check calibration_loss function
-    nbins=2
+    nbins = 2
     y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
 
