@@ -187,7 +187,7 @@ def test_kmedoids_iris():
                          random_state=rng)
         model.fit(X_iris)
 
-        assert model._iter_step < (len(X_iris) / 10)
+        assert model._iter_step < (len(X_iris) // 10)
 
         distances = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X_iris)
         avg_dist_to_random_medoid = np.mean(distances.ravel())
