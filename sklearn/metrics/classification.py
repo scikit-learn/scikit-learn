@@ -2008,11 +2008,9 @@ def calibration_loss(y_true, y_prob, reducer="sum", nbins=10, normalize=True,
     better the predictions are calibrated.
 
     The aggregation method can be either:
-    - 'sum' for sum_k P_k delta_k (default)
-    - 'max' for max_k delta_k
+    - 'sum' for sum_k P_k delta_k (default), denoted as ECE in [1]
+    - 'max' for max_k delta_k, denoted as MCE in [1]
     where k denotes a bin number and delta_k = abs(avg_freq_true_k - center_k)
-
-    TODO: point to reference
 
     The calibration loss is appropriate for binary and categorical outcomes
     that can be structured as true or false, but is inappropriate for ordinal
@@ -2072,7 +2070,10 @@ def calibration_loss(y_true, y_prob, reducer="sum", nbins=10, normalize=True,
 
     References
     ----------
-    .. TODO
+    [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
+        of Modern Neural Networks. Proceedings of the 34th International
+        Conference on Machine Learning, PMLR 70:1321-1330, 2017.
+        <http://proceedings.mlr.press/v70/guo17a.html>`
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
@@ -2088,7 +2089,6 @@ def calibration_loss(y_true, y_prob, reducer="sum", nbins=10, normalize=True,
     loss = 0.
     count = 0.
     for x in np.arange(0, 1, step_size):
-        bin_center = x + step_size / 2
         in_range = (x <= y_prob) & (y_prob < x + step_size)
         if sample_weight is None:
             delta_count = in_range.sum()
@@ -2097,11 +2097,12 @@ def calibration_loss(y_true, y_prob, reducer="sum", nbins=10, normalize=True,
             delta_count = (in_range * sample_weight).sum()
             avg_pred_true = ((in_range * y_true * sample_weight).sum()
                              / float(delta_count))
+        bin_centroid = (in_range * y_prob).sum() / float(delta_count)
         count += delta_count
         if reducer == "max":
-            loss = max(loss, abs(avg_pred_true - bin_center))
+            loss = max(loss, abs(avg_pred_true - bin_centroid))
         elif reducer == "sum":
-            delta_loss = abs(avg_pred_true - bin_center) * delta_count
+            delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
             if not np.isnan(delta_loss):
                 loss += delta_loss
         else:
