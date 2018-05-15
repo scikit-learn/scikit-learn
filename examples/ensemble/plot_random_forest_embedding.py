@@ -31,6 +31,7 @@ from sklearn.datasets import make_circles
 from sklearn.ensemble import RandomTreesEmbedding, ExtraTreesClassifier
 from sklearn.decomposition import TruncatedSVD
 from sklearn.naive_bayes import BernoulliNB
+from sklearn.aode import AODE
 
 # make a synthetic dataset
 X, y = make_circles(factor=0.5, random_state=0, noise=0.05)
@@ -47,6 +48,9 @@ X_reduced = svd.fit_transform(X_transformed)
 nb = BernoulliNB()
 nb.fit(X_transformed, y)
 
+# Learn a AODE classifier on the transformed data
+ao = AODE()
+ao.fit(X_transformed, y)
 
 # Learn an ExtraTreesClassifier for comparison
 trees = ExtraTreesClassifier(max_depth=3, n_estimators=10, random_state=0)
@@ -56,13 +60,13 @@ trees.fit(X, y)
 # scatter plot of original and reduced data
 fig = plt.figure(figsize=(9, 8))
 
-ax = plt.subplot(221)
+ax = plt.subplot(321)
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50, edgecolor='k')
 ax.set_title("Original Data (2d)")
 ax.set_xticks(())
 ax.set_yticks(())
 
-ax = plt.subplot(222)
+ax = plt.subplot(322)
 ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, s=50, edgecolor='k')
 ax.set_title("Truncated SVD reduction (2d) of transformed data (%dd)" %
              X_transformed.shape[1])
@@ -80,7 +84,7 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 transformed_grid = hasher.transform(np.c_[xx.ravel(), yy.ravel()])
 y_grid_pred = nb.predict_proba(transformed_grid)[:, 1]
 
-ax = plt.subplot(223)
+ax = plt.subplot(323)
 ax.set_title("Naive Bayes on Transformed data")
 ax.pcolormesh(xx, yy, y_grid_pred.reshape(xx.shape))
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50, edgecolor='k')
@@ -92,8 +96,20 @@ ax.set_yticks(())
 # transform grid using ExtraTreesClassifier
 y_grid_pred = trees.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
 
-ax = plt.subplot(224)
+ax = plt.subplot(324)
 ax.set_title("ExtraTrees predictions")
+ax.pcolormesh(xx, yy, y_grid_pred.reshape(xx.shape))
+ax.scatter(X[:, 0], X[:, 1], c=y, s=50, edgecolor='k')
+ax.set_ylim(-1.4, 1.4)
+ax.set_xlim(-1.4, 1.4)
+ax.set_xticks(())
+ax.set_yticks(())
+
+# AODE on Transformed data
+y_grid_pred = ao.predict_proba(transformed_grid)[:, 1]
+
+ax = plt.subplot(325)
+ax.set_title("AODE on Transformed data")
 ax.pcolormesh(xx, yy, y_grid_pred.reshape(xx.shape))
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50, edgecolor='k')
 ax.set_ylim(-1.4, 1.4)
