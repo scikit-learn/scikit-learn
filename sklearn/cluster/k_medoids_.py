@@ -108,7 +108,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.cluster_centers_ = None
         self.medoid_indices_ = None
         self.labels_ = None
-        self._iter_step = None
+        self.n_iter_ = None
 
     def _check_nonnegative_int(self, value, desc):
         """Validates if value is a valid integer > 0"""
@@ -163,7 +163,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
-        for self._iter_step in range(0, self.max_iter):
+        for self.n_iter_ in range(0, self.max_iter):
             old_medoid_idxs = np.copy(medoid_idxs)
             labels = np.argmin(D[medoid_idxs, :], axis=0)
 
@@ -171,7 +171,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             self._update_medoid_idxs_in_place(D, labels, medoid_idxs)
             if np.all(old_medoid_idxs == medoid_idxs):
                 break
-            elif self._iter_step == self.max_iter - 1:
+            elif self.n_iter_ == self.max_iter - 1:
                 warnings.warn("Maximum number of iteration reached before "
                               "convergence. Consider increasing max_iter to "
                               "improve the fit.",
