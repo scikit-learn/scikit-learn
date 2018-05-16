@@ -225,11 +225,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        if self.metric == "precomputed":
-            return X[:, self.medoid_indices_]
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
+        if self.metric == "precomputed":
+            check_is_fitted(self, "medoid_indices_")
+            return X[:, self.medoid_indices_]
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc'])
             check_is_fitted(self, "cluster_centers_")
 
             Y = self.cluster_centers_
@@ -250,16 +251,18 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_samples,)
             Index of the cluster each sample belongs to.
         """
-        if self.metric == "precomputed":
-            return np.argmin(X[:, self.medoid_indices_], axis=1)
-
-        check_is_fitted(self, "cluster_centers_")
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        # Return data points to clusters based on which cluster assignment
-        # yields the smallest distance
-        return pairwise_distances_argmin(X, Y=self.cluster_centers_,
-                                         metric=self.metric)
+        if self.metric == "precomputed":
+            check_is_fitted(self, "medoid_indices_")
+            return np.argmin(X[:, self.medoid_indices_], axis=1)
+        else:
+            check_is_fitted(self, "cluster_centers_")
+
+            # Return data points to clusters based on which cluster assignment
+            # yields the smallest distance
+            return pairwise_distances_argmin(X, Y=self.cluster_centers_,
+                                             metric=self.metric)
 
     def _compute_inertia(self, distances):
         """Compute inertia of new samples. Inertia is defined as the sum of the
