@@ -1000,32 +1000,22 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.transform, "hello world!")
 
 
-@pytest.mark.parametrize("dtype", [
-    np.float32,
-    np.float64
-])
-def test_tfidf_transformer_type(dtype):
-    # create made up data with parameterized dtype
-    X = rand(10, 20000, dtype=dtype, random_state=42)
+@pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
+def test_tfidf_transformer_type(X_dtype):
+    X = rand(10, 20000, dtype=X_dtype, random_state=42)
     X_trans = TfidfTransformer().fit_transform(X)
-    # check if the required data types match
-    assert X.dtype == X_trans.dtype
+    assert X_trans.dtype == X.dtype
 
 
-@pytest.mark.parametrize("dtype", [
-    np.float32,
-    np.float64,
-])
-def test_tfidf_vectorizer_type(dtype):
+@pytest.mark.parametrize(
+    "vectorizer_dtype, output_dtype",
+    [(np.int32, np.float64),
+     (np.int64, np.float64),
+     (np.float32, np.float32),
+     (np.float64, np.float64)]
+)
+def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype):
     X = np.array(["numpy", "scipy", "sklearn"])
-    vectorizer = TfidfVectorizer(dtype=dtype)
+    vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
     X_idf = vectorizer.fit_transform(X)
-    assert dtype == X_idf.dtype
-
-
-def test_tfidf_fallback():
-    # TFIDFTransformer should fallback to
-    # np.float64 if np.int* is passed
-    X = np.array([1, 2, 3, 4, 5], dtype=np.int32)
-    X_idf = TfidfTransformer().fit_transform(X)
-    assert X_idf.dtype.type == np.float64
+    assert X_idf.dtype == output_dtype
