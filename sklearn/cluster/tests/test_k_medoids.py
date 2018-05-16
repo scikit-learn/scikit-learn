@@ -185,7 +185,8 @@ def test_max_iter():
 
     model = KMedoids(n_clusters=10,
                      init='random',
-                     max_iter=1
+                     random_state=rng,
+                     max_iter=1,
                     )
     assert_warns_message(UserWarning,
                          "Maximum number of iteration reached before",
