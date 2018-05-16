@@ -52,10 +52,10 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         - If True, then X will be converted to a 2-dimensional NumPy array or
           sparse matrix. If the conversion is not possible an exception is
           raised.
-        - If False, then there is no input validation.
+        - If False, there is no input validation.
 
         When X is validated, the parameters ``accept_sparse`` and
-        ``force_all_finite`` will control the validation for the sparsity and
+        ``force_all_finite`` control the validation for the sparsity and
         the finiteness of X, respectively.
 
         .. deprecated:: 0.20
@@ -127,8 +127,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         else:
             self._validate = self.validate
 
-        if ((not isinstance(self._validate, bool)) and
-                self._validate != 'array-or-frame'):
+        if self._validate not in (True, False, 'array-or-frame'):
             raise ValueError("'validate' should be a boolean or "
                              "'array-or-frame'. Got {!r} instead."
                              .format(self._validate))
@@ -141,9 +140,9 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         if self._validate:
             if hasattr(X, 'loc') and self._validate == 'array-or-frame':
                 if self.force_all_finite:
-                    _assert_all_finite(X.values, allow_nan=False
-                                       if self.force_all_finite is True
-                                       else True)
+                    _assert_all_finite(
+                        X.values,
+                        allow_nan=not (self.force_all_finite is True))
                 return X
             else:
                 return check_array(X, accept_sparse=self.accept_sparse,

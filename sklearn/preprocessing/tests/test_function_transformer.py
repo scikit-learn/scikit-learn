@@ -180,10 +180,7 @@ def test_check_inverse():
      np.array([[0, 1], [2, np.inf]]),
      np.array([[0, 1], [np.inf, np.nan]])]
 )
-@pytest.mark.parametrize(
-    "force_all_finite",
-    [True, False, 'allow-nan']
-)
+@pytest.mark.parametrize("force_all_finite", [True, False, 'allow-nan'])
 def test_function_transformer_finiteness_pandas(X, force_all_finite):
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(X)
@@ -209,10 +206,7 @@ def test_function_transformer_finiteness_pandas(X, force_all_finite):
         transformer.fit_transform(X_df)
 
 
-@pytest.mark.parametrize(
-    "is_dataframe",
-    [True, False]
-)
+@pytest.mark.parametrize("is_dataframe", [True, False])
 def test_function_transformer_future_warning(is_dataframe):
     # FIXME: to be removed in 0.22
     X = np.random.randn(100, 10)
