@@ -1640,21 +1640,32 @@ def test_brier_score_loss():
 
 def test_calibration_loss():
     # Check calibration_loss function
-    nbins = 2
+    n_bins = 2
     y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, nbins=nbins, reducer="sum"), 0.)
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum"), 0.)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, nbins=nbins, reducer="max"), 0.)
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.)
 
     y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, nbins=nbins, reducer="sum"), 0.25)
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum"), 0.25)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, nbins=nbins, reducer="max"), 0.25)
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.25)
+
+    y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
+    sample_weight = [1, 1, 1, 1] + [3, 3, 3, 3]
+
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, sample_weight=sample_weight,
+                         n_bins=n_bins, reducer="sum"), 0.1875)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, sample_weight=sample_weight,
+                         n_bins=n_bins, reducer="max"), 0.25)
 
     assert_raises(ValueError, calibration_loss, y_true, y_pred[1:])
     assert_raises(ValueError, calibration_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, calibration_loss, y_true, y_pred - 1.)
+    assert_raises(ValueError, calibration_loss, y_true, y_pred, reducer="foo")
