@@ -53,7 +53,7 @@ cdef double _logsumexp(double* arr, int n_classes) nogil:
 cdef class MultinomialLogLoss:
     cdef double _loss(self, double* prediction, double y, int n_classes,
                       double sample_weight) nogil:
-        """Multinomial Logistic regression loss.
+        r"""Multinomial Logistic regression loss.
 
         The multinomial logistic loss for one sample is:
         loss = - sw \sum_c \delta_{y,c} (prediction[c] - logsumexp(prediction))
@@ -97,7 +97,7 @@ cdef class MultinomialLogLoss:
 
     cdef void _dloss(self, double* prediction, double y, int n_classes,
                      double sample_weight, double* gradient_ptr) nogil:
-        """Multinomial Logistic regression gradient of the loss.
+        r"""Multinomial Logistic regression gradient of the loss.
 
         The gradient of the multinomial logistic loss with respect to a class c,
         and for one sample is:

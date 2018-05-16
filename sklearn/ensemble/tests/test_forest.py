@@ -223,8 +223,8 @@ def check_importances(name, criterion, dtype, tolerance):
     # Check with parallel
     importances = est.feature_importances_
     est.set_params(n_jobs=2)
-    importances_parrallel = est.feature_importances_
-    assert_array_almost_equal(importances, importances_parrallel)
+    importances_parallel = est.feature_importances_
+    assert_array_almost_equal(importances, importances_parallel)
 
     # Check with sample weights
     sample_weight = check_random_state(0).randint(1, 10, len(X))

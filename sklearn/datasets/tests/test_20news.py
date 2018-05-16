@@ -5,6 +5,8 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
+from sklearn.datasets.tests.test_common import check_return_X_y
+from functools import partial
 
 from sklearn import datasets
 
@@ -76,6 +78,10 @@ def test_20news_vectorized():
     assert_equal(bunch.data.shape, (7532, 130107))
     assert_equal(bunch.target.shape[0], 7532)
     assert_equal(bunch.data.dtype, np.float64)
+
+    # test return_X_y option
+    fetch_func = partial(datasets.fetch_20newsgroups_vectorized, subset='test')
+    check_return_X_y(bunch, fetch_func)
 
     # test subset = all
     bunch = datasets.fetch_20newsgroups_vectorized(subset='all')

@@ -515,7 +515,7 @@ cdef class ClassificationCriterion(Criterion):
 
 
 cdef class Entropy(ClassificationCriterion):
-    """Cross Entropy impurity criterion.
+    r"""Cross Entropy impurity criterion.
 
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
@@ -596,7 +596,7 @@ cdef class Entropy(ClassificationCriterion):
 
 
 cdef class Gini(ClassificationCriterion):
-    """Gini Index impurity criterion.
+    r"""Gini Index impurity criterion.
 
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
@@ -690,7 +690,7 @@ cdef class Gini(ClassificationCriterion):
 
 
 cdef class RegressionCriterion(Criterion):
-    """Abstract regression criterion.
+    r"""Abstract regression criterion.
 
     This handles cases where the target is a continuous value, and is
     evaluated by computing the variance of the target values left and right
@@ -989,7 +989,7 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 cdef class MAE(RegressionCriterion):
-    """Mean absolute error impurity criterion
+    r"""Mean absolute error impurity criterion
 
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""

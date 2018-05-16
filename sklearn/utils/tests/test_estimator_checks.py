@@ -134,6 +134,33 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class BadTransformerWithoutMixin(BaseEstimator):
+    def fit(self, X, y=None):
+        X = check_array(X)
+        return self
+
+    def transform(self, X):
+        X = check_array(X)
+        return X
+
+
+class NotInvariantPredict(BaseEstimator):
+    def fit(self, X, y):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+        return self
+
+    def predict(self, X):
+        # return 1 if X has more than one element else return 0
+        X = check_array(X)
+        if X.shape[0] > 1:
+            return np.ones(X.shape[0])
+        return np.zeros(X.shape[0])
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -178,12 +205,19 @@ def test_check_estimator():
                         check_estimator, ChangesWrongAttribute)
     check_estimator(ChangesUnderscoreAttribute)
     # check that `fit` doesn't add any public attribute
-    msg = ('Estimator adds public attribute\(s\) during the fit method.'
+    msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, SetsWrongAttribute)
+    # check for invariant method
+    name = NotInvariantPredict.__name__
+    method = 'predict'
+    msg = ("{method} of {name} is not invariant when applied "
+           "to a subset.").format(method=method, name=name)
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, NotInvariantPredict)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
@@ -206,6 +240,12 @@ def test_check_estimator():
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+
+def test_check_estimator_transformer_no_mixin():
+    # check that TransformerMixin is not required for transformer tests to run
+    assert_raises_regex(AttributeError, '.*fit_transform.*',
+                        check_estimator, BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():
@@ -262,7 +302,7 @@ def test_check_no_attributes_set_in_init():
     assert_raises_regex(AssertionError,
                         "Estimator estimator_name should not set any"
                         " attribute apart from parameters during init."
-                        " Found attributes \[\'you_should_not_set_this_\'\].",
+                        r" Found attributes \['you_should_not_set_this_'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet())
@@ -270,7 +310,7 @@ def test_check_no_attributes_set_in_init():
                         "Estimator estimator_name should store all "
                         "parameters as an attribute during init. "
                         "Did not find attributes "
-                        "\[\'you_should_set_this_\'\].",
+                        r"\['you_should_set_this_'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet())

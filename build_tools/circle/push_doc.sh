@@ -25,10 +25,10 @@ GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 
 if [ "$CIRCLE_BRANCH" = "master" ]
 then
-	dir=dev
+    dir=dev
 else
-	# Strip off .X
-	dir="${CIRCLE_BRANCH::-2}"
+    # Strip off .X
+    dir="${CIRCLE_BRANCH::-2}"
 fi
 
 MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"

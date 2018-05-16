@@ -987,7 +987,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         # if not warmstart - clear the estimator state
         if not self.warm_start:
@@ -1331,23 +1330,23 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1365,7 +1364,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
@@ -1412,7 +1411,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1425,7 +1424,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1493,7 +1492,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init_ : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
@@ -1672,7 +1671,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -1702,7 +1701,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -1785,23 +1784,23 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1819,7 +1818,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
@@ -1870,7 +1869,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1883,7 +1882,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1945,7 +1944,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init_ : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
