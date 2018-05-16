@@ -151,6 +151,11 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
+        elif self.init_params == 'rand_data':
+            resp = np.zeros((n_samples, self.n_components))
+            points = random_state.choice(range(n_samples), self.n_components, replace=False)
+            for n, i in enumerate(points):
+                resp[i, n] = 1
         else:
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
