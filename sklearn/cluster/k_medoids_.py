@@ -152,7 +152,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              % (self.n_clusters, X.shape[0]))
 
         D = pairwise_distances(X, metric=self.metric)
-        medoid_idxs = self._initialize_medoids(D, self.n_clusters, random_state_)
+        medoid_idxs = self._initialize_medoids(D,
+                                               self.n_clusters,
+                                               random_state_,
+                                               )
         labels = None
 
         # Continue the algorithm as long as
@@ -172,11 +175,16 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                               "improve the fit.",
                               ConvergenceWarning)
 
+        # Set the resulting instance variables.
+        if self.metric == "precomputed":
+            self.cluster_centers_ = None
+        else:
+            self.cluster_centers_ = X[medoid_idxs]
+
         # Expose labels_ which are the assignments of
         # the training data to clusters
         self.labels_ = labels
         self.medoid_indices_ = medoid_idxs
-        self.cluster_centers_ = X[medoid_idxs] if (self.metric != "precomputed") else None
         self.inertia_ = self._compute_inertia(self.transform(X))
 
         # Return self to enable method chaining
@@ -192,12 +200,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             cluster_k_idxs = np.where(labels == k)[0]
 
             if len(cluster_k_idxs) == 0:
-                warnings.warn("Cluster {k} is empty! "
-                              "self.labels_[self.medoid_indices_[{k}]] may not be labeled "
-                              "with its corresponding cluster ({k}).".format(k=k))
+                warnings.warn(
+                    "Cluster {k} is empty! "
+                    "self.labels_[self.medoid_indices_[{k}]] "
+                    "may not be labeled with "
+                    "its corresponding cluster ({k}).".format(k=k))
                 continue
 
-            in_cluster_distances = D[cluster_k_idxs, cluster_k_idxs[:, np.newaxis]]
+            in_cluster_distances = D[cluster_k_idxs,
+                                     cluster_k_idxs[:, np.newaxis]]
 
             # Calculate all costs from each point to all others in the cluster
             in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
@@ -285,7 +296,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return inertia
 
     def _initialize_medoids(self, D, n_clusters, random_state_):
-        """Select initial mediods randomly, with k-medoids++, or heuristically"""
+        """Select initial mediods when beginning clustering."""
 
         if self.init == 'random':  # Random initialization
             # Pick random k medoids as the initial ones.
@@ -298,7 +309,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             medoids = np.argpartition(np.sum(D, axis=1),
                                       n_clusters-1)[:n_clusters]
         else:
-            raise ValueError("init value '{init}' not recognized".format(init=self.init))
+            raise ValueError("init value '{init}' not recognized"
+                             .format(init=self.init))
 
         return medoids
 
@@ -355,7 +367,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # pick the remaining self.n_clusters-1 points
         for cluster_index in range(1, self.n_clusters):
-            rand_vals = random_state_.random_sample(n_local_trials) * current_pot
+            rand_vals = (random_state_.random_sample(n_local_trials)
+                         * current_pot)
             candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
                                             rand_vals)
 
