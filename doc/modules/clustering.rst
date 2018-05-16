@@ -1616,7 +1616,7 @@ symmetric is:
 .. math::
    R_{ij} = \frac{s_i + s_j}{d_{ij}}
 
-Then the DB index is defined as:
+Then the Davies-Bouldin index is defined as:
 
 .. math::
    DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
@@ -1630,7 +1630,6 @@ cluster analysis as follows:
   >>> from sklearn import datasets
   >>> iris = datasets.load_iris()
   >>> X = iris.data
-
   >>> from sklearn.cluster import KMeans
   >>> from sklearn.metrics import davies_bouldin_score
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
@@ -1643,7 +1642,6 @@ Advantages
 ~~~~~~~~~~
 
 - The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-
 - The index is computed only quantities and features inherent to the dataset.
 
 Drawbacks
@@ -1654,7 +1652,6 @@ Drawbacks
   DBSCAN.
 
 - The usage of centroid distance limits the distance metric to Euclidean space.
-
 - A good value reported by this method does not imply the best information retrieval.
 
 .. topic:: References
