@@ -7,8 +7,8 @@ from sklearn.cluster import KMedoids, KMeans
 from sklearn.datasets import load_iris
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal, assert_raise_message, assert_warns_message
+from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_raise_message, assert_warns_message
 from sklearn.utils.testing import assert_allclose
 
 seed = 0
@@ -46,7 +46,7 @@ def test_kmedoids_input_validation_and_fit_check():
 
 
 def test_random_deterministic():
-    """Result of random init method should be determined for a given RandomState."""
+    """Random_state should determine 'random' init output."""
     rng = np.random.RandomState(seed)
 
     X = load_iris()["data"]
@@ -113,7 +113,7 @@ def test_kmedoids_pp():
          [11, 10],
          [12, 10],
          [10, 11],
-        ]
+         ]
     D = euclidean_distances(X)
 
     centers = kmedoids._initialize_medoids(D, 3, random_state_=rng)
@@ -140,7 +140,11 @@ def test_precomputed():
     ]
     D_2 = euclidean_distances(X_2, X_1)
 
-    kmedoids = KMedoids(metric="precomputed", n_clusters=2, random_state=rng).fit(D_1)
+    kmedoids = KMedoids(metric="precomputed",
+                        n_clusters=2,
+                        random_state=rng,
+                        )
+    kmedoids.fit(D_1)
 
     assert_allclose(kmedoids.inertia_, 0.2)
     assert_array_equal(kmedoids.medoid_indices_, [2, 0])
@@ -149,7 +153,7 @@ def test_precomputed():
 
     med_1, med_2 = tuple(kmedoids.medoid_indices_)
     predictions = kmedoids.predict(D_2)
-    assert_array_equal(predictions, [med_1 // 2, med_2 // 2], "predict closest cluster")
+    assert_array_equal(predictions, [med_1 // 2, med_2 // 2])
 
     transformed = kmedoids.transform(D_2)
     assert_array_equal(transformed, D_2[:, kmedoids.medoid_indices_])
@@ -187,12 +191,12 @@ def test_max_iter():
                      init='random',
                      random_state=rng,
                      max_iter=1,
-                    )
+                     )
     assert_warns_message(UserWarning,
                          "Maximum number of iteration reached before",
                          model.fit,
                          X_iris,
-                        )
+                         )
 
 
 def test_kmedoids_iris():
@@ -202,7 +206,8 @@ def test_kmedoids_iris():
 
     ref_model = KMeans(n_clusters=3).fit(X_iris)
 
-    avg_dist_to_closest_centroid = ref_model.transform(X_iris).min(axis=1).mean()
+    avg_dist_to_closest_centroid = ref_model\
+        .transform(X_iris).min(axis=1).mean()
 
     for init in ['random', 'heuristic', 'k-medoids++']:
         distance_metric = 'euclidean'
@@ -210,7 +215,7 @@ def test_kmedoids_iris():
                          metric=distance_metric,
                          init=init,
                          random_state=rng,
-                        )
+                         )
         model.fit(X_iris)
 
         # test convergence in reasonable number of steps
@@ -250,6 +255,7 @@ def test_kmedoids_fit_predict_transform():
 
 def test_callable_distance_metric():
     rng = np.random.RandomState(seed)
+
     def my_metric(a, b):
         return np.sqrt(np.sum(np.power(a - b, 2)))
 
