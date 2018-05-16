@@ -131,8 +131,7 @@ def assert_grid_iter_equals_getitem(grid):
     [(0, TypeError, 'Parameter grid is not a dict or a list (0)'),
      ([{'foo': [0]}, 0], TypeError, 'Parameter grid is not a dict (0)'),
      ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
-      "(key='foo', value=0)")
-    ]
+      "(key='foo', value=0)")]
 )
 def test_parameter_grid_constructor(input, error_type, error_message):
     # Test constructor's validator
