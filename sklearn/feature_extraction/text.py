@@ -1124,8 +1124,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         if self.use_idf:
             n_samples, n_features = X.shape
-            # _document_frequency will return int32
-            # array by default, hence the cast
             df = _document_frequency(X).astype(X.dtype
                                                if X.dtype in FLOAT_DTYPES
                                                else np.float64)
@@ -1133,6 +1131,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # perform idf smoothing if required
             df += int(self.smooth_idf)
             n_samples += int(self.smooth_idf)
+
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(n_samples / df) + 1
