@@ -126,6 +126,7 @@ y = np.array([1, 1, 2, 2])
 def assert_grid_iter_equals_getitem(grid):
     assert_equal(list(grid), [grid[i] for i in range(len(grid))])
 
+
 @pytest.mark.parametrize(
     "input, error_type, error_message",
     [(0, TypeError, 'Parameter grid is not a dict or a list (0)'),
