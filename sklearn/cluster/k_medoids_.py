@@ -104,11 +104,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.init = init
         self.max_iter = max_iter
         self.random_state = random_state
-        self.inertia_ = None
-        self.cluster_centers_ = None
-        self.medoid_indices_ = None
-        self.labels_ = None
-        self.n_iter_ = None
 
     def _check_nonnegative_int(self, value, desc):
         """Validates if value is a valid integer > 0"""
