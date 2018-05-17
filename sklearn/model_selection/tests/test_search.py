@@ -134,8 +134,7 @@ def assert_grid_iter_equals_getitem(grid):
      ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
       "(key='foo', value=0)")]
 )
-def test_parameter_grid_constructor(input, error_type, error_message):
-    # Test constructor's validator
+def test_validate_parameter_grid_input(input, error_type, error_message):
     with pytest.raises(error_type, message=error_message):
         ParameterGrid(input)
 
