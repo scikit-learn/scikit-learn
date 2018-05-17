@@ -94,8 +94,8 @@ can be found in members ``support_vectors_``, ``support_`` and
 
     >>> # get support vectors
     >>> clf.support_vectors_
-    array([[ 0.,  0.],
-           [ 1.,  1.]])
+    array([[0., 0.],
+           [1., 1.]])
     >>> # get indices of support vectors
     >>> clf.support_ # doctest: +ELLIPSIS
     array([0, 1]...)
@@ -322,7 +322,7 @@ floating point values instead of integer values::
         gamma='auto_deprecated', kernel='rbf', max_iter=-1, shrinking=True,
         tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
-    array([ 1.5])
+    array([1.5])
 
 
 .. topic:: Examples:
