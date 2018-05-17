@@ -180,14 +180,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         return X_int, X_mask
 
 
-WARNING_MSG = (
-    "The handling of integer data will change in the future. Currently, the "
-    "categories are determined based on the range [0, max(values)], while "
-    "in the future they will be determined based on the unique values.\n"
-    "If you want the future behaviour, you can specify \"categories='auto'\"."
-)
-
-
 class OneHotEncoder(_BaseEncoder):
     """Encode categorical integer features as a one-hot numeric array.
 
@@ -230,8 +222,8 @@ class OneHotEncoder(_BaseEncoder):
         Desired dtype of output.
 
     handle_unknown : 'error' (default) or 'ignore'
-        Whether to raise an error or ignore if a unknown categorical feature is
-        present during transform (default is to raise). When this parameter
+        Whether to raise an error or ignore if an unknown categorical feature
+        is present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
         transform, the resulting one-hot encoded columns for this feature
         will be all zeros. In the inverse transform, an unknown category
@@ -262,7 +254,7 @@ class OneHotEncoder(_BaseEncoder):
 
         .. deprecated:: 0.20
             The `categorical_features` keyword is deprecated and will be
-            removed in 0.22.
+            removed in 0.22. You can use the ``ColumnTransformer`` instead.
 
     Attributes
     ----------
@@ -405,15 +397,17 @@ class OneHotEncoder(_BaseEncoder):
 
         user_set_categories = False
 
+        # user manually set the categories -> never legacy mode
         if self._categories is not None:
             self._legacy_mode = False
             user_set_categories = True
 
+        # categories not set -> infer if we need legacy mode or not
         elif self._deprecated_n_values != 'auto':
             msg = (
                 "Passing 'n_values' is deprecated and will be removed in a "
                 "future release. You can use the 'categories' keyword instead."
-                " 'n_values=n' corresponds to 'n_values=[range(n)]'.")
+                " 'n_values=n' corresponds to 'categories=[range(n)]'.")
             warnings.warn(msg, DeprecationWarning)
 
             # we internally translate this to the correct categories
@@ -456,9 +450,22 @@ class OneHotEncoder(_BaseEncoder):
                 except ValueError:
                     self._legacy_mode = False
                 else:
-                    warnings.warn(WARNING_MSG, DeprecationWarning)
+                    msg = (
+                        "The handling of integer data will change in the "
+                        "future. Currently, the categories are determined "
+                        "based on the range [0, max(values)], while in the "
+                        "future they will be determined based on the unique "
+                        "values.\nIf you want the future behaviour and "
+                        "silence this warning, you can specify "
+                        "\"categories='auto'\".\n"
+                        "In case you used a LabelEncoder before this "
+                        "OneHotEncoder to convert the categories to integers, "
+                        "then you can now use the OneHotEncoder directly."
+                    )
+                    warnings.warn(msg, DeprecationWarning)
                     self._legacy_mode = True
 
+        # if user specified categorical_features -> always use legacy mode
         if (not isinstance(self._deprecated_categorical_features,
                            six.string_types)
                 or (isinstance(self._deprecated_categorical_features,
@@ -468,7 +475,9 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError(
                     "The 'categorical_features' keyword is deprecated, and "
                     "cannot be used together with specifying 'categories'.")
-            warnings.warn("The 'categorical_features' keyword is deprecated.",
+            warnings.warn("The 'categorical_features' keyword is deprecated "
+                          "and will be removed in a future version. You can "
+                          "use the ColumnTransformer instead.",
                           DeprecationWarning)
             self._legacy_mode = True
 
@@ -484,16 +493,17 @@ class OneHotEncoder(_BaseEncoder):
         -------
         self
         """
-        if self.handle_unknown not in ['error', 'ignore']:
-            template = ("handle_unknown should be either 'error' or "
-                        "'ignore', got %s")
-            raise ValueError(template % self.handle_unknown)
+        if self.handle_unknown not in ('error', 'ignore'):
+            msg = ("handle_unknown should be either 'error' or 'ignore', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
 
         self._handle_deprecations(X)
 
         if self._legacy_mode:
-            # TODO not with _transform_selected ??
-            self._legacy_fit_transform(X)
+            _transform_selected(X, self._legacy_fit_transform,
+                                self._deprecated_categorical_features,
+                                copy=True)
             return self
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
@@ -550,9 +560,8 @@ class OneHotEncoder(_BaseEncoder):
             self._active_features_ = active_features
 
             self.categories_ = [
-                np.unique(X[:, i]).astype(dtype) if dtype else np.unique(X[:, i])
-                for i in range(n_features)]
-            #import pdb; pdb.set_trace()
+                np.unique(X[:, i]).astype(dtype) if dtype
+                else np.unique(X[:, i]) for i in range(n_features)]
 
         return out if self.sparse else out.toarray()
 
@@ -567,10 +576,10 @@ class OneHotEncoder(_BaseEncoder):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        if self.handle_unknown not in ['error', 'ignore']:
-            template = ("handle_unknown should be either 'error' or "
-                        "'ignore', got %s")
-            raise ValueError(template % self.handle_unknown)
+        if self.handle_unknown not in ('error', 'ignore'):
+            msg = ("handle_unknown should be either 'error' or 'ignore', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
 
         self._handle_deprecations(X)
 
@@ -665,12 +674,12 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        if not self._legacy_mode:
-            return self._transform_new(X)
-        else:
+        if self._legacy_mode:
             return _transform_selected(X, self._legacy_transform,
                                        self._deprecated_categorical_features,
                                        copy=True)
+        else:
+            return self._transform_new(X)
 
     def inverse_transform(self, X):
         """Convert back the data to the original representation.
@@ -746,7 +755,7 @@ class OrdinalEncoder(_BaseEncoder):
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
     The features are converted to ordinal integers. This results in
-   a single column of integers (0 to n_categories - 1) per feature.
+    a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
@@ -774,7 +783,7 @@ class OrdinalEncoder(_BaseEncoder):
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
-    values per feature and transform the data to a binary one-hot encoding.
+    values per feature and transform the data to an ordinal encoding.
 
     >>> from sklearn.preprocessing import OrdinalEncoder
     >>> enc = OrdinalEncoder()

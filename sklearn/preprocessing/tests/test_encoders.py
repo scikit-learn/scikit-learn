@@ -49,21 +49,6 @@ def toarray(a):
     return a
 
 
-def _check_dim_1axis(a):
-    if isinstance(a, list):
-        return np.array(a).shape[0]
-    return a.shape[0]
-
-
-def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
-                        n_samples_seen):
-    if batch_stop != n:
-        assert_equal((i + 1) * chunk_size, n_samples_seen)
-    else:
-        assert_equal(i * chunk_size + (batch_stop - batch_start),
-                     n_samples_seen)
-
-
 def test_one_hot_encoder_sparse():
     # Test OneHotEncoder's fit and transform.
     X = [[3, 2, 1], [0, 1, 1]]
@@ -104,7 +89,7 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = r"unknown cat"  # egorical feature present \[2\] during transform." # TODO
+    error_msg = r"Found unknown categories \[2\] in column 1 during transform"
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
     with ignore_warnings(category=DeprecationWarning):
         assert_raises(
@@ -165,19 +150,32 @@ def test_one_hot_encoder_deprecationwarnings():
         # check it still works correctly as well
         with ignore_warnings(category=DeprecationWarning):
             X_trans = enc.fit_transform(X).toarray()
-        assert_array_equal(X_trans, [[0., 1., 0., 1., 1.],
-                                     [1., 0., 1., 0., 1.]])
+        res = [[0., 1., 0., 1., 1.],
+               [1., 0., 1., 0., 1.]]
+        assert_array_equal(X_trans, res)
 
         # check deprecated attributes
         assert_warns(DeprecationWarning, lambda: enc.active_features_)
         assert_warns(DeprecationWarning, lambda: enc.feature_indices_)
         assert_warns(DeprecationWarning, lambda: enc.n_values_)
+        assert_warns(DeprecationWarning, lambda: enc.n_values)
+        assert_warns(DeprecationWarning, lambda: enc.categorical_features)
+
+        def set_n_values():
+            enc.n_values = 3
+        assert_warns(DeprecationWarning, set_n_values)
+
+        def set_categorical_features():
+            enc.categorical_features = [0]
+        assert_warns(DeprecationWarning, set_categorical_features)
 
         # check no warning is raised if keyword is specified
         enc = OneHotEncoder(categories='auto')
         assert_no_warnings(enc.fit, X)
         enc = OneHotEncoder(categories='auto')
         assert_no_warnings(enc.fit_transform, X)
+        X_trans = enc.fit_transform(X).toarray()
+        assert_array_equal(X_trans, res)
 
 
 def test_one_hot_encoder_force_new_behaviour():
@@ -248,7 +246,8 @@ def _run_one_hot(X, X2, cat):
     enc = OneHotEncoder(categorical_features=cat)
     with ignore_warnings(category=DeprecationWarning):
         Xtr = enc.fit_transform(X)
-    X2tr = enc.transform(X2)
+    with ignore_warnings(category=DeprecationWarning):
+        X2tr = enc.fit(X).transform(X2)
     return Xtr, X2tr
 
 
@@ -384,7 +383,7 @@ def test_categorical_encoder_handle_unknown():
     # Test that encoder raises error for unknown features during transform.
     enc = OneHotEncoder(categories='auto')
     enc.fit(X)
-    msg = re.escape('unknown cate') # TODO gories [7] in column 0')
+    msg = re.escape('unknown categories [7] in column 0')
     assert_raises_regex(ValueError, msg, enc.transform, X2)
 
     # With 'ignore' you get all 0's in result
