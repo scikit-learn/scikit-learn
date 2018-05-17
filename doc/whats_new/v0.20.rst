@@ -402,6 +402,10 @@ Decomposition, manifold learning and clustering
   :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
   Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Fixed a bug in :class:`dummy.DummyClassifier` where 1d dimensional y with
+  ndim=2 was throwing a dimension mismatch error in prediction time.
+  :issue:`10926` by :user:`Nick Sorros <nsorros>`
+
 Metrics
 
 - Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
