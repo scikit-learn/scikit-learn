@@ -722,7 +722,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
 
 # Kernels
-def linear_kernel(X, Y=None):
+def linear_kernel(X, Y=None, dense_output=True):
     """
     Compute the linear kernel between X and Y.
 
@@ -734,12 +734,18 @@ def linear_kernel(X, Y=None):
 
     Y : array of shape (n_samples_2, n_features)
 
+    dense_output : boolean (optional), default True
+        Whether to return dense output even when the input is sparse. If
+        ``False``, the output is sparse if both input arrays are sparse.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    return safe_sparse_dot(X, Y.T, dense_output=True)
+    return safe_sparse_dot(X, Y.T, dense_output=dense_output)
 
 
 def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):

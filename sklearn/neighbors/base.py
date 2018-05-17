@@ -258,6 +258,12 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "Expected n_neighbors > 0. Got %d" %
                     self.n_neighbors
                 )
+            else:
+                if not np.issubdtype(type(self.n_neighbors), np.integer):
+                    raise TypeError(
+                        "n_neighbors does not take %s value, "
+                        "enter integer value" %
+                        type(self.n_neighbors))
 
         return self
 
@@ -327,6 +333,17 @@ class KNeighborsMixin(object):
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
+        elif n_neighbors <= 0:
+            raise ValueError(
+                "Expected n_neighbors > 0. Got %d" %
+                n_neighbors
+            )
+        else:
+            if not np.issubdtype(type(n_neighbors), np.integer):
+                raise TypeError(
+                    "n_neighbors does not take %s value, "
+                    "enter integer value" %
+                    type(n_neighbors))
 
         if X is not None:
             query_is_train = False
