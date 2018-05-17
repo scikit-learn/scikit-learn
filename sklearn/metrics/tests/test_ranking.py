@@ -1109,10 +1109,16 @@ def test_dcg_ties():
     y_true = np.asarray([np.arange(5)])
     y_score = np.zeros(y_true.shape)
     dcg = _dcg_sample_scores(y_true, y_score)
+    dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
     discounts = 1 / np.log2(np.arange(2, 7))
     assert dcg == pytest.approx([discounts.sum() * y_true.mean()])
+    assert dcg_ignore_ties == pytest.approx(
+        [(discounts * y_true[:, ::-1]).sum()])
     y_score[0, 3:] = 1
     dcg = _dcg_sample_scores(y_true, y_score)
+    dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
+    assert dcg_ignore_ties == pytest.approx(
+        [(discounts * y_true[:, ::-1]).sum()])
     assert dcg == pytest.approx([
         discounts[:2].sum() * y_true[0, 3:].mean() +
         discounts[2:].sum() * y_true[0, :3].mean()
@@ -1123,7 +1129,10 @@ def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
     y_score = y_true + np.random.RandomState(0).uniform(
         -.2, .2, size=y_true.shape)
-    assert ndcg_score(y_true, y_score) == pytest.approx(1.)
+    ndcg = ndcg_score(y_true, y_score)
+    ndcg_no_ties = ndcg_score(y_true, y_score, ignore_ties=True)
+    assert ndcg == pytest.approx(ndcg_no_ties)
+    assert ndcg == pytest.approx(1.)
     y_score += 1000
     assert ndcg_score(y_true, y_score) == pytest.approx(1.)
 
@@ -1135,8 +1144,12 @@ def test_ndcg_toy_examples():
         -.2, .2, size=y_score.shape)
     assert _dcg_sample_scores(y_true, y_score) == pytest.approx(
         3 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(y_true, y_score) == pytest.approx(
+        _dcg_sample_scores(y_true, y_score, ignore_ties=True))
     assert _dcg_sample_scores(y_true, y_score_noisy) == pytest.approx(
         3 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(y_true, y_score_noisy) == pytest.approx(
+        _dcg_sample_scores(y_true, y_score_noisy, ignore_ties=True))
     assert _ndcg_sample_scores(y_true, y_score) == pytest.approx(
         1 / np.log2(np.arange(2, 7)))
     assert _dcg_sample_scores(y_true, y_score, log_basis=10) == pytest.approx(
@@ -1151,7 +1164,10 @@ def test_ndcg_toy_examples():
         expected_dcg_score * np.ones(5))
     assert _ndcg_sample_scores(y_true, y_score) == pytest.approx(np.ones(5))
     assert dcg_score(y_true, y_score) == pytest.approx(expected_dcg_score)
+    assert dcg_score(
+        y_true, y_score, ignore_ties=True) == pytest.approx(expected_dcg_score)
     assert ndcg_score(y_true, y_score) == pytest.approx(1.)
+    assert ndcg_score(y_true, y_score, ignore_ties=True) == pytest.approx(1.)
 
 
 def test_ndcg_score():

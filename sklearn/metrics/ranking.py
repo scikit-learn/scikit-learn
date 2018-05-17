@@ -871,7 +871,8 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
     return np.average(loss, weights=sample_weight)
 
 
-def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
+def _dcg_sample_scores(y_true, y_score, k=None,
+                       log_basis=2, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -899,6 +900,10 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
         Basis of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
+    ignore_ties : bool, optional (default=False)
+        Assume that there are no ties in y_score (which is likely to be the
+        case if y_score is continuous) for performance gains.
+
     Returns
     -------
     discounted_cumulative_gain : ndarray, shape (n_samples,)
@@ -915,10 +920,18 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
     discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_basis))
     if k is not None:
         discount[k:] = 0
-    discount_cumsum = np.cumsum(discount)
-    cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum)
-                        for y_t, y_s in zip(y_true, y_score)]
-    return np.asarray(cumulative_gains)
+    if ignore_ties:
+        ranking = np.argsort(y_score)[:, ::-1]
+        ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
+        if k is not None:
+            ranked = ranked[:, :k]
+        cumulative_gains = (ranked * discount).sum(axis=1)
+    else:
+        discount_cumsum = np.cumsum(discount)
+        cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum)
+                            for y_t, y_s in zip(y_true, y_score)]
+        cumulative_gains = np.asarray(cumulative_gains)
+    return cumulative_gains
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
@@ -944,7 +957,8 @@ def _check_dcg_target_type(y_true):
                 supported_fmt, y_type))
 
 
-def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
+def dcg_score(y_true, y_score, k=None,
+              log_basis=2, sample_weight=None, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -974,6 +988,10 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
 
     sample_weight : ndarray, shape (n_samples,), optional (default=None)
         Sample weights. If None, all samples are given the same weight.
+
+    ignore_ties : bool, optional (default=False)
+        Assume that there are no ties in y_score (which is likely to be the
+        case if y_score is continuous) for performance gains.
 
     Returns
     -------
@@ -1026,11 +1044,13 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
     return np.average(
-        _dcg_sample_scores(y_true, y_score, k=k, log_basis=log_basis),
+        _dcg_sample_scores(
+            y_true, y_score, k=k, log_basis=log_basis,
+            ignore_ties=ignore_ties),
         weights=sample_weight)
 
 
-def _ndcg_sample_scores(y_true, y_score, k=None):
+def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1056,6 +1076,10 @@ def _ndcg_sample_scores(y_true, y_score, k=None):
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
+    ignore_ties : bool, optional (default=False)
+        Assume that there are no ties in y_score (which is likely to be the
+        case if y_score is continuous) for performance gains.
+
     Returns
     -------
     normalized_discounted_cumulative_gain : ndarray, shape (n_samples,)
@@ -1066,15 +1090,15 @@ def _ndcg_sample_scores(y_true, y_score, k=None):
     dcg_score : Discounted Cumulative Gain (not normalized).
 
     """
-    gain = _dcg_sample_scores(y_true, y_score, k)
-    normalizing_gain = _dcg_sample_scores(y_true, y_true, k)
+    gain = _dcg_sample_scores(y_true, y_score, k, ignore_ties=ignore_ties)
+    normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
     gain[all_irrelevant] = 0
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
     return gain
 
 
-def ndcg_score(y_true, y_score, k=None, sample_weight=None):
+def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1102,6 +1126,10 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
 
     sample_weight : ndarray, shape (n_samples,), optional (default=None)
         Sample weights. If None, all samples are given the same weight.
+
+    ignore_ties : bool, optional (default=False)
+        Assume that there are no ties in y_score (which is likely to be the
+        case if y_score is continuous) for performance gains.
 
     Returns
     -------
@@ -1151,5 +1179,5 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
-    gain = _ndcg_sample_scores(y_true, y_score, k=k)
+    gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)
