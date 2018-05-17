@@ -1125,6 +1125,11 @@ def test_dcg_ties():
     ])
 
 
+def test_ndcg_ignore_ties_with_k():
+    a = np.arange(12).reshape((2, 6))
+    _ = ndcg_score(a, a, k=3, ignore_ties=True)
+
+
 def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
     y_score = y_true + np.random.RandomState(0).uniform(
