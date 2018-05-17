@@ -103,6 +103,10 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+- Added the :func:`metrics.dcg_score` (Discounted Cumulative Gain) and
+  :func:`metrics.ndcg_score` (Normalized Discounted Cumulative Gain) ranking
+  metrics. :issue:`9951` by :user:`Jérôme Dockès <jeromedockes>`
+
 Decomposition, manifold learning and clustering
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
