@@ -42,7 +42,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         Document word matrix.
 
     exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
-        Exponential value of expection of log topic word distribution.
+        Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
     doc_topic_prior : float
@@ -154,7 +154,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `eta`.
+        In the literature, this is called `beta`.
 
     learning_method : 'batch' | 'online', default='online'
         Method used to update `_component`. Only used in `fit` method.

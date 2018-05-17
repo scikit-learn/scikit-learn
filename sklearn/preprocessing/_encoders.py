@@ -305,8 +305,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
-    array([[ 1.,  0.,  1.,  0.,  0.],
-           [ 0.,  1.,  0.,  0.,  0.]])
+    array([[ 1., 0., 1., 0., 0.],
+           [ 0., 1., 0., 0., 0.]])
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
@@ -785,8 +785,8 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
-    array([[ 0.,  2.],
-           [ 1.,  0.]])
+    array([[ 0., 2.],
+           [ 1., 0.]])
 
     >>> enc.inverse_transform([[1, 0], [0, 1]])
     array([['Male', 1],

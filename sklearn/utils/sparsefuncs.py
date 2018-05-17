@@ -104,7 +104,7 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
-    function. Both must be initilized to 0-arrays of the proper size, i.e.
+    function. Both must be initialized to 0-arrays of the proper size, i.e.
     the number of features in X. last_n is the number of samples encountered
     until now.
 
