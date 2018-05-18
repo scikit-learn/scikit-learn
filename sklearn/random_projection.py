@@ -158,7 +158,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
     The components of the random matrix are drawn from
 
-        N(0, 1.0 / n_components).
+        N(0, 1.0 / sqrt(n_components)).
 
     Read more in the :ref:`User Guide <gaussian_random_matrix>`.
 
