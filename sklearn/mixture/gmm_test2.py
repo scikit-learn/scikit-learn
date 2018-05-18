@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
+from sklearn.utils.extmath import row_norms
+from sklearn.cluster.k_means_ import _k_init
 
 
 # Generate some data
@@ -20,6 +22,7 @@ X = X[:, ::-1]  # flip axes for better plotting
 
 n_samples = 400
 n_components = 4
+x_squared_norms = row_norms(X, squared=True)
 
 # Plot the data with K Means Labels
 # kmeans = KMeans(4, random_state=0)
@@ -36,6 +39,8 @@ def genGmm(init_params, seed=None):
         init_means = calculateMeans(randMean(r))
     elif init_params == 'rand_data':
         init_means = calculateMeans(randPointMean(r))
+    elif init_params == 'k-means++':
+        init_means = calculateMeans(kmeansPlusPlus(r))
     else:
         raise ValueError("Unimplemented initialisation method '%s'"
                          % init_params)
@@ -79,6 +84,16 @@ def randMean(r):
     # Sum of responsibilities across a given point is 1.
 
 
+def kmeansPlusPlus(r):
+    # Generate responsibilities that end up picking points based on k-means++
+    resp_kmpp = np.zeros((n_samples,n_components))
+    centers = _k_init(X, n_components, x_squared_norms=x_squared_norms,
+                      random_state=r)
+    points = [np.where(X == centers[i])[0][0] for i in range(n_components)]
+    for n, i in enumerate(points):
+        resp_kmpp[i, n] = 1
+    return resp_kmpp
+
 def calculateMeans(resp):
     # Generate the means of the components. These are the initial parameters.
     nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
@@ -93,15 +108,14 @@ def testSeed(seed):
     plt.figure(figsize=(9, 3))
     plt.subplots_adjust(bottom=.1, top=0.9, hspace=.15, wspace=.05,
                         left=.05, right=.95)
-    methods = ['random', 'kmeans', 'rand_data']
+    methods = ['random', 'kmeans', 'rand_data', 'k-means++']
 
     for n, i in enumerate(methods):
-        plt.subplot(1, 3, n+1)
+        plt.subplot(1, len(methods), n+1)
         labels, ini, seed, params = genGmm(i, seed)
         plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis', lw=0.5,
                     edgecolors='black')
-        plt.scatter(ini[:, 0], ini[:, 1], s=150, marker='P', c='orange', lw=1.5,
-                    edgecolors='black')
+        plt.scatter(ini[:, 0], ini[:, 1], s=150, marker='P', c='orange',
+                    lw=1.5, edgecolors='black')
         plt.title(i)
-
     plt.show()

@@ -13,13 +13,14 @@ from time import time
 import numpy as np
 
 from .. import cluster
+from ..cluster.k_means_ import _k_init
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.fixes import logsumexp
-
+from ..utils.extmath import row_norms
 
 def _check_shape(param, param_shape, name):
     """Validate the shape of the input parameter 'param'.
@@ -155,6 +156,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             resp = np.zeros((n_samples, self.n_components))
             points = random_state.choice(range(n_samples), self.n_components,
                                          replace=False)
+            for n, i in enumerate(points):
+                resp[i, n] = 1
+        elif self.init_params == 'k-means++':
+            resp = np.zeros((n_samples, self.n_components))
+            centers = _k_init(X, self.n_components, x_squared_norms=row_norms(X, squared=True),
+                              random_state=random_state)
+            points = [np.where(X == centers[i])[0][0] for i in
+                      range(self.n_components)]
             for n, i in enumerate(points):
                 resp[i, n] = 1
         else:
