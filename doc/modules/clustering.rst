@@ -1591,6 +1591,86 @@ Drawbacks
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
     `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
 
+
+.. _davies-bouldin_index:
+
+Davies-Bouldin Index
+--------------------
+
+If the ground truth labels are not known, the Davies-Bouldin index
+(:func:`sklearn.metrics.davies_bouldin_score`) can be used to evaluate the
+model, where a lower Davies-Bouldin index relates to a model with better
+separation between the clusters.
+
+The index is defined as the average similarity between each cluster :math:`C_i`
+for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
+this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
+
+- :math:`s_i`, the average distance between each point of cluster :math:`i` and
+  the centroid of that cluster -- also know as cluster diameter.
+- :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
+
+A simple choice to construct :math:`R_ij` so that it is nonnegative and
+symmetric is:
+
+.. math::
+   R_{ij} = \frac{s_i + s_j}{d_{ij}}
+
+Then the Davies-Bouldin index is defined as:
+
+.. math::
+   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+
+Zero is the lowest possible score. Values closer to zero indicate a better
+partition.
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis as follows:
+
+  >>> from sklearn import datasets
+  >>> iris = datasets.load_iris()
+  >>> X = iris.data
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics import davies_bouldin_score
+  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans.labels_
+  >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
+  0.6623...
+
+
+Advantages
+~~~~~~~~~~
+
+- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
+- The index is computed only quantities and features inherent to the dataset.
+
+Drawbacks
+~~~~~~~~~
+
+- The Davies-Boulding index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained from
+  DBSCAN.
+
+- The usage of centroid distance limits the distance metric to Euclidean space.
+- A good value reported by this method does not imply the best information retrieval.
+
+.. topic:: References
+
+ * Davies, David L.; Bouldin, Donald W. (1979).
+   "A Cluster Separation Measure"
+   IEEE Transactions on Pattern Analysis and Machine Intelligence.
+   PAMI-1 (2): 224-227.
+   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+
+ * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
+   "On Clustering Validation Techniques"
+   Journal of Intelligent Information Systems, 17(2-3), 107-145.
+   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+
+ * `Wikipedia entry for Davies-Bouldin index
+   <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
+
+
 .. _contingency_matrix:
 
 Contingency Matrix
