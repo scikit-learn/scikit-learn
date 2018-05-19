@@ -1656,7 +1656,7 @@ def test_calibration_loss():
         calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.25)
 
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
-    sample_weight = [1, 1, 1, 1] + [3, 3, 3, 3]
+    sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
 
     assert_almost_equal(
         calibration_loss(y_true, y_pred, sample_weight=sample_weight,
