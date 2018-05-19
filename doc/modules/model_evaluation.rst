@@ -62,6 +62,7 @@ Scoring                           Function                                      
 'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`           for binary targets
 'average_precision'               :func:`metrics.average_precision_score`
 'brier_score_loss'                :func:`metrics.brier_score_loss`
+'calibration_loss'                :func:`metrics.calibration_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -1306,6 +1307,64 @@ Here is a small example of usage of this function:::
   * G. Brier, `Verification of forecasts expressed in terms of probability
     <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
     Monthly weather review 78.1 (1950)
+
+
+Calibration loss
+----------------
+
+The :func:`calibration_loss` function computes the expected and maximum
+calibration losses as defined in [1] for binary classes.
+
+Across all items in a set N predictions, the calibration loss measures
+the aggregated difference between (1) the average predicted probability
+assigned to the possible outcomes for item i, and (2) the frequencies
+of the actual outcome.
+Therefore, the lower the calibration loss is for a set of predictions, the
+better the predictions are calibrated.
+The aggregation method can be either:
+- 'sum' for :math:`\sum_k P_k \delta_k`, denoted as expected calibration error
+ (ECE) in [1]
+- 'max' for :math:`\max_k \delta_k`, denoted as maximum calibration error
+ (MCE) in [1]]
+where :math:`k` spans all bins,
+:math:`P_k = \dfrac{\sum_{b_k} w_t}{\sum_{b_k} w_t}` denotes the (normalized)
+weight of bin :math:`k` and
+:math:`delta_k = \dfrac{|\sum_{b_k} w_t(o_t - f_t)|}{\sum_{b_k} w_t}` denotes
+the absolute difference between the average frequency of positive class and the
+average predicted probability of positive class in bin :math:`k`.
+
+The calibration loss is appropriate for binary and categorical outcomes
+that can be structured as true or false, but is inappropriate for ordinal
+variables which can take on three or more values.
+Which label is considered to be the positive label is controlled via the
+parameter pos_label, which defaults to 1.
+
+Here is a small example of usage of this function:::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import calibration_loss
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> calibration_loss(y_true, y_pred, n_bins=2, \
+                         reducer="sum")
+    0.0
+    >>> calibration_loss(y_true, y_pred, n_bins=2, \
+                         reducer="max")
+    0.0
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> calibration_loss(y_true, y_pred, n_bins=2, \
+                         reducer="sum")
+    0.25
+    >>> calibration_loss(y_true, y_pred, n_bins=2, \
+                         reducer="max")
+    0.25
+
+.. topic:: References:
+
+  * [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
+        of Modern Neural Networks. Proceedings of the 34th International
+        Conference on Machine Learning, PMLR 70:1321-1330, 2017.
+        <http://proceedings.mlr.press/v70/guo17a.html>`
 
 .. _multilabel_ranking_metrics:
 
