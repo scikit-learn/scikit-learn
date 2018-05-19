@@ -47,6 +47,7 @@ from .cluster import silhouette_samples
 from .cluster import silhouette_score
 from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
+from .cluster import davies_bouldin_score
 
 from .pairwise import euclidean_distances
 from .pairwise import pairwise_distances
@@ -83,6 +84,7 @@ __all__ = [
     'consensus_score',
     'coverage_error',
     'dcg_score',
+    'davies_bouldin_score',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
