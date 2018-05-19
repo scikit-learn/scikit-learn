@@ -2092,18 +2092,23 @@ def calibration_loss(y_true, y_prob, reducer="sum", n_bins=10, normalize=True,
     step_size = 1 / float(n_bins)
     loss = 0.
     count = 0.
-    for x in np.arange(0, 1, step_size):
-        in_range = (x <= y_prob) & (y_prob < x + step_size)
+    ind = np.argsort(y_prob)
+    y_true = y_true[ind]
+    y_prob = y_prob[ind]
+    if sample_weight is not None:
+        sample_weight = sample_weight[ind]
+    i_thres = np.searchsorted(y_prob, np.arange(0, 1, step_size)).tolist()
+    i_thres.append(y_true.shape[0])
+    for i, i_start in enumerate(i_thres[:-1]):
+        i_end = i_thres[i+1]
         if sample_weight is None:
-            delta_count = in_range.sum()
-            avg_pred_true = np.dot(in_range, y_true) / float(delta_count)
-            bin_centroid = np.dot(in_range, y_prob) / float(delta_count)
+            delta_count = float(i_end - i_start)
+            avg_pred_true = y_true[i_start:i_end].sum() / delta_count
+            bin_centroid = y_prob[i_start:i_end].sum() / delta_count
         else:
-            delta_count = np.dot(in_range, sample_weight)
-            avg_pred_true = (np.dot(in_range * y_true, sample_weight)
-                             / float(delta_count))
-            bin_centroid = (np.dot(in_range * y_prob, sample_weight)
-                            / float(delta_count))
+            delta_count = float(sample_weight[i_start:i_end].sum())
+            avg_pred_true = np.dot(y_true[i_start:i_end], sample_weight[i_start:i_end]) / delta_count
+            bin_centroid = np.dot(y_prob[i_start:i_end], sample_weight[i_start:i_end]) / delta_count
         count += delta_count
         if reducer == "max":
             loss = max(loss, abs(avg_pred_true - bin_centroid))
