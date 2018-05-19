@@ -18,7 +18,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.metrics import calibration_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
@@ -57,9 +57,9 @@ def test_calibration():
             pc_clf.fit(this_X_train, y_train, sample_weight=sw_train)
             prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
 
-            # Check that brier score has improved after calibration
-            assert_greater(brier_score_loss(y_test, prob_pos_clf),
-                           brier_score_loss(y_test, prob_pos_pc_clf))
+            # Check that calibration loss has improved after calibration
+            assert_greater(calibration_loss(y_test, prob_pos_clf),
+                           calibration_loss(y_test, prob_pos_pc_clf))
 
             # Check invariance against relabeling [0, 1] -> [1, 2]
             pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
@@ -84,8 +84,8 @@ def test_calibration():
             else:
                 # Isotonic calibration is not invariant against relabeling
                 # but should improve in both cases
-                assert_greater(brier_score_loss(y_test, prob_pos_clf),
-                               brier_score_loss((y_test + 1) % 2,
+                assert_greater(calibration_loss(y_test, prob_pos_clf),
+                               calibration_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
 
         # Check failure cases:
@@ -217,8 +217,8 @@ def test_calibration_prefit():
                 assert_array_equal(y_pred,
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
 
-                assert_greater(brier_score_loss(y_test, prob_pos_clf),
-                               brier_score_loss(y_test, prob_pos_pc_clf))
+                assert_greater(calibration_loss(y_test, prob_pos_clf),
+                               calibration_loss(y_test, prob_pos_pc_clf))
 
 
 def test_sigmoid_calibration():
