@@ -20,7 +20,8 @@ from ._dbscan_inner import dbscan_inner, get_neighborhood
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1, save_memory=False):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1,
+           save_memory=False):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -130,7 +131,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         check_consistent_length(X, sample_weight)
 
     if metric == 'precomputed' and save_memory:
-        raise ValueError("save_memory can't be True when metric is `precomputed`.")
+        raise ValueError("Can't use save_memory with `precomputed` metric.")
 
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is in the
@@ -160,31 +161,35 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
         if not save_memory:
-            neighborhoods = neighbors_model.radius_neighbors(X, eps,
-                                                             return_distance=False)
+            neighborhoods = neighbors_model.radius_neighbors(
+                                X,
+                                eps,
+                                return_distance=False)
 
     if not save_memory:
         if sample_weight is None:
             n_neighbors = np.array([len(neighbors)
-                                        for neighbors in neighborhoods])
+                                    for neighbors in neighborhoods])
         else:
             n_neighbors = np.array([np.sum(sample_weight[neighbors])
-                                        for neighbors in neighborhoods])
+                                    for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
     labels = -np.ones(X.shape[0], dtype=np.intp)
 
     if save_memory:
-        # Because when ``save_memory`` is ``True``, we don't know core_samples in advance,
-        # we set it to ``2`` meaning it is unknown now.
+        # Because when ``save_memory`` is ``True``, we don't know core_samples
+        # in advance, so we set it to ``2`` meaning it is unknown now.
         core_samples = np.ones(X.shape[0], dtype=np.uint8)
         core_samples[:] = 2
     else:
         # A list of all core samples found.
         core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
 
-    neighborhood = get_neighborhood(X, neighbors_model, eps, sample_weight, min_samples)
-    dbscan_inner(core_samples, neighborhoods, labels, save_memory, neighborhood)
+    neighborhood = get_neighborhood(X, neighbors_model, eps, sample_weight,
+                                    min_samples)
+    dbscan_inner(core_samples, neighborhoods, labels, save_memory,
+                 neighborhood)
     return np.where(core_samples)[0], labels
 
 
