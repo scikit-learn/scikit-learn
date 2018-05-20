@@ -16,11 +16,11 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
 from ..neighbors import NearestNeighbors
 
-from ._dbscan_inner import dbscan_inner
+from ._dbscan_inner import dbscan_inner, get_neighborhood
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1, mode='once'):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1, save_memory=False):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -79,10 +79,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
-    mode : {'once', 'mem'}, optional
-        How to compute pairwise distance between samples. If ``once``, nearest
-        neighbors will be computed at once as a matrix and use more memory.
-        If ``mem``, nearest neighbors for each sample will be computed when
+    save_memory : boolean, optional
+        Compute pairwise distance between samples in memory saving approach.
+        If ``False``, nearest neighbors will be computed at once as a matrix
+        and use more memory.
+        If ``True``, nearest neighbors for each sample will be computed when
         it is needed.
 
     Returns
@@ -128,8 +129,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         sample_weight = np.asarray(sample_weight)
         check_consistent_length(X, sample_weight)
 
-    if metric == 'precomputed' and mode == 'mem':
-        raise ValueError("mode can't be `mem` when metric is `precomputed`.")
+    if metric == 'precomputed' and save_memory:
+        raise ValueError("save_memory can't be True when metric is `precomputed`.")
 
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is in the
@@ -158,11 +159,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
                                            n_jobs=n_jobs)
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
-        if mode == "once":
+        if not save_memory:
             neighborhoods = neighbors_model.radius_neighbors(X, eps,
                                                              return_distance=False)
 
-    if mode == "once":
+    if not save_memory:
         if sample_weight is None:
             n_neighbors = np.array([len(neighbors)
                                         for neighbors in neighborhoods])
@@ -173,19 +174,17 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     # Initially, all samples are noise.
     labels = -np.ones(X.shape[0], dtype=np.intp)
 
-    # A list of all core samples found.
-    if mode == 'mem':
-        # Because under ``mem`` mode, we don't know core_samples in advance,
-        # we set it to a certain number (2) marking it unknown.
+    if save_memory:
+        # Because when ``save_memory`` is ``True``, we don't know core_samples in advance,
+        # we set it to ``2`` meaning it is unknown now.
         core_samples = np.ones(X.shape[0], dtype=np.uint8)
         core_samples[:] = 2
-    elif mode == 'once':
-        core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
     else:
-        raise ValueError("mode must be 'mem' or 'once'.")
+        # A list of all core samples found.
+        core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
 
-    dbscan_inner(core_samples, neighborhoods, labels, X, eps, min_samples,
-                sample_weight, neighbors_model, mode)
+    neighborhood = get_neighborhood(X, neighbors_model, eps, sample_weight, min_samples)
+    dbscan_inner(core_samples, neighborhoods, labels, save_memory, neighborhood)
     return np.where(core_samples)[0], labels
 
 
@@ -244,10 +243,11 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
-    mode : {'once', 'mem'}, optional
-        How to compute pairwise distance between samples. If ``once``, nearest
-        neighbors will be computed as a matrix and use more memory.
-        If ``mem``, nearest neighbors for each sample will be computed when
+    save_memory : boolean, optional
+        Compute pairwise distance between samples in memory saving approach.
+        If ``False``, nearest neighbors will be computed at once as a matrix
+        and use more memory.
+        If ``True``, nearest neighbors for each sample will be computed when
         it is needed.
 
     Attributes
@@ -292,7 +292,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=1, mode='once'):
+                 n_jobs=1, save_memory=False):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
@@ -301,7 +301,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.leaf_size = leaf_size
         self.p = p
         self.n_jobs = n_jobs
-        self.mode = mode
+        self.save_memory = save_memory
 
     def fit(self, X, y=None, sample_weight=None):
         """Perform DBSCAN clustering from features or distance matrix.
