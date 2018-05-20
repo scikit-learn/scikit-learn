@@ -2,6 +2,7 @@
 
 # Author: Wei Xue <xuewei4d@gmail.com>
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -17,7 +18,7 @@ from ..base import DensityMixin
 from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
-from ..utils.extmath import logsumexp
+from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -37,7 +38,7 @@ def _check_shape(param, param_shape, name):
                          "but got %s" % (name, param_shape, param.shape))
 
 
-def _check_X(X, n_components=None, n_features=None):
+def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
     """Check the input data X.
 
     Parameters
@@ -50,7 +51,8 @@ def _check_X(X, n_components=None, n_features=None):
     -------
     X : array, shape (n_samples, n_features)
     """
-    X = check_array(X, dtype=[np.float64, np.float32])
+    X = check_array(X, dtype=[np.float64, np.float32],
+                    ensure_min_samples=ensure_min_samples)
     if n_components is not None and X.shape[0] < n_components:
         raise ValueError('Expected n_samples >= n_components '
                          'but got n_components = %d, n_samples = %d'
@@ -129,15 +131,17 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         pass
 
-    def _initialize_parameters(self, X):
+    def _initialize_parameters(self, X, random_state):
         """Initialize the model parameters.
 
         Parameters
         ----------
         X : array-like, shape  (n_samples, n_features)
+
+        random_state : RandomState
+            A random number generator instance.
         """
-        n_samples = X.shape[0]
-        random_state = check_random_state(self.random_state)
+        n_samples, _ = X.shape
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
@@ -145,7 +149,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                                    random_state=random_state).fit(X).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
-            resp = random_state.rand(X.shape[0], self.n_components)
+            resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
         else:
             raise ValueError("Unimplemented initialization method '%s'"
@@ -184,46 +188,52 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         -------
         self
         """
-        X = _check_X(X, self.n_components)
+        X = _check_X(X, self.n_components, ensure_min_samples=2)
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 
-        max_log_likelihood = -np.infty
+        max_lower_bound = -np.infty
         self.converged_ = False
 
+        random_state = check_random_state(self.random_state)
+
+        n_samples, _ = X.shape
         for init in range(n_init):
             self._print_verbose_msg_init_beg(init)
 
             if do_init:
-                self._initialize_parameters(X)
-            current_log_likelihood, resp = self._e_step(X)
+                self._initialize_parameters(X, random_state)
+                self.lower_bound_ = -np.infty
 
-            for n_iter in range(self.max_iter):
-                prev_log_likelihood = current_log_likelihood
+            for n_iter in range(1, self.max_iter + 1):
+                prev_lower_bound = self.lower_bound_
 
-                self._m_step(X, resp)
-                current_log_likelihood, resp = self._e_step(X)
-                change = current_log_likelihood - prev_log_likelihood
+                log_prob_norm, log_resp = self._e_step(X)
+                self._m_step(X, log_resp)
+                self.lower_bound_ = self._compute_lower_bound(
+                    log_resp, log_prob_norm)
+
+                change = self.lower_bound_ - prev_lower_bound
                 self._print_verbose_msg_iter_end(n_iter, change)
 
                 if abs(change) < self.tol:
                     self.converged_ = True
                     break
 
-            self._print_verbose_msg_init_end(current_log_likelihood)
+            self._print_verbose_msg_init_end(self.lower_bound_)
 
-            if current_log_likelihood > max_log_likelihood:
-                max_log_likelihood = current_log_likelihood
+            if self.lower_bound_ > max_lower_bound:
+                max_lower_bound = self.lower_bound_
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 
         if not self.converged_:
-            warnings.warn('Initialization %d did not converged. '
+            warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '
-                          'or increase n_init, tol '
+                          'or increase max_iter, tol '
                           'or check for degenerate data.'
                           % (init + 1), ConvergenceWarning)
 
@@ -232,7 +242,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         return self
 
-    @abstractmethod
     def _e_step(self, X):
         """E step.
 
@@ -242,21 +251,27 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        log-likelihood : scalar
+        log_prob_norm : float
+            Mean of the logarithms of the probabilities of each sample in X
 
-        responsibility : array, shape (n_samples, n_components)
+        log_responsibility : array, shape (n_samples, n_components)
+            Logarithm of the posterior probabilities (or responsibilities) of
+            the point of each sample in X.
         """
-        pass
+        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
+        return np.mean(log_prob_norm), log_resp
 
     @abstractmethod
-    def _m_step(self, X, resp):
+    def _m_step(self, X, log_resp):
         """M step.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        resp : array-like, shape (n_samples, n_components)
+        log_resp : array-like, shape (n_samples, n_components)
+            Logarithm of the posterior probabilities (or responsibilities) of
+            the point of each sample in X.
         """
         pass
 
@@ -307,7 +322,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         return self.score_samples(X).mean()
 
-    def predict(self, X, y=None):
+    def predict(self, X):
         """Predict the labels for the data samples in X using trained model.
 
         Parameters
@@ -326,7 +341,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
-        """Predict posterior probability of data per each component.
+        """Predict posterior probability of each component given the data.
 
         Parameters
         ----------
@@ -337,13 +352,62 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability of the sample for each Gaussian
-            (state) in the model.
+            Returns the probability each Gaussian (state) in
+            the model given each sample.
         """
         self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
-        _, _, log_resp = self._estimate_log_prob_resp(X)
+        _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
+
+    def sample(self, n_samples=1):
+        """Generate random samples from the fitted Gaussian distribution.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
+
+        Returns
+        -------
+        X : array, shape (n_samples, n_features)
+            Randomly generated sample
+
+        y : array, shape (nsamples,)
+            Component labels
+
+        """
+        self._check_is_fitted()
+
+        if n_samples < 1:
+            raise ValueError(
+                "Invalid value for 'n_samples': %d . The sampling requires at "
+                "least one sample." % (self.n_components))
+
+        _, n_features = self.means_.shape
+        rng = check_random_state(self.random_state)
+        n_samples_comp = rng.multinomial(n_samples, self.weights_)
+
+        if self.covariance_type == 'full':
+            X = np.vstack([
+                rng.multivariate_normal(mean, covariance, int(sample))
+                for (mean, covariance, sample) in zip(
+                    self.means_, self.covariances_, n_samples_comp)])
+        elif self.covariance_type == "tied":
+            X = np.vstack([
+                rng.multivariate_normal(mean, self.covariances_, int(sample))
+                for (mean, sample) in zip(
+                    self.means_, n_samples_comp)])
+        else:
+            X = np.vstack([
+                mean + rng.randn(sample, n_features) * np.sqrt(covariance)
+                for (mean, covariance, sample) in zip(
+                    self.means_, self.covariances_, n_samples_comp)])
+
+        y = np.concatenate([j * np.ones(sample, dtype=int)
+                           for j, sample in enumerate(n_samples_comp)])
+
+        return (X, y)
 
     def _estimate_weighted_log_prob(self, X):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
@@ -354,7 +418,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        weighted_log_prob : array, shape (n_features, n_component)
+        weighted_log_prob : array, shape (n_samples, n_component)
         """
         return self._estimate_log_prob(X) + self._estimate_log_weights()
 
@@ -400,9 +464,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         log_prob_norm : array, shape (n_samples,)
             log p(X)
 
-        log_prob : array, shape (n_samples, n_components)
-            log p(X|Z) + log weights
-
         log_responsibilities : array, shape (n_samples, n_components)
             logarithm of the responsibilities
         """
@@ -411,7 +472,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         with np.errstate(under='ignore'):
             # ignore underflow
             log_resp = weighted_log_prob - log_prob_norm[:, np.newaxis]
-        return log_prob_norm, weighted_log_prob, log_resp
+        return log_prob_norm, log_resp
 
     def _print_verbose_msg_init_beg(self, n_init):
         """Print verbose message on initialization."""

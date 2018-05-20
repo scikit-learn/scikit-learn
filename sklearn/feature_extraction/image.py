@@ -16,7 +16,6 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils.fixes import astype
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -34,11 +33,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
     Parameters
     ===========
-    n_x: integer
+    n_x : integer
         The size of the grid in the x direction.
-    n_y: integer
+    n_y : integer
         The size of the grid in the y direction.
-    n_z: integer, optional
+    n_z : integer, optional
         The size of the grid in the z direction, defaults to 1
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
@@ -108,7 +107,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
         n_voxels = diag.size
     else:
         if mask is not None:
-            mask = astype(mask, dtype=np.bool, copy=False)
+            mask = mask.astype(dtype=np.bool, copy=False)
             mask = np.asarray(mask, dtype=np.bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
@@ -152,8 +151,8 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Notes
     -----
-    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
-    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
+    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
     returns an np.ndarray, as expected.
 
     For compatibility, user code relying on this method should wrap its
@@ -188,8 +187,8 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
 
     Notes
     -----
-    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
-    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
+    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
     returns an np.ndarray, as expected.
 
     For compatibility, user code relying on this method should wrap its
@@ -230,6 +229,9 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         if (isinstance(max_patches, (numbers.Integral))
                 and max_patches < all_patches):
             return max_patches
+        elif (isinstance(max_patches, (numbers.Integral))
+              and max_patches >= all_patches):
+            return all_patches
         elif (isinstance(max_patches, (numbers.Real))
                 and 0 < max_patches < 1):
             return int(max_patches * all_patches)
@@ -319,9 +321,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.
+        `max_patches` is not None.  If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -450,8 +455,11 @@ class PatchExtractor(BaseEstimator):
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     """
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
@@ -480,7 +488,7 @@ class PatchExtractor(BaseEstimator):
 
         Returns
         -------
-        patches: array, shape = (n_patches, patch_height, patch_width) or
+        patches : array, shape = (n_patches, patch_height, patch_width) or
              (n_patches, patch_height, patch_width, n_channels)
              The collection of patches extracted from the images, where
              `n_patches` is either `n_samples * max_patches` or the total

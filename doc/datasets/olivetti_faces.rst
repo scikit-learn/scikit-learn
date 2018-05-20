@@ -5,15 +5,13 @@ The Olivetti faces dataset
 ==========================
 
 
-This dataset contains a set of face images taken between April 1992 and April
-1994 at AT&T Laboratories Cambridge. The website describing the original
-dataset is now defunct, but archived copies can be accessed through
-`the Internet Archive's Wayback Machine`_. The
+`This dataset contains a set of face images`_ taken between April 1992 and April
+1994 at AT&T Laboratories Cambridge. The
 :func:`sklearn.datasets.fetch_olivetti_faces` function is the data
 fetching / caching function that downloads the data
 archive from AT&T.
 
-.. _the Internet Archive's Wayback Machine: http://wayback.archive.org/web/*/http://www.uk.research.att.com/facedatabase.html
+.. _This dataset contains a set of face images: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 As described on the original website:
 

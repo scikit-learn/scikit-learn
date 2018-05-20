@@ -1,3 +1,7 @@
+# Author: Wei Xue <xuewei4d@gmail.com>
+#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clause
+
 import sys
 import warnings
 
@@ -11,10 +15,12 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture.gaussian_mixture import GaussianMixture
 from sklearn.mixture.gaussian_mixture import (
-    _estimate_gaussian_precisions_cholesky_full,
-    _estimate_gaussian_precisions_cholesky_tied,
-    _estimate_gaussian_precisions_cholesky_diag,
-    _estimate_gaussian_precisions_cholesky_spherical)
+    _estimate_gaussian_covariances_full,
+    _estimate_gaussian_covariances_tied,
+    _estimate_gaussian_covariances_diag,
+    _estimate_gaussian_covariances_spherical)
+from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
+from sklearn.mixture.gaussian_mixture import _compute_log_det_cholesky
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils.testing import assert_allclose
@@ -27,6 +33,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -327,25 +334,33 @@ def test_suffstat_sk_full():
     X_resp = np.sqrt(resp) * X
     nk = np.array([n_samples])
     xk = np.zeros((1, n_features))
-    precs_pred = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                             nk, xk, 0)
-    covars_pred = linalg.inv(np.dot(precs_pred[0], precs_pred[0].T))
+    covars_pred = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
     ecov = EmpiricalCovariance(assume_centered=True)
     ecov.fit(X_resp)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='frobenius'), 0)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='spectral'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='frobenius'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
+    precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
+    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
+    assert_array_almost_equal(precs_est, precs_pred)
 
     # special case 2, assuming resp are all ones
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean(axis=0).reshape((1, -1))
-    precs_pred = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                             nk, xk, 0)
-    covars_pred = linalg.inv(np.dot(precs_pred[0], precs_pred[0].T))
+    covars_pred = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
     ecov = EmpiricalCovariance(assume_centered=False)
     ecov.fit(X)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='frobenius'), 0)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='spectral'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='frobenius'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
+    precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
+    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
+    assert_array_almost_equal(precs_est, precs_pred)
 
 
 def test_suffstat_sk_tied():
@@ -359,21 +374,22 @@ def test_suffstat_sk_tied():
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
 
-    precs_pred_full = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_full = [linalg.inv(np.dot(precision_chol, precision_chol.T))
-                        for precision_chol in precs_pred_full]
+    covars_pred_full = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
     covars_pred_full = np.sum(nk[:, np.newaxis, np.newaxis] * covars_pred_full,
                               0) / n_samples
 
-    precs_pred_tied = _estimate_gaussian_precisions_cholesky_tied(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_tied = linalg.inv(np.dot(precs_pred_tied, precs_pred_tied.T))
+    covars_pred_tied = _estimate_gaussian_covariances_tied(resp, X, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
     ecov.covariance_ = covars_pred_full
     assert_almost_equal(ecov.error_norm(covars_pred_tied, norm='frobenius'), 0)
     assert_almost_equal(ecov.error_norm(covars_pred_tied, norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred_tied, 'tied')
+    precs_pred = np.dot(precs_chol_pred, precs_chol_pred.T)
+    precs_est = linalg.inv(covars_pred_tied)
+    assert_array_almost_equal(precs_est, precs_pred)
 
 
 def test_suffstat_sk_diag():
@@ -386,21 +402,19 @@ def test_suffstat_sk_diag():
     X = rng.rand(n_samples, n_features)
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
-    precs_pred_full = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_full = [linalg.inv(np.dot(precision_chol, precision_chol.T))
-                        for precision_chol in precs_pred_full]
-
-    precs_pred_diag = _estimate_gaussian_precisions_cholesky_diag(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_diag = np.array([np.diag(1. / d) ** 2
-                                 for d in precs_pred_diag])
+    covars_pred_full = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
+    covars_pred_diag = _estimate_gaussian_covariances_diag(resp, X, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
     for (cov_full, cov_diag) in zip(covars_pred_full, covars_pred_diag):
         ecov.covariance_ = np.diag(np.diag(cov_full))
+        cov_diag = np.diag(cov_diag)
         assert_almost_equal(ecov.error_norm(cov_diag, norm='frobenius'), 0)
         assert_almost_equal(ecov.error_norm(cov_diag, norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred_diag, 'diag')
+    assert_almost_equal(covars_pred_diag, 1. / precs_chol_pred ** 2)
 
 
 def test_gaussian_suffstat_sk_spherical():
@@ -414,11 +428,38 @@ def test_gaussian_suffstat_sk_spherical():
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean()
-    precs_pred_spherical = _estimate_gaussian_precisions_cholesky_spherical(
-        resp, X, nk, xk, 0)
-    covars_pred_spherical = (np.dot(X.flatten().T, X.flatten()) /
-                             (n_features * n_samples))
-    assert_almost_equal(1. / precs_pred_spherical ** 2, covars_pred_spherical)
+    covars_pred_spherical = _estimate_gaussian_covariances_spherical(resp, X,
+                                                                     nk, xk, 0)
+    covars_pred_spherical2 = (np.dot(X.flatten().T, X.flatten()) /
+                              (n_features * n_samples))
+    assert_almost_equal(covars_pred_spherical, covars_pred_spherical2)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred_spherical,
+                                                  'spherical')
+    assert_almost_equal(covars_pred_spherical, 1. / precs_chol_pred ** 2)
+
+
+def test_compute_log_det_cholesky():
+    n_features = 2
+    rand_data = RandomData(np.random.RandomState(0))
+
+    for covar_type in COVARIANCE_TYPE:
+        covariance = rand_data.covariances[covar_type]
+
+        if covar_type == 'full':
+            predected_det = np.array([linalg.det(cov) for cov in covariance])
+        elif covar_type == 'tied':
+            predected_det = linalg.det(covariance)
+        elif covar_type == 'diag':
+            predected_det = np.array([np.prod(cov) for cov in covariance])
+        elif covar_type == 'spherical':
+            predected_det = covariance ** n_features
+
+        # We compute the cholesky decomposition of the covariance matrix
+        expected_det = _compute_log_det_cholesky(_compute_precision_cholesky(
+            covariance, covar_type), covar_type, n_features=n_features)
+        assert_array_almost_equal(expected_det, - .5 * np.log(predected_det))
 
 
 def _naive_lmvnpdf_diag(X, means, covars):
@@ -430,13 +471,9 @@ def _naive_lmvnpdf_diag(X, means, covars):
 
 
 def test_gaussian_mixture_log_probabilities():
-    from sklearn.mixture.gaussian_mixture import (
-        _estimate_log_gaussian_prob_full,
-        _estimate_log_gaussian_prob_tied,
-        _estimate_log_gaussian_prob_diag,
-        _estimate_log_gaussian_prob_spherical)
+    from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
 
-    # test aginst with _naive_lmvnpdf_diag
+    # test against with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     n_samples = 500
@@ -451,12 +488,12 @@ def test_gaussian_mixture_log_probabilities():
     # full covariances
     precs_full = np.array([np.diag(1. / np.sqrt(x)) for x in covars_diag])
 
-    log_prob = _estimate_log_gaussian_prob_full(X, means, precs_full)
+    log_prob = _estimate_log_gaussian_prob(X, means, precs_full, 'full')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
     # diag covariances
     precs_chol_diag = 1. / np.sqrt(covars_diag)
-    log_prob = _estimate_log_gaussian_prob_diag(X, means, precs_chol_diag)
+    log_prob = _estimate_log_gaussian_prob(X, means, precs_chol_diag, 'diag')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
     # tied
@@ -465,7 +502,7 @@ def test_gaussian_mixture_log_probabilities():
 
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [covars_tied] * n_components)
-    log_prob = _estimate_log_gaussian_prob_tied(X, means, precs_tied)
+    log_prob = _estimate_log_gaussian_prob(X, means, precs_tied, 'tied')
 
     assert_array_almost_equal(log_prob, log_prob_naive)
 
@@ -475,7 +512,8 @@ def test_gaussian_mixture_log_probabilities():
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [[k] * n_features for k in
                                           covars_spherical])
-    log_prob = _estimate_log_gaussian_prob_spherical(X, means, precs_spherical)
+    log_prob = _estimate_log_gaussian_prob(X, means,
+                                           precs_spherical, 'spherical')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
 # skip tests on weighted_log_probabilities, log_weights
@@ -611,9 +649,9 @@ def test_gaussian_mixture_fit_convergence_warning():
                             max_iter=max_iter, reg_covar=0, random_state=rng,
                             covariance_type=covar_type)
         assert_warns_message(ConvergenceWarning,
-                             'Initialization %d did not converged. '
+                             'Initialization %d did not converge. '
                              'Try different init parameters, '
-                             'or increase n_init, tol '
+                             'or increase max_iter, tol '
                              'or check for degenerate data.'
                              % max_iter, g.fit, X)
 
@@ -712,11 +750,11 @@ def test_warm_start():
     X = rng.rand(n_samples, n_features)
 
     # Assert the warm_start give the same result for the same number of iter
-    g = GaussianMixture(n_components=n_components, n_init=1,
-                        max_iter=2, reg_covar=0, random_state=random_state,
+    g = GaussianMixture(n_components=n_components, n_init=1, max_iter=2,
+                        reg_covar=0, random_state=random_state,
                         warm_start=False)
-    h = GaussianMixture(n_components=n_components, n_init=1,
-                        max_iter=1, reg_covar=0, random_state=random_state,
+    h = GaussianMixture(n_components=n_components, n_init=1, max_iter=1,
+                        reg_covar=0, random_state=random_state,
                         warm_start=True)
 
     with warnings.catch_warnings():
@@ -815,7 +853,7 @@ def test_monotonic_likelihood():
             warnings.simplefilter("ignore", ConvergenceWarning)
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
-            for _ in range(300):
+            for _ in range(600):
                 prev_log_likelihood = current_log_likelihood
                 try:
                     current_log_likelihood = gmm.fit(X).score(X)
@@ -826,6 +864,8 @@ def test_monotonic_likelihood():
 
                 if gmm.converged_:
                     break
+
+            assert_true(gmm.converged_)
 
 
 def test_regularisation():
@@ -844,10 +884,12 @@ def test_regularisation():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             assert_raise_message(ValueError,
-                                 "The algorithm has diverged because of too "
-                                 "few samples per components. "
-                                 "Try to decrease the number of components, "
-                                 "or increase reg_covar.", gmm.fit, X)
+                                 "Fitting the mixture model failed because "
+                                 "some components have ill-defined empirical "
+                                 "covariance (for instance caused by "
+                                 "singleton or collapsed samples). Try to "
+                                 "decrease the number of components, or "
+                                 "increase reg_covar.", gmm.fit, X)
 
             gmm.set_params(reg_covar=1e-6).fit(X)
 
@@ -860,15 +902,82 @@ def test_property():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         gmm = GaussianMixture(n_components=n_components,
-                              covariance_type=covar_type, random_state=rng)
+                              covariance_type=covar_type, random_state=rng,
+                              n_init=5)
         gmm.fit(X)
-        print(covar_type)
-        if covar_type is 'full':
+        if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
                 assert_array_almost_equal(linalg.inv(prec), covar)
-        elif covar_type is 'tied':
+        elif covar_type == 'tied':
             assert_array_almost_equal(linalg.inv(gmm.precisions_),
                                       gmm.covariances_)
         else:
             assert_array_almost_equal(gmm.precisions_, 1. / gmm.covariances_)
+
+
+def test_sample():
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=7, n_components=3)
+    n_features, n_components = rand_data.n_features, rand_data.n_components
+
+    for covar_type in COVARIANCE_TYPE:
+        X = rand_data.X[covar_type]
+
+        gmm = GaussianMixture(n_components=n_components,
+                              covariance_type=covar_type, random_state=rng)
+        # To sample we need that GaussianMixture is fitted
+        assert_raise_message(NotFittedError, "This GaussianMixture instance "
+                             "is not fitted", gmm.sample, 0)
+        gmm.fit(X)
+
+        assert_raise_message(ValueError, "Invalid value for 'n_samples",
+                             gmm.sample, 0)
+
+        # Just to make sure the class samples correctly
+        n_samples = 20000
+        X_s, y_s = gmm.sample(n_samples)
+
+        for k in range(n_components):
+            if covar_type == 'full':
+                assert_array_almost_equal(gmm.covariances_[k],
+                                          np.cov(X_s[y_s == k].T), decimal=1)
+            elif covar_type == 'tied':
+                assert_array_almost_equal(gmm.covariances_,
+                                          np.cov(X_s[y_s == k].T), decimal=1)
+            elif covar_type == 'diag':
+                assert_array_almost_equal(gmm.covariances_[k],
+                                          np.diag(np.cov(X_s[y_s == k].T)),
+                                          decimal=1)
+            else:
+                assert_array_almost_equal(
+                    gmm.covariances_[k], np.var(X_s[y_s == k] - gmm.means_[k]),
+                    decimal=1)
+
+        means_s = np.array([np.mean(X_s[y_s == k], 0)
+                           for k in range(n_components)])
+        assert_array_almost_equal(gmm.means_, means_s, decimal=1)
+
+        # Check shapes of sampled data, see
+        # https://github.com/scikit-learn/scikit-learn/issues/7701
+        assert_equal(X_s.shape, (n_samples, n_features))
+
+        for sample_size in range(1, 100):
+            X_s, _ = gmm.sample(sample_size)
+            assert_equal(X_s.shape, (sample_size, n_features))
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_init():
+    # We check that by increasing the n_init number we have a better solution
+    random_state = 0
+    rand_data = RandomData(np.random.RandomState(random_state), scale=1)
+    n_components = rand_data.n_components
+    X = rand_data.X['full']
+
+    gmm1 = GaussianMixture(n_components=n_components, n_init=1,
+                           max_iter=1, random_state=random_state).fit(X)
+    gmm2 = GaussianMixture(n_components=n_components, n_init=100,
+                           max_iter=1, random_state=random_state).fit(X)
+
+    assert_greater(gmm2.lower_bound_, gmm1.lower_bound_)

@@ -42,24 +42,17 @@ import scipy as sp
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import sp_version
 
-if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
-                   "thus does not include the scipy.misc.face() image.")
 
-###############################################################################
-try:
-    from scipy import misc
-    face = misc.face(gray=True)
-except AttributeError:
-    # Old versions of scipy have face in the top level package
+try:  # SciPy >= 0.16 have face in misc
+    from scipy.misc import face
+    face = face(gray=True)
+except ImportError:
     face = sp.face(gray=True)
 
 # Convert from uint8 representation with values between 0 and 255 to
 # a floating point representation with values between 0 and 1.
-face = face / 255
+face = face / 255.
 
 # downsample for higher speed
 face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
@@ -81,7 +74,7 @@ data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
 print('done in %.2fs.' % (time() - t0))
 
-###############################################################################
+# #############################################################################
 # Learn the dictionary from reference patches
 
 print('Learning the dictionary...')
@@ -104,7 +97,7 @@ plt.suptitle('Dictionary learned from face patches\n' +
 plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
-###############################################################################
+# #############################################################################
 # Display the distorted image
 
 def show_with_diff(image, reference, title):
@@ -129,7 +122,7 @@ def show_with_diff(image, reference, title):
 
 show_with_diff(distorted, face, 'Distorted image')
 
-###############################################################################
+# #############################################################################
 # Extract noisy patches and reconstruct them using the dictionary
 
 print('Extracting noisy patches... ')

@@ -19,7 +19,7 @@ better**.
     >>> y_digits = digits.target
     >>> svc = svm.SVC(C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
-    0.97999999999999998
+    0.98
 
 To get a better measure of prediction accuracy (which we can use as a
 proxy for goodness of fit of the model), we can successively split the
@@ -38,8 +38,8 @@ data in *folds* that we use for training and testing::
     ...     y_test  = y_train.pop(k)
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
-    >>> print(scores)
-    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
+    >>> print(scores)  # doctest: +ELLIPSIS
+    [0.934..., 0.956..., 0.939...]
 
 .. currentmodule:: sklearn.model_selection
 
@@ -61,7 +61,7 @@ This example shows an example usage of the ``split`` method.
 
     >>> from sklearn.model_selection import KFold, cross_val_score
     >>> X = ["a", "a", "b", "c", "c", "c"]
-    >>> k_fold = KFold(n_folds=3)
+    >>> k_fold = KFold(n_splits=3)
     >>> for train_indices, test_indices in k_fold.split(X):
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5] | test: [0 1]
@@ -70,10 +70,9 @@ This example shows an example usage of the ``split`` method.
 
 The cross-validation can then be performed easily::
 
-    >>> kfold = KFold(n_folds=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
-    ...          for train, test in k_fold.split(X_digits)]
-    [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
+    ...          for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
+    [0.934..., 0.956..., 0.939...]
 
 The cross-validation score can be directly calculated using the
 :func:`cross_val_score` helper. Given an estimator, the cross-validation object
@@ -87,7 +86,7 @@ Refer the :ref:`metrics module <metrics>` to learn more on the available scoring
 methods.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold, n_jobs=-1)
-    array([ 0.93489149,  0.95659432,  0.93989983])
+    array([0.93489149, 0.95659432, 0.93989983])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
@@ -97,7 +96,7 @@ scoring method.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold,
     ...                 scoring='precision_macro')
-    array([ 0.93969761,  0.95911415,  0.94041254])
+    array([0.93969761, 0.95911415, 0.94041254])
 
    **Cross-validation generators**
 
@@ -106,11 +105,11 @@ scoring method.
 
    *
 
-    - :class:`KFold` **(n_folds, shuffle, random_state)**
+    - :class:`KFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
+    - :class:`StratifiedKFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`LabelKFold` **(n_folds, shuffle, random_state)**
+    - :class:`GroupKFold` **(n_splits)**
 
 
    *
@@ -119,18 +118,18 @@ scoring method.
 
     - Same as K-Fold but preserves the class distribution within each fold.
 
-    - Ensures that the same label is not in both testing and training sets.
+    - Ensures that the same group is not in both testing and training sets.
 
 
 .. list-table::
 
    *
 
-    - :class:`ShuffleSplit` **(n_iter, test_size, train_size, random_state)**
+    - :class:`ShuffleSplit` **(n_splits, test_size, train_size, random_state)**
 
     - :class:`StratifiedShuffleSplit`
 
-    - :class:`LabelShuffleSplit`
+    - :class:`GroupShuffleSplit`
 
    *
 
@@ -138,16 +137,16 @@ scoring method.
 
     - Same as shuffle split but preserves the class distribution within each iteration.
 
-    - Ensures that the same label is not in both testing and training sets.
+    - Ensures that the same group is not in both testing and training sets.
 
 
 .. list-table::
 
    *
 
-    - :class:`LeaveOneLabelOut` **()**
+    - :class:`LeaveOneGroupOut` **()**
 
-    - :class:`LeavePLabelOut`  **(p)**
+    - :class:`LeavePGroupsOut`  **(n_groups)**
 
     - :class:`LeaveOneOut` **()**
 
@@ -155,9 +154,9 @@ scoring method.
 
    *
 
-    - Takes a label array to group observations.
+    - Takes a group array to group observations.
 
-    - Leave P labels out.
+    - Leave P groups out.
 
     - Leave one observation out.
 
@@ -183,7 +182,7 @@ scoring method.
 .. topic:: **Exercise**
    :class: green
 
-   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_001.png
+   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: right
         :scale: 90
@@ -195,7 +194,7 @@ scoring method.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
 
 
@@ -207,7 +206,7 @@ Grid-search
 
 .. currentmodule:: sklearn.model_selection
 
-The sklearn provides an object that, given data, computes the score
+scikit-learn provides an object that, given data, computes the score
 during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
@@ -238,7 +237,7 @@ a stratified 3-fold.
 
         >>> cross_val_score(clf, X_digits, y_digits)
         ...                                               # doctest: +ELLIPSIS
-        array([ 0.938...,  0.963...,  0.944...])
+        array([0.938..., 0.963..., 0.944...])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set ``gamma`` and the other one by
@@ -257,9 +256,9 @@ Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
-algorithm-by-algorithm basis. This is why for certain estimators the
-sklearn exposes :ref:`cross_validation` estimators that set their parameter
-automatically by cross-validation::
+algorithm-by-algorithm basis. This is why, for certain estimators,
+scikit-learn exposes :ref:`cross_validation` estimators that set their
+parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
     >>> lasso = linear_model.LassoCV()
@@ -289,6 +288,4 @@ appended to their name.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
        :lines: 17-24
 
-   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
-
-
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_diabetes.py`

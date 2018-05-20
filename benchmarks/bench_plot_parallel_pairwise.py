@@ -33,8 +33,10 @@ def plot(func):
     plt.title('Parallel %s' % func.__name__)
     plt.legend()
 
+
 def euclidean_distances(X, n_jobs):
     return pairwise_distances(X, metric="euclidean", n_jobs=n_jobs)
+
 
 def rbf_kernels(X, n_jobs):
     return pairwise_kernels(X, metric="rbf", n_jobs=n_jobs, gamma=0.1)

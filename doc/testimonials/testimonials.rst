@@ -64,9 +64,9 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 At INRIA, we use scikit-learn to support leading-edge basic research in many
 teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
 <http://lear.inrialpes.fr/>`_ for computer vision, `Visages
-<https://www.irisa.fr/visages/index>`_ for medical image analysis, `Privatics
+<https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
-tool to address difficult applications of machine learing in an academic
+tool to address difficult applications of machine learning in an academic
 environment as it is performant and versatile, but all easy-to-use and well
 documented, which makes it well suited to grad students.
 
@@ -76,6 +76,78 @@ documented, which makes it well suited to grad students.
    <span class="testimonial-author">
 
 Gaël Varoquaux, research at Parietal
+
+.. raw:: html
+
+   </span>
+
+
+`betaworks <https://betaworks.com>`_
+------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/betaworks.png
+    :width: 120pt
+    :target: https://betaworks.com
+
+.. raw:: html
+
+  </div>
+
+Betaworks is a NYC-based startup studio that builds new products, grows
+companies, and invests in others. Over the past 8 years we’ve launched a
+handful of social data analytics-driven services, such as Bitly, Chartbeat,
+digg and Scale Model. Consistently the betaworks data science team uses
+Scikit-learn for a variety of tasks. From exploratory analysis, to product
+development, it is an essential part of our toolkit. Recent uses are included
+in `digg’s new video recommender system
+<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
+and Poncho’s `dynamic heuristic subspace clustering
+<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_. 
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Gilad Lotan, Chief Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
+`Hugging Face <https://huggingface.co>`_
+------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/huggingface.png
+    :width: 120pt
+    :target: https://huggingface.co
+
+.. raw:: html
+
+  </div>
+
+At Hugging Face we're using NLP and probabilistic models to generate
+conversational Artificial intelligences that are fun to chat with. Despite using
+deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_ 
+of our `NLP tasks <https://huggingface.co/coref/>`_, scikit-learn is still the bread-and-butter of
+our daily machine learning routine. The ease of use and predictability of the
+interface, as well as the straightforward mathematical explanations that are
+here when you need them, is the killer feature. We use a variety of scikit-learn
+models in production and they are also operationally very pleasant to work with.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Julien Chaumond, Chief Technology Officer
 
 .. raw:: html
 
@@ -256,8 +328,8 @@ Greg Lamp, Co-founder Yhat
 
    </span>
 
-`Rangespan <https://www.rangespan.com>`_
-------------------------------------------
+`Rangespan <http://www.rangespan.com>`_
+----------------------------------------
 
 .. raw:: html
 
@@ -265,7 +337,7 @@ Greg Lamp, Co-founder Yhat
 
 .. image:: images/rangespan.png
     :width: 120pt
-    :target: https://www.rangespan.com
+    :target: http://www.rangespan.com
 
 .. raw:: html
 
@@ -467,7 +539,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
 .. image:: images/peerindex.png
     :width: 120pt
-    :target: http://www.peerindex.com/
+    :target: https://www.brandwatch.com/peerindex-and-brandwatch
 
 .. raw:: html
 
@@ -494,7 +566,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
    </span>
 
 
-`DataRobot <http://www.datarobot.com>`_
+`DataRobot <https://www.datarobot.com>`_
 ----------------------------------------
 
 .. raw:: html
@@ -503,7 +575,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 
 .. image:: images/datarobot.png
     :width: 120pt
-    :target: http://www.datarobot.com
+    :target: https://www.datarobot.com
 
 .. raw:: html
 
@@ -758,6 +830,74 @@ machine learning algorithms on all types of data.
   <span class="testimonial-author">
 
 Florian Douetteau, CEO, Dataiku
+
+.. raw:: html
+
+  </span>
+
+`Otto Group <https://ottogroup.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/ottogroup_logo.png
+    :width: 120pt
+    :target: https://ottogroup.com
+
+.. raw:: html
+
+   </div>
+
+Here at Otto Group, one of global Big Five B2C online retailers, we are using
+scikit-learn in all aspects of our daily work from data exploration to development
+of machine learning application to the productive deployment of those services.
+It helps us to tackle machine learning problems ranging from e-commerce to logistics.
+It consistent APIs enabled us to build the `Palladium REST-API framework
+<https://github.com/ottogroup/palladium/>`_ around it and continuously deliver
+scikit-learn based services.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Christian Rammig, Head of Data Science, Otto Group
+
+.. raw:: html
+
+  </span>
+
+`Zopa <https://zopa.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/zopa.png
+    :width: 120pt
+    :target: https://zopa.com
+
+.. raw:: html
+
+   </div>
+
+
+At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
+to run the business and optimize our users' experience. It powers our 
+Machine Learning models involved in credit risk, fraud risk, marketing, and pricing, 
+and has been used for originating at least 1 billion GBP worth of Zopa loans.
+It is very well documented, powerful, and simple to use. We are grateful for the 
+capabilities it has provided, and for allowing us to deliver on our mission of making
+money simple and fair.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Vlasios Vasileiou, Head of Data Science, Zopa
 
 .. raw:: html
 

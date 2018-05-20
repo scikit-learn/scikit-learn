@@ -19,7 +19,7 @@ from sklearn import datasets
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data[:150]
@@ -28,19 +28,13 @@ y = diabetes.target[:150]
 lasso = Lasso(random_state=0)
 alphas = np.logspace(-4, -0.5, 30)
 
-scores = list()
-scores_std = list()
-
+tuned_parameters = [{'alpha': alphas}]
 n_folds = 3
 
-for alpha in alphas:
-    lasso.alpha = alpha
-    this_scores = cross_val_score(lasso, X, y, cv=n_folds, n_jobs=1)
-    scores.append(np.mean(this_scores))
-    scores_std.append(np.std(this_scores))
-
-scores, scores_std = np.array(scores), np.array(scores_std)
-
+clf = GridSearchCV(lasso, tuned_parameters, cv=n_folds, refit=False)
+clf.fit(X, y)
+scores = clf.cv_results_['mean_test_score']
+scores_std = clf.cv_results_['std_test_score']
 plt.figure().set_size_inches(8, 6)
 plt.semilogx(alphas, scores)
 
@@ -58,7 +52,7 @@ plt.xlabel('alpha')
 plt.axhline(np.max(scores), linestyle='--', color='.5')
 plt.xlim([alphas[0], alphas[-1]])
 
-##############################################################################
+# #############################################################################
 # Bonus: how much can you trust the selection of alpha?
 
 # To answer this question we use the LassoCV object that sets its alpha

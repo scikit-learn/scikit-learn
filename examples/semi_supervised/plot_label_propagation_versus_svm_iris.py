@@ -13,7 +13,7 @@ even with a small amount of labeled data.
 print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -71,9 +71,9 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
 
     # Plot also the training points
     colors = [color_map[y] for y in y_train]
-    plt.scatter(X[:, 0], X[:, 1], c=colors, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=colors, edgecolors='black')
 
     plt.title(titles[i])
 
-plt.text(.90, 0, "Unlabeled points are colored white")
+plt.suptitle("Unlabeled points are colored white", y=0.1)
 plt.show()

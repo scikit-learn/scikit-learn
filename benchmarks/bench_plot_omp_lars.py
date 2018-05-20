@@ -9,6 +9,8 @@ import gc
 import sys
 from time import time
 
+import six
+
 import numpy as np
 
 from sklearn.linear_model import lars_path, orthogonal_mp
@@ -107,12 +109,12 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
     fig = plt.figure('scikit-learn OMP vs. LARS benchmark results')
-    for i, (label, timings) in enumerate(sorted(results.iteritems())):
+    for i, (label, timings) in enumerate(sorted(six.iteritems(results))):
         ax = fig.add_subplot(1, 2, i+1)
         vmax = max(1 - timings.min(), -1 + timings.max())
         plt.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)
-        ax.set_xticklabels([''] + map(str, samples_range))
-        ax.set_yticklabels([''] + map(str, features_range))
+        ax.set_xticklabels([''] + [str(each) for each in samples_range])
+        ax.set_yticklabels([''] + [str(each) for each in features_range])
         plt.xlabel('n_samples')
         plt.ylabel('n_features')
         plt.title(label)

@@ -12,8 +12,6 @@ from sklearn.externals.joblib import Memory
 from sklearn.linear_model import (LogisticRegression, SGDClassifier)
 from sklearn.datasets import fetch_rcv1
 from sklearn.linear_model.sag import get_auto_step_size
-from sklearn.linear_model.sag_fast import get_max_squared_sum
-
 
 try:
     import lightning.classification as lightning_clf
@@ -140,6 +138,10 @@ def plot_dloss(clfs):
         plt.xlabel("seconds")
         plt.ylabel("log(best - train_loss)")
 
+
+def get_max_squared_sum(X):
+    """Get the maximum row-wise sum of squares"""
+    return np.sum(X ** 2, axis=1).max()
 
 rcv1 = fetch_rcv1()
 X = rcv1.data

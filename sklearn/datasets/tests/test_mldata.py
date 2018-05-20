@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_not_in
 from sklearn.utils.testing import mock_mldata_urlopen
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import with_setup
 from sklearn.utils.testing import assert_array_equal
 
 
@@ -43,10 +42,9 @@ def test_mldata_filename():
         assert_equal(mldata_filename(name), desired)
 
 
-@with_setup(setup_tmpdata, teardown_tmpdata)
 def test_download():
     """Test that fetch_mldata is able to download and cache a data set."""
-
+    setup_tmpdata()
     _urlopen_ref = datasets.mldata.urlopen
     datasets.mldata.urlopen = mock_mldata_urlopen({
         'mock': {
@@ -66,10 +64,11 @@ def test_download():
                       fetch_mldata, 'not_existing_name')
     finally:
         datasets.mldata.urlopen = _urlopen_ref
+        teardown_tmpdata()
 
 
-@with_setup(setup_tmpdata, teardown_tmpdata)
 def test_fetch_one_column():
+    setup_tmpdata()
     _urlopen_ref = datasets.mldata.urlopen
     try:
         dataname = 'onecol'
@@ -90,10 +89,11 @@ def test_fetch_one_column():
         assert_equal(dset.data.shape, (3, 2))
     finally:
         datasets.mldata.urlopen = _urlopen_ref
+        teardown_tmpdata()
 
 
-@with_setup(setup_tmpdata, teardown_tmpdata)
 def test_fetch_multiple_column():
+    setup_tmpdata()
     _urlopen_ref = datasets.mldata.urlopen
     try:
         # create fake data set in cache
@@ -167,3 +167,4 @@ def test_fetch_multiple_column():
 
     finally:
         datasets.mldata.urlopen = _urlopen_ref
+        teardown_tmpdata()

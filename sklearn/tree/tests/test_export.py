@@ -2,16 +2,19 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
-from re import finditer
+from re import finditer, search
 
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
+from numpy.random import RandomState
 
+from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
-from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
+                                   assert_less_equal, assert_raises_regex,
+                                   assert_raise_message)
+from sklearn.exceptions import NotFittedError
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -30,9 +33,7 @@ def test_graphviz_toy():
     clf.fit(X, y)
 
     # Test export code
-    out = StringIO()
-    export_graphviz(clf, out_file=out)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -48,9 +49,8 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test with feature_names
-    out = StringIO()
-    export_graphviz(clf, out_file=out, feature_names=["feature0", "feature1"])
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
+                                out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -66,9 +66,7 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test with class_names
-    out = StringIO()
-    export_graphviz(clf, out_file=out, class_names=["yes", "no"])
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -86,10 +84,9 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test plot_options
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, impurity=False,
-                    proportion=True, special_characters=True, rounded=True)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, filled=True, impurity=False,
+                                proportion=True, special_characters=True,
+                                rounded=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -109,9 +106,8 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test max_depth
-    out = StringIO()
-    export_graphviz(clf, out_file=out, max_depth=0, class_names=True)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, max_depth=0,
+                                class_names=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -125,10 +121,8 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test max_depth with plot_options
-    out = StringIO()
-    export_graphviz(clf, out_file=out, max_depth=0, filled=True,
-                    node_ids=True)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, max_depth=0, filled=True,
+                                out_file=None, node_ids=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
@@ -148,9 +142,8 @@ def test_graphviz_toy():
                                  random_state=2)
     clf = clf.fit(X, y2, sample_weight=w)
 
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, impurity=False)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, filled=True,
+                                impurity=False, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
@@ -182,10 +175,8 @@ def test_graphviz_toy():
                                 random_state=2)
     clf.fit(X, y)
 
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, leaves_parallel=True,
-                    rotate=True, rounded=True)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
+                                out_file=None, rotate=True, rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -212,29 +203,51 @@ def test_graphviz_toy():
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X, y_degraded)
 
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True)
-    contents1 = out.getvalue()
+    contents1 = export_graphviz(clf, filled=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
-                '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", fillcolor="#e5813900"] ;\n' \
+                '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", ' \
+                'fillcolor="#e5813900"] ;\n' \
                 '}'
-
-    assert_equal(contents1, contents2)
 
 
 def test_graphviz_errors():
     # Check for errors of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
+
+    # Check not-fitted decision tree error
+    out = StringIO()
+    assert_raises(NotFittedError, export_graphviz, clf, out)
+
     clf.fit(X, y)
 
-    # Check feature_names error
-    out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, feature_names=[])
+    # Check if it errors when length of feature_names
+    # mismatches with number of features
+    message = ("Length of feature_names, "
+               "1 does not match number of features, 2")
+    assert_raise_message(ValueError, message, export_graphviz, clf, None,
+                         feature_names=["a"])
+
+    message = ("Length of feature_names, "
+               "3 does not match number of features, 2")
+    assert_raise_message(ValueError, message, export_graphviz, clf, None,
+                         feature_names=["a", "b", "c"])
+
+    # Check error when argument is not an estimator
+    message = "is not an estimator instance"
+    assert_raise_message(TypeError, message,
+                         export_graphviz, clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+
+    # Check precision error
+    out = StringIO()
+    assert_raises_regex(ValueError, "should be greater or equal",
+                        export_graphviz, clf, out, precision=-1)
+    assert_raises_regex(ValueError, "should be an integer",
+                        export_graphviz, clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
@@ -248,5 +261,50 @@ def test_friedman_mse_in_graphviz():
     for estimator in clf.estimators_:
         export_graphviz(estimator[0], out_file=dot_data)
 
-    for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
+    for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
         assert_in("friedman_mse", finding.group())
+
+
+def test_precision():
+
+    rng_reg = RandomState(2)
+    rng_clf = RandomState(8)
+    for X, y, clf in zip(
+            (rng_reg.random_sample((5, 2)),
+             rng_clf.random_sample((1000, 4))),
+            (rng_reg.random_sample((5, )),
+             rng_clf.randint(2, size=(1000, ))),
+            (DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
+                                   max_depth=1),
+             DecisionTreeClassifier(max_depth=1, random_state=0))):
+
+        clf.fit(X, y)
+        for precision in (4, 3):
+            dot_data = export_graphviz(clf, out_file=None, precision=precision,
+                                       proportion=True)
+
+            # With the current random state, the impurity and the threshold
+            # will have the number of precision set in the export_graphviz
+            # function. We will check the number of precision with a strict
+            # equality. The value reported will have only 2 precision and
+            # therefore, only a less equal comparison will be done.
+
+            # check value
+            for finding in finditer(r"value = \d+\.\d+", dot_data):
+                assert_less_equal(
+                    len(search(r"\.\d+", finding.group()).group()),
+                    precision + 1)
+            # check impurity
+            if is_classifier(clf):
+                pattern = r"gini = \d+\.\d+"
+            else:
+                pattern = r"friedman_mse = \d+\.\d+"
+
+            # check impurity
+            for finding in finditer(pattern, dot_data):
+                assert_equal(len(search(r"\.\d+", finding.group()).group()),
+                             precision + 1)
+            # check threshold
+            for finding in finditer(r"<= \d+\.\d+", dot_data):
+                assert_equal(len(search(r"\.\d+", finding.group()).group()),
+                             precision + 1)

@@ -7,7 +7,7 @@ from sklearn.externals.six import b, u
 from sklearn.utils.murmurhash import murmurhash3_32
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from nose.tools import assert_equal, assert_true
+from sklearn.utils.testing import assert_equal, assert_true
 
 
 def test_mmhash3_int():

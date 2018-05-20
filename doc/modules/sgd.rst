@@ -46,7 +46,7 @@ The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
 penalties for classification.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_separating_hyperplane_001.png
    :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
@@ -59,13 +59,13 @@ for the training samples::
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = SGDClassifier(loss="hinge", penalty="l2")
+    >>> clf = SGDClassifier(loss="hinge", penalty="l2", max_iter=5)
     >>> clf.fit(X, y)
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, random_state=None, shuffle=True,
-           verbose=0, warm_start=False)
+           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
+           n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
+           shuffle=True, tol=None, verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -77,7 +77,7 @@ SGD fits a linear model to the training data. The member ``coef_`` holds
 the model parameters::
 
     >>> clf.coef_                                         # doctest: +ELLIPSIS
-    array([[ 9.9...,  9.9...]])
+    array([[9.9..., 9.9...]])
 
 Member ``intercept_`` holds the intercept (aka offset or bias)::
 
@@ -90,7 +90,7 @@ hyperplane, is controlled by the parameter ``fit_intercept``.
 To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])                 # doctest: +ELLIPSIS
-    array([ 29.6...])
+    array([29.6...])
 
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
@@ -109,9 +109,9 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`::
 
-    >>> clf = SGDClassifier(loss="log").fit(X, y)
+    >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]])                      # doctest: +ELLIPSIS
-    array([[ 0.00...,  0.99...]])
+    array([[0.00..., 0.99...]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
@@ -137,14 +137,14 @@ below illustrates the OVA approach on the iris dataset.  The dashed
 lines represent the three OVA classifiers; the background colors show
 the decision surface induced by the three classifiers.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_iris_001.png
    :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
 
-In the case of multi-class classification ``coef_`` is a two-dimensionally
-array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a one
-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
+In the case of multi-class classification ``coef_`` is a two-dimensional
+array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a
+one-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are
 indexed in ascending order (see attribute ``classes_``).
 Note that, in principle, since they allow to create a probability model,
@@ -158,11 +158,11 @@ further information.
 
 .. topic:: Examples:
 
- - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
- - :ref:`example_linear_model_plot_sgd_iris.py`
- - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
- - :ref:`example_linear_model_plot_sgd_comparison.py`
- - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`,
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting ```average=True```. ASGD works by averaging the coefficients
@@ -218,7 +218,7 @@ matrix format as defined in `scipy.sparse.csr_matrix
 
 .. topic:: Examples:
 
- - :ref:`example_text_document_classification_20newsgroups.py`
+ - :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
 Complexity
 ==========
@@ -279,7 +279,7 @@ Mathematical formulation
 ========================
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \{-1,1\}`, our goal is to
 learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
 :math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
 to make predictions, we simply look at the sign of :math:`f(x)`.
@@ -304,7 +304,7 @@ Different choices for :math:`L` entail different classifiers such as
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_loss_functions_001.png
     :target: ../auto_examples/linear_model/plot_sgd_loss_functions.html
     :align: center
     :scale: 75
@@ -319,7 +319,7 @@ Popular choices for the regularization term :math:`R` include:
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_penalties_001.png
     :target: ../auto_examples/linear_model/plot_sgd_penalties.html
     :align: center
     :scale: 75

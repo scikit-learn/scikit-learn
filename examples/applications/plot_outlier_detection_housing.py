@@ -19,7 +19,8 @@ structure of the observations. Although the robust covariance estimate is
 able to focus on the main mode of the data distribution, it sticks to the
 assumption that the data should be Gaussian distributed, yielding some biased
 estimation of the data structure, but yet accurate to some extent.
-The One-Class SVM algorithm
+The One-Class SVM does not assume any parametric form of the data distribution
+and can therefore model the complex shape of the data much better.
 
 First example
 -------------

@@ -27,6 +27,14 @@ def test_permutation_invariance():
     assert_array_equal(y_transformed, y_transformed_s)
 
 
+def test_check_increasing_small_number_of_samples():
+    x = [0, 1, 2]
+    y = [1, 1.1, 1.05]
+
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
 def test_check_increasing_up():
     x = [0, 1, 2, 3, 4, 5]
     y = [0, 1.5, 2.77, 8.99, 8.99, 50]
@@ -78,6 +86,10 @@ def test_check_ci_warn():
 def test_isotonic_regression():
     y = np.array([3, 7, 5, 9, 8, 7, 10])
     y_ = np.array([3, 6, 6, 8, 8, 8, 10])
+    assert_array_equal(y_, isotonic_regression(y))
+
+    y = np.array([10, 0, 2])
+    y_ = np.array([4, 4, 4])
     assert_array_equal(y_, isotonic_regression(y))
 
     x = np.arange(len(y))
@@ -152,6 +164,30 @@ def test_isotonic_regression_ties_secondary_():
     ir.fit(x, y)
     assert_array_almost_equal(ir.transform(x), y_true, 4)
     assert_array_almost_equal(ir.fit_transform(x, y), y_true, 4)
+
+
+def test_isotonic_regression_with_ties_in_differently_sized_groups():
+    """
+    Non-regression test to handle issue 9432:
+    https://github.com/scikit-learn/scikit-learn/issues/9432
+
+    Compare against output in R:
+    > library("isotone")
+    > x <- c(0, 1, 1, 2, 3, 4)
+    > y <- c(0, 0, 1, 0, 0, 1)
+    > res1 <- gpava(x, y, ties="secondary")
+    > res1$x
+
+    `isotone` version: 1.1-0, 2015-07-24
+    R version: R version 3.3.2 (2016-10-31)
+    """
+    x = np.array([0, 1, 1, 2, 3, 4])
+    y = np.array([0, 0, 1, 0, 0, 1])
+    y_true = np.array([0., 0.25, 0.25, 0.25, 0.25, 1.])
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_almost_equal(ir.transform(x), y_true)
+    assert_array_almost_equal(ir.fit_transform(x, y), y_true)
 
 
 def test_isotonic_regression_reversed():
@@ -336,6 +372,29 @@ def test_isotonic_duplicate_min_entry():
     ir.fit(x, y)
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
     assert_true(all_predictions_finite)
+
+
+def test_isotonic_ymin_ymax():
+    # Test from @NelleV's issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/6921
+    x = np.array([1.263, 1.318, -0.572, 0.307, -0.707, -0.176, -1.599, 1.059,
+                  1.396, 1.906, 0.210, 0.028, -0.081, 0.444, 0.018, -0.377,
+                  -0.896, -0.377, -1.327, 0.180])
+    y = isotonic_regression(x, y_min=0., y_max=0.1)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
+
+    # Also test decreasing case since the logic there is different
+    y = isotonic_regression(x, y_min=0., y_max=0.1, increasing=False)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
+
+    # Finally, test with only one bound
+    y = isotonic_regression(x, y_min=0., increasing=False)
+
+    assert(np.all(y >= 0))
 
 
 def test_isotonic_zero_weight_loop():

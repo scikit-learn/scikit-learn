@@ -1,5 +1,4 @@
 from itertools import product
-from nose.tools import assert_true
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
@@ -10,11 +9,13 @@ from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 eigen_solvers = ['dense', 'arpack']
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Test utility routines
 def test_barycenter_kneighbors_graph():
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
@@ -33,7 +34,7 @@ def test_barycenter_kneighbors_graph():
     assert_less(linalg.norm(pred - X) / X.shape[0], 1)
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
 
 def test_lle_simple_grid():
@@ -129,8 +130,17 @@ def test_pipeline():
 
 # Test the error raised when the weight matrix is singular
 def test_singular_matrix():
-    from nose.tools import assert_raises
     M = np.ones((10, 3))
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
+
+
+# regression test for #6033
+def test_integer_input():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+
+    for method in ["standard", "hessian", "modified", "ltsa"]:
+        clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
+        clf.fit(X)  # this previously raised a TypeError

@@ -12,6 +12,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.externals.six import iteritems
 
@@ -31,6 +33,7 @@ from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRED_DISTANCES
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import check_paired_arrays
@@ -38,6 +41,9 @@ from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.preprocessing import normalize
+from sklearn.exceptions import DataConversionWarning
+
+import pytest
 
 
 def test_pairwise_distances():
@@ -58,7 +64,8 @@ def test_pairwise_distances():
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
     assert_array_almost_equal(S, S2)
-    # "cityblock" uses sklearn metric, cityblock (function) is scipy.spatial.
+    # "cityblock" uses scikit-learn metric, cityblock (function) is
+    # scipy.spatial.
     S = pairwise_distances(X, metric="cityblock")
     S2 = pairwise_distances(X, metric=cityblock)
     assert_equal(S.shape[0], S.shape[1])
@@ -70,12 +77,13 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # Low-level function for manhattan can divide in blocks to avoid
-    # using too much memory during the broadcasting
-    S3 = manhattan_distances(X, Y, size_threshold=10)
-    assert_array_almost_equal(S, S3)
+    # Using size_threshold argument should raise
+    # a deprecation warning
+    assert_warns(DeprecationWarning,
+                 manhattan_distances, X, Y, size_threshold=10)
     # Test cosine as a string metric versus cosine callable
-    # "cosine" uses sklearn metric, cosine (function) is scipy.spatial
+    # The string "cosine" uses sklearn.metric,
+    # while the function cosine is scipy.spatial
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
     assert_equal(S.shape[0], X.shape[0])
@@ -115,6 +123,22 @@ def test_pairwise_distances():
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
 
+# ignore conversion to boolean in pairwise_distances
+@ignore_warnings(category=DataConversionWarning)
+def test_pairwise_boolean_distance():
+    # test that we convert to boolean arrays for boolean distances
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 4)
+    Y = X.copy()
+    Y[0, 0] = 1 - Y[0, 0]
+
+    for metric in PAIRWISE_BOOLEAN_FUNCTIONS:
+        for Z in [Y, None]:
+            res = pairwise_distances(X, Z, metric=metric)
+            res[np.isnan(res)] = 0
+            assert_true(np.sum(res != 0) == 0)
+
+
 def test_pairwise_precomputed():
     for func in [pairwise_distances, pairwise_kernels]:
         # Test correct shape
@@ -143,7 +167,7 @@ def test_pairwise_precomputed():
         assert_equal('f', S.dtype.kind)
 
         # Test converts list to array-like
-        S = func([[1]], metric='precomputed')
+        S = func([[1.]], metric='precomputed')
         assert_true(isinstance(S, np.ndarray))
 
 
@@ -188,7 +212,7 @@ def test_pairwise_callable_nonstrict_metric():
     # paired_distances should allow callable metric where metric(x, x) != 0
     # Knowing that the callable is a strict metric would allow the diagonal to
     # be left uncalculated and set to 0.
-    assert_equal(pairwise_distances([[1]], metric=lambda x, y: 5)[0, 0], 5)
+    assert_equal(pairwise_distances([[1.]], metric=lambda x, y: 5)[0, 0], 5)
 
 
 def callable_rbf_kernel(x, y, **kwds):
@@ -311,7 +335,7 @@ def test_pairwise_distances_argmin_min():
     assert_equal(type(Dsp), np.ndarray)
     assert_equal(type(Esp), np.ndarray)
 
-    # Non-euclidean sklearn metric
+    # Non-euclidean scikit-learn metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
     D2 = pairwise_distances_argmin(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
@@ -384,6 +408,36 @@ def test_euclidean_distances():
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
+
+
+def test_cosine_distances():
+    # Check the pairwise Cosine distances computation
+    rng = np.random.RandomState(1337)
+    x = np.abs(rng.rand(910))
+    XA = np.vstack([x, x])
+    D = cosine_distances(XA)
+    assert_array_almost_equal(D, [[0., 0.], [0., 0.]])
+    # check that all elements are in [0, 2]
+    assert_true(np.all(D >= 0.))
+    assert_true(np.all(D <= 2.))
+    # check that diagonal elements are equal to 0
+    assert_array_almost_equal(D[np.diag_indices_from(D)], [0., 0.])
+
+    XB = np.vstack([x, -x])
+    D2 = cosine_distances(XB)
+    # check that all elements are in [0, 2]
+    assert_true(np.all(D2 >= 0.))
+    assert_true(np.all(D2 <= 2.))
+    # check that diagonal elements are equal to 0 and non diagonal to 2
+    assert_array_almost_equal(D2, [[0., 2.], [2., 0.]])
+
+    # check large random matrix
+    X = np.abs(rng.rand(1000, 5000))
+    D = cosine_distances(X)
+    # check that diagonal elements are equal to 0
+    assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
+    assert_true(np.all(D >= 0.))
+    assert_true(np.all(D <= 2.))
 
 
 # Paired distances
@@ -508,20 +562,28 @@ def test_laplacian_kernel():
     assert_true(np.all(K - np.diag(np.diag(K)) < 1))
 
 
-def test_cosine_similarity_sparse_output():
-    # Test if cosine_similarity correctly produces sparse output.
-
+@pytest.mark.parametrize('metric, pairwise_func',
+                         [('linear', linear_kernel),
+                          ('cosine', cosine_similarity)])
+def test_pairwise_similarity_sparse_output(metric, pairwise_func):
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((3, 4))
     Xcsr = csr_matrix(X)
     Ycsr = csr_matrix(Y)
 
-    K1 = cosine_similarity(Xcsr, Ycsr, dense_output=False)
+    # should be sparse
+    K1 = pairwise_func(Xcsr, Ycsr, dense_output=False)
     assert_true(issparse(K1))
 
-    K2 = pairwise_kernels(Xcsr, Y=Ycsr, metric="cosine")
+    # should be dense, and equal to K1
+    K2 = pairwise_func(X, Y, dense_output=True)
+    assert not issparse(K2)
     assert_array_almost_equal(K1.todense(), K2)
+
+    # show the kernel output equal to the sparse.todense()
+    K3 = pairwise_kernels(X, Y=Y, metric=metric)
+    assert_array_almost_equal(K1.todense(), K3)
 
 
 def test_cosine_similarity():

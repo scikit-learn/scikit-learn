@@ -67,7 +67,7 @@ repeat = 10
 
 range_n_outliers = np.concatenate(
     (np.linspace(0, n_samples / 8, 5),
-     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1]))
+     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1])).astype(np.int)
 
 # definition of arrays to store results
 err_loc_mcd = np.zeros((range_n_outliers.size, repeat))
@@ -135,13 +135,13 @@ x_size = range_n_outliers.size
 plt.errorbar(range_n_outliers, err_cov_mcd.mean(1),
              yerr=err_cov_mcd.std(1),
              label="Robust covariance (mcd)", color='m')
-plt.errorbar(range_n_outliers[:(x_size / 5 + 1)],
-             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
-             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
+plt.errorbar(range_n_outliers[:(x_size // 5 + 1)],
+             err_cov_emp_full.mean(1)[:(x_size // 5 + 1)],
+             yerr=err_cov_emp_full.std(1)[:(x_size // 5 + 1)],
              label="Full data set empirical covariance", color='green')
-plt.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
-         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
-         ls='--')
+plt.plot(range_n_outliers[(x_size // 5):(x_size // 2 - 1)],
+         err_cov_emp_full.mean(1)[(x_size // 5):(x_size // 2 - 1)],
+         color='green', ls='--')
 plt.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
              yerr=err_cov_emp_pure.std(1),
              label="Pure data set empirical covariance", color='black')

@@ -23,7 +23,7 @@ power iteration method:
     https://en.wikipedia.org/wiki/Power_iteration
 
 Here the computation is achieved thanks to Martinsson's Randomized SVD
-algorithm implemented in the scikit.
+algorithm implemented in scikit-learn.
 
 The graph data is fetched from the DBpedia dumps. DBpedia is an extraction
 of the latent structured data of the Wikipedia content.
@@ -52,7 +52,7 @@ from sklearn.externals.six import iteritems
 
 print(__doc__)
 
-###############################################################################
+# #############################################################################
 # Where to download the data, if not already on disk
 redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
@@ -73,7 +73,7 @@ for url, filename in resources:
         print()
 
 
-###############################################################################
+# #############################################################################
 # Loading the redirect files
 
 memory = Memory(cachedir=".")
@@ -179,7 +179,7 @@ t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
 print("done in %0.3fs" % (time() - t0))
 
-# print the names of the wikipedia related strongest components of the the
+# print the names of the wikipedia related strongest components of the
 # principal singular vector which should be similar to the highest eigenvector
 print("Top wikipedia pages according to principal singular vectors")
 pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])

@@ -25,13 +25,13 @@ digits = datasets.load_digits()
 X, y = digits.data, digits.target
 
 classifiers = [
-    ("SGD", SGDClassifier()),
-    ("ASGD", SGDClassifier(average=True)),
-    ("Perceptron", Perceptron()),
+    ("SGD", SGDClassifier(max_iter=100)),
+    ("ASGD", SGDClassifier(average=True, max_iter=100)),
+    ("Perceptron", Perceptron(tol=1e-3)),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
-                                                         C=1.0)),
+                                                         C=1.0, tol=1e-4)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
-                                                          C=1.0)),
+                                                          C=1.0, tol=1e-4)),
     ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
 ]
 

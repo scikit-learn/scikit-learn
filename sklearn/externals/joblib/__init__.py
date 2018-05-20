@@ -1,27 +1,27 @@
-""" Joblib is a set of tools to provide **lightweight pipelining in
+"""Joblib is a set of tools to provide **lightweight pipelining in
 Python**. In particular, joblib offers:
 
-  1. transparent disk-caching of the output values and lazy re-evaluation
-     (memoize pattern)
+1. transparent disk-caching of the output values and lazy re-evaluation
+   (memoize pattern)
 
-  2. easy simple parallel computing
+2. easy simple parallel computing
 
-  3. logging and tracing of the execution
+3. logging and tracing of the execution
 
 Joblib is optimized to be **fast** and **robust** in particular on large
 data and has specific optimizations for `numpy` arrays. It is
 **BSD-licensed**.
 
 
-    ============================== ============================================
-    **User documentation**:        http://pythonhosted.org/joblib
+    ========================= ================================================
+    **User documentation:**        http://pythonhosted.org/joblib
 
-    **Download packages**:         http://pypi.python.org/pypi/joblib#downloads
+    **Download packages:**         http://pypi.python.org/pypi/joblib#downloads
 
-    **Source code**:               http://github.com/joblib/joblib
+    **Source code:**               http://github.com/joblib/joblib
 
-    **Report issues**:             http://github.com/joblib/joblib/issues
-    ============================== ============================================
+    **Report issues:**             http://github.com/joblib/joblib/issues
+    ========================= ================================================
 
 
 Vision
@@ -115,7 +115,7 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.9.4'
+__version__ = '0.11'
 
 
 from .memory import Memory, MemorizedResult
@@ -127,3 +127,11 @@ from .numpy_pickle import load
 from .parallel import Parallel
 from .parallel import delayed
 from .parallel import cpu_count
+from .parallel import register_parallel_backend
+from .parallel import parallel_backend
+from .parallel import effective_n_jobs
+
+
+__all__ = ['Memory', 'MemorizedResult', 'PrintTime', 'Logger', 'hash', 'dump',
+           'load', 'Parallel', 'delayed', 'cpu_count', 'effective_n_jobs',
+           'register_parallel_backend', 'parallel_backend']

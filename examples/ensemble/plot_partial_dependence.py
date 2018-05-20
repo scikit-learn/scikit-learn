@@ -69,7 +69,7 @@ def main():
                                                         random_state=1)
     names = cal_housing.feature_names
 
-    print("Training GBRT...", flush=True, end='')
+    print("Training GBRT...")
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=4,
                                     learning_rate=0.1, loss='huber',
                                     random_state=1)
@@ -95,15 +95,16 @@ def main():
     XX, YY = np.meshgrid(axes[0], axes[1])
     Z = pdp[0].reshape(list(map(np.size, axes))).T
     ax = Axes3D(fig)
-    surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu)
+    surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
+                           cmap=plt.cm.BuPu, edgecolor='k')
     ax.set_xlabel(names[target_feature[0]])
     ax.set_ylabel(names[target_feature[1]])
     ax.set_zlabel('Partial dependence')
     #  pretty init view
     ax.view_init(elev=22, azim=122)
     plt.colorbar(surf)
-    plt.suptitle('Partial dependence of house value on median age and '
-                 'average occupancy')
+    plt.suptitle('Partial dependence of house value on median\n'
+                 'age and average occupancy')
     plt.subplots_adjust(top=0.9)
 
     plt.show()

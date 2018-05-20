@@ -1,4 +1,3 @@
-
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
@@ -20,8 +19,7 @@ import numpy as np
 
 from ..externals.six import string_types
 from .validation import check_array
-from ..utils.fixes import bincount
-from ..utils.fixes import array_equal
+
 
 
 def _unique_multiclass(y):
@@ -56,7 +54,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    *ys : array-likes,
+    *ys : array-likes
 
     Returns
     -------
@@ -156,11 +154,12 @@ def is_multilabel(y):
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
 
+
 def check_classification_targets(y):
     """Ensure that target y is of a non-regression type.
 
     Only the following target types (as defined in type_of_target) are allowed:
-        'binary', 'multiclass', 'multiclass-multioutput', 
+        'binary', 'multiclass', 'multiclass-multioutput',
         'multilabel-indicator', 'multilabel-sequences'
 
     Parameters
@@ -168,14 +167,22 @@ def check_classification_targets(y):
     y : array-like
     """
     y_type = type_of_target(y)
-    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput', 
-            'multilabel-indicator', 'multilabel-sequences']:
+    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
+                      'multilabel-indicator', 'multilabel-sequences']:
         raise ValueError("Unknown label type: %r" % y_type)
 
 
-
 def type_of_target(y):
-    """Determine the type of data indicated by target `y`
+    """Determine the type of data indicated by the target.
+
+    Note that this type is the most specific type that can be inferred.
+    For example:
+
+        * ``binary`` is more specific but compatible with ``multiclass``.
+        * ``multiclass`` of integers is more specific but compatible with
+          ``continuous``.
+        * ``multilabel-indicator`` is more specific but compatible with
+          ``multiclass-multioutput``.
 
     Parameters
     ----------
@@ -185,6 +192,7 @@ def type_of_target(y):
     -------
     target_type : string
         One of:
+
         * 'continuous': `y` is an array-like of floats that are not all
           integers, and is 1d or a column vector.
         * 'continuous-multioutput': `y` is a 2d array of floats that are
@@ -234,6 +242,10 @@ def type_of_target(y):
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
+
+    sparseseries = (y.__class__.__name__ == 'SparseSeries')
+    if sparseseries:
+        raise ValueError("y cannot be class 'SparseSeries'.")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
@@ -299,7 +311,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not array_equal(clf.classes_, unique_labels(classes)):
+            if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))
@@ -360,7 +372,7 @@ def class_distribution(y, sample_weight=None):
 
             classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
                                        return_inverse=True)
-            class_prior_k = bincount(y_k, weights=nz_samp_weight)
+            class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
 
             # An explicit zero was found, combine its weight with the weight
             # of the implicit zeros
@@ -382,7 +394,55 @@ def class_distribution(y, sample_weight=None):
             classes_k, y_k = np.unique(y[:, k], return_inverse=True)
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])
-            class_prior_k = bincount(y_k, weights=sample_weight)
+            class_prior_k = np.bincount(y_k, weights=sample_weight)
             class_prior.append(class_prior_k / class_prior_k.sum())
 
     return (classes, n_classes, class_prior)
+
+
+def _ovr_decision_function(predictions, confidences, n_classes):
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
+
+    It is important to include a continuous value, not only votes,
+    to make computing AUC or calibration meaningful.
+
+    Parameters
+    ----------
+    predictions : array-like, shape (n_samples, n_classifiers)
+        Predicted classes for each binary classifier.
+
+    confidences : array-like, shape (n_samples, n_classifiers)
+        Decision functions or predicted probabilities for positive class
+        for each binary classifier.
+
+    n_classes : int
+        Number of classes. n_classifiers must be
+        ``n_classes * (n_classes - 1 ) / 2``
+    """
+    n_samples = predictions.shape[0]
+    votes = np.zeros((n_samples, n_classes))
+    sum_of_confidences = np.zeros((n_samples, n_classes))
+
+    k = 0
+    for i in range(n_classes):
+        for j in range(i + 1, n_classes):
+            sum_of_confidences[:, i] -= confidences[:, k]
+            sum_of_confidences[:, j] += confidences[:, k]
+            votes[predictions[:, k] == 0, i] += 1
+            votes[predictions[:, k] == 1, j] += 1
+            k += 1
+
+    max_confidences = sum_of_confidences.max()
+    min_confidences = sum_of_confidences.min()
+
+    if max_confidences == min_confidences:
+        return votes
+
+    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # The motivation is to use confidence levels as a way to break ties in
+    # the votes without switching any decision made based on a difference
+    # of 1 vote.
+    eps = np.finfo(sum_of_confidences.dtype).eps
+    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
+    scale = (0.5 - eps) / max_abs_confidence
+    return votes + sum_of_confidences * scale
