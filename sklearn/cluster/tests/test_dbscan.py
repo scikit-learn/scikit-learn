@@ -57,26 +57,30 @@ def test_dbscan_feature():
     metric = 'euclidean'
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric, eps=eps,
-                                  min_samples=min_samples)
+    for save_memory in [True, False]:
+        core_samples, labels = dbscan(X, metric=metric, eps=eps,
+                                      min_samples=min_samples,
+                                      save_memory=save_memory)
 
-    # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_1, n_clusters)
+        # number of clusters, ignoring noise if present
+        n_clusters_1 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
-    labels = db.fit(X).labels_
+        db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
+        labels = db.fit(X).labels_
 
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+        n_clusters_2 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_2, n_clusters)
 
 
 def test_dbscan_sparse():
-    core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=.8,
-                                        min_samples=10)
-    core_dense, labels_dense = dbscan(X, eps=.8, min_samples=10)
-    assert_array_equal(core_dense, core_sparse)
-    assert_array_equal(labels_dense, labels_sparse)
+    for save_memory in [True, False]:
+        core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=.8,
+                                            min_samples=10,
+                                            save_memory=save_memory)
+        core_dense, labels_dense = dbscan(X, eps=.8, min_samples=10)
+        assert_array_equal(core_dense, core_sparse)
+        assert_array_equal(labels_dense, labels_sparse)
 
 
 def test_dbscan_sparse_precomputed():
@@ -101,10 +105,11 @@ def test_dbscan_no_core_samples():
     X[X < .8] = 0
 
     for X_ in [X, sparse.csr_matrix(X)]:
-        db = DBSCAN(min_samples=6).fit(X_)
-        assert_array_equal(db.components_, np.empty((0, X_.shape[1])))
-        assert_array_equal(db.labels_, -1)
-        assert_equal(db.core_sample_indices_.shape, (0,))
+        for save_memory in [True, False]:
+            db = DBSCAN(min_samples=6, save_memory=save_memory).fit(X_)
+            assert_array_equal(db.components_, np.empty((0, X_.shape[1])))
+            assert_array_equal(db.labels_, -1)
+            assert_equal(db.core_sample_indices_.shape, (0,))
 
 
 def test_dbscan_callable():
@@ -117,20 +122,22 @@ def test_dbscan_callable():
     metric = distance.euclidean
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric, eps=eps,
-                                  min_samples=min_samples,
-                                  algorithm='ball_tree')
+    for save_memory in [True, False]:
+        core_samples, labels = dbscan(X, metric=metric, eps=eps,
+                                      min_samples=min_samples,
+                                      algorithm='ball_tree',
+                                      save_memory=save_memory)
 
-    # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_1, n_clusters)
+        # number of clusters, ignoring noise if present
+        n_clusters_1 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples,
-                algorithm='ball_tree')
-    labels = db.fit(X).labels_
+        db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples,
+                    algorithm='ball_tree')
+        labels = db.fit(X).labels_
 
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+        n_clusters_2 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_2, n_clusters)
 
 
 def test_dbscan_metric_params():
@@ -174,30 +181,37 @@ def test_dbscan_balltree():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_1, n_clusters)
 
-    db = DBSCAN(p=2.0, eps=eps, min_samples=min_samples, algorithm='ball_tree')
-    labels = db.fit(X).labels_
+    for save_memory in [True, False]:
+        db = DBSCAN(p=2.0, eps=eps, min_samples=min_samples,
+                    algorithm='ball_tree',
+                    save_memory=save_memory)
+        labels = db.fit(X).labels_
 
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_2, n_clusters)
+        n_clusters_2 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_2, n_clusters)
 
-    db = DBSCAN(p=2.0, eps=eps, min_samples=min_samples, algorithm='kd_tree')
-    labels = db.fit(X).labels_
+        db = DBSCAN(p=2.0, eps=eps, min_samples=min_samples,
+                    algorithm='kd_tree',
+                    save_memory=save_memory)
+        labels = db.fit(X).labels_
 
-    n_clusters_3 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_3, n_clusters)
+        n_clusters_3 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_3, n_clusters)
 
-    db = DBSCAN(p=1.0, eps=eps, min_samples=min_samples, algorithm='ball_tree')
-    labels = db.fit(X).labels_
+        db = DBSCAN(p=1.0, eps=eps, min_samples=min_samples,
+                    algorithm='ball_tree',
+                    save_memory=save_memory)
+        labels = db.fit(X).labels_
 
-    n_clusters_4 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_4, n_clusters)
+        n_clusters_4 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_4, n_clusters)
 
-    db = DBSCAN(leaf_size=20, eps=eps, min_samples=min_samples,
-                algorithm='ball_tree')
-    labels = db.fit(X).labels_
+        db = DBSCAN(leaf_size=20, eps=eps, min_samples=min_samples,
+                    algorithm='ball_tree', save_memory=save_memory)
+        labels = db.fit(X).labels_
 
-    n_clusters_5 = len(set(labels)) - int(-1 in labels)
-    assert_equal(n_clusters_5, n_clusters)
+        n_clusters_5 = len(set(labels)) - int(-1 in labels)
+        assert_equal(n_clusters_5, n_clusters)
 
 
 def test_input_validation():
@@ -311,33 +325,41 @@ def test_dbscan_core_samples_toy():
     n_samples = len(X)
 
     for algorithm in ['brute', 'kd_tree', 'ball_tree']:
-        # Degenerate case: every sample is a core sample, either with its own
-        # cluster or including other close core samples.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=1)
-        assert_array_equal(core_samples, np.arange(n_samples))
-        assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
+        for save_memory in [True, False]:
+            # Degenerate case: every sample is a core sample,
+            # either with its own cluster or including other
+            # close core samples.
+            core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                          min_samples=1,
+                                          save_memory=save_memory)
+            assert_array_equal(core_samples, np.arange(n_samples))
+            assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
 
-        # With eps=1 and min_samples=2 only the 3 samples from the denser area
-        # are core samples. All other points are isolated and considered noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=2)
-        assert_array_equal(core_samples, [1, 2, 3])
-        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+            # With eps=1 and min_samples=2 only the 3 samples from the
+            # denser area are core samples. All other points are isolated
+            # and considered noise.
+            core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                          min_samples=2,
+                                          save_memory=save_memory)
+            assert_array_equal(core_samples, [1, 2, 3])
+            assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
-        # Only the sample in the middle of the dense area is core. Its two
-        # neighbors are edge samples. Remaining samples are noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=3)
-        assert_array_equal(core_samples, [2])
-        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+            # Only the sample in the middle of the dense area is core.
+            # Its two neighbors are edge samples. Remaining samples are
+            # noise.
+            core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                          min_samples=3,
+                                          save_memory=save_memory)
+            assert_array_equal(core_samples, [2])
+            assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
-        # It's no longer possible to extract core samples with eps=1:
-        # everything is noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=4)
-        assert_array_equal(core_samples, [])
-        assert_array_equal(labels, -np.ones(n_samples))
+            # It's no longer possible to extract core samples with eps=1:
+            # everything is noise.
+            core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                          min_samples=4,
+                                          save_memory=save_memory)
+            assert_array_equal(core_samples, [])
+            assert_array_equal(labels, -np.ones(n_samples))
 
 
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
