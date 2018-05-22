@@ -505,7 +505,7 @@ class SVC(BaseSVC):
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is used as multi-class strategy.
+        ('ovo') is always used as multi-class strategy.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
