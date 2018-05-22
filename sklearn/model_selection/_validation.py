@@ -29,7 +29,7 @@ from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
-from ._split import check_cv, StratifiedShuffleSplit
+from ._split import check_cv, train_test_split
 from ..preprocessing import LabelEncoder
 
 
@@ -1111,7 +1111,7 @@ def learning_curve(estimator, X, y, groups=None,
         when True, each training set will be sampled such that the proportion
         of each class matches the full training data (for the current iteration
         of cross-validation) as well as possible.
-        Stratification is done based on the y labels.
+        Stratification is done by using y as the class labels.
         If shuffle=False or y is None, then stratify must be False.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1183,12 +1183,9 @@ def learning_curve(estimator, X, y, groups=None,
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 if stratify and n_train_samples < n_max_training_samples:
-                    inner_cv = StratifiedShuffleSplit(
-                        train_size=n_train_samples, test_size=None,
-                        random_state=random_state)
-                    cur_train_index, useless_test_index = next(
-                        inner_cv.split(X=train, y=y[train]))
-                    cur_train = train[cur_train_index]
+                    cur_train, useless_test = train_test_split(
+                        train, stratify=y[train], train_size=n_train_samples,
+                        test_size=None, random_state=random_state)
                 else:
                     cur_train = train[:n_train_samples]
                 train_test_proportions.append((cur_train, test))
