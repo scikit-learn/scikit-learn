@@ -182,7 +182,7 @@ Below is an example of multiclass learning using OvR::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X) # doctest: +NORMALIZE_WHITESPACE
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -239,7 +239,7 @@ Below is an example of multiclass learning using OvO::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X) # doctest: +NORMALIZE_WHITESPACE
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -304,7 +304,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> X, y = iris.data, iris.target
   >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
   ...                            code_size=2, random_state=0)
-  >>> clf.fit(X, y).predict(X)
+  >>> clf.fit(X, y).predict(X) # doctest: +NORMALIZE_WHITESPACE
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
@@ -397,6 +397,8 @@ Below is an example of multioutput classification:
            [0, 0, 2],
            [2, 0, 0]])
 
+.. _classifierchain:
+
 Classifier Chain
 ================
 
@@ -425,3 +427,13 @@ averaged together.
 
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
         "Classifier Chains for Multi-label Classification", 2009.
+
+.. _regressorchain:
+
+Regressor Chain
+================
+
+Regressor chains (see :class:`RegressorChain`) is analogous to 
+ClassifierChain as a way of combining a number of regressions 
+into a single multi-target model that is capable of exploiting 
+correlations among targets.

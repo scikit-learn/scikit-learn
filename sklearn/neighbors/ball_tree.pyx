@@ -29,6 +29,7 @@ cdef class BallTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
     pass
 
+
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree
 #
@@ -38,7 +39,6 @@ cdef class BallTree(BinaryTree):
 #   relative rankings of the true distance.  For example, the reduced
 #   distance for the Euclidean metric is the squared-euclidean distance.
 #   For some metrics, the reduced distance is simply the distance.
-
 
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
@@ -105,7 +105,7 @@ cdef inline DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node,
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef DTYPE_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
                                      tree.data.shape[1])

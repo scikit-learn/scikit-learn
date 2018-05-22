@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_div0
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
@@ -196,6 +197,14 @@ def test_precision_recall_f_extra_labels():
                       labels=np.arange(6), average=average)
         assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
                       labels=np.arange(-1, 4), average=average)
+
+    # tests non-regression on issue #10307
+    y_true = np.array([[0, 1, 1], [1, 0, 0]])
+    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+    p, r, f, _ = precision_recall_fscore_support(y_true, y_pred,
+                                                 average='samples',
+                                                 labels=[0, 1])
+    assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
 
 @ignore_warnings
@@ -402,15 +411,13 @@ def test_matthews_corrcoef():
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
+    mcc = assert_warns_div0(matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
 
     # And also for any other vector with 0 variance
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, ['a'] * len(y_true))
+    mcc = assert_warns_div0(matthews_corrcoef, y_true, ['a'] * len(y_true))
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
@@ -871,6 +878,20 @@ def test_classification_report_labels_target_names_unequal_length():
     assert_warns_message(UserWarning,
                          "labels size, 2, does not "
                          "match size of target_names, 3",
+                         classification_report,
+                         y_true, y_pred, labels=[0, 2],
+                         target_names=target_names)
+
+
+def test_classification_report_no_labels_target_names_unequal_length():
+    y_true = [0, 0, 2, 0, 0]
+    y_pred = [0, 2, 2, 0, 0]
+    target_names = ['class 0', 'class 1', 'class 2']
+
+    assert_raise_message(ValueError,
+                         "Number of classes, 2, does not "
+                         "match size of target_names, 3. "
+                         "Try specifying the labels parameter",
                          classification_report,
                          y_true, y_pred, target_names=target_names)
 

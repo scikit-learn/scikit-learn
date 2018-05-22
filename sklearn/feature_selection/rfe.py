@@ -97,8 +97,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True,  True,  True,
-            False, False, False, False, False], dtype=bool)
+    array([ True,  True,  True,  True,  True, False, False, False, False,
+           False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
@@ -366,8 +366,8 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True,  True,  True,
-            False, False, False, False, False], dtype=bool)
+    array([ True,  True,  True,  True,  True, False, False, False, False,
+           False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
@@ -391,7 +391,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -404,6 +404,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             Target values (integers for classification, real numbers for
             regression).
+
+        groups : array-like, shape = [n_samples], optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
         X, y = check_X_y(X, y, "csr")
 
@@ -443,7 +447,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y))
+            for train, test in cv.split(X, y, groups))
 
         scores = np.sum(scores, axis=0)
         n_features_to_select = max(
@@ -466,5 +470,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y)
+        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
         return self
