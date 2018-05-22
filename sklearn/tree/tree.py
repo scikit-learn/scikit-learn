@@ -93,7 +93,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 normalize_feature_importances=True):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -107,6 +108,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self.normalize_feature_importances = normalize_feature_importances
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -508,7 +510,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         check_is_fitted(self, 'tree_')
 
-        return self.tree_.compute_feature_importances()
+        return self.tree_.compute_feature_importances(
+            normalize=self.normalize_feature_importances
+        )
 
 
 # =============================================================================
@@ -989,6 +993,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    normalize_feature_importances : bool, optional (default=True)
+        For RandomForests, it is often beneficial to normalize before summing
+        as each stage has roughly the same amount of beginning entropy.
+
+        However, when computing feature importance for GBM ensembles,
+        normalization before summing will overweight the importance of features
+        from later stages, so it is recommended to set this to ``False``.
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -1068,7 +1080,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 presort=False):
+                 presort=False,
+                 normalize_feature_importances=True):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1081,7 +1094,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            normalize_feature_importances=normalize_feature_importances)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):

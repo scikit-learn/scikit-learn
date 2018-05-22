@@ -779,7 +779,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                presort=self.presort,
+                normalize_feature_importances=False)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1234,6 +1235,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)
+        importances /= importances.sum()
         return importances
 
     def _validate_y(self, y, sample_weight):

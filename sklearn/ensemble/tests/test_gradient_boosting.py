@@ -19,7 +19,7 @@ from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.utils import check_random_state, tosequence
+from sklearn.utils import check_random_state, tosequence, shuffle
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -450,6 +450,32 @@ def test_max_feature_regression():
     gbrt.fit(X_train, y_train)
     deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
     assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
+
+
+def test_feature_importance_regression():
+    # Test to make sure GINI importance is calculated correctly
+    # Make sure that results are summed, then normalized to avoid
+    # over-weighting features from later stages
+    boston = datasets.load_boston()
+    X, y = shuffle(boston.data, boston.target, random_state=13)
+    X = X.astype(np.float32)
+    offset = int(X.shape[0] * 0.9)
+    X_train, y_train = X[:offset], y[:offset]
+
+    clf = GradientBoostingRegressor(n_estimators=500, min_samples_split=2,
+                                    max_depth=4, learning_rate=0.01, loss='ls',
+                                    random_state=1)
+    clf.fit(X_train, y_train)
+
+    feature_importance = clf.feature_importances_
+    feature_importance = 100.0 * (feature_importance /
+                                  feature_importance.max())
+    sorted_idx = np.argsort(feature_importance)
+
+    feature_order = ['CHAS', 'ZN', 'RAD', 'INDUS', 'B', 'AGE', 'TAX',
+                     'PTRATIO', 'CRIM', 'NOX', 'DIS', 'RM', 'LSTAT']
+
+    assert_equal(list(boston.feature_names[sorted_idx]), feature_order)
 
 
 def test_max_feature_auto():
