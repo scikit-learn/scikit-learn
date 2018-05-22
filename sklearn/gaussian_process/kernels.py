@@ -1221,7 +1221,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 return K, np.empty((X.shape[0], X.shape[0], 0))
             elif not self.anisotropic or length_scale.shape[0] == 1:
                 K_gradient = \
-                    (K * squareform(dists) / self.length_scale_bounds)[:, :, np.newaxis]
+                    (K * squareform(dists) / self.length_scale)[:, :, np.newaxis]
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
