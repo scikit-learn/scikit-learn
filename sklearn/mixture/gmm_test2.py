@@ -87,10 +87,9 @@ def randMean(r):
 def kmeansPlusPlus(r):
     # Generate responsibilities that end up picking points based on k-means++
     resp_kmpp = np.zeros((n_samples,n_components))
-    centers = _k_init(X, n_components, x_squared_norms=x_squared_norms,
+    centers, indices = _k_init(X, n_components, x_squared_norms=x_squared_norms,
                       random_state=r)
-    points = [np.where(X == centers[i])[0][0] for i in range(n_components)]
-    for n, i in enumerate(points):
+    for n, i in enumerate(indices.astype(int)):
         resp_kmpp[i, n] = 1
     return resp_kmpp
 

@@ -160,11 +160,9 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 resp[i, n] = 1
         elif self.init_params == 'k-means++':
             resp = np.zeros((n_samples, self.n_components))
-            centers = _k_init(X, self.n_components, x_squared_norms=row_norms(X, squared=True),
+            _ , indices = _k_init(X, self.n_components, x_squared_norms=row_norms(X, squared=True),
                               random_state=random_state)
-            points = [np.where(X == centers[i])[0][0] for i in
-                      range(self.n_components)]
-            for n, i in enumerate(points):
+            for n, i in enumerate(indices.astype(int)):
                 resp[i, n] = 1
         else:
             raise ValueError("Unimplemented initialization method '%s'"

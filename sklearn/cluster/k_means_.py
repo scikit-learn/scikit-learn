@@ -91,12 +91,14 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         # that it helped.
         n_local_trials = 2 + int(np.log(n_clusters))
 
-    # Pick first center randomly
+    # Pick first center randomly and track index of point
     center_id = random_state.randint(n_samples)
+    indices = np.empty(n_clusters)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
     else:
         centers[0] = X[center_id]
+    indices[0] = center_id
 
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
@@ -139,8 +141,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
             centers[c] = X[best_candidate]
         current_pot = best_pot
         closest_dist_sq = best_dist_sq
+        indices[c] = best_candidate
 
-    return centers
+    return centers, indices
 
 
 ###############################################################################
@@ -744,7 +747,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
             "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
     if isinstance(init, string_types) and init == 'k-means++':
-        centers = _k_init(X, k, random_state=random_state,
+        centers, _ = _k_init(X, k, random_state=random_state,
                           x_squared_norms=x_squared_norms)
     elif isinstance(init, string_types) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
