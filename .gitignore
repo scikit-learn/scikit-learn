@@ -68,11 +68,3 @@ benchmarks/bench_covertype_data/
 .cache
 .pytest_cache/
 _configtest.o.d
-
-# only for g-walsh
-.mypy_cache/
-.ropeproject/
-venv/
-sklearn/mixture/gmm_test2.py
-sklearn/mixture/run_script.py
-gmm_gordon_test.py
