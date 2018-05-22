@@ -364,6 +364,8 @@ def load_iris(return_X_y=False):
     -----
         .. versionchanged:: 0.20
             Fixed two wrong data points according to Fisher's paper.
+            The new version is the same as in R, but not as in UCI Machine
+            Learning Repository.
 
     Examples
     --------

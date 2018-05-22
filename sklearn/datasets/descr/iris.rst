@@ -33,7 +33,8 @@ Data Set Characteristics:
     :Date: July, 1988
 
 The famous Iris database, first used by Sir R.A. Fisher.
-The dataset is taken from Fisher's paper.
+The dataset is taken from Fisher's paper. Note that it's the same as in R,
+but not as in UCI Machine Learning Repository, which has two wrong data points.
 
 This is perhaps the best known database to be found in the
 pattern recognition literature.  Fisher's paper is a classic in the field and
