@@ -38,7 +38,7 @@ from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-from sklearn.base import (clone, TransformerMixin, ClusterMixin,
+from sklearn.base import (clone, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor,
                           is_outlier_detector)
 

@@ -22,9 +22,7 @@ from scipy.sparse.linalg import svds
 from ..externals import six
 
 from .base import _BasePCA
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import deprecated
-from ..utils import check_random_state, as_float_array
+from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
