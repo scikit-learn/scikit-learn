@@ -478,6 +478,10 @@ Datasets
 - Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
   :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
 
+- Fixed a bug in :func:`dataset.load_iris` which had two wrong data points.
+  :issue:`11082` by :user:`Sadhana Srinivasan <rotuna>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
+
 API changes summary
 -------------------
 
