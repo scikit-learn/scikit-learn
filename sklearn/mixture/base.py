@@ -22,6 +22,7 @@ from ..utils import check_array, check_random_state
 from ..utils.fixes import logsumexp
 from ..utils.extmath import row_norms
 
+
 def _check_shape(param, param_shape, name):
     """Validate the shape of the input parameter 'param'.
 
@@ -160,8 +161,9 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 resp[i, n] = 1
         elif self.init_params == 'k-means++':
             resp = np.zeros((n_samples, self.n_components))
-            _ , indices = _k_init(X, self.n_components, x_squared_norms=row_norms(X, squared=True),
-                              random_state=random_state)
+            _, indices = _k_init(X, self.n_components,
+                                 x_squared_norms=row_norms(X, squared=True),
+                                 random_state=random_state)
             for n, i in enumerate(indices.astype(int)):
                 resp[i, n] = 1
         else:
