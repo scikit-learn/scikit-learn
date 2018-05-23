@@ -121,6 +121,17 @@ Metrics
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
+  
+Kernel approximation
+
+- Moved majority of the code from :class:`kernel_approximation.AdditiveChi2Sampler`
+  class to the new :class:`kernel_approximation.BaseAdditiveHomogenousKernelSampler`
+  class made for general additive homogenous kernel samplers. Added derived
+  classes :class:`kernel_approximation.AdditiveChi2Sampler`,
+  :class:`kernel_approximation.IntersectionSampler` and
+  :class:`kernel_approximation.JensenShannonSampler` for additive chi2,
+  intersection and Jensen-Shannon kernel samplers.
+  :issue:`8025` by `Valery Anisimovsky`.
 
 Enhancements
 ............
