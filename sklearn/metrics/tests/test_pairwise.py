@@ -398,7 +398,7 @@ def test_pairwise_distances_chunked_reduce():
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
     assert len(S_chunks) > 1
-    # atol is for diagonal where S is explcitly zeroed on the diagonal
+    # atol is for diagonal where S is explicitly zeroed on the diagonal
     assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
 
 

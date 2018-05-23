@@ -1211,7 +1211,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         ``reduce_func``.
 
     Examples
-    -------
+    --------
     Without reduce_func:
 
     >>> X = np.random.RandomState(0).rand(5, 3)
