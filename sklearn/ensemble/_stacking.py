@@ -42,12 +42,13 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
 
     @abstractmethod
     def __init__(self, estimators=None, final_estimator=None, cv=None,
-                 method_estimators='auto', n_jobs=1, random_state=None,
-                 verbose=0):
+                 method_estimators='auto', pass_through=False, n_jobs=1,
+                 random_state=None, verbose=0):
         self.estimators = estimators
         self.final_estimator = final_estimator
         self.cv = cv
         self.method_estimators = method_estimators
+        self.pass_through = pass_through
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -79,10 +80,13 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
                                  'the method {}.'.format(name, method))
             return method
 
-    @staticmethod
-    def _concatenate_predictions(y_pred):
-        return np.concatenate([pred.reshape(-1, 1) if pred.ndim == 1
-                               else pred for pred in y_pred], axis=1)
+    def _concatenate_predictions(self, X, y_pred):
+        if self.pass_through:
+            return np.concatenate([X] + [pred.reshape(-1, 1) if pred.ndim == 1
+                                         else pred for pred in y_pred], axis=1)
+        else:
+            return np.concatenate([pred.reshape(-1, 1) if pred.ndim == 1
+                                   else pred for pred in y_pred], axis=1)
 
     def set_params(self, **params):
         """ Setting the parameters for the stacking estimator.
@@ -142,7 +146,7 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
         self : object
         """
 
-        self._validate_meta_esimator()
+        self._validate_meta_estimator()
 
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError('Invalid `estimators` attribute, '
@@ -188,7 +192,7 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
 
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
-        # predict_proba. There exposed publicly.
+        # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
             for est in estimators_ if est is not None)
@@ -216,7 +220,7 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
         self.method_estimators_ = [meth for meth in self.method_estimators_
                                    if meth is not None]
 
-        X_meta = self._concatenate_predictions(X_meta)
+        X_meta = self._concatenate_predictions(X, X_meta)
         self.final_estimator_.fit(X_meta, y)
 
         return self
@@ -236,7 +240,7 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
             Prediction outputs for each estimator.
         """
         check_is_fitted(self, 'estimators_')
-        return self._concatenate_predictions([
+        return self._concatenate_predictions(X, [
             getattr(est, meth)(X)
             for est, meth in zip(self.estimators_,
                                  self.method_estimators_)
@@ -304,6 +308,11 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         * if ``auto``, it will try to invoke, for each estimator,
         ``predict_proba``, ``decision_function`` or ``predict`` in that order.
 
+    pass_through : bool, optional
+        Whether or not to concatenate the original data ``X`` with the output
+        of ``estimators`` to feed the ``final_estimator``. The default is
+        False.
+
     n_jobs : int, optional (default=1)
         The number of jobs to ``fit`` the ``estimators`` in parallel. If
         -1, then the number of jobs is set to the number of cores.
@@ -319,7 +328,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     estimators_ : list of estimator object
         The base estimators fitted.
 
-    stacking_classifier_ : estimator object
+    final_estimator_ : estimator object
         The classifier to stacked the base estimators fitted.
 
     method_estimators_ : list of string
@@ -348,18 +357,19 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     """
     def __init__(self, estimators=None, final_estimator=None, cv=None,
-                 method_estimators='auto', n_jobs=1, random_state=None,
-                 verbose=0):
+                 method_estimators='auto', pass_through=False, n_jobs=1,
+                 random_state=None, verbose=0):
         super(StackingClassifier, self).__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             method_estimators=method_estimators,
+            pass_through=pass_through,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
 
-    def _validate_meta_esimator(self):
+    def _validate_meta_estimator(self):
         super(StackingClassifier, self)._validate_final_estimator(
             default=LogisticRegression(random_state=self.random_state))
         if not is_classifier(self.final_estimator_):
@@ -427,6 +437,11 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         * if ``auto``, it will try to invoke, for each estimator,
         ``predict_proba``, ``decision_function`` or ``predict`` in that order.
 
+    pass_through : bool, optional
+        Whether or not to concatenate the original data ``X`` with the output
+        of ``estimators`` to feed the ``final_estimator``. The default is
+        False.
+
     n_jobs : int, optional (default=1)
         The number of jobs to ``fit`` the ``estimators`` in parallel. If
         -1, then the number of jobs is set to the number of cores.
@@ -471,18 +486,19 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     """
     def __init__(self, estimators=None, final_estimator=None, cv=None,
-                 method_estimators='auto', n_jobs=1, random_state=None,
-                 verbose=0):
+                 method_estimators='auto', pass_through=False, n_jobs=1,
+                 random_state=None, verbose=0):
         super(StackingRegressor, self).__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             method_estimators=method_estimators,
+            pass_through=pass_through,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
 
-    def _validate_meta_esimator(self):
+    def _validate_meta_estimator(self):
         super(StackingRegressor, self)._validate_final_estimator(
             default=LinearRegression())
         if not is_regressor(self.final_estimator_):

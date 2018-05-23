@@ -34,14 +34,11 @@ X_iris, y_iris = load_iris(return_X_y=True)
 
 
 @pytest.mark.parametrize(
-    "cv",
-    [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()]
-)
+    "cv", [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()])
 @pytest.mark.parametrize(
-    "final_estimator",
-    [None, RandomForestClassifier(random_state=42)]
-)
-def test_stacking_classifier_iris(cv, final_estimator):
+    "final_estimator", [None, RandomForestClassifier(random_state=42)])
+@pytest.mark.parametrize("pass_through", [False, True])
+def test_stacking_classifier_iris(cv, final_estimator, pass_through):
     X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
@@ -60,14 +57,11 @@ def test_stacking_classifier_iris(cv, final_estimator):
 
 
 @pytest.mark.parametrize(
-    "cv",
-    [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()]
-)
+    "cv", [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()])
 @pytest.mark.parametrize(
-    "final_estimator",
-    [None, RandomForestRegressor(random_state=42)]
-)
-def test_stacking_regressor_diabetes(cv, final_estimator):
+    "final_estimator", [None, RandomForestRegressor(random_state=42)])
+@pytest.mark.parametrize("pass_through", [False, True])
+def test_stacking_regressor_diabetes(cv, final_estimator, pass_through):
     X, y = load_diabetes(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]

@@ -63,9 +63,10 @@ Classifiers and regressors
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Added :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`
-  to stack predictors using a final classifier or regressor. :issue:`4816` by
-  :user:`Guillaume Lemaitre <glemaitre>` and :user:`Caio Oliveira <caioaao>`.
+- Added :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` to stack predictors using a final
+  classifier or regressor. :issue:`11047` by :user:`Guillaume Lemaitre
+  <glemaitre>` and :user:`Caio Oliveira <caioaao>`.
 
 Preprocessing
 
