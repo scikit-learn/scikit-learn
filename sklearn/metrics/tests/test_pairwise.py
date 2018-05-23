@@ -443,17 +443,19 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
                                      metric=metric)
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
-    min_block_mib = np.array(X).shape[0] * 8 * 2 ** -20
+    Y = np.array(X if Y is None else Y)
+    min_block_mib = len(Y) * 8 * 2 ** -20
 
     for block in blockwise_distances:
-        memory_used = len(block) * 8
-        assert memory_used <= min(working_memory, min_block_mib) * 2 ** 20
+        memory_used = block.nbytes
+        assert memory_used <= max(working_memory, min_block_mib) * 2 ** 20
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
     assert_array_almost_equal(blockwise_distances, S)
 
 
+@ignore_warnings
 def test_pairwise_distances_chunked():
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
