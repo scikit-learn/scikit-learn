@@ -112,6 +112,10 @@ Decomposition, manifold learning and clustering
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
+- :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
+  sample weights via new parameter ``sample_weight`` in ``fit`` function.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
+
 Metrics
 
 - Partial AUC is available via ``max_fpr`` parameter in
@@ -160,7 +164,7 @@ Classifiers and regressors
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
-  
+
 - Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
   in :class:`discriminant_analysis`.
   :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
@@ -190,7 +194,7 @@ Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
-  
+
 - Enable the call to :meth:`get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
@@ -611,3 +615,8 @@ Changes to estimator checks
 - Add tests in :func:`estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
+
+- :func:`estimator_checks.check_sample_weights_pandas_series` now uses 8 rather
+  than 6 samples to accommodate for the default number of clusters in
+  :class:`cluster.KMeans`.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
