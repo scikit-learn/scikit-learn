@@ -37,18 +37,26 @@ X_iris, y_iris = load_iris(return_X_y=True)
     "cv", [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()])
 @pytest.mark.parametrize(
     "final_estimator", [None, RandomForestClassifier(random_state=42)])
-@pytest.mark.parametrize("pass_through", [False, True])
-def test_stacking_classifier_iris(cv, final_estimator, pass_through):
+@pytest.mark.parametrize(
+    "pass_through, X_trans_shape",
+    [(False, 6),
+     (True, 10)]
+)
+def test_stacking_classifier_iris(cv, final_estimator, pass_through,
+                                  X_trans_shape):
     X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     clf = StackingClassifier(estimators=estimators,
                              final_estimator=final_estimator,
-                             cv=cv, random_state=42)
+                             cv=cv, pass_through=pass_through, random_state=42)
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
     assert clf.score(X_test, y_test) > 0.8
+
+    X_trans = clf.transform(X_test)
+    assert X_trans.shape[1] == X_trans_shape
 
     clf.set_params(lr=None)
     clf.fit(X_train, y_train)
@@ -60,17 +68,25 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through):
     "cv", [3, StratifiedKFold(shuffle=True, random_state=42), LeaveOneOut()])
 @pytest.mark.parametrize(
     "final_estimator", [None, RandomForestRegressor(random_state=42)])
-@pytest.mark.parametrize("pass_through", [False, True])
-def test_stacking_regressor_diabetes(cv, final_estimator, pass_through):
+@pytest.mark.parametrize(
+    "pass_through, X_trans_shape",
+    [(False, 2),
+     (True, 12)]
+)
+def test_stacking_regressor_diabetes(cv, final_estimator, pass_through,
+                                     X_trans_shape):
     X, y = load_diabetes(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     reg = StackingRegressor(estimators=estimators,
                             final_estimator=final_estimator,
-                            cv=cv, random_state=42)
+                            cv=cv, pass_through=pass_through, random_state=42)
     reg.fit(X_train, y_train)
     reg.predict(X_test)
     assert reg.score(X_test, y_test) < 0.5
+
+    X_trans = reg.transform(X_test)
+    assert X_trans.shape[1] == X_trans_shape
 
     reg.set_params(lr=None)
     reg.fit(X_train, y_train)
@@ -83,6 +99,9 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
 
     def fit(self, X, y):
         return self.reg.fit(X, y)
+
+    def predict(self, X):
+        return np.ones(X.shape[0])
 
 
 class NoWeightClassifier(BaseEstimator, ClassifierMixin):
