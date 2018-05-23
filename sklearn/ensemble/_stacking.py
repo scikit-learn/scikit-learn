@@ -274,6 +274,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     allows to combine the strength of each individual estimator. It should be
     noted that the final estimator is trained through cross-validation.
 
+    .. versionadded:: 0.20
+
     Read more in the :ref:`User Guide <stacking>`.
 
     Parameters
@@ -402,6 +404,8 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     estimator and use a regressor to compute the final prediction. Stacking
     allows to combine the strength of each individual estimator. It should be
     noted that the final estimator is trained through cross-validation.
+
+    .. versionadded:: 0.20
 
     Read more in the :ref:`User Guide <stacking>`.
 
