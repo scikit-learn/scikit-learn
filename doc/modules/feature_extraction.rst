@@ -49,9 +49,9 @@ is a traditional numerical feature::
   >>> vec = DictVectorizer()
 
   >>> vec.fit_transform(measurements).toarray()
-  array([[  1.,   0.,   0.,  33.],
-         [  0.,   1.,   0.,  12.],
-         [  0.,   0.,   1.,  18.]])
+  array([[ 1.,  0.,  0., 33.],
+         [ 0.,  1.,  0., 12.],
+         [ 0.,  0.,  1., 18.]])
 
   >>> vec.get_feature_names()
   ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
@@ -89,7 +89,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   <1x6 sparse matrix of type '<... 'numpy.float64'>'
       with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
-  array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
+  array([[1., 1., 1., 1., 1., 1.]])
   >>> vec.get_feature_names()
   ['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat', 'word-2=the']
 
@@ -463,12 +463,12 @@ content of the documents::
       with 9 stored elements in Compressed Sparse ... format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
-  array([[ 0.81940995,  0.        ,  0.57320793],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 0.47330339,  0.88089948,  0.        ],
-         [ 0.58149261,  0.        ,  0.81355169]])
+  array([[0.81940995, 0.        , 0.57320793],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [0.47330339, 0.88089948, 0.        ],
+         [0.58149261, 0.        , 0.81355169]])
 
 Each row is normalized to have unit Euclidean norm:
 
@@ -523,19 +523,19 @@ And the L2-normalized tf-idf changes to
 
   >>> transformer = TfidfTransformer()
   >>> transformer.fit_transform(counts).toarray()
-  array([[ 0.85151335,  0.        ,  0.52433293],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 1.        ,  0.        ,  0.        ],
-         [ 0.55422893,  0.83236428,  0.        ],
-         [ 0.63035731,  0.        ,  0.77630514]])
+  array([[0.85151335, 0.        , 0.52433293],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [1.        , 0.        , 0.        ],
+         [0.55422893, 0.83236428, 0.        ],
+         [0.63035731, 0.        , 0.77630514]])
 
 The weights of each
 feature computed by the ``fit`` method call are stored in a model
 attribute::
 
   >>> transformer.idf_                       # doctest: +ELLIPSIS
-  array([ 1. ...,  2.25...,  1.84...])
+  array([1. ..., 2.25..., 1.84...])
 
 
 
@@ -1011,8 +1011,8 @@ features or samples. For instance Ward clustering
 (:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
 of an image, thus forming contiguous patches:
 
-.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_face_ward_segmentation_001.png
-   :target: ../auto_examples/cluster/plot_face_ward_segmentation.html
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
+   :target: ../auto_examples/cluster/plot_coin_ward_segmentation.html
    :align: center
    :scale: 40
 
@@ -1030,7 +1030,7 @@ or similarity matrices.
 
 .. note:: **Examples**
 
-   * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`
 
    * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`
 
