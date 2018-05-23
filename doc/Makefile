@@ -6,11 +6,16 @@ SPHINXOPTS    =
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
+ifneq ($(EXAMPLES_PATTERN),)
+    EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
+endif
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+    $(EXAMPLES_PATTERN_OPTS) .
+
 
 .PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng
 
@@ -32,7 +37,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf auto_examples/
 	-rm -rf generated/*
-	-rm -rf modules/generated/*
+	-rm -rf modules/generated/
 
 html:
 	# These two lines make the build a bit more lengthy, and the

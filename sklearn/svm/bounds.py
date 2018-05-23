@@ -2,8 +2,6 @@
 # Author: Paolo Losi
 # License: BSD 3 clause
 
-from warnings import warn
-
 import numpy as np
 
 from ..preprocessing import LabelBinarizer

@@ -11,7 +11,6 @@ from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
-from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises, clean_warning_registry
@@ -21,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_div0
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
@@ -197,6 +197,14 @@ def test_precision_recall_f_extra_labels():
                       labels=np.arange(6), average=average)
         assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
                       labels=np.arange(-1, 4), average=average)
+
+    # tests non-regression on issue #10307
+    y_true = np.array([[0, 1, 1], [1, 0, 0]])
+    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+    p, r, f, _ = precision_recall_fscore_support(y_true, y_pred,
+                                                 average='samples',
+                                                 labels=[0, 1])
+    assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
 
 @ignore_warnings
@@ -403,15 +411,13 @@ def test_matthews_corrcoef():
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
+    mcc = assert_warns_div0(matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
 
     # And also for any other vector with 0 variance
-    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, ['a'] * len(y_true))
+    mcc = assert_warns_div0(matthews_corrcoef, y_true, ['a'] * len(y_true))
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
@@ -482,6 +488,41 @@ def test_matthews_corrcoef_multiclass():
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
+
+
+def test_matthews_corrcoef_overflow():
+    # https://github.com/scikit-learn/scikit-learn/issues/9622
+    rng = np.random.RandomState(20170906)
+
+    def mcc_safe(y_true, y_pred):
+        conf_matrix = confusion_matrix(y_true, y_pred)
+        true_pos = conf_matrix[1, 1]
+        false_pos = conf_matrix[1, 0]
+        false_neg = conf_matrix[0, 1]
+        n_points = len(y_true)
+        pos_rate = (true_pos + false_neg) / n_points
+        activity = (true_pos + false_pos) / n_points
+        mcc_numerator = true_pos / n_points - pos_rate * activity
+        mcc_denominator = activity * pos_rate * (1 - activity) * (1 - pos_rate)
+        return mcc_numerator / np.sqrt(mcc_denominator)
+
+    def random_ys(n_points):    # binary
+        x_true = rng.random_sample(n_points)
+        x_pred = x_true + 0.2 * (rng.random_sample(n_points) - 0.5)
+        y_true = (x_true > 0.5)
+        y_pred = (x_pred > 0.5)
+        return y_true, y_pred
+
+    for n_points in [100, 10000, 1000000]:
+        arr = np.repeat([0., 1.], n_points)  # binary
+        assert_almost_equal(matthews_corrcoef(arr, arr), 1.0)
+        arr = np.repeat([0., 1., 2.], n_points)  # multiclass
+        assert_almost_equal(matthews_corrcoef(arr, arr), 1.0)
+
+        y_true, y_pred = random_ys(n_points)
+        assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
+        assert_almost_equal(matthews_corrcoef(y_true, y_pred),
+                            mcc_safe(y_true, y_pred))
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -837,6 +878,20 @@ def test_classification_report_labels_target_names_unequal_length():
     assert_warns_message(UserWarning,
                          "labels size, 2, does not "
                          "match size of target_names, 3",
+                         classification_report,
+                         y_true, y_pred, labels=[0, 2],
+                         target_names=target_names)
+
+
+def test_classification_report_no_labels_target_names_unequal_length():
+    y_true = [0, 0, 2, 0, 0]
+    y_pred = [0, 2, 2, 0, 0]
+    target_names = ['class 0', 'class 1', 'class 2']
+
+    assert_raise_message(ValueError,
+                         "Number of classes, 2, does not "
+                         "match size of target_names, 3. "
+                         "Try specifying the labels parameter",
                          classification_report,
                          y_true, y_pred, target_names=target_names)
 
@@ -1199,7 +1254,7 @@ def test_prf_warnings():
     my_assert(w, msg, f, np.array([[0, 0], [0, 0]]),
               np.array([[1, 1], [1, 1]]), average='micro')
 
-    # single postive label
+    # single positive label
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.')
     my_assert(w, msg, f, [1, 1], [-1, -1], average='binary')
@@ -1345,7 +1400,8 @@ def test__check_targets():
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
-                    "Can't handle mix of {0} and {1}".format(type1, type2),
+                    "Classification metrics can't handle a mix of {0} and {1} "
+                    "targets".format(type1, type2),
                     _check_targets, y1, y2)
 
             else:

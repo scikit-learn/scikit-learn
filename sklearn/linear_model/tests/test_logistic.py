@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import raises
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model.logistic import (
@@ -74,6 +73,11 @@ def test_error():
                          LogisticRegression(C=-1).fit, X, Y1)
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
+
+    msg = "is not a valid scoring value"
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
+                         X, Y1)
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
@@ -145,8 +149,8 @@ def test_check_solver_option():
     X, y = iris.data, iris.target
     for LR in [LogisticRegression, LogisticRegressionCV]:
 
-        msg = ("Logistic Regression supports only liblinear, newton-cg, lbfgs"
-               " and sag solvers, got wrong_name")
+        msg = ('Logistic Regression supports only liblinear, newton-cg, '
+               'lbfgs, sag and saga solvers, got wrong_name')
         lr = LR(solver="wrong_name")
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -192,6 +196,23 @@ def test_multinomial_binary():
         pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data),
                                       axis=1)]
         assert_greater(np.mean(pred == target), .9)
+
+
+def test_multinomial_binary_probabilities():
+    # Test multinomial LR gives expected probabilities based on the
+    # decision function, for a binary problem.
+    X, y = make_classification()
+    clf = LogisticRegression(multi_class='multinomial', solver='saga')
+    clf.fit(X, y)
+
+    decision = clf.decision_function(X)
+    proba = clf.predict_proba(X)
+
+    expected_proba_class_1 = (np.exp(decision) /
+                              (np.exp(decision) + np.exp(-decision)))
+    expected_proba = np.c_[1-expected_proba_class_1, expected_proba_class_1]
+
+    assert_almost_equal(proba, expected_proba)
 
 
 def test_sparsify():
@@ -244,13 +265,13 @@ def test_write_parameters():
     assert_array_almost_equal(clf.decision_function(X), 0)
 
 
-@raises(ValueError)
 def test_nan():
     # Test proper NaN handling.
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    LogisticRegression(random_state=0).fit(Xnan, Y1)
+    logistic = LogisticRegression(random_state=0)
+    assert_raises(ValueError, logistic.fit, Xnan, Y1)
 
 
 def test_consistency_path():
@@ -289,6 +310,15 @@ def test_consistency_path():
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
         assert_array_almost_equal(lr_coef, coefs[0], decimal=4,
                                   err_msg="with solver = %s" % solver)
+
+
+def test_logistic_regression_path_convergence_fail():
+    rng = np.random.RandomState(0)
+    X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
+    y = [1] * 100 + [-1] * 100
+    Cs = [1e3]
+    assert_warns(ConvergenceWarning, logistic_regression_path,
+                 X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
 
 
 def test_liblinear_dual_random_state():
@@ -770,15 +800,6 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-def test_logistic_regression_convergence_warnings():
-    # Test that warnings are raised if model does not converge
-
-    X, y = make_classification(n_samples=20, n_features=20, random_state=0)
-    clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
-    assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
-    assert_equal(clf_lib.n_iter_, 2)
-
-
 def test_logistic_regression_multinomial():
     # Tests for the multinomial option in logistic regression
 
@@ -986,7 +1007,7 @@ def test_logreg_predict_proba_multinomial():
     X, y = make_classification(n_samples=10, n_features=20, random_state=0,
                                n_classes=3, n_informative=10)
 
-    # Predicted probabilites using the true-entropy loss should give a
+    # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
     clf_multi = LogisticRegression(multi_class="multinomial", solver="lbfgs")
     clf_multi.fit(X, y)
@@ -996,14 +1017,13 @@ def test_logreg_predict_proba_multinomial():
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert_greater(clf_ovr_loss, clf_multi_loss)
 
-    # Predicted probabilites using the soft-max function should give a
+    # Predicted probabilities using the soft-max function should give a
     # smaller loss than those using the logistic function.
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
     clf_wrong_loss = log_loss(y, clf_multi._predict_proba_lr(X))
     assert_greater(clf_wrong_loss, clf_multi_loss)
 
 
-@ignore_warnings
 def test_max_iter():
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
@@ -1019,7 +1039,7 @@ def test_max_iter():
                 lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
                                         multi_class=multi_class,
                                         random_state=0, solver=solver)
-                lr.fit(X, y_bin)
+                assert_warns(ConvergenceWarning, lr.fit, X, y_bin)
                 assert_equal(lr.n_iter_[0], max_iter)
 
 

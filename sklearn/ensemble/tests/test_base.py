@@ -109,7 +109,7 @@ def test_set_random_states():
     assert_not_equal(est1.get_params()['sel__estimator__random_state'],
                      est1.get_params()['clf__random_state'])
 
-    # ensure multiple random_state paramaters are invariant to get_params()
+    # ensure multiple random_state parameters are invariant to get_params()
     # iteration order
 
     class AlphaParamPipeline(Pipeline):

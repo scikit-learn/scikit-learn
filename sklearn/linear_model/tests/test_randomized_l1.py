@@ -11,10 +11,13 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
-from sklearn.linear_model.randomized_l1 import (lasso_stability_path,
+from sklearn.linear_model.randomized_l1 import(lasso_stability_path,
                                                 RandomizedLasso,
                                                 RandomizedLogisticRegression)
+
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import StandardScaler
@@ -30,6 +33,7 @@ X = X[:, [2, 3, 6, 7, 8]]
 F, _ = f_regression(X, y)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_lasso_stability_path():
     # Check lasso stability path
     # Load diabetes data and add noisy features
@@ -42,6 +46,7 @@ def test_lasso_stability_path():
                        np.argsort(np.sum(scores_path, axis=1))[-3:])
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_randomized_lasso_error_memory():
     scaling = 0.3
     selection_threshold = 0.5
@@ -55,6 +60,7 @@ def test_randomized_lasso_error_memory():
                         clf.fit, X, y)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_randomized_lasso():
     # Check randomized lasso
     scaling = 0.3
@@ -124,6 +130,7 @@ def test_randomized_lasso_precompute():
         assert_array_equal(feature_scores_1, feature_scores_2)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_randomized_logistic():
     # Check randomized sparse logistic regression
     iris = load_iris()
@@ -153,6 +160,7 @@ def test_randomized_logistic():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_randomized_logistic_sparse():
     # Check randomized sparse logistic regression on sparse data
     iris = load_iris()
@@ -179,3 +187,31 @@ def test_randomized_logistic_sparse():
                                        tol=1e-3)
     feature_scores_sp = clf.fit(X_sp, y).scores_
     assert_array_equal(feature_scores, feature_scores_sp)
+
+
+def test_warning_raised():
+
+    scaling = 0.3
+    selection_threshold = 0.5
+    tempdir = 5
+    assert_warns_message(DeprecationWarning, "The function"
+                         " lasso_stability_path is "
+                         "deprecated in 0.19 and will be removed in 0.21.",
+                         lasso_stability_path, X, y, scaling=scaling,
+                         random_state=42, n_resampling=30)
+
+    assert_warns_message(DeprecationWarning, "Class RandomizedLasso is"
+                         " deprecated; The class RandomizedLasso is "
+                         "deprecated in 0.19 and will be removed in 0.21.",
+                         RandomizedLasso, verbose=False, alpha=[1, 0.8],
+                         random_state=42, scaling=scaling,
+                         selection_threshold=selection_threshold,
+                         memory=tempdir)
+
+    assert_warns_message(DeprecationWarning, "The class"
+                         " RandomizedLogisticRegression is "
+                         "deprecated in 0.19 and will be removed in 0.21.",
+                         RandomizedLogisticRegression,
+                         verbose=False, C=1., random_state=42,
+                         scaling=scaling, n_resampling=50,
+                         tol=1e-3)

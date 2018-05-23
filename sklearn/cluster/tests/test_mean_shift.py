@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
@@ -31,6 +32,13 @@ def test_estimate_bandwidth():
     # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
     assert_true(0.9 <= bandwidth <= 1.5)
+
+
+def test_estimate_bandwidth_1sample():
+    # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
+    # n_neighbors is set to 1.
+    bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
+    assert_equal(bandwidth, 0.)
 
 
 def test_mean_shift():
@@ -63,7 +71,7 @@ def test_parallel():
     ms2 = MeanShift()
     ms2.fit(X)
 
-    assert_array_equal(ms1.cluster_centers_, ms2.cluster_centers_)
+    assert_array_almost_equal(ms1.cluster_centers_, ms2.cluster_centers_)
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
@@ -114,7 +122,7 @@ def test_bin_seeds():
     # we bail and use the whole data here.
     with warnings.catch_warnings(record=True):
         test_bins = get_bin_seeds(X, 0.01, 1)
-    assert_array_equal(test_bins, X)
+    assert_array_almost_equal(test_bins, X)
 
     # tight clusters around [0, 0] and [1, 1], only get two bins
     X, _ = make_blobs(n_samples=100, n_features=2, centers=[[0, 0], [1, 1]],

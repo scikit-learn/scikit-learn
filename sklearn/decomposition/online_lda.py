@@ -5,7 +5,7 @@ Online Latent Dirichlet Allocation with variational inference
 =============================================================
 
 This implementation is modified from Matthew D. Hoffman's onlineldavb code
-Link: http://matthewdhoffman.com/code/onlineldavb.tar
+Link: https://github.com/blei-lab/onlineldavb
 """
 
 # Author: Chyi-Kwei Yau
@@ -42,7 +42,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         Document word matrix.
 
     exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
-        Exponential value of expection of log topic word distribution.
+        Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
     doc_topic_prior : float
@@ -154,7 +154,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `eta`.
+        In the literature, this is called `beta`.
 
     learning_method : 'batch' | 'online', default='online'
         Method used to update `_component`. Only used in `fit` method.
@@ -187,20 +187,20 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     max_iter : integer, optional (default=10)
         The maximum number of iterations.
 
-    total_samples : int, optional (default=1e6)
-        Total number of documents. Only used in the `partial_fit` method.
-
     batch_size : int, optional (default=128)
         Number of documents to use in each EM iteration. Only used in online
         learning.
 
-    evaluate_every : int optional (default=0)
+    evaluate_every : int, optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
         set it to 0 or negative number to not evalute perplexity in
         training at all. Evaluating perplexity can help you check convergence
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time
         up to two-fold.
+
+    total_samples : int, optional (default=1e6)
+        Total number of documents. Only used in the `partial_fit` method.
 
     perp_tol : float, optional (default=1e-1)
         Perplexity tolerance in batch learning. Only used when
@@ -257,7 +257,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Chong Wang, John Paisley, 2013
 
     [3] Matthew D. Hoffman's onlineldavb code. Link:
-        http://matthewdhoffman.com//code/onlineldavb.tar
+        https://github.com/blei-lab/onlineldavb
 
     """
 
@@ -473,6 +473,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
+        y : Ignored
+
         Returns
         -------
         self
@@ -514,6 +516,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
+
+        y : Ignored
 
         Returns
         -------
@@ -714,6 +718,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
+        y : Ignored
+
         Returns
         -------
         score : float
@@ -794,6 +800,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             This argument is deprecated and is currently being ignored.
 
             .. deprecated:: 0.19
+
+        sub_sampling : bool
+            Do sub-sampling or not.
 
         Returns
         -------

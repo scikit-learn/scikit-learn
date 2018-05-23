@@ -309,7 +309,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self.random_state = random_state
 
     @abstractmethod
-    def _make_random_matrix(n_components, n_features):
+    def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix
 
         Parameters
@@ -337,7 +337,8 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             matrix dimensions based on the theory referenced in the
             afore mentioned papers.
 
-        y : is not used: placeholder to allow for usage in a Pipeline.
+        y
+            Ignored
 
         Returns
         -------

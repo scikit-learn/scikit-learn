@@ -111,7 +111,7 @@ memory footprint and estimator).
 Influence of the Input Data Representation
 ------------------------------------------
 
-Scipy provides sparse matrix datastructures which are optimized for storing
+Scipy provides sparse matrix data structures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
 a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)

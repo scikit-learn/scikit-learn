@@ -197,7 +197,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
-        # outpreform or match a dense label binarizer in all cases and has also
+        # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
         # overall.
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
@@ -267,9 +267,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         columns = (col.toarray().ravel() for col in Y.T)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_binary)(self.estimators_[i], X,
-                                         next(columns))
-            for i in range(self.n_classes_))
+            delayed(_partial_fit_binary)(estimator, X, column)
+            for estimator, column in izip(self.estimators_, columns))
 
         return self
 
@@ -722,7 +721,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         X, y = check_X_y(X, y)
         if self.code_size <= 0:
-            raise ValueError("code_size should be greater than 0, got {1}"
+            raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
 
         _check_estimator(self.estimator)

@@ -90,7 +90,7 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.int):
+    if np.issubdtype(mask.dtype, np.signedinteger):
         return mask
 
     if hasattr(X, "toarray"):
@@ -135,8 +135,15 @@ def safe_indexing(X, indices):
     -------
     subset
         Subset of X on first axis
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
     """
     if hasattr(X, "iloc"):
+        # Work-around for indexing with read-only indices in pandas
+        indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
             return X.iloc[indices]
@@ -189,8 +196,8 @@ def resample(*arrays, **options):
     Returns
     -------
     resampled_arrays : sequence of indexable data-structures
-        Sequence of resampled views of the collections. The original arrays are
-        not impacted.
+        Sequence of resampled copies of the collections. The original arrays
+        are not impacted.
 
     Examples
     --------
@@ -205,18 +212,18 @@ def resample(*arrays, **options):
       >>> from sklearn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
       >>> X
-      array([[ 1.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[1., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 4 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
-      array([[ 1.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[1., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> y
       array([0, 1, 0])
@@ -293,8 +300,8 @@ def shuffle(*arrays, **options):
     Returns
     -------
     shuffled_arrays : sequence of indexable data-structures
-        Sequence of shuffled views of the collections. The original arrays are
-        not impacted.
+        Sequence of shuffled copies of the collections. The original arrays
+        are not impacted.
 
     Examples
     --------
@@ -309,18 +316,18 @@ def shuffle(*arrays, **options):
       >>> from sklearn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
       >>> X
-      array([[ 0.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[0., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 3 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
-      array([[ 0.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[0., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> y
       array([2, 1, 0])
@@ -463,7 +470,12 @@ def _get_n_jobs(n_jobs):
 
 
 def tosequence(x):
-    """Cast iterable x to a Sequence, avoiding a copy if possible."""
+    """Cast iterable x to a Sequence, avoiding a copy if possible.
+
+    Parameters
+    ----------
+    x : iterable
+    """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
     elif isinstance(x, Sequence):
@@ -481,11 +493,19 @@ def indices_to_mask(indices, mask_length):
         List of integers treated as indices.
     mask_length : int
         Length of boolean mask to be generated.
+        This parameter must be greater than max(indices)
 
     Returns
     -------
     mask : 1d boolean nd-array
         Boolean array that is True where indices are present, else False.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indices_to_mask
+    >>> indices = [1, 2 , 3, 4]
+    >>> indices_to_mask(indices, 5)
+    array([False,  True,  True,  True,  True])
     """
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
