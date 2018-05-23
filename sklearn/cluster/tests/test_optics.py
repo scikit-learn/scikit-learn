@@ -68,7 +68,8 @@ def test_close_extract():
     clust3 = clust.fit(X)
     # check warning when centers are passed
     assert_warns(RuntimeWarning, clust3.extract_dbscan, .3)
-    assert_equal(max(clust3.extract_dbscan(.3)[1]), 3)
+    # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
+    assert_equal(max(clust3.extract_dbscan(.3)[1]), 2)
 
 
 def test_auto_extract_hier():
