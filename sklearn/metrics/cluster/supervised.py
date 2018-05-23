@@ -16,6 +16,7 @@ better.
 from __future__ import division
 
 from math import log
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -527,6 +528,22 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
+
+def _generalized_average(U, V, average_method):
+    if average_method == "min":
+        return min(U, V)
+    elif average_method == "sqrt":
+        return max(np.sqrt(U * V), 1e-10)  # Avoids zero-division error
+    elif average_method == "sum":
+        return max(np.mean(U, V), 1e-10)
+    elif average_method == "max":
+        return max(U, V)
+    else:
+        raise ValueError("'average_method' must be 'min', 'sqrt', 'sum', or "
+        "'max'")
+
+
+
 def mutual_info_score(labels_true, labels_pred, contingency=None):
     r"""Mutual Information between two clusterings.
 
@@ -608,7 +625,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred):
+def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -617,7 +634,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     clusters, regardless of whether there is actually more information shared.
     For two clusterings :math:`U` and :math:`V`, the AMI is given as::
 
-        AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [max(H(U), H(V)) - E(MI(U, V))]
+        AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [avg(H(U), H(V)) - E(MI(U, V))]
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -640,6 +657,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    average_method : string or None, optional (default: None)
+        How to compute the normalizer in the denominator. Possible options
+        are 'min', 'sqrt', 'sum', and 'max'.
+        If None, 'max' will be used. This is likely to change in a future
+        version. 
 
     Returns
     -------
@@ -682,6 +705,12 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
+    if average_method is None:
+        warnings.warn("The behavior of AMI will change in a future version. "
+           "To match the behavior of 'v_measure_score', AMI will use "
+           "sqrt-averaging, i.e. geometric mean, by default."
+           )
+        average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
@@ -700,17 +729,19 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
-    ami = (mi - emi) / (max(h_true, h_pred) - emi)
+    normalizer = _generalized_average(h_true, h_pred, average_method)
+    ami = (mi - emi) / (normalizer - emi)
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred):
+def normalized_mutual_info_score(labels_true, labels_pred, average_method=None):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``.
+    information is normalized by some generalized mean of ``H(labels_true)``
+    and ``H(labels_pred))``.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mustual_info_score` might be preferred.
@@ -733,6 +764,12 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    average_method : string or None, optional (default: None)
+        How to compute the normalizer in the denominator. Possible options
+        are 'min', 'sqrt', 'sum', and 'max'.
+        If None, 'sqrt' will be used, matching the behavior of
+        `v_measure_score`. 
 
     Returns
     -------
@@ -764,6 +801,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
       0.0
 
     """
+    if average_method is None:
+        average_method = 'sqrt'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
@@ -780,7 +819,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
-    nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
+    normalizer = _generalized_average(h_true, h_pred, average_method)
+    nmi = mi / normalizer
     return nmi
 
 
