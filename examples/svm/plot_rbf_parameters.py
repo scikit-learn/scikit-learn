@@ -15,9 +15,8 @@ The ``C`` parameter trades off correct classification of training examples
 against maximization of the decision function's margin. For larger values of 
 ``C``, a smaller margin will be accepted if the decision function is better at 
 classifying all training points correctly. A lower ``C`` will encourage a larger 
-margin, and a more simple decision function, even if that decision function 
-misclassifies more of the training examples. ``C`` therefore behaves as a 
-regularization parameter in the SVM.
+margin, therefore a simpler decision function, at the cost of training accuracy.
+In other words``C`` behaves as a regularization parameter in the SVM.
 
 The first plot is a visualization of the decision function for a variety of
 parameter values on a simplified classification problem involving only 2 input
