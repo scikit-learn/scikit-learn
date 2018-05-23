@@ -30,8 +30,8 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     OPTICS: Ordering Points To Identify the Clustering Structure
     Equivalent to DBSCAN, finds core sample of high density and expands
-    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for varying
-    epsilon values. Optimized for usage on large point datasets.
+    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
+    neighborhood radius. Optimized for usage on large point datasets.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     OPTICS: Ordering Points To Identify the Clustering Structure
     Equivalent to DBSCAN, finds core sample of high density and expands
-    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for varying
+    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
     neighborhood radius. Optimized for usage on large point datasets.
 
     Parameters
@@ -462,7 +462,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
     n_samples = len(core_distances)
     is_core = np.zeros(n_samples, dtype=bool)
     labels = np.ones(n_samples, dtype=int) * -1
-    cluster_id = 0
+    cluster_id = -1
 
     for entry in ordering:
         if reachability[entry] > eps:
@@ -538,7 +538,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     """
 
     # Extraction wrapper
-    reachability = reachability/np.max(reachability[1:])
+    reachability = reachability / np.max(reachability[1:])
     reachability_plot = reachability[ordering].tolist()
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,

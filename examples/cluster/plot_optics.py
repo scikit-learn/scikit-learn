@@ -76,10 +76,10 @@ for k, c in zip(range(0, 5), color):
 ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], 'k+', alpha=0.1)
 
 # DBSCAN at 0.25
-color = ['g.', 'greenyellow.', 'olive.', 'r.', 'b.', 'c.']
+color = ['g', 'greenyellow', 'olive', 'r', 'b', 'c']
 for k, c in zip(range(0, 6), color):
     Xk = X[labels_025 == k]
-    ax3.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
+    ax3.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3, marker='.')
 ax3.plot(X[labels_025 == -1, 0], X[labels_025 == -1, 1], 'k+', alpha=0.1)
 
 # DBSCAN at 0.75
