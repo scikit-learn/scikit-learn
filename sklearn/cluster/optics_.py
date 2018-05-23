@@ -117,7 +117,6 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
     Returns
     -------
@@ -232,7 +231,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
     Attributes
     ----------
@@ -540,6 +538,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     """
 
     # Extraction wrapper
+    reachability = reachability/np.max(reachability[1:])
     reachability_plot = reachability[ordering].tolist()
     root_node = _automatic_cluster(reachability_plot, ordering,
                                    maxima_ratio, rejection_ratio,
@@ -648,10 +647,14 @@ def _cluster_tree(node, parent_node, local_maxima_points,
                   reachability_plot, reachability_ordering,
                   min_cluster_size, maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min):
-    # node is a node or the root of the tree in the first call
-    # parent_node is parent node of N or None if node is root of the tree
-    # local_maxima_points is list of local maxima points sorted in
-    # descending order of reachability
+    """Recursively builds cluster tree to hold hierarchical cluster structure
+
+    node is a node or the root of the tree in the first call
+    parent_node is parent node of N or None if node is root of the tree
+    local_maxima_points is list of local maxima points sorted in
+    descending order of reachability
+    """
+
     if len(local_maxima_points) == 0:
         return  # parent_node is a leaf
 

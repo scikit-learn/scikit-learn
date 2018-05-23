@@ -13,13 +13,11 @@ from sklearn.utils.testing import assert_raises
 from sklearn.cluster.tests.common import generate_clustered_data
 
 
-def test_optics():
-    # Tests the optics clustering method and all functions inside it
-    # 'auto' mode
+def test_correct_number_of_clusters():
+    # in 'auto' mode
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
-    print(np.shape(X))
     # Parameters chosen specifically for this task.
     # Compute OPTICS
     clust = OPTICS(max_bound=5.0 * 6.0, min_samples=4, metric='euclidean')
@@ -29,9 +27,8 @@ def test_optics():
     assert_equal(n_clusters_1, n_clusters)
 
 
-def test_optics2():
-    # Tests the optics clustering method and all functions inside it
-    # 'dbscan' mode
+def test_minimum_number_of_sample_check():
+    # test that we check a minimum number of samples
 
     # Compute OPTICS
     X = [[1, 1]]
@@ -75,17 +72,18 @@ def test_close_extract():
 
 
 def test_auto_extract_hier():
-    # Generate sample data
+    # Tests auto extraction gets correct # of clusters with varying density
 
-    np.random.seed(0)
+    # Generate sample data
+    rng = np.random.RandomState(0)
     n_points_per_cluster = 250
 
-    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
     X = np.vstack((C1, C2, C3, C4, C5, C6))
 
     # Compute OPTICS
@@ -101,15 +99,15 @@ def test_auto_extract_hier():
 def test_reach_dists():
     # Tests against known extraction array
 
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
     n_points_per_cluster = 250
 
-    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
     X = np.vstack((C1, C2, C3, C4, C5, C6))
 
     # Compute OPTICS
@@ -121,7 +119,7 @@ def test_reach_dists():
 
     # Expected values, matches 'RD' results from:
     # http://chemometria.us.edu.pl/download/optics.py
-    # Skip to line 342
+    # Skip to line 340
 
     v = [np.inf, 0.606005, 0.472013, 0.162951, 0.161000, 0.385547, 0.179715,
          0.213507, 0.348468, 0.308146, 0.560519, 0.266072, 0.764384, 0.253164,

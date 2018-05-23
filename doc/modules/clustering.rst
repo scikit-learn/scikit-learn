@@ -816,7 +816,7 @@ relaxes the ``eps`` requirement from a single value to a value range. The key
 difference between DBSCAN and OPTICS is that the OPTICS algorithm builds a
 *reachability* graph, which assigns each sample both a ``reachability_``
 distance, and a spot within the cluster ``ordering_`` attribute; these two
-attributes are assigned when the model is fit, and are used to determine
+attributes are assigned when the model is fitted, and are used to determine
 cluster membership. If OPTICS is run with the default value of *inf* set for
 ``max_bound``, then DBSCAN style cluster extraction can be performed in linear
 time for any given ``eps`` value using the ``extract_dbscan`` method. Setting
@@ -831,7 +831,7 @@ for being marked as *core samples*; this effect is quite local to the starting
 point of the dataset and is unlikely to be noticed on even moderately large
 datasets.
 
-.. |optics_results| image:: ../auto_examples/cluster/images/plot_optics_001.png
+.. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_optics_001.png
         :target: ../auto_examples/cluster/plot_optics.html
         :scale: 50
 
