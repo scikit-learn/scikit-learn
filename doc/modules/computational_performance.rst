@@ -308,6 +308,8 @@ Debian / Ubuntu.
     or upgrade to Python 3.4 which has a new version of ``multiprocessing``
     that should be immune to this problem.
 
+.. _working_memory:
+
 Limiting Working Memory
 -----------------------
 
