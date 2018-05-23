@@ -46,9 +46,9 @@ import matplotlib.pyplot as plt
 def plot_regression_results(ax, y_true, y_pred, title, scores):
     """Scatter plot of the predicted vs true targets."""
     ax.plot([y_true.min(), y_true.max()],
-            [y_pred.min(), y_pred.max()],
+            [y_true.min(), y_true.max()],
             '--r', linewidth=2)
-    ax.scatter(y_true, y_pred)
+    ax.scatter(y_true, y_pred, alpha=0.2)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -57,12 +57,12 @@ def plot_regression_results(ax, y_true, y_pred, title, scores):
     ax.spines['left'].set_position(('outward', 10))
     ax.spines['bottom'].set_position(('outward', 10))
     ax.set_xlim([y_true.min(), y_true.max()])
-    ax.set_ylim([y_pred.min(), y_pred.max()])
+    ax.set_ylim([y_true.min(), y_true.max()])
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
     extra = plt.Rectangle((0, 0), 0, 0, fc="w", fill=False,
                           edgecolor='none', linewidth=0)
-    ax.legend([extra], [scores])
+    ax.legend([extra], [scores], loc='upper left')
     ax.set_title(title)
 
 
@@ -76,7 +76,7 @@ from sklearn.model_selection import cross_validate, cross_val_predict
 
 X, y = load_boston(return_X_y=True)
 
-fig, axs = plt.subplots(2, 2)
+fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
 
 for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
@@ -97,4 +97,5 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
 
 plt.suptitle('Single predictors versus stacked predictors')
 plt.tight_layout()
+plt.subplots_adjust(top=0.9)
 plt.show()
