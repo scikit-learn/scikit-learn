@@ -3,7 +3,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Kyle Kastner <kastnerkyle@gmail.com>
 #
 # License: BSD 3 clause
@@ -13,7 +13,6 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
 from ..externals import six
 from abc import ABCMeta, abstractmethod
@@ -97,8 +96,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             Returns the instance itself.
         """
 
-
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply dimensionality reduction to X.
 
         X is projected on the first principal components previously extracted
@@ -130,12 +128,12 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
-        X_transformed = fast_dot(X, self.components_.T)
+        X_transformed = np.dot(X, self.components_.T)
         if self.whiten:
             X_transformed /= np.sqrt(self.explained_variance_)
         return X_transformed
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         In other words, return an input X_original whose transform would be X.
@@ -156,7 +154,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         exact inverse operation, which includes reversing whitening.
         """
         if self.whiten:
-            return fast_dot(X, np.sqrt(self.explained_variance_[:, np.newaxis]) *
+            return np.dot(X, np.sqrt(self.explained_variance_[:, np.newaxis]) *
                             self.components_) + self.mean_
         else:
-            return fast_dot(X, self.components_) + self.mean_
+            return np.dot(X, self.components_) + self.mean_

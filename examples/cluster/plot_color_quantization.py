@@ -84,21 +84,18 @@ def recreate_image(codebook, labels, w, h):
 # Display all results, alongside original image
 plt.figure(1)
 plt.clf()
-ax = plt.axes([0, 0, 1, 1])
 plt.axis('off')
 plt.title('Original image (96,615 colors)')
 plt.imshow(china)
 
 plt.figure(2)
 plt.clf()
-ax = plt.axes([0, 0, 1, 1])
 plt.axis('off')
 plt.title('Quantized image (64 colors, K-Means)')
 plt.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
 plt.figure(3)
 plt.clf()
-ax = plt.axes([0, 0, 1, 1])
 plt.axis('off')
 plt.title('Quantized image (64 colors, Random)')
 plt.imshow(recreate_image(codebook_random, labels_random, w, h))

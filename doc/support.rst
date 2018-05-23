@@ -90,13 +90,9 @@ client works fine: http://webchat.freenode.net
 Documentation resources
 =======================
 
-This documentation is relative to |release|. Documentation for other
-versions can be found here:
+This documentation is relative to |release|. Documentation for
+other versions can be found `here
+<http://scikit-learn.org/dev/versions.html>`_.
 
-    * `0.18 <http://scikit-learn.org/0.18/>`_
-    * `0.17 <http://scikit-learn.org/0.17/>`_
-    * `0.16 <http://scikit-learn.org/0.16/>`_
-    * `0.15 <http://scikit-learn.org/0.15/>`_
-
-Printable pdf documentation for all versions can be found `here
+Printable pdf documentation for old versions can be found `here
 <https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.

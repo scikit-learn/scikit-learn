@@ -29,12 +29,15 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 
+
+def true_fun(X):
+    return np.cos(1.5 * np.pi * X)
+
 np.random.seed(0)
 
 n_samples = 30
 degrees = [1, 4, 15]
 
-true_fun = lambda X: np.cos(1.5 * np.pi * X)
 X = np.sort(np.random.rand(n_samples))
 y = true_fun(X) + np.random.randn(n_samples) * 0.1
 
@@ -57,7 +60,7 @@ for i in range(len(degrees)):
     X_test = np.linspace(0, 1, 100)
     plt.plot(X_test, pipeline.predict(X_test[:, np.newaxis]), label="Model")
     plt.plot(X_test, true_fun(X_test), label="True function")
-    plt.scatter(X, y, label="Samples")
+    plt.scatter(X, y, edgecolor='b', s=20, label="Samples")
     plt.xlabel("x")
     plt.ylabel("y")
     plt.xlim((0, 1))

@@ -5,8 +5,6 @@ Exceptions
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
-import sys
-
 from ._compat import PY3_OR_LATER
 
 class JoblibException(Exception):

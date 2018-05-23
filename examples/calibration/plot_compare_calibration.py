@@ -33,9 +33,9 @@ with different biases per method:
   moving the average prediction of the bagged ensemble away from 0. We observe
   this effect most strongly with random forests because the base-level trees
   trained with random forests have relatively high variance due to feature
-  subseting." As a result, the calibration curve shows a characteristic sigmoid
-  shape, indicating that the classifier could trust its "intuition" more and
-  return probabilities closer to 0 or 1 typically.
+  subsetting." As a result, the calibration curve shows a characteristic
+  sigmoid shape, indicating that the classifier could trust its "intuition"
+  more and return probabilities closer to 0 or 1 typically.
 
 * Support Vector Classification (SVC) shows an even more sigmoid curve as
   the  RandomForestClassifier, which is typical for maximum-margin methods
@@ -81,7 +81,7 @@ svc = LinearSVC(C=1.0)
 rfc = RandomForestClassifier(n_estimators=100)
 
 
-###############################################################################
+# #############################################################################
 # Plot calibration plots
 
 plt.figure(figsize=(10, 10))

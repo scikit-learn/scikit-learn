@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -203,8 +204,25 @@ def test_label_encoder_errors():
 
     # Fail on unseen labels
     le = LabelEncoder()
-    le.fit([1, 2, 3, 1, -1])
-    assert_raises(ValueError, le.inverse_transform, [-1])
+    le.fit([1, 2, 3, -1, 1])
+    msg = "contains previously unseen labels"
+    assert_raise_message(ValueError, msg, le.inverse_transform, [-2])
+    assert_raise_message(ValueError, msg, le.inverse_transform, [-2, -3, -4])
+
+    # Fail on inverse_transform("")
+    msg = "bad input shape ()"
+    assert_raise_message(ValueError, msg, le.inverse_transform, "")
+
+
+def test_label_encoder_empty_array():
+    le = LabelEncoder()
+    le.fit(np.array(["1", "2", "1", "2", "2"]))
+    # test empty transform
+    transformed = le.transform([])
+    assert_array_equal(np.array([]), transformed)
+    # test empty inverse transform
+    inverse_transformed = le.inverse_transform([])
+    assert_array_equal(np.array([]), inverse_transformed)
 
 
 def test_sparse_output_multilabel_binarizer():
@@ -221,7 +239,7 @@ def test_sparse_output_multilabel_binarizer():
     inverse = inputs[0]()
     for sparse_output in [True, False]:
         for inp in inputs:
-            # With fit_tranform
+            # With fit_transform
             mlb = MultiLabelBinarizer(sparse_output=sparse_output)
             got = mlb.fit_transform(inp())
             assert_equal(issparse(got), sparse_output)
@@ -263,7 +281,7 @@ def test_multilabel_binarizer():
                               [1, 1, 0]])
     inverse = inputs[0]()
     for inp in inputs:
-        # With fit_tranform
+        # With fit_transform
         mlb = MultiLabelBinarizer()
         got = mlb.fit_transform(inp())
         assert_array_equal(indicator_mat, got)
@@ -290,10 +308,17 @@ def test_multilabel_binarizer_empty_sample():
 def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
-    assert_raises(KeyError, mlb.fit(y).transform, [[0]])
+    Y = np.array([[1, 0], [0, 1]])
+    w = 'unknown class(es) [0, 4] will be ignored'
+    matrix = assert_warns_message(UserWarning, w,
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    assert_array_equal(matrix, Y)
 
-    mlb = MultiLabelBinarizer(classes=[1, 2])
-    assert_raises(KeyError, mlb.fit_transform, [[0]])
+    Y = np.array([[1, 0, 0], [0, 1, 0]])
+    mlb = MultiLabelBinarizer(classes=[1, 2, 3])
+    matrix = assert_warns_message(UserWarning, w,
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    assert_array_equal(matrix, Y)
 
 
 def test_multilabel_binarizer_given_classes():

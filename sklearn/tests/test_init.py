@@ -7,7 +7,7 @@ __license__ = 'BSD'
 from sklearn.utils.testing import assert_equal
 
 try:
-    from sklearn import *
+    from sklearn import *  # noqa
     _top_import_error = None
 except Exception as e:
     _top_import_error = e

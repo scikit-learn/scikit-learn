@@ -217,8 +217,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef floating *R_data = <floating*> R.data
     cdef floating *XtA_data = <floating*> XtA.data
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if alpha == 0 and beta == 0:
+        warnings.warn("Coordinate descent with no regularization may lead to unexpected"
             " results and is discouraged.")
 
     with nogil:
@@ -480,8 +480,9 @@ def sparse_enet_coordinate_descent(floating [:] w,
                 if d_w_ii > d_w_max:
                     d_w_max = d_w_ii
 
-                if w[ii] > w_max:
-                    w_max = w[ii]
+                if fabs(w[ii]) > w_max:
+                    w_max = fabs(w[ii])
+
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping

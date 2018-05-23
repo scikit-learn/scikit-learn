@@ -26,6 +26,7 @@ from .numpy_pickle_compat import NDArrayWrapper
 # which we don't care.
 from .numpy_pickle_compat import ZNDArrayWrapper  # noqa
 from ._compat import _basestring, PY3_OR_LATER
+from .backports import make_memmap
 
 ###############################################################################
 # Utility objects for persistence.
@@ -151,12 +152,12 @@ class NumpyArrayWrapper(object):
         if unpickler.mmap_mode == 'w+':
             unpickler.mmap_mode = 'r+'
 
-        marray = unpickler.np.memmap(unpickler.filename,
-                                     dtype=self.dtype,
-                                     shape=self.shape,
-                                     order=self.order,
-                                     mode=unpickler.mmap_mode,
-                                     offset=offset)
+        marray = make_memmap(unpickler.filename,
+                             dtype=self.dtype,
+                             shape=self.shape,
+                             order=self.order,
+                             mode=unpickler.mmap_mode,
+                             offset=offset)
         # update the offset so that it corresponds to the end of the read array
         unpickler.file_handle.seek(offset + marray.nbytes)
 
@@ -409,7 +410,7 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
         if len(compress) != 2:
             raise ValueError(
                 'Compress argument tuple should contain exactly 2 elements: '
-                '(compress method, compress level), you passed {0}'
+                '(compress method, compress level), you passed {}'
                 .format(compress))
         compress_method, compress_level = compress
     else:
@@ -418,14 +419,14 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
     if compress_level is not False and compress_level not in range(10):
         # Raising an error if a non valid compress level is given.
         raise ValueError(
-            'Non valid compress level given: "{0}". Possible values are '
-            '{1}.'.format(compress_level, list(range(10))))
+            'Non valid compress level given: "{}". Possible values are '
+            '{}.'.format(compress_level, list(range(10))))
 
     if compress_method not in _COMPRESSORS:
         # Raising an error if an unsupported compression method is given.
         raise ValueError(
-            'Non valid compression method given: "{0}". Possible values are '
-            '{1}.'.format(compress_method, _COMPRESSORS))
+            'Non valid compression method given: "{}". Possible values are '
+            '{}.'.format(compress_method, _COMPRESSORS))
 
     if not is_filename and not is_fileobj:
         # People keep inverting arguments, and the resulting error is
@@ -461,17 +462,17 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
             compress_level = 3
 
     if not PY3_OR_LATER and compress_method in ('lzma', 'xz'):
-        raise NotImplementedError("{0} compression is only available for "
+        raise NotImplementedError("{} compression is only available for "
                                   "python version >= 3.3. You are using "
-                                  "{1}.{2}".format(compress_method,
-                                                   sys.version_info[0],
-                                                   sys.version_info[1]))
+                                  "{}.{}".format(compress_method,
+                                                 sys.version_info[0],
+                                                 sys.version_info[1]))
 
     if cache_size is not None:
         # Cache size is deprecated starting from version 0.10
         warnings.warn("Please do not set 'cache_size' in joblib.dump, "
                       "this parameter has no effect and will be removed. "
-                      "You used 'cache_size={0}'".format(cache_size),
+                      "You used 'cache_size={}'".format(cache_size),
                       DeprecationWarning, stacklevel=2)
 
     if compress_level != 0:
@@ -560,8 +561,10 @@ def load(filename, mmap_mode=None):
     if Path is not None and isinstance(filename, Path):
         filename = str(filename)
 
-    if hasattr(filename, "read") and hasattr(filename, "seek"):
-        with _read_fileobject(filename, "", mmap_mode) as fobj:
+    if hasattr(filename, "read"):
+        fobj = filename
+        filename = getattr(fobj, 'name', '')
+        with _read_fileobject(fobj, filename, mmap_mode) as fobj:
             obj = _unpickle(fobj)
     else:
         with open(filename, 'rb') as f:

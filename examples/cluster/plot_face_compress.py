@@ -23,23 +23,17 @@ import scipy as sp
 import matplotlib.pyplot as plt
 
 from sklearn import cluster
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import sp_version
 
-if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
-                   "thus does not include the scipy.misc.face() image.")
 
-try:
+try:  # SciPy >= 0.16 have face in misc
+    from scipy.misc import face
+    face = face(gray=True)
+except ImportError:
     face = sp.face(gray=True)
-except AttributeError:
-    # Newer versions of scipy have face in misc
-    from scipy import misc
-    face = misc.face(gray=True)
 
 n_clusters = 5
 np.random.seed(0)
-    
+
 X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
 k_means = cluster.KMeans(n_clusters=n_clusters, n_init=4)
 k_means.fit(X)

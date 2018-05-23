@@ -36,6 +36,9 @@ class MockDataFrame(object):
     def __eq__(self, other):
         return MockDataFrame(self.array == other.array)
 
+    def __ne__(self, other):
+        return not self == other
+
 
 class CheckingClassifier(BaseEstimator, ClassifierMixin):
     """Dummy classifier to test pipelining and meta-estimators.

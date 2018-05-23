@@ -13,7 +13,7 @@ For more information, see User Questions: http://scikit-learn.org/stable/support
 #### Steps/Code to Reproduce
 <!--
 Example:
-```
+```python
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 

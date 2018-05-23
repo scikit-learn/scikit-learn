@@ -13,22 +13,17 @@ import os
 import shutil
 import tempfile
 import numpy as np
+from functools import partial
 from sklearn.externals import six
-try:
-    try:
-        from scipy.misc import imsave
-    except ImportError:
-        from scipy.misc.pilutil import imsave
-except ImportError:
-    imsave = None
-
+from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_raises
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -48,7 +43,7 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if imsave is None:
+    if not pillow_installed:
         raise SkipTest("PIL not installed.")
 
     if not os.path.exists(LFW_HOME):
@@ -110,10 +105,9 @@ def teardown_module():
         shutil.rmtree(SCIKIT_LEARN_EMPTY_DATA)
 
 
-@raises(IOError)
 def test_load_empty_lfw_people():
-    fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA,
-                     download_if_missing=False)
+    assert_raises(IOError, fetch_lfw_people, data_home=SCIKIT_LEARN_EMPTY_DATA,
+                  download_if_missing=False)
 
 
 def test_load_fake_lfw_people():
@@ -147,17 +141,23 @@ def test_load_fake_lfw_people():
                        ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
 
+    # test return_X_y option
+    fetch_func = partial(fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                         resize=None,
+                         slice_=None, color=True,
+                         download_if_missing=False)
+    check_return_X_y(lfw_people, fetch_func)
 
-@raises(ValueError)
+
 def test_load_fake_lfw_people_too_restrictive():
-    fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100,
-                     download_if_missing=False)
+    assert_raises(ValueError, fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                  min_faces_per_person=100, download_if_missing=False)
 
 
-@raises(IOError)
 def test_load_empty_lfw_pairs():
-    fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA,
-                    download_if_missing=False)
+    assert_raises(IOError, fetch_lfw_pairs,
+                  data_home=SCIKIT_LEARN_EMPTY_DATA,
+                  download_if_missing=False)
 
 
 def test_load_fake_lfw_pairs():

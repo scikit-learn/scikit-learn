@@ -71,7 +71,7 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
 
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil:
-    """Generate a random integer in [0; end)."""
+    """Generate a random integer in [low; end)."""
     return low + our_rand_r(random_state) % (high - low)
 
 

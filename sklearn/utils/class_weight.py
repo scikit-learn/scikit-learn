@@ -4,9 +4,6 @@
 
 import numpy as np
 from ..externals import six
-from ..utils.fixes import in1d
-
-from .fixes import bincount
 
 
 def compute_class_weight(class_weight, classes, y):
@@ -55,7 +52,7 @@ def compute_class_weight(class_weight, classes, y):
             raise ValueError("classes should have valid labels that are in y")
 
         recip_freq = len(y) / (len(le.classes_) *
-                               bincount(y_ind).astype(np.float64))
+                               np.bincount(y_ind).astype(np.float64))
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
@@ -66,7 +63,7 @@ def compute_class_weight(class_weight, classes, y):
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label %d not present." % c)
+                raise ValueError("Class label {} not present.".format(c))
             else:
                 weight[i] = class_weight[c]
 
@@ -83,6 +80,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
+
+        Note that for multioutput (including multilabel) weights should be
+        defined for each class of every column in its own dict. For example,
+        for four-class multilabel classification weights should be
+        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+        [{1:1}, {2:5}, {3:1}, {4:1}].
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data:
@@ -164,7 +167,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[in1d(y_full, list(classes_missing))] = 0.
+            weight_k[np.in1d(y_full, list(classes_missing))] = 0.
 
         expanded_class_weight.append(weight_k)
 

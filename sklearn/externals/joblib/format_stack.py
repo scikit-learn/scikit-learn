@@ -135,15 +135,10 @@ def _fixed_getframes(etb, context=1, tb_offset=0):
     aux = traceback.extract_tb(etb)
     assert len(records) == len(aux)
     for i, (file, lnum, _, _) in enumerate(aux):
-        maybeStart = lnum - 1 - context // 2
-        start = max(maybeStart, 0)
+        maybe_start = lnum - 1 - context // 2
+        start = max(maybe_start, 0)
         end = start + context
         lines = linecache.getlines(file)[start:end]
-        # pad with empty lines if necessary
-        if maybeStart < 0:
-            lines = (['\n'] * -maybeStart) + lines
-        if len(lines) < context:
-            lines += ['\n'] * (context - len(lines))
         buf = list(records[i])
         buf[LNUM_POS] = lnum
         buf[INDEX_POS] = lnum - 1 - start
@@ -355,13 +350,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
         pyver)
 
     # Drop topmost frames if requested
-    try:
-        records = _fixed_getframes(etb, context, tb_offset)
-    except:
-        raise
-        print('\nUnfortunately, your original traceback can not be '
-              'constructed.\n')
-        return ''
+    records = _fixed_getframes(etb, context, tb_offset)
 
     # Get (safely) a string form of the exception info
     try:
@@ -397,18 +386,13 @@ def format_outer_frames(context=5, stack_start=None, stack_end=None,
                 filename = filename[:-4] + '.py'
         if ignore_ipython:
             # Hack to avoid printing the internals of IPython
-            if (os.path.basename(filename) == 'iplib.py'
-                        and func_name in ('safe_execfile', 'runcode')):
+            if (os.path.basename(filename) in ('iplib.py', 'py3compat.py')
+                        and func_name in ('execfile', 'safe_execfile', 'runcode')):
                 break
-        maybeStart = line_no - 1 - context // 2
-        start = max(maybeStart, 0)
+        maybe_start = line_no - 1 - context // 2
+        start = max(maybe_start, 0)
         end = start + context
         lines = linecache.getlines(filename)[start:end]
-        # pad with empty lines if necessary
-        if maybeStart < 0:
-            lines = (['\n'] * -maybeStart) + lines
-        if len(lines) < context:
-            lines += ['\n'] * (context - len(lines))
         buf = list(records[i])
         buf[LNUM_POS] = line_no
         buf[INDEX_POS] = line_no - 1 - start
