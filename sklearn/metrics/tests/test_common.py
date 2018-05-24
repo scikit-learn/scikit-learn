@@ -152,12 +152,34 @@ CLASSIFICATION_METRICS = {
     "cohen_kappa_score": cohen_kappa_score,
 }
 
-# Metrics are tested with numpy's assert_array. Therefor box-shaped outputs
-# are required.
+
+def precision_recall_curve_padded_thresholds(*args, **kwargs):
+    """
+    The dimensions of precision-recall pairs and the threshold array as
+    returned by the precision_recall_curve do not match. See
+    func:`sklearn.metrics.precision_recall_curve`
+
+    This prevents implicit conversion of return value triple to an higher
+    dimensional np.array of dtype('float64') (it will be of dtype('object)
+    instead). This again is needed for assert_array_equal to work correctly.
+
+    As a workaround we pad the threshold to match dimension of precision and
+    recall.
+    """
+    precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
+
+    pad_threshholds = len(precision) - len(thresholds)
+
+    return np.array([
+        precision,
+        recall,
+        np.pad(thresholds, (0, pad_threshholds), mode='constant')
+    ])
+
+
 CURVE_METRICS = {
-    "roc_curve": lambda *args, **kwargs: roc_curve(*args, **kwargs)[:2],
-    "precision_recall_curve":
-        lambda *args, **kwargs: precision_recall_curve(*args, **kwargs)[:2],
+    "roc_curve": roc_curve,
+    "precision_recall_curve": precision_recall_curve_padded_thresholds,
 }
 
 THRESHOLDED_METRICS = {
