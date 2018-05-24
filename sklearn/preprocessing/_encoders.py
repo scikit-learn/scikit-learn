@@ -219,8 +219,8 @@ class OneHotEncoder(_BaseEncoder):
                   in ``range(n_values[i])``
 
         .. deprecated:: 0.20
-            The `n_values` keyword is deprecated and will be removed in 0.22.
-            Use `categories` instead.
+            The `n_values` keyword was deprecated in version 0.20 and will
+            be removed in 0.22. Use `categories` instead.
 
     categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
@@ -232,8 +232,9 @@ class OneHotEncoder(_BaseEncoder):
         Non-categorical features are always stacked to the right of the matrix.
 
         .. deprecated:: 0.20
-            The `categorical_features` keyword is deprecated and will be
-            removed in 0.22. You can use the ``ColumnTransformer`` instead.
+            The `categorical_features` keyword was deprecated in version
+            0.20 and will be removed in 0.22.
+            You can use the ``ColumnTransformer`` instead.
 
     Attributes
     ----------
@@ -246,6 +247,8 @@ class OneHotEncoder(_BaseEncoder):
         in the training set. Only available when n_values is ``'auto'``.
 
         .. deprecated:: 0.20
+            The `active_features_` attribute was deprecated in version
+            0.20 and will be removed in 0.22.
 
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
@@ -254,11 +257,15 @@ class OneHotEncoder(_BaseEncoder):
         (and then potentially masked by `active_features_` afterwards)
 
         .. deprecated:: 0.20
+            The `feature_indices_` attribute was deprecated in version
+            0.20 and will be removed in 0.22.
 
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
         .. deprecated:: 0.20
+            The `n_values_` attribute was deprecated in version
+            0.20 and will be removed in 0.22.
 
     Examples
     --------
