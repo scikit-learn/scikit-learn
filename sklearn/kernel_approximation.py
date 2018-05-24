@@ -673,6 +673,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         return params
 
+
 # Add `rel_entr` if it is not defined by scipy (0.14.0 and earlier).
 try:
     from scipy.special import rel_entr
