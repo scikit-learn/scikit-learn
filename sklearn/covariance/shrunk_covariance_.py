@@ -73,15 +73,15 @@ class ShrunkCovariance(EmpiricalCovariance):
     store_precision : boolean, default True
         Specify if the estimated precision is stored
 
-    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
-        Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
-
     assume_centered : boolean, default False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data are centered before computation.
+
+    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
+        Coefficient in the convex combination used for the computation
+        of the shrunk estimate.
 
     Attributes
     ----------
@@ -486,10 +486,10 @@ class OAS(EmpiricalCovariance):
     The formula used here does not correspond to the one given in the
     article. It has been taken from the Matlab program available from the
     authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
-    In the original article, formula (23) states that 2/p is multiplied by 
-    Trace(cov*cov) in both the numerator and denominator, this operation is omitted
-    in the author's MATLAB program because for a large p, the value of 2/p is so 
-    small that it doesn't affect the value of the estimator. 
+    In the original article, formula (23) states that 2/p is multiplied by
+    Trace(cov*cov) in both the numerator and denominator, this operation is
+    omitted in the author's MATLAB program because for a large p, the value
+    of 2/p is so small that it doesn't affect the value of the estimator.
 
     Parameters
     ----------

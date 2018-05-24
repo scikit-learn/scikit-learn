@@ -651,7 +651,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    mutual_information_score: Mutual Information (not adjusted for chance)
+    mutual_info_score: Mutual Information (not adjusted for chance)
 
     Examples
     --------
@@ -812,6 +812,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
 
     labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
+
+    sparse : bool
+        Compute contingency matrix internally with sparse matrix.
 
     Returns
     -------

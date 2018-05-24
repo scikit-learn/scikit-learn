@@ -6,7 +6,7 @@ from re import finditer, search
 
 from numpy.random import RandomState
 
-from sklearn.base import ClassifierMixin
+from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
@@ -292,7 +292,7 @@ def test_precision():
                     len(search("\.\d+", finding.group()).group()),
                     precision + 1)
             # check impurity
-            if isinstance(clf, ClassifierMixin):
+            if is_classifier(clf):
                 pattern = "gini = \d+\.\d+"
             else:
                 pattern = "friedman_mse = \d+\.\d+"

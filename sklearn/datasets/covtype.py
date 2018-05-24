@@ -15,29 +15,30 @@ Courtesy of Jock A. Blackard and Colorado State University.
 # License: BSD 3 clause
 
 from gzip import GzipFile
-from io import BytesIO
 import logging
 from os.path import exists, join
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from os import remove
 
 import numpy as np
 
 from .base import get_data_home
+from .base import _fetch_remote
+from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from ..utils import check_random_state
 
+# The original data can be found in:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
+ARCHIVE = RemoteFileMetadata(
+    filename='covtype.data.gz',
+    url='https://ndownloader.figshare.com/files/5976039',
+    checksum=('614360d0257557dd1792834a85a1cdeb'
+              'fadc3c4f30b011d56afee7ffb5b15771'))
 
-URL = ('http://archive.ics.uci.edu/ml/'
-       'machine-learning-databases/covtype/covtype.data.gz')
-
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def fetch_covtype(data_home=None, download_if_missing=True,
@@ -91,19 +92,21 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     if download_if_missing and not available:
         if not exists(covtype_dir):
             makedirs(covtype_dir)
-        logger.warning("Downloading %s" % URL)
-        f = BytesIO(urlopen(URL).read())
-        Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
+        logger.info("Downloading %s" % ARCHIVE.url)
+
+        archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
+        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
+        # delete archive
+        remove(archive_path)
 
         X = Xy[:, :-1]
         y = Xy[:, -1].astype(np.int32)
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(y, targets_path, compress=9)
-    elif not available:
-        if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
 
+    elif not available and not download_if_missing:
+        raise IOError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:

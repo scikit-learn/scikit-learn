@@ -80,7 +80,7 @@ def test_oneclass_adaboost_proba():
     # https://github.com/scikit-learn/scikit-learn/issues/7501
     y_t = np.ones(len(X))
     clf = AdaBoostClassifier().fit(X, y_t)
-    assert_array_equal(clf.predict_proba(X), np.ones((len(X), 1)))
+    assert_array_almost_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
 def test_classification_toy():
@@ -364,29 +364,29 @@ def test_sparse_classification():
         # decision_function
         sparse_results = sparse_classifier.decision_function(X_test_sparse)
         dense_results = dense_classifier.decision_function(X_test)
-        assert_array_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
 
         # predict_log_proba
         sparse_results = sparse_classifier.predict_log_proba(X_test_sparse)
         dense_results = dense_classifier.predict_log_proba(X_test)
-        assert_array_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
 
         # predict_proba
         sparse_results = sparse_classifier.predict_proba(X_test_sparse)
         dense_results = dense_classifier.predict_proba(X_test)
-        assert_array_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
 
         # score
         sparse_results = sparse_classifier.score(X_test_sparse, y_test)
         dense_results = dense_classifier.score(X_test, y_test)
-        assert_array_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
 
         # staged_decision_function
         sparse_results = sparse_classifier.staged_decision_function(
             X_test_sparse)
         dense_results = dense_classifier.staged_decision_function(X_test)
         for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_equal(sprase_res, dense_res)
+            assert_array_almost_equal(sprase_res, dense_res)
 
         # staged_predict
         sparse_results = sparse_classifier.staged_predict(X_test_sparse)
@@ -398,7 +398,7 @@ def test_sparse_classification():
         sparse_results = sparse_classifier.staged_predict_proba(X_test_sparse)
         dense_results = dense_classifier.staged_predict_proba(X_test)
         for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_equal(sprase_res, dense_res)
+            assert_array_almost_equal(sprase_res, dense_res)
 
         # staged_score
         sparse_results = sparse_classifier.staged_score(X_test_sparse,
@@ -451,13 +451,13 @@ def test_sparse_regression():
         # predict
         sparse_results = sparse_classifier.predict(X_test_sparse)
         dense_results = dense_classifier.predict(X_test)
-        assert_array_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
 
         # staged_predict
         sparse_results = sparse_classifier.staged_predict(X_test_sparse)
         dense_results = dense_classifier.staged_predict(X_test)
         for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_equal(sprase_res, dense_res)
+            assert_array_almost_equal(sprase_res, dense_res)
 
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 

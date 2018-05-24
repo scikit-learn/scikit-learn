@@ -37,7 +37,7 @@ Videos
   <http://videolectures.net/icml2010_varaquaux_scik/>`_ by `Gael Varoquaux`_ at
   ICML 2010
 
-    A three minute video from a very early stage of the scikit, explaining the
+    A three minute video from a very early stage of scikit-learn, explaining the
     basic idea and approach we are following.
 
 - `Introduction to statistical learning with scikit-learn <http://archive.org/search.php?query=scikit-learn>`_

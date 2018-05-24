@@ -1,9 +1,17 @@
 #!/bin/sh
 # Script to do a local install of joblib
+set +x
 export LC_ALL=C
 INSTALL_FOLDER=tmp/joblib_install
 rm -rf joblib $INSTALL_FOLDER
-pip install joblib --target $INSTALL_FOLDER
+if [ -z "$1" ]
+then
+        JOBLIB=joblib
+else
+        JOBLIB=$1
+fi
+
+pip install $JOBLIB --target $INSTALL_FOLDER
 cp -r $INSTALL_FOLDER/joblib .
 rm -rf $INSTALL_FOLDER
 
@@ -16,7 +24,3 @@ find joblib -name "*.bak" | xargs rm
 # Remove the tests folders to speed-up test time for scikit-learn.
 # joblib is already tested on its own CI infrastructure upstream.
 rm -r joblib/test
-
-# Remove joblib/testing.py which is only used in tests and has a
-# pytest dependency (needed until we drop nose)
-rm joblib/testing.py

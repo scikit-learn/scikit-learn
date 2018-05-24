@@ -114,8 +114,9 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         X_data = X.ravel()
 
     # do not affect the zeros: here 0 ** (-1) = 0 and not infinity
-    WH_data = WH_data[X_data != 0]
-    X_data = X_data[X_data != 0]
+    indices = X_data > EPSILON
+    WH_data = WH_data[indices]
+    X_data = X_data[indices]
 
     # used to avoid division by zero
     WH_data[WH_data == 0] = EPSILON
@@ -1143,6 +1144,9 @@ class NMF(BaseEstimator, TransformerMixin):
            Regularization parameter *l1_ratio* used in the Coordinate Descent
            solver.
 
+    verbose : bool, default=False
+        Whether to be verbose.
+
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
@@ -1208,6 +1212,8 @@ class NMF(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
+        y : Ignored
+
         W : array-like, shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
 
@@ -1245,6 +1251,8 @@ class NMF(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
+
+        y : Ignored
 
         Returns
         -------

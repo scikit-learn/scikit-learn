@@ -15,11 +15,13 @@ from sklearn.gaussian_process.kernels import DotProduct
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
             assert_almost_equal, assert_equal, assert_raise_message,
-            assert_array_almost_equal)
+            assert_array_almost_equal, assert_array_equal)
 
 
 def f(x):
     return x * np.sin(x)
+
+
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
@@ -344,3 +346,21 @@ def test_no_fit_default_predict():
 
     assert_array_almost_equal(y_std1, y_std2)
     assert_array_almost_equal(y_cov1, y_cov2)
+
+
+def test_K_inv_reset():
+    y2 = f(X2).ravel()
+    for kernel in kernels:
+        # Test that self._K_inv is reset after a new fit
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        assert_true(hasattr(gpr, '_K_inv'))
+        assert_true(gpr._K_inv is None)
+        gpr.predict(X, return_std=True)
+        assert_true(gpr._K_inv is not None)
+        gpr.fit(X2, y2)
+        assert_true(gpr._K_inv is None)
+        gpr.predict(X2, return_std=True)
+        gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X2, y2)
+        gpr2.predict(X2, return_std=True)
+        # the value of K_inv should be independent of the first fit
+        assert_array_equal(gpr._K_inv, gpr2._K_inv)

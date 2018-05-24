@@ -20,7 +20,6 @@ from sklearn.model_selection import GridSearchCV
 
 # load the data
 digits = load_digits()
-data = digits.data
 
 # project the 64-dimensional data to a lower dimension
 pca = PCA(n_components=15, whiten=False)

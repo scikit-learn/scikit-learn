@@ -7,7 +7,9 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -349,11 +351,66 @@ def test_pca_inverse():
 
 
 def test_pca_validation():
-    X = [[0, 1], [1, 0]]
+    # Ensures that solver-specific extreme inputs for the n_components
+    # parameter raise errors
+    X = np.array([[0, 1, 0], [1, 0, 0]])
+    smallest_d = 2  # The smallest dimension
+    lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
+
     for solver in solver_list:
-        for n_components in [-1, 3]:
-            assert_raises(ValueError,
-                          PCA(n_components, svd_solver=solver).fit, X)
+        # We conduct the same test on X.T so that it is invariant to axis.
+        for data in [X, X.T]:
+            for n_components in [-1, 3]:
+
+                if solver == 'auto':
+                    solver_reported = 'full'
+                else:
+                    solver_reported = solver
+
+                assert_raises_regex(ValueError,
+                                    "n_components={}L? must be between "
+                                    "{}L? and min\(n_samples, n_features\)="
+                                    "{}L? with svd_solver=\'{}\'"
+                                    .format(n_components,
+                                            lower_limit[solver],
+                                            smallest_d,
+                                            solver_reported),
+                                    PCA(n_components,
+                                        svd_solver=solver).fit, data)
+            if solver == 'arpack':
+
+                n_components = smallest_d
+
+                assert_raises_regex(ValueError,
+                                    "n_components={}L? must be "
+                                    "strictly less than "
+                                    "min\(n_samples, n_features\)={}L?"
+                                    " with svd_solver=\'arpack\'"
+                                    .format(n_components, smallest_d),
+                                    PCA(n_components, svd_solver=solver)
+                                    .fit, data)
+
+        n_components = 1.0
+        type_ncom = type(n_components)
+        assert_raise_message(ValueError,
+                             "n_components={} must be of type int "
+                             "when greater than or equal to 1, was of type={}"
+                             .format(n_components, type_ncom),
+                             PCA(n_components, svd_solver=solver).fit, data)
+
+
+def test_n_components_none():
+    # Ensures that n_components == None is handled correctly
+    X = iris.data
+    # We conduct the same test on X.T so that it is invariant to axis.
+    for data in [X, X.T]:
+        for solver in solver_list:
+            pca = PCA(svd_solver=solver)
+            pca.fit(data)
+            if solver == 'arpack':
+                assert_equal(pca.n_components_, min(data.shape) - 1)
+            else:
+                assert_equal(pca.n_components_, min(data.shape))
 
 
 def test_randomized_pca_check_projection():
@@ -403,6 +460,26 @@ def test_randomized_pca_inverse():
     Y_inverse = pca.inverse_transform(Y)
     relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
     assert_less(relative_max_delta, 1e-5)
+
+
+def test_n_components_mle():
+    # Ensure that n_components == 'mle' doesn't raise error for auto/full
+    # svd_solver and raises error for arpack/randomized svd_solver
+    rng = np.random.RandomState(0)
+    n_samples = 600
+    n_features = 10
+    X = rng.randn(n_samples, n_features)
+    n_components_dict = {}
+    for solver in solver_list:
+        pca = PCA(n_components='mle', svd_solver=solver)
+        if solver in ['auto', 'full']:
+            pca.fit(X)
+            n_components_dict[solver] = pca.n_components_
+        else:  # arpack/randomized solver
+            error_message = ("n_components='mle' cannot be a string with "
+                             "svd_solver='{}'".format(solver))
+            assert_raise_message(ValueError, error_message, pca.fit, X)
+    assert_equal(n_components_dict['auto'], n_components_dict['full'])
 
 
 def test_pca_dim():
@@ -527,6 +604,50 @@ def test_pca_score3():
         ll[k] = pca.score(Xt)
 
     assert_true(ll.argmax() == 1)
+
+
+def test_pca_score_with_different_solvers():
+    digits = datasets.load_digits()
+    X_digits = digits.data
+
+    pca_dict = {svd_solver: PCA(n_components=30, svd_solver=svd_solver,
+                                random_state=0)
+                for svd_solver in solver_list}
+
+    for pca in pca_dict.values():
+        pca.fit(X_digits)
+        # Sanity check for the noise_variance_. For more details see
+        # https://github.com/scikit-learn/scikit-learn/issues/7568
+        # https://github.com/scikit-learn/scikit-learn/issues/8541
+        # https://github.com/scikit-learn/scikit-learn/issues/8544
+        assert np.all((pca.explained_variance_ - pca.noise_variance_) >= 0)
+
+    # Compare scores with different svd_solvers
+    score_dict = {svd_solver: pca.score(X_digits)
+                  for svd_solver, pca in pca_dict.items()}
+    assert_almost_equal(score_dict['full'], score_dict['arpack'])
+    assert_almost_equal(score_dict['full'], score_dict['randomized'],
+                        decimal=3)
+
+
+def test_pca_zero_noise_variance_edge_cases():
+    # ensure that noise_variance_ is 0 in edge cases
+    # when n_components == min(n_samples, n_features)
+    n, p = 100, 3
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
+    # arpack raises ValueError for n_components == min(n_samples,
+    # n_features)
+    svd_solvers = ['full', 'randomized']
+
+    for svd_solver in svd_solvers:
+        pca = PCA(svd_solver=svd_solver, n_components=p)
+        pca.fit(X)
+        assert pca.noise_variance_ == 0
+
+        pca.fit(X.T)
+        assert pca.noise_variance_ == 0
 
 
 def test_svd_solver_auto():

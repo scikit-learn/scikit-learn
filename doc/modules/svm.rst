@@ -212,13 +212,12 @@ Then ``dual_coef_`` looks like this:
 Scores and probabilities
 ------------------------
 
-The :class:`SVC` method ``decision_function`` gives per-class scores 
-for each sample (or a single score per sample in the binary case).
-When the constructor option ``probability`` is set to ``True``,
-class membership probability estimates
-(from the methods ``predict_proba`` and ``predict_log_proba``) are enabled.
-In the binary case, the probabilities are calibrated using Platt scaling:
-logistic regression on the SVM's scores,
+The ``decision_function`` method of :class:`SVC` and :class:`NuSVC` gives
+per-class scores for each sample (or a single score per sample in the binary
+case). When the constructor option ``probability`` is set to ``True``,
+class membership probability estimates (from the methods ``predict_proba`` and
+``predict_log_proba``) are enabled. In the binary case, the probabilities are
+calibrated using Platt scaling: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
@@ -245,7 +244,7 @@ and use ``decision_function`` instead of ``predict_proba``.
  
  * Platt
    `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
-   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`.
+   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -399,7 +398,7 @@ Tips on Practical Use
     function can be configured to be almost the same as the :class:`LinearSVC`
     model.
 
-  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`nuSVC` and
+  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
     :class:`NuSVR`, the size of the kernel cache has a strong impact on run
     times for larger problems.  If you have enough RAM available, it is
     recommended to set ``cache_size`` to a higher value than the default of
@@ -423,10 +422,24 @@ Tips on Practical Use
     positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
-  * The underlying :class:`LinearSVC` implementation uses a random
-    number generator to select features when fitting the model. It is
-    thus not uncommon, to have slightly different results for the same
-    input data. If that happens, try with a smaller tol parameter.
+  * **Randomness of the underlying implementations**: The underlying 
+    implementations of :class:`SVC` and :class:`NuSVC` use a random number
+    generator only to shuffle the data for probability estimation (when
+    ``probability`` is set to ``True``). This randomness can be controlled
+    with the ``random_state`` parameter. If ``probability`` is set to ``False``
+    these estimators are not random and ``random_state`` has no effect on the
+    results. The underlying :class:`OneClassSVM` implementation is similar to
+    the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
+    is provided for :class:`OneClassSVM`, it is not random.
+
+    The underlying :class:`LinearSVC` implementation uses a random number
+    generator to select features when fitting the model with a dual coordinate
+    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon,
+    to have slightly different results for the same input data. If that
+    happens, try with a smaller tol parameter. This randomness can also be
+    controlled with the ``random_state`` parameter. When ``dual`` is
+    set to ``False`` the underlying implementation of :class:`LinearSVC` is
+    not random and ``random_state`` has no effect on the results.
 
   * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
@@ -640,7 +653,7 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
-It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
+It can be shown that the :math:`\nu`-SVC formulation is a reparameterization
 of the :math:`C`-SVC and therefore mathematically equivalent.
 
 

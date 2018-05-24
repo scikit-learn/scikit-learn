@@ -39,5 +39,4 @@ git config --global push.default matching
 git add -f $dir/
 git commit -m "$MSG" $dir
 git push
-
 echo $MSG 

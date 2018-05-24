@@ -7,12 +7,10 @@ import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 
-from numpy.testing import assert_raises
-
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import assert_equal, assert_true
+from sklearn.utils.testing import assert_equal, assert_true, assert_raises
 
 
 def test_img_to_graph():

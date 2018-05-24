@@ -301,7 +301,9 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor*.
+used, and the *damping factor* which damps the responsibility and 
+availability messages to avoid numerical oscillations when updating these
+messages.
 
 The main drawback of Affinity Propagation is its complexity. The
 algorithm has a time complexity of the order :math:`O(N^2 T)`, where :math:`N`
@@ -338,7 +340,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -346,10 +348,17 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i', k)}]
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
+As discussed above, in order to avoid numerical oscillations when updating the 
+messages, the damping factor :math:`\lambda` is introduced to iteration process:
+
+.. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
+.. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
+
+where :math:`t` indicates the iteration times.
 
 .. _mean_shift:
 
@@ -418,7 +427,7 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
 SpectralClustering requires the number of clusters to be specified. It
 works well for a small number of clusters but is not advised when using
 many clusters.
@@ -667,7 +676,7 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
 
-* *l1* distance is often good for sparse features, or sparse noise: ie
+* *l1* distance is often good for sparse features, or sparse noise: i.e.
   many of the features are zero, as in text mining using occurrences of
   rare words.
 
@@ -863,7 +872,7 @@ the user is advised
  2. Train all data by multiple calls to partial_fit.
  3. Set ``n_clusters`` to a required value using
     ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+ 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
     which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
@@ -1334,7 +1343,7 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
+ * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 

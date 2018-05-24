@@ -265,6 +265,10 @@ class _CalibratedClassifier(object):
             if None, then classes is extracted from the given target values
             in fit().
 
+    See also
+    --------
+    CalibratedClassifierCV
+
     References
     ----------
     .. [1] Obtaining calibrated probability estimates from decision trees

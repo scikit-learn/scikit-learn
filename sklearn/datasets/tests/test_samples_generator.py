@@ -25,6 +25,7 @@ from sklearn.datasets import make_friedman2
 from sklearn.datasets import make_friedman3
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.datasets import make_moons
+from sklearn.datasets import make_circles
 from sklearn.datasets import make_sparse_coded_signal
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
@@ -37,12 +38,14 @@ from sklearn.utils.validation import assert_all_finite
 
 
 def test_make_classification():
+    weights = [0.1, 0.25]
     X, y = make_classification(n_samples=100, n_features=20, n_informative=5,
                                n_redundant=1, n_repeated=1, n_classes=3,
                                n_clusters_per_class=1, hypercube=False,
-                               shift=None, scale=None, weights=[0.1, 0.25],
+                               shift=None, scale=None, weights=weights,
                                random_state=0)
 
+    assert_equal(weights, [0.1, 0.25])
     assert_equal(X.shape, (100, 20), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of classes")
@@ -171,12 +174,13 @@ def test_make_multilabel_classification_return_indicator():
         n_samples=25, n_features=20, n_classes=3, random_state=0,
         allow_unlabeled=allow_unlabeled, return_distributions=True)
 
-    assert_array_equal(X, X2)
+    assert_array_almost_equal(X, X2)
     assert_array_equal(Y, Y2)
     assert_equal(p_c.shape, (3,))
     assert_almost_equal(p_c.sum(), 1)
     assert_equal(p_w_c.shape, (20, 3))
     assert_almost_equal(p_w_c.sum(axis=0), [1] * 3)
+
 
 def test_make_multilabel_classification_return_indicator_sparse():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
@@ -187,6 +191,7 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
         assert_true(sp.issparse(Y))
+
 
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
@@ -371,7 +376,7 @@ def test_make_checkerboard():
                                  shuffle=True, random_state=0)
     X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
-    assert_array_equal(X1, X2)
+    assert_array_almost_equal(X1, X2)
 
 
 def test_make_moons():
@@ -381,3 +386,29 @@ def test_make_moons():
         dist_sqr = ((x - center) ** 2).sum()
         assert_almost_equal(dist_sqr, 1.0,
                             err_msg="Point is not on expected unit circle")
+
+
+def test_make_circles():
+    factor = 0.3
+
+    for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
+        # Testing odd and even case, because in the past make_circles always
+        # created an even number of samples.
+        X, y = make_circles(n_samples, shuffle=False, noise=None,
+                            factor=factor)
+        assert_equal(X.shape, (n_samples, 2), "X shape mismatch")
+        assert_equal(y.shape, (n_samples,), "y shape mismatch")
+        center = [0.0, 0.0]
+        for x, label in zip(X, y):
+            dist_sqr = ((x - center) ** 2).sum()
+            dist_exp = 1.0 if label == 0 else factor**2
+            assert_almost_equal(dist_sqr, dist_exp,
+                                err_msg="Point is not on expected circle")
+
+        assert_equal(X[y == 0].shape, (n_outer, 2),
+                     "Samples not correctly distributed across circles.")
+        assert_equal(X[y == 1].shape, (n_inner, 2),
+                     "Samples not correctly distributed across circles.")
+
+    assert_raises(ValueError, make_circles, factor=-0.01)
+    assert_raises(ValueError, make_circles, factor=1.)

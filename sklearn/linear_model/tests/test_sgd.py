@@ -9,7 +9,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
@@ -266,11 +265,11 @@ class CommonTest(object):
                                   decimal=16)
         assert_almost_equal(clf1.intercept_, average_intercept, decimal=16)
 
-    @raises(ValueError)
     def test_sgd_bad_alpha_for_optimal_learning_rate(self):
         # Check whether expected ValueError on bad alpha, i.e. 0
         # since alpha is used to compute the optimal learning rate
-        self.factory(alpha=0, learning_rate="optimal")
+        assert_raises(ValueError, self.factory,
+                      alpha=0, learning_rate="optimal")
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
@@ -287,63 +286,56 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             # assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
             assert_array_equal(clf.predict(T), true_result)
 
-    @raises(ValueError)
     def test_sgd_bad_l1_ratio(self):
         # Check whether expected ValueError on bad l1_ratio
-        self.factory(l1_ratio=1.1)
+        assert_raises(ValueError, self.factory, l1_ratio=1.1)
 
-    @raises(ValueError)
     def test_sgd_bad_learning_rate_schedule(self):
         # Check whether expected ValueError on bad learning_rate
-        self.factory(learning_rate="<unknown>")
+        assert_raises(ValueError, self.factory, learning_rate="<unknown>")
 
-    @raises(ValueError)
     def test_sgd_bad_eta0(self):
         # Check whether expected ValueError on bad eta0
-        self.factory(eta0=0, learning_rate="constant")
+        assert_raises(ValueError, self.factory, eta0=0,
+                      learning_rate="constant")
 
-    @raises(ValueError)
     def test_sgd_bad_alpha(self):
         # Check whether expected ValueError on bad alpha
-        self.factory(alpha=-.1)
+        assert_raises(ValueError, self.factory, alpha=-.1)
 
-    @raises(ValueError)
     def test_sgd_bad_penalty(self):
         # Check whether expected ValueError on bad penalty
-        self.factory(penalty='foobar', l1_ratio=0.85)
+        assert_raises(ValueError, self.factory, penalty='foobar',
+                      l1_ratio=0.85)
 
-    @raises(ValueError)
     def test_sgd_bad_loss(self):
         # Check whether expected ValueError on bad loss
-        self.factory(loss="foobar")
+        assert_raises(ValueError, self.factory, loss="foobar")
 
-    @raises(ValueError)
     def test_sgd_max_iter_param(self):
         # Test parameter validity check
-        self.factory(max_iter=-10000)
+        assert_raises(ValueError, self.factory, max_iter=-10000)
 
-    @raises(ValueError)
     def test_sgd_shuffle_param(self):
         # Test parameter validity check
-        self.factory(shuffle="false")
+        assert_raises(ValueError, self.factory, shuffle="false")
 
-    @raises(TypeError)
     def test_argument_coef(self):
         # Checks coef_init not allowed as model argument (only fit)
-        # Provided coef_ does not match dataset.
-        self.factory(coef_init=np.zeros((3,))).fit(X, Y)
+        # Provided coef_ does not match dataset
+        assert_raises(TypeError, self.factory, coef_init=np.zeros((3,)))
 
-    @raises(ValueError)
     def test_provide_coef(self):
         # Checks coef_init shape for the warm starts
         # Provided coef_ does not match dataset.
-        self.factory().fit(X, Y, coef_init=np.zeros((3,)))
+        assert_raises(ValueError, self.factory().fit,
+                      X, Y, coef_init=np.zeros((3,)))
 
-    @raises(ValueError)
     def test_set_intercept(self):
         # Checks intercept_ shape for the warm starts
         # Provided intercept_ does not match dataset.
-        self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
+        assert_raises(ValueError, self.factory().fit,
+                      X, Y, intercept_init=np.zeros((3,)))
 
     def test_set_intercept_binary(self):
         # Checks intercept_ shape for the warm starts in binary case
@@ -386,10 +378,10 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory().fit(X, Y)
         self.factory().fit(X, Y, intercept_init=clf.intercept_)
 
-    @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
         # Target must have at least two labels
-        self.factory(alpha=0.01, max_iter=20).fit(X2, np.ones(9))
+        clf = self.factory(alpha=0.01, max_iter=20)
+        assert_raises(ValueError, clf.fit, X2, np.ones(9))
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
@@ -607,17 +599,15 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # should be similar up to some epsilon due to learning rate schedule
         assert_almost_equal(clf.coef_, clf_weighted.coef_, decimal=2)
 
-    @raises(ValueError)
     def test_wrong_class_weight_label(self):
         # ValueError due to not existing class label.
         clf = self.factory(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-        clf.fit(X, Y)
+        assert_raises(ValueError, clf.fit, X, Y)
 
-    @raises(ValueError)
     def test_wrong_class_weight_format(self):
         # ValueError due to wrong class_weight argument type.
         clf = self.factory(alpha=0.1, max_iter=1000, class_weight=[0.5])
-        clf.fit(X, Y)
+        assert_raises(ValueError, clf.fit, X, Y)
 
     def test_weights_multiplied(self):
         # Tests that class_weight and sample_weight are multiplicative
@@ -700,18 +690,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # the prediction on this point should shift
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
-    @raises(ValueError)
     def test_wrong_sample_weights(self):
         # Test if ValueError is raised if sample_weight has wrong shape
         clf = self.factory(alpha=0.1, max_iter=1000, fit_intercept=False)
         # provided sample_weight too long
-        clf.fit(X, Y, sample_weight=np.arange(7))
+        assert_raises(ValueError, clf.fit, X, Y, sample_weight=np.arange(7))
 
-    @raises(ValueError)
     def test_partial_fit_exception(self):
         clf = self.factory(alpha=0.01)
         # classes was not specified
-        clf.partial_fit(X3, Y3)
+        assert_raises(ValueError, clf.partial_fit, X3, Y3)
 
     def test_partial_fit_binary(self):
         third = X.shape[0] // 3
@@ -851,15 +839,14 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
         assert_equal(clf.coef_[0], clf.coef_[1])
 
-    @raises(ValueError)
     def test_sgd_bad_penalty(self):
         # Check whether expected ValueError on bad penalty
-        self.factory(penalty='foobar', l1_ratio=0.85)
+        assert_raises(ValueError, self.factory,
+                      penalty='foobar', l1_ratio=0.85)
 
-    @raises(ValueError)
     def test_sgd_bad_loss(self):
         # Check whether expected ValueError on bad loss
-        self.factory(loss="foobar")
+        assert_raises(ValueError, self.factory, loss="foobar")
 
     def test_sgd_averaged_computed_correctly(self):
         # Tests the average regressor matches the naive implementation
@@ -1207,12 +1194,13 @@ def test_tol_parameter():
 def test_future_and_deprecation_warnings():
     # Test that warnings are raised. Will be removed in 0.21
 
+    def init(max_iter=None, tol=None, n_iter=None, for_partial_fit=False):
+        sgd = SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter)
+        sgd._validate_params(for_partial_fit=for_partial_fit)
+
     # When all default values are used
     msg_future = "max_iter and tol parameters have been added in "
-    assert_warns_message(FutureWarning, msg_future, SGDClassifier)
-
-    def init(max_iter=None, tol=None, n_iter=None):
-        SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter)
+    assert_warns_message(FutureWarning, msg_future, init)
 
     # When n_iter is specified
     msg_deprecation = "n_iter parameter is deprecated"
@@ -1223,29 +1211,37 @@ def test_future_and_deprecation_warnings():
     assert_no_warnings(init, None, 1e-3, None)
     assert_no_warnings(init, 100, 1e-3, None)
 
+    # Test that for_partial_fit will not throw warnings for max_iter or tol
+    assert_no_warnings(init, None, None, None, True)
+
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def test_tol_and_max_iter_default_values():
     # Test that the default values are correctly changed
     est = SGDClassifier()
-    assert_equal(est.tol, None)
-    assert_equal(est.max_iter, 5)
+    est._validate_params()
+    assert_equal(est._tol, None)
+    assert_equal(est._max_iter, 5)
 
     est = SGDClassifier(n_iter=42)
-    assert_equal(est.tol, None)
-    assert_equal(est.max_iter, 42)
+    est._validate_params()
+    assert_equal(est._tol, None)
+    assert_equal(est._max_iter, 42)
 
     est = SGDClassifier(tol=1e-2)
-    assert_equal(est.tol, 1e-2)
-    assert_equal(est.max_iter, 1000)
+    est._validate_params()
+    assert_equal(est._tol, 1e-2)
+    assert_equal(est._max_iter, 1000)
 
     est = SGDClassifier(max_iter=42)
-    assert_equal(est.tol, None)
-    assert_equal(est.max_iter, 42)
+    est._validate_params()
+    assert_equal(est._tol, None)
+    assert_equal(est._max_iter, 42)
 
     est = SGDClassifier(max_iter=42, tol=1e-2)
-    assert_equal(est.tol, 1e-2)
-    assert_equal(est.max_iter, 42)
+    est._validate_params()
+    assert_equal(est._tol, 1e-2)
+    assert_equal(est._max_iter, 42)
 
 
 def _test_gradient_common(loss_function, cases):

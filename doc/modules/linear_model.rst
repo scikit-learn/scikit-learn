@@ -1141,7 +1141,7 @@ in the following ways.
 
 .. topic:: References:
 
-    .. [#f1] Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
+  * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Also, this estimator is different from the R implementation of Robust Regression
 (http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least

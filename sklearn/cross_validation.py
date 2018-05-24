@@ -1953,9 +1953,6 @@ def permutation_test_score(estimator, X, y, cv=None,
     return score, permutation_scores, pvalue
 
 
-permutation_test_score.__test__ = False  # to avoid a pb with nosetests
-
-
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
@@ -2070,6 +2067,3 @@ def train_test_split(*arrays, **options):
     train, test = next(iter(cv))
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-train_test_split.__test__ = False  # to avoid a pb with nosetests

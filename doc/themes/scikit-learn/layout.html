@@ -26,6 +26,11 @@
   {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
+  <script>
+     VERSION_SUBDIR = (function(groups) {
+         return groups ? groups[1] : null;
+     })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
+  </script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
   <script type="text/javascript">
@@ -78,17 +83,17 @@
                  <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-            <li class="link-title">Scikit-learn 0.19 (development)</li>
+            <li class="link-title">Scikit-learn <script>document.write(DOCUMENTATION_OPTIONS.VERSION + (VERSION_SUBDIR ? " (" + VERSION_SUBDIR + ")" : ""));</script></li>
             <li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
             <li><a href="{{ pathto('user_guide') }}">User guide</a></li>
             <li><a href="{{ pathto('modules/classes') }}">API</a></li>
             <li><a href="{{ pathto('faq') }}">FAQ</a></li>
             <li><a href="{{ pathto('developers/contributing') }}">Contributing</a></li>
             <li class="divider"></li>
-                <li><a href="http://scikit-learn.org/stable/documentation.html">Scikit-learn 0.18 (stable)</a></li>
-                <li><a href="http://scikit-learn.org/0.17/documentation.html">Scikit-learn 0.17</a></li>
-                <li><a href="http://scikit-learn.org/0.16/documentation.html">Scikit-learn 0.16</a></li>
-				<li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
+                <script>if (VERSION_SUBDIR != "stable") document.write('<li><a href="http://scikit-learn.org/stable/documentation.html">Stable version</a></li>')</script>
+                <script>if (VERSION_SUBDIR != "dev") document.write('<li><a href="http://scikit-learn.org/dev/documentation.html">Development version</a></li>')</script>
+                <li><a href="http://scikit-learn.org/dev/versions.html">All available versions</a></li>
+                <li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
               </ul>
             </div>
         </li>
@@ -203,7 +208,7 @@
 {% endblock %}
 
 {% block content %}
-<!-- Github "fork me" ribbon -->
+<!-- GitHub "fork me" ribbon -->
 <a href="https://github.com/scikit-learn/scikit-learn">
   <img class="fork-me"
        style="position: absolute; top: 0; right: 0; border: 0;"

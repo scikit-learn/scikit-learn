@@ -29,7 +29,6 @@ from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
@@ -42,16 +41,18 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
 
 
-REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
-                      'neg_mean_squared_error', 'neg_mean_squared_log_error',
+REGRESSION_SCORERS = ['explained_variance', 'r2',
+                      'neg_mean_absolute_error', 'neg_mean_squared_error',
+                      'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error']
 
-CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
+CLF_SCORERS = ['accuracy', 'balanced_accuracy',
+               'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -68,7 +69,7 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
-    sensible_regr = DummyRegressor(strategy='median')
+    sensible_regr = DecisionTreeRegressor(random_state=0)
     sensible_regr.fit(X_train, y_train)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)

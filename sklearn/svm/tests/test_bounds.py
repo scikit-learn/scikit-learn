@@ -5,7 +5,7 @@ from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
 
-from sklearn.utils.testing import assert_true, raises
+from sklearn.utils.testing import assert_true, assert_raises
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -63,13 +63,11 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
                 (np.asarray(clf.intercept_) != 0).any())
 
 
-@raises(ValueError)
 def test_ill_posed_min_c():
     X = [[0, 0], [0, 0]]
     y = [0, 1]
-    l1_min_c(X, y)
+    assert_raises(ValueError, l1_min_c, X, y)
 
 
-@raises(ValueError)
 def test_unsupported_loss():
-    l1_min_c(dense_X, Y1, 'l1')
+    assert_raises(ValueError, l1_min_c, dense_X, Y1, 'l1')

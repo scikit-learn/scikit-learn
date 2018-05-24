@@ -3,6 +3,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from scipy import sparse
+from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
@@ -254,8 +255,8 @@ def test_spectral_embedding_unnormalized():
                                      drop_first=False)
 
     # Verify using manual computation with dense eigh
-    laplacian, dd = sparse.csgraph.laplacian(sims, normed=False,
-                                             return_diag=True)
+    laplacian, dd = csgraph.laplacian(sims, normed=False,
+                                      return_diag=True)
     _, diffusion_map = eigh(laplacian)
     embedding_2 = diffusion_map.T[:n_components] * dd
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T

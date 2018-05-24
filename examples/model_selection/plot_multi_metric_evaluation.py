@@ -1,4 +1,7 @@
-"""Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV
+"""
+============================================================================
+Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV
+============================================================================
 
 Multiple metric parameter search can be done by setting the ``scoring``
 parameter to a list of metric scorer names or a dict mapping the scorer names

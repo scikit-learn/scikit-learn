@@ -189,8 +189,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                              "y contains classes %s"
                              % (self.__class__.__name__, self.classes_))
         elif self.classes_.size == 1:
-            raise ValueError("{0:s} requires 2 classes.".format(
-                self.__class__.__name__))
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class"
+                             .format(self.__class__.__name__,
+                                     self.classes_.size))
 
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
@@ -595,8 +596,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         self.n_classes_ = self.classes_.size
         if self.n_classes_ == 1:
             raise ValueError("GaussianProcessClassifier requires 2 or more "
-                             "distinct classes. Only class %s present."
-                             % self.classes_[0])
+                             "distinct classes; got %d class (only class %s "
+                             "is present)"
+                             % (self.n_classes_, self.classes_[0]))
         if self.n_classes_ > 2:
             if self.multi_class == "one_vs_rest":
                 self.base_estimator_ = \

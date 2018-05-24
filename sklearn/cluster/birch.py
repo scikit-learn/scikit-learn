@@ -441,6 +441,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
+
+        y : Ignored
+
         """
         self.fit_, self.partial_fit_ = True, False
         return self._fit(X)
@@ -521,6 +524,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features), None
             Input data. If X is not provided, only the global clustering
             step is done.
+
+        y : Ignored
+
         """
         self.partial_fit_, self.fit_ = True, False
         if X is None:

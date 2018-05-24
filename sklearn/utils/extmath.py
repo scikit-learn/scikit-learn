@@ -421,7 +421,6 @@ def weighted_mode(a, w, axis=0):
     else:
         a = np.asarray(a)
         w = np.asarray(w)
-        axis = axis
 
     if a.shape != w.shape:
         w = np.zeros(a.shape, dtype=w.dtype) + w

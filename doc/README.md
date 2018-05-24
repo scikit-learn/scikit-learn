@@ -1,8 +1,13 @@
 # Documentation for scikit-learn
 
 This section contains the full manual and web page as displayed in
-http://scikit-learn.org. To generate the full web page, including
-the example gallery (this might take a while):
+http://scikit-learn.org.
+Building the website requires the sphinx and sphinx-gallery packages:
+
+    pip install sphinx sphinx-gallery
+
+To generate the full web page, including the example gallery (this might take a
+while):
 
     make html
 
@@ -15,7 +20,6 @@ That should create all the doc in directory _build/html
 To build the PDF manual, run
 
     make latexpdf
-
 
 The website is hosted at github and can be updated manually (for releases)
 by pushing to the https://github.com/scikit-learn/scikit-learn.github.io repository.

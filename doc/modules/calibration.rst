@@ -34,7 +34,7 @@ with different biases per method:
 
 .. currentmodule:: sklearn.naive_bayes
 
-*  :class:`GaussianNB` tends to push probabilties to 0 or 1 (note the
+*  :class:`GaussianNB` tends to push probabilities to 0 or 1 (note the
    counts in the histograms). This is mainly because it makes the assumption
    that features are conditionally independent given the class, which is not
    the case in this dataset which contains 2 redundant features.
@@ -44,7 +44,7 @@ with different biases per method:
 *  :class:`RandomForestClassifier` shows the opposite behavior: the histograms
    show peaks at approximately 0.2 and 0.9 probability, while probabilities close to
    0 or 1 are very rare. An explanation for this is given by Niculescu-Mizil
-   and Caruana [4]: "Methods such as bagging and random forests that average
+   and Caruana [4]_: "Methods such as bagging and random forests that average
    predictions from a base set of models can have difficulty making predictions
    near 0 and 1 because variance in the underlying base models will bias
    predictions that should be near zero or one away from these values. Because
@@ -56,16 +56,16 @@ with different biases per method:
    than 0 for this case, thus moving the average prediction of the bagged
    ensemble away from 0. We observe this effect most strongly with random
    forests because the base-level trees trained with random forests have
-   relatively high variance due to feature subseting." As a result, the
-   calibration curve also referred to as the reliability diagram (Wilks 1995[5]) shows a
+   relatively high variance due to feature subsetting." As a result, the
+   calibration curve also referred to as the reliability diagram (Wilks 1995 [5]_) shows a
    characteristic sigmoid shape, indicating that the classifier could trust its
-   "intuition" more and return probabilties closer to 0 or 1 typically.
+   "intuition" more and return probabilities closer to 0 or 1 typically.
 
 .. currentmodule:: sklearn.svm
 
 *  Linear Support Vector Classification (:class:`LinearSVC`) shows an even more sigmoid curve
    as the RandomForestClassifier, which is typical for maximum-margin methods
-   (compare Niculescu-Mizil and Caruana [4]), which focus on hard samples
+   (compare Niculescu-Mizil and Caruana [4]_), which focus on hard samples
    that are close to the decision boundary (the support vectors).
 
 .. currentmodule:: sklearn.calibration
@@ -78,7 +78,7 @@ The class :class:`CalibratedClassifierCV` uses a cross-validation generator and
 estimates for each split the model parameter on the train samples and the
 calibration of the test samples. The probabilities predicted for the
 folds are then averaged. Already fitted classifiers can be calibrated by
-:class:`CalibratedClassifierCV` via the paramter cv="prefit". In this case,
+:class:`CalibratedClassifierCV` via the parameter cv="prefit". In this case,
 the user has to take care manually that data for model fitting and calibration
 are disjoint.
 
@@ -190,18 +190,18 @@ a similar decrease in log-loss.
 
 .. topic:: References:
 
-    .. [1] Obtaining calibrated probability estimates from decision trees
-          and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    * Obtaining calibrated probability estimates from decision trees
+      and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-          Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    * Transforming Classifier Scores into Accurate Multiclass
+      Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-          Regularized Likelihood Methods, J. Platt, (1999)
+    * Probabilistic Outputs for Support Vector Machines and Comparisons to
+      Regularized Likelihood Methods, J. Platt, (1999)
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
-          A. Niculescu-Mizil & R. Caruana, ICML 2005
+           A. Niculescu-Mizil & R. Caruana, ICML 2005
 
     .. [5] On the combination of forecast probabilities for
-         consecutive precipitation periods. Wea. Forecasting, 5, 640–
-         650., Wilks, D. S., 1990a
+           consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
+           Wilks, D. S., 1990a

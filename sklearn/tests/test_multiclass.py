@@ -704,6 +704,9 @@ def test_ecoc_float_y():
 
     ovo = OutputCodeClassifier(LinearSVC())
     assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
+    assert_raise_message(ValueError, "code_size should be greater than 0,"
+                         " got -1", ovo.fit, X, y)
 
 
 def test_pairwise_indices():

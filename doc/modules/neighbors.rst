@@ -206,7 +206,7 @@ Nearest Neighbors Regression
 
 Neighbors-based regression can be used in cases where the data labels are
 continuous rather than discrete variables.  The label assigned to a query
-point is computed based the mean of the labels of its nearest neighbors.
+point is computed based on the mean of the labels of its nearest neighbors.
 
 scikit-learn implements two different neighbors regressors:
 :class:`KNeighborsRegressor` implements learning based on the :math:`k`
@@ -294,7 +294,7 @@ the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
 to an arbitrary number of dimensions.  The KD tree is a binary tree
 structure which recursively partitions the parameter space along the data
-axes, dividing it into nested orthotopic regions into which data points
+axes, dividing it into nested orthotropic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
 is performed only along the data axes, no :math:`D`-dimensional distances
 need to be computed.  Once constructed, the nearest neighbor of a query

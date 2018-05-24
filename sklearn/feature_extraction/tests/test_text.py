@@ -23,12 +23,12 @@ from sklearn.base import clone
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_not_equal, assert_almost_equal,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry, SkipTest)
+                                   clean_warning_registry, ignore_warnings,
+                                   SkipTest, assert_raises)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -220,6 +220,25 @@ def test_char_wb_ngram_analyzer():
     text = StringIO("A test with a file-like object!")
     expected = [' a ', ' te', 'tes', 'est', 'st ', ' tes']
     assert_equal(cnga(text)[:6], expected)
+
+
+def test_word_ngram_analyzer():
+    cnga = CountVectorizer(analyzer='word', strip_accents='unicode',
+                           ngram_range=(3, 6)).build_analyzer()
+
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
+    expected = ['this is test', 'is test really', 'test really met']
+    assert_equal(cnga(text)[:3], expected)
+
+    expected = ['test really met harry yesterday',
+                'this is test really met harry',
+                'is test really met harry yesterday']
+    assert_equal(cnga(text)[-3:], expected)
+
+    cnga_file = CountVectorizer(input='file', analyzer='word',
+                                ngram_range=(3, 6)).build_analyzer()
+    file = StringIO(text)
+    assert_equal(cnga_file(file), cnga(text))
 
 
 def test_countvectorizer_custom_vocabulary():
@@ -480,6 +499,7 @@ def test_tfidf_vectorizer_setters():
     assert_true(tv._tfidf.sublinear_tf)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hashing_vectorizer():
     v = HashingVectorizer()
     X = v.transform(ALL_FOOD_DOCS)
@@ -651,6 +671,7 @@ def test_count_binary_occurrences():
     assert_equal(X_sparse.dtype, np.float32)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
@@ -784,6 +805,7 @@ def test_vectorizer_pipeline_cross_validation():
     assert_array_equal(cv_scores, [1., 1., 1.])
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (

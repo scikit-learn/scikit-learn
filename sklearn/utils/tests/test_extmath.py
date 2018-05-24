@@ -206,10 +206,19 @@ def test_row_norms():
                                   precision)
         assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
 
-        Xcsr = sparse.csr_matrix(X, dtype=dtype)
-        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
-                                  precision)
-        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
+        for csr_index_dtype in [np.int32, np.int64]:
+            Xcsr = sparse.csr_matrix(X, dtype=dtype)
+            # csr_matrix will use int32 indices by default,
+            # up-casting those to int64 when necessary
+            if csr_index_dtype is np.int64:
+                Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
+                Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+            assert Xcsr.indices.dtype == csr_index_dtype
+            assert Xcsr.indptr.dtype == csr_index_dtype
+            assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
+                                      precision)
+            assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr),
+                                      precision)
 
 
 def test_randomized_svd_low_rank_with_noise():

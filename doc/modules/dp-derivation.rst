@@ -23,7 +23,7 @@ complex, or even more. For this reason we present here a full
 derivation of the inference algorithm and all the update and
 lower-bound equations. If you're not interested in learning how to
 derive similar algorithms yourself and you're not interested in
-changing/debugging the implementation in the scikit this document is
+changing/debugging the implementation in scikit-learn this document is
 not for you.
 
 The complexity of this implementation is linear in the number of
@@ -358,7 +358,7 @@ The model then is
   X_t &\sim& Normal(\mu_{z_i},  \Sigma^{-1})
   \end{array}
 
-Tha variational distribution we'll use is
+The variational distribution we'll use is
 
 .. math::
 

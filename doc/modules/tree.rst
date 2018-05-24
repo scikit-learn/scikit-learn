@@ -481,7 +481,10 @@ Regression criteria
 
 If the target is a continuous value, then for node :math:`m`,
 representing a region :math:`R_m` with :math:`N_m` observations, common
-criteria to minimise are
+criteria to minimise as for determining locations for future
+splits are Mean Squared Error, which minimizes the L2 error
+using mean values at terminal nodes, and Mean Absolute Error, which 
+minimizes the L1 error using median values at terminal nodes. 
 
 Mean Squared Error:
 

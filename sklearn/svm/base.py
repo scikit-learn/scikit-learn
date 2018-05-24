@@ -503,7 +503,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                % len(cls))
+                " class" % len(cls))
 
         self.classes_ = cls
 
@@ -810,7 +810,6 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
-
 
     multi_class : str, {'ovr', 'crammer_singer'}
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
