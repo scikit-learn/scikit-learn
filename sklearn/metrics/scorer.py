@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+from collections import Iterable
 import warnings
 
 import numpy as np
@@ -300,6 +301,10 @@ def check_scoring(estimator, scoring=None, allow_none=False):
                 "If no scoring is specified, the estimator passed should "
                 "have a 'score' method. The estimator %r does not."
                 % estimator)
+    elif isinstance(scoring, Iterable):
+        raise ValueError("For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead. "
+                         "{0} was passed.".format(scoring))
     else:
         raise ValueError("scoring value should either be a callable, string or"
                          " None. %r was passed" % scoring)

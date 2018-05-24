@@ -786,7 +786,7 @@ div.warning-wrapper p {
 }
 
 
-/*-----------------------The Code Sprint Sponser Banner---------------------*/
+/*-----------------------The Code Sprint Sponsor Banner---------------------*/
 
 div.sprint-wrapper {
     font-weight: bold;

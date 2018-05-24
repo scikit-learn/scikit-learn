@@ -27,8 +27,8 @@ Two feature extraction methods can be used in this example:
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
-Additionally, latent semantic analysis can also be used to reduce dimensionality
-and discover latent patterns in the data.
+Additionally, latent semantic analysis can also be used to reduce
+dimensionality and discover latent patterns in the data.
 
 It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
@@ -106,6 +106,7 @@ op.print_help()
 def is_interactive():
     return not hasattr(sys.modules['__main__'], '__file__')
 
+
 # work-around for Jupyter notebook and IPython console
 argv = [] if is_interactive() else sys.argv[1:]
 (opts, args) = op.parse_args(argv)
@@ -138,7 +139,8 @@ print()
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
 
-print("Extracting features from the training dataset using a sparse vectorizer")
+print("Extracting features from the training dataset "
+      "using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
     if opts.use_idf:

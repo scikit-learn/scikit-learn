@@ -15,7 +15,7 @@ from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError
+from ..exceptions import NotFittedError, ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
 
@@ -626,7 +626,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                 warnings.warn(
                     "Number of subclusters found (%d) by Birch is less "
                     "than (%d). Decrease the threshold."
-                    % (len(centroids), self.n_clusters))
+                    % (len(centroids), self.n_clusters), ConvergenceWarning)
         else:
             # The global clustering step that clusters the subclusters of
             # the leaves. It assumes the centroids of the subclusters as

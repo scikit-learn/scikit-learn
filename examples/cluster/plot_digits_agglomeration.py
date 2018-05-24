@@ -54,7 +54,7 @@ for i in range(4):
 
 plt.subplot(3, 4, 10)
 plt.imshow(np.reshape(agglo.labels_, images[0].shape),
-           interpolation='nearest', cmap=plt.cm.spectral)
+           interpolation='nearest', cmap=plt.cm.nipy_spectral)
 plt.xticks(())
 plt.yticks(())
 plt.title('Labels')
