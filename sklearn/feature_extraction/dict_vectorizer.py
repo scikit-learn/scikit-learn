@@ -37,6 +37,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
+    When feature values are iterables but not mapping, this transformer will iterate
+    over the values to perform the same transformation to every element.
+
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
     represented as numeric values such as int, the DictVectorizer can be
@@ -85,7 +88,18 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
-    array([[0., 0., 4.]])
+    array([[ 0.,  0.,  4.]])
+    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'}, {'foo': ['1', '3']}]
+    >>> X = v.fit_transform(D)
+    >>> X
+    array([[ 1.,  0.,  1., 0.],
+           [ 0.,  1.,  0., 1.],
+           [ 0.,  0.,  1., 1.])
+    >>> v.inverse_transform(X) == \
+    [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0}, {'foo=3': 1.0, 'foo=1': 1.0}]
+    True
+    >>> v.transform({'foo': '1', 'unseen_feature': [3]})
+    array([[ 1.,  0.,  0., 0.]])
 
     See also
     --------
@@ -138,14 +152,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             v = 1
         elif isinstance(v, Number) or (v is None):
             feature_name = f
-        elif isinstance(v, Iterable):
+        elif isinstance(v, Iterable) and not isinstance(v, Mapping):
             for vv in v:
                 self.add_element(f, vv, feature_names, vocab,
                                  fitting, transforming, indices, values)
             return
         else:
-            raise Exception(
-                'Unsupported Type %s for {%s: %s}' % (type(v), f, v))
+            raise ValueError(
+                'Unsupported Value Type %s for {%s: %s}' % (type(v), f, v))
 
         if fitting:
             if feature_name not in vocab:
