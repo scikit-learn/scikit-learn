@@ -11,6 +11,7 @@ better.
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 #          Gregory Stupp <stuppie@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Arya McCarthy <arya@jhu.edu>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -49,6 +50,21 @@ def check_clusterings(labels_true, labels_pred):
             "labels_true and labels_pred must have same size, got %d and %d"
             % (labels_true.shape[0], labels_pred.shape[0]))
     return labels_true, labels_pred
+
+
+def _generalized_average(U, V, average_method):
+    """Return a particular mean of two numbers."""
+    if average_method == "min":
+        return max(min(U, V), 1e-10)
+    elif average_method == "sqrt":
+        return max(np.sqrt(U * V), 1e-10)  # Avoids zero-division error
+    elif average_method == "sum":
+        return max(np.mean([U, V]), 1e-10)
+    elif average_method == "max":
+        return max(U, V)
+    else:
+        raise ValueError("'average_method' must be 'min', 'sqrt', 'sum', or "
+                         "'max'")
 
 
 def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
@@ -528,22 +544,6 @@ def v_measure_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-
-def _generalized_average(U, V, average_method):
-    if average_method == "min":
-        return min(U, V)
-    elif average_method == "sqrt":
-        return max(np.sqrt(U * V), 1e-10)  # Avoids zero-division error
-    elif average_method == "sum":
-        return max(np.mean(U, V), 1e-10)
-    elif average_method == "max":
-        return max(U, V)
-    else:
-        raise ValueError("'average_method' must be 'min', 'sqrt', 'sum', or "
-        "'max'")
-
-
-
 def mutual_info_score(labels_true, labels_pred, contingency=None):
     r"""Mutual Information between two clusterings.
 
@@ -662,7 +662,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'sqrt', 'sum', and 'max'.
         If None, 'max' will be used. This is likely to change in a future
-        version. 
+        version.
 
     Returns
     -------
@@ -707,9 +707,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     """
     if average_method is None:
         warnings.warn("The behavior of AMI will change in a future version. "
-           "To match the behavior of 'v_measure_score', AMI will use "
-           "sqrt-averaging, i.e. geometric mean, by default."
-           )
+                      "To match the behavior of 'v_measure_score', AMI will "
+                      "use sum-averaging, i.e. arithmetic mean, by default."
+                      )
         average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
@@ -730,11 +730,13 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
+    print(normalizer)
     ami = (mi - emi) / (normalizer - emi)
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred, average_method=None):
+def normalized_mutual_info_score(labels_true, labels_pred,
+                                 average_method=None):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
@@ -769,7 +771,7 @@ def normalized_mutual_info_score(labels_true, labels_pred, average_method=None):
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'sqrt', 'sum', and 'max'.
         If None, 'sqrt' will be used, matching the behavior of
-        `v_measure_score`. 
+        `v_measure_score`.
 
     Returns
     -------
@@ -802,6 +804,10 @@ def normalized_mutual_info_score(labels_true, labels_pred, average_method=None):
 
     """
     if average_method is None:
+        warnings.warn("The behavior of NMI will change in a future version. "
+                      "To match the behavior of 'v_measure_score', NMI will "
+                      "use sum-averaging, i.e. arithmetic mean, by default."
+                      )
         average_method = 'sqrt'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
