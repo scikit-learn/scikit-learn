@@ -354,7 +354,9 @@ class RegressorMixin(object):
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
-            Test samples.
+            Test samples. For some estimators this may be a
+            precomputed kernel matrix instead, shape = (n_samples,
+            n_samples).
 
         y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True values for X.
