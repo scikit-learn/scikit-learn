@@ -16,6 +16,7 @@ from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
@@ -403,12 +404,12 @@ def test_symmetry():
     y_pred = random_state.randint(0, 2, size=(20, ))
 
     # We shouldn't forget any metrics
-    assert_array_equal(set(SYMMETRIC_METRICS).union(
+    assert_equal(set(SYMMETRIC_METRICS).union(
         NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
         METRIC_UNDEFINED_BINARY_MULTICLASS),
         set(ALL_METRICS))
 
-    assert_array_equal(
+    assert_equal(
         set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
         set([]))
 
