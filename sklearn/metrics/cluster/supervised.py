@@ -253,7 +253,9 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
 
     V-Measure is furthermore symmetric: swapping ``labels_true`` and
     ``label_pred`` will give the same score. This does not hold for
-    homogeneity and completeness.
+    homogeneity and completeness. V-Measure is identical to
+    :func:`normalized_mutual_info_score` with the averaging method
+    ``'sum'``.
 
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
@@ -452,7 +454,8 @@ def completeness_score(labels_true, labels_pred):
 def v_measure_score(labels_true, labels_pred):
     """V-measure cluster labeling given a ground truth.
 
-    This score is identical to :func:`normalized_mutual_info_score`.
+    This score is identical to :func:`normalized_mutual_info_score` with
+    the ``'sum'`` option for averaging.
 
     The V-measure is the harmonic mean between homogeneity and completeness::
 
@@ -466,6 +469,7 @@ def v_measure_score(labels_true, labels_pred):
     ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
+
 
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
@@ -493,6 +497,7 @@ def v_measure_score(labels_true, labels_pred):
     --------
     homogeneity_score
     completeness_score
+    normalized_mutual_info_score
 
     Examples
     --------
@@ -664,6 +669,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
         If None, 'max' will be used. This is likely to change in a future
         version.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     ami: float(upperlimited by 1.0)
@@ -772,6 +779,8 @@ def normalized_mutual_info_score(labels_true, labels_pred,
         If None, 'sqrt' will be used, matching the behavior of
         `v_measure_score`.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     nmi : float
@@ -779,6 +788,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
 
     See also
     --------
+    v_measure_score: V-Measure (NMI with arithmetic mean option.)
     adjusted_rand_score: Adjusted Rand Index
     adjusted_mutual_info_score: Adjusted Mutual Information (adjusted
         against chance)

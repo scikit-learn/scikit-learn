@@ -1102,16 +1102,10 @@ Advantages
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
-- **Bounded range [0, 1]**:  Values close to zero indicate two label
+- **Upper bound  of 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
-  indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  indicate significant agreement. Further, an AMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
-
-- **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assumes isotropic
-  blob shapes with results of spectral clustering algorithms which can
-  find cluster with "folded" shapes.
 
 
 Drawbacks
@@ -1185,7 +1179,7 @@ following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
 Using the expected value, the adjusted mutual information can then be
 calculated using a similar form to that of the adjusted Rand index:
 
-.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\max(H(U), H(V)) - E[\text{MI}]}
+.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
 
 .. topic:: References
 
@@ -1249,7 +1243,8 @@ Their harmonic mean called **V-measure** is computed by
   0.51...
 
 The V-measure is actually equivalent to the mutual information (NMI)
-discussed above normalized by the sum of the label entropies [B2011]_.
+discussed above normalized by the arithmetic mean of the label 
+entropies [B2011]_.
 
 Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
