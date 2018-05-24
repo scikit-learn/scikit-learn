@@ -471,6 +471,11 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Feature selection
+
+- Fixed computation of ``n_features_to_compute`` for edge case with tied
+  CV scores in :class:`RFECV`. :issue:`9222` by `Nick Hoh <nickypie>`.
+
 Model evaluation and meta-estimators
 
 - Add improved error message in :func:`model_selection.cross_val_score` when
