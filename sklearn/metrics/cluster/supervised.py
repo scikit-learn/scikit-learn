@@ -730,7 +730,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    print(normalizer)
     ami = (mi - emi) / (normalizer - emi)
     return ami
 
@@ -743,7 +742,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
     information is normalized by some generalized mean of ``H(labels_true)``
-    and ``H(labels_pred))``.
+    and ``H(labels_pred))``, defined by the `average_method`.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mustual_info_score` might be preferred.
