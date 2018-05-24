@@ -434,8 +434,8 @@ Metrics
   :issue:`9515` by :user:`Alan Liddell <aliddell>` and
   :user:`Manh Dao <manhdao>`.
 
-- Fixed a bug in:  :func:`metrics.brier_score_loss`, when all `y_true` values are 1,
-  the function previously reported a loss of 1 when given a `y_prob` of 1, when it
+- Fixed a bug in:  :func:`metrics.brier_score_loss`, when all ``y_true`` values are 1,
+  the function previously reported a loss of 1 when given a ``y_prob`` of 1, when it
   should be 0.  :issue:`9300` by :user:`Ganesh N. Sivalingam <gnsiva>`.
 
 Neighbors

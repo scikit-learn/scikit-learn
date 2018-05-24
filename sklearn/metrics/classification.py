@@ -1952,7 +1952,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     pos_label : int or str, default=None
         Label of the positive class. If None, the maximum label is used as
-        positive class. If all values are 0/False, then 1 is used as pos_label.
+        positive class. If all values are 0 or False, then 1 is used as pos_label.
 
     Returns
     -------
