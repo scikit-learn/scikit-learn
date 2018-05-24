@@ -83,7 +83,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, pass_through,
                             cv=cv, pass_through=pass_through, random_state=42)
     reg.fit(X_train, y_train)
     reg.predict(X_test)
-    assert reg.score(X_test, y_test) < 0.5
+    assert reg.score(X_test, y_test) < 0.6
 
     X_trans = reg.transform(X_test)
     assert X_trans.shape[1] == X_trans_shape

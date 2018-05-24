@@ -281,7 +281,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Base estimators which will be stacked together.
+        Base estimators which will be stacked together. An estimator can be set
+        to None using set_params.
 
     final_estimator : estimator object
         A classifier which will be used to combine the base estimators.
@@ -412,7 +413,8 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Base estimators which will be stacked together.
+        Base estimators which will be stacked together. An estimator can be set
+        to None using set_params.
 
     final_estimator : estimator object
         A regressor which will be used to combine the base estimators.
