@@ -98,8 +98,12 @@ CLASSIFICATION_METRICS = {
     "balanced_accuracy_score": balanced_accuracy_score,
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
+    # `confusion_matrix` returns absolute values and hence behaves unnormalized
+    # . Naming it with an unnormalized_ prefix is neccessary for this module to
+    # skip sample_weight scaling checks which will fail for unnormalized
+    # metrics.
     "unnormalized_confusion_matrix": confusion_matrix,
-    "confusion_matrix": lambda *args, **kwargs: (
+    "normalized_confusion_matrix": lambda *args, **kwargs: (
         confusion_matrix(*args, **kwargs).astype('float') / confusion_matrix(
             *args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
@@ -281,7 +285,7 @@ METRICS_WITH_POS_LABEL = [
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "unnormalized_confusion_matrix",
-    "confusion_matrix",
+    "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
 
@@ -376,7 +380,7 @@ NOT_SYMMETRIC_METRICS = [
     "explained_variance_score",
     "r2_score",
     "unnormalized_confusion_matrix",
-    "confusion_matrix",
+    "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
 
