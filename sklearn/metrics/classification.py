@@ -1427,7 +1427,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, output_dict=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1522,17 +1522,31 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
     rows = zip(target_names, p, r, f1, s)
+
+    avg_total = [np.average(p, weights=s),
+                np.average(r, weights=s),
+                np.average(f1, weights=s),
+                np.sum(s)]
+
+    if output_dict:
+        report_dict = {label[0]:label[1:] for label in rows}
+
+        for label,scores in report_dict.items():
+            report_dict[label] = dict(zip(headers, scores))
+
+        report_dict['avg / total'] =  dict(zip(headers, avg_total))
+
+        return report_dict
+
+
     for row in rows:
         report += row_fmt.format(*row, width=width, digits=digits)
 
     report += u'\n'
 
-    # compute averages
+    # append averages
     report += row_fmt.format(last_line_heading,
-                             np.average(p, weights=s),
-                             np.average(r, weights=s),
-                             np.average(f1, weights=s),
-                             np.sum(s),
+                             *avg_total,
                              width=width, digits=digits)
 
     return report
