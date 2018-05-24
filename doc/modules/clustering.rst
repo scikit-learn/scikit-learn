@@ -303,11 +303,16 @@ as it will choose one of the cluster members as the medoid while
 :class:`KMeans` will move the center of the cluster towards the outlier which
 might in turn move other points away from the cluster centre.
 
-Please note that K-Medoids is different from the K-Medians algorithm as it
-always chooses a point from the dataset as the cluster centre. K-Medians might
-choose a point which is not in the original dataset. For example, given the
-vectors (0,1), (1,0) and (2,2), the Manhattan-distance median is (1,1),
-which does not exist in the original data, and thus cannot be a medoid.
+:class:`KMedoids` is also different from K-Medians, which is analogous to :class:`KMeans`
+except that the Manhattan Median is used for each cluster center instead of
+the centroid. K-Medians is robust to outliers, but it is limited to the
+Manhattan Distance metric and, similar to :class:`KMeans`, it does not guarantee
+that the center of each cluster will be a member of the original dataset.
+
+The complexity of K-Medoids is :math:`O(N^2 K T)` where :math:`N` is the number
+of samples, :math:`T` is the number of iterations and :math:`K` is the number of
+clusters. This makes it more suitable for smaller datasets in comparison to
+:class:`KMeans` which is :math:`O(N K T)`.
 
 .. topic:: Examples:
 
@@ -324,17 +329,12 @@ Assignment and Update steps (BUILD and SWAP in Kaufmann and Rousseeuw, 1987).
 
 PAM works as follows:
 
-* Initialize: Select ``n_clusters`` from the dataset as the medoids using either
-  a heuristic or random approach (configurable using the ``init`` parameter).
+* Initialize: Select ``n_clusters`` from the dataset as the medoids using
+  a heuristic, random, or k-medoids++ approach (configurable using the ``init`` parameter).
 * Assignment step: assign each element from the dataset to the closest medoid.
 * Update step: Identify the new medoid of each cluster.
 * Repeat the assignment and update step while the medoids keep changing or
   maximum number of iterations ``max_iter`` is reached.
-
-The complexity of K-Medoids is :math:`O(N^2 K T)` where :math:`N` is the number
-of samples, :math:`T` is the number of iterations and :math:`K` is the number of
-clusters. This makes it more suitable for smaller datasets in comparison to
-:class:`KMeans` which is :math:`O(N K T)`.
 
 .. topic:: References:
 
