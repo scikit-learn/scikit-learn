@@ -18,7 +18,7 @@ import pytest
 
 @pytest.fixture
 def tmpdata(tmpdir):
-    os.makedirs(tmpdir.join('mldata'))
+    os.makedirs(str(tmpdir.join('mldata')))
     yield tmpdir
 
 
