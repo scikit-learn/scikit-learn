@@ -719,7 +719,6 @@ try:
     if_safe_multiprocessing_with_blas = pytest.mark.skipif(
             sys.platform == 'darwin',
             reason="Possible multi-process bug with some BLAS")
-
 except ImportError:
     pass
 

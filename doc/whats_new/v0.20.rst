@@ -99,6 +99,9 @@ Preprocessing
 
 Model evaluation
 
+- Added the :func:`metrics.cluster.davies_bouldin_index` metric for unsupervised
+  evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
+
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
@@ -108,6 +111,10 @@ Decomposition, manifold learning and clustering
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
+- :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
+  sample weights via new parameter ``sample_weight`` in ``fit`` function.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
 
 Metrics
 
@@ -157,7 +164,7 @@ Classifiers and regressors
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
-  
+
 - Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
   in :class:`discriminant_analysis`.
   :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
@@ -187,7 +194,7 @@ Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
-  
+
 - Enable the call to :meth:`get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
@@ -421,6 +428,12 @@ Metrics
   :func:`mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- Fixed a bug in :func:`metrics.cluster.fowlkes_mallows_score` to avoid integer
+  overflow. Casted return value of `contingency_matrix` to `int64` and computed
+  product of square roots rather than square root of product.
+  :issue:`9515` by :user:`Alan Liddell <aliddell>` and
+  :user:`Manh Dao <manhdao>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
@@ -468,6 +481,10 @@ Datasets
 
 - Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
   :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+
+- Fixed a bug in :func:`dataset.load_iris` which had two wrong data points.
+  :issue:`11082` by :user:`Sadhana Srinivasan <rotuna>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
 
 API changes summary
 -------------------
@@ -598,3 +615,8 @@ Changes to estimator checks
 - Add tests in :func:`estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
+
+- :func:`estimator_checks.check_sample_weights_pandas_series` now uses 8 rather
+  than 6 samples to accommodate for the default number of clusters in
+  :class:`cluster.KMeans`.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
