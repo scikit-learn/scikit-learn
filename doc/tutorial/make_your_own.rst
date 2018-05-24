@@ -14,16 +14,10 @@ Before to go
 Before to implement your own estimator, be aware that scikit-learn
 provides a ``FunctionTransformer`` which will convert a python function
 to a scikit-learn transformer. We willustrate the use of this
-transformer with a quick example.
-
-.. code:: ipython3
+transformer with a quick example::
 
     from sklearn.preprocessing import FunctionTransformer
-
-.. code:: ipython3
-
     help(FunctionTransformer)
-
 
 .. parsed-literal::
 
@@ -214,49 +208,29 @@ transformer with a quick example.
     
 
 
-Define a function which will square the input data
+Define a function which will square the input data::
 
-.. code:: ipython3
+     def square_X(X):
+         return X ** 2
 
-    def square_X(X):
-        return X ** 2
-
-Create a transformer using the ``FunctionTransformer``
-
-.. code:: ipython3
+Create a transformer using the ``FunctionTransformer``::
 
     transformer = FunctionTransformer(func=square_X, validate=False)
 
 As any other transformer in scikit-learn, ``transformer`` implements the
-``fit_transform`` method.
-
-.. code:: ipython3
+``fit_transform`` method::
 
     import numpy as np
     
     X = np.random.randn(3, 2)
     X
-
-
-
-
-.. parsed-literal::
-
     array([[ 0.37164319,  0.49252007],
            [ 0.38457574, -0.35885232],
            [ 0.66372047,  0.43601824]])
 
-
-
-.. code:: ipython3
+Call ``fit_transform``::
 
     transformer.fit_transform(X)
-
-
-
-
-.. parsed-literal::
-
     array([[0.13811866, 0.24257602],
            [0.1478985 , 0.12877499],
            [0.44052487, 0.19011191]])
@@ -281,14 +255,9 @@ Scikit-learn base estimator
 The central piece of transformer, regressor, and classifier is
 ``BaseEstimator``. All estimators in scikit-learn are derived from this
 class. In more details, this base class enables to set and get
-parameters of the estimator.
-
-.. code:: ipython3
+parameters of the estimator::
 
     from sklearn.base import BaseEstimator
-
-.. code:: ipython3
-
     help(BaseEstimator)
 
 
@@ -364,14 +333,9 @@ method. The use case is the following:
 In addition, scikit-learn provides a
 `mixin <https://en.wikipedia.org/wiki/Mixin>`__, i.e.
 ``TransformerMixin``, which implement the combination of ``fit`` and
-``transform`` called ``fit_transform``.
-
-.. code:: ipython3
+``transform`` called ``fit_transform``::
 
     from sklearn.base import TransformerMixin
-
-.. code:: ipython3
-
     help(TransformerMixin)
 
 
@@ -420,9 +384,7 @@ scikit-learn API imposed ``fit`` to return ``self``. The reason is that
 it allows to pipeline ``fit`` and ``transform`` imposed by the
 ``TransformerMixin``. The ``fit`` method is expected to have ``X`` and
 ``y`` as inputs. Note that ``transform`` take only ``X`` as input and is
-expected to return the transformed version of ``X``.
-
-.. code:: ipython3
+expected to return the transformed version of ``X``::
 
     class MyOwnTransformer(BaseEstimator, TransformerMixin):
         
@@ -433,40 +395,25 @@ expected to return the transformed version of ``X``.
             return X
 
 We build a basic example to show that our ``MyOwnTransformer`` is
-working within a scikit-learn ``pipeline``.
-
-.. code:: ipython3
+working within a scikit-learn ``pipeline``::
 
     from sklearn.datasets import load_iris
     from sklearn.pipeline import make_pipeline
-    from sklearn.linear_model import LogisticRegression
-    
+    from sklearn.linear_model import LogisticRegression    
+
     X, y = load_iris(return_X_y=True)
     pipe = make_pipeline(MyOwnTransformer(), LogisticRegression())
     pipe.fit(X, y)
-
-
-
-
-.. parsed-literal::
-
     Pipeline(memory=None,
          steps=[('myowntransformer', MyOwnTransformer()), ('logisticregression', LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
               intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
               penalty='l2', random_state=None, solver='liblinear', tol=0.0001,
               verbose=0, warm_start=False))])
 
-
-
-.. code:: ipython3
+We can call the ``predict`` method of the pipeline which is equivalent to call
+``transform`` of the transformer and ``predict`` of the classifier::
 
     pipe.predict(X)
-
-
-
-
-.. parsed-literal::
-
     array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
            0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -490,14 +437,9 @@ Similarly, regressors are scikit-lean estimators which implement a
 In addition, scikit-learn provides a
 `mixin <https://en.wikipedia.org/wiki/Mixin>`__, i.e.
 ``RegressorMixin``, which implement the ``score`` method which compute
-the :math:`R^2` score of the predictions.
-
-.. code:: ipython3
+the :math:`R^2` score of the predictions::
 
     from sklearn.base import RegressorMixin
-
-.. code:: ipython3
-
     help(RegressorMixin)
 
 
@@ -552,9 +494,7 @@ Therefore, we create a regressor, ``MyOwnRegressor`` which inherates
 from both ``BaseEstimator`` and ``RegressorMixin``. The method ``fit``
 gets ``X`` and ``y`` as input and should return ``self``. It should
 implement the ``predict`` function which should output the predictions
-of your regressor.
-
-.. code:: ipython3
+of your regressor::
 
     import numpy as np
     
@@ -568,9 +508,7 @@ of your regressor.
             return np.mean(X, axis=1)
 
 We illustrate that this regressor is working within a scikit-learn
-pipeline.
-
-.. code:: ipython3
+pipeline::
 
     from sklearn.datasets import load_diabetes
     from sklearn.pipeline import make_pipeline
@@ -578,28 +516,14 @@ pipeline.
     X, y = load_diabetes(return_X_y=True)
     pipe = make_pipeline(MyOwnTransformer(), MyOwnRegressor())
     pipe.fit(X, y)
-
-
-
-
-.. parsed-literal::
-
     Pipeline(memory=None,
          steps=[('myowntransformer', MyOwnTransformer()), ('myownregressor', MyOwnRegressor())])
 
 
 
-As we defined the ``predict`` method, we can call it.
-
-.. code:: ipython3
+As we defined the ``predict`` method, we can call it::
 
     pipe.predict(X)
-
-
-
-
-.. parsed-literal::
-
     array([ 4.95495135e-03, -2.77553225e-02,  3.69509479e-03, -1.33173475e-02,
            -1.07322419e-02, -5.18397864e-02, -2.62834231e-02,  3.86272696e-02,
             7.13601945e-03, -1.30130115e-02, -5.98097614e-02, -4.87315957e-03,
@@ -715,17 +639,9 @@ As we defined the ``predict`` method, we can call it.
 
 
 Since we inherite from the ``RegressorMixin``, we can call the ``score``
-method which will return the :math:`R^2` score.
-
-.. code:: ipython3
+method which will return the :math:`R^2` score::
 
     pipe.score(X, y)
-
-
-
-
-.. parsed-literal::
-
     -3.90271854560383
 
 
@@ -748,14 +664,9 @@ they output the probabilities of the prediction using the
 In addition, scikit-learn provides a
 `mixin <https://en.wikipedia.org/wiki/Mixin>`__, i.e.
 ``ClassifierMixin``, which implement the ``score`` method which compute
-the accuracy score of the predictions.
-
-.. code:: ipython3
+the accuracy score of the predictions::
 
     from sklearn.base import ClassifierMixin
-
-.. code:: ipython3
-
     help(ClassifierMixin)
 
 
@@ -807,9 +718,7 @@ from both ``BaseEstimator`` and ``ClassifierMixin``. The method ``fit``
 gets ``X`` and ``y`` as input and should return ``self``. It should
 implement the ``predict`` function which should output the class infered
 by the classifier. ``predict_proba`` will output some probabilities
-instead.
-
-.. code:: ipython3
+instead::
 
     import numpy as np
     
@@ -828,9 +737,7 @@ instead.
             return pred / np.sum(pred, axis=1)[:, np.newaxis]
 
 We illustrate that this regressor is working within a scikit-learn
-pipeline.
-
-.. code:: ipython3
+pipeline::
 
     from sklearn.datasets import load_iris
     from sklearn.pipeline import make_pipeline
@@ -838,28 +745,14 @@ pipeline.
     X, y = load_iris(return_X_y=True)
     pipe = make_pipeline(MyOwnTransformer(), MyOwnClassifier())
     pipe.fit(X, y)
-
-
-
-
-.. parsed-literal::
-
     Pipeline(memory=None,
          steps=[('myowntransformer', MyOwnTransformer()), ('myownclassifier', MyOwnClassifier())])
 
 
 
-Then, you can call ``predict`` and ``predict_proba``.
-
-.. code:: ipython3
+Then, you can call ``predict`` and ``predict_proba``::
 
     pipe.predict(X)
-
-
-
-
-.. parsed-literal::
-
     array([1, 0, 0, 2, 1, 2, 1, 0, 2, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 0,
            1, 1, 2, 2, 0, 0, 0, 1, 1, 2, 1, 1, 2, 2, 0, 2, 2, 2, 1, 0, 2, 2,
            0, 0, 0, 2, 2, 1, 2, 2, 0, 0, 1, 0, 1, 2, 2, 1, 1, 1, 2, 2, 0, 1,
@@ -868,17 +761,7 @@ Then, you can call ``predict`` and ``predict_proba``.
            1, 2, 0, 0, 0, 1, 0, 2, 1, 0, 0, 2, 1, 1, 1, 0, 1, 2, 1, 2, 1, 0,
            2, 2, 2, 2, 0, 2, 2, 1, 0, 1, 0, 2, 2, 0, 2, 0, 1, 0])
 
-
-
-.. code:: ipython3
-
     pipe.predict_proba(X)
-
-
-
-
-.. parsed-literal::
-
     array([[1.48898954e-01, 2.74767300e-01, 5.76333746e-01],
            [1.73879547e-01, 5.42471890e-01, 2.83648563e-01],
            [3.40340578e-01, 2.04503856e-01, 4.55155566e-01],
@@ -1033,16 +916,8 @@ Then, you can call ``predict`` and ``predict_proba``.
 
 
 Since our classifier inherites from ``ClassifierMixin``, we can compute
-the accuracy by calling the ``score`` method.
-
-.. code:: ipython3
+the accuracy by calling the ``score`` method::
 
     pipe.score(X, y)
-
-
-
-
-.. parsed-literal::
-
     0.36
 
