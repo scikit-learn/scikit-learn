@@ -133,29 +133,29 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
     def add_element(self, f, v, feature_names, vocab, fitting=True,
                     transforming=False, indices=None, values=None):
-        if not isinstance(v, six.string_types) and isinstance(v, Iterable):
+        if isinstance(v, six.string_types):
+            feature_name = "%s%s%s" % (f, self.separator, v)
+            v = 1
+        elif isinstance(v, Number) or (v is None):
+            feature_name = f
+        elif isinstance(v, Iterable):
             for vv in v:
                 self.add_element(f, vv, feature_names, vocab,
                                  fitting, transforming, indices, values)
+            return
         else:
-            if isinstance(v, six.string_types):
-                feature_name = "%s%s%s" % (f, self.separator, v)
-                v = 1
-            elif isinstance(v, Number) or (v is True) or\
-                    (v is False) or (v is None):
-                feature_name = f
-            else:
-                raise Exception(
-                    'Unsupported Type %s for {%s: %s}' % (type(v), f, v))
-            if fitting:
-                if feature_name not in vocab:
-                    vocab[feature_name] = len(feature_names)
-                    feature_names.append(feature_name)
+            raise Exception(
+                'Unsupported Type %s for {%s: %s}' % (type(v), f, v))
 
-            if transforming:
-                if feature_name in vocab:
-                    indices.append(vocab[feature_name])
-                    values.append(self.dtype(v))
+        if fitting:
+            if feature_name not in vocab:
+                vocab[feature_name] = len(feature_names)
+                feature_names.append(feature_name)
+
+        if transforming:
+            if feature_name in vocab:
+                indices.append(vocab[feature_name])
+                values.append(self.dtype(v))
 
     def _transform(self, X, fitting):
         # Sanity check: Python's array has no way of explicitly requesting the
