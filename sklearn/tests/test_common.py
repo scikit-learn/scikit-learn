@@ -78,7 +78,8 @@ def _generate_checks_per_estimator(check_generator, estimators):
 
 def _rename_partial(val):
     if isinstance(val, functools.partial):
-        kwstring = "".join(["{}={}".format(k, v) for k, v in val.keywords.items()])
+        kwstring = "".join(["{}={}".format(k, v)
+                            for k, v in val.keywords.items()])
         return "{}({})".format(val.func.__name__, kwstring)
 
 
