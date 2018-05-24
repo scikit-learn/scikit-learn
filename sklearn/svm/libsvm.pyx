@@ -11,7 +11,7 @@ performance reasons. See sklearn.svm for a higher-level API.
 
 Low-level memory management is done in libsvm_helper.c. If we happen
 to run out of memory a MemoryError will be raised. In practice this is
-not very helpful since hight changes are malloc fails inside svm.cpp,
+not very helpful since high chances are malloc fails inside svm.cpp,
 where no sort of memory checks are done.
 
 [1] https://www.csie.ntu.edu.tw/~cjlin/libsvm/
@@ -133,23 +133,23 @@ def fit(
     Returns
     -------
     support : array, shape=[n_support]
-        index of support vectors
+        Index of support vectors.
 
     support_vectors : array, shape=[n_support, n_features]
-        support vectors (equivalent to X[support]). Will return an
+        Support vectors (equivalent to X[support]). Will return an
         empty array in the case of precomputed kernel.
 
-    n_class_SV : array
-        number of support vectors in each class.
+    n_class_SV : array, shape=[n_class]
+        Number of support vectors in each class.
 
-    sv_coef : array
-        coefficients of support vectors in decision function.
+    sv_coef : array, shape=[n_class-1, n_support]
+        Coefficients of support vectors in decision function.
 
-    intercept : array
-        intercept in decision function
+    intercept : array, shape=[n_class*(n_class-1)/2]
+        Intercept in decision function.
 
-    probA, probB : array
-        probability estimates, empty array for probability=False
+    probA, probB : array, shape=[n_class*(n_class-1)/2]
+        Probability estimates, empty array for probability=False.
     """
 
     cdef svm_parameter param
@@ -288,22 +288,48 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     Parameters
     ----------
     X : array-like, dtype=float, size=[n_samples, n_features]
-    svm_type : {0, 1, 2, 3, 4}
-        Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
-        Type of kernel.
-    degree : int
-        Degree of the polynomial kernel.
-    gamma : float
+
+    support : array, shape=[n_support]
+        Index of support vectors in training set.
+
+    SV : array, shape=[n_support, n_features]
+        Support vectors.
+
+    nSV : array, shape=[n_class]
+        Number of support vectors in each class.
+
+    sv_coef : array, shape=[n_class-1, n_support]
+        Coefficients of support vectors in decision function.
+
+    intercept : array, shape=[n_class*(n_class-1)/2]
+        Intercept in decision function.
+
+    probA, probB : array, shape=[n_class*(n_class-1)/2]
+        Probability estimates.
+
+    svm_type : {0, 1, 2, 3, 4}, optional
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+        respectively. 0 by default.
+
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
+        Kernel to use in the model: linear, polynomial, RBF, sigmoid
+        or precomputed. 'rbf' by default.
+
+    degree : int32, optional
+        Degree of the polynomial kernel (only relevant if kernel is
+        set to polynomial), 3 by default.
+
+    gamma : float64, optional
         Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
         kernels. 0.1 by default.
-    coef0 : float
-        Independent parameter in poly/sigmoid kernel.
+
+    coef0 : float64, optional
+        Independent parameter in poly/sigmoid kernel. 0 by default.
 
     Returns
     -------
     dec_values : array
-        predicted values.
+        Predicted values.
     """
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter param
@@ -364,13 +390,49 @@ def predict_proba(
 
     Parameters
     ----------
-    X : array-like, dtype=float
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
+    X : array-like, dtype=float, size=[n_samples, n_features]
+
+    support : array, shape=[n_support]
+        Index of support vectors in training set.
+
+    SV : array, shape=[n_support, n_features]
+        Support vectors.
+
+    nSV : array, shape=[n_class]
+        Number of support vectors in each class.
+
+    sv_coef : array, shape=[n_class-1, n_support]
+        Coefficients of support vectors in decision function.
+
+    intercept : array, shape=[n_class*(n_class-1)/2]
+        Intercept in decision function.
+
+    probA, probB : array, shape=[n_class*(n_class-1)/2]
+        Probability estimates.
+
+    svm_type : {0, 1, 2, 3, 4}, optional
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+        respectively. 0 by default.
+
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
+        Kernel to use in the model: linear, polynomial, RBF, sigmoid
+        or precomputed. 'rbf' by default.
+
+    degree : int32, optional
+        Degree of the polynomial kernel (only relevant if kernel is
+        set to polynomial), 3 by default.
+
+    gamma : float64, optional
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
+
+    coef0 : float64, optional
+        Independent parameter in poly/sigmoid kernel. 0 by default.
 
     Returns
     -------
     dec_values : array
-        predicted values.
+        Predicted values.
     """
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter param
@@ -421,6 +483,52 @@ def decision_function(
 
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
+
+    Parameters
+    ----------
+    X : array-like, dtype=float, size=[n_samples, n_features]
+
+    support : array, shape=[n_support]
+        Index of support vectors in training set.
+
+    SV : array, shape=[n_support, n_features]
+        Support vectors.
+
+    nSV : array, shape=[n_class]
+        Number of support vectors in each class.
+
+    sv_coef : array, shape=[n_class-1, n_support]
+        Coefficients of support vectors in decision function.
+
+    intercept : array, shape=[n_class*(n_class-1)/2]
+        Intercept in decision function.
+
+    probA, probB : array, shape=[n_class*(n_class-1)/2]
+        Probability estimates.
+
+    svm_type : {0, 1, 2, 3, 4}, optional
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+        respectively. 0 by default.
+
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
+        Kernel to use in the model: linear, polynomial, RBF, sigmoid
+        or precomputed. 'rbf' by default.
+
+    degree : int32, optional
+        Degree of the polynomial kernel (only relevant if kernel is
+        set to polynomial), 3 by default.
+
+    gamma : float64, optional
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
+
+    coef0 : float64, optional
+        Independent parameter in poly/sigmoid kernel. 0 by default.
+
+    Returns
+    -------
+    dec_values : array
+        Predicted values.
     """
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter param
@@ -483,33 +591,59 @@ def cross_validation(
     Y : array, dtype=float, size=[n_samples]
         target vector
 
-    svm_type : {0, 1, 2, 3, 4}
-        Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
+    n_fold : int32
+        Number of folds for cross validation.
 
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
+    svm_type : {0, 1, 2, 3, 4}, optional
+        Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
+        respectively. 0 by default.
+
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
         Kernel to use in the model: linear, polynomial, RBF, sigmoid
-        or precomputed.
+        or precomputed. 'rbf' by default.
 
-    degree : int
+    degree : int32, optional
         Degree of the polynomial kernel (only relevant if kernel is
-        set to polynomial)
+        set to polynomial), 3 by default.
 
-    gamma : float
+    gamma : float64, optional
         Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
         kernels. 0.1 by default.
 
-    coef0 : float
-        Independent parameter in poly/sigmoid kernel.
+    coef0 : float64, optional
+        Independent parameter in poly/sigmoid kernel. 0 by default.
 
-    tol : float
-        Stopping criteria.
+    tol : float64, optional
+        Numeric stopping criterion (WRITEME). 1e-3 by default.
 
-    C : float
-        C parameter in C-Support Vector Classification
+    C : float64, optional
+        C parameter in C-Support Vector Classification. 1 by default.
 
-    nu : float
+    nu : float64, optional
+        0.5 by default.
 
-    cache_size : float
+    epsilon : double, optional
+        0.1 by default.
+
+    class_weight : array, dtype float64, shape (n_classes,), optional
+        np.empty(0) by default.
+
+    sample_weight : array, dtype float64, shape (n_samples,), optional
+        np.empty(0) by default.
+
+    shrinking : int, optional
+        1 by default.
+
+    probability : int, optional
+        0 by default.
+
+    cache_size : float64, optional
+        Cache size for gram matrix columns (in megabytes). 100 by default.
+
+    max_iter : int (-1 for no limit), optional.
+        Stop solver after this many iterations regardless of accuracy
+        (XXX Currently there is no API to know whether this kicked in.)
+        -1 by default.
 
     random_seed : int, optional
         Seed for the random number generator used for probability estimates.
