@@ -18,8 +18,8 @@ import pytest
 
 @pytest.fixture
 def tmpdata(tmpdir):
-    os.makedirs(tmpdir.join('mldata'))
-    yield tmpdir
+    os.makedirs(str(tmpdir.join('mldata')))
+    yield str(tmpdir)
 
 
 def test_mldata_filename():
