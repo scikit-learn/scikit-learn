@@ -335,40 +335,14 @@ class OneHotEncoder(_BaseEncoder):
             # warnings.warn("Deprecated", DeprecationWarning)
         else:
             n_values = "auto"
-        self._deprecated_n_values = n_values
+        self.n_values = n_values
 
         if categorical_features is not None:
             pass
             # warnings.warn("Deprecated", DeprecationWarning)
         else:
             categorical_features = "all"
-        self._deprecated_categorical_features = categorical_features
-
-    # Deprecated keywords
-
-    @property
-    def n_values(self):
-        warnings.warn("The 'n_values' parameter is deprecated.",
-                      DeprecationWarning)
-        return self._deprecated_n_values
-
-    @n_values.setter
-    def n_values(self, value):
-        warnings.warn("The 'n_values' parameter is deprecated.",
-                      DeprecationWarning)
-        self._deprecated_n_values = value
-
-    @property
-    def categorical_features(self):
-        warnings.warn("The 'categorical_features' parameter is deprecated.",
-                      DeprecationWarning)
-        return self._deprecated_categorical_features
-
-    @categorical_features.setter
-    def categorical_features(self, value):
-        warnings.warn("The 'categorical_features' parameter is deprecated.",
-                      DeprecationWarning)
-        self._deprecated_categorical_features = value
+        self.categorical_features = categorical_features
 
     # Deprecated attributes
 
@@ -403,7 +377,7 @@ class OneHotEncoder(_BaseEncoder):
             user_set_categories = True
 
         # categories not set -> infer if we need legacy mode or not
-        elif self._deprecated_n_values != 'auto':
+        elif self.n_values != 'auto':
             msg = (
                 "Passing 'n_values' is deprecated and will be removed in a "
                 "future release. You can use the 'categories' keyword instead."
@@ -414,18 +388,16 @@ class OneHotEncoder(_BaseEncoder):
             # and don't use legacy mode
             X = check_array(X, dtype=np.int)
 
-            if isinstance(self._deprecated_n_values, numbers.Integral):
+            if isinstance(self.n_values, numbers.Integral):
                 n_features = X.shape[1]
                 self.categories = [
-                    list(range(self._deprecated_n_values))
-                    for _ in range(n_features)]
+                    list(range(self.n_values)) for _ in range(n_features)]
                 n_values = np.empty(n_features, dtype=np.int)
-                n_values.fill(self._deprecated_n_values)
+                n_values.fill(self.n_values)
             else:
                 try:
-                    n_values = np.asarray(self._deprecated_n_values, dtype=int)
-                    self.categories = [list(range(i))
-                                       for i in self._deprecated_n_values]
+                    n_values = np.asarray(self.n_values, dtype=int)
+                    self.categories = [list(range(i)) for i in self.n_values]
                 except (ValueError, TypeError):
                     raise TypeError(
                         "Wrong type for parameter `n_values`. Expected 'auto',"
@@ -466,11 +438,9 @@ class OneHotEncoder(_BaseEncoder):
                     self._legacy_mode = True
 
         # if user specified categorical_features -> always use legacy mode
-        if (not isinstance(self._deprecated_categorical_features,
-                           six.string_types)
-                or (isinstance(self._deprecated_categorical_features,
-                               six.string_types)
-                    and self._deprecated_categorical_features != 'all')):
+        if (not isinstance(self.categorical_features, six.string_types)
+                or (isinstance(self.categorical_features, six.string_types)
+                    and self.categorical_features != 'all')):
             if user_set_categories:
                 raise ValueError(
                     "The 'categorical_features' keyword is deprecated, and "
@@ -502,7 +472,7 @@ class OneHotEncoder(_BaseEncoder):
 
         if self._legacy_mode:
             _transform_selected(X, self._legacy_fit_transform,
-                                self._deprecated_categorical_features,
+                                self.categorical_features,
                                 copy=True)
             return self
         else:
@@ -511,24 +481,23 @@ class OneHotEncoder(_BaseEncoder):
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
-        self_n_values = self._deprecated_n_values
         dtype = getattr(X, 'dtype', None)
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
-        if (isinstance(self_n_values, six.string_types) and
-                self_n_values == 'auto'):
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
-        elif isinstance(self_n_values, numbers.Integral):
-            if (np.max(X, axis=0) >= self_n_values).any():
+        elif isinstance(self.n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self.n_values).any():
                 raise ValueError("Feature out of bounds for n_values=%d"
-                                 % self_n_values)
+                                 % self.n_values)
             n_values = np.empty(n_features, dtype=np.int)
-            n_values.fill(self_n_values)
+            n_values.fill(self.n_values)
         else:
             try:
-                n_values = np.asarray(self_n_values, dtype=int)
+                n_values = np.asarray(self.n_values, dtype=int)
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
@@ -552,8 +521,8 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if (isinstance(self_n_values, six.string_types) and
-                self_n_values == 'auto'):
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -585,14 +554,12 @@ class OneHotEncoder(_BaseEncoder):
 
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_fit_transform,
-                                       self._deprecated_categorical_features,
-                                       copy=True)
+                                       self.categorical_features, copy=True)
         else:
             return self.fit(X).transform(X)
 
     def _legacy_transform(self, X):
         """Assumes X contains only categorical features."""
-        self_n_values = self._deprecated_n_values
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -625,8 +592,8 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if (isinstance(self_n_values, six.string_types) and
-                self_n_values == 'auto'):
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
             out = out[:, self._active_features_]
 
         return out if self.sparse else out.toarray()
@@ -676,7 +643,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_transform,
-                                       self._deprecated_categorical_features,
+                                       self.categorical_features,
                                        copy=True)
         else:
             return self._transform_new(X)

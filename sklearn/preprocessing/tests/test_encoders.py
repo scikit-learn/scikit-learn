@@ -158,16 +158,6 @@ def test_one_hot_encoder_deprecationwarnings():
         assert_warns(DeprecationWarning, lambda: enc.active_features_)
         assert_warns(DeprecationWarning, lambda: enc.feature_indices_)
         assert_warns(DeprecationWarning, lambda: enc.n_values_)
-        assert_warns(DeprecationWarning, lambda: enc.n_values)
-        assert_warns(DeprecationWarning, lambda: enc.categorical_features)
-
-        def set_n_values():
-            enc.n_values = 3
-        assert_warns(DeprecationWarning, set_n_values)
-
-        def set_categorical_features():
-            enc.categorical_features = [0]
-        assert_warns(DeprecationWarning, set_categorical_features)
 
         # check no warning is raised if keyword is specified
         enc = OneHotEncoder(categories='auto')
