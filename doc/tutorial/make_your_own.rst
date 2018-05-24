@@ -8,8 +8,8 @@ to follow the scikit-learn API to benefit of all utilities (pipeline,
 grid-search, etc.). This tutorial shows how to rule your own
 scikit-learn estimator.
 
-Before to go
-------------
+Is it necessary to make your own estimator
+------------------------------------------
 
 Before to implement your own estimator, be aware that scikit-learn
 provides a ``FunctionTransformer`` which will convert a python function
@@ -242,8 +242,8 @@ actually stateless and one might want to embed some supervision to
 transform the data. In this latter case, you need to implement your own
 transformer.
 
-Make your own
--------------
+Then, make your own estimator
+-----------------------------
 
 We will show how to create your own transformer, regressor, and
 classifier as well as a quick example to illustrate their integrations
