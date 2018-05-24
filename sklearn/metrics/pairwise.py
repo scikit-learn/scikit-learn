@@ -1235,7 +1235,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
     >>> avg_dist  # doctest: +ELLIPSIS
-    array([ 0.039...,  0.        ,  0.        ,  0.039...,  0.        ])
+    array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:
 
