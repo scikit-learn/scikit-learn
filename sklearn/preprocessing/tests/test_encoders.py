@@ -167,6 +167,14 @@ def test_one_hot_encoder_deprecationwarnings():
         X_trans = enc.fit_transform(X).toarray()
         assert_array_equal(X_trans, res)
 
+        # check there is also a warning if the default is passed
+        enc = OneHotEncoder(n_values='auto', handle_unknown='ignore')
+        assert_warns(DeprecationWarning, enc.fit, X)
+
+    X = np.array([['cat1', 'cat2']], dtype=object).T
+    enc = OneHotEncoder(categorical_features='all')
+    assert_warns(DeprecationWarning, enc.fit, X)
+
 
 def test_one_hot_encoder_force_new_behaviour():
     # ambiguous integer case (non secutive range of categories)

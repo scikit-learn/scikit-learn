@@ -13,40 +13,19 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
+from ..utils import deprecated
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from .label import LabelEncoder
 
 
-BOUNDS_THRESHOLD = 1e-7
-
-
-zip = six.moves.zip
-map = six.moves.map
 range = six.moves.range
+
 
 __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
-
-
-def _handle_zeros_in_scale(scale, copy=True):
-    ''' Makes sure that whenever scale is zero, we handle it correctly.
-
-    This happens in most scalers when we have constant features.'''
-
-    # if we are fitting on 1D arrays, scale might be a scalar
-    if np.isscalar(scale):
-        if scale == .0:
-            scale = 1.
-        return scale
-    elif isinstance(scale, np.ndarray):
-        if copy:
-            # New array to avoid side-effects
-            scale = scale.copy()
-        scale[scale == 0.0] = 1.0
-        return scale
 
 
 def _transform_selected(X, transform, selected="all", copy=True):
@@ -321,63 +300,42 @@ class OneHotEncoder(_BaseEncoder):
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
-        self._categories = categories
-        if categories is None:
-            self.categories = 'auto'
-        else:
-            self.categories = categories
+        self._categories = self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-
-        if n_values is not None:
-            pass
-            # warnings.warn("Deprecated", DeprecationWarning)
-        else:
-            n_values = "auto"
-        self.n_values = n_values
-
-        if categorical_features is not None:
-            pass
-            # warnings.warn("Deprecated", DeprecationWarning)
-        else:
-            categorical_features = "all"
+        self._n_values = self.n_values = n_values
+        self._categorical_features = categorical_features
         self.categorical_features = categorical_features
 
     # Deprecated attributes
 
     @property
+    @deprecated("The 'active_features_' attribute is deprecated.")
     def active_features_(self):
         check_is_fitted(self, 'categories_')
-        warnings.warn("The 'active_features_' attribute is deprecated.",
-                      DeprecationWarning)
         return self._active_features_
 
     @property
+    @deprecated("The 'feature_indices_' attribute is deprecated.")
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
-        warnings.warn("The 'feature_indices_' attribute is deprecated.",
-                      DeprecationWarning)
         return self._feature_indices_
 
     @property
+    @deprecated("The 'n_values_' attribute is deprecated.")
     def n_values_(self):
         check_is_fitted(self, 'categories_')
-        warnings.warn("The 'n_values_' attribute is deprecated.",
-                      DeprecationWarning)
         return self._n_values_
 
     def _handle_deprecations(self, X):
 
-        user_set_categories = False
-
         # user manually set the categories -> never legacy mode
         if self._categories is not None:
             self._legacy_mode = False
-            user_set_categories = True
 
         # categories not set -> infer if we need legacy mode or not
-        elif self.n_values != 'auto':
+        elif self._n_values is not None and self._n_values != 'auto':
             msg = (
                 "Passing 'n_values' is deprecated and will be removed in a "
                 "future release. You can use the 'categories' keyword instead."
@@ -414,6 +372,15 @@ class OneHotEncoder(_BaseEncoder):
             if self.handle_unknown == 'ignore':
                 # no change in behaviour, no need to raise deprecation warning
                 self._legacy_mode = False
+                self.categories = 'auto'
+                if self._n_values == 'auto':
+                    # user manually specified this
+                    msg = (
+                        "Passing 'n_values' is deprecated and will be removed "
+                        "in a future release. n_values='auto' can be replaced "
+                        "with categories='auto'."
+                    )
+                    warnings.warn(msg, DeprecationWarning)
             else:
 
                 # check if we have integer or categorical input
@@ -421,6 +388,7 @@ class OneHotEncoder(_BaseEncoder):
                     X = check_array(X, dtype=np.int)
                 except ValueError:
                     self._legacy_mode = False
+                    self.categories = 'auto'
                 else:
                     msg = (
                         "The handling of integer data will change in the "
@@ -436,20 +404,30 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, DeprecationWarning)
                     self._legacy_mode = True
+                    self.n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
-        if (not isinstance(self.categorical_features, six.string_types)
-                or (isinstance(self.categorical_features, six.string_types)
-                    and self.categorical_features != 'all')):
-            if user_set_categories:
-                raise ValueError(
-                    "The 'categorical_features' keyword is deprecated, and "
-                    "cannot be used together with specifying 'categories'.")
-            warnings.warn("The 'categorical_features' keyword is deprecated "
-                          "and will be removed in a future version. You can "
-                          "use the ColumnTransformer instead.",
-                          DeprecationWarning)
-            self._legacy_mode = True
+        if self._categorical_features is not None:
+            if (isinstance(self._categorical_features, six.string_types)
+                    and self._categorical_features == 'all'):
+                warnings.warn(
+                    "The 'categorical_features' keyword is deprecated "
+                    "and will be removed in a future version. The passed "
+                    "value of 'all' is the default and can simply be removed.",
+                    DeprecationWarning)
+            else:
+                if self._categories is not None:
+                    raise ValueError(
+                        "The 'categorical_features' keyword is deprecated, "
+                        "and cannot be used together with specifying "
+                        "'categories'.")
+                warnings.warn(
+                    "The 'categorical_features' keyword is deprecated "
+                    "and will be removed in a future version. You can "
+                    "use the ColumnTransformer instead.", DeprecationWarning)
+                self._legacy_mode = True
+        else:
+            self.categorical_features = 'all'
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
