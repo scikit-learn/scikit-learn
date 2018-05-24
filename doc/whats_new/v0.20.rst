@@ -473,7 +473,7 @@ Preprocessing
 
 Feature selection
 
-- Fixed computation of `n_features_to_compute` for edge case with tied
+- Fixed computation of ``n_features_to_compute`` for edge case with tied
   CV scores in :class:`RFECV`. :issue:`9222` by `Nick Hoh <nickypie>`.
 
 Model evaluation and meta-estimators
