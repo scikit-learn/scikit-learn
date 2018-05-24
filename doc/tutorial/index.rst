@@ -15,6 +15,7 @@ scikit-learn Tutorials
    :maxdepth: 2
 
    basic/tutorial.rst
+   make_your_own.rst
    statistical_inference/index.rst
    text_analytics/working_with_text_data.rst
    machine_learning_map/index
