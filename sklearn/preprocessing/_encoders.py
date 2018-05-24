@@ -311,19 +311,22 @@ class OneHotEncoder(_BaseEncoder):
     # Deprecated attributes
 
     @property
-    @deprecated("The 'active_features_' attribute is deprecated.")
+    @deprecated("The 'active_features_' attribute was deprecated in version "
+                "0.20 and will be removed 0.22.")
     def active_features_(self):
         check_is_fitted(self, 'categories_')
         return self._active_features_
 
     @property
-    @deprecated("The 'feature_indices_' attribute is deprecated.")
+    @deprecated("The 'feature_indices_' attribute was deprecated in version "
+                "0.20 and will be removed 0.22.")
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
         return self._feature_indices_
 
     @property
-    @deprecated("The 'n_values_' attribute is deprecated.")
+    @deprecated("The 'n_values_' attribute was deprecated in version "
+                "0.20 and will be removed 0.22.")
     def n_values_(self):
         check_is_fitted(self, 'categories_')
         return self._n_values_
@@ -337,9 +340,10 @@ class OneHotEncoder(_BaseEncoder):
         # categories not set -> infer if we need legacy mode or not
         elif self._n_values is not None and self._n_values != 'auto':
             msg = (
-                "Passing 'n_values' is deprecated and will be removed in a "
-                "future release. You can use the 'categories' keyword instead."
-                " 'n_values=n' corresponds to 'categories=[range(n)]'.")
+                "Passing 'n_values' is deprecated in version 0.20 and will be "
+                "removed in 0.22. You can use the 'categories' keyword "
+                "instead. 'n_values=n' corresponds to 'categories=[range(n)]'."
+            )
             warnings.warn(msg, DeprecationWarning)
 
             # we internally translate this to the correct categories
@@ -376,9 +380,9 @@ class OneHotEncoder(_BaseEncoder):
                 if self._n_values == 'auto':
                     # user manually specified this
                     msg = (
-                        "Passing 'n_values' is deprecated and will be removed "
-                        "in a future release. n_values='auto' can be replaced "
-                        "with categories='auto'."
+                        "Passing 'n_values' is deprecated in version 0.20 and "
+                        "will be removed in 0.22. n_values='auto' can be "
+                        "replaced with categories='auto'."
                     )
                     warnings.warn(msg, DeprecationWarning)
             else:
@@ -391,8 +395,8 @@ class OneHotEncoder(_BaseEncoder):
                     self.categories = 'auto'
                 else:
                     msg = (
-                        "The handling of integer data will change in the "
-                        "future. Currently, the categories are determined "
+                        "The handling of integer data will change in version "
+                        "0.22. Currently, the categories are determined "
                         "based on the range [0, max(values)], while in the "
                         "future they will be determined based on the unique "
                         "values.\nIf you want the future behaviour and "
@@ -402,7 +406,7 @@ class OneHotEncoder(_BaseEncoder):
                         "OneHotEncoder to convert the categories to integers, "
                         "then you can now use the OneHotEncoder directly."
                     )
-                    warnings.warn(msg, DeprecationWarning)
+                    warnings.warn(msg, FutureWarning)
                     self._legacy_mode = True
                     self.n_values = 'auto'
 
@@ -411,8 +415,8 @@ class OneHotEncoder(_BaseEncoder):
             if (isinstance(self._categorical_features, six.string_types)
                     and self._categorical_features == 'all'):
                 warnings.warn(
-                    "The 'categorical_features' keyword is deprecated "
-                    "and will be removed in a future version. The passed "
+                    "The 'categorical_features' keyword is deprecated in "
+                    "version 0.20 and will be removed in 0.22. The passed "
                     "value of 'all' is the default and can simply be removed.",
                     DeprecationWarning)
             else:
@@ -422,8 +426,8 @@ class OneHotEncoder(_BaseEncoder):
                         "and cannot be used together with specifying "
                         "'categories'.")
                 warnings.warn(
-                    "The 'categorical_features' keyword is deprecated "
-                    "and will be removed in a future version. You can "
+                    "The 'categorical_features' keyword is deprecated in "
+                    "version 0.20 and will be removed in 0.22. You can "
                     "use the ColumnTransformer instead.", DeprecationWarning)
                 self._legacy_mode = True
         else:

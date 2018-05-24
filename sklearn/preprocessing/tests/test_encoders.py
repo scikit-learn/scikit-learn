@@ -53,7 +53,7 @@ def test_one_hot_encoder_sparse():
     # Test OneHotEncoder's fit and transform.
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder()
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         # discover max values automatically
         X_trans = enc.fit_transform(X).toarray()
         assert_equal(X_trans.shape, (2, 5))
@@ -110,11 +110,11 @@ def test_one_hot_encoder_sparse():
 
     enc = OneHotEncoder()
     # test negative input to fit
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=FutureWarning):
         assert_raises(ValueError, enc.fit, [[0], [-1]])
 
     # test negative input to transform
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=FutureWarning):
         enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
@@ -123,7 +123,7 @@ def test_one_hot_encoder_dense():
     # check for sparse=False
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder(sparse=False)
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         # discover max values automatically
         X_trans = enc.fit_transform(X)
         assert_equal(X_trans.shape, (2, 5))
@@ -141,14 +141,14 @@ def test_one_hot_encoder_deprecationwarnings():
     for X in [[[3, 2, 1], [0, 1, 1]],
               [[3., 2., 1.], [0., 1., 1.]]]:
         enc = OneHotEncoder()
-        assert_warns_message(DeprecationWarning, "handling of integer",
+        assert_warns_message(FutureWarning, "handling of integer",
                              enc.fit, X)
         enc = OneHotEncoder()
-        assert_warns_message(DeprecationWarning, "handling of integer",
+        assert_warns_message(FutureWarning, "handling of integer",
                              enc.fit_transform, X)
 
         # check it still works correctly as well
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=FutureWarning):
             X_trans = enc.fit_transform(X).toarray()
         res = [[0., 1., 0., 1., 1.],
                [1., 0., 1., 0., 1.]]
@@ -184,7 +184,7 @@ def test_one_hot_encoder_force_new_behaviour():
     # without argument -> by default using legacy behaviour with warnings
     enc = OneHotEncoder()
 
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=FutureWarning):
         enc.fit(X)
 
     res = enc.transform(X2)
@@ -242,9 +242,9 @@ def _run_one_hot(X, X2, cat):
     #     DeprecationWarning,
     #     OneHotEncoder, categorical_features=cat)
     enc = OneHotEncoder(categorical_features=cat)
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         Xtr = enc.fit_transform(X)
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         X2tr = enc.fit(X).transform(X2)
     return Xtr, X2tr
 
@@ -293,7 +293,7 @@ def test_one_hot_encoder_unknown_transform():
     # Test that one hot encoder raises error for unknown features
     # present during transform.
     oh = OneHotEncoder(handle_unknown='error')
-    assert_warns(DeprecationWarning, oh.fit, X)
+    assert_warns(FutureWarning, oh.fit, X)
     assert_raises(ValueError, oh.transform, y)
 
     # Test the ignore option, ignores unknown features.
