@@ -1323,9 +1323,10 @@ Therefore, the lower the calibration loss is for a set of predictions, the
 better the predictions are calibrated.
 The aggregation method can be either:
 - 'sum' for :math:`\sum_k P_k \delta_k`, denoted as expected calibration error
- (ECE) in [1]
+ (ECE) in [1] when the optional parameter 'sliding_window' is set to False
+ or calB in [2] when the 'sliding_window' is set to True
 - 'max' for :math:`\max_k \delta_k`, denoted as maximum calibration error
- (MCE) in [1]]
+ (MCE) in [1]
 where :math:`k` spans all bins,
 :math:`P_k = \dfrac{\sum_{b_k} w_t}{\sum_{b_k} w_t}` denotes the (normalized)
 weight of bin :math:`k` and
@@ -1365,6 +1366,10 @@ Here is a small example of usage of this function:::
         of Modern Neural Networks. Proceedings of the 34th International
         Conference on Machine Learning, PMLR 70:1321-1330, 2017.
         <http://proceedings.mlr.press/v70/guo17a.html>`
+  * [2] `An experimental comparison of performance measures for classification.
+        C.Ferri, J.Hernandez-Orallo, R.Modroiu. Pattern Recognition Letters,
+        Volume 30, Issue 1, 2009.
+   <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`
 
 .. _multilabel_ranking_metrics:
 

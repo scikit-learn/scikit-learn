@@ -1648,12 +1648,24 @@ def test_calibration_loss():
         calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum"), 0.)
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum",
+                         sliding_window=True),
+        0.05)
 
     y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum"), 0.25)
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.25)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum",
+                         sliding_window=True),
+        0.15)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max",
+                         sliding_window=True),
+        0.25)
 
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
     sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])

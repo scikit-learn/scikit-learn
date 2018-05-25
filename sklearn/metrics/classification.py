@@ -1996,8 +1996,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, reducer="sum", n_bins=10, normalize=True,
-                     sample_weight=None, pos_label=None):
+def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=10,
+                     sliding_window=False, normalize=True, pos_label=None):
     """Compute  calibration loss.
 
     Across all items in a set N predictions, the calibration loss measures
@@ -2008,7 +2008,8 @@ def calibration_loss(y_true, y_prob, reducer="sum", n_bins=10, normalize=True,
     better the predictions are calibrated.
 
     The aggregation method can be either:
-    - 'sum' for sum_k P_k delta_k (default), denoted as ECE in [1]
+    - 'sum' for sum_k P_k delta_k (default), denoted as ECE in [1],
+       or calB in [2] if sliding_window parameter is set to true
     - 'max' for max_k delta_k, denoted as MCE in [1]
     where k denotes a bin number and delta_k = abs(avg_freq_true_k - center_k)
 
@@ -2035,9 +2036,14 @@ def calibration_loss(y_true, y_prob, reducer="sum", n_bins=10, normalize=True,
         Aggregation method.
 
     n_bins : int, positive, optional (default=10)
-        Number of bins. Computation requires n_bins full passes on both
-        y_prob and y_true but larger n_bins can increase the accuracy of the
-        calibration loss, provided sufficient data in bins.
+        Number of bins if sliding_window is set to false.
+        Number of non-overlapping bins if sliding_window is set to true, i.e.
+        each bins will contain N / n_bins elements.
+        Larger n_bins can increase the accuracy of the calibration loss,
+        provided sufficient data in bins.
+
+    sliding_window : bool, optional (default=False)
+        If true, compute the
 
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
@@ -2078,6 +2084,10 @@ def calibration_loss(y_true, y_prob, reducer="sum", n_bins=10, normalize=True,
         of Modern Neural Networks. Proceedings of the 34th International
         Conference on Machine Learning, PMLR 70:1321-1330, 2017.
         <http://proceedings.mlr.press/v70/guo17a.html>`
+    [2] `An experimental comparison of performance measures for classification.
+        C.Ferri, J.Hernandez-Orallo, R.Modroiu. Pattern Recognition Letters,
+        Volume 30, Issue 1, 2009.
+    <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
@@ -2089,37 +2099,59 @@ def calibration_loss(y_true, y_prob, reducer="sum", n_bins=10, normalize=True,
         pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
-    step_size = 1 / float(n_bins)
+
     loss = 0.
     count = 0.
-    ind = np.argsort(y_prob)
-    y_true = y_true[ind]
-    y_prob = y_prob[ind]
+    remapping = np.argsort(y_prob)
+    y_true = y_true[remapping]
+    y_prob = y_prob[remapping]
     if sample_weight is not None:
-        sample_weight = sample_weight[ind]
-    i_thres = np.searchsorted(y_prob, np.arange(0, 1, step_size)).tolist()
-    i_thres.append(y_true.shape[0])
-    for i, i_start in enumerate(i_thres[:-1]):
-        i_end = i_thres[i+1]
-        if sample_weight is None:
-            delta_count = float(i_end - i_start)
-            avg_pred_true = y_true[i_start:i_end].sum() / delta_count
-            bin_centroid = y_prob[i_start:i_end].sum() / delta_count
-        else:
-            delta_count = float(sample_weight[i_start:i_end].sum())
-            avg_pred_true = np.dot(y_true[i_start:i_end],
-                                   sample_weight[i_start:i_end]) / delta_count
-            bin_centroid = np.dot(y_prob[i_start:i_end],
-                                  sample_weight[i_start:i_end]) / delta_count
-        count += delta_count
+        sample_weight = sample_weight[remapping]
+
+    if sliding_window:
+        if sample_weight:
+            raise ValueError("sample_weight is incompatible sliding_window"
+                             "set to True")
+        bin_size = y_true.shape[0] // n_bins
+        cumsum_true = np.zeros(y_true.shape[0] + 1)
+        cumsum_true[1:] = np.cumsum(y_true)
+        cumsum_prob = np.zeros(y_prob.shape[0] + 1)
+        cumsum_prob[1:] = np.cumsum(y_prob)
+        win_avg_pred_true = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
+                             / bin_size)
+        win_bin_centroid = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
+                            / bin_size)
+        deltas = np.abs(win_avg_pred_true - win_bin_centroid)
         if reducer == "max":
-            loss = max(loss, abs(avg_pred_true - bin_centroid))
+            loss = deltas.max()
         elif reducer == "sum":
-            delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
-            if not np.isnan(delta_loss):
-                loss += delta_loss
-        else:
-            raise ValueError("reducer is neither 'sum' nor 'max'")
+            loss = deltas.sum()
+            count = deltas.shape[0]
+    else:
+        step_size = 1 / float(n_bins)
+        i_thres = np.searchsorted(y_prob, np.arange(0, 1, step_size)).tolist()
+        i_thres.append(y_true.shape[0])
+        for i, i_start in enumerate(i_thres[:-1]):
+            i_end = i_thres[i+1]
+            if sample_weight is None:
+                delta_count = float(i_end - i_start)
+                avg_pred_true = y_true[i_start:i_end].sum() / delta_count
+                bin_centroid = y_prob[i_start:i_end].sum() / delta_count
+            else:
+                delta_count = float(sample_weight[i_start:i_end].sum())
+                avg_pred_true = np.dot(y_true[i_start:i_end],
+                                       sample_weight[i_start:i_end]) / delta_count
+                bin_centroid = np.dot(y_prob[i_start:i_end],
+                                      sample_weight[i_start:i_end]) / delta_count
+            count += delta_count
+            if reducer == "max":
+                loss = max(loss, abs(avg_pred_true - bin_centroid))
+            elif reducer == "sum":
+                delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
+                if not np.isnan(delta_loss):
+                    loss += delta_loss
+            else:
+                raise ValueError("reducer is neither 'sum' nor 'max'")
     if reducer == "sum" and normalize:
         loss /= count
     return loss
