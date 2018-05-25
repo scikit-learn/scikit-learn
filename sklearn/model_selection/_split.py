@@ -367,6 +367,10 @@ class KFold(_BaseKFold):
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` == True.
 
+    .. deprecated:: 0.20
+     ``n_splits=3`` is deprecated in version 0.20. New default value is
+    changed to ``n_splits=5``.
+
     Examples
     --------
     >>> from sklearn.model_selection import KFold
@@ -416,6 +420,9 @@ class KFold(_BaseKFold):
         if self.shuffle:
             check_random_state(self.random_state).shuffle(indices)
 
+        if self.n_splits == 3:
+            warnings.warn("n_splits=3 is deprecated in 0.20. New default"
+                          "value is changed to n_splits=5", DeprecationWarning)
         n_splits = self.n_splits
         fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
         fold_sizes[:n_samples % n_splits] += 1
