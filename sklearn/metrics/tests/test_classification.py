@@ -101,6 +101,23 @@ def make_prediction(dataset=None, binary=False):
 ###############################################################################
 # Tests
 
+def test_classification_report_dictionary_output():
+
+    # Test performance report with dictionary output
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = {'avg / total': {'recall': 0.53, 'f1-score': 0.47, 'support': 75, 'precision': 0.51},
+    'setosa': {'recall': 0.79, 'f1-score': 0.81, 'support': 24, 'precision': 0.83},
+    'versicolor': {'recall': 0.10, 'f1-score': 0.15, 'support': 31, 'precision': 0.33},
+    'virginica': {'recall': 0.90, 'f1-score': 0.57, 'support': 20, 'precision': 0.42}}
+
+    report = classification_report(
+        y_true, y_pred, labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names,output_dict=True)
+
+    assert_dict_equal(report, expected_report)
 
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
