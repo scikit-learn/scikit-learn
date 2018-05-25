@@ -257,7 +257,7 @@ Metrics
 
 - :func:`metrics.cluster.silhouette_score` and
   :func:`metrics.cluster.silhouette_samples` are more memory efficient,
-  causing them to run faster. :issue:`10280` by `Joel Nothman`_.
+  causing them to run faster. :issue:`11135` by `Joel Nothman`_.
 
 Linear, kernelized and related models
 
