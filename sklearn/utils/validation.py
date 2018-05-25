@@ -568,7 +568,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
 
-
     if warn_on_dtype and dtypes_orig is not None and {array.dtype} != \
             set(dtypes_orig):
         # if there was at the beginning some other types than the final one
