@@ -183,7 +183,7 @@ Classifiers and regressors
   Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
 
 - :mod:`Nearest neighbors <neighbors>` query methods are now more memory
-  efficient when ``algorithm='brute'``. :issue:`10280` by `Joel Nothman`_
+  efficient when ``algorithm='brute'``. :issue:`11136` by `Joel Nothman`_
   and :user:`Aman Dalmia <dalmia>`.
 
 Cluster
