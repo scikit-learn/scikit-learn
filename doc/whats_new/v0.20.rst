@@ -615,6 +615,9 @@ Misc
   acts as an upper bound on iterations.
   :issue:`#10982` by :user:`Juliet Lawton <julietcl>`
 
+- Invalid input for :class:`model_selection.ParameterGrid` now raises TypeError.
+  :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
+
 Changes to estimator checks
 ---------------------------
 
