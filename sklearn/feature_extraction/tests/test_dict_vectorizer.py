@@ -2,7 +2,6 @@
 #          Dan Blanchard <dblanchard@ets.org>
 # License: BSD 3 clause
 
-from itertools import imap
 from random import Random
 import numpy as np
 import scipy.sparse as sp
@@ -97,7 +96,7 @@ def test_iterable_value():
 
 
 def test_iterable_value_with_generator():
-    D_in = [{"version": imap(str, xrange(1, 3)), "ham": 2},
+    D_in = [{"version": map(str, range(1, 3)), "ham": 2},
             {"version": "2", "spam": .3},
             {"version=3": True, "spam": -1}]
     v = DictVectorizer(sparse=False)
@@ -107,7 +106,7 @@ def test_iterable_value_with_generator():
     D_out = v.inverse_transform(X)
     assert_equal(D_out[0], {"version=1": 1, "version=2": 1, "ham": 2})
 
-    actual_x0 = v.transform({"version": imap(str, xrange(1, 3)), "ham": 2})
+    actual_x0 = v.transform({"version": map(str, range(1, 3)), "ham": 2})
     assert_array_equal(actual_x0, X[0:1])
 
     names = v.get_feature_names()
