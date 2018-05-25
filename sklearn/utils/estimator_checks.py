@@ -6,10 +6,12 @@ import sys
 import traceback
 import pickle
 from copy import deepcopy
+import struct
+from functools import partial
+
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -33,6 +35,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import create_memmap_backed_data
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
@@ -73,6 +76,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
+             'MinMaxScaler', 'QuantileTransformer']
+
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
@@ -81,6 +87,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
     yield check_estimators_fit_returns_self
+    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
 
     # Check that all estimator yield informative messages when
@@ -93,7 +100,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ['SimpleImputer', 'Imputer']:
+    if name not in ALLOW_NAN:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -120,6 +127,7 @@ def _yield_classifier_checks(name, classifier):
     yield check_estimators_partial_fit_n_features
     # basic consistency testing
     yield check_classifiers_train
+    yield partial(check_classifiers_train, readonly_memmap=True)
     yield check_classifiers_regression_target
     if (name not in ["MultinomialNB", "ComplementNB", "LabelPropagation",
                      "LabelSpreading"] and
@@ -168,6 +176,7 @@ def _yield_regressor_checks(name, regressor):
     # TODO: test with multiple responses
     # basic testing
     yield check_regressors_train
+    yield partial(check_regressors_train, readonly_memmap=True)
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
@@ -193,6 +202,7 @@ def _yield_transformer_checks(name, transformer):
                     'FunctionTransformer', 'Normalizer']:
         # basic tests
         yield check_transformer_general
+        yield partial(check_transformer_general, readonly_memmap=True)
         yield check_transformers_unfitted
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
@@ -208,6 +218,7 @@ def _yield_clustering_checks(name, clusterer):
         # this is clustering on the features
         # let's not test that here.
         yield check_clustering
+        yield partial(check_clustering, readonly_memmap=True)
         yield check_estimators_partial_fit_n_features
     yield check_non_transformer_estimators_n_iter
 
@@ -220,6 +231,7 @@ def _yield_outliers_checks(name, estimator):
     # checks for estimators that can be used on a test set
     if hasattr(estimator, 'predict'):
         yield check_outliers_train
+        yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
@@ -474,10 +486,11 @@ def check_sample_weights_pandas_series(name, estimator_orig):
     if has_fit_parameter(estimator, "sample_weight"):
         try:
             import pandas as pd
-            X = np.array([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+            X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                          [2, 1], [2, 2], [2, 3], [2, 4]])
             X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 2, 2, 2])
-            weights = pd.Series([1] * 6)
+            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2])
+            weights = pd.Series([1] * 8)
             try:
                 estimator.fit(X, y, sample_weight=weights)
             except ValueError:
@@ -796,7 +809,7 @@ def check_fit1d(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_transformer_general(name, transformer):
+def check_transformer_general(name, transformer, readonly_memmap=False):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
@@ -804,6 +817,10 @@ def check_transformer_general(name, transformer):
     if name == 'PowerTransformer':
         # Box-Cox requires positive, non-zero data
         X += 1
+
+    if readonly_memmap:
+        X, y = create_memmap_backed_data([X, y])
+
     _check_transformer(name, transformer, X, y)
     _check_transformer(name, transformer, X.tolist(), y.tolist())
 
@@ -1162,11 +1179,17 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_clustering(name, clusterer_orig):
+def check_clustering(name, clusterer_orig, readonly_memmap=False):
     clusterer = clone(clusterer_orig)
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
+    rng = np.random.RandomState(7)
+    X_noise = np.concatenate([X, rng.uniform(low=-3, high=3, size=(5, 2))])
+
+    if readonly_memmap:
+        X, y, X_noise = create_memmap_backed_data([X, y, X_noise])
+
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
     if hasattr(clusterer, "n_clusters"):
@@ -1198,8 +1221,6 @@ def check_clustering(name, clusterer_orig):
     assert_in(pred2.dtype, [np.dtype('int32'), np.dtype('int64')])
 
     # Add noise to X to test the possible values of the labels
-    rng = np.random.RandomState(7)
-    X_noise = np.concatenate([X, rng.uniform(low=-3, high=3, size=(5, 2))])
     labels = clusterer.fit_predict(X_noise)
 
     # There should be at least one sample in every cluster. Equivalently
@@ -1270,20 +1291,26 @@ def check_classifiers_one_label(name, classifier_orig):
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, classifier_orig):
+def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
+
+    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
+        X_m -= X_m.min()
+        X_b -= X_b.min()
+
+    if readonly_memmap:
+        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
+
     for (X, y) in [(X_m, y_m), (X_b, y_b)]:
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
         classifier = clone(classifier_orig)
-        if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
-            X -= X.min()
         X = pairwise_estimator_convert_X(X, classifier_orig)
         set_random_state(classifier)
         # raises error on malformed input for fit
@@ -1379,9 +1406,13 @@ def check_classifiers_train(name, classifier_orig):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
-def check_outliers_train(name, estimator_orig):
+def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     X, _ = make_blobs(n_samples=300, random_state=0)
     X = shuffle(X, random_state=7)
+
+    if readonly_memmap:
+        X = create_memmap_backed_data(X)
+
     n_samples, n_features = X.shape
     estimator = clone(estimator_orig)
     set_random_state(estimator)
@@ -1441,7 +1472,8 @@ def check_outliers_train(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_estimators_fit_returns_self(name, estimator_orig):
+def check_estimators_fit_returns_self(name, estimator_orig,
+                                      readonly_memmap=False):
     """Check if self is returned when calling fit"""
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     # some want non-negative input
@@ -1454,8 +1486,10 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
-    set_random_state(estimator)
+    if readonly_memmap:
+        X, y = create_memmap_backed_data([X, y])
 
+    set_random_state(estimator)
     assert_true(estimator.fit(X, y) is estimator)
 
 
@@ -1634,14 +1668,23 @@ def check_regressors_int(name, regressor_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_regressors_train(name, regressor_orig):
+def check_regressors_train(name, regressor_orig, readonly_memmap=False):
     X, y = _boston_subset()
     X = pairwise_estimator_convert_X(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
     regressor = clone(regressor_orig)
     y = multioutput_estimator_convert_y_2d(regressor, y)
-    rnd = np.random.RandomState(0)
+    if name in CROSS_DECOMPOSITION:
+        rnd = np.random.RandomState(0)
+        y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
+        y_ = y_.T
+    else:
+        y_ = y
+
+    if readonly_memmap:
+        X, y, y_ = create_memmap_backed_data([X, y, y_])
+
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
@@ -1656,11 +1699,6 @@ def check_regressors_train(name, regressor_orig):
                        "labels. Perhaps use check_X_y in fit.".format(name)):
         regressor.fit(X, y[:-1])
     # fit
-    if name in CROSS_DECOMPOSITION:
-        y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
-        y_ = y_.T
-    else:
-        y_ = y
     set_random_state(regressor)
     regressor.fit(X, y_)
     regressor.fit(X.tolist(), y_.tolist())

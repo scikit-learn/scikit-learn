@@ -360,6 +360,13 @@ def load_iris(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    Notes
+    -----
+        .. versionchanged:: 0.20
+            Fixed two wrong data points according to Fisher's paper.
+            The new version is the same as in R, but not as in the UCI
+            Machine Learning Repository.
+
     Examples
     --------
     Let's say you are interested in the samples 10, 25, and 50, and want to
@@ -701,6 +708,8 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    Notes
+    -----
         .. versionchanged:: 0.20
             Fixed a wrong data point at [445, 0].
 
