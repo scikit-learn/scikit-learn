@@ -40,34 +40,34 @@ def _remove_dir(path):
 
 @pytest.fixture(scope="module")
 def data_home(tmpdir_factory):
-    return tmpdir_factory.mktemp("scikit_learn_data_home_test")
+    tmp_file = str(tmpdir_factory.mktemp("scikit_learn_data_home_test"))
+    yield tmp_file
+    _remove_dir(tmp_file)
 
 
 @pytest.fixture(scope="module")
 def load_files_root(tmpdir_factory):
-    return tmpdir_factory.mktemp("scikit_learn_load_files_test")
+    tmp_file = str(tmpdir_factory.mktemp("scikit_learn_load_files_test"))
+    yield tmp_file
+    _remove_dir(tmp_file)
 
 
 @pytest.fixture
 def test_category_dir_1(load_files_root):
-    try:
-        TEST_CATEGORY_DIR1 = tempfile.mkdtemp(dir=load_files_root)
-        sample_file = tempfile.NamedTemporaryFile(dir=TEST_CATEGORY_DIR1,
-                                                  delete=False)
-        sample_file.write(b("Hello World!\n"))
-        sample_file.close()
-        yield TEST_CATEGORY_DIR1
-    finally:
-        _remove_dir(TEST_CATEGORY_DIR1)
+    TEST_CATEGORY_DIR1 = tempfile.mkdtemp(dir=load_files_root)
+    sample_file = tempfile.NamedTemporaryFile(dir=TEST_CATEGORY_DIR1,
+                                              delete=False)
+    sample_file.write(b("Hello World!\n"))
+    sample_file.close()
+    yield str(TEST_CATEGORY_DIR1)
+    _remove_dir(TEST_CATEGORY_DIR1)
 
 
 @pytest.fixture
 def test_category_dir_2(load_files_root):
-    try:
-        TEST_CATEGORY_DIR2 = tempfile.mkdtemp(dir=load_files_root)
-        yield TEST_CATEGORY_DIR2
-    finally:
-        _remove_dir(TEST_CATEGORY_DIR2)
+    TEST_CATEGORY_DIR2 = tempfile.mkdtemp(dir=load_files_root)
+    yield str(TEST_CATEGORY_DIR2)
+    _remove_dir(TEST_CATEGORY_DIR2)
 
 
 def test_data_home(data_home):
