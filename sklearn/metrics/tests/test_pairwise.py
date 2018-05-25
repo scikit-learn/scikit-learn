@@ -2,7 +2,6 @@ from types import GeneratorType
 
 import numpy as np
 from numpy import linalg
-import pytest
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
