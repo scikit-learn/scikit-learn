@@ -56,6 +56,9 @@ Classifiers and regressors
 - :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
   ``predict`` method. The returned standard deviations will be zeros.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
@@ -121,6 +124,13 @@ Metrics
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
+
+Misc
+
+- A new configuration parameter, ``working_memory`` was added to control memory
+  consumption limits in chunked operations, such as the new
+  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
+  :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Enhancements
 ............
@@ -536,6 +546,12 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
+  and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
+  v0.22.  It no longer has any effect, as batch size is determined by global
+  ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
+  Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Cluster
 
