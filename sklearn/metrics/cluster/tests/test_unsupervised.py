@@ -12,9 +12,9 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
+from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics.cluster import davies_bouldin_score
-from sklearn.metrics import pairwise_distances
 
 
 def test_silhouette():

@@ -166,10 +166,6 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
-- :mod:`Nearest neighbors <neighbors>` query methods are now more memory
-  efficient when ``algorithm='brute'``. :issue:`10280` by `Joel Nothman`_
-  and :user:`Aman Dalmia <dalmia>`.
-
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
