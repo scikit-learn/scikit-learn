@@ -172,16 +172,16 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
     def fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm.
 
-        The method fits the model `n_init` times and sets the parameters with
+        The method fits the model ``n_init`` times and sets the parameters with
         which the model has the largest likelihood or lower bound. Within each
-        trial, the method iterates between E-step and M-step for `max_iter`
+        trial, the method iterates between E-step and M-step for ``max_iter``
         times until the change of likelihood or lower bound is less than
-        `tol`, otherwise, a `ConvergenceWarning` is raised.
-        If `warm_start` is `True`, then `n_init` is ignored and a single
+        ``tol``, otherwise, a ``ConvergenceWarning`` is raised.
+        If ``warm_start`` is ``True``, then ``n_init`` is ignored and a single
         initialization is performed upon the first call. Upon consecutive
         calls, training starts where it left off. The max lower bound may be
         lower than after the last call if you fit a different dataset. If
-        `max_iter` is 1, the method detects convergence by comparing the lower
+        ``max_iter`` is 1, the method detects convergence by comparing the lower
         bound after the single iteration with the lower bound after the last
         call (the dataset is assumed to be the same).
 
