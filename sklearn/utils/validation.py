@@ -576,7 +576,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         # some data must have been converted
         msg = ("Data with input dtype %s were all converted to %s%s."
                % (', '.join(map(str, set(dtypes_orig))), array.dtype, context))
-        warnings.warn(msg, DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning, stacklevel=2)
 
     return array
 
