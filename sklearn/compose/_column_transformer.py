@@ -49,7 +49,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     Parameters
     ----------
     transformers : list of tuples
-        List of (name, transformer, column) tuples specifying the transformer
+        List of (name, transformer, column(s)) tuples specifying the transformer
         objects to be applied to subsets of the data.
 
         name : string
@@ -61,8 +61,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
-        column : string or int, array-like of string or int, slice or boolean \
-mask array
+        column(s) : string or int, array-like of string or int, slice or \
+boolean mask array
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -114,8 +114,8 @@ mask array
     ...      ("norm2", Normalizer(norm='l1'), slice(2, 4))])
     >>> X = np.array([[0., 1., 2., 2.],
     ...               [1., 1., 0., 1.]])
-    >>> # Normalizer scales each row of X to unit norm. Therefore, a separate
-    >>> # scaling is applied for the two first and two last elements of each
+    >>> # Normalizer scales each row of X to unit norm. A separate scaling
+    >>> # is applied for the two first and two last elements of each
     >>> # row independently.
     >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
     array([[0. , 1. , 0.5, 0.5],
@@ -262,7 +262,11 @@ mask array
         for name, trans, _, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
-            if not hasattr(trans, 'get_feature_names'):
+            elif trans == 'passthrough':
+                raise NotImplementedError(
+                    "get_feature_names is not yet supported when using "
+                    "a 'passthrough' transformer.")
+            elif not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))

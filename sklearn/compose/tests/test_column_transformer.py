@@ -384,6 +384,19 @@ def test_column_transformer_get_feature_names():
     ct.fit(X)
     assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1__c'])
 
+    # passthrough transformers not supported
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X)
+    assert_raise_message(
+        NotImplementedError, 'get_feature_names is not yet supported',
+        ct.get_feature_names)
+
+    # drop transformer
+    ct = ColumnTransformer(
+        [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
+    ct.fit(X)
+    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b'])
+
 
 def test_column_transformer_special_strings():
 
