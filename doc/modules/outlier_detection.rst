@@ -86,7 +86,9 @@ the distribution of the inlying data is very challenging, and a One-class SVM
 might give useful results in these situations depending on the value of its
 hyperparameters.
 
-:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns an ellipse. It thus degrades when the data is not unimodal. Notice however that this estimator is robust to outliers.
+:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
+an ellipse. It thus degrades when the data is not unimodal. Notice however
+that this estimator is robust to outliers.
 
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
 seem to perform reasonably well for multi-modal data sets. The advantage of
@@ -291,8 +293,13 @@ The question is not, how isolated the sample is, but how isolated it is
 with respect to the surrounding neighborhood.
 
 When applying LOF for outlier detection, there are no ``predict``,
-``decision_function`` and ``score_samples`` methods but only a ``fit_predict`` method. The scores of abnormality of the training samples are accessible
+``decision_function`` and ``score_samples`` methods but only a ``fit_predict``
+method. The scores of abnormality of the training samples are accessible
 through the ``negative_outlier_factor_`` attribute.
+Note that ``predict``, ``decision_function`` and ``score_samples`` can be used
+on new unseen data when LOF is applied for novelty detection, i.e. when the
+``novelty`` parameter is set to ``True``. See :ref:`novelty_with_lof`.
+
 
 This strategy is illustrated below.
 
@@ -303,9 +310,11 @@ This strategy is illustrated below.
 
 .. topic:: Examples:
 
-   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py` for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
+   for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a comparison with other anomaly detection methods.
+   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
+   comparison with other anomaly detection methods.
 
 .. topic:: References:
 
@@ -314,11 +323,14 @@ This strategy is illustrated below.
       <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
+.. _novelty_with_lof:
+
 Novelty detection with Local Outlier Factor
 ===========================================
 
 To use :class:`neighbors.LocalOutlierFactor` for novelty detection, i.e.
-predict labels or compute the score of abnormality of new unseen data, you need to instantiate the estimator with the ``novelty`` parameter
+predict labels or compute the score of abnormality of new unseen data, you
+need to instantiate the estimator with the ``novelty`` parameter
 set to ``True`` before fitting the estimator::
 
   lof = LocalOutlierFactor(novelty=True)
