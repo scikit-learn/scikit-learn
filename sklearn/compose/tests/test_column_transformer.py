@@ -27,6 +27,12 @@ class Trans(BaseEstimator):
         return self
 
     def transform(self, X, y=None):
+        # 1D Series -> 2D DataFrame
+        if hasattr(X, 'to_frame'):
+            return X.to_frame()
+        # 1D array -> 2D array
+        if X.ndim == 1:
+            return np.atleast_2d(X).T
         return X
 
 
@@ -44,25 +50,26 @@ def test_column_transformer():
 
     X_res_first1D = np.array([0, 1, 2])
     X_res_second1D = np.array([2, 4, 6])
-    X_res_first2D = X_res_first1D.reshape(-1, 1)
+    X_res_first = X_res_first1D.reshape(-1, 1)
     X_res_both = X_array
 
     cases = [
         # single column 1D / 2D
-        (0, X_res_first1D),
-        ([0], X_res_first2D),
+        (0, X_res_first),
+        ([0], X_res_first),
         # list-like
         ([0, 1], X_res_both),
         (np.array([0, 1]), X_res_both),
         # slice
-        (slice(0, 1), X_res_first2D),
+        (slice(0, 1), X_res_first),
         (slice(0, 2), X_res_both),
         # boolean mask
-        (np.array([True, False]), X_res_first2D),
+        (np.array([True, False]), X_res_first),
     ]
 
     for selection, res in cases:
-        ct = ColumnTransformer([('trans', Trans(), selection)])
+        ct = ColumnTransformer([('trans', Trans(), selection)],
+                               remainder='drop')
         assert_array_equal(ct.fit_transform(X_array), res)
         assert_array_equal(ct.fit(X_array).transform(X_array), res)
 
@@ -93,17 +100,16 @@ def test_column_transformer_dataframe():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
 
-    X_res_first1D = np.array([0, 1, 2])
-    X_res_first2D = X_res_first1D.reshape(-1, 1)
+    X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
     X_res_both = X_array
 
     cases = [
         # String keys: label based
 
         # scalar
-        ('first', X_res_first1D),
+        ('first', X_res_first),
         # list
-        (['first'], X_res_first2D),
+        (['first'], X_res_first),
         (['first', 'second'], X_res_both),
         # slice
         (slice('first', 'second'), X_res_both),
@@ -111,22 +117,23 @@ def test_column_transformer_dataframe():
         # int keys: positional
 
         # scalar
-        (0, X_res_first1D),
+        (0, X_res_first),
         # list
-        ([0], X_res_first2D),
+        ([0], X_res_first),
         ([0, 1], X_res_both),
         (np.array([0, 1]), X_res_both),
         # slice
-        (slice(0, 1), X_res_first2D),
+        (slice(0, 1), X_res_first),
         (slice(0, 2), X_res_both),
 
         # boolean mask
-        (np.array([True, False]), X_res_first2D),
-        (pd.Series([True, False], index=['first', 'second']), X_res_first2D),
+        (np.array([True, False]), X_res_first),
+        (pd.Series([True, False], index=['first', 'second']), X_res_first),
     ]
 
     for selection, res in cases:
-        ct = ColumnTransformer([('trans', Trans(), selection)])
+        ct = ColumnTransformer([('trans', Trans(), selection)],
+                               remainder='drop')
         assert_array_equal(ct.fit_transform(X_df), res)
         assert_array_equal(ct.fit(X_df).transform(X_df), res)
 
@@ -170,8 +177,12 @@ def test_column_transformer_dataframe():
 
         def transform(self, X, y=None):
             assert_true(isinstance(X, (pd.DataFrame, pd.Series)))
+            if isinstance(X, pd.Series):
+                X = X.to_frame()
+            return X
 
-    ct = ColumnTransformer([('trans', TransAssert(), 'first')])
+    ct = ColumnTransformer([('trans', TransAssert(), 'first')],
+                           remainder='drop')
     ct.fit_transform(X_df)
     ct = ColumnTransformer([('trans', TransAssert(), ['first', 'second'])])
     ct.fit_transform(X_df)
@@ -179,9 +190,9 @@ def test_column_transformer_dataframe():
     # integer column spec + integer column names -> still use positional
     X_df2 = X_df.copy()
     X_df2.columns = [1, 0]
-    ct = ColumnTransformer([('trans', Trans(), 0)])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first1D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first1D)
+    ct = ColumnTransformer([('trans', Trans(), 0)], remainder='drop')
+    assert_array_equal(ct.fit_transform(X_df), X_res_first)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
 
 
 def test_column_transformer_sparse_array():
@@ -192,11 +203,14 @@ def test_column_transformer_sparse_array():
     X_res_both = X_sparse
 
     for col in [0, [0], slice(0, 1)]:
-        ct = ColumnTransformer([('trans', Trans(), col)])
-        assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
-        assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_first)
-        assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
-                                     X_res_first)
+        for remainder, res in [('drop', X_res_first),
+                               ('passthrough', X_res_both)]:
+            ct = ColumnTransformer([('trans', Trans(), col)],
+                                   remainder=remainder)
+            assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
+            assert_allclose_dense_sparse(ct.fit_transform(X_sparse), res)
+            assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
+                                         res)
 
     for col in [[0, 1], slice(0, 2)]:
         ct = ColumnTransformer([('trans', Trans(), col)])
@@ -239,18 +253,62 @@ def test_column_transformer_error_msg_1D():
         assert_raise_message(ValueError, "specific message", func, X_array)
 
 
-def test_column_transformer_invalid_columns():
+def test_2D_transformer_output():
+
+    class TransNo2D(BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            return X
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    # if one transformer is dropped, test that name is still correct
+    ct = ColumnTransformer([('trans1', 'drop', 0),
+                            ('trans2', TransNo2D(), 1)])
+    assert_raise_message(ValueError, "the 'trans2' transformer should be 2D",
+                         ct.fit_transform, X_array)
+    ct.fit(X_array)
+    assert_raise_message(ValueError, "the 'trans2' transformer should be 2D",
+                         ct.transform, X_array)
+
+
+def test_2D_transformer_output_pandas():
+    pd = pytest.importorskip('pandas')
+
+    class TransNo2D(BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            return X
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_df = pd.DataFrame(X_array, columns=['col1', 'col2'])
+
+    # if one transformer is dropped, test that name is still correct
+    ct = ColumnTransformer([('trans1', TransNo2D(), 'col1')])
+    assert_raise_message(ValueError, "the 'trans1' transformer should be 2D",
+                         ct.fit_transform, X_df)
+    ct.fit(X_df)
+    assert_raise_message(ValueError, "the 'trans1' transformer should be 2D",
+                         ct.transform, X_df)
+
+
+@pytest.mark.parametrize("remainder", ['drop', 'passthrough'])
+def test_column_transformer_invalid_columns(remainder):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     # general invalid
     for col in [1.5, ['string', 1], slice(1, 's')]:
-        ct = ColumnTransformer([('trans', Trans(), col)])
+        ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
         assert_raise_message(ValueError, "No valid specification",
                              ct.fit, X_array)
 
     # invalid for arrays
     for col in ['string', ['string', 'other'], slice('a', 'b')]:
-        ct = ColumnTransformer([('trans', Trans(), col)])
+        ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
         assert_raise_message(ValueError, "Specifying the columns",
                              ct.fit, X_array)
 
@@ -304,7 +362,7 @@ def test_column_transformer_get_set_params():
                             ('trans2', StandardScaler(), [1])])
 
     exp = {'n_jobs': 1,
-           'remainder': 'drop',
+           'remainder': 'passthrough',
            'trans1': ct.transformers[0][1],
            'trans1__copy': True,
            'trans1__with_mean': True,
@@ -323,7 +381,7 @@ def test_column_transformer_get_set_params():
 
     ct.set_params(trans1='passthrough')
     exp = {'n_jobs': 1,
-           'remainder': 'drop',
+           'remainder': 'passthrough',
            'trans1': 'passthrough',
            'trans2': ct.transformers[1][1],
            'trans2__copy': True,
@@ -439,16 +497,16 @@ def test_column_transformer_remainder():
     X_res_second = np.array([2, 4, 6]).reshape(-1, 1)
     X_res_both = X_array
 
-    # default no passthrough
+    # default passthrough
     ct = ColumnTransformer([('trans', Trans(), [0])])
-    assert_array_equal(ct.fit_transform(X_array), X_res_first)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
-
-    # specify to passthrough remaining columns
-    ct = ColumnTransformer([('trans1', Trans(), [0])],
-                           remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+
+    # specify to drop remaining columns
+    ct = ColumnTransformer([('trans1', Trans(), [0])],
+                           remainder='drop')
+    assert_array_equal(ct.fit_transform(X_array), X_res_first)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
 
     # column order is not preserved (passed through added to end)
     ct = ColumnTransformer([('trans1', Trans(), [1])],

@@ -49,11 +49,11 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     Parameters
     ----------
     transformers : list of tuples
-        List of (name, transformer, column(s)) tuples specifying the transformer
-        objects to be applied to subsets of the data.
+        List of (name, transformer, column(s)) tuples specifying the
+        transformer objects to be applied to subsets of the data.
 
         name : string
-            Like in FeatureUnion and Pipeline, this allows the transformer and
+            Like in Pipeline and FeatureUnion, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {'passthrough', 'drop'}
@@ -69,13 +69,14 @@ boolean mask array
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
-    remainder : {'passthrough', 'drop'}, default 'drop'
-        By default, only the specified columns in `transformers` are
-        transformed and combined in the output (default of ``'drop'``).
-        By specifying ``remainder='passthrough'``, all remaining columns that
-        were not specified in `transformers` will be automatically passed
-        through. This subset of columns is concatenated with the output of
-        the transformers.
+    remainder : {'passthrough', 'drop'}, default 'passthrough'
+        By default, all remaining columns that were not specified in
+        `transformers` will be automatically passed through (default of
+        ``'passthrough'``). This subset of columns is concatenated with the
+        output of the transformers.
+        By using ``remainder='drop'``, only the specified columns in
+        `transformers` are transformed and combined in the output, and the
+        non-specified columns are dropped.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -123,7 +124,7 @@ boolean mask array
 
     """
 
-    def __init__(self, transformers, remainder='drop', n_jobs=1,
+    def __init__(self, transformers, remainder='passthrough', n_jobs=1,
                  transformer_weights=None):
         self.transformers = transformers
         self.remainder = remainder
@@ -219,8 +220,7 @@ boolean mask array
                                 (t, type(t)))
 
     def _validate_remainder(self, X):
-        """Generate list of passthrough columns for 'remainder' case.
-        """
+        """Generate list of passthrough columns for 'remainder' case."""
         if self.remainder not in ('drop', 'passthrough'):
             raise ValueError(
                 "The remainder keyword needs to be one of 'drop' or "
@@ -233,6 +233,9 @@ boolean mask array
             for _, _, columns in self.transformers:
                 cols.extend(_get_column_indices(X, columns))
             self._passthrough = sorted(list(set(range(n_columns)) - set(cols)))
+            if not self._passthrough:
+                # empty list -> no need to select passthrough columns
+                self._passthrough = None
         else:
             self._passthrough = None
 
@@ -292,6 +295,18 @@ boolean mask array
             transformers_.append((name, trans, column))
 
         self.transformers_ = transformers_
+
+    def _validate_output(self, result):
+        """
+        Ensure that the output of each transformer is 2D. Otherwise
+        hstack can raise an error or produce incorrect results.
+        """
+        names = [name for name, _, _, _ in self._iter(replace_strings=True)]
+        for Xs, name in zip(result, names):
+            if not getattr(Xs, 'ndim', 0) == 2:
+                raise ValueError(
+                    "The output of the '{0}' transformer should be 2D (scipy "
+                    "matrix, array, or pandas DataFrame).".format(name))
 
     def _fit_transform(self, X, y, func, fitted=False):
         """
@@ -375,6 +390,7 @@ boolean mask array
         Xs, transformers = zip(*result)
 
         self._update_fitted_transformers(transformers)
+        self._validate_output(Xs)
 
         if self._passthrough is not None:
             Xs = list(Xs) + [_get_column(X, self._passthrough)]
@@ -405,6 +421,7 @@ boolean mask array
         check_is_fitted(self, 'transformers_')
 
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
+        self._validate_output(Xs)
 
         if not Xs:
             # All transformers are None
@@ -510,7 +527,11 @@ def _get_column_indices(X, key):
             return list(key)
 
     elif _check_key_type(key, six.string_types):
-        all_columns = list(X.columns)
+        try:
+            all_columns = list(X.columns)
+        except AttributeError:
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
         if isinstance(key, six.string_types):
             columns = [key]
         elif isinstance(key, slice):
@@ -577,7 +598,8 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], CategoricalEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
+    ColumnTransformer(n_jobs=1, remainder='passthrough',
+             transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
