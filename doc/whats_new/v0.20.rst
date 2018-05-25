@@ -166,6 +166,10 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
+- :mod:`Nearest neighbors <neighbors>` query methods are now more memory
+  efficient when ``algorithm='brute'``. :issue:`10280` by `Joel Nothman`_
+  and :user:`Aman Dalmia <dalmia>`.
+
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
@@ -254,6 +258,10 @@ Metrics
 - Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
   False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
+
+- :func:`metrics.cluster.silhouette_score` and
+  :func:`metrics.cluster.silhouette_samples` are more memory efficient,
+  causing them to run faster. :issue:`10280` by `Joel Nothman`_.
 
 Linear, kernelized and related models
 
