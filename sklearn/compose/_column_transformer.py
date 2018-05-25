@@ -69,10 +69,10 @@ mask array
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
-    unspecified : {'passthrough', 'drop'}, default 'drop'
+    remainder : {'passthrough', 'drop'}, default 'drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output (default of ``'drop'``).
-        By specifying ``unspecified='passthrough'``, all remaining columns that
+        By specifying ``remainder='passthrough'``, all remaining columns that
         were not specified in `transformers` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformers.
@@ -123,10 +123,10 @@ mask array
 
     """
 
-    def __init__(self, transformers, unspecified='drop', n_jobs=1,
+    def __init__(self, transformers, remainder='drop', n_jobs=1,
                  transformer_weights=None):
         self.transformers = transformers
-        self.unspecified = unspecified
+        self.remainder = remainder
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
 
@@ -218,17 +218,17 @@ mask array
                                 "specifiers. '%s' (type %s) doesn't." %
                                 (t, type(t)))
 
-    def _validate_unspecified(self, X):
-        """Generate list of passthrough columns for 'unspecified' case.
+    def _validate_remainder(self, X):
+        """Generate list of passthrough columns for 'remainder' case.
         """
-        if self.unspecified not in ('drop', 'passthrough'):
+        if self.remainder not in ('drop', 'passthrough'):
             raise ValueError(
-                "The unspecified keywords needs to be one of 'drop' or "
+                "The remainder keyword needs to be one of 'drop' or "
                 "'passthrough'. {0:r} was passed instead")
 
         n_columns = X.shape[1]
 
-        if self.unspecified == 'passthrough':
+        if self.remainder == 'passthrough':
             cols = []
             for _, _, columns in self.transformers:
                 cols.extend(_get_column_indices(X, columns))
@@ -328,7 +328,7 @@ mask array
 
         """
         self._validate_transformers()
-        self._validate_unspecified(X)
+        self._validate_remainder(X)
 
         transformers = self._fit_transform(X, y, _fit_one_transformer)
 
@@ -357,7 +357,7 @@ mask array
 
         """
         self._validate_transformers()
-        self._validate_unspecified(X)
+        self._validate_remainder(X)
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
@@ -573,14 +573,13 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (['numerical_column'], StandardScaler()),
     ...     (['categorical_column'], CategoricalEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, transformer_weights=None,
+    ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
                            ('categoricalencoder',
                             CategoricalEncoder(...),
-                            ['categorical_column'])],
-             unspecified='drop')
+                            ['categorical_column'])])
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)
