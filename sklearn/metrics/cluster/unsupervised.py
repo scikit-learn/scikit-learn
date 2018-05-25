@@ -15,6 +15,7 @@ from ...utils import check_random_state
 from ...utils import check_X_y
 from ...utils import safe_indexing
 from ..pairwise import pairwise_distances_chunked
+from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
 
