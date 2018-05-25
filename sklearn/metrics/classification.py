@@ -2029,7 +2029,6 @@ def calibration_loss(y_true, y_prob, bin_size=2):
     >>> calibration_loss(y_true, y_prob, bin_size=2)
     0.5333333333333333
     """
-
     pos_loss = 0.0
     neg_loss = 0.0
 
