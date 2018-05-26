@@ -67,15 +67,8 @@ Building from source
 If you have all the build requirements installed (see below for details), you can build and install the package in the following way.
 
 If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. It is thus preferred that
-you add the scikit-learn directory to your ``PYTHONPATH`` and build the
-extension in place::
-
-    python setup.py build_ext --inplace
-
-
-Another option is to install the package in editable mode if you change your
-code a lot and do not want to have to reinstall every time. This basically
+package each time you update the sources. Therefore it's recommended that you install in editable,
+which allows you to edit the code in-place. This basically
 builds the extension in place and creates a link to the development directory
 (see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
