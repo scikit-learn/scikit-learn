@@ -355,7 +355,7 @@ class KFold(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=5
+    n_splits : int, default=3
         Number of folds. Must be at least 2.
 
     shuffle : boolean, optional
@@ -368,8 +368,8 @@ class KFold(_BaseKFold):
         by `np.random`. Used when ``shuffle`` == True.
 
     .. deprecated:: 0.20
-     ``n_splits=3`` is deprecated in version 0.20. New default value is
-    changed to ``n_splits=5``.
+    The default value ``n_splits=3`` is deprecated in version 0.20 and will 
+    be changed to ``n_splits=5``in version 0.22.
 
     Examples
     --------
@@ -410,7 +410,7 @@ class KFold(_BaseKFold):
     RepeatedKFold: Repeats K-Fold n times.
     """
 
-    def __init__(self, n_splits=5, shuffle=False,
+    def __init__(self, n_splits=3, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n_splits, shuffle, random_state)
 
@@ -421,8 +421,10 @@ class KFold(_BaseKFold):
             check_random_state(self.random_state).shuffle(indices)
 
         if self.n_splits == 3:
-            warnings.warn("n_splits=3 is deprecated in 0.20. New default"
-                          "value is changed to n_splits=5", DeprecationWarning)
+            warnings.warn("The default value of n_splits=3 is deprecated"
+                          " in version 0.20 and will be changed to "
+                          "n_splits=5 in version 0.22"
+                          , DeprecationWarning)
         n_splits = self.n_splits
         fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
         fold_sizes[:n_samples % n_splits] += 1
