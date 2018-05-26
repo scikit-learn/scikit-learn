@@ -799,30 +799,6 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
                     for key in param_keys + score_keys))
 
 
-def check_cv_results_grid_scores_consistency(search):
-    # TODO Remove test in 0.20
-    if search.multimetric_:
-        assert_raise_message(AttributeError, "not available for multi-metric",
-                             getattr, search, 'grid_scores_')
-    else:
-        cv_results = search.cv_results_
-        res_scores = np.vstack(list([cv_results["split%d_test_score" % i]
-                                     for i in range(search.n_splits_)])).T
-        res_means = cv_results["mean_test_score"]
-        res_params = cv_results["params"]
-        n_cand = len(res_params)
-        grid_scores = assert_warns(DeprecationWarning, getattr,
-                                   search, 'grid_scores_')
-        assert_equal(len(grid_scores), n_cand)
-        # Check consistency of the structure of grid_scores
-        for i in range(n_cand):
-            assert_equal(grid_scores[i].parameters, res_params[i])
-            assert_array_equal(grid_scores[i].cv_validation_scores,
-                               res_scores[i, :])
-            assert_array_equal(grid_scores[i].mean_validation_score,
-                               res_means[i])
-
-
 def test_grid_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4,
                                random_state=42)
@@ -873,7 +849,6 @@ def test_grid_search_cv_results():
                          cv_results['param_degree'].mask[i])
                         for i in range(n_candidates)
                         if cv_results['param_kernel'][i] == 'rbf'))
-        check_cv_results_grid_scores_consistency(search)
 
 
 def test_random_search_cv_results():
@@ -908,7 +883,6 @@ def test_random_search_cv_results():
         # For random_search, all the param array vals should be unmasked
         assert_false(any(cv_results['param_C'].mask) or
                      any(cv_results['param_gamma'].mask))
-        check_cv_results_grid_scores_consistency(search)
 
 
 @ignore_warnings(category=DeprecationWarning)
