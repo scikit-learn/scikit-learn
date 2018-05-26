@@ -14,12 +14,13 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import TransformedTargetRegressor
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.linear_model import LinearRegression, Lasso
 
 from sklearn import datasets
+
+from sklearn.compose import TransformedTargetRegressor
 
 friedman = datasets.make_friedman1(random_state=0)
 

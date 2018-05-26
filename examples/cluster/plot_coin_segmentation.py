@@ -72,7 +72,7 @@ for assign_labels in ('kmeans', 'discretize'):
     plt.imshow(rescaled_coins, cmap=plt.cm.gray)
     for l in range(N_REGIONS):
         plt.contour(labels == l,
-                    colors=[plt.cm.spectral(l / float(N_REGIONS))])
+                    colors=[plt.cm.nipy_spectral(l / float(N_REGIONS))])
     plt.xticks(())
     plt.yticks(())
     title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))

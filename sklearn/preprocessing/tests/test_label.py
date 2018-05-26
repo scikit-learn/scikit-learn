@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -307,10 +308,17 @@ def test_multilabel_binarizer_empty_sample():
 def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
-    assert_raises(KeyError, mlb.fit(y).transform, [[0]])
+    Y = np.array([[1, 0], [0, 1]])
+    w = 'unknown class(es) [0, 4] will be ignored'
+    matrix = assert_warns_message(UserWarning, w,
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    assert_array_equal(matrix, Y)
 
-    mlb = MultiLabelBinarizer(classes=[1, 2])
-    assert_raises(KeyError, mlb.fit_transform, [[0]])
+    Y = np.array([[1, 0, 0], [0, 1, 0]])
+    mlb = MultiLabelBinarizer(classes=[1, 2, 3])
+    matrix = assert_warns_message(UserWarning, w,
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    assert_array_equal(matrix, Y)
 
 
 def test_multilabel_binarizer_given_classes():

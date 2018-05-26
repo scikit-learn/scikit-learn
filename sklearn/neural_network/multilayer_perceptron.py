@@ -788,7 +788,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     warm_start : bool, optional, default False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default 0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
@@ -928,7 +928,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                                  (self.classes_, classes))
         else:
             classes = unique_labels(y)
-            if np.setdiff1d(classes, self.classes_, assume_unique=True):
+            if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
@@ -1171,7 +1171,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     warm_start : bool, optional, default False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default 0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only

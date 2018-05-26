@@ -42,6 +42,13 @@ def test_huber_equals_lr_for_high_epsilon():
     assert_almost_equal(huber.intercept_, lr.intercept_, 2)
 
 
+def test_huber_max_iter():
+    X, y = make_regression_with_outliers()
+    huber = HuberRegressor(max_iter=1)
+    huber.fit(X, y)
+    assert huber.n_iter_ == huber.max_iter
+
+
 def test_huber_gradient():
     # Test that the gradient calculated by _huber_loss_and_gradient is correct
     rng = np.random.RandomState(1)
@@ -168,9 +175,7 @@ def test_huber_warm_start():
     # these would be almost same but not equal.
     assert_array_almost_equal(huber_warm.coef_, huber_warm_coef, 1)
 
-    # No n_iter_ in old SciPy (<=0.9)
-    if huber_warm.n_iter_ is not None:
-        assert_equal(0, huber_warm.n_iter_)
+    assert huber_warm.n_iter_ == 0
 
 
 def test_huber_better_r2_score():

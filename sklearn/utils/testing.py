@@ -16,6 +16,7 @@ import pkgutil
 import warnings
 import sys
 import struct
+import functools
 
 import scipy as sp
 import scipy.io
@@ -45,7 +46,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
-from sklearn.externals.funcsigs import signature
+from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
@@ -687,16 +688,16 @@ def if_matplotlib(func):
     return run_test
 
 
-def skip_if_32bit(func):
-    """Test decorator that skips tests on 32bit platforms."""
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        bits = 8 * struct.calcsize("P")
-        if bits == 32:
-            raise SkipTest('Test skipped on 32bit platforms.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
+try:
+    import pytest
+
+    skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+                                       reason='skipped on 32bit platforms')
+    skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
+                                     reason='skip on travis')
+
+except ImportError:
+    pass
 
 
 def if_safe_multiprocessing_with_blas(func):
@@ -743,12 +744,6 @@ def check_skip_network():
         raise SkipTest("Text tutorial requires large dataset download")
 
 
-def check_skip_travis():
-    """Skip test if being run on Travis."""
-    if os.environ.get('TRAVIS') == "true":
-        raise SkipTest("This test needs to be skipped on Travis")
-
-
 def _delete_folder(folder_path, warn=False):
     """Utility function to cleanup a temporary folder if still existing.
 
@@ -766,19 +761,27 @@ def _delete_folder(folder_path, warn=False):
 
 class TempMemmap(object):
     def __init__(self, data, mmap_mode='r'):
-        self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
         self.mmap_mode = mmap_mode
         self.data = data
 
     def __enter__(self):
-        fpath = op.join(self.temp_folder, 'data.pkl')
-        joblib.dump(self.data, fpath)
-        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
-        atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
+        data_read_only, self.temp_folder = create_memmap_backed_data(
+            self.data, mmap_mode=self.mmap_mode, return_folder=True)
         return data_read_only
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
+
+
+def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
+    temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
+    atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
+    filename = op.join(temp_folder, 'data.pkl')
+    joblib.dump(data, filename)
+    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    result = (memmap_backed_data if not return_folder
+              else (memmap_backed_data, temp_folder))
+    return result
 
 
 # Utils to test docstrings
