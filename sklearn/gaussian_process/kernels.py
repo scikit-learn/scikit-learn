@@ -30,7 +30,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
 from ..base import clone
-from sklearn.externals.funcsigs import signature
+from ..utils.fixes import signature
 
 
 def _check_length_scale(X, length_scale):

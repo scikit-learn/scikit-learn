@@ -990,7 +990,7 @@ Target Types
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
 
-        Continous multioutput targets are represented as multiple
+        Continuous multioutput targets are represented as multiple
         :term:`continuous` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 

@@ -437,6 +437,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             " instead.", DeprecationWarning)
         accept_sparse = False
 
+    # store reference to original array to check if copy is needed when
+    # function returns
+    array_orig = array
+
     # store whether originally we wanted numeric dtype
     dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
@@ -487,13 +491,13 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter('error', ComplexWarning)
-                array = np.array(array, dtype=dtype, order=order, copy=copy)
+                array = np.asarray(array, dtype=dtype, order=order)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
 
         # It is possible that the np.array(..) gave no warning. This happens
-        # when no dtype conversion happend, for example dtype = None. The
+        # when no dtype conversion happened, for example dtype = None. The
         # result is that np.array(..) produces an array of complex dtype
         # and we need to catch and raise exception for such cases.
         _ensure_no_complex_data(array)
@@ -513,8 +517,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
-            # To ensure that array flags are maintained
-            array = np.array(array, dtype=dtype, order=order, copy=copy)
 
         # in the future np.flexible dtypes will be handled like object dtypes
         if dtype_numeric and np.issubdtype(array.dtype, np.flexible):
@@ -556,6 +558,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning)
+
+    if copy and np.may_share_memory(array, array_orig):
+        array = np.array(array, dtype=dtype, order=order)
+
     return array
 
 

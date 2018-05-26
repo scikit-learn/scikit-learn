@@ -1,22 +1,33 @@
 import pytest
 import numpy as np
 
+from scipy import sparse
+
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
+
+from sklearn.base import clone
+
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import MinMaxScaler
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
 iris = load_iris()
 
 
+def _get_valid_samples_by_column(X, col):
+    """Get non NaN samples in column of X"""
+    return X[:, [col]][~np.isnan(X[:, col])]
+
+
 @pytest.mark.parametrize(
-    "est",
-    [MinMaxScaler(),
-     QuantileTransformer(n_quantiles=10, random_state=42)]
+    "est, support_sparse",
+    [(MinMaxScaler(), False),
+     (QuantileTransformer(n_quantiles=10, random_state=42), True)]
 )
-def test_missing_value_handling(est):
+def test_missing_value_handling(est, support_sparse):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
@@ -43,13 +54,30 @@ def test_missing_value_handling(est):
 
     for i in range(X.shape[1]):
         # train only on non-NaN
-        est.fit(X_train[:, [i]][~np.isnan(X_train[:, i])])
+        est.fit(_get_valid_samples_by_column(X_train, i))
         # check transforming with NaN works even when training without NaN
         Xt_col = est.transform(X_test[:, [i]])
         assert_array_equal(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
             Xt_col_nonan = est.transform(
-                X_test[:, [i]][~np.isnan(X_test[:, i])])
+                _get_valid_samples_by_column(X_test, i))
             assert_array_equal(Xt_col_nonan,
                                Xt_col[~np.isnan(Xt_col.squeeze())])
+
+    if support_sparse:
+        est_dense = clone(est)
+        est_sparse = clone(est)
+
+        Xt_dense = est_dense.fit(X_train).transform(X_test)
+        Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
+        for sparse_constructor in (sparse.csr_matrix, sparse.csc_matrix,
+                                   sparse.bsr_matrix, sparse.coo_matrix,
+                                   sparse.dia_matrix, sparse.dok_matrix,
+                                   sparse.lil_matrix):
+            # check that the dense and sparse inputs lead to the same results
+            Xt_sparse = (est_sparse.fit(sparse_constructor(X_train))
+                         .transform(sparse_constructor(X_test)))
+            assert_allclose(Xt_sparse.A, Xt_dense)
+            Xt_inv_sparse = est_sparse.inverse_transform(Xt_sparse)
+            assert_allclose(Xt_inv_sparse.A, Xt_inv_dense)
