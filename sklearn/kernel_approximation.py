@@ -282,7 +282,7 @@ class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
 
     @abstractmethod
     def _spectrum(self, omega):
-        raise NotImplementedError("No spectrum function in base class")
+        """Spectrum function for kernel"""
 
     def _transform_dense(self, X):
         non_zero = (X != 0.0)
@@ -683,6 +683,4 @@ except ImportError:
             return x * np.log(x / y)
         elif x == 0 and y >= 0:
             return 0
-        else:
-            return np.inf
     rel_entr = np.vectorize(xfunc)

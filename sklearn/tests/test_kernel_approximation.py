@@ -24,6 +24,7 @@ X = rng.random_sample(size=(300, 50))
 Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
+X = np.concatenate([X, np.zeros((1, 50))], axis=0)
 
 
 def _test_additive_homogenous_sampler(exact_kernel, sampler, sample_interval):
@@ -86,11 +87,8 @@ def _test_additive_homogenous_sampler(exact_kernel, sampler, sample_interval):
 def test_base_additive_homogenous_sampler():
     # test error on incorrect extending of base class
     class DerivedSampler(BaseAdditiveHomogenousKernelSampler):
-        def _spectrum(self, omega):
-            # Fake spectrum function
-            pass
-    transform = DerivedSampler()
-    assert_raises(ValueError, transform.fit, X)
+        pass
+    assert_raises(TypeError, DerivedSampler)
 
 
 def test_additive_chi2_sampler():
