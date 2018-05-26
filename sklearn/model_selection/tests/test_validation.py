@@ -1188,13 +1188,16 @@ def test_learning_curve_with_stratify():
     def max_diff_in_ones_between_strata(X, y, stratify, folds_count=5,
                                         iters_count=10, random_state=0):
         ones_counter = []
+        ids = []
 
         class MockCountingEstimator(BaseEstimator):
             """ Dummy classifier: it stores (in global var for this class)
-            count of non-zero-labeled elements in passed y """
+            count of non-zero-labeled elements in passed y (y_subset)
+            and ids of instances occurred in training subset (X_subset)"""
             def fit(self, X_subset, y_subset=None):
                 cur_ones_count = np.count_nonzero(y_subset)
                 ones_counter.append(cur_ones_count)
+                ids.append(set(X_subset[:, 0].A1))
                 return self
 
             def score(self, X, y):
@@ -1210,6 +1213,16 @@ def test_learning_curve_with_stratify():
                        stratify=stratify,
                        random_state=random_state)
 
+        # Check that each iteration contains growing subset of instances by
+        # comparing actual difference with max natural one, i.e. caused by
+        # uneven split of instances into folds and then into training subsets.
+        # With default test data and folds/iters counts max natural diff is 0
+        max_nat_diff = len(y) * (folds_count - 1) / folds_count % iters_count
+        strata_ids = np.diff(np.asarray(ids).reshape(folds_count, iters_count))
+        strata_ids_lengths = [len(x) for xs in strata_ids for x in xs]
+        strata_ids_lengths_diff = np.diff(strata_ids_lengths)
+        assert(max(strata_ids_lengths_diff) <= max_nat_diff)
+
         # Extract max possible diff of ones count between strata
         # inside each training CV fold
         ones_counter = np.asarray(ones_counter).reshape(folds_count,
@@ -1217,12 +1230,14 @@ def test_learning_curve_with_stratify():
         # ones_counter stores accumulated count, not count in each stratum,
         # so we need to take this into account: e.g. [1 1 6 8 9] => [1 0 5 2 1]
         strata_ones = np.hstack((ones_counter[:, [0]], np.diff(ones_counter)))
-        max_diff = np.max(np.max(strata_ones, 1) - np.min(strata_ones, 1))
-        return max_diff
+        max_diff_ones = np.max(np.max(strata_ones, 1) - np.min(strata_ones, 1))
+        return max_diff_ones
 
     ones = 25
     zeros = 2475
-    X = np.random.rand(ones + zeros, 2)
+    X_ids = np.matrix(range(ones + zeros))
+    X_features = np.random.rand(ones + zeros, 2)
+    X = np.hstack((X_ids.T, X_features))
     y = np.array([1] * ones + [0] * zeros)
     cv = StratifiedKFold(5)
 

@@ -1169,7 +1169,7 @@ def learning_curve(estimator, X, y, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
 
-    if shuffle:
+    if shuffle and not stratify:  # if stratify, we shuffle at each iteration
         rng = check_random_state(random_state)
         cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
 
