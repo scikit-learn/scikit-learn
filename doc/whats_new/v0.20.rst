@@ -56,6 +56,9 @@ Classifiers and regressors
 - :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
   ``predict`` method. The returned standard deviations will be zeros.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
@@ -112,11 +115,22 @@ Decomposition, manifold learning and clustering
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
+- :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
+  sample weights via new parameter ``sample_weight`` in ``fit`` function.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
+
 Metrics
 
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
+
+Misc
+
+- A new configuration parameter, ``working_memory`` was added to control memory
+  consumption limits in chunked operations, such as the new
+  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
+  :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Enhancements
 ............
@@ -160,7 +174,7 @@ Classifiers and regressors
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
-  
+
 - Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
   in :class:`discriminant_analysis`.
   :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
@@ -190,7 +204,7 @@ Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
-  
+
 - Enable the call to :meth:`get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
@@ -467,6 +481,11 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Feature selection
+
+- Fixed computation of ``n_features_to_compute`` for edge case with tied
+  CV scores in :class:`RFECV`. :issue:`9222` by `Nick Hoh <nickypie>`.
+
 Model evaluation and meta-estimators
 
 - Add improved error message in :func:`model_selection.cross_val_score` when
@@ -527,6 +546,12 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
+  and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
+  v0.22.  It no longer has any effect, as batch size is determined by global
+  ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
+  Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Cluster
 
@@ -590,6 +615,9 @@ Misc
   acts as an upper bound on iterations.
   :issue:`#10982` by :user:`Juliet Lawton <julietcl>`
 
+- Invalid input for :class:`model_selection.ParameterGrid` now raises TypeError.
+  :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
+
 Changes to estimator checks
 ---------------------------
 
@@ -611,3 +639,8 @@ Changes to estimator checks
 - Add tests in :func:`estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
+
+- :func:`estimator_checks.check_sample_weights_pandas_series` now uses 8 rather
+  than 6 samples to accommodate for the default number of clusters in
+  :class:`cluster.KMeans`.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
