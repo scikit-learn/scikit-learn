@@ -861,7 +861,7 @@ class GridSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
@@ -1195,7 +1195,7 @@ class RandomizedSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
