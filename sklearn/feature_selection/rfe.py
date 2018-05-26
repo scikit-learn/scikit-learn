@@ -80,6 +80,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
+    scores_ : list
+        List of step scores, it is used when implementing ``RFECV``.
+        It is not computed while calling ``RFE.fit()``.
+
     estimator_ : object
         The external estimator fit on the reduced dataset.
 
