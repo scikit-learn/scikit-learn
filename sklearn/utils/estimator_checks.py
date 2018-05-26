@@ -38,6 +38,7 @@ from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+
 from sklearn.base import (clone, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor,
                           is_outlier_detector)
@@ -77,7 +78,6 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
              'MinMaxScaler', 'QuantileTransformer']
-
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
@@ -256,8 +256,10 @@ def _yield_all_checks(name, estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
-    yield check_fit2d_1sample
     yield check_methods_subset_invariance
+    if name != 'GaussianProcess':  # FIXME
+        # XXX GaussianProcess deprecated in 0.20
+        yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
