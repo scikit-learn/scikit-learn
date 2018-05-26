@@ -2,6 +2,7 @@
 
 import os
 import scipy as sp
+import shutil
 
 from sklearn import datasets
 from sklearn.datasets import mldata_filename, fetch_mldata
@@ -16,10 +17,13 @@ from sklearn.utils.testing import assert_array_equal
 import pytest
 
 
-@pytest.fixture
-def tmpdata(tmpdir):
-    os.makedirs(str(tmpdir.join('mldata')))
+@pytest.fixture(scope='module')
+def tmpdata(tmpdir_factory):
+    tmpdir = tmpdir_factory.mktemp('tmp')
+    tmpdir_path = str(tmpdir.join('mldata'))
+    os.makedirs(tmpdir_path)
     yield str(tmpdir)
+    shutil.rmtree(str(tmpdir))
 
 
 def test_mldata_filename():
