@@ -1188,16 +1188,13 @@ def test_learning_curve_with_stratify():
     def max_diff_in_ones_between_strata(X, y, stratify, folds_count=5,
                                         iters_count=10, random_state=0):
         ones_counter = []
-        ids = []
 
         class MockCountingEstimator(BaseEstimator):
             """ Dummy classifier: it stores (in global var for this class)
-            count of non-zero-labeled elements in passed y (y_subset)
-            and ids of instances occurred in training subset (X_subset)"""
+            count of non-zero-labeled elements in passed y (y_subset)"""
             def fit(self, X_subset, y_subset=None):
                 cur_ones_count = np.count_nonzero(y_subset)
                 ones_counter.append(cur_ones_count)
-                ids.append(set(X_subset[:, 0].A1))
                 return self
 
             def score(self, X, y):
@@ -1205,23 +1202,11 @@ def test_learning_curve_with_stratify():
 
         counting_estimator = MockCountingEstimator()
         cv = StratifiedKFold(folds_count)
-        train_sizes = np.linspace(1.0 / iters_count, 1.0,
-                                  iters_count)
+        train_sizes = np.linspace(1.0 / iters_count, 1.0, iters_count)
 
         learning_curve(counting_estimator, X, y, cv=cv,
                        train_sizes=train_sizes, shuffle=True,
-                       stratify=stratify,
-                       random_state=random_state)
-
-        # Check that each iteration contains growing subset of instances by
-        # comparing actual difference with max natural one, i.e. caused by
-        # uneven split of instances into folds and then into training subsets.
-        # With default test data and folds/iters counts max natural diff is 0
-        max_nat_diff = len(y) * (folds_count - 1) / folds_count % iters_count
-        strata_ids = np.diff(np.asarray(ids).reshape(folds_count, iters_count))
-        strata_ids_lengths = [len(x) for xs in strata_ids for x in xs]
-        strata_ids_lengths_diff = np.diff(strata_ids_lengths)
-        assert(max(strata_ids_lengths_diff) <= max_nat_diff)
+                       stratify=stratify, random_state=random_state)
 
         # Extract max possible diff of ones count between strata
         # inside each training CV fold
@@ -1232,6 +1217,34 @@ def test_learning_curve_with_stratify():
         strata_ones = np.hstack((ones_counter[:, [0]], np.diff(ones_counter)))
         max_diff_ones = np.max(np.max(strata_ones, 1) - np.min(strata_ones, 1))
         return max_diff_ones
+
+    def check_growing_subsets(X, y, rand_state, folds_count=5, iters_count=10):
+        ids = []
+
+        class MockStoringEstimator(BaseEstimator):
+            """ Dummy classifier: it stores (in global var for this class)
+            ids of instances occurred in training subset (X_subset)"""
+            def fit(self, X_subset, y_subset=None):
+                ids.append(set(X_subset[:, 0].A1))
+                return self
+
+            def score(self, X, y):
+                return 0
+
+        counting_estimator = MockStoringEstimator()
+        cv = StratifiedKFold(folds_count)
+        train_sizes = np.linspace(1.0 / iters_count, 1.0, iters_count)
+
+        learning_curve(counting_estimator, X, y, cv=cv,
+                       train_sizes=train_sizes, shuffle=True,
+                       stratify=True, random_state=rand_state)
+
+        strata_ids = np.diff(np.asarray(ids).reshape(folds_count, iters_count))
+        strata_ids_lengths = [len(x) for xs in strata_ids for x in xs]
+        strata_ids_lengths_diff = np.diff(strata_ids_lengths)
+
+        max_nat_diff = len(y) * (folds_count - 1) / folds_count % iters_count
+        assert(max(strata_ids_lengths_diff) <= max_nat_diff)
 
     ones = 25
     zeros = 2475
@@ -1264,6 +1277,13 @@ def test_learning_curve_with_stratify():
     # (i.e. differing by not more than 1)
     assert(max_diff_in_ones_between_strata(X, y, stratify=False) > 1)
     assert(max_diff_in_ones_between_strata(X, y, stratify=True) <= 1)
+
+    # Check that each iteration contains growing subsets of instances by
+    # comparing actual difference with max natural one, i.e. caused by
+    # uneven split of instances into folds and then into training subsets.
+    # With default test data and folds/iters counts max natural diff is 0
+    check_growing_subsets(X, y, 0)
+    check_growing_subsets(X, y, np.random.RandomState(0))
 
 
 def test_validation_curve():

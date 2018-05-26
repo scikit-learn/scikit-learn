@@ -23,7 +23,7 @@ import scipy.sparse as sp
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.deprecation import DeprecationDict
-from ..utils.validation import _is_arraylike, _num_samples
+from ..utils.validation import _is_arraylike, _num_samples, get_random_seed
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
@@ -1148,6 +1148,9 @@ def learning_curve(estimator, X, y, groups=None,
         elif y is None:
             raise ValueError(
                 "Stratification is meaningless for y=None")
+        # we need to use random_seed, not RandomState instance,
+        # in order to make training subsets growing, not disjoint
+        random_seed = get_random_seed(random_state)
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -1185,7 +1188,7 @@ def learning_curve(estimator, X, y, groups=None,
                 if stratify and n_train_samples < n_max_training_samples:
                     cur_train, useless_test = train_test_split(
                         train, stratify=y[train], train_size=n_train_samples,
-                        test_size=None, random_state=random_state)
+                        test_size=None, random_state=random_seed)
                 else:
                     cur_train = train[:n_train_samples]
                 train_test_proportions.append((cur_train, test))
