@@ -138,6 +138,7 @@ def test_validate_parameter_grid_input(input, error_type, error_message):
     with pytest.raises(error_type, message=error_message):
         ParameterGrid(input)
 
+
 def test_parameter_grid():
 
     # Test basic properties of ParameterGrid.
