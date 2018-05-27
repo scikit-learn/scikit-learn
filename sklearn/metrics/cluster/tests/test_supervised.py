@@ -54,9 +54,7 @@ def test_generalized_average():
     assert means[0] <= means[1] <= means[2] <= means[3]
     c, d = 12, 12
     means = [_generalized_average(c, d, method) for method in methods]
-    assert_equal(means[0], means[1])
-    assert_equal(means[1], means[2])
-    assert_equal(means[2], means[3])
+    assert means[0] == means[1] == means[2] == means[3]
 
 
 def test_perfect_matches():
@@ -75,13 +73,13 @@ def test_perfect_matches():
     means = {"min", "sqrt", "sum", "max"}
     for score_func in score_funcs_with_changing_means:
         for mean in means:
-            assert_equal(score_func([], [], mean), 1.0)
-            assert_equal(score_func([0], [1], mean), 1.0)
-            assert_equal(score_func([0, 0, 0], [0, 0, 0], mean), 1.0)
-            assert_equal(score_func([0, 1, 0], [42, 7, 42], mean), 1.0)
-            assert_equal(score_func([0., 1., 0.], [42., 7., 42.], mean), 1.0)
-            assert_equal(score_func([0., 1., 2.], [42., 7., 2.], mean), 1.0)
-            assert_equal(score_func([0, 1, 2], [42, 7, 2], mean), 1.0)
+            assert score_func([], [], mean) ==  1.0
+            assert score_func([0], [1], mean) == 1.0
+            assert score_func([0, 0, 0], [0, 0, 0], mean) == 1.0
+            assert score_func([0, 1, 0], [42, 7, 42], mean) == 1.0
+            assert score_func([0., 1., 0.], [42., 7., 42.], mean) == 1.0
+            assert score_func([0., 1., 2.], [42., 7., 2.], mean) == 1.0
+            assert score_func([0, 1, 2], [42, 7, 2], mean) == 1.0
 
 
 def test_homogeneous_but_not_complete_labeling():
@@ -252,13 +250,10 @@ def test_exactly_zero_info_score():
         assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
         for method in ["min", "sqrt", "sum", "max"]:
-            print(method)
-            assert_equal(adjusted_mutual_info_score(labels_a, labels_b,
-                                                    method),
-                         0.0)
-            assert_equal(normalized_mutual_info_score(labels_a, labels_b,
-                                                      method),
-                         0.0)
+            assert adjusted_mutual_info_score(labels_a, labels_b,
+                                              method) == 0.0
+            assert normalized_mutual_info_score(labels_a, labels_b,
+                                                method) == 0.0
 
 
 def test_v_measure_and_mutual_information(seed=36):

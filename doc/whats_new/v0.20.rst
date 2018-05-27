@@ -121,6 +121,12 @@ Metrics
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
+- Added control over the normalizer in 
+  :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
+  parameter. In a future version, the default normalizer for each will become
+  the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
+  :user:`Arya McCarthy <aryamccarthy>`.
 
 Enhancements
 ............

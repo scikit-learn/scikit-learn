@@ -1158,7 +1158,7 @@ It also can be expressed in set cardinality formulation:
 
 The normalized mutual information is defined as
 
-.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\sqrt{H(U)H(V)}}
+.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\text{mean}(H(U), H(V))}
 
 This value of the mutual information and also the normalized variant is not
 adjusted for chance and will tend to increase as the number of different labels
@@ -1181,6 +1181,13 @@ calculated using a similar form to that of the adjusted Rand index:
 
 .. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
 
+For normalized mutual information and adjusted mutual information, the normalizing 
+value is typically some mean of the entropies of each clustering. Various means exist,
+and no firm rules exist for preferring one over the others.  The decision is largely 
+a field-by-field basis; for instance, in community detection, the arithmetic mean is
+most common. Yang et al. (2016) found that each normalizing method provided 
+"qualitatively similar behaviours".
+
 .. topic:: References
 
  * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles – a
@@ -1194,16 +1201,22 @@ calculated using a similar form to that of the adjusted Rand index:
    `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
    ISBN 9781605585161.
 
- * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+ * Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance, JMLR
-   http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+   
+ * Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of community
+   detection algorithms on artificial networks". Scientific Reports 6: 30750.
+   `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
+   
+   
 
 .. _homogeneity_completeness:
 
