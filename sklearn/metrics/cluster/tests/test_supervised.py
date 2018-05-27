@@ -73,7 +73,7 @@ def test_perfect_matches():
     means = {"min", "sqrt", "sum", "max"}
     for score_func in score_funcs_with_changing_means:
         for mean in means:
-            assert score_func([], [], mean) ==  1.0
+            assert score_func([], [], mean) == 1.0
             assert score_func([0], [1], mean) == 1.0
             assert score_func([0, 0, 0], [0, 0, 0], mean) == 1.0
             assert score_func([0, 1, 0], [42, 7, 42], mean) == 1.0
