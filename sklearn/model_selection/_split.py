@@ -367,7 +367,7 @@ class KFold(_BaseKFold):
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` == True.
 
-    .. deprecated:: 0.20
+    .. versionchanged:: 0.20
     The default value ``n_splits=3`` is deprecated in version 0.20 and will 
     be changed to ``n_splits=5``in version 0.22.
 

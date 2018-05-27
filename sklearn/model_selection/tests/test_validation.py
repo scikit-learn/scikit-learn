@@ -396,12 +396,14 @@ def test_cross_validate_return_train_score_warn():
 
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
-
+    msg_nsplit = ("The default value of n_splits=3 is deprecated in " 
+                  "version 0.20 and will be changed to n_splits=5 "
+                  "in version 0.22")
     result = {}
     for val in [False, True, 'warn']:
-        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
-                                         return_train_score=val)
-
+        result[val] = assert_warns_message(DeprecationWarning, msg_nsplit, 
+                                           cross_validate, estimator, X, y,
+                                           return_train_score=val)
     msg = (
         'You are accessing a training score ({!r}), '
         'which will not be available by default '
@@ -986,7 +988,7 @@ def test_learning_curve():
                 estimator, X, y, cv=KFold(n_splits=n_splits),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
-        if len(w) > 0:
+        if len(w) > 1:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_equal(train_scores.shape, (10, 3))
         assert_equal(test_scores.shape, (10, 3))
@@ -1003,7 +1005,7 @@ def test_learning_curve():
                 cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
-        if len(w) > 0:
+        if len(w) > 1:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_array_almost_equal(train_scores2, train_scores)
         assert_array_almost_equal(test_scores2, test_scores)
