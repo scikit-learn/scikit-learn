@@ -7,7 +7,8 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, check_consistent_length
+
 from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
@@ -133,11 +134,7 @@ class KernelDensity(BaseEstimator):
                 raise ValueError("the shape of sample_weight must be ({0},),"
                                  " but was {1}".format(X.shape[0],
                                                        sample_weight.shape))
-            if sample_weight.shape[0] != X.shape[0]:
-                raise ValueError("X and sample_weight have incompatible "
-                                 "shapes: X has shape {0} and sample_weight "
-                                 "has shape {1}".format(X.shape,
-                                                        sample_weight.shape))
+            check_consistent_length(X, sample_weight)
             if sample_weight.min() <= 0:
                 raise ValueError("sample_weight must have positive values")
 
