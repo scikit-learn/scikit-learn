@@ -368,8 +368,8 @@ class KFold(_BaseKFold):
         by `np.random`. Used when ``shuffle`` == True.
 
     .. versionchanged:: 0.20
-    The default value ``n_splits=3`` is deprecated in version 0.20 and will 
-    be changed to ``n_splits=5``in version 0.22.
+        The default value ``n_splits=3`` is deprecated in version 0.20 and will 
+        be changed to ``n_splits=5``in version 0.22.
 
     Examples
     --------
@@ -420,11 +420,6 @@ class KFold(_BaseKFold):
         if self.shuffle:
             check_random_state(self.random_state).shuffle(indices)
 
-        if self.n_splits == 3:
-            warnings.warn("The default value of n_splits=3 is deprecated"
-                          " in version 0.20 and will be changed to "
-                          "n_splits=5 in version 0.22"
-                          , DeprecationWarning)
         n_splits = self.n_splits
         fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
         fold_sizes[:n_samples % n_splits] += 1
@@ -1902,6 +1897,9 @@ def check_cv(cv=3, y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
+    warnings.warn("The default value of n_splits=3 is deprecated"
+                  " in version 0.20 and will be changed to "
+                  "n_splits=5 in version 0.22", DeprecationWarning)
     if cv is None:
         cv = 3
 

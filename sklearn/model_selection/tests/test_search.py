@@ -1584,4 +1584,4 @@ def test_deprecated_grid_search_iid():
 
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
-    assert_no_warnings(grid.fit, X, y)
+    assert_warns_message(DeprecationWarning, depr_message_nsplit, grid.fit, X, y)
