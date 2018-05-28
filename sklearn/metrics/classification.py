@@ -2139,10 +2139,12 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=1
                 bin_centroid = y_prob[i_start:i_end].sum() / delta_count
             else:
                 delta_count = float(sample_weight[i_start:i_end].sum())
-                avg_pred_true = np.dot(y_true[i_start:i_end],
-                                       sample_weight[i_start:i_end]) / delta_count
-                bin_centroid = np.dot(y_prob[i_start:i_end],
-                                      sample_weight[i_start:i_end]) / delta_count
+                avg_pred_true = (np.dot(y_true[i_start:i_end],
+                                        sample_weight[i_start:i_end])
+                                 / delta_count)
+                bin_centroid = (np.dot(y_prob[i_start:i_end],
+                                       sample_weight[i_start:i_end])
+                                / delta_count)
             count += delta_count
             if reducer == "max":
                 loss = max(loss, abs(avg_pred_true - bin_centroid))
