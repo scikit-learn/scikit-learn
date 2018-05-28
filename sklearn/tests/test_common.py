@@ -12,6 +12,7 @@ import warnings
 import sys
 import re
 import pkgutil
+import functools
 
 import pytest
 
@@ -75,10 +76,18 @@ def _generate_checks_per_estimator(check_generator, estimators):
             yield name, Estimator, check
 
 
+def _rename_partial(val):
+    if isinstance(val, functools.partial):
+        kwstring = "".join(["{}={}".format(k, v)
+                            for k, v in val.keywords.items()])
+        return "{}({})".format(val.func.__name__, kwstring)
+
+
 @pytest.mark.parametrize(
         "name, Estimator, check",
         _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_non_meta_estimators())
+                                       _tested_non_meta_estimators()),
+        ids=_rename_partial
 )
 def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
