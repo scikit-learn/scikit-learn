@@ -124,7 +124,9 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     # accumulate distances from each sample to each cluster
     clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
                            dtype=D_chunk.dtype)
-    np.add.at(clust_dists.T, labels, D_chunk.T)
+    for i in range(len(D_chunk)):
+        clust_dists[i] += np.bincount(labels, weights=D_chunk[i],
+                                      minlength=len(label_freqs))
 
     # intra_index selects intra-cluster distances within clust_dists
     intra_index = (np.arange(len(D_chunk)), labels[start:start + len(D_chunk)])
