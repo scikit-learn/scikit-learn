@@ -132,7 +132,7 @@ def test_polynomial_features():
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
     assert_equal(interact.powers_.shape, (interact.n_output_features_,
-                                          interact.n_input_features_))
+                 interact.n_input_features_))
 
 
 def test_polynomial_feature_names():
@@ -920,17 +920,17 @@ def test_quantile_transform_check_error():
     assert_raises_regex(ValueError, "Invalid value for 'subsample': 0.",
                         QuantileTransformer(subsample=0).fit, X)
     assert_raises_regex(ValueError, "The number of quantiles cannot be"
-                                    " greater than the number of samples used. Got"
-                                    " 1000 quantiles and 10 samples.",
+                        " greater than the number of samples used. Got"
+                        " 1000 quantiles and 10 samples.",
                         QuantileTransformer(subsample=10).fit, X)
 
     transformer = QuantileTransformer(n_quantiles=10)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                                    "non-negative sparse matrices.",
+                        "non-negative sparse matrices.",
                         transformer.fit, X_neg)
     transformer.fit(X)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                                    "non-negative sparse matrices.",
+                        "non-negative sparse matrices.",
                         transformer.transform, X_neg)
 
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
@@ -940,15 +940,15 @@ def test_quantile_transform_check_error():
                                     " instead of 3.",
                         transformer.transform, X_bad_feat)
     assert_raises_regex(ValueError, "X does not have the same number of "
-                                    "features as the previously fitted data. Got 2"
-                                    " instead of 3.",
+                        "features as the previously fitted data. Got 2"
+                        " instead of 3.",
                         transformer.inverse_transform, X_bad_feat)
 
     transformer = QuantileTransformer(n_quantiles=10,
                                       output_distribution='rnd')
     # check that an error is raised at fit time
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                                    " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
                         transformer.fit, X)
     # check that an error is raised at transform time
     transformer.output_distribution = 'uniform'
@@ -956,11 +956,11 @@ def test_quantile_transform_check_error():
     X_tran = transformer.transform(X)
     transformer.output_distribution = 'rnd'
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                                    " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
                         transformer.transform, X)
     # check that an error is raised at inverse_transform time
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                                    " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
                         transformer.inverse_transform, X_tran)
     # check that an error is raised if input is scalar
     assert_raise_message(ValueError,
@@ -1788,7 +1788,7 @@ def test_cv_pipeline_precomputed():
     K = X.dot(X.T)
     kcent = KernelCenterer()
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
-                                                      SVR(gamma='scale'))])
+                        SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
     assert_true(pipeline._pairwise)
@@ -1908,39 +1908,56 @@ def test_one_hot_encoder_dense():
                        np.array([[0., 1., 0., 1., 1.],
                                  [1., 0., 1., 0., 1.]]))
 
-def _check_transform_selected(X, X_expected, sel):
+
+def _check_transform_selected(X, X_expected, dtype, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, sel)
+        Xtr = _transform_selected(M, Binarizer().transform, dtype, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
-def test_transform_selected():
-    X = [[3, 2, 1], [0, 1, 1]]
+@pytest.mark.parametrize(
+    "output_dtype",
+    [np.int32, np.float32, np.float64]
+)
+@pytest.mark.parametrize(
+    "input_dtype",
+    [np.int32, np.float32, np.float64]
+)
+def test_transform_selected(output_dtype, input_dtype):
+    X = np.asarray([[3, 2, 1], [0, 1, 1]], dtype=input_dtype)
 
-    X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0])
-    _check_transform_selected(X, X_expected, [True, False, False])
+    X_expected = np.asarray([[1, 2, 1], [0, 1, 1]], dtype=output_dtype)
+    _check_transform_selected(X, X_expected, output_dtype, [0])
+    _check_transform_selected(X, X_expected, output_dtype, [True, False, False])
 
-    X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0, 1, 2])
-    _check_transform_selected(X, X_expected, [True, True, True])
-    _check_transform_selected(X, X_expected, "all")
+    X_expected = np.asarray([[1, 1, 1], [0, 1, 1]], dtype=output_dtype)
+    _check_transform_selected(X, X_expected, output_dtype, [0, 1, 2])
+    _check_transform_selected(X, X_expected, output_dtype, [True, True, True])
+    _check_transform_selected(X, X_expected, output_dtype, "all")
 
-    _check_transform_selected(X, X, [])
-    _check_transform_selected(X, X, [False, False, False])
+    _check_transform_selected(X, X, output_dtype, [])
+    _check_transform_selected(X, X, output_dtype, [False, False, False])
 
 
-def test_transform_selected_copy_arg():
+@pytest.mark.parametrize(
+    "output_dtype",
+    [np.int32, np.float32, np.float64]
+)
+@pytest.mark.parametrize(
+    "input_dtype",
+    [np.int32, np.float32, np.float64]
+)
+def test_transform_selected_copy_arg(output_dtype, input_dtype):
     # transformer that alters X
     def _mutating_transformer(X):
         X[0, 0] = X[0, 0] + 1
         return X
 
-    original_X = np.asarray([[1, 2], [3, 4]])
-    expected_Xtr = [[2, 2], [3, 4]]
+    original_X = np.asarray([[1, 2], [3, 4]], dtype=input_dtype)
+    expected_Xtr = np.asarray([[2, 2], [3, 4]], dtype=output_dtype)
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
+    Xtr = _transform_selected(X, _mutating_transformer, output_dtype, copy=True,
                               selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
@@ -1986,46 +2003,55 @@ def test_one_hot_encoder_categorical_features():
     _check_one_hot(X, X2, cat, 5)
 
 
-def test_one_hot_encoder_mixed_input_given_type():
-    X = np.array([[0, 2, 1],
-                  [1, 0, 3],
-                  [1, 0, 2]], dtype=np.int64)
+@pytest.mark.parametrize(
+    "output_dtype",
+    [np.int32, np.float32, np.float64]
+)
+@pytest.mark.parametrize(
+    "input_dtype",
+    [np.int32, np.float32, np.float64]
+)
+@pytest.mark.parametrize(
+    "sparse",
+    [True, False]
+)
+def test_one_hot_encoder_preserve_type(input_dtype, output_dtype, sparse):
+    X = np.array([[0, 1, 0, 0], [1, 2, 0, 0]], dtype=input_dtype)
+    transformer = OneHotEncoder(categorical_features=[0, 1],
+                                dtype=output_dtype, sparse=sparse)
+    X_trans = transformer.fit_transform(X)
+    assert X_trans.dtype == output_dtype
+
+
+@pytest.mark.parametrize(
+    "output_dtype",
+    [np.int32, np.float32, np.float64]
+)
+@pytest.mark.parametrize(
+    "input_dtype",
+    [np.int32, np.float32, np.float64]
+)
+@pytest.mark.parametrize(
+    "sparse",
+    [True, False]
+)
+def test_one_hot_encoder_mixed_input_given_type(input_dtype, output_dtype, sparse):
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]], dtype=input_dtype)
     # Test that one hot encoder raises error for unknown features
     # present during transform.
     oh = OneHotEncoder(categorical_features=[0, 1],
-                       dtype=np.float32)
-    new_x = oh.fit(X).transform(X)
-    assert_equal(new_x.dtype, np.float32, "Encoded output must be of dtype float32")
-    expected = np.array([[1, 0, 0, 1, 1],
-                         [0, 1, 1, 0, 3],
-                         [0, 1, 1, 0, 2]], dtype=np.float32)
-    assert_equal(toarray(new_x).dtype, expected.dtype,
-                 "Encoded output must be of dtype float32")
-    assert_array_equal(toarray(new_x), expected, "Wrongly encoded")
+                       dtype=output_dtype,
+                       sparse=sparse)
+    actual_x = oh.fit(X).transform(X)
 
-    X = X.astype(np.float64)
-    oh = OneHotEncoder(categorical_features=[0, 1],
-                       dtype=np.float64)
-    new_x = oh.fit(X).transform(X)
-    assert_equal(new_x.dtype, np.float64, "Encoded output must be of dtype float64")
-    expected = np.array([[1, 0, 0, 1, 1],
-                         [0, 1, 1, 0, 3],
-                         [0, 1, 1, 0, 2]], dtype=np.float64)
-    assert_equal(toarray(new_x).dtype, expected.dtype,
-                 "Encoded output must be of dtype float64")
-    assert_array_equal(toarray(new_x), expected, "Wrongly encoded")
+    assert actual_x.dtype == output_dtype
 
-    X = X.astype(np.int32)
-    oh = OneHotEncoder(categorical_features=[0, 1],
-                       dtype=np.int32)
-    new_x = oh.fit(X).transform(X)
-    assert_equal(new_x.dtype, np.int32, "Encoded output must be of dtype int32")
     expected = np.array([[1, 0, 0, 1, 1],
                          [0, 1, 1, 0, 3],
-                         [0, 1, 1, 0, 2]], dtype=np.int32)
-    assert_equal(toarray(new_x).dtype, expected.dtype,
-                 "Encoded output must be of dtype int32")
-    assert_array_equal(toarray(new_x), expected, "Wrongly encoded")
+                         [0, 1, 1, 0, 2]], dtype=output_dtype)
+
+    actual_x_dense = actual_x.A if sparse else actual_x
+    assert np.all(actual_x_dense == expected)
 
 
 def test_one_hot_encoder_unknown_transform():

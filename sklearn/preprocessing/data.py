@@ -1825,7 +1825,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, dtype=np.float64, selected="all", copy=True):
+def _transform_selected(X, transform, dtype, selected="all", copy=True):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -1836,7 +1836,7 @@ def _transform_selected(X, transform, dtype=np.float64, selected="all", copy=Tru
     transform : callable
         A callable transform(X) -> X_transformed
 
-    dtype : number type, default=np.float
+    dtype : number type
         Desired dtype of output.
 
     copy : boolean, optional
@@ -1872,12 +1872,15 @@ def _transform_selected(X, transform, dtype=np.float64, selected="all", copy=Tru
         return transform(X)
     else:
         X_sel = transform(X[:, ind[sel]])
-        X_not_sel = X[:, ind[not_sel]]
+        # The columns of X which are not transformed need
+        # to be casted to the desire dtype before concatenation.
+        # Otherwise, the stacking will cast to the higher-precision dtype.
+        X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
         if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-            return sparse.hstack((X_sel, X_not_sel), dtype=dtype)
+            return sparse.hstack((X_sel, X_not_sel))
         else:
-            return np.hstack((X_sel, X_not_sel)).astype(dtype)
+            return np.hstack((X_sel, X_not_sel))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -2064,8 +2067,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        return _transform_selected(X, self._fit_transform, self.dtype,
-                                   self.categorical_features, copy=True)
+        return _transform_selected(X, self._fit_transform, self.dtype, self.categorical_features, copy=True)
 
     def _transform(self, X):
         """Assumes X contains only categorical features."""
@@ -2120,8 +2122,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
-        return _transform_selected(X, self._transform, self.dtype,
-                                   self.categorical_features, copy=True)
+        return _transform_selected(X, self._transform, self.dtype, self.categorical_features, copy=True)
 
 
 class QuantileTransformer(BaseEstimator, TransformerMixin):
