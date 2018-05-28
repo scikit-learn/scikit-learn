@@ -166,8 +166,7 @@ Issue/Comment: Linking to comments
 Issue: Usage question
     ::
 
-        Please, if any usage question comes up, it would be easier for you to make a search in `Stack Overflow`_ with the [scikit-learn] and [python] tags. Your question might have already been answered and so there will be no need of waiting a response of an author or a developer. On the other hand, if you have also 
-        searched in `Stack Overflow`_ but nothing seems related or helpful in your question, you can alternatively use the `mailing list`_.
+        Please consider making a search in `Stack Overflow`_ with the [scikit-learn] and [python] tags. Your question might have already been answered and so there will be no need of waiting a response of an author or a developer. On the other hand, if you have also searched in `Stack Overflow`_ but nothing seems related or helpful in your question, you can alternatively use the `mailing list`_.
 
 PR-NEW: Better description
     ::
