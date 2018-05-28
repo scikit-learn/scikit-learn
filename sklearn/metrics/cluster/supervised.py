@@ -56,15 +56,15 @@ def _generalized_average(U, V, average_method):
     """Return a particular mean of two numbers."""
     if average_method == "min":
         return max(min(U, V), 1e-10)
-    elif average_method == "sqrt":
+    elif average_method == "geometric":
         return max(np.sqrt(U * V), 1e-10)  # Avoids zero-division error
-    elif average_method == "sum":
+    elif average_method == "arithmetic":
         return max(np.mean([U, V]), 1e-10)
     elif average_method == "max":
         return max(U, V)
     else:
-        raise ValueError("'average_method' must be 'min', 'sqrt', 'sum', or "
-                         "'max'")
+        raise ValueError("'average_method' must be 'min', 'geometric', "
+                         "'arithmetic', or 'max'")
 
 
 def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
@@ -254,8 +254,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     V-Measure is furthermore symmetric: swapping ``labels_true`` and
     ``label_pred`` will give the same score. This does not hold for
     homogeneity and completeness. V-Measure is identical to
-    :func:`normalized_mutual_info_score` with the averaging method
-    ``'sum'``.
+    :func:`normalized_mutual_info_score` with the arithmetic averaging
+    method.
 
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
@@ -455,7 +455,7 @@ def v_measure_score(labels_true, labels_pred):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score` with
-    the ``'sum'`` option for averaging.
+    the ``'arithmetic'`` option for averaging.
 
     The V-measure is the harmonic mean between homogeneity and completeness::
 
@@ -665,7 +665,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
 
     average_method : string or None, optional (default: None)
         How to compute the normalizer in the denominator. Possible options
-        are 'min', 'sqrt', 'sum', and 'max'.
+        are 'min', 'geometric', 'arithmetic', and 'max'.
         If None, 'max' will be used. This is likely to change in a future
         version.
 
@@ -715,7 +715,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     if average_method is None:
         warnings.warn("The behavior of AMI will change in a future version. "
                       "To match the behavior of 'v_measure_score', AMI will "
-                      "use sum-averaging, i.e. arithmetic mean, by default."
+                      "use arithmetic mean by default."
                       )
         average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -775,9 +775,9 @@ def normalized_mutual_info_score(labels_true, labels_pred,
 
     average_method : string or None, optional (default: None)
         How to compute the normalizer in the denominator. Possible options
-        are 'min', 'sqrt', 'sum', and 'max'.
-        If None, 'sqrt' will be used, matching the behavior of
-        `v_measure_score`.
+        are 'min', 'geometric', 'arithmetic', and 'max'.
+        If None, 'geometric' will be used. This is likely to change in a
+        future version.
 
         .. versionadded:: 0.20
 
@@ -815,9 +815,9 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     if average_method is None:
         warnings.warn("The behavior of NMI will change in a future version. "
                       "To match the behavior of 'v_measure_score', NMI will "
-                      "use sum-averaging, i.e. arithmetic mean, by default."
+                      "use arithmetic mean by default."
                       )
-        average_method = 'sqrt'
+        average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)

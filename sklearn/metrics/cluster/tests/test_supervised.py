@@ -49,7 +49,7 @@ def test_error_messages_on_wrong_input():
 
 def test_generalized_average():
     a, b = 1, 2
-    methods = ["min", "sqrt", "sum", "max"]
+    methods = ["min", "geometric", "arithmetic", "max"]
     means = [_generalized_average(a, b, method) for method in methods]
     assert means[0] <= means[1] <= means[2] <= means[3]
     c, d = 12, 12
@@ -70,7 +70,7 @@ def test_perfect_matches():
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
     ]
-    means = {"min", "sqrt", "sum", "max"}
+    means = {"min", "geometric", "arithmetic", "max"}
     for score_func in score_funcs_with_changing_means:
         for mean in means:
             assert score_func([], [], mean) == 1.0
@@ -249,7 +249,7 @@ def test_exactly_zero_info_score():
         assert_equal(v_measure_score(labels_a, labels_b), 0.0)
         assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        for method in ["min", "sqrt", "sum", "max"]:
+        for method in ["min", "geometric", "arithmetic", "max"]:
             assert adjusted_mutual_info_score(labels_a, labels_b,
                                               method) == 0.0
             assert normalized_mutual_info_score(labels_a, labels_b,
@@ -265,9 +265,10 @@ def test_v_measure_and_mutual_information(seed=36):
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
+        avg = 'arithmetic'
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             normalized_mutual_info_score(labels_a, labels_b,
-                                                         average_method='sum')
+                                                         average_method=avg)
                             )
 
 

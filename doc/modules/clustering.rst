@@ -1048,8 +1048,8 @@ Given the knowledge of the ground truth class assignments ``labels_true`` and
 our clustering algorithm assignments of the same samples ``labels_pred``, the
 **Mutual Information** is a function that measures the **agreement** of the two
 assignments, ignoring permutations.  Two different normalized versions of this
-measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
-Mutual Information(AMI)**. NMI is often used in the literature while AMI was
+measure are available, **Normalized Mutual Information (NMI)** and **Adjusted
+Mutual Information (AMI)**. NMI is often used in the literature, while AMI was
 proposed more recently and is **normalized against chance**::
 
   >>> from sklearn import metrics
@@ -1187,6 +1187,10 @@ and no firm rules exist for preferring one over the others.  The decision is lar
 a field-by-field basis; for instance, in community detection, the arithmetic mean is
 most common. Yang et al. (2016) found that each normalizing method provided 
 "qualitatively similar behaviours".
+
+Vinh et al. (2010) named variants of NMI and AMI by their averaging method. Their
+'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
+more broadly common names.
 
 .. topic:: References
 
