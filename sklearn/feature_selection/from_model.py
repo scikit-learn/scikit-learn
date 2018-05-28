@@ -160,7 +160,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.prefit:
             raise NotFittedError(
@@ -192,7 +191,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.prefit:
             raise NotFittedError(

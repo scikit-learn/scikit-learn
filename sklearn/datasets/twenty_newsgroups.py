@@ -169,8 +169,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : numpy random number generator or seed integer
-        Used to shuffle the dataset.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
@@ -275,7 +277,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
-                                  download_if_missing=True):
+                                  download_if_missing=True, return_X_y=False):
     """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
@@ -309,12 +311,21 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False. If True, returns ``(data.data,
+    data.target)`` instead of a Bunch object.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     bunch : Bunch object
         bunch.data: sparse matrix, shape [n_samples, n_features]
         bunch.target: array, shape [n_samples]
         bunch.target_names: list, length [n_classes]
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
     filebase = '20newsgroup_vectorized'
@@ -368,5 +379,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     else:
         raise ValueError("%r is not a valid subset: should be one of "
                          "['train', 'test', 'all']" % subset)
+
+    if return_X_y:
+        return data, target
 
     return Bunch(data=data, target=target, target_names=target_names)

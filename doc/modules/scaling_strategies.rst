@@ -45,8 +45,8 @@ variables represented as list of Python dicts or
 
 Incremental learning
 --------------------
-Finally, for 3. we have a number of options inside scikit-learn. Although all
-algorithms cannot learn incrementally (i.e. without seeing all the instances
+Finally, for 3. we have a number of options inside scikit-learn. Although not
+all algorithms can learn incrementally (i.e. without seeing all the instances
 at once), all estimators implementing the ``partial_fit`` API are candidates.
 Actually, the ability to learn incrementally from a mini-batch of instances
 (sometimes called "online learning") is key to out-of-core learning as it
@@ -85,11 +85,11 @@ attributes, the incremental learner itself may be unable to cope with
 new/unseen targets classes. In this case you have to pass all the possible
 classes to the first ``partial_fit`` call using the ``classes=`` parameter.
 
-Another aspect to consider when choosing a proper algorithm is that all of them
-don't put the same importance on each example over time. Namely, the
+Another aspect to consider when choosing a proper algorithm is that not all of
+them put the same importance on each example over time. Namely, the
 ``Perceptron`` is still sensitive to badly labeled examples even after many
 examples whereas the ``SGD*`` and ``PassiveAggressive*`` families are more
-robust to this kind of artifacts. Conversely, the later also tend to give less
+robust to this kind of artifacts. Conversely, the latter also tend to give less
 importance to remarkably different, yet properly labeled examples when they
 come late in the stream as their learning rate decreases over time.
 

@@ -11,6 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
+import numbers
 
 import numpy as np
 from scipy import linalg
@@ -242,7 +243,7 @@ class PCA(_BasePCA):
         from Tipping and Bishop 1999. See "Pattern Recognition and
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
-        computed the estimated data covariance and score samples.
+        compute the estimated data covariance and score samples.
 
         Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
@@ -278,27 +279,27 @@ class PCA(_BasePCA):
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.99244...  0.00755...]
+    [0.9924... 0.0075...]
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
-    [ 6.30061...  0.54980...]
+    [6.30061... 0.54980...]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='full', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.99244...  0.00755...]
+    [0.9924... 0.00755...]
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
-    [ 6.30061...  0.54980...]
+    [6.30061... 0.54980...]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
     PCA(copy=True, iterated_power='auto', n_components=1, random_state=None,
       svd_solver='arpack', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.99244...]
+    [0.99244...]
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
-    [ 6.30061...]
+    [6.30061...]
 
     See also
     --------
@@ -325,7 +326,7 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
+            Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : Ignored
@@ -421,6 +422,12 @@ class PCA(_BasePCA):
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='full'"
                              % (n_components, min(n_samples, n_features)))
+        elif n_components >= 1:
+            if not isinstance(n_components, (numbers.Integral, np.integer)):
+                raise ValueError("n_components=%r must be of type int "
+                                 "when greater than or equal to 1, "
+                                 "was of type=%r"
+                                 % (n_components, type(n_components)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -481,6 +488,10 @@ class PCA(_BasePCA):
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
+        elif not isinstance(n_components, (numbers.Integral, np.integer)):
+            raise ValueError("n_components=%r must be of type int "
+                             "when greater than or equal to 1, was of type=%r"
+                             % (n_components, type(n_components)))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
                                                             n_features):
             raise ValueError("n_components=%r must be strictly less than "
@@ -662,9 +673,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     RandomizedPCA(copy=True, iterated_power=2, n_components=2,
            random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.99244...  0.00755...]
+    [0.9924... 0.007557...]
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
-    [ 6.30061...  0.54980...]
+    [6.30061... 0.54980...]
 
     See also
     --------

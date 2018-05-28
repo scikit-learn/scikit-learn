@@ -145,7 +145,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
-        self._centerer = KernelCenterer()
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
@@ -235,6 +234,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
 

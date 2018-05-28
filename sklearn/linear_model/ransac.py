@@ -13,6 +13,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
 from ..utils.validation import has_fit_parameter
+from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
 
@@ -197,7 +198,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
@@ -453,7 +454,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                               " early due to skipping more iterations than"
                               " `max_skips`. See estimator attributes for"
                               " diagnostics (n_skips*).",
-                              UserWarning)
+                              ConvergenceWarning)
 
         # estimate final model using all inliers
         base_estimator.fit(X_inlier_best, y_inlier_best)

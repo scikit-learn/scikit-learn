@@ -158,6 +158,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         This is useful if the stored attributes of a previously used model
         has to be reused. If set to False, then the coefficients will
         be rewritten for every call to fit.
+        See :term:`the Glossary <warm_start>`.
 
     fit_intercept : bool, default True
         Whether or not to fit the intercept. This can be set to False
@@ -181,7 +182,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     n_iter_ : int
         Number of iterations that fmin_l_bfgs_b has run for.
-        Not available if SciPy version is 0.9 and below.
+
+        .. versionchanged:: 0.20
+
+            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
+            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
@@ -222,7 +227,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True)
@@ -255,24 +259,18 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         bounds = np.tile([-np.inf, np.inf], (parameters.shape[0], 1))
         bounds[-1][0] = np.finfo(np.float64).eps * 10
 
-        # Type Error caused in old versions of SciPy because of no
-        # maxiter argument ( <= 0.9).
-        try:
-            parameters, f, dict_ = optimize.fmin_l_bfgs_b(
-                _huber_loss_and_gradient, parameters,
-                args=(X, y, self.epsilon, self.alpha, sample_weight),
-                maxiter=self.max_iter, pgtol=self.tol, bounds=bounds,
-                iprint=0)
-        except TypeError:
-            parameters, f, dict_ = optimize.fmin_l_bfgs_b(
-                _huber_loss_and_gradient, parameters,
-                args=(X, y, self.epsilon, self.alpha, sample_weight),
-                bounds=bounds)
+        parameters, f, dict_ = optimize.fmin_l_bfgs_b(
+            _huber_loss_and_gradient, parameters,
+            args=(X, y, self.epsilon, self.alpha, sample_weight),
+            maxiter=self.max_iter, pgtol=self.tol, bounds=bounds,
+            iprint=0)
         if dict_['warnflag'] == 2:
             raise ValueError("HuberRegressor convergence failed:"
                              " l-BFGS-b solver terminated with %s"
                              % dict_['task'].decode('ascii'))
-        self.n_iter_ = dict_.get('nit', None)
+        # In scipy <= 1.0.0, nit may exceed maxiter.
+        # See https://github.com/scipy/scipy/issues/7854.
+        self.n_iter_ = min(dict_['nit'], self.max_iter)
         self.scale_ = parameters[-1]
         if self.fit_intercept:
             self.intercept_ = parameters[-2]
