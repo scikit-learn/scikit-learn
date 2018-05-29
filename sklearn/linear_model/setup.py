@@ -7,6 +7,7 @@ from sklearn._build_utils import get_blas_info
 
 from Cython import Tempita
 
+
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
@@ -36,13 +37,13 @@ def configuration(parent_package='', top_path=None):
                          **blas_info)
 
     # generate sag_fast from template
-    sag_template = 'sklearn/linear_model/sag_fast.pyx.tp'
-    sag_file = sag_template[:-3]
+    sag_cython_file = 'sklearn/linear_model/sag_fast.pyx.tp'
+    sag_file = sag_cython_file[:-3]
 
     if not (os.path.exists(sag_file) and
-            os.stat(sag_template).st_mtime < os.stat(sag_file).st_mtime):
+            os.stat(sag_cython_file).st_mtime < os.stat(sag_file).st_mtime):
 
-        with open(sag_template, "r") as f:
+        with open(sag_cython_file, "r") as f:
             tmpl = f.read()
         tmpl_ = Tempita.sub(tmpl)
 
