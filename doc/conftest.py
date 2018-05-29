@@ -55,11 +55,11 @@ def setup_working_with_text_data():
     check_skip_network()
 
 
-def setup_feature_extraction():
+def setup_compose():
     try:
         import pandas  # noqa
     except ImportError:
-        raise SkipTest("Skipping feature_extraction.rst, pandas not installed")
+        raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
 def pytest_runtest_setup(item):
@@ -74,8 +74,8 @@ def pytest_runtest_setup(item):
         setup_twenty_newsgroups()
     elif fname.endswith('tutorial/text_analytics/working_with_text_data.rst'):
         setup_working_with_text_data()
-    elif fname.endswith('modules/feature_extraction.rst'):
-        setup_feature_extraction()
+    elif fname.endswith('modules/compose.rst'):
+        setup_compose()
 
 
 def pytest_runtest_teardown(item):
