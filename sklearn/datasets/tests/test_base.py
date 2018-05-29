@@ -54,20 +54,20 @@ def load_files_root(tmpdir_factory):
 
 @pytest.fixture
 def test_category_dir_1(load_files_root):
-    TEST_CATEGORY_DIR1 = tempfile.mkdtemp(dir=load_files_root)
-    sample_file = tempfile.NamedTemporaryFile(dir=TEST_CATEGORY_DIR1,
+    test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
+    sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1,
                                               delete=False)
     sample_file.write(b("Hello World!\n"))
     sample_file.close()
-    yield str(TEST_CATEGORY_DIR1)
-    _remove_dir(TEST_CATEGORY_DIR1)
+    yield str(test_category_dir1)
+    _remove_dir(test_category_dir1)
 
 
 @pytest.fixture
 def test_category_dir_2(load_files_root):
-    TEST_CATEGORY_DIR2 = tempfile.mkdtemp(dir=load_files_root)
-    yield str(TEST_CATEGORY_DIR2)
-    _remove_dir(TEST_CATEGORY_DIR2)
+    test_category_dir2 = tempfile.mkdtemp(dir=load_files_root)
+    yield str(test_category_dir2)
+    _remove_dir(test_category_dir2)
 
 
 def test_data_home(data_home):
