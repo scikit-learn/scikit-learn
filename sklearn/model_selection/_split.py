@@ -1897,10 +1897,10 @@ def check_cv(cv=3, y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
-    warnings.warn("The default value of n_splits=3 is deprecated"
-                  " in version 0.20 and will be changed to "
-                  "n_splits=5 in version 0.22", DeprecationWarning)
     if cv is None:
+        warnings.warn("The default value of n_splits=3 is deprecated"
+                      " in version 0.20 and will be changed to "
+                      "n_splits=5 in version 0.22", FutureWarning)
         cv = 3
 
     if isinstance(cv, numbers.Integral):
