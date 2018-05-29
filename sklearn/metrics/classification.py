@@ -1427,7 +1427,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, output_dict=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1452,10 +1452,15 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
+    output_dict : boolean (default = False)
+        Optional to return a dictionary.
+
     Returns
     -------
-    report : string
+    report : string/dict
         Text summary of the precision, recall, F1 score for each class.
+        Dictionary returned if output_dict is true. The keys include the class
+        names while the values are of float type.
 
         The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
@@ -1534,6 +1539,37 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                              np.average(f1, weights=s),
                              np.sum(s),
                              width=width, digits=digits)
+
+    if output_dict :
+
+        headers = headers[1:]
+
+        scores = [p,r,f1,s]
+        report_dict = {}
+        i=0
+
+        for t in target_names:
+            report_dict[t] = {}
+            for header,score_name in zip(headers,scores):
+                if header == "support":
+                    report_dict[t][header] = float("{0}".format(score_name[i]))
+
+                else:
+                    report_dict[t][header] = float("{0:0.{1}f}".format(score_name[i], digits))
+
+            i+=1
+
+        report_dict[last_line_heading] = {}
+
+        for header,v in zip(headers,(np.average(p, weights=s),
+                                    np.average(r, weights=s),
+                                    np.average(f1, weights=s))):
+
+            report_dict[last_line_heading][header] = float("{0:0.{1}f}".format(v, digits))
+
+        report_dict[last_line_heading]['support'] = float("{0}".format(np.sum(s)))
+
+        report = report_dict
 
     return report
 
