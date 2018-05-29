@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
+from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, safe_indexing
 from ..preprocessing import FunctionTransformer
@@ -14,7 +15,7 @@ from ..preprocessing import FunctionTransformer
 __all__ = ['TransformedTargetRegressor']
 
 
-class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
+class TransformedTargetRegressor(_BaseComposition, RegressorMixin):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation in regression
@@ -109,20 +110,57 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
 
+    @property
+    def _params(self):
+        return [('transformer', self.transformer),
+                ('regressor', self.regressor)]
+
+    @_params.setter
+    def _params(self, value):
+        self.transformers = value[0][1]
+        self.regressor = value[1][1]
+
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params('_params', deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
+        self._set_params('_params', **kwargs)
+        return self
+
     def _fit_transformer(self, y):
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
             raise ValueError("'transformer' and functions 'func'/"
                              "'inverse_func' cannot both be set.")
-        elif self.transformer is not None:
-            self.transformer_ = clone(self.transformer)
-        else:
+        elif self.transformer is None:
             if self.func is not None and self.inverse_func is None:
                 raise ValueError("When 'func' is provided, 'inverse_func' must"
                                  " also be provided")
-            self.transformer_ = FunctionTransformer(
+            self.transformer = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=True,
                 check_inverse=self.check_inverse)
+        self.transformer_ = clone(self.transformer)
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
@@ -176,9 +214,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
         if self.regressor is None:
             from ..linear_model import LinearRegression
-            self.regressor_ = LinearRegression()
-        else:
-            self.regressor_ = clone(self.regressor)
+            self.regressor = LinearRegression()
+        self.regressor_ = clone(self.regressor)
 
         # transform y and convert back to 1d array if needed
         y_trans = self.transformer_.fit_transform(y_2d)
