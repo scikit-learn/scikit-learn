@@ -103,10 +103,10 @@ def test_fused_types_consistency():
         xi_data32, _, _ = xi32
         xi_data64, _, _ = xi64
 
-        assert isinstance(xi_data32, np.float32)
-        assert isinstance(xi_data64, np.float64)
-        assert isinstance(yi32, np.float32)
-        assert isinstance(yi64, np.float64)
+        assert_equal(xi_data32.dtype, np.float32)
+        assert_equal(xi_data64.dtype, np.float64)
+        assert isinstance(yi32, float)
+        assert isinstance(yi64, float)
 
         assert_array_almost_equal(xi_data64, xi_data32, decimal=5)
         assert_array_almost_equal(yi64, yi32, decimal=5)
