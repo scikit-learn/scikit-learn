@@ -181,9 +181,9 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         initialization is performed upon the first call. Upon consecutive
         calls, training starts where it left off. The max lower bound may be
         lower than after the last call if you fit a different dataset. If
-        ``max_iter`` is 1, the method detects convergence by comparing the lower
-        bound after the single iteration with the lower bound after the last
-        call (the dataset is assumed to be the same).
+        ``max_iter`` is 1, the method detects convergence by comparing the
+        lower bound after the single iteration with the lower bound after the
+        last call (the dataset is assumed to be the same).
 
         Parameters
         ----------
