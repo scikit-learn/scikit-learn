@@ -449,6 +449,12 @@ def test_column_transformer_get_feature_names():
         NotImplementedError, 'get_feature_names is not yet supported',
         ct.get_feature_names)
 
+    ct = ColumnTransformer([('trans', DictVectorizer(), 0)])
+    ct.fit(X)
+    assert_raise_message(
+        NotImplementedError, 'get_feature_names is not yet supported',
+        ct.get_feature_names)
+
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
