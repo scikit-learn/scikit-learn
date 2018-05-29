@@ -988,7 +988,7 @@ def test_learning_curve():
                 estimator, X, y, cv=KFold(n_splits=n_splits),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
-        if len(w) > 1:
+        if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_equal(train_scores.shape, (10, 3))
         assert_equal(test_scores.shape, (10, 3))
@@ -1005,7 +1005,7 @@ def test_learning_curve():
                 cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
-        if len(w) > 1:
+        if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_array_almost_equal(train_scores2, train_scores)
         assert_array_almost_equal(test_scores2, test_scores)
