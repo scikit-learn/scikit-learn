@@ -138,6 +138,7 @@ def test_validate_parameter_grid_input(input, error_type, error_message):
     with pytest.raises(error_type, message=error_message):
         ParameterGrid(input)
 
+
 def test_parameter_grid():
 
     # Test basic properties of ParameterGrid.
@@ -359,7 +360,7 @@ def test_return_train_score_warn():
     estimators = [GridSearchCV(LinearSVC(random_state=0), grid, iid=False),
                   RandomizedSearchCV(LinearSVC(random_state=0), grid,
                                      n_iter=2, iid=False)]
-    msg_nsplit = ("The default value of n_splits=3 is deprecated in " 
+    msg_nsplit = ("The default value of n_splits=3 is deprecated in "
                   "version 0.20 and will be changed to n_splits=5 "
                   "in version 0.22")
     result = {}
@@ -1566,14 +1567,14 @@ def test_transform_inverse_transform_round_trip():
 def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.22")
-    depr_message_nsplit = ("The default value of n_splits=3 is deprecated in " 
-                          "version 0.20 and will be changed to n_splits=5 "
-                          "in version 0.22")
+    depr_message_nsplit = ("The default value of n_splits=3 is deprecated in "
+                           "version 0.20 and will be changed to n_splits=5 "
+                           "in version 0.22")
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=3)
     # no warning with equally sized test sets
-    assert_warns_message(DeprecationWarning, depr_message_nsplit, grid.fit, X, y)
-
+    assert_warns_message(DeprecationWarning, depr_message_nsplit,
+                         grid.fit, X, y)
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=5)
     # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
@@ -1584,4 +1585,5 @@ def test_deprecated_grid_search_iid():
 
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
-    assert_warns_message(DeprecationWarning, depr_message_nsplit, grid.fit, X, y)
+    assert_warns_message(DeprecationWarning, depr_message_nsplit,
+                         grid.fit, X, y)

@@ -368,7 +368,7 @@ class KFold(_BaseKFold):
         by `np.random`. Used when ``shuffle`` == True.
 
     .. versionchanged:: 0.20
-        The default value ``n_splits=3`` is deprecated in version 0.20 and will 
+        The default value ``n_splits=3`` is deprecated in version 0.20 and will
         be changed to ``n_splits=5``in version 0.22.
 
     Examples
@@ -2064,6 +2064,7 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test
 train_test_split.__test__ = False
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

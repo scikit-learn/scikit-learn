@@ -431,7 +431,7 @@ def test_lars_cv_max_iter():
         X = np.c_[X, x, x]  # add correlated features
         lars_cv = linear_model.LassoLarsCV(max_iter=5)
         lars_cv.fit(X, y)
-    assert_true(len(w) == 1)
+    assert_true(len(w) >= 1)
 
 
 def test_lasso_lars_ic():

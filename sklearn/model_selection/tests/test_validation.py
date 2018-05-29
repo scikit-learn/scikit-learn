@@ -396,12 +396,12 @@ def test_cross_validate_return_train_score_warn():
 
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
-    msg_nsplit = ("The default value of n_splits=3 is deprecated in " 
+    msg_nsplit = ("The default value of n_splits=3 is deprecated in "
                   "version 0.20 and will be changed to n_splits=5 "
                   "in version 0.22")
     result = {}
     for val in [False, True, 'warn']:
-        result[val] = assert_warns_message(DeprecationWarning, msg_nsplit, 
+        result[val] = assert_warns_message(DeprecationWarning, msg_nsplit,
                                            cross_validate, estimator, X, y,
                                            return_train_score=val)
     msg = (
