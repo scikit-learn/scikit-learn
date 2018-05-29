@@ -71,7 +71,8 @@ def test_kernel_gradient(kernel):
 @pytest.mark.parametrize(
         'kernel',
         [kernel for kernel in kernels
-         if not (isinstance(kernel, KernelOperator)  # skip non-basic kernels
+         # skip non-basic kernels
+         if not (isinstance(kernel, KernelOperator)
                  or isinstance(kernel, Exponentiation))])
 def test_kernel_theta(kernel):
     # Check that parameter vector theta of kernel is set correctly.
