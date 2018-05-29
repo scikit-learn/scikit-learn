@@ -1059,12 +1059,6 @@ cdef class BinaryTree:
         self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
         self.data = get_memview_DTYPE_2D(self.data_arr)
 
-        if sample_weight is not None:
-            self.sample_weight_arr = np.asarray(sample_weight, dtype=DTYPE, order='C')
-            self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
-            self.sum_weight = np.sum(self.sample_weight)
-        else:
-            self.sample_weight = None
 
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
@@ -1086,6 +1080,16 @@ cdef class BinaryTree:
 
         n_samples = self.data.shape[0]
         n_features = self.data.shape[1]
+
+
+        if sample_weight is not None:
+            self.sample_weight_arr = np.asarray(sample_weight, dtype=DTYPE, order='C')
+            self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
+            self.sum_weight = np.sum(self.sample_weight)
+        else:
+            self.sample_weight = None
+            self.sum_weight = <DTYPE_t> n_samples
+
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
@@ -1536,11 +1540,6 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_LB = 0, dist_UB = 0
 
         cdef ITYPE_t n_samples = self.data.shape[0]
-        cdef DTYPE_t Z
-        if self.sample_weight is not None:
-            Z = self.sum_weight
-        else:
-            Z = <DTYPE_t> n_samples
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i
         cdef KernelType kernel_c
@@ -1602,10 +1601,10 @@ cdef class BinaryTree:
             for i in range(Xarr.shape[0]):
                 min_max_dist(self, 0, pt, &dist_LB, &dist_UB)
                 # compute max & min bounds on density within top node
-                log_min_bound = (log(Z) +
+                log_min_bound = (log(self.sum_weight) +
                                  compute_log_kernel(dist_UB,
                                                     h_c, kernel_c))
-                log_max_bound = (log(Z) +
+                log_max_bound = (log(self.sum_weight) +
                                  compute_log_kernel(dist_LB,
                                                     h_c, kernel_c))
                 log_bound_spread = logsubexp(log_max_bound, log_min_bound)
