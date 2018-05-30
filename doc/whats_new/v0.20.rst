@@ -79,7 +79,7 @@ Preprocessing
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
-  DataFrames. By `Andreas Müller`_ and `Joris Van den Bossche`_.
+  DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_.
 
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
   power transformation, allowing users to map data from any distribution to a
