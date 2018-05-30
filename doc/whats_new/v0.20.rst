@@ -125,7 +125,7 @@ Metrics
 
 - Added ``output_dict`` parameter in :func:`metrics.classification_report`
   to return classification statistics as dictionary.
-  :issue:`11160` by :user: `Dan Barkhorn <danielbarkhorn>`.
+  :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
 
 Misc
 
