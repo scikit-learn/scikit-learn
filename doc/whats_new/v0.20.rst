@@ -71,7 +71,7 @@ Preprocessing
 - Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
   categorical features as a numeric array, either using a one-hot (or
   dummy) encoding scheme or by converting to ordinal integers.
-  Compared to the existing :class:`OneHotEncoder`, this new class handles
+  Compared to the existing :class:`preprocessing.OneHotEncoder`, this new class handles
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
   the maximum value in the features. :issue:`9151` by
@@ -93,14 +93,14 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Added :class:`MICEImputer`, which is a strategy for imputing missing
+- Added :class:`impute.MICEImputer`, which is a strategy for imputing missing
   values by modeling each feature with missing values as a function of
   other features in a round-robin fashion. :issue:`8478` by
   :user:`Sergey Feldman <sergeyf>`.
 
 Model evaluation
 
-- Added the :func:`metrics.cluster.davies_bouldin_score` metric for unsupervised
+- Added the :func:`metrics.davies_bouldin_score` metric for unsupervised
   evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
@@ -168,7 +168,7 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
-- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
+- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
@@ -414,8 +414,8 @@ Decomposition, manifold learning and clustering
   looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
-  points could be generated. :issue:`10037` by :user:`Christian Braune
-  <christianbraune79>`_.
+  points could be generated. :issue:`10037`
+  by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`cluster.spectral_clustering` where the normalization of
   the spectrum was using a division instead of a multiplication. :issue:`8129`
@@ -429,7 +429,7 @@ Decomposition, manifold learning and clustering
 
 Metrics
 
-- Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
+- Fixed a bug in :func:`metrics.precision_recall_fscore_support`
   when truncated `range(n_labels)` is passed as value for `labels`.
   :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
 
@@ -443,10 +443,10 @@ Metrics
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
 - Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
-  :func:`mutual_info_score`.
+  :func:`metrics.mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Fixed a bug in :func:`metrics.cluster.fowlkes_mallows_score` to avoid integer
+- Fixed a bug in :func:`metrics.fowlkes_mallows_score` to avoid integer
   overflow. Casted return value of `contingency_matrix` to `int64` and computed
   product of square roots rather than square root of product.
   :issue:`9515` by :user:`Alan Liddell <aliddell>` and
@@ -492,7 +492,7 @@ Preprocessing
 Feature selection
 
 - Fixed computation of ``n_features_to_compute`` for edge case with tied
-  CV scores in :class:`RFECV`. :issue:`9222` by `Nick Hoh <nickypie>`.
+  CV scores in :class:`feature_selection.RFECV`. :issue:`9222` by :user:`Nick Hoh <nickypie>`.
 
 Model evaluation and meta-estimators
 
@@ -502,10 +502,10 @@ Model evaluation and meta-estimators
 
 Datasets
 
-- Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
+- Fixed a bug in :func:`datasets.load_boston` which had a wrong data point.
   :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
 
-- Fixed a bug in :func:`dataset.load_iris` which had two wrong data points.
+- Fixed a bug in :func:`datasets.load_iris` which had two wrong data points.
   :issue:`11082` by :user:`Sadhana Srinivasan <rotuna>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
@@ -530,13 +530,13 @@ Linear, kernelized and related models
   performed. :issue:`10723` by `Joel Nothman`_.
 
 - The default value of ``gamma`` parameter of :class:`svm.SVC`,
-  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`NuSVR`, :class:`OneClassSVM`
+  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`
   will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
   better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
   and :user:`Ting Neo <neokt>`.
 
 - Added convergence warning to :class:`svm.LinearSVC` and
-  :class:`linear_model.logistic.LogisticRegression` when ``verbose`` is set to 0.
+  :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
 
 Decomposition, manifold learning and clustering
