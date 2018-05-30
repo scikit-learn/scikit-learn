@@ -26,9 +26,9 @@ random sampling procedures.
 - :class:`linear_model.OrthogonalMatchingPursuit` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
 - :class:`metrics.roc_curve` (bug fix)
-- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
+- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -69,13 +69,13 @@ Classifiers and regressors
 Preprocessing
 
 - Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
-  categorical features as a numeric array, either using a one-hot (or
-  dummy) encoding scheme or by converting to ordinal integers.
-  Compared to the existing :class:`preprocessing.OneHotEncoder`, this new class handles
+  categorical features as a numeric array, either using a one-hot (or dummy)
+  encoding scheme or by converting to ordinal integers.  Compared to the
+  existing :class:`~preprocessing.OneHotEncoder`, this new class handles
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
-  the maximum value in the features. :issue:`9151` by
-  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
+  the maximum value in the features. :issue:`9151` by :user:`Vighnesh Birodkar
+  <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
@@ -475,7 +475,7 @@ Feature Extraction
 
 Utils
 
-- :func:`utils.validation.check_array` yield a ``FutureWarning`` indicating
+- :func:`utils.check_array` yield a ``FutureWarning`` indicating
   that arrays of bytes/strings will be interpreted as decimal numbers
   beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
@@ -491,8 +491,9 @@ Preprocessing
 
 Feature selection
 
-- Fixed computation of ``n_features_to_compute`` for edge case with tied
-  CV scores in :class:`feature_selection.RFECV`. :issue:`9222` by :user:`Nick Hoh <nickypie>`.
+- Fixed computation of ``n_features_to_compute`` for edge case with tied CV
+  scores in :class:`feature_selection.RFECV`. :issue:`9222` by `Nick Hoh
+  <nickypie>`.
 
 Model evaluation and meta-estimators
 
@@ -530,10 +531,10 @@ Linear, kernelized and related models
   performed. :issue:`10723` by `Joel Nothman`_.
 
 - The default value of ``gamma`` parameter of :class:`svm.SVC`,
-  :class:`svm.NuSVC`, :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`
-  will change from ``'auto'`` to ``'scale'`` in version 0.22 to account
-  better for unscaled features. :issue:`8361` by :user:`Gaurav Dhingra <gxyd>`
-  and :user:`Ting Neo <neokt>`.
+  :class:`~svm.NuSVC`, :class:`~svm.SVR`, :class:`~svm.NuSVR`,
+  :class:`~svm.OneClassSVM` will change from ``'auto'`` to ``'scale'`` in
+  version 0.22 to account better for unscaled features. :issue:`8361` by
+  :user:`Gaurav Dhingra <gxyd>` and :user:`Ting Neo <neokt>`.
 
 - Added convergence warning to :class:`svm.LinearSVC` and
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
@@ -608,8 +609,9 @@ Covariance
 
 Misc
 
-- Changed warning type from UserWarning to ConvergenceWarning for failing
-  convergence in :func:`linear_model.logistic_regression_path`,
+- Changed warning type from :class:`UserWarning` to
+  :class:`exceptions.ConvergenceWarning` for failing convergence in
+  :func:`linear_model.logistic_regression_path`,
   :class:`linear_model.RANSACRegressor`, :func:`linear_model.ridge_regression`,
   :class:`gaussian_process.GaussianProcessRegressor`,
   :class:`gaussian_process.GaussianProcessClassifier`,
@@ -629,26 +631,25 @@ Misc
 Changes to estimator checks
 ---------------------------
 
-- Allow tests in :func:`estimator_checks.check_estimator` to test functions
+These changes mostly affect library developers.
+
+- Allow tests in :func:`utils.estimator_checks.check_estimator` to test functions
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
 
-- Allow :func:`estimator_checks.check_estimator` to check that there is no
+- Allow :func:`~utils.estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
 
-- Add test :func:`estimator_checks.check_methods_subset_invariance` to check
-  that estimators methods are invariant if applied to a data subset.
-  :issue:`10420` by :user:`Jonathan Ohayon <Johayon>`
+- Add ``check_methods_subset_invariance`` to
+  :func:`~utils.estimator_checks.check_estimator`, which checks that
+  estimator methods are invariant if applied to a data subset.  :issue:`10420`
+  by :user:`Jonathan Ohayon <Johayon>`
 
-- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
-  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
-
-- Add tests in :func:`estimator_checks.check_estimator` to check that an
+- Add tests in :func:`utils.estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
 
-- :func:`estimator_checks.check_sample_weights_pandas_series` now uses 8 rather
-  than 6 samples to accommodate for the default number of clusters in
-  :class:`cluster.KMeans`.
+- ``check_sample_weights_pandas_series`` now uses 8 rather than 6 samples
+  to accommodate for the default number of clusters in :class:`cluster.KMeans`.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
