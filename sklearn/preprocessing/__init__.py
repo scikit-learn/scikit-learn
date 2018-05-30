@@ -25,7 +25,6 @@ from .data import power_transform
 from .data import OneHotEncoder
 from .data import PowerTransformer
 from .data import CategoricalEncoder
-
 from .data import PolynomialFeatures
 from .discretization import KBinsDiscretizer
 

@@ -9,6 +9,7 @@
 from collections import defaultdict
 import itertools
 import array
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -126,6 +127,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
         y = column_or_1d(y, warn=True)
+        # transform of empty array is empty array
+        if _num_samples(y) == 0:
+            return np.array([])
 
         classes = np.unique(y)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
@@ -147,6 +151,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : numpy array of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
+        # inverse transform of empty array is empty array
+        if _num_samples(y) == 0:
+            return np.array([])
 
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
         if len(diff):
@@ -677,6 +685,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.OneHotEncoder : encode categorical integer features
         using a one-hot aka one-of-K scheme.
     """
+
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -787,9 +796,19 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
+        unknown = set()
         for labels in y:
-            indices.extend(set(class_mapping[label] for label in labels))
+            index = set()
+            for label in labels:
+                try:
+                    index.add(class_mapping[label])
+                except KeyError:
+                    unknown.add(label)
+            indices.extend(index)
             indptr.append(len(indices))
+        if unknown:
+            warnings.warn('unknown class(es) {0} will be ignored'
+                          .format(sorted(unknown, key=str)))
         data = np.ones(len(indices), dtype=int)
 
         return sp.csr_matrix((data, indices, indptr),
