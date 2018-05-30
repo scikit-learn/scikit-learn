@@ -43,8 +43,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
-        metric parameter.
+        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
+        its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
@@ -94,12 +94,18 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
-    while original DBSCAN had memory complexity O(n).
+    while original DBSCAN had memory complexity O(n). It may attract a higher
+    memory complexity when querying these nearest neighborhoods, depending
+    on the ``algorithm``.
 
-    Sparse neighborhoods can be precomputed using
+    One way to avoid the query complexity is to pre-compute sparse
+    neighborhoods in chunks using
     :func:`NearestNeighbors.radius_neighbors_graph
-    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
-    with ``mode='distance'``.
+    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>` with
+    ``mode='distance'``, then using ``metric='precomputed'`` here.
+
+    Another way to reduce memory and computation time is to remove
+    (near-)duplicate points and use ``sample_weight`` instead.
 
     References
     ----------
@@ -182,8 +188,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.calculate_distance for its
-        metric parameter.
+        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
+        its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
@@ -234,12 +240,18 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
-    while original DBSCAN had memory complexity O(n).
+    while original DBSCAN had memory complexity O(n). It may attract a higher
+    memory complexity when querying these nearest neighborhoods, depending
+    on the ``algorithm``.
 
-    Sparse neighborhoods can be precomputed using
+    One way to avoid the query complexity is to pre-compute sparse
+    neighborhoods in chunks using
     :func:`NearestNeighbors.radius_neighbors_graph
-    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
-    with ``mode='distance'``.
+    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>` with
+    ``mode='distance'``, then using ``metric='precomputed'`` here.
+
+    Another way to reduce memory and computation time is to remove
+    (near-)duplicate points and use ``sample_weight`` instead.
 
     References
     ----------

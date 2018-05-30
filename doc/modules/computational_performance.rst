@@ -111,7 +111,7 @@ memory footprint and estimator).
 Influence of the Input Data Representation
 ------------------------------------------
 
-Scipy provides sparse matrix datastructures which are optimized for storing
+Scipy provides sparse matrix data structures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
 a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
@@ -307,6 +307,27 @@ Debian / Ubuntu.
     make sure you have a single-threaded BLAS library, or set ``n_jobs=1``,
     or upgrade to Python 3.4 which has a new version of ``multiprocessing``
     that should be immune to this problem.
+
+.. _working_memory:
+
+Limiting Working Memory
+-----------------------
+
+Some calculations when implemented using standard numpy vectorized operations
+involve using a large amount of temporary memory.  This may potentially exhaust
+system memory.  Where computations can be performed in fixed-memory chunks, we
+attempt to do so, and allow the user to hint at the maximum size of this
+working memory (defaulting to 1GB) using :func:`sklearn.set_config` or
+:func:`config_context`.  The following suggests to limit temporary working
+memory to 128 MiB::
+
+  >>> import sklearn
+  >>> with sklearn.config_context(working_memory=128):
+  ...    pass  # do chunked work here
+
+An example of a chunked operation adhering to this setting is
+:func:`metric.pairwise_distances_chunked`, which facilitates computing
+row-wise reductions of a pairwise distance matrix.
 
 Model Compression
 -----------------

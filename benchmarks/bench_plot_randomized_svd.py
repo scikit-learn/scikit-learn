@@ -31,7 +31,7 @@ The benchmarks follow.
     goal: study whether the rank of the matrix and the number of components
     extracted by randomized SVD affect "the optimal" number of power iterations
 
-(c) plot: time vs norm, varing datasets
+(c) plot: time vs norm, varying datasets
     data: many datasets
     goal: compare default configurations
 

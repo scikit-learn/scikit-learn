@@ -192,11 +192,7 @@ def test_gaussian_kde(n_samples=1000):
 
     for h in [0.01, 0.1, 1]:
         bt = BallTree(x_in[:, None])
-        try:
-            gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
-        except TypeError:
-            raise SkipTest("Old version of scipy, doesn't accept "
-                           "explicit bandwidth.")
+        gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
 
         dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)

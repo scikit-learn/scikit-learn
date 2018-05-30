@@ -598,7 +598,7 @@ minimize the loss function :math:`L` given the current model
   .. math::
 
     F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) - h(x))
+    F_{m-1}(x_i) + h(x))
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -614,7 +614,7 @@ loss function:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
+    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
 Where the step length :math:`\gamma_m` is chosen using line search:
@@ -782,7 +782,7 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_  # doctest: +ELLIPSIS
-    array([ 0.11,  0.1 ,  0.11,  ...
+    array([0.11, 0.1 , 0.11, ...
 
 .. topic:: Examples:
 
@@ -1029,7 +1029,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
    >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
 
    >>> clf1 = clf1.fit(X,y)

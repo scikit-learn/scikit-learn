@@ -24,7 +24,3 @@ find joblib -name "*.bak" | xargs rm
 # Remove the tests folders to speed-up test time for scikit-learn.
 # joblib is already tested on its own CI infrastructure upstream.
 rm -r joblib/test
-
-# Remove joblib/testing.py which is only used in tests and has a
-# pytest dependency (needed until we drop nose)
-rm joblib/testing.py

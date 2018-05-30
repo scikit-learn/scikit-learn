@@ -1,7 +1,8 @@
 import sys
 import warnings
+import functools
 
-__all__ = ["deprecated", ]
+__all__ = ["deprecated", "DeprecationDict"]
 
 
 class deprecated(object):
@@ -71,13 +72,12 @@ class deprecated(object):
         if self.extra:
             msg += "; %s" % self.extra
 
+        @functools.wraps(fun)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning)
             return fun(*args, **kwargs)
 
-        wrapped.__name__ = fun.__name__
-        wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
+        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
 
         return wrapped
 
@@ -102,3 +102,33 @@ def _is_deprecated(func):
                                               for c in closures
                      if isinstance(c.cell_contents, str)]))
     return is_deprecated
+
+
+class DeprecationDict(dict):
+    """A dict which raises a warning when some keys are looked up
+
+    Note, this does not raise a warning for __contains__ and iteration.
+
+    It also will raise a warning even after the key has been manually set by
+    the user.
+    """
+    def __init__(self, *args, **kwargs):
+        self._deprecations = {}
+        super(DeprecationDict, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if key in self._deprecations:
+            warn_args, warn_kwargs = self._deprecations[key]
+            warnings.warn(*warn_args, **warn_kwargs)
+        return super(DeprecationDict, self).__getitem__(key)
+
+    def get(self, key, default=None):
+        # dict does not implement it like this, hence it needs to be overridden
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def add_warning(self, key, *args, **kwargs):
+        """Add a warning to be triggered when the specified key is read"""
+        self._deprecations[key] = (args, kwargs)

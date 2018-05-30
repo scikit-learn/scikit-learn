@@ -1,4 +1,3 @@
-
 .. currentmodule:: sklearn.preprocessing
 
 .. _preprocessing_targets:
@@ -6,6 +5,11 @@
 ==========================================
 Transforming the prediction target (``y``)
 ==========================================
+
+These are transformers that are not intended to be used on features, only on
+supervised learning targets. See also :ref:`transformed_target_regressor` if
+you want to transform the prediction target for learning, but evaluate the
+model in the original (untransformed) space.
 
 Label binarization
 ------------------

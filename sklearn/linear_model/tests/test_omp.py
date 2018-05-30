@@ -22,6 +22,9 @@ from sklearn.datasets import make_sparse_coded_signal
 n_samples, n_features, n_nonzero_coefs, n_targets = 20, 30, 5, 3
 y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
                                        n_nonzero_coefs, random_state=0)
+# Make X not of norm 1 for testing
+X *= 10
+y *= 10
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
@@ -113,12 +116,16 @@ def test_estimator():
     assert_equal(omp.intercept_.shape, (n_targets,))
     assert_true(np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
-    omp.set_params(fit_intercept=False, normalize=False)
-
+    coef_normalized = omp.coef_[0].copy()
+    omp.set_params(fit_intercept=True, normalize=False)
     omp.fit(X, y[:, 0])
+    assert_array_almost_equal(coef_normalized, omp.coef_)
+
+    omp.set_params(fit_intercept=False, normalize=False)
+    omp.fit(X, y[:, 0])
+    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
     assert_equal(omp.coef_.shape, (n_features,))
     assert_equal(omp.intercept_, 0)
-    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
     omp.fit(X, y)
     assert_equal(omp.coef_.shape, (n_targets, n_features))
