@@ -92,8 +92,7 @@ def test_factor_analysis():
         fa_var = FactorAnalysis(n_components=n_comps, rotation=method)
         results.append(fa_var.fit_transform(X))
     for a, b in ((0, 1), (0, 2), (1, 2)):
-        assert_raises(AssertionError, assert_array_almost_equal,
-                      results[a], results[b])
+        assert not np.allclose(results[a], results[b])
 
     assert_raises(NotImplementedError,
                   FactorAnalysis(rotation='not_implemented').fit_transform, X)
