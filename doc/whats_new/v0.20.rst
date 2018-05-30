@@ -100,7 +100,7 @@ Preprocessing
 
 Model evaluation
 
-- Added the :func:`metrics.cluster.davies_bouldin_index` metric for unsupervised
+- Added the :func:`metrics.cluster.davies_bouldin_score` metric for unsupervised
   evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
