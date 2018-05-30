@@ -117,7 +117,14 @@ Metrics
 
 - Added `output_dict` parameter in method ``classification_report`` to
   give option to return classification statistics as dictionary. :issue:
-  `11160` by :user: `Dan Barkhorn <danielbarkhorn>`
+  `11160` by :user: `Dan Barkhorn <danielbarkhorn>`.
+
+Misc
+
+- A new configuration parameter, ``working_memory`` was added to control memory
+  consumption limits in chunked operations, such as the new
+  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
+  :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Enhancements
 ............
