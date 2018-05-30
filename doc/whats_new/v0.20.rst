@@ -123,6 +123,10 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
+- Added ``output_dict`` parameter in :func:`metrics.classification_report`
+  to return classification statistics as dictionary.
+  :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
+
 Misc
 
 - A new configuration parameter, ``working_memory`` was added to control memory
