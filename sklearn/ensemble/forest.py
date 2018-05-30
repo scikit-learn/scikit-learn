@@ -971,7 +971,7 @@ class RandomForestClassifier(ForestClassifier):
     DecisionTreeClassifier, ExtraTreesClassifier
     """
     def __init__(self,
-                 n_estimators=10,
+                 n_estimators=100,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1453,7 +1453,7 @@ class ExtraTreesClassifier(ForestClassifier):
         splits.
     """
     def __init__(self,
-                 n_estimators=10,
+                 n_estimators=100,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
