@@ -66,6 +66,11 @@ Classifiers and regressors
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier` can now
+  be fit with missing/non-finite values in X and/or multi-output Y to support
+  wrapping pipelines that perform their own imputation.
+  :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
+
 Preprocessing
 
 - Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
