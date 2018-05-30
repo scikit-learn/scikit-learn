@@ -59,3 +59,10 @@ def test_MDS():
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
+
+    # Test to check the adaptive tol value
+    mat = np.random.rand(1000, 2).astype(np.float32)
+    mds.MDS().fit_transform(mat)
+
+    mat = np.random.rand(1000, 2).astype(np.float16)
+    mds.MDS().fit_transform(mat)

@@ -67,7 +67,15 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     n_iter : int
         The number of iterations corresponding to the best stress.
     """
-    dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
+    if dissimilarities.dtype == np.float16:
+        _tol = 1E-2
+    elif dissimilarities.dtype == np.float32:
+        _tol = 1E-4
+    else:
+        _tol = 1E-10
+
+    dissimilarities = check_symmetric(dissimilarities, tol=_tol,
+                                      raise_exception=True)
 
     n_samples = dissimilarities.shape[0]
     random_state = check_random_state(random_state)
