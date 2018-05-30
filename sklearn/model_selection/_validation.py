@@ -194,6 +194,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     :func:`sklearn.model_selection.cross_val_score`:
         Run cross-validation for single metric evaluation.
 
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
+
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
 
@@ -340,6 +344,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     :func:`sklearn.model_selection.cross_validate`:
         To run cross-validation on multiple metrics and also to return
         train scores, fit times and score times.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
 
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
@@ -606,6 +614,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                       method='predict'):
     """Generate cross-validated estimates for each input data point
 
+    It is not appropriate to pass these predictions into an evaluation
+    metric. Use :func:`cross_validate` to measure generalization error.
+
     Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
@@ -676,6 +687,12 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     -------
     predictions : ndarray
         This is the result of calling ``method``
+
+    See also
+    --------
+    cross_val_score : calculate score for each CV split
+
+    cross_validate : calculate one or more scores and timings for each CV split
 
     Notes
     -----
@@ -1097,7 +1114,7 @@ def learning_curve(estimator, X, y, groups=None,
 
     Returns
     -------
-    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.

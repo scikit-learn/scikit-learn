@@ -916,7 +916,7 @@ Some tips and tricks:
     (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform some British spelling 
+    The following example will, for instance, transform some British spelling
     to American spelling::
 
         >>> import re

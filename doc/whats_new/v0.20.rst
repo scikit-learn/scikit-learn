@@ -56,6 +56,9 @@ Classifiers and regressors
 - :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
   ``predict`` method. The returned standard deviations will be zeros.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
@@ -74,15 +77,16 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`compose.ColumnTransformer`, which allows to apply
+  different transformers to different columns of arrays or pandas
+  DataFrames. By `Andreas Müller`_ and `Joris Van den Bossche`_.
+
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
   power transformation, allowing users to map data from any distribution to a
   Gaussian distribution. This is useful as a variance-stabilizing transformation
   in situations where normality and homoscedasticity are desirable.
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
   :user:`Maniteja Nandana <maniteja123>`.
-
-- :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
-  :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
@@ -94,10 +98,10 @@ Preprocessing
   other features in a round-robin fashion. :issue:`8478` by
   :user:`Sergey Feldman <sergeyf>`.
 
-- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values. :issue:`10404`
-  by :user:`Lucija Gregov <LucijaGregov>`.
-
 Model evaluation
+
+- Added the :func:`metrics.cluster.davies_bouldin_index` metric for unsupervised
+  evaluation of clustering models. :issue:`10827` by :user:`Luis Osa <logc>`.
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
@@ -109,15 +113,19 @@ Decomposition, manifold learning and clustering
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
+- :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
+  sample weights via new parameter ``sample_weight`` in ``fit`` function.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
+
 Metrics
 
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
-- Added `output_dict` parameter in method ``classification_report`` to
-  give option to return classification statistics as dictionary. :issue:
-  `11160` by :user: `Dan Barkhorn <danielbarkhorn>`.
+- Added ``output_dict`` parameter in :func:`metrics.classification_report`
+  to return classification statistics as dictionary.
+  :issue:`11160` by :user: `Dan Barkhorn <danielbarkhorn>`.
 
 Misc
 
@@ -207,6 +215,12 @@ Preprocessing
   now ignores any unknown classes. A warning is raised stating the unknown classes
   classes found which are ignored.
   :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
+
+- :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
+  :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values.
+  :issue:`10404` by :user:`Lucija Gregov <LucijaGregov>`.
 
 Model evaluation and meta-estimators
 
@@ -475,6 +489,11 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+Feature selection
+
+- Fixed computation of ``n_features_to_compute`` for edge case with tied
+  CV scores in :class:`RFECV`. :issue:`9222` by `Nick Hoh <nickypie>`.
+
 Model evaluation and meta-estimators
 
 - Add improved error message in :func:`model_selection.cross_val_score` when
@@ -485,6 +504,10 @@ Datasets
 
 - Fixed a bug in :func:`dataset.load_boston` which had a wrong data point.
   :issue:`10801` by :user:`Takeshi Yoshizawa <tarcusx>`.
+
+- Fixed a bug in :func:`dataset.load_iris` which had two wrong data points.
+  :issue:`11082` by :user:`Sadhana Srinivasan <rotuna>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
 
 API changes summary
 -------------------
@@ -531,6 +554,12 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
+  and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
+  v0.22.  It no longer has any effect, as batch size is determined by global
+  ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
+  Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Cluster
 
@@ -594,6 +623,9 @@ Misc
   acts as an upper bound on iterations.
   :issue:`#10982` by :user:`Juliet Lawton <julietcl>`
 
+- Invalid input for :class:`model_selection.ParameterGrid` now raises TypeError.
+  :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
+
 Changes to estimator checks
 ---------------------------
 
@@ -615,3 +647,8 @@ Changes to estimator checks
 - Add tests in :func:`estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
+
+- :func:`estimator_checks.check_sample_weights_pandas_series` now uses 8 rather
+  than 6 samples to accommodate for the default number of clusters in
+  :class:`cluster.KMeans`.
+  :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
