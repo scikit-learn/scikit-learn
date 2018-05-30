@@ -115,6 +115,10 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
+- Added `output_dict` parameter in method ``classification_report`` to
+  give option to return classification statistics as dictionary. :issue:
+  `11160` by :user: `Dan Barkhorn <danielbarkhorn>`
+
 Enhancements
 ............
 
@@ -157,7 +161,7 @@ Classifiers and regressors
   :class:`neighbors.RadiusNeighborsClassifier` are now
   parallelized according to ``n_jobs`` regardless of ``algorithm``.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
-  
+
 - Memory usage improvement for :func:`_class_means` and :func:`_class_cov`
   in :class:`discriminant_analysis`.
   :issue:`10898` by :user:`Nanxin Chen <bobchennan>`.`
@@ -187,7 +191,7 @@ Preprocessing
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
-  
+
 - Enable the call to :meth:`get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
