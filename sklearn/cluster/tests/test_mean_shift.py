@@ -24,7 +24,7 @@ from sklearn.datasets.samples_generator import make_blobs
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
-X, _ = make_blobs(n_samples=50, n_features=2, centers=centers,
+X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
                   cluster_std=0.4, shuffle=True, random_state=11)
 
 
@@ -65,6 +65,10 @@ def test_estimate_bandwidth_with_sparse_matrix():
 
 
 def test_parallel():
+    centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+    X, _ = make_blobs(n_samples=50, n_features=2, centers=centers,
+                      cluster_std=0.4, shuffle=True, random_state=11)
+
     ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
 
