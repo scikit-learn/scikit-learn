@@ -52,7 +52,7 @@ X_train, X_train_lr, y_train, y_train_lr = train_test_split(X_train,
 
 # Unsupervised transformation based on totally random trees
 rt = RandomTreesEmbedding(max_depth=3, n_estimators=n_estimator,
-	random_state=0)
+                          random_state=0)
 
 rt_lm = LogisticRegression()
 pipeline = make_pipeline(rt, rt_lm)

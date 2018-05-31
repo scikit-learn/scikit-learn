@@ -177,12 +177,12 @@ This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
 clustering an image:
 
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_face_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_face_ward_segmentation.html
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
+    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
     :scale: 40
     :align: right
 
-.. literalinclude:: ../../auto_examples/cluster/plot_face_ward_segmentation.py
+.. literalinclude:: ../../auto_examples/cluster/plot_coin_ward_segmentation.py
     :lines: 21-45
 
 ..
