@@ -70,8 +70,8 @@ class Pipeline(_BaseComposition):
 
     See also
     --------
-    sklearn.pipeline.make_pipeline : Factory function for generating
-        pipelines.
+    sklearn.pipeline.make_pipeline : convenience function for simplified
+        pipeline construction.
 
     Examples
     --------
@@ -637,8 +637,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     See also
     --------
-    sklearn.pipeline.make_union : Factory function for generating
-        feature unions.
+    sklearn.pipeline.make_union : convenience function for simplified
+        feature union construction.
 
     Examples
     --------

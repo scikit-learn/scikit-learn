@@ -108,7 +108,7 @@ boolean mask array
 
     See also
     --------
-    sklearn.compose.make_column_transformer : factory function for
+    sklearn.compose.make_column_transformer : convenience function for
         combining the output of multiple transformer objects applied to
         subsets of the original feature space.
 
