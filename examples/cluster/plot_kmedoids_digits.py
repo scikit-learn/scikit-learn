@@ -11,7 +11,8 @@ metrics for K-Medoids.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.cluster import KMedoids
+from collections import namedtuple
+from sklearn.cluster import KMedoids, KMeans
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
@@ -42,17 +43,23 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 plt.figure()
 plt.clf()
 
-plt.suptitle("Plugging different distance functions to K-Medoids", fontsize=14)
+plt.suptitle("Comparing multiple K-Medoids metrics to K-Means and each other", fontsize=14)
 
-selected_distance_metrics = ['manhattan', 'euclidean', 'cosine']
+Algorithm = namedtuple('ClusterAlgorithm', ['model', 'description'])
 
-plot_rows = int(np.ceil(len(selected_distance_metrics) / 2.0))
+selected_models = [
+    Algorithm(KMedoids(n_clusters=n_digits, metric='manhattan'), 'KMedoids (manhattan)'),
+    Algorithm(KMedoids(n_clusters=n_digits, metric='euclidean'), 'KMedoids (euclidean)'),
+    Algorithm(KMedoids(n_clusters=n_digits, metric='cosine'), 'KMedoids (cosine)'),
+    Algorithm(KMeans(n_clusters=n_digits), 'KMeans')
+    ]
+
+plot_rows = int(np.ceil(len(selected_models) / 2.0))
 plot_cols = 2
 
-for i, distance_metric in enumerate(selected_distance_metrics):
+for i, (model, description) in enumerate(selected_models):
 
     # Obtain labels for each point in mesh. Use last trained model.
-    model = KMedoids(n_clusters=n_digits, metric=distance_metric)
     model.fit(reduced_data)
     Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
 
@@ -64,13 +71,13 @@ for i, distance_metric in enumerate(selected_distance_metrics):
                cmap=plt.cm.Paired,
                aspect='auto', origin='lower')
 
-    plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
+    plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2, alpha=0.3)
     # Plot the centroids as a white X
     centroids = model.cluster_centers_
     plt.scatter(centroids[:, 0], centroids[:, 1],
                 marker='x', s=169, linewidths=3,
                 color='w', zorder=10)
-    plt.title('{}'.format(distance_metric))
+    plt.title(description)
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)
     plt.xticks(())
