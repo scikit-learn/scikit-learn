@@ -19,6 +19,8 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import (f1_score, accuracy_score, hamming_loss,
                              jaccard_similarity_score)
 from sklearn.utils.testing import ignore_warnings
+from sklearn.metrics.classification import precision_recall_fscore_support, \
+    precision_recall_fscore_support_with_multilabel_confusion_matrix
 
 
 METRICS = {
@@ -27,10 +29,12 @@ METRICS = {
     'accuracy': accuracy_score,
     'hamming': hamming_loss,
     'jaccard': jaccard_similarity_score,
+    'precision_recall_fscore_support': precision_recall_fscore_support,
+    'precision_recall_fscore_support_with_multilabel_confusion_matrix':
+        precision_recall_fscore_support_with_multilabel_confusion_matrix
 }
 
 FORMATS = {
-    'sequences': lambda y: [list(np.flatnonzero(s)) for s in y],
     'dense': lambda y: y,
     'csr': lambda y: sp.csr_matrix(y),
     'csc': lambda y: sp.csc_matrix(y),
