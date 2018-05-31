@@ -109,6 +109,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=params['n_clusters'])
+    kmedoids = cluster.KMedoids(n_clusters=params['n_clusters'], init='k-medoids++', metric='braycurtis')
     ward = cluster.AgglomerativeClustering(
         n_clusters=params['n_clusters'], linkage='ward',
         connectivity=connectivity)
@@ -127,6 +128,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
 
     clustering_algorithms = (
         ('MiniBatchKMeans', two_means),
+        ('KMedoids', kmedoids),
         ('AffinityPropagation', affinity_propagation),
         ('MeanShift', ms),
         ('SpectralClustering', spectral),
