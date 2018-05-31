@@ -109,8 +109,8 @@ boolean mask array
     See also
     --------
     sklearn.compose.make_column_transformer : convenience function for
-        combining the output of multiple transformer objects applied to
-        subsets of the original feature space.
+        combining the outputs of multiple transformer objects applied to
+        column subsets of the original feature space.
 
     Examples
     --------
@@ -605,8 +605,8 @@ def make_column_transformer(*transformers, **kwargs):
     See also
     --------
     sklearn.compose.ColumnTransformer : Class that allows combining the
-        output of multiple transformer objects used on subsets of the
-        data into a single feature space.
+        outputs of multiple transformer objects used on column subsets
+        of the data into a single feature space.
 
     Examples
     --------
