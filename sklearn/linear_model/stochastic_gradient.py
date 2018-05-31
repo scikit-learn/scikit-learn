@@ -514,7 +514,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.standard_intercept_ = np.atleast_1d(self.intercept_)
                 self.intercept_ = self.standard_intercept_
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, max_iter=1):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -537,6 +537,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
+        max_iter : float, optional
+            How many passes over the dataset for this evaluation of partial_fit
+
+            .. versionadded:: 0.20
+
         Returns
         -------
         self : returns an instance of self.
@@ -552,8 +557,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "Pass the resulting weights as the class_weight "
                              "parameter.".format(self.class_weight))
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
-                                 learning_rate=self.learning_rate, max_iter=1,
-                                 classes=classes, sample_weight=sample_weight,
+                                 learning_rate=self.learning_rate,
+                                 max_iter=max_iter, classes=classes,
+                                 sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
@@ -976,7 +982,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         return self
 
-    def partial_fit(self, X, y, sample_weight=None):
+    def partial_fit(self, X, y, sample_weight=None, max_iter=1):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -991,6 +997,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
+        max_iter : float, optional
+            How many passes over the dataset for this evaluation of partial_fit
+
+            .. versionadded:: 0.20
+
         Returns
         -------
         self : returns an instance of self.
@@ -998,7 +1009,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self._validate_params(for_partial_fit=True)
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
-                                 learning_rate=self.learning_rate, max_iter=1,
+                                 learning_rate=self.learning_rate,
+                                 max_iter=max_iter,
                                  sample_weight=sample_weight, coef_init=None,
                                  intercept_init=None)
 
