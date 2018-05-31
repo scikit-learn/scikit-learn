@@ -171,7 +171,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     sample_weight = check_array(sample_weight, ensure_2d=False)
                     check_consistent_length(y, sample_weight)
                 base_estimator_sample_weight = sample_weight
+            oob_decision_function_ = []
             for train, test in cv.split(X, y):
+                oob = np.empty(shape=(len(y), len(self.classes_))) * np.nan
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(
@@ -188,7 +190,21 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                                               sample_weight[test])
                 else:
                     calibrated_classifier.fit(X[test], y[test])
-                self.calibrated_classifiers_.append(calibrated_classifier)
+                    if hasattr(calibrated_classifier.base_estimator, 'oob_decision_function_'):
+                        idx_pos_class = calibrated_classifier.label_encoder_.transform(
+                            calibrated_classifier.base_estimator.classes_)
+                        df = calibrated_classifier.base_estimator.oob_decision_function_[:, 1:]
+                        oob[train, :] = calibrated_classifier.transform_proba(
+                            df, idx_pos_class, len(self.classes_),
+                            calibrated_classifier.base_estimator.oob_decision_function_)
+                        oob_decision_function_.append(oob)
+                        # to save memory we can remove the oob from the base estimator
+                        delattr(calibrated_classifier.base_estimator, 'oob_decision_function_')
+                        calibrated_classifier.base_estimator.oob_score = False
+                    self.calibrated_classifiers_.append(calibrated_classifier)
+                if hasattr(self.base_estimator, 'oob_score') and self.base_estimator.oob_score:
+                    self.oob_decision_function_ = np.nanmean(np.array(oob_decision_function_), axis=0)
+                    self.oob = True
 
         return self
 
@@ -373,6 +389,12 @@ class _CalibratedClassifier(object):
 
         df, idx_pos_class = self._preproc(X)
 
+        proba = self.transform_proba(df, idx_pos_class, n_classes, proba)
+
+        return proba
+
+    def transform_proba(self, df, idx_pos_class, n_classes, proba):
+        proba = np.copy(proba)
         for k, this_df, calibrator in \
                 zip(idx_pos_class, df.T, self.calibrators_):
             if n_classes == 2:
