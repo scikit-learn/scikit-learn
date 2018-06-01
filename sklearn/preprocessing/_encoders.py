@@ -97,12 +97,12 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
 
-        if self.categories != 'auto':
-            for cats in self.categories:
+        if self._categories != 'auto':
+            for cats in self._categories:
                 if not np.all(np.sort(cats) == np.array(cats)):
                     raise ValueError("Unsorted categories are not yet "
                                      "supported")
-            if len(self.categories) != n_features:
+            if len(self._categories) != n_features:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
 
@@ -111,17 +111,17 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         for i in range(n_features):
             le = self._label_encoders_[i]
             Xi = X[:, i]
-            if self.categories == 'auto':
+            if self._categories == 'auto':
                 le.fit(Xi)
             else:
                 if handle_unknown == 'error':
-                    valid_mask = np.in1d(Xi, self.categories[i])
+                    valid_mask = np.in1d(Xi, self._categories[i])
                     if not np.all(valid_mask):
                         diff = np.unique(Xi[~valid_mask])
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                le.classes_ = np.array(self.categories[i])
+                le.classes_ = np.array(self._categories[i])
 
         self.categories_ = [le.classes_ for le in self._label_encoders_]
 
@@ -308,12 +308,11 @@ class OneHotEncoder(_BaseEncoder):
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
-        self._categories = self.categories = categories
+        self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-        self._n_values = self.n_values = n_values
-        self._categorical_features = categorical_features
+        self.n_values = n_values
         self.categorical_features = categorical_features
 
     # Deprecated attributes
@@ -341,12 +340,19 @@ class OneHotEncoder(_BaseEncoder):
 
     def _handle_deprecations(self, X):
 
-        # user manually set the categories -> never legacy mode
-        if self._categories is not None:
+        # internal version of the attributes to handle deprecations
+        self._categories = getattr(self, '_categories', None)
+        self._categorical_features = getattr(self, '_categorical_features',
+                                             None)
+
+        # user manually set the categories or second fit -> never legacy mode
+        if self.categories is not None or self._categories is not None:
             self._legacy_mode = False
+            if self.categories is not None:
+                self._categories = self.categories
 
         # categories not set -> infer if we need legacy mode or not
-        elif self._n_values is not None and self._n_values != 'auto':
+        elif self.n_values is not None and self.n_values != 'auto':
             msg = (
                 "Passing 'n_values' is deprecated in version 0.20 and will be "
                 "removed in 0.22. You can use the 'categories' keyword "
@@ -360,14 +366,14 @@ class OneHotEncoder(_BaseEncoder):
 
             if isinstance(self.n_values, numbers.Integral):
                 n_features = X.shape[1]
-                self.categories = [
+                self._categories = [
                     list(range(self.n_values)) for _ in range(n_features)]
                 n_values = np.empty(n_features, dtype=np.int)
                 n_values.fill(self.n_values)
             else:
                 try:
                     n_values = np.asarray(self.n_values, dtype=int)
-                    self.categories = [list(range(i)) for i in self.n_values]
+                    self._categories = [list(range(i)) for i in self.n_values]
                 except (ValueError, TypeError):
                     raise TypeError(
                         "Wrong type for parameter `n_values`. Expected 'auto',"
@@ -384,8 +390,8 @@ class OneHotEncoder(_BaseEncoder):
             if self.handle_unknown == 'ignore':
                 # no change in behaviour, no need to raise deprecation warning
                 self._legacy_mode = False
-                self.categories = 'auto'
-                if self._n_values == 'auto':
+                self._categories = 'auto'
+                if self.n_values == 'auto':
                     # user manually specified this
                     msg = (
                         "Passing 'n_values' is deprecated in version 0.20 and "
@@ -400,7 +406,7 @@ class OneHotEncoder(_BaseEncoder):
                     X = check_array(X, dtype=np.int)
                 except ValueError:
                     self._legacy_mode = False
-                    self.categories = 'auto'
+                    self._categories = 'auto'
                 else:
                     msg = (
                         "The handling of integer data will change in version "
@@ -419,16 +425,16 @@ class OneHotEncoder(_BaseEncoder):
                     self.n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
-        if self._categorical_features is not None:
-            if (isinstance(self._categorical_features, six.string_types)
-                    and self._categorical_features == 'all'):
+        if self.categorical_features is not None:
+            if (isinstance(self.categorical_features, six.string_types)
+                    and self.categorical_features == 'all'):
                 warnings.warn(
                     "The 'categorical_features' keyword is deprecated in "
                     "version 0.20 and will be removed in 0.22. The passed "
                     "value of 'all' is the default and can simply be removed.",
                     DeprecationWarning)
             else:
-                if self._categories is not None:
+                if self.categories is not None:
                     raise ValueError(
                         "The 'categorical_features' keyword is deprecated, "
                         "and cannot be used together with specifying "
@@ -438,8 +444,9 @@ class OneHotEncoder(_BaseEncoder):
                     "version 0.20 and will be removed in 0.22. You can "
                     "use the ColumnTransformer instead.", DeprecationWarning)
                 self._legacy_mode = True
+            self._categorical_features = self.categorical_features
         else:
-            self.categorical_features = 'all'
+            self._categorical_features = 'all'
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -462,7 +469,7 @@ class OneHotEncoder(_BaseEncoder):
 
         if self._legacy_mode:
             _transform_selected(X, self._legacy_fit_transform,
-                                self.categorical_features,
+                                self._categorical_features,
                                 copy=True)
             return self
         else:
@@ -544,7 +551,7 @@ class OneHotEncoder(_BaseEncoder):
 
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_fit_transform,
-                                       self.categorical_features, copy=True)
+                                       self._categorical_features, copy=True)
         else:
             return self.fit(X).transform(X)
 
@@ -633,7 +640,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         if self._legacy_mode:
             return _transform_selected(X, self._legacy_transform,
-                                       self.categorical_features,
+                                       self._categorical_features,
                                        copy=True)
         else:
             return self._transform_new(X)
@@ -787,6 +794,9 @@ class OrdinalEncoder(_BaseEncoder):
         self
 
         """
+        # base classes uses _categories to deal with deprecations in
+        # OneHoteEncoder: can be removed once deprecations are removed
+        self._categories = self.categories
         self._fit(X)
 
         return self
