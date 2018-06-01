@@ -360,32 +360,7 @@ class OneHotEncoder(_BaseEncoder):
                 "instead. 'n_values=n' corresponds to 'categories=[range(n)]'."
             )
             warnings.warn(msg, DeprecationWarning)
-
-            # we internally translate this to the correct categories
-            # and don't use legacy mode
-            X = check_array(X, dtype=np.int)
-
-            if isinstance(self.n_values, numbers.Integral):
-                n_features = X.shape[1]
-                self._categories = [
-                    list(range(self.n_values)) for _ in range(n_features)]
-                n_values = np.empty(n_features, dtype=np.int)
-                n_values.fill(self.n_values)
-            else:
-                try:
-                    n_values = np.asarray(self.n_values, dtype=int)
-                    self._categories = [list(range(i)) for i in self.n_values]
-                except (ValueError, TypeError):
-                    raise TypeError(
-                        "Wrong type for parameter `n_values`. Expected 'auto',"
-                        " int or array of ints, got %r".format(type(X)))
-
-            self._n_values_ = n_values
-            n_values = np.hstack([[0], n_values])
-            indices = np.cumsum(n_values)
-            self._feature_indices_ = indices
-
-            self._legacy_mode = False
+            self._legacy_mode = True
 
         else:  # n_values = 'auto'
             if self.handle_unknown == 'ignore':
