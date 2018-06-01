@@ -459,7 +459,10 @@ def _check_key_type(key, superclass):
     if isinstance(key, list):
         return all(isinstance(x, superclass) for x in key)
     if hasattr(key, 'dtype'):
-        return key.dtype.kind == 'i'
+        if superclass is int:
+            return key.dtype.kind == 'i'
+        else:
+            return key.dtype.kind in ('O', 'U', 'S')
     return False
 
 

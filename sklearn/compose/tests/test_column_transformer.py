@@ -551,9 +551,10 @@ def test_column_transformer_remainder_numpy(key):
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
 
 
-@pytest.mark.parametrize("key", [[0], slice(0, 1), np.array([True, False]),
-                                 ['first'], slice(None, 'first'),
-                                 slice('first', 'first')])
+@pytest.mark.parametrize(
+    "key", [[0], slice(0, 1), np.array([True, False]), ['first'],
+            np.array(['first']), np.array(['first'], dtype=object),
+            slice(None, 'first'), slice('first', 'first')])
 def test_column_transformer_remainder_pandas(key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip('pandas')
