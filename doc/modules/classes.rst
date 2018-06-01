@@ -158,7 +158,14 @@ details.
     :toctree: generated
     :template: class.rst
 
+    compose.ColumnTransformer
     compose.TransformedTargetRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   compose.make_column_transformer
 
 .. _covariance_ref:
 
@@ -749,6 +756,7 @@ Kernels:
    linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:
@@ -1462,6 +1470,7 @@ Low-level methods
    utils.testing.assert_not_in
    utils.testing.assert_raise_message
    utils.testing.all_estimators
+
 
 Recently deprecated
 ===================
