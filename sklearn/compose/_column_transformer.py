@@ -448,7 +448,17 @@ boolean mask array
 
 def _check_key_type(key, superclass):
     """
-    Check that scalar, list or slice is of certain type.
+    Check that scalar, list or slice is of a certain type.
+
+    This is only used in _get_column and _get_column_indices to check
+    if the `key` (column specification) is fully integer or fully string-like.
+
+    Parameters
+    ----------
+    key : scalar, list, slice, array-like
+        The column specification to check
+    superclass : int or six.string_types
+        The type for which to check the `key`
 
     """
     if isinstance(key, superclass):
@@ -462,6 +472,7 @@ def _check_key_type(key, superclass):
         if superclass is int:
             return key.dtype.kind == 'i'
         else:
+            # superclass = six.string_types
             return key.dtype.kind in ('O', 'U', 'S')
     return False
 
