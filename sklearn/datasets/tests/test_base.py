@@ -43,7 +43,7 @@ def data_home(tmpdir_factory):
     tmp_file = str(tmpdir_factory.mktemp("scikit_learn_data_home_test"))
     yield tmp_file
     _remove_dir(tmp_file)
-    
+
 
 @pytest.fixture(scope="module")
 def load_files_root(tmpdir_factory):
@@ -51,7 +51,7 @@ def load_files_root(tmpdir_factory):
     yield tmp_file
     _remove_dir(tmp_file)
 
-    
+
 @pytest.fixture
 def test_category_dir_1(load_files_root):
     test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
