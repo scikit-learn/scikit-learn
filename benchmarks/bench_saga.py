@@ -160,7 +160,6 @@ def exp(solvers, penalty, single_target,
     X = X[:n_samples]
     y = y[:n_samples]
 
-    # cached_fit = mem.cache(fit_single)
     out = Parallel(n_jobs=n_jobs, mmap_mode=None)(
         delayed(fit_single)(solver, X, y,
                             penalty=penalty, single_target=single_target,

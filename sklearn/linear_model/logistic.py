@@ -1205,6 +1205,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
+
+        Notes
+        -----
+        The SAGA solver supports both float64 and float32 bit arrays.
         """
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"

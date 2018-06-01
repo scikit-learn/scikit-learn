@@ -267,16 +267,6 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
     cdef {{c_type}} y
     # the sample weight
     cdef {{c_type}} sample_weight
-    # # _step_size
-    # cdef {{c_type}} _step_size = <{{c_type}}> __step_size
-    # # alpha
-    # cdef {{c_type}} alpha = <{{c_type}}> _alpha
-    # # beta
-    # cdef {{c_type}} beta = <{{c_type}}> _beta
-    # # tol
-    # cdef {{c_type}} tol = <{{c_type}}> _tol
-    # # intercept_decay
-    # cdef {{c_type}} intercept_decay = <{{c_type}}> _intercept_decay
 
     # helper variable for indexes
     cdef int f_idx, s_idx, feature_ind, class_ind, j
