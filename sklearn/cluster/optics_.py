@@ -9,6 +9,7 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+from __future__ import division
 import warnings
 import numpy as np
 
@@ -461,7 +462,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
 
     n_samples = len(core_distances)
     is_core = np.zeros(n_samples, dtype=bool)
-    labels = np.ones(n_samples, dtype=int) * -1
+    labels = -np.ones(n_samples, dtype=int)
     cluster_id = -1
 
     for entry in ordering:
@@ -469,16 +470,10 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
             if core_distances[entry] <= eps:
                 cluster_id += 1
                 labels[entry] = cluster_id
-            else:
-                # This is only needed for compatibility for repeated scans.
-                labels[entry] = -1   # Noise points
-                is_core[entry] = 0
         else:
             labels[entry] = cluster_id
             if core_distances[entry] <= eps:
-                is_core[entry] = 1   # True
-            else:
-                is_core[entry] = 0   # False
+                is_core[entry] = True
     return np.arange(n_samples)[is_core], labels
 
 
@@ -545,11 +540,11 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
                                    similarity_threshold, significant_min,
                                    min_cluster_size_ratio, min_maxima_ratio)
     leaves = _get_leaves(root_node, [])
-    # Start cluster id's at 1
+    # Start cluster id's at 0
     clustid = 0
     n_samples = len(reachability)
     is_core = np.zeros(n_samples, dtype=bool)
-    labels = np.ones(n_samples, dtype=int) * -1
+    labels = -np.ones(n_samples, dtype=int)
     # Start all points as non-core noise
     for leaf in leaves:
         index = ordering[leaf.start:leaf.end]
@@ -610,18 +605,16 @@ class _TreeNode(object):
 
 def _is_local_maxima(index, reachability_plot, reachability_ordering,
                      neighborhood_size):
-    # 0 = point at index is not local maxima
-    # 1 = point at index is local maxima
     for i in range(1, neighborhood_size + 1):
         # process objects to the right of index
         if index + i < len(reachability_plot):
-            if (reachability_plot[index] < reachability_plot[index + i]):
-                return 0
+            if reachability_plot[index] < reachability_plot[index + i]:
+                return False
         # process objects to the left of index
         if index - i >= 0:
-            if (reachability_plot[index] < reachability_plot[index - i]):
-                return 0
-    return 1
+            if reachability_plot[index] < reachability_plot[index - i]:
+                return False
+    return True
 
 
 def _find_local_maxima(reachability_plot, reachability_ordering,
@@ -698,30 +691,25 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     check_value_2 = int(np.round(check_ratio * len(node_2.points)))
     if check_value_2 == 0:
         check_value_2 = 1
-    avg_reach_value_1 = float(np.average(reachability_plot[(node_1.end -
-                                         check_value_1):node_1.end]))
-    avg_reach_value_2 = float(np.average(reachability_plot[node_2.start:(
-                                node_2.start + check_value_2)]))
+    avg_reach1 = np.mean(reachability_plot[(node_1.end -
+                                            check_value_1):node_1.end])
+    avg_reach2 = np.mean(reachability_plot[node_2.start:(node_2.start
+                                                         + check_value_2)])
 
-    if (float(avg_reach_value_1 / float(reachability_plot[s])) >
-        maxima_ratio or float(avg_reach_value_2 /
-                              float(reachability_plot[s])) > maxima_ratio):
+    if ((avg_reach1 / reachability_plot[s]) > maxima_ratio or
+            (avg_reach2 / reachability_plot[s]) > maxima_ratio):
 
-        if float(avg_reach_value_1 /
-                 float(reachability_plot[s])) < rejection_ratio:
+        if (avg_reach1 / reachability_plot[s]) < rejection_ratio:
             # reject node 2
             node_list.remove((node_2, local_max_2))
-        if float(avg_reach_value_2 /
-                 float(reachability_plot[s])) < rejection_ratio:
+        if (avg_reach2 / reachability_plot[s]) < rejection_ratio:
             # reject node 1
             node_list.remove((node_1, local_max_1))
-        if (float(avg_reach_value_1 /
-            float(reachability_plot[s])) >= rejection_ratio and float(
-                avg_reach_value_2 /
-                float(reachability_plot[s])) >= rejection_ratio):
-            node.assign_split_point(-1)
+        if ((avg_reach1 / reachability_plot[s]) >= rejection_ratio and
+                (avg_reach2 / reachability_plot[s]) >= rejection_ratio):
             # since split_point is not significant,
             # ignore this split and continue (reject both child nodes)
+            node.assign_split_point(-1)
             _cluster_tree(node, parent_node, local_maxima_points,
                           reachability_plot, reachability_ordering,
                           min_cluster_size, maxima_ratio, rejection_ratio,
@@ -737,7 +725,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
             node_list.count((node_2, local_max_1)) > 0):
         # cluster 2 is too small
         node_list.remove((node_2, local_max_2))
-    if len(node_list) == 0:
+    if not node_list:
         # parent_node will be a leaf
         node.assign_split_point(-1)
         return
@@ -746,8 +734,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     # is too "similar" to its parent, given the similarity threshold.
     bypass_node = 0
     if parent_node is not None:
-        if (float(float(node.end - node.start) /
-                  float(parent_node.end - parent_node.start)) >
+        if ((node.end - node.start) / (parent_node.end - parent_node.start) >
                 similarity_threshold):
 
             parent_node.children.remove(node)
