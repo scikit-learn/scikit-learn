@@ -43,15 +43,23 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 plt.figure()
 plt.clf()
 
-plt.suptitle("Comparing multiple K-Medoids metrics to K-Means and each other", fontsize=14)
+plt.suptitle("Comparing multiple K-Medoids metrics to K-Means and each other",
+             fontsize=14)
 
 Algorithm = namedtuple('ClusterAlgorithm', ['model', 'description'])
 
 selected_models = [
-    Algorithm(KMedoids(n_clusters=n_digits, metric='manhattan'), 'KMedoids (manhattan)'),
-    Algorithm(KMedoids(n_clusters=n_digits, metric='euclidean'), 'KMedoids (euclidean)'),
-    Algorithm(KMedoids(n_clusters=n_digits, metric='cosine'), 'KMedoids (cosine)'),
-    Algorithm(KMeans(n_clusters=n_digits), 'KMeans')
+    Algorithm(KMedoids(metric='manhattan',
+                       n_clusters=n_digits),
+              'KMedoids (manhattan)'),
+    Algorithm(KMedoids(metric='euclidean',
+                       n_clusters=n_digits),
+              'KMedoids (euclidean)'),
+    Algorithm(KMedoids(metric='cosine',
+                       n_clusters=n_digits),
+              'KMedoids (cosine)'),
+    Algorithm(KMeans(n_clusters=n_digits),
+              'KMeans')
     ]
 
 plot_rows = int(np.ceil(len(selected_models) / 2.0))
@@ -71,7 +79,11 @@ for i, (model, description) in enumerate(selected_models):
                cmap=plt.cm.Paired,
                aspect='auto', origin='lower')
 
-    plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2, alpha=0.3)
+    plt.plot(reduced_data[:, 0],
+             reduced_data[:, 1],
+             'k.', markersize=2,
+             alpha=0.3,
+             )
     # Plot the centroids as a white X
     centroids = model.cluster_centers_
     plt.scatter(centroids[:, 0], centroids[:, 1],

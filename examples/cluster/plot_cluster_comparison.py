@@ -109,7 +109,10 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=params['n_clusters'])
-    kmedoids = cluster.KMedoids(n_clusters=params['n_clusters'], init='k-medoids++', metric='braycurtis')
+    kmedoids = cluster.KMedoids(
+        n_clusters=params['n_clusters'],
+        init='k-medoids++',
+        metric='euclidean')
     ward = cluster.AgglomerativeClustering(
         n_clusters=params['n_clusters'], linkage='ward',
         connectivity=connectivity)
