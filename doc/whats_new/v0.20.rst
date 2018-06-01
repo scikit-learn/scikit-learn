@@ -63,9 +63,6 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
 
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
-
 - :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier` can now
   be fit with missing/non-finite values in X and/or multi-output Y to support
   wrapping pipelines that perform their own imputation.
