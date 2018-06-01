@@ -502,7 +502,7 @@ def _get_column(X, key):
         column_names = False
     elif _check_key_type(key, six.string_types):
         column_names = True
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         column_names = False
         if hasattr(X, 'loc'):
@@ -569,7 +569,7 @@ def _get_column_indices(X, key):
 
         return [all_columns.index(col) for col in columns]
 
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         return list(np.arange(n_columns)[key])
     else:

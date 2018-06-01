@@ -302,7 +302,7 @@ def test_column_transformer_invalid_columns(remainder):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     # general invalid
-    for col in [1.5, ['string', 1], slice(1, 's')]:
+    for col in [1.5, ['string', 1], slice(1, 's'), np.array([1.])]:
         ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
         assert_raise_message(ValueError, "No valid specification",
                              ct.fit, X_array)
