@@ -64,5 +64,5 @@ def test_MDS():
     mat = np.random.rand(1000, 2).astype(np.float32)
     mds.MDS().fit_transform(mat)
 
-    mat = np.random.rand(1000, 2).astype(np.float16)
-    mds.MDS().fit_transform(mat)
+    _mat = mat.astype(np.float16)
+    mds.MDS().fit_transform(_mat)
