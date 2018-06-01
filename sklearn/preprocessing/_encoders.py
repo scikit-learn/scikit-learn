@@ -240,7 +240,8 @@ class OneHotEncoder(_BaseEncoder):
     ----------
     categories_ : list of arrays
         The categories of each feature determined during fitting
-        (in order corresponding with output of ``transform``).
+        (in order of the features in X and corresponding with the output
+        of ``transform``).
 
     active_features_ : array
         Indices for active features, meaning values that actually occur
@@ -646,7 +647,7 @@ class OneHotEncoder(_BaseEncoder):
             return self._transform_new(X)
 
     def inverse_transform(self, X):
-        """Convert back the data to the original representation.
+        """Convert the back data to the original representation.
 
         In case unknown categories are encountered (all zero's in the
         one-hot encoding), ``None`` is used to represent this category.
@@ -771,10 +772,6 @@ class OrdinalEncoder(_BaseEncoder):
       categorical features.
     sklearn.preprocessing.LabelEncoder : encodes target labels with values
       between 0 and n_classes-1.
-    sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
-      dictionary items (also handles string-valued features).
-    sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
-      encoding of dictionary items or strings.
     """
 
     def __init__(self, categories='auto', dtype=np.float64):
@@ -819,7 +816,7 @@ class OrdinalEncoder(_BaseEncoder):
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
-        """Convert back the data to the original representation.
+        """Convert the data back to the original representation.
 
         Parameters
         ----------

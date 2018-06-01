@@ -26,22 +26,6 @@ from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.preprocessing._encoders import OrdinalEncoder
 
-from sklearn import datasets
-
-iris = datasets.load_iris()
-
-# Make some data to be used many times
-rng = np.random.RandomState(0)
-n_features = 30
-n_samples = 1000
-offsets = rng.uniform(-1, 1, size=n_features)
-scales = rng.uniform(1, 10, size=n_features)
-X_2d = rng.randn(n_samples, n_features) * scales + offsets
-X_1row = X_2d[0, :].reshape(1, n_features)
-X_1col = X_2d[:, 0].reshape(n_samples, 1)
-X_list_1row = X_1row.tolist()
-X_list_1col = X_1col.tolist()
-
 
 def toarray(a):
     if hasattr(a, "toarray"):
