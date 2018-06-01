@@ -1425,31 +1425,6 @@ def precision_recall_fscore_support_with_multilabel_confusion_matrix(
            Godbole, Sunita Sarawagi
            <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`_
 
-    Examples
-    --------
-    >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
-    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    ... # doctest: +ELLIPSIS
-    (0.22..., 0.33..., 0.26..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
-    (0.33..., 0.33..., 0.33..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
-    (0.22..., 0.33..., 0.26..., None)
-
-    It is possible to compute per-label precisions, recalls, F1-scores and
-    supports instead of averaging:
-    >>> precision_recall_fscore_support(y_true, y_pred, average=None,
-    ... labels=['pig', 'dog', 'cat'])
-    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    (array([ 0. ,  0. ,  0.66...]),
-     array([ 0.,  0.,  1.]),
-     array([ 0. ,  0. ,  0.8]),
-     array([2, 2, 2]))
-
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
