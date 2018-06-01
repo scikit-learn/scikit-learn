@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer
@@ -552,12 +553,14 @@ def test_column_transformer_remainder_numpy(key):
 
 
 @pytest.mark.parametrize(
-    "key", [[0], slice(0, 1), np.array([True, False]), ['first'],
+    "key", [[0], slice(0, 1), np.array([True, False]), ['first'], 'pd-index',
             np.array(['first']), np.array(['first'], dtype=object),
             slice(None, 'first'), slice('first', 'first')])
 def test_column_transformer_remainder_pandas(key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip('pandas')
+    if isinstance(key, six.string_types) and key == 'pd-index':
+        key = pd.Index(['first'])
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
