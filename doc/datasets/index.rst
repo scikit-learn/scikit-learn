@@ -333,27 +333,3 @@ writing data in that format.
 .. include:: rcv1.rst
 
 .. include:: kddcup99.rst
-
-.. _boston_house_prices:
-
-.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
-
-.. _breast_cancer:
-
-.. include:: ../../sklearn/datasets/descr/breast_cancer.rst
-
-.. _diabetes:
-
-.. include:: ../../sklearn/datasets/descr/diabetes.rst
-
-.. _digits:
-
-.. include:: ../../sklearn/datasets/descr/digits.rst
-
-.. _iris:
-
-.. include:: ../../sklearn/datasets/descr/iris.rst
-
-.. _linnerud:
-
-.. include:: ../../sklearn/datasets/descr/linnerud.rst
