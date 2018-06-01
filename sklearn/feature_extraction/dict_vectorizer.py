@@ -88,18 +88,18 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
-    array([[ 0.,  0.,  4.]])
+    array([[0., 0., 4.]])
     >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'}, {'foo': ['1', '3']}]
-    >>> X = v.fit_transform(D)
+    >>> X = v.fit_transform(D2)
     >>> X
-    array([[ 1.,  0.,  1., 0.],
-           [ 0.,  1.,  0., 1.],
-           [ 0.,  0.,  1., 1.])
+    array([[ 1.,  0.,  1.,  0.],
+           [ 0.,  1.,  0.,  1.],
+           [ 0.,  0.,  1.,  1.]])
     >>> v.inverse_transform(X) == \
-    [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0}, {'foo=3': 1.0, 'foo=1': 1.0}]
+    ... [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0}, {'foo=3': 1.0, 'foo=1': 1.0}]
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
-    array([[ 1.,  0.,  0., 0.]])
+    array([[ 0.,  0.,  1.,  0.]])
 
     See also
     --------
