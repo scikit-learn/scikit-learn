@@ -256,8 +256,8 @@ Metrics
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
 - :func:`metrics.cluster.silhouette_score` and
-  :func:`metrics.cluster.silhouette_samples` are more memory efficient,
-  avoiding some reported freezes and MemoryErrors.
+  :func:`metrics.cluster.silhouette_samples` are more memory efficient and run
+  faster. This avoids some reported freezes and MemoryErrors.
   :issue:`11135` by `Joel Nothman`_.
 
 Linear, kernelized and related models
