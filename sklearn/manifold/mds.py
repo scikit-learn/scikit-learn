@@ -67,8 +67,8 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     n_iter : int
         The number of iterations corresponding to the best stress.
     """
-    if dissimilarities.dtype is np.float16 \
-            or dissimilarities.dtype is np.float32:
+    if dissimilarities.dtype == np.float16 \
+            or dissimilarities.dtype == np.float32:
         _tol = np.finfo(dissimilarities.dtype).eps
     else:
         _tol = 1E-10
