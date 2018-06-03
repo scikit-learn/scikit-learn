@@ -418,7 +418,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
         # express fps as a cumsum to ensure fps is increasing even in
-        # the presense of floating point errors
+        # the presence of floating point errors
         fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
