@@ -7,6 +7,7 @@ from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
                                    ignore_warnings, fails_if_pypy)
 
+
 @fails_if_pypy
 def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
@@ -18,6 +19,7 @@ def test_feature_hasher_dicts():
     gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
     assert_array_equal(X1.toarray(), X2.toarray())
+
 
 @fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
