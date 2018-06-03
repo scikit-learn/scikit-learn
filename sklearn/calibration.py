@@ -200,7 +200,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                         # save memory: remove the oob from the estimator
                         delattr(calibrated_classifier,
                                 'oob_decision_function_')
-                    self.calibrated_classifiers_.append(calibrated_classifier)
+                self.calibrated_classifiers_.append(calibrated_classifier)
             if hasattr(self.base_estimator, 'oob_score') and \
                     self.base_estimator.oob_score:
                 # average over all oob for each sample
@@ -370,7 +370,7 @@ class _CalibratedClassifier(object):
             self.calibrators_.append(calibrator)
         if hasattr(self.base_estimator, 'oob_decision_function_'):
             oob_df = self.base_estimator.oob_decision_function_
-            self._transform_proba(oob_df, idx_pos_class, len(self.classes))
+            self._transform_proba(oob_df, idx_pos_class, (X.shape[0], len(self.classes)))
             setattr(self, 'oob_decision_function_', oob_df)
             delattr(self.base_estimator, 'oob_decision_function_')
 
@@ -393,16 +393,16 @@ class _CalibratedClassifier(object):
             The predicted probas. Can be exact zeros.
         """
         n_classes = len(self.classes_)
-        proba = np.zeros((X.shape[0], n_classes))
 
         df, idx_pos_class = self._preproc(X)
 
-        proba = self._transform_proba(df, idx_pos_class, n_classes)
+        proba = self._transform_proba(df, idx_pos_class, (X.shape[0], n_classes))
 
         return proba
 
-    def _transform_proba(self, df, idx_pos_class, n_classes):
-        proba = np.empty(shape=(df.shape[0], n_classes))
+    def _transform_proba(self, df, idx_pos_class, shape):
+        _, n_classes = shape
+        proba = np.zeros(shape=shape)
         for k, this_df, calibrator in \
                 zip(idx_pos_class, df.T, self.calibrators_):
             if n_classes == 2:
