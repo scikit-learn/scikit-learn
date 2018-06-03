@@ -72,13 +72,6 @@ jobs:
       - checkout
       - run: ./build_tools/circle/build_test_pypy.sh
 
-  pypy2:
-    docker:
-      - image: pypy:2-6.0.0
-    steps:
-      - checkout
-      - run: ./build_tools/circle/build_test_pypy.sh
-
   deploy:
     docker:
       - image: circleci/python:3.6.1
@@ -103,7 +96,6 @@ workflows:
       - python3
       - python2
       - pypy3
-      - pypy2
       - deploy:
           requires:
             - python3
