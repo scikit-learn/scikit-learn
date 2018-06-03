@@ -103,8 +103,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
-        if hasattr(self.base_estimator, 'oob'):
-            self.oob = True
+        if hasattr(self.base_estimator, 'oob_score'):
+            self.oob_score = True
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -192,34 +192,20 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                                               sample_weight[test])
                 else:
                     calibrated_classifier.fit(X[test], y[test])
-                    estimator = calibrated_classifier.base_estimator
                     # out-of-bag (oob) requires special treatment
-                    if hasattr(estimator,
+                    if hasattr(calibrated_classifier,
                                'oob_decision_function_'):
-                        idx_pos_class = \
-                            calibrated_classifier.label_encoder_.transform(
-                                estimator.classes_)
-                        df = estimator.oob_decision_function_
-                        if df.ndim == 1:
-                            df = df[:, np.newaxis]
-                        else:
-                            df = df[:, 1:]
-                        # save oob for each fold, but in the correct location
-                        # and after calibration transformation
-                        oob[train, :] = calibrated_classifier._transform_proba(
-                            df, idx_pos_class, len(self.classes_),
-                            estimator.oob_decision_function_)
+                        oob[train] = calibrated_classifier.oob_decision_function_
                         oob_decision_function_.append(oob)
-                        # save memory: remove the oob from the base estimator
-                        delattr(estimator,
+                        # save memory: remove the oob from the estimator
+                        delattr(calibrated_classifier,
                                 'oob_decision_function_')
-                        estimator.oob_score = False
                     self.calibrated_classifiers_.append(calibrated_classifier)
-                if hasattr(self.base_estimator, 'oob_score') and \
-                        self.base_estimator.oob_score:
-                    # average over all oob for each sample
-                    self.oob_decision_function_ = \
-                        np.nanmean(np.array(oob_decision_function_), axis=0)
+            if hasattr(self.base_estimator, 'oob_score') and \
+                    self.base_estimator.oob_score:
+                # average over all oob for each sample
+                self.oob_decision_function_ = \
+                    np.nanmean(np.array(oob_decision_function_), axis=0)
 
         return self
 
@@ -318,6 +304,8 @@ class _CalibratedClassifier(object):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
+        if hasattr(self.base_estimator, 'oob_score'):
+            self.oob_score = base_estimator.oob_score
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -380,6 +368,11 @@ class _CalibratedClassifier(object):
                                  '"isotonic". Got %s.' % self.method)
             calibrator.fit(this_df, Y[:, k], sample_weight)
             self.calibrators_.append(calibrator)
+        if hasattr(self.base_estimator, 'oob_decision_function_'):
+            oob_df = self.base_estimator.oob_decision_function_
+            self._transform_proba(oob_df, idx_pos_class, len(self.classes))
+            self.oob_decision_function_= oob_df
+            delattr(self.base_estimator, 'oob_decision_function_')
 
         return self
 
@@ -404,12 +397,12 @@ class _CalibratedClassifier(object):
 
         df, idx_pos_class = self._preproc(X)
 
-        proba = self._transform_proba(df, idx_pos_class, n_classes, proba)
+        proba = self._transform_proba(df, idx_pos_class, n_classes)
 
         return proba
 
-    def _transform_proba(self, df, idx_pos_class, n_classes, proba):
-        proba = np.copy(proba)
+    def _transform_proba(self, df, idx_pos_class, n_classes):
+        proba = np.empty(shape=(df.shape[0], n_classes))
         for k, this_df, calibrator in \
                 zip(idx_pos_class, df.T, self.calibrators_):
             if n_classes == 2:
