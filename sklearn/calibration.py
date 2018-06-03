@@ -193,24 +193,31 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 else:
                     calibrated_classifier.fit(X[test], y[test])
                     estimator = calibrated_classifier.base_estimator
+                    # out-of-bag (oob) requires special treatment
                     if hasattr(estimator,
                                'oob_decision_function_'):
                         idx_pos_class = \
                             calibrated_classifier.label_encoder_.transform(
                                 estimator.classes_)
-                        df = estimator.oob_decision_function_[:, 1:]
+                        df = estimator.oob_decision_function_
+                        if df.ndim == 1:
+                            df = df[:, np.newaxis]
+                        else:
+                            df = df[:, 1:]
+                        # save oob for each fold, but in the correct location
+                        # and after calibration transformation
                         oob[train, :] = calibrated_classifier._transform_proba(
                             df, idx_pos_class, len(self.classes_),
                             estimator.oob_decision_function_)
                         oob_decision_function_.append(oob)
-                        # to save memory we can remove the oob
-                        # from the base estimator
+                        # save memory: remove the oob from the base estimator
                         delattr(estimator,
                                 'oob_decision_function_')
                         estimator.oob_score = False
                     self.calibrated_classifiers_.append(calibrated_classifier)
                 if hasattr(self.base_estimator, 'oob_score') and \
                         self.base_estimator.oob_score:
+                    # average over all oob for each sample
                     self.oob_decision_function_ = \
                         np.nanmean(np.array(oob_decision_function_), axis=0)
 
