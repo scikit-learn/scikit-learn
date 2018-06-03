@@ -1789,3 +1789,34 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         return self
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the score using the `scoring` option on the given
+        test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score of self.predict(X) wrt. y.
+
+       """
+
+        scoring = self.scoring
+        if isinstance(scoring, six.string_types):
+            scoring = get_scorer(scoring)
+
+        if scoring is None:
+            return super().score(X, y, sample_weight=sample_weight)
+
+        return scoring(self, X, y, sample_weight=sample_weight)

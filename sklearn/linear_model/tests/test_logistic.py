@@ -2,7 +2,9 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 from sklearn.datasets import load_iris, make_classification
-from sklearn.metrics import log_loss
+from sklearn.metrics import (
+    log_loss, mean_squared_error, make_scorer
+)
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
@@ -87,6 +89,30 @@ def test_error():
         msg = "Maximum number of iteration must be positive"
         assert_raise_message(ValueError, msg, LR(max_iter=-1).fit, X, Y1)
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
+
+
+def test_logistic_cv_neg_mean_squared_error():
+    lr = LogisticRegressionCV(scoring='neg_mean_squared_error', cv=2)
+    lr.fit(X, Y1)
+    pred = lr.predict(X)
+
+    # Uses neg_mean_squared_error in score function
+    assert_almost_equal(-mean_squared_error(Y1, pred),
+                        lr.score(X, Y1))
+
+
+def test_logistic_cv_custom_scorer():
+    def neg_mean_forth_error(y_true, y_pred, sample_weight=None):
+        return -np.mean((y_true-y_pred)**4)
+
+    nmfe_scorer = make_scorer(neg_mean_forth_error)
+
+    lr = LogisticRegressionCV(scoring=nmfe_scorer, cv=2)
+    lr.fit(X, Y1)
+    pred = lr.predict(X)
+
+    assert_almost_equal(neg_mean_forth_error(Y1, pred),
+                        lr.score(X, Y1))
 
 
 def test_lr_liblinear_warning():
