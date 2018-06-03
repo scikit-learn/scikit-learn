@@ -5,11 +5,11 @@ import scipy.sparse as sp
 
 import pytest
 
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_raises, assert_greater,
-                                   assert_array_less)
+                                   assert_array_less, assert_allclose)
 
 
 # Make an X that looks somewhat like a small tf-idf matrix.
@@ -222,3 +222,34 @@ def test_singular_values():
     rpca.fit(X_hat_rpca)
     assert_array_almost_equal(apca.singular_values_, [3.142, 2.718, 1.0], 14)
     assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)
+
+
+def test_truncated_svd_eq_pca():
+    # TruncatedSVD should be equal to PCA on centered data
+
+    X_c = X - X.mean(axis=0)
+
+    params = dict(n_components=10, random_state=42)
+
+    svd = TruncatedSVD(algorithm='arpack', **params)
+    pca = PCA(svd_solver='arpack', **params)
+
+    Xt_svd = svd.fit_transform(X_c)
+    Xt_pca = pca.fit_transform(X_c)
+
+    rtol = 1e-9
+
+    assert_allclose(Xt_svd, Xt_pca, rtol=rtol)
+
+    assert_allclose(pca.mean_, 0, atol=1e-9)
+
+    assert_allclose(svd.components_, pca.components_)
+
+    # transform only a subset of the data
+    Xt2_svd = svd.transform(X_c[:10])
+    Xt2_pca = pca.transform(X_c[:10])
+    assert_allclose(Xt2_svd, Xt2_pca, rtol=rtol)
+
+    X2_svd = svd.inverse_transform(Xt2_svd)
+    X2_pca = pca.inverse_transform(Xt2_svd)
+    assert_allclose(X2_svd, X2_pca, rtol=rtol)
