@@ -1817,6 +1817,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scoring = get_scorer(scoring)
 
         if scoring is None:
-            return super().score(X, y, sample_weight=sample_weight)
+            return (super(LogisticRegressionCV, self)
+                    .score(X, y, sample_weight=sample_weight))
 
         return scoring(self, X, y, sample_weight=sample_weight)
