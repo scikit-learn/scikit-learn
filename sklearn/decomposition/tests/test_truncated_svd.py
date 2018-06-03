@@ -3,6 +3,8 @@
 import numpy as np
 import scipy.sparse as sp
 
+import pytest
+
 from sklearn.decomposition import TruncatedSVD
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
@@ -43,31 +45,31 @@ def test_attributes():
         assert_equal(tsvd.components_.shape, (n_components, n_features))
 
 
-def test_too_many_components():
-    for algorithm in ["arpack", "randomized"]:
-        for n_components in (n_features, n_features + 1):
-            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
-            assert_raises(ValueError, tsvd.fit, X)
+@pytest.mark.parametrize('algorithm', ("arpack", "randomized"))
+def test_too_many_components(algorithm):
+    for n_components in (n_features, n_features + 1):
+        tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
+        assert_raises(ValueError, tsvd.fit, X)
 
 
-def test_sparse_formats():
-    for fmt in ("array", "csr", "csc", "coo", "lil"):
-        Xfmt = Xdense if fmt == "dense" else getattr(X, "to" + fmt)()
-        tsvd = TruncatedSVD(n_components=11)
-        Xtrans = tsvd.fit_transform(Xfmt)
-        assert_equal(Xtrans.shape, (n_samples, 11))
-        Xtrans = tsvd.transform(Xfmt)
-        assert_equal(Xtrans.shape, (n_samples, 11))
+@pytest.mark.parametrize('fmt', ("array", "csr", "csc", "coo", "lil"))
+def test_sparse_formats(fmt):
+    Xfmt = Xdense if fmt == "dense" else getattr(X, "to" + fmt)()
+    tsvd = TruncatedSVD(n_components=11)
+    Xtrans = tsvd.fit_transform(Xfmt)
+    assert_equal(Xtrans.shape, (n_samples, 11))
+    Xtrans = tsvd.transform(Xfmt)
+    assert_equal(Xtrans.shape, (n_samples, 11))
 
 
-def test_inverse_transform():
-    for algo in ("arpack", "randomized"):
-        # We need a lot of components for the reconstruction to be "almost
-        # equal" in all positions. XXX Test means or sums instead?
-        tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
-        Xt = tsvd.fit_transform(X)
-        Xinv = tsvd.inverse_transform(Xt)
-        assert_array_almost_equal(Xinv, Xdense, decimal=1)
+@pytest.mark.parametrize('algo', ("arpack", "randomized"))
+def test_inverse_transform(algo):
+    # We need a lot of components for the reconstruction to be "almost
+    # equal" in all positions. XXX Test means or sums instead?
+    tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
+    Xt = tsvd.fit_transform(X)
+    Xinv = tsvd.inverse_transform(Xt)
+    assert_array_almost_equal(Xinv, Xdense, decimal=1)
 
 
 def test_integers():
