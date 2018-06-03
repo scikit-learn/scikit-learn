@@ -204,8 +204,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             if hasattr(self.base_estimator, 'oob_score') and \
                     self.base_estimator.oob_score:
                 # average over all oob for each sample
-                self.oob_decision_function_ = \
-                    np.nanmean(np.array(oob_decision_function_), axis=0)
+                setattr(self, 'oob_decision_function_',
+                        np.nanmean(np.array(oob_decision_function_), axis=0))
 
         return self
 
@@ -371,7 +371,7 @@ class _CalibratedClassifier(object):
         if hasattr(self.base_estimator, 'oob_decision_function_'):
             oob_df = self.base_estimator.oob_decision_function_
             self._transform_proba(oob_df, idx_pos_class, len(self.classes))
-            self.oob_decision_function_= oob_df
+            setattr(self, 'oob_decision_function_', oob_df)
             delattr(self.base_estimator, 'oob_decision_function_')
 
         return self
