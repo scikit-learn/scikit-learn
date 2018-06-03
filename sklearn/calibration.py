@@ -195,7 +195,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     # out-of-bag (oob) requires special treatment
                     if hasattr(calibrated_classifier,
                                'oob_decision_function_'):
-                        oob[train] = calibrated_classifier.oob_decision_function_
+                        oob[train] = \
+                            calibrated_classifier.oob_decision_function_
                         oob_decision_function_.append(oob)
                         # save memory: remove the oob from the estimator
                         delattr(calibrated_classifier,
@@ -370,7 +371,8 @@ class _CalibratedClassifier(object):
             self.calibrators_.append(calibrator)
         if hasattr(self.base_estimator, 'oob_decision_function_'):
             oob_df = self.base_estimator.oob_decision_function_
-            self._transform_proba(oob_df, idx_pos_class, (X.shape[0], len(self.classes)))
+            self._transform_proba(
+                oob_df, idx_pos_class, (X.shape[0], len(self.classes)))
             setattr(self, 'oob_decision_function_', oob_df)
             delattr(self.base_estimator, 'oob_decision_function_')
 
@@ -396,7 +398,8 @@ class _CalibratedClassifier(object):
 
         df, idx_pos_class = self._preproc(X)
 
-        proba = self._transform_proba(df, idx_pos_class, (X.shape[0], n_classes))
+        proba = self._transform_proba(df, idx_pos_class,
+                                      (X.shape[0], n_classes))
 
         return proba
 
