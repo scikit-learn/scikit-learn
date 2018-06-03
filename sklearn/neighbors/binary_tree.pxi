@@ -2152,21 +2152,16 @@ cdef class BinaryTree:
                 global_log_bound_spread =\
                     logsubexp(global_log_bound_spread,
                               node_log_bound_spreads[i_node])
-                if with_sample_weight:
-                    for i in range(node_info.idx_start, node_info.idx_end):
-                        dist_pt = self.dist(pt, data + n_features * idx_array[i],
-                                            n_features)
-                        log_density = compute_log_kernel(dist_pt, h, kernel)
+                for i in range(node_info.idx_start, node_info.idx_end):
+                    dist_pt = self.dist(pt, data + n_features * idx_array[i],
+                                        n_features)
+                    log_density = compute_log_kernel(dist_pt, h, kernel)
+                    if with_sample_weight:
                         log_weight = np.log(sample_weight[idx_array[i]])
-                        global_log_min_bound = logaddexp(global_log_min_bound,
-                                                         log_density + log_weight)
-                else:
-                    for i in range(node_info.idx_start, node_info.idx_end):
-                        dist_pt = self.dist(pt, data + n_features * idx_array[i],
-                                            n_features)
-                        log_density = compute_log_kernel(dist_pt, h, kernel)
-                        global_log_min_bound = logaddexp(global_log_min_bound,
-                                                         log_density)
+                    else:
+                        log_weight = 0.
+                    global_log_min_bound = logaddexp(global_log_min_bound,
+                                                     log_density + log_weight)
 
             #------------------------------------------------------------
             # Case 4: split node and query subnodes
@@ -2294,22 +2289,17 @@ cdef class BinaryTree:
                                                 local_log_min_bound)
             global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
                                                    local_log_bound_spread)
-            if with_sample_weight:
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
-                                        n_features)
-                    log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
+            for i in range(node_info.idx_start, node_info.idx_end):
+                dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+                                    n_features)
+                log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
+                if with_sample_weight:
                     log_weight = np.log(sample_weight[idx_array[i]])
-                    global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                        log_dens_contribution +
-                                                            log_weight)
-            else:
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
-                                        n_features)
-                    log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
-                    global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                        log_dens_contribution)
+                else:
+                    log_weight = 0.
+                global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                                    log_dens_contribution +
+                                                        log_weight)
 
         #------------------------------------------------------------
         # Case 4: split node and query subnodes
