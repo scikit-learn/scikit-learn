@@ -699,6 +699,8 @@ try:
                                        reason='skipped on 32bit platforms')
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
+    fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
+                                      reason='not compatible with PyPy')
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

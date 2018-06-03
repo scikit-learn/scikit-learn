@@ -31,7 +31,9 @@ from ..utils import check_array, IS_PYPY
 if not IS_PYPY:
     from ._svmlight_format import _load_svmlight_file
 else:
-    from ._svmlight_format_pypy import _load_svmlight_file
+    def _load_svmlight_file(*args, **kwargs):
+        raise NotImplementedError('load_svmlight_file is currently not '
+                                  'compatible with PyPy.')
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,

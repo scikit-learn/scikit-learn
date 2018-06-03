@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import fails_if_pypy
 from sklearn.utils.fixes import sp_version
 
 import sklearn
@@ -31,6 +32,7 @@ invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
 invalidfile2 = os.path.join(currdir, "data", "svmlight_invalid_order.txt")
 
 
+@fails_if_pypy
 def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
@@ -62,6 +64,7 @@ def test_load_svmlight_file():
     assert_array_equal(y, [1, 2, 3, 4, 1, 2])
 
 
+@fails_if_pypy
 def test_load_svmlight_file_fd():
     # test loading from file descriptor
     X1, y1 = load_svmlight_file(datafile)
@@ -75,11 +78,13 @@ def test_load_svmlight_file_fd():
         os.close(fd)
 
 
+@fails_if_pypy
 def test_load_svmlight_file_multilabel():
     X, y = load_svmlight_file(multifile, multilabel=True)
     assert_equal(y, [(0, 1), (2,), (), (1, 2)])
 
 
+@fails_if_pypy
 def test_load_svmlight_files():
     X_train, y_train, X_test, y_test = load_svmlight_files([datafile] * 2,
                                                            dtype=np.float32)
@@ -95,6 +100,7 @@ def test_load_svmlight_files():
     assert_equal(X3.dtype, np.float64)
 
 
+@fails_if_pypy
 def test_load_svmlight_file_n_features():
     X, y = load_svmlight_file(datafile, n_features=22)
 
@@ -113,6 +119,7 @@ def test_load_svmlight_file_n_features():
     assert_raises(ValueError, load_svmlight_file, datafile, n_features=20)
 
 
+@fails_if_pypy
 def test_load_compressed():
     X, y = load_svmlight_file(datafile)
 
@@ -141,19 +148,23 @@ def test_load_compressed():
     assert_array_almost_equal(y, ybz)
 
 
+@fails_if_pypy
 def test_load_invalid_file():
     assert_raises(ValueError, load_svmlight_file, invalidfile)
 
 
+@fails_if_pypy
 def test_load_invalid_order_file():
     assert_raises(ValueError, load_svmlight_file, invalidfile2)
 
 
+@fails_if_pypy
 def test_load_zero_based():
     f = BytesIO(b("-1 4:1.\n1 0:1\n"))
     assert_raises(ValueError, load_svmlight_file, f, zero_based=False)
 
 
+@fails_if_pypy
 def test_load_zero_based_auto():
     data1 = b("-1 1:1 2:2 3:3\n")
     data2 = b("-1 0:0 1:1\n")
@@ -169,6 +180,7 @@ def test_load_zero_based_auto():
     assert_equal(X2.shape, (1, 4))
 
 
+@fails_if_pypy
 def test_load_with_qid():
     # load svmfile with qid attribute
     data = b("""
@@ -186,21 +198,25 @@ def test_load_with_qid():
         assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
+@fails_if_pypy
 def test_load_invalid_file2():
     assert_raises(ValueError, load_svmlight_files,
                   [datafile, invalidfile, datafile])
 
 
+@fails_if_pypy
 def test_not_a_filename():
     # in python 3 integers are valid file opening arguments (taken as unix
     # file descriptors)
     assert_raises(TypeError, load_svmlight_file, .42)
 
 
+@fails_if_pypy
 def test_invalid_filename():
     assert_raises(IOError, load_svmlight_file, "trou pic nic douille")
 
 
+@fails_if_pypy
 def test_dump():
     X_sparse, y_dense = load_svmlight_file(datafile)
     X_dense = X_sparse.toarray()
@@ -266,6 +282,7 @@ def test_dump():
                             y_dense.astype(dtype), y2, 15)
 
 
+@fails_if_pypy
 def test_dump_multilabel():
     X = [[1, 0, 3, 0, 5],
          [0, 0, 0, 0, 0],
@@ -282,6 +299,7 @@ def test_dump_multilabel():
         assert_equal(f.readline(), b("0,1 1:5 3:1\n"))
 
 
+@fails_if_pypy
 def test_dump_concise():
     one = 1
     two = 2.1
@@ -312,6 +330,7 @@ def test_dump_concise():
     assert_array_almost_equal(y, y2)
 
 
+@fails_if_pypy
 def test_dump_comment():
     X, y = load_svmlight_file(datafile)
     X = X.toarray()
@@ -345,6 +364,7 @@ def test_dump_comment():
                   dump_svmlight_file, X, y, f, comment="I've got a \0.")
 
 
+@fails_if_pypy
 def test_dump_invalid():
     X, y = load_svmlight_file(datafile)
 
@@ -356,6 +376,7 @@ def test_dump_invalid():
     assert_raises(ValueError, dump_svmlight_file, X, y[:-1], f)
 
 
+@fails_if_pypy
 def test_dump_query_id():
     # test dumping a file with query_id
     X, y = load_svmlight_file(datafile)
@@ -371,6 +392,7 @@ def test_dump_query_id():
     assert_array_almost_equal(query_id, query_id1)
 
 
+@fails_if_pypy
 def test_load_with_long_qid():
     # load svmfile with longint qid attribute
     data = b("""
@@ -405,6 +427,7 @@ def test_load_with_long_qid():
     assert_array_equal(X.toarray(), true_X)
 
 
+@fails_if_pypy
 def test_load_zeros():
     f = BytesIO()
     true_X = sp.csr_matrix(np.zeros(shape=(3, 4)))
@@ -418,6 +441,7 @@ def test_load_zeros():
         assert_array_almost_equal(X.toarray(), true_X.toarray())
 
 
+@fails_if_pypy
 @pytest.mark.parametrize('sparsity', [0, 0.1, .5, 0.99, 1])
 @pytest.mark.parametrize('n_samples', [13, 101])
 @pytest.mark.parametrize('n_features', [2, 7, 41])
@@ -456,6 +480,7 @@ def test_load_with_offsets(sparsity, n_samples, n_features):
     assert_array_almost_equal(X.toarray(), X_concat.toarray())
 
 
+@fails_if_pypy
 def test_load_offset_exhaustive_splits():
     rng = np.random.RandomState(0)
     X = np.array([
@@ -499,6 +524,7 @@ def test_load_offset_exhaustive_splits():
         assert_array_almost_equal(X.toarray(), X_concat.toarray())
 
 
+@fails_if_pypy
 def test_load_with_offsets_error():
     assert_raises_regex(ValueError, "n_features is required",
                         load_svmlight_file, datafile, offset=3, length=3)

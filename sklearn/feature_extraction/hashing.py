@@ -11,9 +11,10 @@ from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
-    from . import _hashing
+    from ._hashing import transform as _hashing_transform
 else:
-    from . import _hashing_pypy as _hashing
+    def _hashing_transform(*args, **kwargs):
+        raise NotImplementedError('FeatureHasher is not compatible with PyPy.')
 
 
 def _iteritems(d):
@@ -161,7 +162,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
-            _hashing.transform(raw_X, self.n_features, self.dtype,
+            _hashing_transform(raw_X, self.n_features, self.dtype,
                                self.alternate_sign)
         n_samples = indptr.shape[0] - 1
 
