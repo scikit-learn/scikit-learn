@@ -2067,7 +2067,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        return _transform_selected(X, self._fit_transform, self.dtype, self.categorical_features, copy=True)
+        return _transform_selected(X, self._fit_transform, self.dtype,
+                                   self.categorical_features, copy=True)
 
     def _transform(self, X):
         """Assumes X contains only categorical features."""
@@ -2122,7 +2123,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
-        return _transform_selected(X, self._transform, self.dtype, self.categorical_features, copy=True)
+        return _transform_selected(X, self._transform, self.dtype,
+                                   self.categorical_features, copy=True)
 
 
 class QuantileTransformer(BaseEstimator, TransformerMixin):
