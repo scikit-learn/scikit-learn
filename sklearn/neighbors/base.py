@@ -280,6 +280,24 @@ class KNeighborsMixin(object):
 
     def _kneighbors_reduce_func(self, dist, start,
                                 n_neighbors, return_distance):
+        """Reduce a chunk of distances to the nearest neighbors
+
+        Callback to :func:`sklearn.metrics.pairwise.pairwise_distances_chunked`
+
+        Parameters
+        ----------
+        dist : array of shape (n_samples_chunk, n_samples)
+        start : int
+            The index in X which the first row of dist corresponds to.
+        n_neighbors : int
+        return_distance : bool
+
+        Returns
+        -------
+        dist : array of shape (n_samples_chunk, n_neighbors), optional
+            Returned only if return_distance
+        neigh : array of shape (n_samples_chunk, n_neighbors)
+        """
         sample_range = np.arange(dist.shape[0])[:, None]
         neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
         neigh_ind = neigh_ind[:, :n_neighbors]
@@ -531,6 +549,24 @@ class RadiusNeighborsMixin(object):
 
     def _radius_neighbors_reduce_func(self, dist, start,
                                       radius, return_distance):
+        """Reduce a chunk of distances to the nearest neighbors
+
+        Callback to :func:`sklearn.metrics.pairwise.pairwise_distances_chunked`
+
+        Parameters
+        ----------
+        dist : array of shape (n_samples_chunk, n_samples)
+        start : int
+            The index in X which the first row of dist corresponds to.
+        radius : float
+        return_distance : bool
+
+        Returns
+        -------
+        dist : list of n_samples_chunk 1d arrays, optional
+            Returned only if return_distance
+        neigh : list of n_samples_chunk 1d arrays
+        """
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
         if return_distance:
