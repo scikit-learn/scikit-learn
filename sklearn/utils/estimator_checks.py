@@ -67,7 +67,7 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
-                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+                'ExtraTreeRegressor', 'ExtraTreesRegressor',
                 'GaussianProcessRegressor', 'TransformedTargetRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
@@ -104,10 +104,8 @@ def _yield_non_meta_checks(name, estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if name not in ['GaussianProcess']:
-        # FIXME!
-        # in particular GaussianProcess!
-        yield check_estimators_overwrite_params
+    yield check_estimators_overwrite_params
+
     if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
 
@@ -185,9 +183,7 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    if name != "GaussianProcessRegressor":
-        # Test if NotFittedError is raised
-        yield check_estimators_unfitted
+    yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -258,9 +254,7 @@ def _yield_all_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
-    if name != 'GaussianProcess':  # FIXME
-        # XXX GaussianProcess deprecated in 0.20
-        yield check_fit2d_1sample
+    yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance

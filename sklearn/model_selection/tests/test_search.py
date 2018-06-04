@@ -416,7 +416,6 @@ def test_classes__property():
 
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
-    # Non-regression test: grid_scores_ wouldn't be set by GridSearchCV.
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1]})
     grid_search.fit(X, y)
