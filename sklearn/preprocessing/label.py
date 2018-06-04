@@ -16,7 +16,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import sparse_min_max
+from ..utils.sparsefuncs import sparse_min_max
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
