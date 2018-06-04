@@ -88,7 +88,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     of ``bin_width_ / 2`` from the nearest bin edge.
 
     >>> est.bin_width_
-    array([ 1.,  1.,  1.,  1.])
+    array([1., 1., 1., 1.])
     >>> est.inverse_transform(Xt)
     array([[-1.5,  1.5, -3.5, -0.5],
            [-0.5,  2.5, -2.5, -0.5],
