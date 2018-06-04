@@ -1818,12 +1818,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           "accuracy score has changed. The scoring "
                           "parameter is now used",
                           ChangedBehaviorWarning)
-        scoring = self.scoring
+        scoring = self.scoring or 'accuracy'
         if isinstance(scoring, six.string_types):
             scoring = get_scorer(scoring)
-
-        if scoring is None:
-            return (super(LogisticRegressionCV, self)
-                    .score(X, y, sample_weight=sample_weight))
 
         return scoring(self, X, y, sample_weight=sample_weight)
