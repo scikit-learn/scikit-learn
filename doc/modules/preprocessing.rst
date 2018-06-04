@@ -508,7 +508,7 @@ Such features can be efficiently coded as integers, for instance
 ``[1, 2, 1]``.
 
 To convert categorical features to such integer codes, we can use the
-:class:`OrdinalEncoder`.The estimator transforms each categorical feature to one
+:class:`OrdinalEncoder`. This estimator transforms each categorical feature to one
 new feature of integers (0 to n_categories - 1)::
 
     >>> enc = preprocessing.OrdinalEncoder()
@@ -526,7 +526,7 @@ browsers was ordered arbitrarily).
 Another possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K, also known as one-hot or
 dummy encoding.
-This type of encoding can be obtained with the :class:`OneHotEncoderEncoder`,
+This type of encoding can be obtained with the :class:`OneHotEncoder`,
 which transforms each categorical feature with
 ``n_categories`` possible values into ``n_categories`` binary features, with
 one of them 1, and all others 0.

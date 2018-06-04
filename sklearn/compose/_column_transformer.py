@@ -609,7 +609,7 @@ def make_column_transformer(*transformers, **kwargs):
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
-                           ('categoricalencoder',
+                           ('onehotencoder',
                             OneHotEncoder(...),
                             ['categorical_column'])])
 

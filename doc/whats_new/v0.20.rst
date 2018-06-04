@@ -79,8 +79,8 @@ Preprocessing
   convert to ordinal integers.  Those two classes now handle
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
-  the maximum value in the features. :issue:`9151` by :user:`Vighnesh Birodkar
-  <vighneshbirodkar>` and `Joris Van den Bossche`_.
+  the maximum value in the features. :issue:`9151` and :issue:`10521` by
+  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
