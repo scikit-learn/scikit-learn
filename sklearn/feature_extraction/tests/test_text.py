@@ -115,42 +115,42 @@ def test_to_ascii():
     assert_equal(strip_accents_ascii(a), expected)
 
 
-def test_word_analyzer_unigrams():
-    for Vectorizer in (CountVectorizer, HashingVectorizer):
-        wa = Vectorizer(strip_accents='ascii').build_analyzer()
-        text = ("J'ai mang\xe9 du kangourou  ce midi, "
-                "c'\xe9tait pas tr\xeas bon.")
-        expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
-                    'etait', 'pas', 'tres', 'bon']
-        assert_equal(wa(text), expected)
+@pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
+def test_word_analyzer_unigrams(Vectorizer):
+    wa = Vectorizer(strip_accents='ascii').build_analyzer()
+    text = ("J'ai mang\xe9 du kangourou  ce midi, "
+            "c'\xe9tait pas tr\xeas bon.")
+    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
+                'etait', 'pas', 'tres', 'bon']
+    assert_equal(wa(text), expected)
 
-        text = "This is a test, really.\n\n I met Harry yesterday."
-        expected = ['this', 'is', 'test', 'really', 'met', 'harry',
-                    'yesterday']
-        assert_equal(wa(text), expected)
+    text = "This is a test, really.\n\n I met Harry yesterday."
+    expected = ['this', 'is', 'test', 'really', 'met', 'harry',
+                'yesterday']
+    assert_equal(wa(text), expected)
 
-        wa = Vectorizer(input='file').build_analyzer()
-        text = StringIO("This is a test with a file-like object!")
-        expected = ['this', 'is', 'test', 'with', 'file', 'like',
-                    'object']
-        assert_equal(wa(text), expected)
+    wa = Vectorizer(input='file').build_analyzer()
+    text = StringIO("This is a test with a file-like object!")
+    expected = ['this', 'is', 'test', 'with', 'file', 'like',
+                'object']
+    assert_equal(wa(text), expected)
 
-        # with custom preprocessor
-        wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-        text = ("J'ai mang\xe9 du kangourou  ce midi, "
-                " c'\xe9tait pas tr\xeas bon.")
-        expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
-                    'ETAIT', 'PAS', 'TRES', 'BON']
-        assert_equal(wa(text), expected)
+    # with custom preprocessor
+    wa = Vectorizer(preprocessor=uppercase).build_analyzer()
+    text = ("J'ai mang\xe9 du kangourou  ce midi, "
+            " c'\xe9tait pas tr\xeas bon.")
+    expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
+                'ETAIT', 'PAS', 'TRES', 'BON']
+    assert_equal(wa(text), expected)
 
-        # with custom tokenizer
-        wa = Vectorizer(tokenizer=split_tokenize,
-                        strip_accents='ascii').build_analyzer()
-        text = ("J'ai mang\xe9 du kangourou  ce midi, "
-                "c'\xe9tait pas tr\xeas bon.")
-        expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
-                    "c'etait", 'pas', 'tres', 'bon.']
-        assert_equal(wa(text), expected)
+    # with custom tokenizer
+    wa = Vectorizer(tokenizer=split_tokenize,
+                    strip_accents='ascii').build_analyzer()
+    text = ("J'ai mang\xe9 du kangourou  ce midi, "
+            "c'\xe9tait pas tr\xeas bon.")
+    expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
+                "c'etait", 'pas', 'tres', 'bon.']
+    assert_equal(wa(text), expected)
 
 
 def test_word_analyzer_unigrams_and_bigrams():
@@ -574,22 +574,17 @@ def test_feature_names():
         assert_equal(idx, cv.vocabulary_.get(name))
 
 
-def test_vectorizer_max_features():
-    vec_factories = (
-        CountVectorizer,
-        TfidfVectorizer,
-    )
-
+@pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
+def test_vectorizer_max_features(Vectorizer):
     expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
     expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
                                u'sparkling', u'water', u'the'])
 
-    for vec_factory in vec_factories:
-        # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=4)
-        vectorizer.fit(ALL_FOOD_DOCS)
-        assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
-        assert_equal(vectorizer.stop_words_, expected_stop_words)
+    # test bounded number of extracted features
+    vectorizer = Vectorizer(max_df=0.6, max_features=4)
+    vectorizer.fit(ALL_FOOD_DOCS)
+    assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
+    assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
 def test_count_vectorizer_max_features():
@@ -713,23 +708,24 @@ def test_hashed_binary_occurrences():
     assert_equal(X.dtype, np.float64)
 
 
-def test_vectorizer_inverse_transform():
+@pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
+def test_vectorizer_inverse_transform(Vectorizer):
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
-        transformed_data = vectorizer.fit_transform(data)
-        inversed_data = vectorizer.inverse_transform(transformed_data)
-        analyze = vectorizer.build_analyzer()
-        for doc, inversed_terms in zip(data, inversed_data):
-            terms = np.sort(np.unique(analyze(doc)))
-            inversed_terms = np.sort(np.unique(inversed_terms))
-            assert_array_equal(terms, inversed_terms)
+    vectorizer = Vectorizer()
+    transformed_data = vectorizer.fit_transform(data)
+    inversed_data = vectorizer.inverse_transform(transformed_data)
+    analyze = vectorizer.build_analyzer()
+    for doc, inversed_terms in zip(data, inversed_data):
+        terms = np.sort(np.unique(analyze(doc)))
+        inversed_terms = np.sort(np.unique(inversed_terms))
+        assert_array_equal(terms, inversed_terms)
 
-        # Test that inverse_transform also works with numpy arrays
-        transformed_data = transformed_data.toarray()
-        inversed_data2 = vectorizer.inverse_transform(transformed_data)
-        for terms, terms2 in zip(inversed_data, inversed_data2):
-            assert_array_equal(np.sort(terms), np.sort(terms2))
+    # Test that inverse_transform also works with numpy arrays
+    transformed_data = transformed_data.toarray()
+    inversed_data2 = vectorizer.inverse_transform(transformed_data)
+    for terms, terms2 in zip(inversed_data, inversed_data2):
+        assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
 def test_count_vectorizer_pipeline_grid_selection():
@@ -1030,16 +1026,16 @@ def test_vectorizer_vocab_clone():
     assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
 
 
-def test_vectorizer_string_object_as_input():
+@pytest.mark.parametrize('Vectorizer',
+                         (CountVectorizer, TfidfVectorizer, HashingVectorizer))
+def test_vectorizer_string_object_as_input(Vectorizer):
     message = ("Iterable over raw text documents expected, "
                "string object received.")
-    for vec in [CountVectorizer(), TfidfVectorizer(), HashingVectorizer()]:
-        assert_raise_message(
+    vec = Vectorizer()
+    assert_raise_message(
             ValueError, message, vec.fit_transform, "hello world!")
-        assert_raise_message(
-            ValueError, message, vec.fit, "hello world!")
-        assert_raise_message(
-            ValueError, message, vec.transform, "hello world!")
+    assert_raise_message(ValueError, message, vec.fit, "hello world!")
+    assert_raise_message(ValueError, message, vec.transform, "hello world!")
 
 
 @pytest.mark.parametrize("vec", [
