@@ -404,8 +404,14 @@ else:
                 X.max(axis=axis).toarray().ravel())
 
 
-def min_max_axis(X, axis):
-    """Compute minimum and maximum along an axis on a CSR or CSC matrix
+def sparse_nan_min_max(X, axis):
+    return(_sparse_min_or_max(X, axis, np.fmin),
+           _sparse_min_or_max(X, axis, np.fmax))
+
+
+def min_max_axis(X, axis, ignore_nan=False):
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix and
+    optionally ignore NaN values.
 
     Parameters
     ----------
@@ -414,6 +420,9 @@ def min_max_axis(X, axis):
 
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
+
+    ignore_nan : bool, default is False
+        Ignore or passing through NaN values.
 
     Returns
     -------
@@ -425,7 +434,10 @@ def min_max_axis(X, axis):
         Feature-wise maxima
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
-        return sparse_min_max(X, axis=axis)
+        if ignore_nan:
+            return sparse_nan_min_max(X, axis=axis)
+        else:
+            return sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
 
