@@ -1,0 +1,71 @@
+Metadata-Version: 2.1
+Name: dask
+Version: 0.17.5
+Summary: Parallel PyData with Task Scheduling
+Home-page: http://github.com/dask/dask/
+Maintainer: Matthew Rocklin
+Maintainer-email: mrocklin@gmail.com
+License: BSD
+Keywords: task-scheduling parallel numpy pandas pydata
+Platform: UNKNOWN
+Provides-Extra: array
+Provides-Extra: delayed
+Provides-Extra: complete
+Provides-Extra: bag
+Provides-Extra: dataframe
+Provides-Extra: distributed
+Provides-Extra: array
+Requires-Dist: numpy (>=1.11.0); extra == 'array'
+Requires-Dist: toolz (>=0.7.3); extra == 'array'
+Provides-Extra: bag
+Requires-Dist: cloudpickle (>=0.2.1); extra == 'bag'
+Requires-Dist: toolz (>=0.7.3); extra == 'bag'
+Requires-Dist: partd (>=0.3.8); extra == 'bag'
+Provides-Extra: complete
+Requires-Dist: cloudpickle (>=0.2.1); extra == 'complete'
+Requires-Dist: distributed (>=1.21); extra == 'complete'
+Requires-Dist: numpy (>=1.11.0); extra == 'complete'
+Requires-Dist: pandas (>=0.19.0); extra == 'complete'
+Requires-Dist: partd (>=0.3.8); extra == 'complete'
+Requires-Dist: toolz (>=0.7.3); extra == 'complete'
+Provides-Extra: dataframe
+Requires-Dist: numpy (>=1.11.0); extra == 'dataframe'
+Requires-Dist: pandas (>=0.19.0); extra == 'dataframe'
+Requires-Dist: toolz (>=0.7.3); extra == 'dataframe'
+Requires-Dist: partd (>=0.3.8); extra == 'dataframe'
+Requires-Dist: cloudpickle (>=0.2.1); extra == 'dataframe'
+Provides-Extra: delayed
+Requires-Dist: toolz (>=0.7.3); extra == 'delayed'
+Provides-Extra: distributed
+Requires-Dist: distributed (>=1.21); extra == 'distributed'
+
+Dask
+====
+
+|Build Status| |Coverage| |Doc Status| |Gitter| |Version Status|
+
+Dask is a flexible parallel computing library for analytics.  See
+documentation_ for more information.
+
+
+LICENSE
+-------
+
+New BSD. See `License File <https://github.com/dask/dask/blob/master/LICENSE.txt>`__.
+
+.. _documentation: http://dask.pydata.org/en/latest/
+.. |Build Status| image:: https://travis-ci.org/dask/dask.svg?branch=master
+   :target: https://travis-ci.org/dask/dask
+.. |Coverage| image:: https://coveralls.io/repos/dask/dask/badge.svg
+   :target: https://coveralls.io/r/dask/dask
+   :alt: Coverage status
+.. |Doc Status| image:: http://readthedocs.org/projects/dask/badge/?version=latest
+   :target: http://dask.pydata.org/en/latest/
+   :alt: Documentation Status
+.. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/dask/dask
+   :target: https://gitter.im/dask/dask?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. |Version Status| image:: https://img.shields.io/pypi/v/dask.svg
+   :target: https://pypi.python.org/pypi/dask/
+
+

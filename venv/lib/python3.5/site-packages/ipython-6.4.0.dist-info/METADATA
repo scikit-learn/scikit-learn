@@ -1,0 +1,116 @@
+Metadata-Version: 2.0
+Name: ipython
+Version: 6.4.0
+Summary: IPython: Productive Interactive Computing
+Home-page: https://ipython.org
+Author: The IPython Development Team
+Author-email: ipython-dev@python.org
+License: BSD
+Description-Content-Type: UNKNOWN
+Keywords: Interactive,Interpreter,Shell,Embedding
+Platform: Linux
+Platform: Mac OSX
+Platform: Windows
+Classifier: Framework :: IPython
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: System :: Shells
+Requires-Python: >=3.3
+Requires-Dist: setuptools (>=18.5)
+Requires-Dist: jedi (>=0.10)
+Requires-Dist: decorator
+Requires-Dist: pickleshare
+Requires-Dist: simplegeneric (>0.8)
+Requires-Dist: traitlets (>=4.2)
+Requires-Dist: prompt-toolkit (<2.0.0,>=1.0.15)
+Requires-Dist: pygments
+Requires-Dist: backcall
+Requires-Dist: typing; python_version <= "3.4"
+Requires-Dist: pathlib2; python_version == "3.3"
+Requires-Dist: pexpect; sys_platform != "win32"
+Requires-Dist: appnope; sys_platform == "darwin"
+Requires-Dist: colorama; sys_platform == "win32"
+Requires-Dist: win-unicode-console (>=0.5); sys_platform == "win32" and python_version < "3.6"
+Provides-Extra: all
+Requires-Dist: nbformat; extra == 'all'
+Requires-Dist: ipykernel; extra == 'all'
+Requires-Dist: notebook; extra == 'all'
+Requires-Dist: nose (>=0.10.1); extra == 'all'
+Requires-Dist: ipyparallel; extra == 'all'
+Requires-Dist: requests; extra == 'all'
+Requires-Dist: Sphinx (>=1.3); extra == 'all'
+Requires-Dist: testpath; extra == 'all'
+Requires-Dist: qtconsole; extra == 'all'
+Requires-Dist: ipywidgets; extra == 'all'
+Requires-Dist: nbconvert; extra == 'all'
+Requires-Dist: pygments; extra == 'all'
+Provides-Extra: doc
+Requires-Dist: Sphinx (>=1.3); extra == 'doc'
+Provides-Extra: kernel
+Requires-Dist: ipykernel; extra == 'kernel'
+Provides-Extra: nbconvert
+Requires-Dist: nbconvert; extra == 'nbconvert'
+Provides-Extra: nbformat
+Requires-Dist: nbformat; extra == 'nbformat'
+Provides-Extra: notebook
+Requires-Dist: notebook; extra == 'notebook'
+Requires-Dist: ipywidgets; extra == 'notebook'
+Provides-Extra: parallel
+Requires-Dist: ipyparallel; extra == 'parallel'
+Provides-Extra: qtconsole
+Requires-Dist: qtconsole; extra == 'qtconsole'
+Provides-Extra: terminal
+Provides-Extra: test
+Requires-Dist: nose (>=0.10.1); extra == 'test'
+Requires-Dist: requests; extra == 'test'
+Requires-Dist: testpath; extra == 'test'
+Requires-Dist: pygments; extra == 'test'
+Requires-Dist: nbformat; extra == 'test'
+Requires-Dist: ipykernel; extra == 'test'
+Provides-Extra: test
+Requires-Dist: numpy; python_version >= "3.4" and extra == 'test'
+
+
+IPython provides a rich toolkit to help you make the most out of using Python
+interactively.  Its main components are:
+
+* A powerful interactive Python shell
+* A `Jupyter <http://jupyter.org/>`_ kernel to work with Python code in Jupyter
+  notebooks and other interactive frontends.
+
+The enhanced interactive Python shells have the following main features:
+
+* Comprehensive object introspection.
+
+* Input history, persistent across sessions.
+
+* Caching of output results during a session with automatically generated
+  references.
+
+* Extensible tab completion, with support by default for completion of python
+  variables and keywords, filenames and function keywords.
+
+* Extensible system of 'magic' commands for controlling the environment and
+  performing many tasks related either to IPython or the operating system.
+
+* A rich configuration system with easy switching between different setups
+  (simpler than changing $PYTHONSTARTUP environment variables every time).
+
+* Session logging and reloading.
+
+* Extensible syntax processing for special purpose situations.
+
+* Access to the system shell with user-extensible alias system.
+
+* Easily embeddable in other Python programs and GUIs.
+
+* Integrated access to the pdb debugger and the Python profiler.
+
+The latest development version is always available from IPython's `GitHub
+site <http://github.com/ipython>`_.
+
+

@@ -1,0 +1,265 @@
+# This file is distributed under the same license as the Django package.
+#
+# Translators:
+# Blue <alexandervanratingen@gmail.com>, 2011-2012
+# Jannis Leidel <jannis@leidel.info>, 2011
+# Jeffrey Gelens <jeffrey@noppo.pro>, 2014
+# Sander Steffann <inactive+steffann@transifex.com>, 2015
+# Tino de Bruijn <tinodb@gmail.com>, 2012
+msgid ""
+msgstr ""
+"Project-Id-Version: django\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-01-17 11:07+0100\n"
+"PO-Revision-Date: 2017-09-19 16:40+0000\n"
+"Last-Translator: Sander Steffann <inactive+steffann@transifex.com>\n"
+"Language-Team: Dutch (http://www.transifex.com/django/django/language/nl/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: nl\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Humanize"
+msgstr "Vermenselijken"
+
+msgid "th"
+msgstr "e"
+
+msgid "st"
+msgstr "e"
+
+msgid "nd"
+msgstr "e"
+
+msgid "rd"
+msgstr "e"
+
+#, python-format
+msgid "%(value).1f million"
+msgid_plural "%(value).1f million"
+msgstr[0] "%(value).1f miljoen"
+msgstr[1] "%(value).1f miljoen"
+
+#, python-format
+msgid "%(value)s million"
+msgid_plural "%(value)s million"
+msgstr[0] "%(value)s miljoen"
+msgstr[1] "%(value)s miljoen"
+
+#, python-format
+msgid "%(value).1f billion"
+msgid_plural "%(value).1f billion"
+msgstr[0] "%(value).1f miljard"
+msgstr[1] "%(value).1f miljard"
+
+#, python-format
+msgid "%(value)s billion"
+msgid_plural "%(value)s billion"
+msgstr[0] "%(value)s miljard"
+msgstr[1] "%(value)s miljard"
+
+#, python-format
+msgid "%(value).1f trillion"
+msgid_plural "%(value).1f trillion"
+msgstr[0] "%(value).1f biljoen"
+msgstr[1] "%(value).1f biljoen"
+
+#, python-format
+msgid "%(value)s trillion"
+msgid_plural "%(value)s trillion"
+msgstr[0] "%(value)s biljoen"
+msgstr[1] "%(value)s biljoen"
+
+#, python-format
+msgid "%(value).1f quadrillion"
+msgid_plural "%(value).1f quadrillion"
+msgstr[0] "%(value).1f biljard"
+msgstr[1] "%(value).1f biljard"
+
+#, python-format
+msgid "%(value)s quadrillion"
+msgid_plural "%(value)s quadrillion"
+msgstr[0] "%(value)s biljard"
+msgstr[1] "%(value)s biljard"
+
+#, python-format
+msgid "%(value).1f quintillion"
+msgid_plural "%(value).1f quintillion"
+msgstr[0] "%(value).1f triljoen"
+msgstr[1] "%(value).1f triljoen"
+
+#, python-format
+msgid "%(value)s quintillion"
+msgid_plural "%(value)s quintillion"
+msgstr[0] "%(value)s triljoen"
+msgstr[1] "%(value)s triljoen"
+
+#, python-format
+msgid "%(value).1f sextillion"
+msgid_plural "%(value).1f sextillion"
+msgstr[0] "%(value).1f triljard"
+msgstr[1] "%(value).1f triljard"
+
+#, python-format
+msgid "%(value)s sextillion"
+msgid_plural "%(value)s sextillion"
+msgstr[0] "%(value)s triljard"
+msgstr[1] "%(value)s triljard"
+
+#, python-format
+msgid "%(value).1f septillion"
+msgid_plural "%(value).1f septillion"
+msgstr[0] "%(value).1f quadriljoen"
+msgstr[1] "%(value).1f quadriljoen"
+
+#, python-format
+msgid "%(value)s septillion"
+msgid_plural "%(value)s septillion"
+msgstr[0] "%(value)s quadriljoen"
+msgstr[1] "%(value)s quadriljoen"
+
+#, python-format
+msgid "%(value).1f octillion"
+msgid_plural "%(value).1f octillion"
+msgstr[0] "%(value).1f quadriljard"
+msgstr[1] "%(value).1f quadriljard"
+
+#, python-format
+msgid "%(value)s octillion"
+msgid_plural "%(value)s octillion"
+msgstr[0] "%(value)s quadriljard"
+msgstr[1] "%(value)s quadriljard"
+
+#, python-format
+msgid "%(value).1f nonillion"
+msgid_plural "%(value).1f nonillion"
+msgstr[0] "%(value).1f quintiljoen"
+msgstr[1] "%(value).1f quintiljoen"
+
+#, python-format
+msgid "%(value)s nonillion"
+msgid_plural "%(value)s nonillion"
+msgstr[0] "%(value)s quintiljoen"
+msgstr[1] "%(value)s quintiljoen"
+
+#, python-format
+msgid "%(value).1f decillion"
+msgid_plural "%(value).1f decillion"
+msgstr[0] "%(value).1f quintiljard"
+msgstr[1] "%(value).1f quintiljard"
+
+#, python-format
+msgid "%(value)s decillion"
+msgid_plural "%(value)s decillion"
+msgstr[0] "%(value)s quintiljard"
+msgstr[1] "%(value)s quintiljard"
+
+#, python-format
+msgid "%(value).1f googol"
+msgid_plural "%(value).1f googol"
+msgstr[0] "%(value).1f googol"
+msgstr[1] "%(value).1f googol"
+
+#, python-format
+msgid "%(value)s googol"
+msgid_plural "%(value)s googol"
+msgstr[0] "%(value)s googol"
+msgstr[1] "%(value)s googol"
+
+msgid "one"
+msgstr "één"
+
+msgid "two"
+msgstr "twee"
+
+msgid "three"
+msgstr "drie"
+
+msgid "four"
+msgstr "vier"
+
+msgid "five"
+msgstr "vijf"
+
+msgid "six"
+msgstr "zes"
+
+msgid "seven"
+msgstr "zeven"
+
+msgid "eight"
+msgstr "acht"
+
+msgid "nine"
+msgstr "negen"
+
+msgid "today"
+msgstr "vandaag"
+
+msgid "tomorrow"
+msgstr "morgen"
+
+msgid "yesterday"
+msgstr "gisteren"
+
+#, python-format
+msgctxt "naturaltime"
+msgid "%(delta)s ago"
+msgstr "%(delta)s geleden"
+
+msgid "now"
+msgstr "nu"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a second ago"
+msgid_plural "%(count)s seconds ago"
+msgstr[0] "een seconde geleden"
+msgstr[1] "%(count)s seconden geleden"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a minute ago"
+msgid_plural "%(count)s minutes ago"
+msgstr[0] "een minuut geleden"
+msgstr[1] "%(count)s minuten geleden"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "an hour ago"
+msgid_plural "%(count)s hours ago"
+msgstr[0] "een uur geleden"
+msgstr[1] "%(count)s uur geleden"
+
+#, python-format
+msgctxt "naturaltime"
+msgid "%(delta)s from now"
+msgstr "%(delta)s van nu"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a second from now"
+msgid_plural "%(count)s seconds from now"
+msgstr[0] "over een seconde"
+msgstr[1] "over %(count)s seconden"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a minute from now"
+msgid_plural "%(count)s minutes from now"
+msgstr[0] "over een minuut"
+msgstr[1] "over %(count)s minuten"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "an hour from now"
+msgid_plural "%(count)s hours from now"
+msgstr[0] "over een uur"
+msgstr[1] "over %(count)s uur"

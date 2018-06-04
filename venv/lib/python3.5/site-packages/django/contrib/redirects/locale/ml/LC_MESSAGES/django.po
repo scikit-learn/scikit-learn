@@ -1,0 +1,47 @@
+# This file is distributed under the same license as the Django package.
+#
+# Translators:
+# Jannis Leidel <jannis@leidel.info>, 2011
+msgid ""
+msgstr ""
+"Project-Id-Version: django\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-10-09 17:42+0200\n"
+"PO-Revision-Date: 2017-09-19 16:40+0000\n"
+"Last-Translator: Jannis Leidel <jannis@leidel.info>\n"
+"Language-Team: Malayalam (http://www.transifex.com/django/django/language/"
+"ml/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ml\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Redirects"
+msgstr ""
+
+msgid "site"
+msgstr ""
+
+msgid "redirect from"
+msgstr "പഴയ വിലാസം"
+
+msgid ""
+"This should be an absolute path, excluding the domain name. Example: '/"
+"events/search/'."
+msgstr ""
+"ഇത് ഡൊമൈന്‍ നാമം ഉള്‍പ്പെടാത്ത ഒരു കേവലമാര്‍ഗം (വിലാസം) ആവണം. ഉദാ: '/events/search/'."
+
+msgid "redirect to"
+msgstr "പുതിയ വിലാസം"
+
+msgid ""
+"This can be either an absolute path (as above) or a full URL starting with "
+"'http://'."
+msgstr "ഇതൊരു കേവല മാര്‍ഗമോ 'http://' എന്നു തുടങ്ങുന്ന പൂര്‍ണ്ണ വിലാസമോ (URL) ആവാം"
+
+msgid "redirect"
+msgstr "വിലാസമാറ്റം"
+
+msgid "redirects"
+msgstr "വിലാസമാറ്റങ്ങള്‍"

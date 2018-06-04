@@ -1,0 +1,31 @@
+Metadata-Version: 2.1
+Name: rope
+Version: 0.10.7
+Summary: a python refactoring library...
+Home-page: https://github.com/python-rope/rope
+Author: Ali Gholami Rudi
+Author-email: aligrudi@users.sourceforge.net
+License: GNU GPL
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Operating System :: OS Independent
+Classifier: Environment :: X11 Applications
+Classifier: Environment :: Win32 (MS Windows)
+Classifier: Environment :: MacOS X
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.2
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Topic :: Software Development
+
+
+b'\n.. _GitHub python-rope / rope: https://github.com/python-rope/rope\n\n\n========================================\n rope, a python refactoring library ...\n========================================\n\n\nOverview\n========\n\n`Rope`_ is a python refactoring library.\n\n.. _`rope`: https://github.com/python-rope/rope\n\n\nNotes\n============\n\n* Nick Smith <nicks@fastmail.fm> takes over maintaining rope. Many thanks to\n  Mat\xc4\x9bj Cepl for his work maintaining rope for the past few years!!\n* Full python3 support is in progress... stay tuned\n'
+
+

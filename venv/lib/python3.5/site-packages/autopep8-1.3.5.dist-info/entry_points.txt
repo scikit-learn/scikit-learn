@@ -1,0 +1,3 @@
+[console_scripts]
+autopep8 = autopep8:main
+

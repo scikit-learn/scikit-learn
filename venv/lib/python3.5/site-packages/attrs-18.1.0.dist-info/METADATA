@@ -1,0 +1,261 @@
+Metadata-Version: 2.1
+Name: attrs
+Version: 18.1.0
+Summary: Classes Without Boilerplate
+Home-page: http://www.attrs.org/
+Author: Hynek Schlawack
+Author-email: hs@ox.cx
+Maintainer: Hynek Schlawack
+Maintainer-email: hs@ox.cx
+License: MIT
+Keywords: class,attribute,boilerplate
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Provides-Extra: tests
+Provides-Extra: docs
+Provides-Extra: dev
+Provides-Extra: dev
+Requires-Dist: coverage; extra == 'dev'
+Requires-Dist: hypothesis; extra == 'dev'
+Requires-Dist: pympler; extra == 'dev'
+Requires-Dist: pytest; extra == 'dev'
+Requires-Dist: six; extra == 'dev'
+Requires-Dist: zope.interface; extra == 'dev'
+Requires-Dist: sphinx; extra == 'dev'
+Requires-Dist: zope.interface; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: sphinx; extra == 'docs'
+Requires-Dist: zope.interface; extra == 'docs'
+Provides-Extra: tests
+Requires-Dist: coverage; extra == 'tests'
+Requires-Dist: hypothesis; extra == 'tests'
+Requires-Dist: pympler; extra == 'tests'
+Requires-Dist: pytest; extra == 'tests'
+Requires-Dist: six; extra == 'tests'
+Requires-Dist: zope.interface; extra == 'tests'
+
+.. image:: http://www.attrs.org/en/latest/_static/attrs_logo.png
+   :alt: attrs Logo
+
+======================================
+``attrs``: Classes Without Boilerplate
+======================================
+
+.. image:: https://readthedocs.org/projects/attrs/badge/?version=stable
+   :target: http://www.attrs.org/en/stable/?badge=stable
+   :alt: Documentation Status
+
+.. image:: https://travis-ci.org/python-attrs/attrs.svg?branch=master
+   :target: https://travis-ci.org/python-attrs/attrs
+   :alt: CI Status
+
+.. image:: https://codecov.io/github/python-attrs/attrs/branch/master/graph/badge.svg
+   :target: https://codecov.io/github/python-attrs/attrs
+   :alt: Test Coverage
+
+.. teaser-begin
+
+``attrs`` is the Python package that will bring back the **joy** of **writing classes** by relieving you from the drudgery of implementing object protocols (aka `dunder <https://nedbatchelder.com/blog/200605/dunder.html>`_ methods).
+
+Its main goal is to help you to write **concise** and **correct** software without slowing down your code.
+
+.. -spiel-end-
+
+For that, it gives you a class decorator and a way to declaratively define the attributes on that class:
+
+.. -code-begin-
+
+.. code-block:: pycon
+
+   >>> import attr
+
+   >>> @attr.s
+   ... class SomeClass(object):
+   ...     a_number = attr.ib(default=42)
+   ...     list_of_numbers = attr.ib(default=attr.Factory(list))
+   ...
+   ...     def hard_math(self, another_number):
+   ...         return self.a_number + sum(self.list_of_numbers) * another_number
+
+
+   >>> sc = SomeClass(1, [1, 2, 3])
+   >>> sc
+   SomeClass(a_number=1, list_of_numbers=[1, 2, 3])
+
+   >>> sc.hard_math(3)
+   19
+   >>> sc == SomeClass(1, [1, 2, 3])
+   True
+   >>> sc != SomeClass(2, [3, 2, 1])
+   True
+
+   >>> attr.asdict(sc)
+   {'a_number': 1, 'list_of_numbers': [1, 2, 3]}
+
+   >>> SomeClass()
+   SomeClass(a_number=42, list_of_numbers=[])
+
+   >>> C = attr.make_class("C", ["a", "b"])
+   >>> C("foo", "bar")
+   C(a='foo', b='bar')
+
+
+After *declaring* your attributes ``attrs`` gives you:
+
+- a concise and explicit overview of the class's attributes,
+- a nice human-readable ``__repr__``,
+- a complete set of comparison methods,
+- an initializer,
+- and much more,
+
+*without* writing dull boilerplate code again and again and *without* runtime performance penalties.
+
+This gives you the power to use actual classes with actual types in your code instead of confusing ``tuple``\ s or `confusingly behaving <http://www.attrs.org/en/stable/why.html#namedtuples>`_ ``namedtuple``\ s.
+Which in turn encourages you to write *small classes* that do `one thing well <https://www.destroyallsoftware.com/talks/boundaries>`_.
+Never again violate the `single responsibility principle <https://en.wikipedia.org/wiki/Single_responsibility_principle>`_ just because implementing ``__init__`` et al is a painful drag.
+
+
+.. -testimonials-
+
+Testimonials
+============
+
+**Amber Hawkie Brown**, Twisted Release Manager and Computer Owl:
+
+  Writing a fully-functional class using attrs takes me less time than writing this testimonial.
+
+
+**Glyph Lefkowitz**, creator of `Twisted <https://twistedmatrix.com/>`_, `Automat <https://pypi.python.org/pypi/Automat>`_, and other open source software, in `The One Python Library Everyone Needs <https://glyph.twistedmatrix.com/2016/08/attrs.html>`_:
+
+  I’m looking forward to is being able to program in Python-with-attrs everywhere.
+  It exerts a subtle, but positive, design influence in all the codebases I’ve see it used in.
+
+
+**Kenneth Reitz**, author of `requests <http://www.python-requests.org/>`_, Python Overlord at Heroku, `on paper no less <https://twitter.com/hynek/status/866817877650751488>`_:
+
+  attrs—classes for humans.  I like it.
+
+
+**Łukasz Langa**, prolific CPython core developer and Production Engineer at Facebook:
+
+  I'm increasingly digging your attr.ocity. Good job!
+
+
+.. -end-
+
+.. -project-information-
+
+Getting Help
+============
+
+Please use the ``python-attrs`` tag on `StackOverflow <https://stackoverflow.com/questions/tagged/python-attrs>`_ to get help.
+
+Answering questions of your fellow developers is also great way to help the project!
+
+
+Project Information
+===================
+
+``attrs`` is released under the `MIT <https://choosealicense.com/licenses/mit/>`_ license,
+its documentation lives at `Read the Docs <http://www.attrs.org/>`_,
+the code on `GitHub <https://github.com/python-attrs/attrs>`_,
+and the latest release on `PyPI <https://pypi.org/project/attrs/>`_.
+It’s rigorously tested on Python 2.7, 3.4+, and PyPy.
+
+We collect information on **third-party extensions** in our `wiki <https://github.com/python-attrs/attrs/wiki/Extensions-to-attrs>`_.
+Feel free to browse and add your own!
+
+If you'd like to contribute to ``attrs`` you're most welcome and we've written `a little guide <http://www.attrs.org/en/latest/contributing.html>`_ to get you started!
+
+
+Release Information
+===================
+
+18.1.0 (2018-05-03)
+-------------------
+
+Changes
+^^^^^^^
+
+- ``x=X(); x.cycle = x; repr(x)`` will no longer raise a ``RecursionError``, and will instead show as ``X(x=...)``.
+
+  `#95 <https://github.com/python-attrs/attrs/issues/95>`_
+- ``attr.ib(factory=f)`` is now syntactic sugar for the common case of ``attr.ib(default=attr.Factory(f))``.
+
+  `#178 <https://github.com/python-attrs/attrs/issues/178>`_,
+  `#356 <https://github.com/python-attrs/attrs/issues/356>`_
+- Added ``attr.field_dict()`` to return an ordered dictionary of ``attrs`` attributes for a class, whose keys are the attribute names.
+
+  `#290 <https://github.com/python-attrs/attrs/issues/290>`_,
+  `#349 <https://github.com/python-attrs/attrs/issues/349>`_
+- The order of attributes that are passed into ``attr.make_class()`` or the ``these`` argument of ``@attr.s()`` is now retained if the dictionary is ordered (i.e. ``dict`` on Python 3.6 and later, ``collections.OrderedDict`` otherwise).
+
+  Before, the order was always determined by the order in which the attributes have been defined which may not be desirable when creating classes programatically.
+
+  `#300 <https://github.com/python-attrs/attrs/issues/300>`_,
+  `#339 <https://github.com/python-attrs/attrs/issues/339>`_,
+  `#343 <https://github.com/python-attrs/attrs/issues/343>`_
+- In slotted classes, ``__getstate__`` and ``__setstate__`` now ignore the ``__weakref__`` attribute.
+
+  `#311 <https://github.com/python-attrs/attrs/issues/311>`_,
+  `#326 <https://github.com/python-attrs/attrs/issues/326>`_
+- Setting the cell type is now completely best effort.
+  This fixes ``attrs`` on Jython.
+
+  We cannot make any guarantees regarding Jython though, because our test suite cannot run due to dependency incompatabilities.
+
+  `#321 <https://github.com/python-attrs/attrs/issues/321>`_,
+  `#334 <https://github.com/python-attrs/attrs/issues/334>`_
+- If ``attr.s`` is passed a *these* argument, it will not attempt to remove attributes with the same name from the class body anymore.
+
+  `#322 <https://github.com/python-attrs/attrs/issues/322>`_,
+  `#323 <https://github.com/python-attrs/attrs/issues/323>`_
+- The hash of ``attr.NOTHING`` is now vegan and faster on 32bit Python builds.
+
+  `#331 <https://github.com/python-attrs/attrs/issues/331>`_,
+  `#332 <https://github.com/python-attrs/attrs/issues/332>`_
+- The overhead of instantiating frozen dict classes is virtually eliminated.
+  `#336 <https://github.com/python-attrs/attrs/issues/336>`_
+- Generated ``__init__`` methods now have an ``__annotations__`` attribute derived from the types of the fields.
+
+  `#363 <https://github.com/python-attrs/attrs/issues/363>`_
+- We have restructured the documentation a bit to account for ``attrs``' growth in scope.
+  Instead of putting everything into the `examples <http://www.attrs.org/en/stable/examples.html>`_ page, we have started to extract narrative chapters.
+
+  So far, we've added chapters on `initialization <http://www.attrs.org/en/stable/init.html>`_ and `hashing <http://www.attrs.org/en/stable/hashing.html>`_.
+
+  Expect more to come!
+
+  `#369 <https://github.com/python-attrs/attrs/issues/369>`_,
+  `#370 <https://github.com/python-attrs/attrs/issues/370>`_
+
+`Full changelog <http://www.attrs.org/en/stable/changelog.html>`_.
+
+Credits
+=======
+
+``attrs`` is written and maintained by `Hynek Schlawack <https://hynek.me/>`_.
+
+The development is kindly supported by `Variomedia AG <https://www.variomedia.de/>`_.
+
+A full list of contributors can be found in `GitHub's overview <https://github.com/python-attrs/attrs/graphs/contributors>`_.
+
+It’s the spiritual successor of `characteristic <https://characteristic.readthedocs.io/>`_ and aspires to fix some of it clunkiness and unfortunate decisions.
+Both were inspired by Twisted’s `FancyEqMixin <https://twistedmatrix.com/documents/current/api/twisted.python.util.FancyEqMixin.html>`_ but both are implemented using class decorators because `sub-classing is bad for you <https://www.youtube.com/watch?v=3MNVP9-hglc>`_, m’kay?
+
+

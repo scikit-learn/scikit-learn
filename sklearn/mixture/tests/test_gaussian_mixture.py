@@ -1033,3 +1033,49 @@ def test_init():
                                max_iter=1, random_state=random_state).fit(X)
 
         assert gmm2.lower_bound_ >= gmm1.lower_bound_
+
+
+def test_init_param():
+    # Check that the init_param options produces valid output.
+    # Compare all to default - kmeans.
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+
+    n_components = rand_data.n_components
+    X = rand_data.X['full']
+    gmm = GaussianMixture(n_components=n_components, random_state=rng,
+                          init_params='kmeans')
+    gmm.fit(X)
+    default_means = gmm.means_
+
+    INIT_TYPE = ['random', 'rand_data', 'k-means++', 'kmeans']
+
+    for init in INIT_TYPE:
+        gmm = GaussianMixture(n_components=n_components, random_state=rng,
+                              init_params=init, tol=1e-06, max_iter=1000)
+        gmm.fit(X)
+        assert_almost_equal(default_means, gmm.means_, decimal=1)
+
+    # Check that all initialisations provide unique starting means
+
+    rand_data = RandomData(rng, scale=5)
+    X = rand_data.X['full']
+
+    gmm = GaussianMixture(n_components=n_components, random_state=0,
+                          init_params='kmeans', max_iter=1)
+    gmm.fit(X)
+    default_means_init = {}
+
+    for init in INIT_TYPE:
+        gmm = GaussianMixture(n_components=n_components, random_state=0,
+                              init_params=init, max_iter=1)
+        gmm.fit(X)
+        default_means_init[init] = gmm.means_
+
+    for i_mean in default_means_init:
+        for j_mean in default_means_init:
+            if i_mean == j_mean:
+                pass
+            else:
+                assert_true(np.any(np.not_equal(
+                    default_means_init[i_mean], default_means_init[j_mean])))

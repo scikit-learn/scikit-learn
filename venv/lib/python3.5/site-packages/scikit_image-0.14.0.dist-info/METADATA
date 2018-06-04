@@ -1,0 +1,50 @@
+Metadata-Version: 2.1
+Name: scikit-image
+Version: 0.14.0
+Summary: Image processing routines for SciPy
+Home-page: http://scikit-image.org
+Maintainer: Stefan van der Walt
+Maintainer-email: stefan@sun.ac.za
+License: Modified BSD
+Download-URL: http://github.com/scikit-image/scikit-image
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: C
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS
+Requires: numpy (>= 1.11)
+Requires: scipy (>= 0.17.0)
+Requires: matplotlib (>= 2.0.0)
+Requires: networkx (>= 1.8)
+Requires: six (>= 1.10.0)
+Requires: pillow (>= 4.3.0)
+Requires: PyWavelets (>= 0.4.0)
+Requires: dask (>= 0.9.0)
+Requires: cloudpickle (>= 0.2.1)
+Requires-Dist: scipy (>=0.17.0)
+Requires-Dist: matplotlib (>=2.0.0)
+Requires-Dist: networkx (>=1.8)
+Requires-Dist: six (>=1.10.0)
+Requires-Dist: pillow (>=4.3.0)
+Requires-Dist: PyWavelets (>=0.4.0)
+Requires-Dist: dask[array] (>=0.9.0)
+Requires-Dist: cloudpickle (>=0.2.1)
+
+Image Processing SciKit
+
+Image processing algorithms for SciPy, including IO, morphology, filtering,
+warping, color manipulation, object detection, etc.
+
+Please refer to the online documentation at
+http://scikit-image.org/
+
+

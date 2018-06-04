@@ -1,0 +1,100 @@
+# Blacklisted imperative words
+#
+# These are words that, if they begin a docstring, are a good indicator that
+# the docstring is not written in an imperative voice.
+#
+# The words included in this list fall into a number of categories:
+#
+# - Starting with a noun/pronoun indicates that the docstring is a noun phrase
+#   or a sentence but not in the imperative mood
+# - Adjectives are always followed by a noun, so same
+# - Particles are also followed by a noun
+# - Some adverbs don't really indicate an imperative sentence, for example
+#   "importantly" or "currently".
+# - Some irregular verb forms that don't stem to the same string as the
+#   imperative does (eg. 'does')
+a
+an
+the
+action
+always
+api
+base
+basic
+business
+calculation
+callback
+collection
+common
+constructor
+convenience
+convenient
+current
+currently
+custom
+data
+data
+default
+deprecated
+description
+dict
+dictionary
+does
+dummy
+example
+factory
+false
+final
+formula
+function
+generic
+handler
+handler
+helper
+here
+hook
+implementation
+importantly
+internal
+it
+main
+method
+module
+new
+number
+optional
+package
+placeholder
+reference
+result
+same
+schema
+setup
+should
+simple
+some
+special
+sql
+standard
+static
+string
+subclasses
+that
+these
+this
+true
+unique
+unit
+utility
+what
+wrapper
+
+
+# These are nouns, but often used in the context of functions that act as
+# objects; thus we do not blacklist these.
+#
+# context  # as in context manager
+# decorator
+# class  # as in class decorator
+# property
+# generator

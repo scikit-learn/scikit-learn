@@ -1,0 +1,265 @@
+# This file is distributed under the same license as the Django package.
+#
+# Translators:
+# András Veres-Szentkirályi, 2016
+# Attila Nagy <>, 2012
+# Jannis Leidel <jannis@leidel.info>, 2011
+# János R (Hangya), 2012
+msgid ""
+msgstr ""
+"Project-Id-Version: django\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-01-17 11:07+0100\n"
+"PO-Revision-Date: 2017-09-23 18:54+0000\n"
+"Last-Translator: János R (Hangya)\n"
+"Language-Team: Hungarian (http://www.transifex.com/django/django/language/"
+"hu/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hu\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Humanize"
+msgstr "Emberi formázás"
+
+msgid "th"
+msgstr "."
+
+msgid "st"
+msgstr "."
+
+msgid "nd"
+msgstr "."
+
+msgid "rd"
+msgstr "."
+
+#, python-format
+msgid "%(value).1f million"
+msgid_plural "%(value).1f million"
+msgstr[0] "%(value)1f millió"
+msgstr[1] "%(value)1f millió"
+
+#, python-format
+msgid "%(value)s million"
+msgid_plural "%(value)s million"
+msgstr[0] "%(value)s millió"
+msgstr[1] "%(value)s millió"
+
+#, python-format
+msgid "%(value).1f billion"
+msgid_plural "%(value).1f billion"
+msgstr[0] "%(value)1f milliárd"
+msgstr[1] "%(value)1f milliárd"
+
+#, python-format
+msgid "%(value)s billion"
+msgid_plural "%(value)s billion"
+msgstr[0] " %(value)s milliárd"
+msgstr[1] " %(value)s milliárd"
+
+#, python-format
+msgid "%(value).1f trillion"
+msgid_plural "%(value).1f trillion"
+msgstr[0] "%(value)1f trilliárd"
+msgstr[1] "%(value)1f trilliárd"
+
+#, python-format
+msgid "%(value)s trillion"
+msgid_plural "%(value)s trillion"
+msgstr[0] "%(value)s billió"
+msgstr[1] "%(value)s billió"
+
+#, python-format
+msgid "%(value).1f quadrillion"
+msgid_plural "%(value).1f quadrillion"
+msgstr[0] "%(value).1f billiárd"
+msgstr[1] "%(value).1f billiárd"
+
+#, python-format
+msgid "%(value)s quadrillion"
+msgid_plural "%(value)s quadrillion"
+msgstr[0] "%(value)s billiárd"
+msgstr[1] "%(value)s billiárd"
+
+#, python-format
+msgid "%(value).1f quintillion"
+msgid_plural "%(value).1f quintillion"
+msgstr[0] "%(value).1f trillió"
+msgstr[1] "%(value).1f trillió"
+
+#, python-format
+msgid "%(value)s quintillion"
+msgid_plural "%(value)s quintillion"
+msgstr[0] "%(value)s trillió"
+msgstr[1] "%(value)s trillió"
+
+#, python-format
+msgid "%(value).1f sextillion"
+msgid_plural "%(value).1f sextillion"
+msgstr[0] "%(value).1f trilliárd"
+msgstr[1] "%(value).1f trilliárd"
+
+#, python-format
+msgid "%(value)s sextillion"
+msgid_plural "%(value)s sextillion"
+msgstr[0] "%(value)s trilliárd"
+msgstr[1] "%(value)s trilliárd"
+
+#, python-format
+msgid "%(value).1f septillion"
+msgid_plural "%(value).1f septillion"
+msgstr[0] "%(value).1f kvadrillió"
+msgstr[1] "%(value).1f kvadrillió"
+
+#, python-format
+msgid "%(value)s septillion"
+msgid_plural "%(value)s septillion"
+msgstr[0] "%(value)s kvadrillió"
+msgstr[1] "%(value)s kvadrillió"
+
+#, python-format
+msgid "%(value).1f octillion"
+msgid_plural "%(value).1f octillion"
+msgstr[0] "%(value).1f kvadrilliárd"
+msgstr[1] "%(value).1f kvadrilliárd"
+
+#, python-format
+msgid "%(value)s octillion"
+msgid_plural "%(value)s octillion"
+msgstr[0] "%(value)s kvadrilliárd"
+msgstr[1] "%(value)s kvadrilliárd"
+
+#, python-format
+msgid "%(value).1f nonillion"
+msgid_plural "%(value).1f nonillion"
+msgstr[0] "%(value).1f kvintillió"
+msgstr[1] "%(value).1f kvintillió"
+
+#, python-format
+msgid "%(value)s nonillion"
+msgid_plural "%(value)s nonillion"
+msgstr[0] "%(value)s kvintillió"
+msgstr[1] "%(value)s kvintillió"
+
+#, python-format
+msgid "%(value).1f decillion"
+msgid_plural "%(value).1f decillion"
+msgstr[0] "%(value).1f kvintilliárd"
+msgstr[1] "%(value).1f kvintilliárd"
+
+#, python-format
+msgid "%(value)s decillion"
+msgid_plural "%(value)s decillion"
+msgstr[0] "%(value)s kvintilliárd"
+msgstr[1] "%(value)s kvintilliárd"
+
+#, python-format
+msgid "%(value).1f googol"
+msgid_plural "%(value).1f googol"
+msgstr[0] "%(value).1f googol"
+msgstr[1] "%(value).1f googol"
+
+#, python-format
+msgid "%(value)s googol"
+msgid_plural "%(value)s googol"
+msgstr[0] "%(value)s googol"
+msgstr[1] "%(value)s googol"
+
+msgid "one"
+msgstr "egy"
+
+msgid "two"
+msgstr "kettő"
+
+msgid "three"
+msgstr "három"
+
+msgid "four"
+msgstr "négy"
+
+msgid "five"
+msgstr "öt"
+
+msgid "six"
+msgstr "hat"
+
+msgid "seven"
+msgstr "hét"
+
+msgid "eight"
+msgstr "nyolc"
+
+msgid "nine"
+msgstr "kilenc"
+
+msgid "today"
+msgstr "ma"
+
+msgid "tomorrow"
+msgstr "holnap"
+
+msgid "yesterday"
+msgstr "tegnap"
+
+#, python-format
+msgctxt "naturaltime"
+msgid "%(delta)s ago"
+msgstr " %(delta)s ezelőtt"
+
+msgid "now"
+msgstr "most"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a second ago"
+msgid_plural "%(count)s seconds ago"
+msgstr[0] "egy másodperce"
+msgstr[1] "%(count)s másodperce"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a minute ago"
+msgid_plural "%(count)s minutes ago"
+msgstr[0] "egy perce"
+msgstr[1] "%(count)s perce"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "an hour ago"
+msgid_plural "%(count)s hours ago"
+msgstr[0] "egy órája"
+msgstr[1] "%(count)s órája"
+
+#, python-format
+msgctxt "naturaltime"
+msgid "%(delta)s from now"
+msgstr "%(delta)s mostantól"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a second from now"
+msgid_plural "%(count)s seconds from now"
+msgstr[0] "egy másodperc múlva"
+msgstr[1] "%(count)s másodperc múlva"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a minute from now"
+msgid_plural "%(count)s minutes from now"
+msgstr[0] "egy perc múlva"
+msgstr[1] "%(count)s perc múlva"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "an hour from now"
+msgid_plural "%(count)s hours from now"
+msgstr[0] "egy óra múlva"
+msgstr[1] "%(count)s óra múlva"

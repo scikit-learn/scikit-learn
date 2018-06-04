@@ -1,0 +1,263 @@
+# This file is distributed under the same license as the Django package.
+#
+# Translators:
+# Alex Gaynor <inactive+Alex@transifex.com>, 2011
+# Jannis Leidel <jannis@leidel.info>, 2011
+# Meir Kriheli <mkriheli@gmail.com>, 2012,2014
+msgid ""
+msgstr ""
+"Project-Id-Version: django\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-01-17 11:07+0100\n"
+"PO-Revision-Date: 2017-09-19 16:40+0000\n"
+"Last-Translator: Jannis Leidel <jannis@leidel.info>\n"
+"Language-Team: Hebrew (http://www.transifex.com/django/django/language/he/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: he\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Humanize"
+msgstr "האנשה"
+
+msgid "th"
+msgstr "רביעי"
+
+msgid "st"
+msgstr "ראשון"
+
+msgid "nd"
+msgstr "שני"
+
+msgid "rd"
+msgstr "שלישי"
+
+#, python-format
+msgid "%(value).1f million"
+msgid_plural "%(value).1f million"
+msgstr[0] "%(value).1f מיליון"
+msgstr[1] "%(value).1f מיליונים"
+
+#, python-format
+msgid "%(value)s million"
+msgid_plural "%(value)s million"
+msgstr[0] "%(value)s מיליון"
+msgstr[1] "%(value)s מיליון"
+
+#, python-format
+msgid "%(value).1f billion"
+msgid_plural "%(value).1f billion"
+msgstr[0] "%(value).1f מיליארד"
+msgstr[1] "%(value).1f מיליארדים"
+
+#, python-format
+msgid "%(value)s billion"
+msgid_plural "%(value)s billion"
+msgstr[0] "%(value)s מיליארד"
+msgstr[1] "%(value)s מיליארד"
+
+#, python-format
+msgid "%(value).1f trillion"
+msgid_plural "%(value).1f trillion"
+msgstr[0] "%(value).1f טריליון"
+msgstr[1] "%(value).1f טריליונים"
+
+#, python-format
+msgid "%(value)s trillion"
+msgid_plural "%(value)s trillion"
+msgstr[0] "%(value)s טריליון"
+msgstr[1] "%(value)s טריליון"
+
+#, python-format
+msgid "%(value).1f quadrillion"
+msgid_plural "%(value).1f quadrillion"
+msgstr[0] "%(value).1f קוודריליון"
+msgstr[1] "%(value).1f קוודריליון"
+
+#, python-format
+msgid "%(value)s quadrillion"
+msgid_plural "%(value)s quadrillion"
+msgstr[0] "%(value)s קוודריליון"
+msgstr[1] "%(value)s קוודריליון"
+
+#, python-format
+msgid "%(value).1f quintillion"
+msgid_plural "%(value).1f quintillion"
+msgstr[0] "%(value).1f קווינטיליון"
+msgstr[1] "%(value).1f קווינטיליון"
+
+#, python-format
+msgid "%(value)s quintillion"
+msgid_plural "%(value)s quintillion"
+msgstr[0] "%(value)s קווינטיליון"
+msgstr[1] "%(value)s קווינטיליון"
+
+#, python-format
+msgid "%(value).1f sextillion"
+msgid_plural "%(value).1f sextillion"
+msgstr[0] "%(value).1f סקסטיליון"
+msgstr[1] "%(value).1f סקסטיליון"
+
+#, python-format
+msgid "%(value)s sextillion"
+msgid_plural "%(value)s sextillion"
+msgstr[0] "%(value)s סקסטיליון"
+msgstr[1] "%(value)s סקסטיליון"
+
+#, python-format
+msgid "%(value).1f septillion"
+msgid_plural "%(value).1f septillion"
+msgstr[0] "%(value).1f ספטיליון"
+msgstr[1] "%(value).1f ספטיליון"
+
+#, python-format
+msgid "%(value)s septillion"
+msgid_plural "%(value)s septillion"
+msgstr[0] "%(value)s ספטיליון"
+msgstr[1] "%(value)s ספטיליון"
+
+#, python-format
+msgid "%(value).1f octillion"
+msgid_plural "%(value).1f octillion"
+msgstr[0] "%(value).1f אוקטיליון"
+msgstr[1] "%(value).1f אוקטיליון"
+
+#, python-format
+msgid "%(value)s octillion"
+msgid_plural "%(value)s octillion"
+msgstr[0] "%(value)s אוקטיליון"
+msgstr[1] "%(value)s אוקטיליון"
+
+#, python-format
+msgid "%(value).1f nonillion"
+msgid_plural "%(value).1f nonillion"
+msgstr[0] "%(value).1f נוניליון"
+msgstr[1] "%(value).1f נוניליון"
+
+#, python-format
+msgid "%(value)s nonillion"
+msgid_plural "%(value)s nonillion"
+msgstr[0] "%(value)s נוניליון"
+msgstr[1] "%(value)s נוניליון"
+
+#, python-format
+msgid "%(value).1f decillion"
+msgid_plural "%(value).1f decillion"
+msgstr[0] "%(value).1f דציליון"
+msgstr[1] "%(value).1f דציליון"
+
+#, python-format
+msgid "%(value)s decillion"
+msgid_plural "%(value)s decillion"
+msgstr[0] "%(value)s דציליון"
+msgstr[1] "%(value)s דציליון"
+
+#, python-format
+msgid "%(value).1f googol"
+msgid_plural "%(value).1f googol"
+msgstr[0] "%(value).1f גוגול"
+msgstr[1] "%(value).1f גוגול"
+
+#, python-format
+msgid "%(value)s googol"
+msgid_plural "%(value)s googol"
+msgstr[0] "%(value)s גוגול"
+msgstr[1] "%(value)s גוגול"
+
+msgid "one"
+msgstr "אחד"
+
+msgid "two"
+msgstr "שניים"
+
+msgid "three"
+msgstr "שלושה"
+
+msgid "four"
+msgstr "ארבעה"
+
+msgid "five"
+msgstr "חמישה"
+
+msgid "six"
+msgstr "שישה"
+
+msgid "seven"
+msgstr "שבעה"
+
+msgid "eight"
+msgstr "שמונה"
+
+msgid "nine"
+msgstr "תשעה"
+
+msgid "today"
+msgstr "היום"
+
+msgid "tomorrow"
+msgstr "מחר"
+
+msgid "yesterday"
+msgstr "אתמול"
+
+#, python-format
+msgctxt "naturaltime"
+msgid "%(delta)s ago"
+msgstr "לפני %(delta)s"
+
+msgid "now"
+msgstr "עכשיו"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a second ago"
+msgid_plural "%(count)s seconds ago"
+msgstr[0] "לפני שניה"
+msgstr[1] "לפני %(count)s שניות"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a minute ago"
+msgid_plural "%(count)s minutes ago"
+msgstr[0] "לפני דקה"
+msgstr[1] "לפני %(count)s דקות"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "an hour ago"
+msgid_plural "%(count)s hours ago"
+msgstr[0] "לפני שעה"
+msgstr[1] "לפני %(count)s שעות"
+
+#, python-format
+msgctxt "naturaltime"
+msgid "%(delta)s from now"
+msgstr "בעוד %(delta)s"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a second from now"
+msgid_plural "%(count)s seconds from now"
+msgstr[0] "בעוד שניה"
+msgstr[1] "בעוד %(count)s שניות"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "a minute from now"
+msgid_plural "%(count)s minutes from now"
+msgstr[0] "בעוד דקה"
+msgstr[1] "בעוד %(count)s דקות"
+
+#. Translators: please keep a non-breaking space (U+00A0)
+#. between count and time unit.
+#, python-format
+msgid "an hour from now"
+msgid_plural "%(count)s hours from now"
+msgstr[0] "בעוד שעה"
+msgstr[1] "בעוד %(count)s שעות"
