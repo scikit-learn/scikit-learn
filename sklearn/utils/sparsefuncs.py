@@ -3,7 +3,6 @@
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
-import warnings
 import scipy.sparse as sp
 import numpy as np
 
