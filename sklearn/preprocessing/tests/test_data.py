@@ -936,8 +936,8 @@ def test_quantile_transform_check_error():
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                                [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
     assert_raises_regex(ValueError, "X does not have the same number of "
-                                    "features as the previously fitted data. Got 2"
-                                    " instead of 3.",
+                        "features as the previously fitted data. Got 2"
+                        " instead of 3.",
                         transformer.transform, X_bad_feat)
     assert_raises_regex(ValueError, "X does not have the same number of "
                         "features as the previously fitted data. Got 2"
@@ -980,8 +980,8 @@ def test_quantile_transform_sparse_ignore_zeros():
 
     # dense case -> warning raise
     assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
-                                      " only with sparse matrix. This parameter has no"
-                                      " effect.", transformer.fit, X)
+                         " only with sparse matrix. This parameter has no"
+                         " effect.", transformer.fit, X)
 
     X_expected = np.array([[0, 0],
                            [0, 0],
@@ -1915,20 +1915,15 @@ def _check_transform_selected(X, X_expected, dtype, sel):
         assert_array_equal(toarray(Xtr), X_expected)
 
 
-@pytest.mark.parametrize(
-    "output_dtype",
-    [np.int32, np.float32, np.float64]
-)
-@pytest.mark.parametrize(
-    "input_dtype",
-    [np.int32, np.float32, np.float64]
-)
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
 def test_transform_selected(output_dtype, input_dtype):
     X = np.asarray([[3, 2, 1], [0, 1, 1]], dtype=input_dtype)
 
     X_expected = np.asarray([[1, 2, 1], [0, 1, 1]], dtype=output_dtype)
     _check_transform_selected(X, X_expected, output_dtype, [0])
-    _check_transform_selected(X, X_expected, output_dtype, [True, False, False])
+    _check_transform_selected(X, X_expected, output_dtype,
+                              [True, False, False])
 
     X_expected = np.asarray([[1, 1, 1], [0, 1, 1]], dtype=output_dtype)
     _check_transform_selected(X, X_expected, output_dtype, [0, 1, 2])
@@ -1939,14 +1934,8 @@ def test_transform_selected(output_dtype, input_dtype):
     _check_transform_selected(X, X, output_dtype, [False, False, False])
 
 
-@pytest.mark.parametrize(
-    "output_dtype",
-    [np.int32, np.float32, np.float64]
-)
-@pytest.mark.parametrize(
-    "input_dtype",
-    [np.int32, np.float32, np.float64]
-)
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
 def test_transform_selected_copy_arg(output_dtype, input_dtype):
     # transformer that alters X
     def _mutating_transformer(X):
@@ -1957,8 +1946,8 @@ def test_transform_selected_copy_arg(output_dtype, input_dtype):
     expected_Xtr = np.asarray([[2, 2], [3, 4]], dtype=output_dtype)
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, output_dtype, copy=True,
-                              selected='all')
+    Xtr = _transform_selected(X, _mutating_transformer, output_dtype,
+                              copy=True, selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
     assert_array_equal(toarray(Xtr), expected_Xtr)
@@ -2023,19 +2012,11 @@ def test_one_hot_encoder_preserve_type(input_dtype, output_dtype, sparse):
     assert X_trans.dtype == output_dtype
 
 
-@pytest.mark.parametrize(
-    "output_dtype",
-    [np.int32, np.float32, np.float64]
-)
-@pytest.mark.parametrize(
-    "input_dtype",
-    [np.int32, np.float32, np.float64]
-)
-@pytest.mark.parametrize(
-    "sparse",
-    [True, False]
-)
-def test_one_hot_encoder_mixed_input_given_type(input_dtype, output_dtype, sparse):
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("sparse", [True, False])
+def test_one_hot_encoder_mixed_input_given_type(input_dtype, output_dtype,
+                                                sparse):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]], dtype=input_dtype)
     # Test that one hot encoder raises error for unknown features
     # present during transform.
@@ -2335,7 +2316,7 @@ def test_quantile_transform_valid_axis():
                   [2.6, 4.1, 2.3, 9.5, 0.1]])
 
     assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
-                                    ". Got axis=2", quantile_transform, X.T, axis=2)
+                        ". Got axis=2", quantile_transform, X.T, axis=2)
 
 
 def test_power_transformer_notfitted():
