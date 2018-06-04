@@ -28,7 +28,7 @@ __all__ = ['learning_curve', 'validation_curve']
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0,
-                   error_score='raise'):
+                   error_score='raise', safe=True):
     """Learning curve.
 
     .. deprecated:: 0.18
@@ -111,6 +111,10 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
+        
+    safe : boolean, optional, default: True
+        If safe is false, clone will fall back to a deep copy on objects that
+        are not estimators.
 
     Returns
     -------
@@ -161,11 +165,11 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
+            clone(estimator, safe=safe), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator, safe=safe), X, y, scorer, train[:n_train_samples], test,
             verbose, parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score)
             for train, test in cv for n_train_samples in train_sizes_abs)
