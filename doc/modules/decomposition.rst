@@ -802,7 +802,7 @@ stored components::
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
+      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -817,10 +817,10 @@ stored components::
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
-      A. Cichocki, P. Anh-Huy, 2009
+      A. Cichocki, A. Phan, 2009
 
     .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <http://http://arxiv.org/pdf/1010.1763v3.pdf>`_
+      <https://arxiv.org/pdf/1010.1763.pdf>`_
       C. Fevotte, J. Idier, 2011
 
 
@@ -848,7 +848,7 @@ a corpus with :math:`D` documents and :math:`K` topics:
   3. For each word :math:`i` in document :math:`d`:
 
     a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(beta_{z_{di}}.)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
@@ -895,11 +895,11 @@ when data can be fetched sequentially.
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”
-      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
       M. Hoffman, D. Blei, F. Bach, 2010
 
     * `"Stochastic Variational Inference"

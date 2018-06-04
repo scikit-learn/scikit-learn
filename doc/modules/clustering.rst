@@ -134,7 +134,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids
 that minimise the *inertia*, or within-cluster sum of squared criterion:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia, or the within-cluster sum of squares criterion,
 can be recognized as a measure of how internally coherent clusters are.
@@ -194,6 +194,12 @@ k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
+
+The algorithm supports sample weights, which can be given by a parameter
+``sample_weight``. This allows to assign more weight to some samples when
+computing cluster centers and values of inertia. For example, assigning a
+weight of 2 to a sample is equivalent to adding a duplicate of that sample
+to the dataset :math:`X`.
 
 A parameter can be given to allow K-means to be run in parallel, called
 ``n_jobs``. Giving this parameter a positive value uses that many processors
@@ -301,7 +307,7 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor* which damps the responsibility and 
+used, and the *damping factor* which damps the responsibility and
 availability messages to avoid numerical oscillations when updating these
 messages.
 
@@ -352,7 +358,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
-As discussed above, in order to avoid numerical oscillations when updating the 
+As discussed above, in order to avoid numerical oscillations when updating the
 messages, the damping factor :math:`\lambda` is introduced to iteration process:
 
 .. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
@@ -469,19 +475,19 @@ function of the gradient of the image.
  * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_face_segmentation.py`: Spectral clustering
-   to split the image of the raccoon face in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
+   to split the image of coins in regions.
 
-.. |face_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_face_segmentation.html
+.. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
-.. |face_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_face_segmentation.html
+.. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
     :scale: 65
 
 Different label assignment strategies
----------------------------------------
+-------------------------------------
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
@@ -495,9 +501,20 @@ geometrical shape.
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
-|face_kmeans|                          |face_discretize|
+|coin_kmeans|                          |coin_discretize|
 =====================================  =====================================
 
+Spectral Clustering Graphs
+--------------------------
+
+Spectral Clustering can also be used to cluster graphs by their spectral
+embeddings.  In this case, the affinity matrix is the adjacency matrix of the
+graph, and SpectralClustering is initialized with `affinity='precomputed'`::
+
+    >>> from sklearn.cluster import SpectralClustering
+    >>> sc = SpectralClustering(3, affinity='precomputed', n_init=100,
+    ...                         assign_labels='discretize')
+    >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
 .. topic:: References:
 
@@ -543,6 +560,8 @@ metric used for the merge strategy:
   observations of pairs of clusters.
 - **Average linkage** minimizes the average of the distances between all
   observations of pairs of clusters.
+- **Single linkage** minimizes the distance between the closest
+  observations of pairs of clusters.
 
 :class:`AgglomerativeClustering` can also scale to large number of samples
 when it is used jointly with a connectivity matrix, but is computationally
@@ -556,30 +575,24 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
-Different linkage type: Ward, complete and average linkage
------------------------------------------------------------
+Different linkage type: Ward, complete, average, and single linkage
+-------------------------------------------------------------------
 
-:class:`AgglomerativeClustering` supports Ward, average, and complete
+:class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_linkage_comparison_001.png
+    :target: ../auto_examples/cluster/plot_linkage_comparison.html
     :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
 
 Agglomerative cluster has a "rich get richer" behavior that leads to
-uneven cluster sizes. In this regard, complete linkage is the worst
+uneven cluster sizes. In this regard, single linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
-Euclidean metrics, average linkage is a good alternative.
+Euclidean metrics, average linkage is a good alternative. Single linkage,
+while not robust to noisy data, can be computed very efficiently and can
+therefore be useful to provide hierarchical clustering of larger datasets.
+Single linkage can also perform well on non-globular data.
 
 .. topic:: Examples:
 
@@ -624,12 +637,12 @@ merging to nearest neighbors as in :ref:`this example
 <sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`raccoon face <sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py>` example.
+:ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`: Ward clustering
-   to split the image of a raccoon face in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward clustering
+   to split the image of coins in regions.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
@@ -641,15 +654,16 @@ enable only merging of neighboring pixels on an image, as in the
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
-.. warning:: **Connectivity constraints with average and complete linkage**
+.. warning:: **Connectivity constraints with single, average and complete linkage**
 
-    Connectivity constraints and complete or average linkage can enhance
+    Connectivity constraints and single, complete or average linkage can enhance
     the 'rich getting richer' aspect of agglomerative clustering,
     particularly so if they are built with
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
     :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    Single linkage is the most brittle linkage option with regard to this issue.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
@@ -671,7 +685,7 @@ enable only merging of neighboring pixels on an image, as in the
 Varying the metric
 -------------------
 
-Average and complete linkage can be used with a variety of distances (or
+Single, average and complete linkage can be used with a variety of distances (or
 affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
@@ -734,8 +748,8 @@ set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Any sample that is not a 
-core sample, and is at least ``eps`` in distance from any core sample, is 
+Any core sample is part of a cluster, by definition. Any sample that is not a
+core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 In the figure below, the color indicates cluster membership, with large circles
@@ -755,9 +769,9 @@ by black points below.
 
 .. topic:: Implementation
 
-    The DBSCAN algorithm is deterministic, always generating the same clusters 
+    The DBSCAN algorithm is deterministic, always generating the same clusters
     when given the same data in the same order.  However, the results can differ when
-    data is provided in a different order. First, even though the core samples 
+    data is provided in a different order. First, even though the core samples
     will always be assigned to the same clusters, the labels of those clusters
     will depend on the order in which those samples are encountered in the data.
     Second and more importantly, the clusters to which non-core samples are assigned
@@ -782,9 +796,10 @@ by black points below.
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
-    - A sparse radius neighborhood graph (where missing
-      entries are presumed to be out of eps) can be precomputed in a memory-efficient
-      way and dbscan can be run over this with ``metric='precomputed'``.
+    - A sparse radius neighborhood graph (where missing entries are presumed to
+      be out of eps) can be precomputed in a memory-efficient way and dbscan
+      can be run over this with ``metric='precomputed'``.  See
+      :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
 
     - The dataset can be compressed, either by removing exact duplicates if
       these occur in your data, or by using BIRCH. Then you only have a
@@ -1139,7 +1154,7 @@ With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
- 
+
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
@@ -1488,7 +1503,7 @@ cluster analysis.
  * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
    Interpretation and Validation of Cluster Analysis". Computational
    and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <http://dx.doi.org/10.1016/0377-0427(87)90125-7>`_.
+   `doi:10.1016/0377-0427(87)90125-7 <https://doi.org/10.1016/0377-0427(87)90125-7>`_.
 
 
 Advantages
@@ -1519,9 +1534,9 @@ Calinski-Harabaz Index
 ----------------------
 
 If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) can be used to evaluate the
-model, where a higher Calinski-Harabaz score relates to a model with better
-defined clusters.
+(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+Ratio Criterion - can be used to evaluate the model, where a higher 
+Calinski-Harabaz score relates to a model with better defined clusters.
 
 For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
@@ -1558,7 +1573,7 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
-  560.39...
+  561.62...
 
 
 Advantages
@@ -1581,4 +1596,140 @@ Drawbacks
 
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
-    `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+    `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
+
+
+.. _davies-bouldin_index:
+
+Davies-Bouldin Index
+--------------------
+
+If the ground truth labels are not known, the Davies-Bouldin index
+(:func:`sklearn.metrics.davies_bouldin_score`) can be used to evaluate the
+model, where a lower Davies-Bouldin index relates to a model with better
+separation between the clusters.
+
+The index is defined as the average similarity between each cluster :math:`C_i`
+for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
+this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
+
+- :math:`s_i`, the average distance between each point of cluster :math:`i` and
+  the centroid of that cluster -- also know as cluster diameter.
+- :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
+
+A simple choice to construct :math:`R_ij` so that it is nonnegative and
+symmetric is:
+
+.. math::
+   R_{ij} = \frac{s_i + s_j}{d_{ij}}
+
+Then the Davies-Bouldin index is defined as:
+
+.. math::
+   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+
+Zero is the lowest possible score. Values closer to zero indicate a better
+partition.
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis as follows:
+
+  >>> from sklearn import datasets
+  >>> iris = datasets.load_iris()
+  >>> X = iris.data
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics import davies_bouldin_score
+  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans.labels_
+  >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
+  0.6619...
+
+
+Advantages
+~~~~~~~~~~
+
+- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
+- The index is computed only quantities and features inherent to the dataset.
+
+Drawbacks
+~~~~~~~~~
+
+- The Davies-Boulding index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained from
+  DBSCAN.
+
+- The usage of centroid distance limits the distance metric to Euclidean space.
+- A good value reported by this method does not imply the best information retrieval.
+
+.. topic:: References
+
+ * Davies, David L.; Bouldin, Donald W. (1979).
+   "A Cluster Separation Measure"
+   IEEE Transactions on Pattern Analysis and Machine Intelligence.
+   PAMI-1 (2): 224-227.
+   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+
+ * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
+   "On Clustering Validation Techniques"
+   Journal of Intelligent Information Systems, 17(2-3), 107-145.
+   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+
+ * `Wikipedia entry for Davies-Bouldin index
+   <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
+
+
+.. _contingency_matrix:
+
+Contingency Matrix
+------------------
+
+Contingency matrix (:func:`sklearn.metrics.cluster.contingency_matrix`)
+reports the intersection cardinality for every true/predicted cluster pair.
+The contingency matrix provides sufficient statistics for all clustering
+metrics where the samples are independent and identically distributed and
+one doesn't need to account for some instances not being clustered.
+
+Here is an example::
+
+   >>> from sklearn.metrics.cluster import contingency_matrix
+   >>> x = ["a", "a", "a", "b", "b", "b"]
+   >>> y = [0, 0, 1, 1, 2, 2]
+   >>> contingency_matrix(x, y)
+   array([[2, 1, 0],
+          [0, 1, 2]])
+
+The first row of output array indicates that there are three samples whose
+true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
+and none is in 2. And the second row indicates that there are three samples
+whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
+1 and two are in 2.
+
+A :ref:`confusion matrix <confusion_matrix>` for classification is a square
+contingency matrix where the order of rows and columns correspond to a list
+of classes.
+
+
+Advantages
+~~~~~~~~~~
+
+- Allows to examine the spread of each true cluster across predicted
+  clusters and vice versa.
+
+- The contingency table calculated is typically utilized in the calculation
+  of a similarity statistic (like the others listed in this document) between
+  the two clusterings.
+
+Drawbacks
+~~~~~~~~~
+
+- Contingency matrix is easy to interpret for a small number of clusters, but
+  becomes very hard to interpret for a large number of clusters.
+
+- It doesn't give a single metric to use as an objective for clustering
+  optimisation.
+
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_

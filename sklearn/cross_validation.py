@@ -524,8 +524,8 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    All the folds have size trunc(n_samples / n_folds), the last one has the
-    complementary.
+    Train and test sizes may be different in each fold, with a difference of at
+    most ``n_classes``.
 
     See also
     --------
@@ -1559,7 +1559,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y))  # doctest:  +ELLIPSIS
-    [ 0.33150734  0.08022311  0.03531764]
+    [0.33150734 0.08022311 0.03531764]
 
     See Also
     ---------

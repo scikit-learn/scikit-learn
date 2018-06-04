@@ -198,6 +198,23 @@ def test_multinomial_binary():
         assert_greater(np.mean(pred == target), .9)
 
 
+def test_multinomial_binary_probabilities():
+    # Test multinomial LR gives expected probabilities based on the
+    # decision function, for a binary problem.
+    X, y = make_classification()
+    clf = LogisticRegression(multi_class='multinomial', solver='saga')
+    clf.fit(X, y)
+
+    decision = clf.decision_function(X)
+    proba = clf.predict_proba(X)
+
+    expected_proba_class_1 = (np.exp(decision) /
+                              (np.exp(decision) + np.exp(-decision)))
+    expected_proba = np.c_[1-expected_proba_class_1, expected_proba_class_1]
+
+    assert_almost_equal(proba, expected_proba)
+
+
 def test_sparsify():
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
@@ -293,6 +310,15 @@ def test_consistency_path():
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
         assert_array_almost_equal(lr_coef, coefs[0], decimal=4,
                                   err_msg="with solver = %s" % solver)
+
+
+def test_logistic_regression_path_convergence_fail():
+    rng = np.random.RandomState(0)
+    X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
+    y = [1] * 100 + [-1] * 100
+    Cs = [1e3]
+    assert_warns(ConvergenceWarning, logistic_regression_path,
+                 X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
 
 
 def test_liblinear_dual_random_state():
@@ -774,15 +800,6 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-def test_logistic_regression_convergence_warnings():
-    # Test that warnings are raised if model does not converge
-
-    X, y = make_classification(n_samples=20, n_features=20, random_state=0)
-    clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
-    assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
-    assert_equal(clf_lib.n_iter_, 2)
-
-
 def test_logistic_regression_multinomial():
     # Tests for the multinomial option in logistic regression
 
@@ -1007,7 +1024,6 @@ def test_logreg_predict_proba_multinomial():
     assert_greater(clf_wrong_loss, clf_multi_loss)
 
 
-@ignore_warnings
 def test_max_iter():
     # Test that the maximum number of iteration is reached
     X, y_bin = iris.data, iris.target.copy()
@@ -1023,7 +1039,7 @@ def test_max_iter():
                 lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
                                         multi_class=multi_class,
                                         random_state=0, solver=solver)
-                lr.fit(X, y_bin)
+                assert_warns(ConvergenceWarning, lr.fit, X, y_bin)
                 assert_equal(lr.n_iter_[0], max_iter)
 
 

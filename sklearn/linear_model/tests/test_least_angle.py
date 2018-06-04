@@ -478,27 +478,37 @@ def test_lars_path_positive_constraint():
     # ensure that we get negative coefficients when positive=False
     # and all positive when positive=True
     # for method 'lar' (default) and lasso
-    for method in ['lar', 'lasso']:
-        alpha, active, coefs = \
-            linear_model.lars_path(diabetes['data'], diabetes['target'],
-                                   return_path=True, method=method,
-                                   positive=False)
-        assert_true(coefs.min() < 0)
 
-        alpha, active, coefs = \
-            linear_model.lars_path(diabetes['data'], diabetes['target'],
-                                   return_path=True, method=method,
-                                   positive=True)
-        assert_true(coefs.min() >= 0)
+    # Once deprecation of LAR + positive option is done use these:
+    # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
+    #               diabetes['target'], method='lar', positive=True)
+
+    with warnings.catch_warnings(record=True) as w:
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method='lar',
+                               positive=True)
+    assert_true(len(w) == 1)
+    assert "broken" in str(w[0].message)
+
+    method = 'lasso'
+    alpha, active, coefs = \
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method=method,
+                               positive=False)
+    assert_true(coefs.min() < 0)
+
+    alpha, active, coefs = \
+        linear_model.lars_path(diabetes['data'], diabetes['target'],
+                               return_path=True, method=method,
+                               positive=True)
+    assert_true(coefs.min() >= 0)
 
 
 # now we gonna test the positive option for all estimator classes
 
 default_parameter = {'fit_intercept': False}
 
-estimator_parameter_map = {'Lars': {'n_nonzero_coefs': 5},
-                           'LassoLars': {'alpha': 0.1},
-                           'LarsCV': {},
+estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsCV': {},
                            'LassoLarsIC': {}}
 

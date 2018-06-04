@@ -43,13 +43,7 @@ run_tests() {
     # Going back to git checkout folder needed to test documentation
     cd $OLDPWD
 
-    # Do not run doctests in scipy-dev-wheels build for now
-    # (broken by numpy 1.14.dev array repr/str formatting
-    # change even with np.set_printoptions(sign='legacy')).
-    # See https://github.com/numpy/numpy/issues/9804 for more details
-    if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
-        make test-doc
-    fi
+    make test-doc
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

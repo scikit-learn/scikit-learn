@@ -50,7 +50,8 @@ MODULE_DOCS = __doc__
 logger = logging.getLogger(__name__)
 
 
-def fetch_california_housing(data_home=None, download_if_missing=True):
+def fetch_california_housing(data_home=None, download_if_missing=True,
+                             return_X_y=False):
     """Loader for the California housing dataset from StatLib.
 
     Read more in the :ref:`User Guide <datasets>`.
@@ -64,6 +65,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     download_if_missing : optional, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+
+    return_X_y : boolean, default=False. If True, returns ``(data.data,
+    data.target)`` instead of a Bunch object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -80,6 +87,10 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
     dataset.DESCR : string
         Description of the California housing dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
 
     Notes
     ------
@@ -131,6 +142,9 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
     # target in units of 100,000
     target = target / 100000.0
+
+    if return_X_y:
+        return data, target
 
     return Bunch(data=data,
                  target=target,
