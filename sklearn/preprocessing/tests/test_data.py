@@ -1992,47 +1992,15 @@ def test_one_hot_encoder_categorical_features():
     _check_one_hot(X, X2, cat, 5)
 
 
-@pytest.mark.parametrize(
-    "output_dtype",
-    [np.int32, np.float32, np.float64]
-)
-@pytest.mark.parametrize(
-    "input_dtype",
-    [np.int32, np.float32, np.float64]
-)
-@pytest.mark.parametrize(
-    "sparse",
-    [True, False]
-)
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype",  [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("sparse", [True, False])
 def test_one_hot_encoder_preserve_type(input_dtype, output_dtype, sparse):
     X = np.array([[0, 1, 0, 0], [1, 2, 0, 0]], dtype=input_dtype)
     transformer = OneHotEncoder(categorical_features=[0, 1],
                                 dtype=output_dtype, sparse=sparse)
     X_trans = transformer.fit_transform(X)
     assert X_trans.dtype == output_dtype
-
-
-@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
-@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
-@pytest.mark.parametrize("sparse", [True, False])
-def test_one_hot_encoder_mixed_input_given_type(input_dtype, output_dtype,
-                                                sparse):
-    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]], dtype=input_dtype)
-    # Test that one hot encoder raises error for unknown features
-    # present during transform.
-    oh = OneHotEncoder(categorical_features=[0, 1],
-                       dtype=output_dtype,
-                       sparse=sparse)
-    actual_x = oh.fit(X).transform(X)
-
-    assert actual_x.dtype == output_dtype
-
-    expected = np.array([[1, 0, 0, 1, 1],
-                         [0, 1, 1, 0, 3],
-                         [0, 1, 1, 0, 2]], dtype=output_dtype)
-
-    actual_x_dense = actual_x.A if sparse else actual_x
-    assert np.all(actual_x_dense == expected)
 
 
 def test_one_hot_encoder_unknown_transform():
