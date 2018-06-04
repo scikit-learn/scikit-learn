@@ -144,7 +144,7 @@ def test_kde_pipeline_gridsearch():
 
 
 def test_kde_sample_weights():
-    n_samples = 2500
+    n_samples = 400
     size_test = 20
     weights_neutral = 3 * np.ones(n_samples)
     for d in [1, 2, 10]:
@@ -186,7 +186,7 @@ def test_kde_sample_weights():
 
                     # Test that sample weights has a non-trivial effect
                     diff = np.max(np.abs(scores_no_weight - scores_weight))
-                    assert diff > 0.005
+                    assert diff > 0.001
 
                     # Test invariance with respect to arbitrary scaling
                     scale_factor = rng.rand()
