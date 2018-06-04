@@ -607,17 +607,17 @@ as each sample is treated independently of others::
   Binarizer(copy=True, threshold=0.0)
 
   >>> binarizer.transform(X)
-  array([[ 1.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+  array([[1., 0., 1.],
+         [1., 0., 0.],
+         [0., 1., 0.]])
 
 It is possible to adjust the threshold of the binarizer::
 
   >>> binarizer = preprocessing.Binarizer(threshold=1.1)
   >>> binarizer.transform(X)
-  array([[ 0.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  0.,  0.]])
+  array([[0., 0., 1.],
+         [1., 0., 0.],
+         [0., 0., 0.]])
 
 As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
