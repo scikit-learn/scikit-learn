@@ -128,8 +128,8 @@ class KernelDensity(BaseEstimator):
         X = check_array(X, order='C', dtype=DTYPE)
 
         if sample_weight is not None:
-            if not hasattr(sample_weight, 'shape'):
-                sample_weight = np.array(sample_weight)
+            sample_weight = check_array(sample_weight, order='C', dtype=DTYPE,
+                                        ensure_2d=False)
             if sample_weight.ndim != 1:
                 raise ValueError("the shape of sample_weight must be ({0},),"
                                  " but was {1}".format(X.shape[0],

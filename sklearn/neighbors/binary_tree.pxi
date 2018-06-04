@@ -2295,8 +2295,8 @@ cdef class BinaryTree:
                 else:
                     log_weight = 0.
                 global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                    log_dens_contribution +
-                                                        log_weight)
+                                                    (log_dens_contribution +
+                                                     log_weight))
 
         #------------------------------------------------------------
         # Case 4: split node and query subnodes

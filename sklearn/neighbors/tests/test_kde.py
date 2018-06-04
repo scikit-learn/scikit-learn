@@ -129,6 +129,9 @@ def test_kde_badargs():
                   metric='blah')
     assert_raises(ValueError, KernelDensity,
                   algorithm='kd_tree', metric='blah')
+    kde = KernelDensity()
+    assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
+                  sample_weight=np.random.random((200, 10)))
 
 
 def test_kde_pipeline_gridsearch():
@@ -151,11 +154,7 @@ def test_kde_sample_weights():
         rng = np.random.RandomState(0)
         X = rng.rand(n_samples, d)
         weights = 1 + (10 * X.sum(axis=1)).astype(np.int8)
-        repetitions = []
-        for x, w in zip(X, weights):
-            for _ in range(w):
-                repetitions.append(x.tolist())
-        X_repetitions = np.array(repetitions)
+        X_repetitions = np.repeat(X, weights, axis=0)
         n_samples_test = size_test // d
         test_points = rng.rand(n_samples_test, d)
         for algorithm in ['auto', 'ball_tree', 'kd_tree']:
