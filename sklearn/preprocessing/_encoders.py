@@ -278,7 +278,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', categories='auto',
+    OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
 
@@ -718,7 +718,8 @@ class OrdinalEncoder(_BaseEncoder):
     ----------
     categories_ : list of arrays
         The categories of each feature determined during fitting
-        (in order corresponding with output of ``transform``).
+        (in order of the features in X and corresponding with the output
+        of ``transform``).
 
     Examples
     --------
