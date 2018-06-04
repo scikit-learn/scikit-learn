@@ -1189,9 +1189,6 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
     X_noise = np.concatenate([X, rng.uniform(low=-3, high=3, size=(5, 2))])
 
     if readonly_memmap:
-        if IS_PYPY and name == 'AgglomerativeClustering':
-            # this check segfaults on readonly_memmap with PyPy
-            return
         X, y, X_noise = create_memmap_backed_data([X, y, X_noise])
 
     n_samples, n_features = X.shape
