@@ -2,9 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 from sklearn.datasets import load_iris, make_classification
-from sklearn.metrics import (
-    log_loss, mean_squared_error, make_scorer
-)
+from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
@@ -21,6 +19,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
@@ -91,28 +90,38 @@ def test_error():
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
 
 
-def test_logistic_cv_neg_mean_squared_error():
-    lr = LogisticRegressionCV(scoring='neg_mean_squared_error', cv=2)
+def test_logistic_cv_mock_scorer():
+
+    class MockScorer(object):
+        def __init__(self):
+            self.calls = 0
+            self.scores = [0.1, 0.4, 0.8, 0.5]
+
+        def __call__(self, model, X, y, sample_weight=None):
+            score = self.scores[self.calls % len(self.scores)]
+            self.calls += 1
+            return score
+
+    mock_scorer = MockScorer()
+    Cs = [1, 2, 3, 4]
+    cv = 2
+
+    lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
     lr.fit(X, Y1)
+
+    # Cs[2] has the highest score (0.8) from MockScorer
+    assert_equal(lr.C_[0], [Cs[2]])
+
+    # scorer called 8 times (cv*len(Cs))
+    assert_equal(mock_scorer.calls, cv*len(Cs))
+
+    # reset mock_scorer
+    mock_scorer.calls = 0
     pred = lr.predict(X)
+    custom_score = assert_warns(ChangedBehaviorWarning, lr.score, X, pred)
 
-    # Uses neg_mean_squared_error in score function
-    assert_almost_equal(-mean_squared_error(Y1, pred),
-                        lr.score(X, Y1))
-
-
-def test_logistic_cv_custom_scorer():
-    def neg_mean_forth_error(y_true, y_pred, sample_weight=None):
-        return -np.mean((y_true-y_pred)**4)
-
-    nmfe_scorer = make_scorer(neg_mean_forth_error)
-
-    lr = LogisticRegressionCV(scoring=nmfe_scorer, cv=2)
-    lr.fit(X, Y1)
-    pred = lr.predict(X)
-
-    assert_almost_equal(neg_mean_forth_error(Y1, pred),
-                        lr.score(X, Y1))
+    assert_equal(custom_score, mock_scorer.scores[0])
+    assert_equal(mock_scorer.calls, 1)
 
 
 def test_lr_liblinear_warning():

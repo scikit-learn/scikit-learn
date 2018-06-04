@@ -29,7 +29,8 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import NotFittedError, ConvergenceWarning
+from..exceptions import (NotFittedError, ConvergenceWarning,
+                         ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
@@ -1810,8 +1811,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         score : float
             Score of self.predict(X) wrt. y.
 
-       """
+        """
 
+        if self.scoring is not None:
+            warnings.warn("The long-standing behavior to use the "
+                          "accuracy score has changed. The scoring "
+                          "parameter is now used",
+                          ChangedBehaviorWarning)
         scoring = self.scoring
         if isinstance(scoring, six.string_types):
             scoring = get_scorer(scoring)
