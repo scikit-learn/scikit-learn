@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
+
+import pytest
+
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
@@ -117,11 +120,20 @@ def test_logistic_cv_mock_scorer():
 
     # reset mock_scorer
     mock_scorer.calls = 0
-    pred = lr.predict(X)
-    custom_score = assert_warns(ChangedBehaviorWarning, lr.score, X, pred)
+    with pytest.warns(ChangedBehaviorWarning):
+        custom_score = lr.score(X, lr.predict(X))
 
     assert_equal(custom_score, mock_scorer.scores[0])
     assert_equal(mock_scorer.calls, 1)
+
+
+def test_logistic_cv_score_does_not_warn_by_default():
+    lr = LogisticRegressionCV(cv=2)
+    lr.fit(X, Y1)
+
+    with pytest.warns(None) as record:
+        lr.score(X, lr.predict(X))
+    assert len(record) == 0
 
 
 def test_lr_liblinear_warning():
