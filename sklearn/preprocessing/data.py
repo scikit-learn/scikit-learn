@@ -1987,6 +1987,38 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.handle_unknown = handle_unknown
 
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length sum(self.n_values_)
+
+        """
+        check_is_fitted(self, 'n_values_')
+
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(len(self.n_values_))]
+        else:
+            if len(input_features) != len(self.n_values_):
+                raise ValueError("Length of input_features is {0}, "
+                                 "but it must equal number of features when "
+                                 "fitted: {1}.".format(len(input_features),
+                                 len(self.n_values_)))
+
+        feature_names = []
+        for (i, n_value) in enumerate(self.n_values_):
+            for j in range(n_value):
+                feature_names.append("{0}={1}".format(input_features[i], j))
+        return feature_names
+
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
