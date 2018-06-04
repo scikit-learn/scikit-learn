@@ -475,13 +475,16 @@ class GaussianMixture(BaseMixture):
     n_init : int, defaults to 1.
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, defaults to 'kmeans'.
+    init_params : {'kmeans', 'random', 'rand_data', 'k-means++'},
+            defaults to 'kmeans'.
         The method used to initialize the weights, the means and the
         precisions.
         Must be one of::
 
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
+            'rand_data' : Initial means are randomly selected data points.
+            'k-means++' : Use the k-means++ method for initialisation.
 
     weights_init : array-like, shape (n_components, ), optional
         The user-provided initial weights, defaults to None.
