@@ -2123,9 +2123,8 @@ cdef class BinaryTree:
 
             node_info = node_data[i_node]
             if with_sample_weight:
-                N1 = 0.0
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    N1 += sample_weight[idx_array[i]]
+                N1 = _total_node_weight(node_data, sample_weight,
+                                        idx_array, i_node)
             else:
                 N1 = node_info.idx_end - node_info.idx_start
 
@@ -2170,12 +2169,10 @@ cdef class BinaryTree:
                 i2 = 2 * i_node + 2
 
                 if with_sample_weight:
-                    N1 = 0.0
-                    for i in range(node_data[i1].idx_start, node_data[i1].idx_end):
-                        N1 += sample_weight[idx_array[i]]
-                    N2 = 0.0
-                    for i in range(node_data[i2].idx_start, node_data[i2].idx_end):
-                        N2 += sample_weight[idx_array[i]]
+                    N1 = _total_node_weight(node_data, sample_weight,
+                                            idx_array, i1)
+                    N2 = _total_node_weight(node_data, sample_weight,
+                                            idx_array, i2)
                 else:
                     N1 = node_data[i1].idx_end - node_data[i1].idx_start
                     N2 = node_data[i2].idx_end - node_data[i2].idx_start
@@ -2244,6 +2241,7 @@ cdef class BinaryTree:
         cdef DTYPE_t N1, N2
 
         cdef DTYPE_t* data = &self.data[0, 0]
+        cdef NodeData_t* node_data = &self.node_data[0]
         cdef bint with_sample_weight = self.sample_weight is not None
         cdef DTYPE_t* sample_weight
         cdef DTYPE_t log_weight
@@ -2260,9 +2258,8 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_UB = 0, dist_LB = 0
 
         if with_sample_weight:
-            N1 = 0.0
-            for i in range(node_info.idx_start, node_info.idx_end):
-                N1 += sample_weight[idx_array[i]]
+            N1  = _total_node_weight(node_data, sample_weight,
+                                     idx_array, i_node)
             N2 = self.sum_weight
         else:
             N1 = <DTYPE_t>(node_info.idx_end - node_info.idx_start)
@@ -2308,16 +2305,10 @@ cdef class BinaryTree:
             i2 = 2 * i_node + 2
 
             if with_sample_weight:
-                N1 = 0.0
-                start = self.node_data[i1].idx_start
-                end = self.node_data[i1].idx_end
-                for i in range(start, end):
-                    N1 += sample_weight[idx_array[i]]
-                N2 = 0.0
-                start = self.node_data[i2].idx_start
-                end = self.node_data[i2].idx_end
-                for i in range(start, end):
-                    N2 += sample_weight[idx_array[i]]
+                N1 = _total_node_weight(node_data, sample_weight,
+                                        idx_array, i1)
+                N2 = _total_node_weight(node_data, sample_weight,
+                                        idx_array, i2)
             else:
                 N1 = <DTYPE_t>(self.node_data[i1].idx_end - self.node_data[i1].idx_start)
                 N2 = <DTYPE_t>(self.node_data[i2].idx_end - self.node_data[i2].idx_start)
@@ -2545,3 +2536,13 @@ cdef inline double fmin(double a, double b):
 
 cdef inline double fmax(double a, double b) nogil:
     return max(a, b)
+
+cdef inline DTYPE_t _total_node_weight(NodeData_t* node_data,
+                                       DTYPE_t* sample_weight,
+                                       ITYPE_t* idx_array,
+                                       ITYPE_t i_node):
+    cdef ITYPE_t i
+    cdef DTYPE_t N = 0.0
+    for i in range(node_data[i_node].idx_start, node_data[i_node].idx_end):
+        N += sample_weight[idx_array[i]]
+    return N
