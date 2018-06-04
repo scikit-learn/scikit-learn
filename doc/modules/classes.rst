@@ -1294,8 +1294,7 @@ Model validation
 
 .. autosummary::
    :toctree: generated/
-   :template: 
-   function.rst
+   :template: function.rst
 
    random_projection.johnson_lindenstrauss_min_dim
 
