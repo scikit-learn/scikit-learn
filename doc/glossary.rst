@@ -165,8 +165,10 @@ General Concepts
         tree-based models such as random forests and gradient boosting
         models that often work better and faster with integer-coded
         categorical variables.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
         <category_encoders>`_ package for tools related to encoding
