@@ -756,6 +756,7 @@ Kernels:
    linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:

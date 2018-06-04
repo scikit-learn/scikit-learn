@@ -68,6 +68,11 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
+    See also
+    --------
+    sklearn.pipeline.make_pipeline : convenience function for simplified
+        pipeline construction.
+
     Examples
     --------
     >>> from sklearn import svm
@@ -549,6 +554,11 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
+    See also
+    --------
+    sklearn.pipeline.Pipeline : Class for creating a pipeline of
+        transforms with a final estimator.
+
     Examples
     --------
     >>> from sklearn.naive_bayes import GaussianNB
@@ -624,6 +634,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+
+    See also
+    --------
+    sklearn.pipeline.make_union : convenience function for simplified
+        feature union construction.
 
     Examples
     --------
@@ -822,6 +837,11 @@ def make_union(*transformers, **kwargs):
     Returns
     -------
     f : FeatureUnion
+
+    See also
+    --------
+    sklearn.pipeline.FeatureUnion : Class for concatenating the results
+        of multiple transformer objects.
 
     Examples
     --------
