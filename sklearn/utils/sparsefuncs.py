@@ -385,23 +385,9 @@ def _sparse_min_or_max(X, axis, min_or_max):
         raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
 
 
-try:
-    with warnings.catch_warnings(record=True):
-        # Don't raise the numpy deprecation warnings that appear in
-        # 1.9, but avoid Python bug due to simplefilter('ignore')
-        warnings.simplefilter('always')
-        sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
-except (TypeError, AttributeError):
-    # in scipy < 0.14.0, sparse matrix min/max doesn't accept `axis` argument
-    # the following code is taken from the scipy 0.14 codebase
-    def sparse_min_max(X, axis):
+def sparse_min_max(X, axis):
         return (_sparse_min_or_max(X, axis, np.minimum),
                 _sparse_min_or_max(X, axis, np.maximum))
-
-else:
-    def sparse_min_max(X, axis):
-        return (X.min(axis=axis).toarray().ravel(),
-                X.max(axis=axis).toarray().ravel())
 
 
 def sparse_nan_min_max(X, axis):

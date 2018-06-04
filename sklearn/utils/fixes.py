@@ -10,7 +10,6 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import warnings
 import os
 import errno
 

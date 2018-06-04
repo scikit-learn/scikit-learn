@@ -346,7 +346,7 @@ def test_inplace_swap_column():
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("axis", [0, 1])
+@pytest.mark.parametrize("axis", [0, 1, None])
 @pytest.mark.parametrize("sparse_format", [sp.csr_matrix, sp.csc_matrix])
 @pytest.mark.parametrize(
     "missing_values, min_func, max_func, ignore_nan",
