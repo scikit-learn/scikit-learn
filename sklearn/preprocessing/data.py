@@ -1433,6 +1433,9 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -1449,7 +1452,8 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         raise ValueError("'%d' is not a supported axis" % axis)
 
     X = check_array(X, sparse_format, copy=copy,
-                    estimator='the normalize function', dtype=FLOAT_DTYPES)
+                    estimator='the normalize function', dtype=FLOAT_DTYPES,
+                    force_all_finite='allow-nan')
     if axis == 0:
         X = X.T
 
@@ -1463,17 +1467,17 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
-            _, norms = min_max_axis(X, 1)
+            _, norms = min_max_axis(X, axis=1, ignore_nan=True)
             norms_elementwise = norms.repeat(np.diff(X.indptr))
             mask = norms_elementwise != 0
             X.data[mask] /= norms_elementwise[mask]
     else:
         if norm == 'l1':
-            norms = np.abs(X).sum(axis=1)
+            norms = np.nansum(np.abs(X), axis=1)
         elif norm == 'l2':
-            norms = row_norms(X)
+            norms = np.sqrt(np.nansum(X * X, axis=1))
         elif norm == 'max':
-            norms = np.max(X, axis=1)
+            norms = np.nanmax(X, axis=1)
         norms = _handle_zeros_in_scale(norms, copy=False)
         X /= norms[:, np.newaxis]
 
@@ -1517,6 +1521,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
 
@@ -1544,7 +1551,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', force_all_finite='allow-nan')
         return self
 
     def transform(self, X, y='deprecated', copy=None):
@@ -1567,7 +1574,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
                           DeprecationWarning)
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', force_all_finite='allow-nan')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 

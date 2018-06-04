@@ -15,6 +15,7 @@ import numpy as np
 import scipy.sparse as sp
 cimport cython
 from cython cimport floating
+from numpy.math cimport isnan
 
 np.import_array()
 
@@ -340,7 +341,8 @@ def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
         sum_ = 0.0
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            sum_ += fabs(X_data[j])
+            if not isnan(X_data[j]):
+                sum_ += fabs(X_data[j])
 
         if sum_ == 0.0:
             # do not normalize empty rows (can happen if CSR is not pruned
@@ -370,7 +372,8 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
         sum_ = 0.0
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            sum_ += (X_data[j] * X_data[j])
+            if not isnan(X_data[j]):
+                sum_ += (X_data[j] * X_data[j])
 
         if sum_ == 0.0:
             # do not normalize empty rows (can happen if CSR is not pruned
