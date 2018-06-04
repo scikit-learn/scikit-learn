@@ -549,7 +549,7 @@ K-bins discretization
   ...               [  6., 3., 11 ]])
   >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2], encode='ordinal').fit(X)
   >>> est.bin_width_
-  array([ 3.,  1.,  2.])
+  array([3., 1., 2.])
 
 By default the output is one-hot encoded into a sparse matrix
 (See :ref:`preprocessing_categorical_features`)
