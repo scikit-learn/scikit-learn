@@ -1,14 +1,10 @@
-# Authors:
-#
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
 from __future__ import division
 
 import re
 
 import numpy as np
 from scipy import sparse
+import pytest
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -270,22 +266,25 @@ def test_one_hot_encoder_categorical_features():
     assert_raises(ValueError, oh.fit, X)
 
 
-def test_one_hot_encoder_unknown_transform():
+def test_one_hot_encoder_handle_unknown():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-    y = np.array([[4, 1, 1]])
+    X2 = np.array([[4, 1, 1]])
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
     oh = OneHotEncoder(handle_unknown='error')
     assert_warns(FutureWarning, oh.fit, X)
-    assert_raises(ValueError, oh.transform, y)
+    assert_raises(ValueError, oh.transform, X2)
 
-    # Test the ignore option, ignores unknown features.
+    # Test the ignore option, ignores unknown features (giving all 0's)
     oh = OneHotEncoder(handle_unknown='ignore')
     oh.fit(X)
+    X2_passed = X2.copy()
     assert_array_equal(
-        oh.transform(y).toarray(),
+        oh.transform(X2_passed).toarray(),
         np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
+    # ensure transformed data was not modified in place
+    assert_allclose(X2, X2_passed)
 
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown='42')
@@ -330,7 +329,7 @@ def test_categorical_encoder_onehot():
     assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
 
 
-def test_categorical_encoder_onehot_inverse():
+def test_one_hot_encoder_inverse():
     for sparse_ in [True, False]:
         X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
         enc = OneHotEncoder(sparse=sparse_)
@@ -370,31 +369,7 @@ def test_categorical_encoder_onehot_inverse():
         assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
-def test_categorical_encoder_handle_unknown():
-    X = np.array([[1, 2, 3], [4, 5, 6]])
-    X2 = np.array([[7, 5, 3]])
-
-    # Test that encoder raises error for unknown features during transform.
-    enc = OneHotEncoder(categories='auto')
-    enc.fit(X)
-    msg = re.escape('unknown categories [7] in column 0')
-    assert_raises_regex(ValueError, msg, enc.transform, X2)
-
-    # With 'ignore' you get all 0's in result
-    enc = OneHotEncoder(handle_unknown='ignore')
-    enc.fit(X)
-    X2_passed = X2.copy()
-    Xtr = enc.transform(X2_passed)
-    assert_allclose(Xtr.toarray(), [[0, 0, 0, 1, 1, 0]])
-    # ensure transformed data was not modified in place
-    assert_allclose(X2, X2_passed)
-
-    # Invalid option
-    enc = OneHotEncoder(handle_unknown='invalid')
-    assert_raises(ValueError, enc.fit, X)
-
-
-def test_categorical_encoder_categories():
+def test_one_hot_encoder_categories():
     X = [['abc', 1, 55], ['def', 2, 55]]
 
     # order of categories should not depend on order of samples
@@ -408,7 +383,7 @@ def test_categorical_encoder_categories():
             assert res.tolist() == exp
 
 
-def test_categorical_encoder_specified_categories():
+def test_one_hot_encoder_specified_categories():
     X = np.array([['a', 'b']], dtype=object).T
 
     enc = OneHotEncoder(categories=[['a', 'b', 'c']])
@@ -445,11 +420,8 @@ def test_categorical_encoder_specified_categories():
     assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
 
 
-def test_categorical_encoder_pandas():
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("pandas is not installed")
+def test_one_hot_encoder_pandas():
+    pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2]})
 
@@ -457,7 +429,7 @@ def test_categorical_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
-def test_categorical_encoder_ordinal():
+def test_ordinal_encoder():
     X = [['abc', 2, 55], ['def', 1, 55]]
 
     enc = OrdinalEncoder()
@@ -468,7 +440,7 @@ def test_categorical_encoder_ordinal():
     assert_array_equal(enc.fit_transform(X), exp)
 
 
-def test_categorical_encoder_ordinal_inverse():
+def test_ordinal_encoder_inverse():
     X = [['abc', 2, 55], ['def', 1, 55]]
     enc = OrdinalEncoder()
     X_tr = enc.fit_transform(X)
@@ -481,7 +453,7 @@ def test_categorical_encoder_ordinal_inverse():
     assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
-def test_categorical_encoder_dtypes():
+def test_encoder_dtypes():
     # check that dtypes are preserved when determining categories
     enc = OneHotEncoder(categories='auto')
     exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
@@ -506,12 +478,9 @@ def test_categorical_encoder_dtypes():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
-def test_categorical_encoder_dtypes_pandas():
+def test_encoder_dtypes_pandas():
     # check dtype (similar to test_categorical_encoder_dtypes for dataframes)
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("pandas is not installed")
+    pd = pytest.importorskip('pandas')
 
     enc = OneHotEncoder(categories='auto')
     exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
@@ -527,7 +496,7 @@ def test_categorical_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
-def test_categorical_encoder_warning():
+def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
