@@ -78,7 +78,7 @@ def test_finite_differences():
 
     point = nca._initialize(X, init)
     # compute the gradient at `point`
-    _, gradient = nca._loss_grad_lbfgs(point, X, y, masks)
+    _, gradient = nca._loss_grad_lbfgs(point, X, y)
 
     # create a random direction of norm 1
     random_direction = rng.randn(*point.shape)
@@ -90,11 +90,9 @@ def test_finite_differences():
 
     # compute finite differences
     eps = 1e-5
-    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction, X, y,
-                                         masks)
-    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction, X, y,
-                                        masks)
-    finite_differences = 1/(2*eps) * (right_loss - left_loss)
+    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction, X, y)
+    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction, X, y)
+    finite_differences = 1 / (2 * eps) * (right_loss - left_loss)
 
     # compute relative error
     relative_error = np.abs(finite_differences - projected_gradient) / \

@@ -10,8 +10,9 @@ from __future__ import print_function
 import numpy as np
 import sys
 import time
-from scipy.misc import logsumexp
+from scipy.special import logsumexp
 from scipy.optimize import minimize
+from ..metrics import pairwise_distances
 from ..preprocessing import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
@@ -190,7 +191,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         disp = self.verbose - 2 if self.verbose > 1 else -1
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
-                            'args': (X_valid, y_valid, masks, -1.0),
+                            'args': (X_valid, y_valid, -1.0),
                             'jac': True,
                             'x0': transformation,
                             'tol': self.tol,
@@ -397,7 +398,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, masks, sign=1.0):
+    def _loss_grad_lbfgs(self, transformation, X, y, sign=1.0):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -411,9 +412,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         y : array, shape (n_samples,)
             The corresponding training labels.
-
-        masks : array, shape (n_samples, n_classes)
-            One-hot encoding of y.
 
         Returns
         -------
@@ -438,36 +436,26 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         t_funcall = time.time()
 
         transformation = transformation.reshape(-1, X.shape[1])
-        loss = 0
-        gradient = np.zeros(transformation.shape)
-        X_embedded = np.dot(X, transformation.T)
+        X_embedded = np.dot(X, transformation.T)  # (n_samples, n_features_out)
+        mask = y[:, np.newaxis] == y[np.newaxis, :]  # (n_samples, n_samples)
 
-        # for every sample x_i, compute its contribution to loss and gradient
-        for i in range(X.shape[0]):
-            # compute squared distances to x_i in embedded space
-            diff_embedded = X_embedded[i] - X_embedded
-            dist_embedded = np.einsum('ij,ij->i', diff_embedded,
-                                      diff_embedded)
-            dist_embedded[i] = np.inf
+        # Compute softmax distances
+        p_ij = pairwise_distances(X_embedded, squared=True)
+        np.fill_diagonal(p_ij, np.inf)
+        p_ij = np.exp(-p_ij - logsumexp(-p_ij, axis=1, keepdims=True))
+        # (n_samples, n_samples)
 
-            # compute exponentiated distances (use the log-sum-exp trick to
-            # avoid numerical instabilities
-            exp_dist_embedded = np.exp(-dist_embedded -
-                                       logsumexp(-dist_embedded))
-            ci = masks[:, y[i]]  # samples that are in the same class as x_i
-            p_i_j = exp_dist_embedded[ci]
-            diffs = X[i, :] - X
-            diff_ci = diffs[ci, :]
-            diff_not_ci = diffs[~ci, :]
-            sum_ci = diff_ci.T.dot(
-                (p_i_j[:, np.newaxis] * diff_embedded[ci, :]))
-            sum_not_ci = diff_not_ci.T.dot((exp_dist_embedded[~ci][:,
-                                            np.newaxis] *
-                                            diff_embedded[~ci, :]))
-            p_i = np.sum(p_i_j)  # probability of x_i to be correctly
-            # classified
-            gradient += 2 * (p_i * sum_not_ci + (p_i - 1) * sum_ci).T
-            loss += p_i
+        # Compute loss
+        masked_p_ij = p_ij * mask
+        p = np.sum(masked_p_ij, axis=1, keepdims=True)  # (n_samples, 1)
+        loss = np.sum(p)
+
+        # Compute gradient of loss w.r.t. `transform`
+        weighted_p_ij = masked_p_ij - p_ij * p
+        gradient = 2 * (X_embedded.T.dot(weighted_p_ij + weighted_p_ij.T) -
+                        X_embedded.T * np.sum(weighted_p_ij, axis=0)).dot(X)
+        # time complexity: O(n_features_out x n_samples x
+        # min(n_samples, n_features))
 
         if self.verbose:
             t_funcall = time.time() - t_funcall
