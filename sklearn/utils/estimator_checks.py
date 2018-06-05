@@ -304,7 +304,7 @@ def check_estimator(Estimator):
         except SkipTest as message:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
-            warnings.warn(message, SkipTestWarning)
+            warnings.warn(str(message), SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
