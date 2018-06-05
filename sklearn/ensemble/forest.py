@@ -159,8 +159,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.class_weight = class_weight
 
         if self.n_estimators == 10:
-            warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                          "will be removed in 0.15.", DeprecationWarning)
+            warnings.warn("'n_estimators' default value was changed to 100 in version 0.20.", DeprecationWarning)
             self.n_estimators = 100
 
     def apply(self, X):
