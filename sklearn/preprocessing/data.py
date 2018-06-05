@@ -138,7 +138,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
-                    dtype=FLOAT_DTYPES)
+                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -154,9 +154,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     else:
         X = np.asarray(X)
         if with_mean:
-            mean_ = np.mean(X, axis)
+            mean_ = np.nanmean(X, axis)
         if with_std:
-            scale_ = np.std(X, axis)
+            scale_ = np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -179,7 +179,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             scale_ = _handle_zeros_in_scale(scale_, copy=False)
             Xr /= scale_
             if with_mean:
-                mean_2 = Xr.mean(axis=0)
+                mean_2 = np.nanmean(Xr, axis=0)
                 # If mean_2 is not 'close to zero', it comes from the fact that
                 # scale_ is very small so that mean_2 = mean_1/scale_ > 0, even
                 # if mean_1 was close to zero. The problem is thus essentially
@@ -533,9 +533,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         The variance for each feature in the training set. Used to compute
         `scale_`
 
-    n_samples_seen_ : int
-        The number of samples processed by the estimator. Will be reset on
-        new calls to fit, but increments across ``partial_fit`` calls.
+    n_samples_seen_ : array, shape(n_features,)
+        The number of samples processed by the estimator for each feature.
+        Will be reset on new calls to fit, but increments across
+        ``partial_fit`` calls.
 
     Examples
     --------
@@ -626,7 +627,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
+                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -656,7 +658,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
                 self.mean_ = .0
-                self.n_samples_seen_ = 0
+                self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int32)
                 if self.with_std:
                     self.var_ = .0
                 else:
@@ -695,7 +697,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_mean:

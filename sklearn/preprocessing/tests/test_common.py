@@ -8,8 +8,9 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.base import clone
 
-from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import QuantileTransformer
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -25,6 +26,7 @@ def _get_valid_samples_by_column(X, col):
 @pytest.mark.parametrize(
     "est, support_sparse",
     [(MinMaxScaler(), False),
+     (StandardScaler(), False),
      (QuantileTransformer(n_quantiles=10, random_state=42), True)]
 )
 def test_missing_value_handling(est, support_sparse):
@@ -57,7 +59,7 @@ def test_missing_value_handling(est, support_sparse):
         est.fit(_get_valid_samples_by_column(X_train, i))
         # check transforming with NaN works even when training without NaN
         Xt_col = est.transform(X_test[:, [i]])
-        assert_array_equal(Xt_col, Xt[:, [i]])
+        assert_allclose(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
             Xt_col_nonan = est.transform(
