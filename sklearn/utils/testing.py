@@ -339,13 +339,13 @@ class _IgnoreWarnings(object):
 
     def __enter__(self):
         clean_warning_registry()  # be safe and not propagate state + chaos
-        warnings.simplefilter("ignore", self.category)
         if self._entered:
             raise RuntimeError("Cannot enter %r twice" % self)
         self._entered = True
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
+        warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
         if not self._entered:
