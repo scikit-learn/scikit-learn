@@ -18,7 +18,7 @@ from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import (assert_true, assert_greater,
                                    assert_raise_message, assert_warns_message,
-                                   ignore_warnings)
+                                   ignore_warnings, assert_raises)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -159,12 +159,11 @@ def test_GMM_attributes():
     covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
     g.covars_ = covars
     assert_array_almost_equal(g.covars_, covars)
-    with pytest.raises(ValueError):
-        g._set_covars([])
-    with pytest.raises(ValueError):
-        g._set_covars(np.zeros((n_components - 2, n_features)))
-    with pytest.raises(ValueError):
-        mixture.GMM(n_components=20, covariance_type='badcovariance_type')
+    assert_raises(ValueError, g._set_covars, [])
+    assert_raises(ValueError, g._set_covars,
+                  np.zeros((n_components - 2, n_features)))
+    assert_raises(ValueError, mixture.GMM, n_components=20,
+                  covariance_type='badcovariance_type')
 
 
 class GMMTester():

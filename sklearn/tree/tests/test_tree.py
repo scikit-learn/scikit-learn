@@ -1547,11 +1547,10 @@ def check_raise_error_on_1d_input(name):
     assert_raises(ValueError, est.predict, [X])
 
 
-# XXX
-# @ignore_warnings
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_1d_input(name):
-    check_raise_error_on_1d_input(name)
+    with ignore_warnings():
+        check_raise_error_on_1d_input(name)
 
 
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
