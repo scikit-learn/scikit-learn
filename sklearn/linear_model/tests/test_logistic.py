@@ -113,18 +113,18 @@ def test_logistic_cv_mock_scorer():
     lr.fit(X, Y1)
 
     # Cs[2] has the highest score (0.8) from MockScorer
-    assert_equal(lr.C_[0], [Cs[2]])
+    assert lr.C_[0] == Cs[2]
 
     # scorer called 8 times (cv*len(Cs))
-    assert_equal(mock_scorer.calls, cv*len(Cs))
+    assert mock_scorer.calls == cv * len(Cs)
 
     # reset mock_scorer
     mock_scorer.calls = 0
     with pytest.warns(ChangedBehaviorWarning):
         custom_score = lr.score(X, lr.predict(X))
 
-    assert_equal(custom_score, mock_scorer.scores[0])
-    assert_equal(mock_scorer.calls, 1)
+    assert custom_score == mock_scorer.scores[0]
+    assert mock_scorer.calls == 1
 
 
 def test_logistic_cv_score_does_not_warn_by_default():
