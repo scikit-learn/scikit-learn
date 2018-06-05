@@ -312,7 +312,8 @@ def test_oob():
                                random_state=42)
 
     for method in ['sigmoid', 'isotonic']:
-        base_estimator = RandomForestClassifier(oob_score=True, n_estimators=150)
+        base_estimator = RandomForestClassifier(
+            oob_score=True, n_estimators=150)
         calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
         calibrated_clf.fit(X, y)
         assert hasattr(calibrated_clf, 'oob_decision_function_')

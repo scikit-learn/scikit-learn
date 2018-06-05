@@ -371,8 +371,7 @@ class _CalibratedClassifier(object):
             self.calibrators_.append(calibrator)
         if hasattr(self.base_estimator, 'oob_decision_function_'):
             oob_df = self.base_estimator.oob_decision_function_
-            self._transform_proba(
-                oob_df, idx_pos_class, (X.shape[0], len(self.classes)))
+            self._transform_proba(oob_df, idx_pos_class, len(self.classes))
             setattr(self, 'oob_decision_function_', oob_df)
             delattr(self.base_estimator, 'oob_decision_function_')
 
@@ -398,14 +397,13 @@ class _CalibratedClassifier(object):
 
         df, idx_pos_class = self._preproc(X)
 
-        proba = self._transform_proba(df, idx_pos_class,
-                                      (X.shape[0], n_classes))
+        proba = self._transform_proba(df, idx_pos_class, n_classes)
 
         return proba
 
-    def _transform_proba(self, df, idx_pos_class, shape):
-        _, n_classes = shape
-        proba = np.zeros(shape=shape)
+    def _transform_proba(self, df, idx_pos_class, n_classes):
+        n_classes = n_classes
+        proba = np.zeros(shape=(df.shape[0], n_classes))
         for k, this_df, calibrator in \
                 zip(idx_pos_class, df.T, self.calibrators_):
             if n_classes == 2:
