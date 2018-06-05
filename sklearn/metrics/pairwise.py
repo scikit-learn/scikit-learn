@@ -18,9 +18,10 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
+from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_even_slices
-from ..utils import gen_batches
+from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -257,8 +258,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
+def _argmin_min_reduce(dist, start):
+    indices = dist.argmin(axis=1)
+    values = dist[np.arange(dist.shape[0]), indices]
+    return indices, values
+
+
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=500, metric_kwargs=None):
+                                  batch_size=None, metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -310,11 +317,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         metrics.
 
     batch_size : integer
-        To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size rows of X and
-        batch_size rows of Y. The default value is quite conservative, but
-        can be changed for fine-tuning. The larger the number, the larger the
-        memory usage.
+        .. deprecated:: 0.20
+            Deprecated for removal in 0.22.
+            Use sklearn.set_config(working_memory=...) instead.
 
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
@@ -333,12 +338,11 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
     """
-    dist_func = None
-    if metric in PAIRWISE_DISTANCE_FUNCTIONS:
-        dist_func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
-    elif not callable(metric) and not isinstance(metric, str):
-        raise ValueError("'metric' must be a string or a callable")
-
+    if batch_size is not None:
+        warnings.warn("'batch_size' is ignored. It was deprecated in version "
+                      "0.20 and will be removed in version 0.22. "
+                      "Use sklearn.set_config(working_memory=...) instead.",
+                      DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
@@ -347,39 +351,11 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     if axis == 0:
         X, Y = Y, X
 
-    # Allocate output arrays
-    indices = np.empty(X.shape[0], dtype=np.intp)
-    values = np.empty(X.shape[0])
-    values.fill(np.infty)
-
-    for chunk_x in gen_batches(X.shape[0], batch_size):
-        X_chunk = X[chunk_x, :]
-
-        for chunk_y in gen_batches(Y.shape[0], batch_size):
-            Y_chunk = Y[chunk_y, :]
-
-            if dist_func is not None:
-                if metric == 'euclidean':  # special case, for speed
-                    d_chunk = safe_sparse_dot(X_chunk, Y_chunk.T,
-                                              dense_output=True)
-                    d_chunk *= -2
-                    d_chunk += row_norms(X_chunk, squared=True)[:, np.newaxis]
-                    d_chunk += row_norms(Y_chunk, squared=True)[np.newaxis, :]
-                    np.maximum(d_chunk, 0, d_chunk)
-                else:
-                    d_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
-            else:
-                d_chunk = pairwise_distances(X_chunk, Y_chunk,
-                                             metric=metric, **metric_kwargs)
-
-            # Update indices and minimum values using chunk
-            min_indices = d_chunk.argmin(axis=1)
-            min_values = d_chunk[np.arange(chunk_x.stop - chunk_x.start),
-                                 min_indices]
-
-            flags = values[chunk_x] > min_values
-            indices[chunk_x][flags] = min_indices[flags] + chunk_y.start
-            values[chunk_x][flags] = min_values[flags]
+    indices, values = zip(*pairwise_distances_chunked(
+        X, Y, reduce_func=_argmin_min_reduce, metric=metric,
+        **metric_kwargs))
+    indices = np.concatenate(indices)
+    values = np.concatenate(values)
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
         np.sqrt(values, values)
@@ -387,7 +363,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=500, metric_kwargs=None):
+                              batch_size=None, metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -441,11 +417,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         metrics.
 
     batch_size : integer
-        To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size rows of X and
-        batch_size rows of Y. The default value is quite conservative, but
-        can be changed for fine-tuning. The larger the number, the larger the
-        memory usage.
+        .. deprecated:: 0.20
+            Deprecated for removal in 0.22.
+            Use sklearn.set_config(working_memory=...) instead.
 
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
@@ -463,8 +437,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(X, Y, axis, metric, batch_size,
-                                         metric_kwargs)[0]
+    return pairwise_distances_argmin_min(X, Y, axis, metric,
+                                         metric_kwargs=metric_kwargs,
+                                         batch_size=batch_size)[0]
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
@@ -928,7 +903,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=dense_output)
+    K = safe_sparse_dot(X_normalized, Y_normalized.T,
+                        dense_output=dense_output)
 
     return K
 
@@ -1144,6 +1120,177 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
 
 
+def _check_chunk_size(reduced, chunk_size):
+    """Checks chunk is a sequence of expected size or a tuple of same
+    """
+    is_tuple = isinstance(reduced, tuple)
+    if not is_tuple:
+        reduced = (reduced,)
+    if any(isinstance(r, tuple) or not hasattr(r, '__iter__')
+           for r in reduced):
+        raise TypeError('reduce_func returned %r. '
+                        'Expected sequence(s) of length %d.' %
+                        (reduced if is_tuple else reduced[0], chunk_size))
+    if any(_num_samples(r) != chunk_size for r in reduced):
+        # XXX: we use int(_num_samples...) because sometimes _num_samples
+        #      returns a long in Python 2, even for small numbers.
+        actual_size = tuple(int(_num_samples(r)) for r in reduced)
+        raise ValueError('reduce_func returned object of length %s. '
+                         'Expected same length as input: %d.' %
+                         (actual_size if is_tuple else actual_size[0],
+                          chunk_size))
+
+
+def pairwise_distances_chunked(X, Y=None, reduce_func=None,
+                               metric='euclidean', n_jobs=1,
+                               working_memory=None, **kwds):
+    """Generate a distance matrix chunk by chunk with optional reduction
+
+    In cases where not all of a pairwise distance matrix needs to be stored at
+    once, this is used to calculate pairwise distances in
+    ``working_memory``-sized chunks.  If ``reduce_func`` is given, it is run
+    on each chunk and its return values are concatenated into lists, arrays
+    or sparse matrices.
+
+    Parameters
+    ----------
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+        [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
+
+    Y : array [n_samples_b, n_features], optional
+        An optional second feature array. Only allowed if
+        metric != "precomputed".
+
+    reduce_func : callable, optional
+        The function which is applied on each chunk of the distance matrix,
+        reducing it to needed values.  ``reduce_func(D_chunk, start)``
+        is called repeatedly, where ``D_chunk`` is a contiguous vertical
+        slice of the pairwise distance matrix, starting at row ``start``.
+        It should return an array, a list, or a sparse matrix of length
+        ``D_chunk.shape[0]``, or a tuple of such objects.
+
+        If None, pairwise_distances_chunked returns a generator of vertical
+        chunks of the distance matrix.
+
+    metric : string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+        If metric is "precomputed", X is assumed to be a distance matrix.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    n_jobs : int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debugging. For n_jobs below -1,
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
+    working_memory : int, optional
+        The sought maximum memory for temporary distance matrix chunks.
+        When None (default), the value of
+        ``sklearn.get_config()['working_memory']`` is used.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a scipy.spatial.distance metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
+
+    Yields
+    ------
+    D_chunk : array or sparse matrix
+        A contiguous slice of distance matrix, optionally processed by
+        ``reduce_func``.
+
+    Examples
+    --------
+    Without reduce_func:
+
+    >>> X = np.random.RandomState(0).rand(5, 3)
+    >>> D_chunk = next(pairwise_distances_chunked(X))
+    >>> D_chunk  # doctest: +ELLIPSIS
+    array([[0.  ..., 0.29..., 0.41..., 0.19..., 0.57...],
+           [0.29..., 0.  ..., 0.57..., 0.41..., 0.76...],
+           [0.41..., 0.57..., 0.  ..., 0.44..., 0.90...],
+           [0.19..., 0.41..., 0.44..., 0.  ..., 0.51...],
+           [0.57..., 0.76..., 0.90..., 0.51..., 0.  ...]])
+
+    Retrieve all neighbors and average distance within radius r:
+
+    >>> r = .2
+    >>> def reduce_func(D_chunk, start):
+    ...     neigh = [np.flatnonzero(d < r) for d in D_chunk]
+    ...     avg_dist = (D_chunk * (D_chunk < r)).mean(axis=1)
+    ...     return neigh, avg_dist
+    >>> gen = pairwise_distances_chunked(X, reduce_func=reduce_func)
+    >>> neigh, avg_dist = next(gen)
+    >>> neigh
+    [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
+    >>> avg_dist  # doctest: +ELLIPSIS
+    array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
+
+    Where r is defined per sample, we need to make use of ``start``:
+
+    >>> r = [.2, .4, .4, .3, .1]
+    >>> def reduce_func(D_chunk, start):
+    ...     neigh = [np.flatnonzero(d < r[i])
+    ...              for i, d in enumerate(D_chunk, start)]
+    ...     return neigh
+    >>> neigh = next(pairwise_distances_chunked(X, reduce_func=reduce_func))
+    >>> neigh
+    [array([0, 3]), array([0, 1]), array([2]), array([0, 3]), array([4])]
+
+    Force row-by-row generation by reducing ``working_memory``:
+
+    >>> gen = pairwise_distances_chunked(X, reduce_func=reduce_func,
+    ...                                  working_memory=0)
+    >>> next(gen)
+    [array([0, 3])]
+    >>> next(gen)
+    [array([0, 1])]
+    """
+    n_samples_X = _num_samples(X)
+    if metric == 'precomputed':
+        slices = (slice(0, n_samples_X),)
+    else:
+        if Y is None:
+            Y = X
+        # We get as many rows as possible within our working_memory budget to
+        # store len(Y) distances in each row of output.
+        #
+        # Note:
+        #  - this will get at least 1 row, even if 1 row of distances will
+        #    exceed working_memory.
+        #  - this does not account for any temporary memory usage while
+        #    calculating distances (e.g. difference of vectors in manhattan
+        #    distance.
+        chunk_n_rows = get_chunk_n_rows(row_bytes=8 * _num_samples(Y),
+                                        max_n_rows=n_samples_X,
+                                        working_memory=working_memory)
+        slices = gen_batches(n_samples_X, chunk_n_rows)
+
+    for sl in slices:
+        if sl.start == 0 and sl.stop == n_samples_X:
+            X_chunk = X  # enable optimised paths for X is Y
+        else:
+            X_chunk = X[sl]
+        D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
+                                     n_jobs=n_jobs, **kwds)
+        if reduce_func is not None:
+            chunk_size = D_chunk.shape[0]
+            D_chunk = reduce_func(D_chunk, sl.start)
+            _check_chunk_size(D_chunk, chunk_size)
+        yield D_chunk
+
+
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
@@ -1186,7 +1333,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         Array of pairwise distances between samples, or a feature array.
 
     Y : array [n_samples_b, n_features], optional
-        An optional second feature array. Only allowed if metric != "precomputed".
+        An optional second feature array. Only allowed if
+        metric != "precomputed".
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -1224,6 +1372,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     See also
     --------
+    pairwise_distances_chunked : performs the same calculation as this funtion,
+        but returns a generator of chunks of the distance matrix, in order to
+        limit memory usage.
     paired_distances : Computes the distances between corresponding
                        elements of two arrays
     """

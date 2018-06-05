@@ -1929,7 +1929,7 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int, None, optional
+    test_size : float, int or None, optional (default=0.25)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
@@ -1938,7 +1938,7 @@ def train_test_split(*arrays, **options):
         if ``train_size`` is unspecified, otherwise it will complement
         the specified ``train_size``.
 
-    train_size : float, int, or None, default None
+    train_size : float, int, or None, (default=None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
@@ -1954,7 +1954,7 @@ def train_test_split(*arrays, **options):
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like or None (default is None)
+    stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
