@@ -142,6 +142,10 @@ Classifiers and regressors
   several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
   and :user:`Minghui Liu <minghui-liu>`.
 
+- In both :class:`ensemble.RandomForestClassifier` and `ensemble.ExtraTreesClassifier`,
+  the default `n_estimators` parameter value has been changed to 100. A deprecation warning
+  is now raised when `n_estimators=10`. :issue:`11128` by :user:`Olamilekan Wahab <olamyy>`
+
 - Add `named_estimators_` parameter in
   :class:`ensemble.VotingClassifier` to access fitted
   estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.

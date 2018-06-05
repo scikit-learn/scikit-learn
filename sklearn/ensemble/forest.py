@@ -65,6 +65,7 @@ from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils import deprecated
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -156,6 +157,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
         self.warm_start = warm_start
         self.class_weight = class_weight
+
+        if self.n_estimators == 10:
+            warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                          "will be removed in 0.15.", DeprecationWarning)
+            self.n_estimators = 100
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -755,7 +761,7 @@ class RandomForestClassifier(ForestClassifier):
 
     Parameters
     ----------
-    n_estimators : integer, optional (default=10)
+    n_estimators : integer, optional (default=100)
         The number of trees in the forest.
 
     criterion : string, optional (default="gini")
@@ -971,7 +977,7 @@ class RandomForestClassifier(ForestClassifier):
     DecisionTreeClassifier, ExtraTreesClassifier
     """
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=10,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1029,7 +1035,7 @@ class RandomForestRegressor(ForestRegressor):
 
     Parameters
     ----------
-    n_estimators : integer, optional (default=10)
+    n_estimators : integer, optional (default=100)
         The number of trees in the forest.
 
     criterion : string, optional (default="mse")
@@ -1265,7 +1271,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Parameters
     ----------
-    n_estimators : integer, optional (default=10)
+    n_estimators : integer, optional (default=100)
         The number of trees in the forest.
 
     criterion : string, optional (default="gini")
@@ -1453,7 +1459,7 @@ class ExtraTreesClassifier(ForestClassifier):
         splits.
     """
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=10,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
