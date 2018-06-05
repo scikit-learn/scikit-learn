@@ -304,9 +304,13 @@ FeatureUnion: composite feature spaces
 :class:`FeatureUnion` combines several transformer objects into a new
 transformer that combines their output. A :class:`FeatureUnion` takes
 a list of transformer objects. During fitting, each of these
-is fit to the data independently. For transforming data, the
-transformers are applied in parallel, and the sample vectors they output
-are concatenated end-to-end into larger vectors.
+is fit to the data independently. The transformers are applied in parallel,
+and the feature matrices they output are concatenated side-by-side into a
+larger matrix.
+
+When you want to apply different transformations to each field of the data,
+see the related class :class:`sklearn.compose.ColumnTransformer`
+(see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -357,4 +361,102 @@ and ignored by setting to ``None``::
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`
- * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`
+
+
+.. _column_transformer:
+
+ColumnTransformer for heterogeneous data
+========================================
+
+.. warning::
+
+    The :class:`compose.ColumnTransformer <sklearn.compose.ColumnTransformer>`
+    class is experimental and the API is subject to change.
+
+Many datasets contain features of different types, say text, floats, and dates,
+where each type of feature requires separate preprocessing or feature
+extraction steps.  Often it is easiest to preprocess data before applying
+scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
+Processing your data before passing it to scikit-learn might be problematic for
+one of the following reasons:
+
+1. Incorporating statistics from test data into the preprocessors makes
+   cross-validation scores unreliable (known as *data leakage*),
+   for example in the case of scalers or imputing missing values.
+2. You may want to include the parameters of the preprocessors in a
+   :ref:`parameter search <grid_search>`.
+
+The :class:`~sklearn.compose.ColumnTransformer` helps performing different
+transformations for different columns of the data, within a
+:class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
+be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
+arrays, sparse matrices, and
+`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
+
+To each column, a different transformation can be applied, such as
+preprocessing or a specific feature extraction method::
+
+  >>> import pandas as pd
+  >>> X = pd.DataFrame(
+  ...     {'city': ['London', 'London', 'Paris', 'Sallisaw'],
+  ...      'title': ["His Last Bow", "How Watson Learned the Trick",
+  ...                "A Moveable Feast", "The Grapes of Wrath"]})
+
+For this data, we might want to encode the ``'city'`` column as a categorical
+variable, but apply a :class:`feature_extraction.text.CountVectorizer
+<sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
+As we might use multiple feature extraction methods on the same column, we give
+each transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
+
+  >>> from sklearn.compose import ColumnTransformer
+  >>> from sklearn.feature_extraction.text import CountVectorizer
+  >>> column_trans = ColumnTransformer(
+  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...      ('title_bow', CountVectorizer(), 'title')])
+
+  >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+      transformers=...)
+
+  >>> column_trans.get_feature_names()
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ['city_category__London', 'city_category__Paris', 'city_category__Sallisaw',
+  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
+  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
+  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
+  'title_bow__wrath']
+
+  >>> column_trans.transform(X).toarray()
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+         [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0],
+         [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1]]...)
+
+In the above example, the
+:class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
+input and therefore the columns were specified as a string (``'city'``).
+However, other transformers generally expect 2D data, and in that case you need
+to specify the column as a list of strings (``['city']``).
+
+Apart from a scalar or a single item list, the column selection can be specified
+as a list of multiple items, an integer array, a slice, or a boolean mask.
+Strings can reference columns if the input is a DataFrame, integers are always
+interpreted as the positional columns.
+
+The :func:`~sklearn.compose.make_columntransformer` function is available
+to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
+Specifically, the names will be given automatically. The equivalent for the
+above example would be::
+
+  >>> from sklearn.compose import make_column_transformer
+  >>> column_trans = make_column_transformer(
+  ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
+  ...     ('title', CountVectorizer()))
+  >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+           transformers=[('countvectorizer-1', ...)
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_column_transformer.py`

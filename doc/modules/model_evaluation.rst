@@ -859,10 +859,10 @@ specified by the ``average`` argument to the
 :func:`average_precision_score` (multilabel only), :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
-:ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
-with all labels included will produce equal precision, recall and :math:`F`,
-while "weighted" averaging may produce an F-score that is not between
-precision and recall.
+:ref:`above <average>`. Note that if all labels are included, "micro"-averaging
+in a multiclass setting will produce precision, recall and :math:`F`
+that are all identical to accuracy. Also note that "weighted" averaging may
+produce an F-score that is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 
