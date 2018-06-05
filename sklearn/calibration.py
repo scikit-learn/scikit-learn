@@ -402,7 +402,6 @@ class _CalibratedClassifier(object):
         return proba
 
     def _transform_proba(self, df, idx_pos_class, n_classes):
-        n_classes = n_classes
         proba = np.zeros(shape=(df.shape[0], n_classes))
         for k, this_df, calibrator in \
                 zip(idx_pos_class, df.T, self.calibrators_):
