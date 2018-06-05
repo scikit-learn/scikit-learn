@@ -704,15 +704,12 @@ Complexity
 
 Training
 ^^^^^^^^
-First, time complexity depends on the number of iterations done. Besides,
-currently the algorithm has to compute, for each sample, its contribution to
-the cost and the gradient. The dominating terms in this computation are
-the dot products between differences in the input space and differences in the
-embedded space, which has complexity ``n_features_out * n_features *
-n_samples``. Therefore time complexity is ``O[n_iterations * n_samples^2 *
-n_features * n_features_out]`` In addition, the biggest matrix in memory has
-size ``max(n_features * n_features_out, n_features * n_samples,
-n_features_out * n_samples)``.
+NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
+Time complexity depends on the number of iterations done by the optimisation
+ algorithm. However, one can set the maximum number of iterations with the
+ argument ``max_iter``. For each iteration, time complexity is
+ ``O(n_features_out x n_samples x min(n_samples, n_features)``.
+
 
 Transform
 ^^^^^^^^^
