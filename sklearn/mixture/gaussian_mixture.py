@@ -460,9 +460,7 @@ class GaussianMixture(BaseMixture):
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
-        lower bound average gain is below this threshold. If 'warm_start' is
-        True and 'max_iter' is 1, then the lower bound after the single
-        iteration is compared to the lower bound after the last fit().
+        lower bound average gain is below this threshold.
 
     reg_covar : float, defaults to 1e-6.
         Non-negative regularization added to the diagonal of covariance.

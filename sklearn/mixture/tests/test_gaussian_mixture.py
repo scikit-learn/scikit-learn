@@ -803,32 +803,6 @@ def test_convergence_detected_with_warm_start():
         assert max_iter >= gmm.n_iter_
 
 
-@ignore_warnings(category=ConvergenceWarning)
-def test_no_convergence_at_1st_iter_if_warm_start_and_max_iter_greater_1():
-    # When warm_start=True and max_iter > 1, if we change dataset, we don't
-    # want to detect convergence by mistake at the first iteration if
-    # lower_bound_ is very close to the lower_bound_ after the previous call
-    # to the fit method.
-    # Unlikely, but possible and problematic, so we might as well avoid it.
-    rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
-    n_components = rand_data.n_components
-    X = rand_data.X['full']
-    idx = len(X) // 2
-    X1, X2 = X[:idx], X[idx:]
-    max_iter = 5
-
-    gmm = GaussianMixture(n_components=n_components, warm_start=True,
-                          max_iter=max_iter, tol=0., random_state=rng)
-    gmm.fit(X1)
-    assert not gmm.converged_
-    assert gmm.n_iter_ == max_iter
-    gmm.tol = np.infty
-    gmm.fit(X2)
-    assert gmm.converged_
-    assert gmm.n_iter_ == 2
-
-
 def test_score():
     covar_type = 'full'
     rng = np.random.RandomState(0)

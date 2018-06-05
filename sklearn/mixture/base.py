@@ -179,11 +179,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         ``tol``, otherwise, a ``ConvergenceWarning`` is raised.
         If ``warm_start`` is ``True``, then ``n_init`` is ignored and a single
         initialization is performed upon the first call. Upon consecutive
-        calls, training starts where it left off. The max lower bound may be
-        lower than after the last call if you fit a different dataset. If
-        ``max_iter`` is 1, the method detects convergence by comparing the
-        lower bound after the single iteration with the lower bound after the
-        last call (the dataset is assumed to be the same).
+        calls, training starts where it left off.
 
         Parameters
         ----------
@@ -214,8 +210,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             if do_init:
                 self._initialize_parameters(X, random_state)
 
-            lower_bound = (-np.infty if do_init or self.max_iter > 1
-                           else self.lower_bound_)
+            lower_bound = (-np.infty if do_init else self.lower_bound_)
 
             for n_iter in range(1, self.max_iter + 1):
                 prev_lower_bound = lower_bound
