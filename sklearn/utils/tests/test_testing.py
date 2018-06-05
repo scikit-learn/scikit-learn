@@ -229,9 +229,8 @@ class TestWarns(unittest.TestCase):
         warnings.simplefilter("ignore", UserWarning)
         assert_equal(assert_warns(UserWarning, f), 3)
 
-        # Test that the warning registry gets restored after assert_warns
-        assert_equal(warnings.filters,
-                     [('ignore', None, UserWarning, None, 0)])
+        # Test that the warning registry is empty after assert_warns
+        assert_equal(sys.modules['warnings'].filters, [])
 
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
