@@ -480,7 +480,7 @@ def test_incremental_variance_update_formulas():
 
     old_means = X1.mean(axis=0)
     old_variances = X1.var(axis=0)
-    old_sample_count = X1.shape[0]
+    old_sample_count = np.ones(X1.shape[1], dtype=np.int32) * X1.shape[0]
     final_means, final_variances, final_count = \
         _incremental_mean_and_var(X2, old_means, old_variances,
                                   old_sample_count)
@@ -558,12 +558,13 @@ def test_incremental_variance_numerical_stability():
     assert_greater(np.abs(stable_var(A) - var).max(), tol)
 
     # Robust implementation: <tol (177)
-    mean, var, n = A0[0, :], np.zeros(n_features), n_samples // 2
+    mean, var = A0[0, :], np.zeros(n_features)
+    n = np.ones(n_features, dtype=np.int32) * (n_samples // 2)
     for i in range(A1.shape[0]):
         mean, var, n = \
             _incremental_mean_and_var(A1[i, :].reshape((1, A1.shape[1])),
                                       mean, var, n)
-    assert_equal(n, A.shape[0])
+    assert_array_equal(n, A.shape[0])
     assert_array_almost_equal(A.mean(axis=0), mean)
     assert_greater(tol, np.abs(stable_var(A) - var).max())
 
@@ -585,7 +586,8 @@ def test_incremental_variance_ddof():
                 incremental_variances = batch.var(axis=0)
                 # Assign this twice so that the test logic is consistent
                 incremental_count = batch.shape[0]
-                sample_count = batch.shape[0]
+                sample_count = (np.ones(batch.shape[1], dtype=np.int32) *
+                                batch.shape[0])
             else:
                 result = _incremental_mean_and_var(
                     batch, incremental_means, incremental_variances,
@@ -599,7 +601,7 @@ def test_incremental_variance_ddof():
             assert_almost_equal(incremental_means, calculated_means, 6)
             assert_almost_equal(incremental_variances,
                                 calculated_variances, 6)
-            assert_equal(incremental_count, sample_count)
+            assert_array_equal(incremental_count, sample_count)
 
 
 def test_vector_sign_flip():
