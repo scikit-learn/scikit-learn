@@ -580,7 +580,7 @@ columns for this feature will be all zeros
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS
-    OneHotEncoder(ccategorical_features=None, categories=None,
+    OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
