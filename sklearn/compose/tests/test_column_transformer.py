@@ -343,12 +343,13 @@ def test_make_column_transformer_kwargs():
     scaler = StandardScaler()
     norm = Normalizer()
     ct = make_column_transformer(('first', scaler), (['second'], norm),
-                                 n_jobs=3)
+                                 n_jobs=3, remainder='drop')
     assert_equal(
         ct.transformers,
         make_column_transformer(('first', scaler),
                                 (['second'], norm)).transformers)
     assert_equal(ct.n_jobs, 3)
+    assert_equal(ct.remainder, 'drop')
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,

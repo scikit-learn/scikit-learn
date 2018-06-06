@@ -609,6 +609,15 @@ def make_column_transformer(*transformers, **kwargs):
     ----------
     *transformers : tuples of column selections and transformers
 
+    remainder : {'passthrough', 'drop'}, default 'passthrough'
+        By default, all remaining columns that were not specified in
+        `transformers` will be automatically passed through (default of
+        ``'passthrough'``). This subset of columns is concatenated with the
+        output of the transformers.
+        By using ``remainder='drop'``, only the specified columns in
+        `transformers` are transformed and combined in the output, and the
+        non-specified columns are dropped.
+
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
@@ -641,8 +650,10 @@ def make_column_transformer(*transformers, **kwargs):
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)
+    remainder = kwargs.pop('remainder', 'passthrough')
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
-    return ColumnTransformer(transformer_list, n_jobs=n_jobs)
+    return ColumnTransformer(transformer_list, n_jobs=n_jobs,
+                             remainder=remainder)
