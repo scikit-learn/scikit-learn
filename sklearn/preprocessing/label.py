@@ -45,7 +45,7 @@ def _check_pandas():
 
     if _PANDAS_INSTALLED is None:
         try:
-            import pandas
+            import pandas  # noqa
             _PANDAS_INSTALLED = True
         except ImportError:
             _PANDAS_INSTALLED = False
@@ -70,28 +70,28 @@ def _check_pandas():
 
 def _factorize_numpy(values):
     # unique sorts
-    return np.unique(values), None
+    return np.unique(values)
 
 
 def _encode_numpy(values, uniques):
     return np.searchsorted(uniques, values)
 
 
-def _factorize_sets(values, uniques=None, encode=True):
+def _factorize_python(values):
     uniques = sorted(set(values))
     uniques = np.array(uniques, dtype=values.dtype)
+    return uniques
+
+
+def _encode_python(values, uniques):
     table = {val: i for i, val in enumerate(uniques)}
-    return uniques, table
-
-
-def _encode_dict(values, uniques, table):
     return np.array([table[v] for v in values])
 
 
 def _factorize_pandas(values):
     import pandas as pd
     _, categories = pd.factorize(values, sort=True)
-    return categories, None
+    return np.array(categories, dtype=values.dtype)
 
 
 def _encode_pandas(values, uniques):
@@ -104,19 +104,17 @@ def _factorize(values):
     if has_pd:
         return _factorize_pandas(values)
     elif values.dtype == object:
-        return _factorize_sets(values)
+        return _factorize_python(values)
     else:
         return _factorize_numpy(values)
 
 
-def _encode(values, uniques, table):
+def _encode(values, uniques):
     has_pd = _check_pandas()
     if has_pd:
         return _encode_pandas(values, uniques)
     elif values.dtype == object:
-        if table is None:
-            table = {val: i for i, val in enumerate(uniques)}
-        return _encode_dict(values, uniques, table)
+        return _encode_python(values, uniques)
     else:
         return _encode_numpy(values, uniques)
 
@@ -178,7 +176,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_, self._table = _factorize(y)
+        self.classes_ = _factorize(y)
         return self
 
     # def fit_transform(self, y):
@@ -217,7 +215,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError(
                     "y contains previously unseen labels: %s" % str(diff))
-        return _encode(y, uniques=self.classes_, table=self._table)
+        return _encode(y, uniques=self.classes_)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.

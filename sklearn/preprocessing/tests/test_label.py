@@ -26,8 +26,8 @@ from sklearn.preprocessing.label import label_binarize
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
 from sklearn.preprocessing.label import (
-    _encode_numpy, _encode_pandas, _encode_dict, _factorize_numpy,
-    _factorize_pandas, _factorize_sets)
+    _encode_numpy, _encode_pandas, _encode_python, _factorize_numpy,
+    _factorize_pandas, _factorize_python)
 
 from sklearn import datasets
 
@@ -535,16 +535,16 @@ def test_factorize_encode_utils(engine, values, expected):
 
     if engine == 'numpy':
         factorize = lambda values: _factorize_numpy(values)
-        encode = lambda values, uniques, table: _encode_numpy(values, uniques)
+        encode = lambda values, uniques: _encode_numpy(values, uniques)
     elif engine == 'python':
-        factorize = lambda values: _factorize_sets(values)
-        encode = lambda values, uniques, table: _encode_dict(values, uniques, table)
+        factorize = lambda values: _factorize_python(values)
+        encode = lambda values, uniques: _encode_python(values, uniques)
     elif engine == 'pandas':
         pytest.importorskip('pandas')
         factorize = lambda values: _factorize_pandas(values)
-        encode = lambda values, uniques, table: _encode_pandas(values, uniques)
+        encode = lambda values, uniques: _encode_pandas(values, uniques)
 
-    uniques, table = factorize(values)
+    uniques = factorize(values)
     assert_array_equal(uniques, expected)
-    encoded = encode(values, uniques, table)
+    encoded = encode(values, uniques)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
