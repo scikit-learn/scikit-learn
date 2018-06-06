@@ -737,9 +737,15 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    # Avoid 0.0 / 0.0 when either entropy is zero.
     denominator = normalizer - emi
-    denominator = max(denominator, np.finfo('float64').eps)
+    # Avoid 0.0 / 0.0 when expectation equals maximum, i.e a perfect match.
+    # normalizer should always be >= emi, but because of floating-point
+    # representation, sometimes emi is slightly larger. Correct this
+    # by preserving the sign.
+    if denominator < 0:
+        denominator = min(denominator, -np.finfo('float64').eps)
+    else:
+        denominator = max(denominator, np.finfo('float64').eps)
     ami = (mi - emi) / denominator
     return ami
 
