@@ -1,11 +1,15 @@
+from types import GeneratorType
+
 import numpy as np
 from numpy import linalg
+import pytest
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
@@ -14,6 +18,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.externals.six import iteritems
 
@@ -28,6 +33,7 @@ from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances_chunked
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
@@ -368,9 +374,127 @@ def test_pairwise_distances_argmin_min():
     dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
 
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
-        X, Y, axis=0, metric="manhattan", batch_size=50)
+        X, Y, axis=0, metric="manhattan")
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+    # Test batch_size deprecation warning
+    assert_warns_message(DeprecationWarning, "version 0.22",
+                         pairwise_distances_argmin_min, X, Y, batch_size=500,
+                         metric='euclidean')
+
+
+def _reduce_func(dist, start):
+    return dist[:, :100]
+
+
+def test_pairwise_distances_chunked_reduce():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((400, 4))
+    # Reduced Euclidean distance
+    S = pairwise_distances(X)[:, :100]
+    S_chunks = pairwise_distances_chunked(X, None, reduce_func=_reduce_func,
+                                          working_memory=2 ** -16)
+    assert isinstance(S_chunks, GeneratorType)
+    S_chunks = list(S_chunks)
+    assert len(S_chunks) > 1
+    # atol is for diagonal where S is explicitly zeroed on the diagonal
+    assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
+
+
+@pytest.mark.parametrize('good_reduce', [
+    lambda D, start: list(D),
+    lambda D, start: np.array(D),
+    lambda D, start: csr_matrix(D),
+    lambda D, start: (list(D), list(D)),
+    lambda D, start: (dok_matrix(D), np.array(D), list(D)),
+    ])
+def test_pairwise_distances_chunked_reduce_valid(good_reduce):
+    X = np.arange(10).reshape(-1, 1)
+    S_chunks = pairwise_distances_chunked(X, None, reduce_func=good_reduce,
+                                          working_memory=64)
+    next(S_chunks)
+
+
+@pytest.mark.parametrize(('bad_reduce', 'err_type', 'message'), [
+    (lambda D, s: np.concatenate([D, D[-1:]]), ValueError,
+     r'length 11\..* input: 10\.'),
+    (lambda D, s: (D, np.concatenate([D, D[-1:]])), ValueError,
+     r'length \(10, 11\)\..* input: 10\.'),
+    (lambda D, s: (D[:9], D), ValueError,
+     r'length \(9, 10\)\..* input: 10\.'),
+    (lambda D, s: 7, TypeError,
+     r'returned 7\. Expected sequence\(s\) of length 10\.'),
+    (lambda D, s: (7, 8), TypeError,
+     r'returned \(7, 8\)\. Expected sequence\(s\) of length 10\.'),
+    (lambda D, s: (np.arange(10), 9), TypeError,
+     r', 9\)\. Expected sequence\(s\) of length 10\.'),
+])
+def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type,
+                                                   message):
+    X = np.arange(10).reshape(-1, 1)
+    S_chunks = pairwise_distances_chunked(X, None, reduce_func=bad_reduce,
+                                          working_memory=64)
+    assert_raises_regexp(err_type, message, next, S_chunks)
+
+
+def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
+    gen = pairwise_distances_chunked(X, Y, working_memory=working_memory,
+                                     metric=metric)
+    assert isinstance(gen, GeneratorType)
+    blockwise_distances = list(gen)
+    Y = np.array(X if Y is None else Y)
+    min_block_mib = len(Y) * 8 * 2 ** -20
+
+    for block in blockwise_distances:
+        memory_used = block.nbytes
+        assert memory_used <= max(working_memory, min_block_mib) * 2 ** 20
+
+    blockwise_distances = np.vstack(blockwise_distances)
+    S = pairwise_distances(X, Y, metric=metric)
+    assert_array_almost_equal(blockwise_distances, S)
+
+
+@ignore_warnings
+def test_pairwise_distances_chunked():
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((400, 4))
+    check_pairwise_distances_chunked(X, None, working_memory=1,
+                                     metric='euclidean')
+    # Test small amounts of memory
+    for power in range(-16, 0):
+        check_pairwise_distances_chunked(X, None, working_memory=2 ** power,
+                                         metric='euclidean')
+    # X as list
+    check_pairwise_distances_chunked(X.tolist(), None, working_memory=1,
+                                     metric='euclidean')
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((200, 4))
+    check_pairwise_distances_chunked(X, Y, working_memory=1,
+                                     metric='euclidean')
+    check_pairwise_distances_chunked(X.tolist(), Y.tolist(), working_memory=1,
+                                     metric='euclidean')
+    # absurdly large working_memory
+    check_pairwise_distances_chunked(X, Y, working_memory=10000,
+                                     metric='euclidean')
+    # "cityblock" uses scikit-learn metric, cityblock (function) is
+    # scipy.spatial.
+    check_pairwise_distances_chunked(X, Y, working_memory=1,
+                                     metric='cityblock')
+    # Test that a value error is raised if the metric is unknown
+    assert_raises(ValueError, next,
+                  pairwise_distances_chunked(X, Y, metric="blah"))
+
+    # Test precomputed returns all at once
+    D = pairwise_distances(X)
+    gen = pairwise_distances_chunked(D,
+                                     working_memory=2 ** -16,
+                                     metric='precomputed')
+    assert isinstance(gen, GeneratorType)
+    assert next(gen) is D
+    assert_raises(StopIteration, next, gen)
 
 
 def test_euclidean_distances():

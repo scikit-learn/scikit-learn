@@ -107,10 +107,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         `remove_zero_eig` are not set, then all components are stored.
 
     dual_coef_ : array, (n_samples, n_features)
-        Inverse transform matrix. Set if `fit_inverse_transform` is True.
+        Inverse transform matrix. Only available when
+        ``fit_inverse_transform`` is True.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
+        Only available when ``fit_inverse_transform`` is True.
 
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
