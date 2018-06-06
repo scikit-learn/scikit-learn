@@ -250,7 +250,7 @@ def test_imputation_constant_float():
     ])
 
     imputer = SimpleImputer(strategy="constant", fill_value=0)
-    X_trans = imputer.fit(X).transform(X)  
+    X_trans = imputer.fit(X).transform(X)
 
     assert_allclose(X_trans, X_true)
 
@@ -272,8 +272,9 @@ def test_imputation_constant_object():
         ["g", "h", "i"]
     ])
 
-    imputer = SimpleImputer(missing_values=None, strategy="constant", fill_value="missing")
-    X_trans = imputer.fit(X).transform(X) 
+    imputer = SimpleImputer(missing_values=None, strategy="constant",
+                            fill_value="missing")
+    X_trans = imputer.fit(X).transform(X)
 
     assert_array_equal(X_trans, X_true)
 
@@ -295,8 +296,9 @@ def test_imputation_constant_object_nan():
         ["g", "h", "i"]
     ], dtype=object)
 
-    imputer = SimpleImputer(missing_values=None, strategy="constant", fill_value="missing")
-    X_trans = imputer.fit(X).transform(X)  
+    imputer = SimpleImputer(missing_values=None, strategy="constant",
+                            fill_value="missing")
+    X_trans = imputer.fit(X).transform(X)
 
     assert_array_equal(X_trans, X_true)
 
