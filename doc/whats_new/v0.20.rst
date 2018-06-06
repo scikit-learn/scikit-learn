@@ -496,6 +496,10 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+- Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
+  when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
+  Morales <DanielMorales9>`.
+
 Feature selection
 
 - Fixed computation of ``n_features_to_compute`` for edge case with tied CV
