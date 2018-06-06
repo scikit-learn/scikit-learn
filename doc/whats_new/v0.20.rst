@@ -453,6 +453,10 @@ Preprocessing
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+- Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
+  when returning a sparse matrix output. :issue:`11034` by :user:`Daniel
+  Morales <DanielMorales9>`.
+
 Model evaluation and meta-estimators
 
 - Add improved error message in :func:`model_selection.cross_val_score` when
