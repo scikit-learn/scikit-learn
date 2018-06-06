@@ -55,11 +55,11 @@ def check_clusterings(labels_true, labels_pred):
 def _generalized_average(U, V, average_method):
     """Return a particular mean of two numbers."""
     if average_method == "min":
-        return max(min(U, V), 1e-10)
+        return min(U, V)
     elif average_method == "geometric":
-        return max(np.sqrt(U * V), 1e-10)  # Avoids zero-division error
+        return np.sqrt(U * V)
     elif average_method == "arithmetic":
-        return max(np.mean([U, V]), 1e-10)
+        return np.mean([U, V])
     elif average_method == "max":
         return max(U, V)
     else:
@@ -713,9 +713,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
 
     """
     if average_method is None:
-        warnings.warn("The behavior of AMI will change in a future version. "
+        warnings.warn("The behavior of AMI will change in version 0.22. "
                       "To match the behavior of 'v_measure_score', AMI will "
-                      "use arithmetic mean by default."
+                      "use average_method='arithmetic' by default."
                       )
         average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -737,7 +737,10 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    ami = (mi - emi) / (normalizer - emi)
+    # Avoid 0.0 / 0.0 when either entropy is zero.
+    denominator = normalizer - emi
+    denominator = max(denominator, np.finfo('float64').eps)
+    ami = (mi - emi) / denominator
     return ami
 
 
@@ -813,9 +816,9 @@ def normalized_mutual_info_score(labels_true, labels_pred,
 
     """
     if average_method is None:
-        warnings.warn("The behavior of NMI will change in a future version. "
+        warnings.warn("The behavior of NMI will change in version 0.22. "
                       "To match the behavior of 'v_measure_score', NMI will "
-                      "use arithmetic mean by default."
+                      "use average_method='arithmetic' by default."
                       )
         average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -835,6 +838,8 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
+    # Avoid 0.0 / 0.0 when either entropy is zero.
+    normalizer = max(normalizer, np.finfo('float64').eps)
     nmi = mi / normalizer
     return nmi
 

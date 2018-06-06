@@ -1186,7 +1186,8 @@ value is typically some mean of the entropies of each clustering. Various means 
 and no firm rules exist for preferring one over the others.  The decision is largely 
 a field-by-field basis; for instance, in community detection, the arithmetic mean is
 most common. Yang et al. (2016) found that each normalizing method provided 
-"qualitatively similar behaviours".
+"qualitatively similar behaviours". In our implementation, this is
+controlled by the ``average_method`` parameter.
 
 Vinh et al. (2010) named variants of NMI and AMI by their averaging method. Their
 'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
