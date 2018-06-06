@@ -497,7 +497,7 @@ Preprocessing
   <newey01c>`.
 
 - Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
-  when returning a sparse matrix output. :issue:`11034` by :user:`Daniel
+  when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
   Morales <DanielMorales9>`.
 
 Feature selection
