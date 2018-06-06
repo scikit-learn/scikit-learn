@@ -724,6 +724,7 @@ class SGDClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -801,8 +802,6 @@ class SGDClassifier(BaseSGDClassifier):
             average=average, n_iter=n_iter)
 
     def _check_proba(self):
-        check_is_fitted(self, "t_")
-
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
@@ -847,6 +846,8 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
+        check_is_fitted(self, "t_")
+
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -1281,6 +1282,7 @@ class SGDRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time

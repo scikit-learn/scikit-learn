@@ -5,7 +5,7 @@
 Importance of Feature Scaling
 =========================================================
 
-Feature scaling though standardization (or Z-score normalization)
+Feature scaling through standardization (or Z-score normalization)
 can be an important preprocessing step for many machine learning
 algorithms. Standardization involves rescaling the features such
 that they have the properties of a standard normal distribution
@@ -89,7 +89,7 @@ print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test_std)))
 pca = unscaled_clf.named_steps['pca']
 pca_std = std_clf.named_steps['pca']
 
-# Show first principal componenets
+# Show first principal components
 print('\nPC 1 without scaling:\n', pca.components_[0])
 print('\nPC 1 with scaling:\n', pca_std.components_[0])
 

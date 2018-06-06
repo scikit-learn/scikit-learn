@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True):
+                   percent10=True, download_if_missing=True, return_X_y=False):
     """Load and return the kddcup 99 dataset (classification).
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
@@ -139,14 +139,11 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset. If subset='SA', this random
-        state is also used to randomly select the small proportion of abnormal
-        samples.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and for
+        selection of abnormal samples if `subset='SA'`. Pass an int for
+        reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
@@ -155,6 +152,12 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object. See
+        below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     data : Bunch
@@ -162,6 +165,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         'data', the data to learn and 'target', the regression target for each
         sample.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
 
     References
     ----------
@@ -230,12 +236,14 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data, target=target)
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, random_state=None,
-                          percent10=True):
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -248,13 +256,6 @@ def _fetch_brute_kddcup99(data_home=None,
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.

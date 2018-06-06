@@ -220,7 +220,7 @@ The 2013 Paris international sprint
    :target: https://www.tinyclues.com/
 
 
-.. |afpy| image:: https://www.afpy.org/logo.png
+.. |afpy| image:: https://www.afpy.org/static/images/logo.svg
    :width: 120pt
    :target: https://www.afpy.org
 
