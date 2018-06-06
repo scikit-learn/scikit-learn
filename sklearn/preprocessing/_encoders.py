@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-def _transform_selected(X, transform, selected="all", copy=True):
+def _transform_selected(X, transform, dtype, selected="all", copy=True):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -38,6 +38,9 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
     transform : callable
         A callable transform(X) -> X_transformed
+
+    dtype : number type
+        Desired dtype of output.
 
     copy : boolean, optional
         Copy X even if it could be avoided.
@@ -72,7 +75,10 @@ def _transform_selected(X, transform, selected="all", copy=True):
         return transform(X)
     else:
         X_sel = transform(X[:, ind[sel]])
-        X_not_sel = X[:, ind[not_sel]]
+        # The columns of X which are not transformed need
+        # to be casted to the desire dtype before concatenation.
+        # Otherwise, the stacking will cast to the higher-precision dtype.
+        X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
         if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
             return sparse.hstack((X_sel, X_not_sel))
@@ -444,7 +450,7 @@ class OneHotEncoder(_BaseEncoder):
         self._handle_deprecations(X)
 
         if self._legacy_mode:
-            _transform_selected(X, self._legacy_fit_transform,
+            _transform_selected(X, self._legacy_fit_transform, self.dtype,
                                 self._categorical_features,
                                 copy=True)
             return self
@@ -526,8 +532,9 @@ class OneHotEncoder(_BaseEncoder):
         self._handle_deprecations(X)
 
         if self._legacy_mode:
-            return _transform_selected(X, self._legacy_fit_transform,
-                                       self._categorical_features, copy=True)
+            return _transform_selected(
+                X, self._legacy_fit_transform, self.dtype,
+                self._categorical_features, copy=True)
         else:
             return self.fit(X).transform(X)
 
@@ -615,7 +622,7 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         if self._legacy_mode:
-            return _transform_selected(X, self._legacy_transform,
+            return _transform_selected(X, self._legacy_transform, self.dtype,
                                        self._categorical_features,
                                        copy=True)
         else:

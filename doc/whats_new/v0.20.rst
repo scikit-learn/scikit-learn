@@ -63,9 +63,6 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
 
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
-
 - :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier` can now
   be fit with missing/non-finite values in X and/or multi-output Y to support
   wrapping pipelines that perform their own imputation.
@@ -267,6 +264,11 @@ Metrics
 - Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
   False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
+
+- :func:`metrics.cluster.silhouette_score` and
+  :func:`metrics.cluster.silhouette_samples` are more memory efficient and run
+  faster. This avoids some reported freezes and MemoryErrors.
+  :issue:`11135` by `Joel Nothman`_.
 
 Linear, kernelized and related models
 
@@ -493,6 +495,10 @@ Preprocessing
 - Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
+
+- Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
+  when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
+  Morales <DanielMorales9>`.
 
 Feature selection
 

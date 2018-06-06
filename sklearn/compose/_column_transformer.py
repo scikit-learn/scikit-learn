@@ -106,6 +106,12 @@ boolean mask array
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
 
+    See also
+    --------
+    sklearn.compose.make_column_transformer : convenience function for
+        combining the outputs of multiple transformer objects applied to
+        column subsets of the original feature space.
+
     Examples
     --------
     >>> from sklearn.compose import ColumnTransformer
@@ -595,6 +601,12 @@ def make_column_transformer(*transformers, **kwargs):
     Returns
     -------
     ct : ColumnTransformer
+
+    See also
+    --------
+    sklearn.compose.ColumnTransformer : Class that allows combining the
+        outputs of multiple transformer objects used on column subsets
+        of the data into a single feature space.
 
     Examples
     --------

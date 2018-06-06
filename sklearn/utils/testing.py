@@ -49,6 +49,7 @@ from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated
 
+
 additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
@@ -696,36 +697,30 @@ try:
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
 
+    #  Decorator for tests involving both BLAS calls and multiprocessing.
+    #
+    #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction
+    #  with some implementation of BLAS (or other libraries that manage an
+    #  internal posix thread pool) can cause a crash or a freeze of the Python
+    #  process.
+    #
+    #  In practice all known packaged distributions (from Linux distros or
+    #  Anaconda) of BLAS under Linux seems to be safe. So we this problem seems
+    #  to only impact OSX users.
+    #
+    #  This wrapper makes it possible to skip tests that can possibly cause
+    #  this crash under OS X with.
+    #
+    #  Under Python 3.4+ it is possible to use the `forkserver` start method
+    #  for multiprocessing to avoid this issue. However it can cause pickling
+    #  errors on interactively defined functions. It therefore not enabled by
+    #  default.
+
+    if_safe_multiprocessing_with_blas = pytest.mark.skipif(
+            sys.platform == 'darwin',
+            reason="Possible multi-process bug with some BLAS")
 except ImportError:
     pass
-
-
-def if_safe_multiprocessing_with_blas(func):
-    """Decorator for tests involving both BLAS calls and multiprocessing.
-
-    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
-    some implementation of BLAS (or other libraries that manage an internal
-    posix thread pool) can cause a crash or a freeze of the Python process.
-
-    In practice all known packaged distributions (from Linux distros or
-    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
-    only impact OSX users.
-
-    This wrapper makes it possible to skip tests that can possibly cause
-    this crash under OS X with.
-
-    Under Python 3.4+ it is possible to use the `forkserver` start method
-    for multiprocessing to avoid this issue. However it can cause pickling
-    errors on interactively defined functions. It therefore not enabled by
-    default.
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        if sys.platform == 'darwin':
-            raise SkipTest(
-                "Possible multi-process bug with some BLAS")
-        return func(*args, **kwargs)
-    return run_test
 
 
 def clean_warning_registry():
