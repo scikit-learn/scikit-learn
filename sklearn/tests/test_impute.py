@@ -219,10 +219,10 @@ def test_imputation_constant_integer():
     ])
 
     X_true = np.array([
-        [0, 2, 3],
-        [4, 0, 5],
-        [6, 7, 0],
-        [8, 9, 0]
+        [0, 2, 3, 0],
+        [4, 0, 5, 0],
+        [6, 7, 0, 0],
+        [8, 9, 0, 0]
     ])
 
     imputer = SimpleImputer(missing_values=-1, strategy="constant", 
@@ -235,24 +235,32 @@ def test_imputation_constant_integer():
 def test_imputation_constant_float():
     # Test imputation using the constant strategy
     # on floats
-    X = np.array([
-        [np.nan, 1.1, 2.2, np.nan],
-        [3.3, np.nan, 4.4, np.nan],
-        [5.5, 6.6, np.nan, np.nan],
-        [7.7, 8.8, 9.9, np.nan]
-    ])
+    for format in ["csr", "array"]:
+        X = np.array([
+            [np.nan, 1.1, 2.2, np.nan],
+            [3.3, np.nan, 4.4, np.nan],
+            [5.5, 6.6, np.nan, np.nan],
+            [7.7, 8.8, 9.9, np.nan]
+        ])
 
-    X_true = np.array([
-        [0, 1.1, 2.2],
-        [3.3, 0, 4.4],
-        [5.5, 6.6, 0],
-        [7.7, 8.8, 9.9]
-    ])
+        X = sparse.csr_matrix(X) if format == "csr" else X
 
-    imputer = SimpleImputer(strategy="constant", fill_value=0)
-    X_trans = imputer.fit(X).transform(X)
+        X_true = np.array([
+            [0, 1.1, 2.2, 0],
+            [3.3, 0, 4.4, 0],
+            [5.5, 6.6, 0, 0],
+            [7.7, 8.8, 9.9, 0]
+        ])
+        
+        X_true = sparse.csr_matrix(X_true) if format == "csr" else X_true
 
-    assert_allclose(X_trans, X_true)
+        imputer = SimpleImputer(strategy="constant", fill_value=0)
+        X_trans = imputer.fit(X).transform(X)
+
+        if format == "csr":
+            assert_allclose(X_trans.toarray(), X_true.toarray())
+        else:
+            assert_allclose(X_trans, X_true)
 
 
 def test_imputation_constant_object():
@@ -266,11 +274,11 @@ def test_imputation_constant_object():
     ], dtype=object)
 
     X_true = np.array([
-        ["missing", "a", "b"],
-        ["c", "missing", "d"],
-        ["e", "f", "missing"],
-        ["g", "h", "i"]
-    ])
+        ["missing", "a", "b", "missing"],
+        ["c", "missing", "d", "missing"],
+        ["e", "f", "missing", "missing"],
+        ["g", "h", "i", "missing"]
+    ], dtype=object)
 
     imputer = SimpleImputer(missing_values=None, strategy="constant",
                             fill_value="missing")
@@ -290,14 +298,13 @@ def test_imputation_constant_object_nan():
     ], dtype=object)
 
     X_true = np.array([
-        ["missing", "a", "b"],
-        ["c", "missing", "d"],
-        ["e", "f", "missing"],
-        ["g", "h", "i"]
+        ["missing_value", "a", "b", "missing_value"],
+        ["c", "missing_value", "d", "missing_value"],
+        ["e", "f", "missing_value", "missing_value"],
+        ["g", "h", "i", "missing_value"]
     ], dtype=object)
 
-    imputer = SimpleImputer(missing_values=None, strategy="constant",
-                            fill_value="missing")
+    imputer = SimpleImputer(strategy="constant")
     X_trans = imputer.fit(X).transform(X)
 
     assert_array_equal(X_trans, X_true)
@@ -317,10 +324,10 @@ def test_imputation_constant_pandas():
         ], dtype=dtype)
 
         X_true = np.array([
-            ["missing", "a", "b"],
-            ["c", "missing", "d"],
-            ["e", "f", "missing"],
-            ["g", "h", "i"]
+            ["missing", "a", "b", "missing"],
+            ["c", "missing", "d", "missing"],
+            ["e", "f", "missing", "missing"],
+            ["g", "h", "i", "missing"]
         ], dtype=object)
 
         imputer = SimpleImputer(strategy="constant", fill_value="missing")
