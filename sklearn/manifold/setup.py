@@ -26,6 +26,11 @@ def configuration(parent_package="", top_path=None):
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
                          extra_compile_args=eca, **blas_info)
+    config.add_extension('_mds_fast',
+                         sources=["_mds_fast.pyx", "src/_mds_pertubations.c"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         extra_compile_args=["-O3", "-fopenmp"])
 
     config.add_subpackage('tests')
 
