@@ -1,0 +1,7 @@
+# Requirements for running the examples
+numpy
+scipy
+scikit-learn
+matplotlib
+pandas
+scikit-image

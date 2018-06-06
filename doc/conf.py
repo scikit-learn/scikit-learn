@@ -252,7 +252,17 @@ sphinx_gallery_conf = {
     'backreferences_dir': os.path.join('modules', 'generated'),
     'show_memory': True,
     'reference_url': {
-        'sklearn': None}
+        'sklearn': None},
+    'examples_dirs': ['../examples'],
+    'gallery_dirs': ['auto_examples'],
+    'binder': {
+        'org': 'scikit-learn',
+        'repo': 'scikit-learn.github.io',
+        'url': 'https://mybinder.org',
+        'branch': 'master',
+        'dependencies': './binder/requirements.txt',
+        'use_jupyter_lab': True
+    }
 }
 
 
