@@ -10,7 +10,10 @@ from __future__ import print_function
 import numpy as np
 import sys
 import time
-from scipy.special import logsumexp
+try:  # scipy.misc.logsumexp is deprecated in scipy 1.0.0
+    from scipy.special import logsumexp
+except ImportError:
+    from scipy.misc import logsumexp
 from scipy.optimize import minimize
 from ..metrics import pairwise_distances
 from ..preprocessing import OneHotEncoder
