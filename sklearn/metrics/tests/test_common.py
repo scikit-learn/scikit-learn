@@ -1120,12 +1120,14 @@ def test_no_averaging_labels():
 
 @ignore_warnings
 def test_all_true_pos_label():
-    # Correct predictions should still work when there are only 1s in the actual set
+    # Correct predictions should still work when there are only 1s in the
+    # actual set
     examples = np.array([0, 1, 1, 0, 1, 1])
     all_ones = np.array([1, 1, 1])
 
     for name in METRICS_WITH_POS_LABEL:
         if not name == 'roc_curve':
             metric = ALL_METRICS[name]
-            perfect_score = metric(examples, examples)
-            assert_almost_equal(perfect_score, metric(all_ones, all_ones))
+            perfect_score = metric(examples, examples, pos_label=1)
+            assert_almost_equal(
+                perfect_score, metric(all_ones, all_ones, pos_label=1))
