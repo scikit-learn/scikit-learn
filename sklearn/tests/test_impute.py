@@ -225,7 +225,7 @@ def test_imputation_constant_integer():
         [8, 9, 0]
     ])
 
-    imputer = SimpleImputer(missing_value=-1, strategy="constant", 
+    imputer = SimpleImputer(missing_values=-1, strategy="constant", 
                             fill_value=0)
     X_trans = imputer.fit(X).transform(X)
 
@@ -266,13 +266,13 @@ def test_imputation_constant_object():
     ], dtype=object)
 
     X_true = np.array([
-        ["Z", "a", "b"],
-        ["c", "Z", "d"],
-        ["e", "f", "Z"],
+        ["missing", "a", "b"],
+        ["c", "missing", "d"],
+        ["e", "f", "missing"],
         ["g", "h", "i"]
     ])
 
-    imputer = SimpleImputer(None, strategy="constant", fill_value="Z")
+    imputer = SimpleImputer(missing_values=None, strategy="constant", fill_value="missing")
     X_trans = imputer.fit(X).transform(X) 
 
     assert_array_equal(X_trans, X_true)
@@ -295,7 +295,7 @@ def test_imputation_constant_object_nan():
         ["g", "h", "i"]
     ], dtype=object)
 
-    imputer = SimpleImputer(None, strategy="constant", fill_value="missing")
+    imputer = SimpleImputer(missing_values=None, strategy="constant", fill_value="missing")
     X_trans = imputer.fit(X).transform(X)  
 
     assert_array_equal(X_trans, X_true)
@@ -323,7 +323,7 @@ def test_imputation_constant_pandas():
 
         imputer = SimpleImputer(strategy="constant", fill_value="missing")
         X_trans = imputer.fit(df).transform(df) 
-    
+
         assert_array_equal(X_trans, X_true)
 
 
