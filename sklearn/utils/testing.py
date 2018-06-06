@@ -137,7 +137,6 @@ def assert_warns(warning_class, func, *args, **kw):
 
     """
     # very important to avoid uncontrolled state propagation
-    warnings.resetwarnings()
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
