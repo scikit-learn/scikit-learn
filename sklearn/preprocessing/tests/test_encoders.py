@@ -15,7 +15,6 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import SkipTest
 
 from sklearn.preprocessing._encoders import _transform_selected
 from sklearn.preprocessing.data import Binarizer
