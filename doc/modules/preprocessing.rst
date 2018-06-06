@@ -537,8 +537,8 @@ Continuing the example above::
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS
   OneHotEncoder(categorical_features=None, categories=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='error',
-           n_values=None, sparse=True)
+         dtype=<... 'numpy.float64'>, handle_unknown='error',
+         n_values=None, sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
   array([[1., 0., 0., 1., 0., 1.],
