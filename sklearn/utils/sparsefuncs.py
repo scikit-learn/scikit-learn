@@ -355,13 +355,12 @@ def _min_or_max_axis(X, axis, min_or_max):
     major_index = np.compress(mask, major_index)
     value = np.compress(mask, value)
 
-    from scipy.sparse import coo_matrix
     if axis == 0:
-        res = coo_matrix((value, (np.zeros(len(value)), major_index)),
-                         dtype=X.dtype, shape=(1, M))
+        res = sp.coo_matrix((value, (np.zeros(len(value)), major_index)),
+                            dtype=X.dtype, shape=(1, M))
     else:
-        res = coo_matrix((value, (major_index, np.zeros(len(value)))),
-                         dtype=X.dtype, shape=(M, 1))
+        res = sp.coo_matrix((value, (major_index, np.zeros(len(value)))),
+                            dtype=X.dtype, shape=(M, 1))
     return res.A.ravel()
 
 
@@ -384,12 +383,12 @@ def _sparse_min_or_max(X, axis, min_or_max):
         raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
 
 
-def sparse_min_max(X, axis):
+def _sparse_min_max(X, axis):
         return (_sparse_min_or_max(X, axis, np.minimum),
                 _sparse_min_or_max(X, axis, np.maximum))
 
 
-def sparse_nan_min_max(X, axis):
+def _sparse_nan_min_max(X, axis):
     return(_sparse_min_or_max(X, axis, np.fmin),
            _sparse_min_or_max(X, axis, np.fmax))
 
@@ -409,6 +408,8 @@ def min_max_axis(X, axis, ignore_nan=False):
     ignore_nan : bool, default is False
         Ignore or passing through NaN values.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
 
@@ -420,9 +421,9 @@ def min_max_axis(X, axis, ignore_nan=False):
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
         if ignore_nan:
-            return sparse_nan_min_max(X, axis=axis)
+            return _sparse_nan_min_max(X, axis=axis)
         else:
-            return sparse_min_max(X, axis=axis)
+            return _sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
 
