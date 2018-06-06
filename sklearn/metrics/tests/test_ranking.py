@@ -176,19 +176,19 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-def test_roc_curve():
+@pytest.mark.parametrize('drop', [True, False])
+def test_roc_curve(drop):
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
     expected_auc = _auc(y_true, probas_pred)
 
-    for drop in [True, False]:
-        fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
-                                         drop_intermediate=drop)
-        roc_auc = auc(fpr, tpr)
-        assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-        assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-        assert_equal(fpr.shape, tpr.shape)
-        assert_equal(fpr.shape, thresholds.shape)
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+                                     drop_intermediate=drop)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
+    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
