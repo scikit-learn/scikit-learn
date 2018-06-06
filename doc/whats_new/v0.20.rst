@@ -186,6 +186,10 @@ Classifiers and regressors
 - :func:`manifold.t_sne.trustworthiness` accepts metrics other than
   Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
 
+- :mod:`Nearest neighbors <neighbors>` query methods are now more memory
+  efficient when ``algorithm='brute'``. :issue:`11136` by `Joel Nothman`_
+  and :user:`Aman Dalmia <dalmia>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
