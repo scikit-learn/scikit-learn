@@ -562,7 +562,8 @@ dataset::
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features=None, categories=[...],
+    OneHotEncoder(categorical_features=None,
+           categories=[...],
            dtype=<... 'numpy.float64'>, handle_unknown='error',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
