@@ -4,10 +4,10 @@ Column Transformer with Mixed Types
 ===================================
 
 This example demonstrates how to use
-:class:`sklearn.compose.ColumnTransformer` on a dataset containing 
-hereogeneous data types. A subset of numerical and categorical features 
-are selected and :class:`sklearn.compose.ColumnTransformer` is used to 
-apply two non-sequential preprocessing pipelines, one for each data 
+:class:`sklearn.compose.ColumnTransformer` on a dataset containing
+hereogeneous data types. A subset of numerical and categorical features
+are selected and :class:`sklearn.compose.ColumnTransformer` is used to
+apply two non-sequential preprocessing pipelines, one for each data
 type:
 
 * Numerical data: missing value imputation and standard scaling
@@ -15,7 +15,7 @@ type:
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
-# 
+#
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -39,7 +39,7 @@ data = pd.read_csv(titanic_url)
 num_feats = ['age', 'fare']
 cat_feats = ['embarked', 'sex', 'pclass']
 
-# Provisionally, use pd.fillna() to impute missing values for categorical 
+# Provisionally, use pd.fillna() to impute missing values for categorical
 # features; SimpleImputer will eventually support strategy="constant"
 data.loc[:, cat_feats] = data.loc[:, cat_feats].fillna(value='missing')
 
@@ -73,10 +73,10 @@ print("model score: %f" % clf_pl.score(X_test, y_test))
 ###############################################################################
 # We can also perform grid search on the different preprocessing steps
 # defined in our ``ColumnTransformer``, together with the classifier's
-# hyperparameters as part of a ``Pipeline``. 
-# ``ColumnTransformer`` integrates well with the rest of scikit-learn, 
+# hyperparameters as part of a ``Pipeline``.
+# ``ColumnTransformer`` integrates well with the rest of scikit-learn,
 # in particular with ``GridSearchCV`.`
-# We will search for both the imputer strategy of the numerical preprocessing 
+# We will search for both the imputer strategy of the numerical preprocessing
 # as for the regularization parameter of the logistic regression
 
 
