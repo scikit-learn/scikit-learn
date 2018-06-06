@@ -1,5 +1,6 @@
 import pickle
 import unittest
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -385,15 +386,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
+        regex = (r"class_weight 'balanced' is not supported for "
+                 r"partial_fit\. In order to use 'balanced' weights, "
+                 r"use compute_class_weight\('balanced', classes, y\). "
+                 r"In place of y you can us a large enough sample "
+                 r"of the full training set target to properly "
+                 r"estimate the class frequency distributions\. "
+                 r"Pass the resulting weights as the class_weight "
+                 r"parameter\.")
         assert_raises_regexp(ValueError,
-                             "class_weight 'balanced' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight\('balanced', classes, y\). "
-                             "In place of y you can us a large enough sample "
-                             "of the full training set target to properly "
-                             "estimate the class frequency distributions. "
-                             "Pass the resulting weights as the class_weight "
-                             "parameter.",
+                             regex,
                              self.factory(class_weight='balanced').partial_fit,
                              X, Y, classes=np.unique(Y))
 
@@ -465,6 +467,29 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # Provided intercept_ does match dataset.
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
+
+    def test_sgd_predict_proba_method_access(self):
+        # Checks that SGDClassifier predict_proba and predict_log_proba methods
+        # can either be accessed or raise an appropriate error message
+        # otherwise. See
+        # https://github.com/scikit-learn/scikit-learn/issues/10938 for more
+        # details.
+        for loss in SGDClassifier.loss_functions:
+            clf = SGDClassifier(loss=loss)
+            if loss in ('log', 'modified_huber'):
+                assert hasattr(clf, 'predict_proba')
+                assert hasattr(clf, 'predict_log_proba')
+            else:
+                message = ("probability estimates are not "
+                           "available for loss={!r}".format(loss))
+                assert not hasattr(clf, 'predict_proba')
+                assert not hasattr(clf, 'predict_log_proba')
+                with pytest.raises(AttributeError,
+                                   message=message):
+                    clf.predict_proba
+                with pytest.raises(AttributeError,
+                                   message=message):
+                    clf.predict_log_proba
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba

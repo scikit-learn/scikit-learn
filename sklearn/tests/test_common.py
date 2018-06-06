@@ -12,8 +12,10 @@ import warnings
 import sys
 import re
 import pkgutil
+import functools
 
-from sklearn.externals.six import PY3
+import pytest
+
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
@@ -29,7 +31,7 @@ from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     set_checking_parameters,
     check_parameters_default_constructible,
-    check_no_fit_attributes_set_in_init,
+    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
 
 
@@ -42,34 +44,65 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, cloneable
-    # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
 
     # Meta sanity-check to make sure that the estimator introspection runs
     # properly
     assert_greater(len(estimators), 0)
 
-    for name, Estimator in estimators:
-        # some can just not be sensibly default constructed
-        yield check_parameters_default_constructible, name, Estimator
+
+@pytest.mark.parametrize(
+        'name, Estimator',
+        all_estimators(include_meta_estimators=True)
+)
+def test_parameters_default_constructible(name, Estimator):
+    # Test that estimators are default-constructible
+    check_parameters_default_constructible(name, Estimator)
 
 
-def test_non_meta_estimators():
-    # input validation etc for non-meta estimators
-    estimators = all_estimators()
-    for name, Estimator in estimators:
+def _tested_non_meta_estimators():
+    for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
         if name.startswith("_"):
             continue
-        estimator = Estimator()
-        # check this on class
-        yield check_no_fit_attributes_set_in_init, name, Estimator
+        yield name, Estimator
 
-        for check in _yield_all_checks(name, estimator):
-            set_checking_parameters(estimator)
-            yield check, name, estimator
+
+def _generate_checks_per_estimator(check_generator, estimators):
+    for name, Estimator in estimators:
+        estimator = Estimator()
+        for check in check_generator(name, estimator):
+            yield name, Estimator, check
+
+
+def _rename_partial(val):
+    if isinstance(val, functools.partial):
+        kwstring = "".join(["{}={}".format(k, v)
+                            for k, v in val.keywords.items()])
+        return "{}({})".format(val.func.__name__, kwstring)
+
+
+@pytest.mark.parametrize(
+        "name, Estimator, check",
+        _generate_checks_per_estimator(_yield_all_checks,
+                                       _tested_non_meta_estimators()),
+        ids=_rename_partial
+)
+def test_non_meta_estimators(name, Estimator, check):
+    # Common tests for non-meta estimators
+    estimator = Estimator()
+    set_checking_parameters(estimator)
+    check(name, estimator)
+
+
+@pytest.mark.parametrize("name, Estimator",
+                         _tested_non_meta_estimators())
+def test_no_attributes_set_in_init(name, Estimator):
+    # input validation etc for non-meta estimators
+    estimator = Estimator()
+    # check this on class
+    check_no_attributes_set_in_init(name, estimator)
 
 
 def test_configure():
@@ -89,29 +122,28 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            if PY3:
-                with open('setup.py') as f:
-                    exec(f.read(), dict(__name__='__main__'))
-            else:
-                execfile('setup.py', dict(__name__='__main__'))
+            with open('setup.py') as f:
+                exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
 
 
-def test_class_weight_balanced_linear_classifiers():
+def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
-        linear_classifiers = [
-            (name, clazz)
-            for name, clazz in classifiers
+        for name, clazz in classifiers:
             if ('class_weight' in clazz().get_params().keys() and
-                issubclass(clazz, LinearClassifierMixin))]
+                    issubclass(clazz, LinearClassifierMixin)):
+                yield name, clazz
 
-    for name, Classifier in linear_classifiers:
-        yield check_class_weight_balanced_linear_classifier, name, Classifier
+
+@pytest.mark.parametrize("name, Classifier",
+                         _tested_linear_classifiers())
+def test_class_weight_balanced_linear_classifiers(name, Classifier):
+    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @ignore_warnings

@@ -5,8 +5,10 @@
 from random import Random
 import numpy as np
 import scipy.sparse as sp
-
 from numpy.testing import assert_array_equal
+
+import pytest
+
 from sklearn.utils.testing import (assert_equal, assert_in,
                                    assert_false, assert_true)
 
@@ -14,34 +16,34 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 
 
-def test_dictvectorizer():
+@pytest.mark.parametrize('sparse', (True, False))
+@pytest.mark.parametrize('dtype', (int, np.float32, np.int16))
+@pytest.mark.parametrize('sort', (True, False))
+@pytest.mark.parametrize('iterable', (True, False))
+def test_dictvectorizer(sparse, dtype, sort, iterable):
     D = [{"foo": 1, "bar": 3},
          {"bar": 4, "baz": 2},
          {"bar": 1, "quux": 1, "quuux": 2}]
 
-    for sparse in (True, False):
-        for dtype in (int, np.float32, np.int16):
-            for sort in (True, False):
-                for iterable in (True, False):
-                    v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
-                    X = v.fit_transform(iter(D) if iterable else D)
+    v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
+    X = v.fit_transform(iter(D) if iterable else D)
 
-                    assert_equal(sp.issparse(X), sparse)
-                    assert_equal(X.shape, (3, 5))
-                    assert_equal(X.sum(), 14)
-                    assert_equal(v.inverse_transform(X), D)
+    assert_equal(sp.issparse(X), sparse)
+    assert_equal(X.shape, (3, 5))
+    assert_equal(X.sum(), 14)
+    assert_equal(v.inverse_transform(X), D)
 
-                    if sparse:
-                        # CSR matrices can't be compared for equality
-                        assert_array_equal(X.A, v.transform(iter(D) if iterable
-                                                            else D).A)
-                    else:
-                        assert_array_equal(X, v.transform(iter(D) if iterable
-                                                          else D))
+    if sparse:
+        # CSR matrices can't be compared for equality
+        assert_array_equal(X.A, v.transform(iter(D) if iterable
+                                            else D).A)
+    else:
+        assert_array_equal(X, v.transform(iter(D) if iterable
+                                          else D))
 
-                    if sort:
-                        assert_equal(v.feature_names_,
-                                     sorted(v.feature_names_))
+    if sort:
+        assert_equal(v.feature_names_,
+                     sorted(v.feature_names_))
 
 
 def test_feature_selection():

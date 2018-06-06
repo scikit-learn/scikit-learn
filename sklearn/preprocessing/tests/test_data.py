@@ -7,10 +7,12 @@ from __future__ import division
 
 import warnings
 import re
+
 import numpy as np
 import numpy.linalg as la
-from scipy import sparse
+from scipy import sparse, stats
 from distutils.version import LooseVersion
+import pytest
 
 from sklearn.utils import gen_batches
 
@@ -54,7 +56,9 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.exceptions import DataConversionWarning
+from sklearn.preprocessing.data import PowerTransformer
+from sklearn.preprocessing.data import power_transform
+from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
@@ -151,6 +155,28 @@ def test_polynomial_feature_names():
         [u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
+
+
+@pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
+                         [(1, True, False, int),
+                          (2, True, False, int),
+                          (2, True, False, np.float32),
+                          (2, True, False, np.float64),
+                          (3, False, False, np.float64),
+                          (3, False, True, np.float64)])
+def test_polynomial_features_sparse_X(deg, include_bias, interaction_only,
+                                      dtype):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_sparse = sparse.csr_matrix(X)
+
+    est = PolynomialFeatures(deg, include_bias=include_bias)
+    Xt_sparse = est.fit_transform(X_sparse.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype))
+
+    assert isinstance(Xt_sparse, sparse.csc_matrix)
+    assert Xt_sparse.dtype == Xt_dense.dtype
+    assert_array_almost_equal(Xt_sparse.A, Xt_dense)
 
 
 def test_standard_scaler_1d():
@@ -1068,9 +1094,7 @@ def test_quantile_transform_subsampling():
 
     # sparse support
 
-    # TODO: rng should be seeded once we drop support for older versions of
-    # scipy (< 0.13) that don't support seeding.
-    X = sparse.rand(n_samples, 1, density=.99, format='csc')
+    X = sparse.rand(n_samples, 1, density=.99, format='csc', random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
@@ -1186,6 +1210,20 @@ def test_quantile_transform_and_inverse():
     assert_array_almost_equal(X, X_trans_inv)
 
 
+def test_quantile_transform_nan():
+    X = np.array([[np.nan, 0,  0, 1],
+                  [np.nan, np.nan, 0, 0.5],
+                  [np.nan, 1, 1, 0]])
+
+    transformer = QuantileTransformer(n_quantiles=10, random_state=42)
+    transformer.fit_transform(X)
+
+    # check that the quantile of the first column is all NaN
+    assert np.isnan(transformer.quantiles_[:, 0]).all()
+    # all other column should not contain NaN
+    assert not np.isnan(transformer.quantiles_[:, 1:]).any()
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
@@ -1196,7 +1234,7 @@ def test_robust_scaler_invalid_range():
     ]:
         scaler = RobustScaler(quantile_range=range_)
 
-        assert_raises_regex(ValueError, 'Invalid quantile range: \(',
+        assert_raises_regex(ValueError, r'Invalid quantile range: \(',
                             scaler.fit, iris.data)
 
 
@@ -1749,7 +1787,8 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
+                        SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
     assert_true(pipeline._pairwise)
@@ -1832,7 +1871,7 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = "unknown categorical feature present \[2\] during transform."
+    error_msg = r"unknown categorical feature present \[2\] during transform."
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
     assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
 
@@ -1870,40 +1909,45 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_transform_selected(X, X_expected, sel):
+def _check_transform_selected(X, X_expected, dtype, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, sel)
+        Xtr = _transform_selected(M, Binarizer().transform, dtype, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
-def test_transform_selected():
-    X = [[3, 2, 1], [0, 1, 1]]
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
+def test_transform_selected(output_dtype, input_dtype):
+    X = np.asarray([[3, 2, 1], [0, 1, 1]], dtype=input_dtype)
 
-    X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0])
-    _check_transform_selected(X, X_expected, [True, False, False])
+    X_expected = np.asarray([[1, 2, 1], [0, 1, 1]], dtype=output_dtype)
+    _check_transform_selected(X, X_expected, output_dtype, [0])
+    _check_transform_selected(X, X_expected, output_dtype,
+                              [True, False, False])
 
-    X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0, 1, 2])
-    _check_transform_selected(X, X_expected, [True, True, True])
-    _check_transform_selected(X, X_expected, "all")
+    X_expected = np.asarray([[1, 1, 1], [0, 1, 1]], dtype=output_dtype)
+    _check_transform_selected(X, X_expected, output_dtype, [0, 1, 2])
+    _check_transform_selected(X, X_expected, output_dtype, [True, True, True])
+    _check_transform_selected(X, X_expected, output_dtype, "all")
 
-    _check_transform_selected(X, X, [])
-    _check_transform_selected(X, X, [False, False, False])
+    _check_transform_selected(X, X, output_dtype, [])
+    _check_transform_selected(X, X, output_dtype, [False, False, False])
 
 
-def test_transform_selected_copy_arg():
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
+def test_transform_selected_copy_arg(output_dtype, input_dtype):
     # transformer that alters X
     def _mutating_transformer(X):
         X[0, 0] = X[0, 0] + 1
         return X
 
-    original_X = np.asarray([[1, 2], [3, 4]])
-    expected_Xtr = [[2, 2], [3, 4]]
+    original_X = np.asarray([[1, 2], [3, 4]], dtype=input_dtype)
+    expected_Xtr = np.asarray([[2, 2], [3, 4]], dtype=output_dtype)
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
-                              selected='all')
+    Xtr = _transform_selected(X, _mutating_transformer, output_dtype,
+                              copy=True, selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
     assert_array_equal(toarray(Xtr), expected_Xtr)
@@ -1946,6 +1990,17 @@ def test_one_hot_encoder_categorical_features():
     # Edge case: all categorical
     cat = [True, True, True]
     _check_one_hot(X, X2, cat, 5)
+
+
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype",  [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("sparse", [True, False])
+def test_one_hot_encoder_preserve_type(input_dtype, output_dtype, sparse):
+    X = np.array([[0, 1, 0, 0], [1, 2, 0, 0]], dtype=input_dtype)
+    transformer = OneHotEncoder(categorical_features=[0, 1],
+                                dtype=output_dtype, sparse=sparse)
+    X_trans = transformer.fit_transform(X)
+    assert X_trans.dtype == output_dtype
 
 
 def test_one_hot_encoder_unknown_transform():
@@ -2085,7 +2140,7 @@ def test_categorical_encoder_specified_categories():
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories[0] == ['a', 'b', 'c']
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
 
     # unsorted passed categories raises for now
     enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
@@ -2099,7 +2154,7 @@ def test_categorical_encoder_specified_categories():
                     [0., 1., 0., 0., 0., 1.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
     assert enc.categories_[1].tolist() == [0, 1, 2]
     assert np.issubdtype(enc.categories_[1].dtype, np.integer)
 
@@ -2201,6 +2256,12 @@ def test_categorical_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
+def test_categorical_encoder_warning():
+    enc = CategoricalEncoder()
+    X = [['Male', 1], ['Female', 3]]
+    np.testing.assert_no_warnings(enc.fit_transform, X)
+
+
 def test_fit_cold_start():
     X = iris.data
     X_2d = X[:, :2]
@@ -2224,3 +2285,124 @@ def test_quantile_transform_valid_axis():
 
     assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
                         ". Got axis=2", quantile_transform, X.T, axis=2)
+
+
+def test_power_transformer_notfitted():
+    pt = PowerTransformer(method='box-cox')
+    X = np.abs(X_1col)
+    assert_raises(NotFittedError, pt.transform, X)
+    assert_raises(NotFittedError, pt.inverse_transform, X)
+
+
+def test_power_transformer_1d():
+    X = np.abs(X_1col)
+
+    for standardize in [True, False]:
+        pt = PowerTransformer(method='box-cox', standardize=standardize)
+
+        X_trans = pt.fit_transform(X)
+        X_trans_func = power_transform(X, standardize=standardize)
+
+        X_expected, lambda_expected = stats.boxcox(X.flatten())
+
+        if standardize:
+            X_expected = scale(X_expected)
+
+        assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
+        assert_almost_equal(X_expected.reshape(-1, 1), X_trans_func)
+
+        assert_almost_equal(X, pt.inverse_transform(X_trans))
+        assert_almost_equal(lambda_expected, pt.lambdas_[0])
+
+        assert len(pt.lambdas_) == X.shape[1]
+        assert isinstance(pt.lambdas_, np.ndarray)
+
+
+def test_power_transformer_2d():
+    X = np.abs(X_2d)
+
+    for standardize in [True, False]:
+        pt = PowerTransformer(method='box-cox', standardize=standardize)
+
+        X_trans_class = pt.fit_transform(X)
+        X_trans_func = power_transform(X, standardize=standardize)
+
+        for X_trans in [X_trans_class, X_trans_func]:
+            for j in range(X_trans.shape[1]):
+                X_expected, lmbda = stats.boxcox(X[:, j].flatten())
+
+                if standardize:
+                    X_expected = scale(X_expected)
+
+                assert_almost_equal(X_trans[:, j], X_expected)
+                assert_almost_equal(lmbda, pt.lambdas_[j])
+
+            # Test inverse transformation
+            X_inv = pt.inverse_transform(X_trans)
+            assert_array_almost_equal(X_inv, X)
+
+        assert len(pt.lambdas_) == X.shape[1]
+        assert isinstance(pt.lambdas_, np.ndarray)
+
+
+def test_power_transformer_strictly_positive_exception():
+    pt = PowerTransformer(method='box-cox')
+    pt.fit(np.abs(X_2d))
+
+    # Exceptions should be raised for negative arrays and zero arrays
+    X_with_negatives = X_2d
+    not_positive_message = 'strictly positive'
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.transform, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.fit, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         power_transform, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.transform, np.zeros(X_2d.shape))
+
+    assert_raise_message(ValueError, not_positive_message,
+                         pt.fit, np.zeros(X_2d.shape))
+
+    assert_raise_message(ValueError, not_positive_message,
+                         power_transform, np.zeros(X_2d.shape))
+
+
+def test_power_transformer_shape_exception():
+    pt = PowerTransformer(method='box-cox')
+    X = np.abs(X_2d)
+    pt.fit(X)
+
+    # Exceptions should be raised for arrays with different num_columns
+    # than during fitting
+    wrong_shape_message = 'Input data has a different number of features'
+
+    assert_raise_message(ValueError, wrong_shape_message,
+                         pt.transform, X[:, 0:1])
+
+    assert_raise_message(ValueError, wrong_shape_message,
+                         pt.inverse_transform, X[:, 0:1])
+
+
+def test_power_transformer_method_exception():
+    pt = PowerTransformer(method='monty-python')
+    X = np.abs(X_2d)
+
+    # An exception should be raised if PowerTransformer.method isn't valid
+    bad_method_message = "'method' must be one of"
+    assert_raise_message(ValueError, bad_method_message,
+                         pt.fit, X)
+
+
+def test_power_transformer_lambda_zero():
+    pt = PowerTransformer(method='box-cox', standardize=False)
+    X = np.abs(X_2d)[:, 0:1]
+
+    # Test the lambda = 0 case
+    pt.lambdas_ = np.array([0])
+    X_trans = pt.transform(X)
+    assert_array_almost_equal(pt.inverse_transform(X_trans), X)

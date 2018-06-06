@@ -32,7 +32,7 @@ Data Set Characteristics:
     :Creator: Harrison, D. and Rubinfeld, D.L.
 
 This is a copy of UCI ML housing dataset.
-http://archive.ics.uci.edu/ml/datasets/Housing
+https://archive.ics.uci.edu/ml/machine-learning-databases/housing/
 
 
 This dataset was taken from the StatLib library which is maintained at Carnegie Mellon University.
@@ -50,4 +50,3 @@ problems.
 
    - Belsley, Kuh & Welsch, 'Regression diagnostics: Identifying Influential Data and Sources of Collinearity', Wiley, 1980. 244-261.
    - Quinlan,R. (1993). Combining Instance-Based and Model-Based Learning. In Proceedings on the Tenth International Conference of Machine Learning, 236-243, University of Massachusetts, Amherst. Morgan Kaufmann.
-   - many more! (see http://archive.ics.uci.edu/ml/datasets/Housing)

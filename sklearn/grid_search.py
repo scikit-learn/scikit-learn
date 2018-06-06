@@ -740,7 +740,7 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn import svm, grid_search, datasets
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVC()
+    >>> svr = svm.SVC(gamma="scale")
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -757,10 +757,10 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    grid_scores_ : list of named tuples
+    grid_scores_ : list of namedtuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+        Each namedtuple has the attributes:
 
             * ``parameters``, a dict of parameter settings
             * ``mean_validation_score``, the mean score over the
@@ -968,10 +968,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    grid_scores_ : list of named tuples
+    grid_scores_ : list of namedtuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+        Each namedtuple has the attributes:
 
             * ``parameters``, a dict of parameter settings
             * ``mean_validation_score``, the mean score over the

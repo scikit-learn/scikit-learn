@@ -17,7 +17,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-
+from .. import get_config
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -212,18 +212,18 @@ def resample(*arrays, **options):
       >>> from sklearn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
       >>> X
-      array([[ 1.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[1., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 4 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
-      array([[ 1.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[1., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> y
       array([0, 1, 0])
@@ -316,18 +316,18 @@ def shuffle(*arrays, **options):
       >>> from sklearn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
       >>> X
-      array([[ 0.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[0., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 3 stored elements in Compressed Sparse Row format>
 
       >>> X_sparse.toarray()
-      array([[ 0.,  0.],
-             [ 2.,  1.],
-             [ 1.,  0.]])
+      array([[0., 0.],
+             [2., 1.],
+             [1., 0.]])
 
       >>> y
       array([2, 1, 0])
@@ -493,11 +493,19 @@ def indices_to_mask(indices, mask_length):
         List of integers treated as indices.
     mask_length : int
         Length of boolean mask to be generated.
+        This parameter must be greater than max(indices)
 
     Returns
     -------
     mask : 1d boolean nd-array
         Boolean array that is True where indices are present, else False.
+
+    Examples
+    --------
+    >>> from sklearn.utils import indices_to_mask
+    >>> indices = [1, 2 , 3, 4]
+    >>> indices_to_mask(indices, 5)
+    array([False,  True,  True,  True,  True])
     """
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
@@ -506,3 +514,42 @@ def indices_to_mask(indices, mask_length):
     mask[indices] = True
 
     return mask
+
+
+def get_chunk_n_rows(row_bytes, max_n_rows=None,
+                     working_memory=None):
+    """Calculates how many rows can be processed within working_memory
+
+    Parameters
+    ----------
+    row_bytes : int
+        The expected number of bytes of memory that will be consumed
+        during the processing of each row.
+    max_n_rows : int, optional
+        The maximum return value.
+    working_memory : int or float, optional
+        The number of rows to fit inside this number of MiB will be returned.
+        When None (default), the value of
+        ``sklearn.get_config()['working_memory']`` is used.
+
+    Returns
+    -------
+    int or the value of n_samples
+
+    Warns
+    -----
+    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
+    """
+
+    if working_memory is None:
+        working_memory = get_config()['working_memory']
+
+    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    if max_n_rows is not None:
+        chunk_n_rows = min(chunk_n_rows, max_n_rows)
+    if chunk_n_rows < 1:
+        warnings.warn('Could not adhere to working_memory config. '
+                      'Currently %.0fMiB, %.0fMiB required.' %
+                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
+        chunk_n_rows = 1
+    return chunk_n_rows
