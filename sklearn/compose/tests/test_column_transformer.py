@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer
@@ -301,7 +302,7 @@ def test_column_transformer_invalid_columns(remainder):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     # general invalid
-    for col in [1.5, ['string', 1], slice(1, 's')]:
+    for col in [1.5, ['string', 1], slice(1, 's'), np.array([1.])]:
         ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
         assert_raise_message(ValueError, "No valid specification",
                              ct.fit, X_array)
@@ -551,12 +552,15 @@ def test_column_transformer_remainder_numpy(key):
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
 
 
-@pytest.mark.parametrize("key", [[0], slice(0, 1), np.array([True, False]),
-                                 ['first'], slice(None, 'first'),
-                                 slice('first', 'first')])
+@pytest.mark.parametrize(
+    "key", [[0], slice(0, 1), np.array([True, False]), ['first'], 'pd-index',
+            np.array(['first']), np.array(['first'], dtype=object),
+            slice(None, 'first'), slice('first', 'first')])
 def test_column_transformer_remainder_pandas(key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip('pandas')
+    if isinstance(key, six.string_types) and key == 'pd-index':
+        key = pd.Index(['first'])
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
