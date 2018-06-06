@@ -306,7 +306,7 @@ def test_imputation_constant_object_nan():
 def test_imputation_constant_pandas():
     # Test imputation using the constant strategy
     # on pandas df
-    pd = pytest.importskip("pandas")
+    pd = pytest.importorskip("pandas")
 
     for dtype in [object, "category"]:
         df = pd.DataFrame([
