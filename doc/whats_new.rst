@@ -1,7 +1,7 @@
 .. currentmodule:: sklearn
 .. include:: includes/big_toc_css.rst
 .. include:: whats_new/_contributors.rst
-===============
+
 Release History
 ===============
 
@@ -5756,10 +5756,14 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
 .. _Arthur Mensch: https://amensch.fr
+Release notes for current and recent releases are detailed on this page, with
+:ref:`previous releases <previous_releases_whats_new>` linked below.
+
 .. include:: whats_new/v0.20.rst
 .. include:: whats_new/v0.19.rst
 
-=================
+.. _previous_releases_whats_new:
+
 Previous Releases
 =================
 .. toctree::

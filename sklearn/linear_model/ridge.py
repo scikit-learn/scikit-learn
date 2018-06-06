@@ -31,6 +31,7 @@ from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
+from ..exceptions import ConvergenceWarning
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
@@ -73,7 +74,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 
         if max_iter is None and info > 0 and verbose:
             warnings.warn("sparse_cg did not converge after %d iterations." %
-                          info)
+                          info, ConvergenceWarning)
 
     return coefs
 
@@ -243,8 +244,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
@@ -358,11 +359,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             solver = 'cholesky'
         else:
             solver = 'sparse_cg'
-
-    elif solver == 'lsqr' and not hasattr(sp_linalg, 'lsqr'):
-        warnings.warn("""lsqr not available on this machine, falling back
-                      to sparse_cg.""")
-        solver = 'sparse_cg'
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
@@ -577,8 +573,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its improved, unbiased version named SAGA. Both methods also use an
@@ -735,8 +731,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
-          in old scipy versions. It also uses an iterative procedure.
+          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
           its unbiased and more flexible version named SAGA. Both methods
@@ -782,6 +778,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
@@ -875,7 +872,7 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
+    http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
@@ -994,7 +991,7 @@ class _RidgeGCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
@@ -1045,11 +1042,16 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
+        if np.any(self.alphas < 0):
+            raise ValueError("alphas cannot be negative. "
+                             "Got {} containing some "
+                             "negative value instead.".format(self.alphas))
+
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(alpha, y, v, Q, QT_y)
+                out, c = _errors(float(alpha), y, v, Q, QT_y)
             else:
-                out, c = _values(alpha, y, v, Q, QT_y)
+                out, c = _values(float(alpha), y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -1089,7 +1091,7 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = alphas
+        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -1113,7 +1115,7 @@ class _BaseRidgeCV(LinearModel):
 
         Returns
         -------
-        self : Returns self.
+        self : object
         """
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
@@ -1212,18 +1214,18 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the `cv_values_` attribute (see
-        below). This flag is only compatible with `cv=None` (i.e. using
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
         Generalized Cross-Validation).
 
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and \
-        `cv=None`). After `fit()` has been called, this attribute will \
-        contain the mean squared errors (by default) or the values of the \
-        `{loss,score}_func` function (if provided in the constructor).
+        Cross-validation values for each alpha (if ``store_cv_values=True``\
+        and ``cv=None``). After ``fit()`` has been called, this attribute \
+        will contain the mean squared errors (by default) or the values \
+        of the ``{loss,score}_func`` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
@@ -1301,14 +1303,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
+    store_cv_values : boolean, default=False
+        Flag indicating if the cross-validation values corresponding to
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
+        Generalized Cross-Validation).
+
     Attributes
     ----------
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-    shape = [n_samples, n_responses, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and
-    `cv=None`). After `fit()` has been called, this attribute will contain \
-    the mean squared errors (by default) or the values of the \
-    `{loss,score}_func` function (if provided in the constructor).
+    cv_values_ : array, shape = [n_samples, n_targets, n_alphas], optional
+        Cross-validation values for each alpha (if ``store_cv_values=True`` and
+        ``cv=None``). After ``fit()`` has been called, this attribute will
+        contain the mean squared errors (by default) or the values of the
+        ``{loss,score}_func`` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
@@ -1332,11 +1339,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
-                 normalize=False, scoring=None, cv=None, class_weight=None):
+                 normalize=False, scoring=None, cv=None, class_weight=None,
+                 store_cv_values=False):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, cv=cv)
+            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
@@ -1357,7 +1366,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Returns
         -------
         self : object
-            Returns self.
         """
         check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                   multi_output=True)

@@ -30,7 +30,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     ----------
     graph : sparse matrix or 2D array (preferably LIL matrix)
         Adjacency matrix of the graph
-    source : node label
+    source : integer
        Starting node for path
     cutoff : integer, optional
         Depth to stop the search - only

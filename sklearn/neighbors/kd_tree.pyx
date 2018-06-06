@@ -15,12 +15,13 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
 
-# Inherit KDTree from BinaryTree
 include "binary_tree.pxi"
 
+# Inherit KDTree from BinaryTree
 cdef class KDTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
     pass
+
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree
@@ -146,7 +147,7 @@ cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 

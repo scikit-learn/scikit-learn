@@ -231,7 +231,7 @@ def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
-    This is a scoring function to be used in a feature seletion procedure, not
+    This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
     This is done in 2 steps:
@@ -336,7 +336,6 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
@@ -427,10 +426,10 @@ class SelectPercentile(_BaseFilter):
             return np.zeros(len(self.scores_), dtype=np.bool)
 
         scores = _clean_nans(self.scores_)
-        treshold = stats.scoreatpercentile(scores,
-                                           100 - self.percentile)
-        mask = scores > treshold
-        ties = np.where(scores == treshold)[0]
+        threshold = stats.scoreatpercentile(scores,
+                                            100 - self.percentile)
+        mask = scores > threshold
+        ties = np.where(scores == threshold)[0]
         if len(ties):
             max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]

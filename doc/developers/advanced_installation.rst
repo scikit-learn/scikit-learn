@@ -35,7 +35,7 @@ Installing an official release
 
 Scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.3),
+- Python (>= 2.7 or >= 3.4),
 - NumPy (>= 1.8.2),
 - SciPy (>= 0.13.3).
 
@@ -177,7 +177,7 @@ latest stable release::
 If there are no binary packages matching your python, version you might
 to try to install scikit-learn and its dependencies from `christoph gohlke
 unofficial windows installers
-<http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
+<https://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
 or from a :ref:`python distribution <install_by_distribution>` instead.
 
 
