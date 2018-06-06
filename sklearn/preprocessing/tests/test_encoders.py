@@ -295,6 +295,37 @@ def test_one_hot_encoder_handle_unknown():
     assert_raises(ValueError, oh.fit, X)
 
 
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
+def test_one_hot_encoder_dtype(input_dtype, output_dtype):
+    X = np.asarray([[0, 1]], dtype=input_dtype).T
+    X_expected = np.asarray([[1, 0], [0, 1]], dtype=output_dtype)
+
+    oh = OneHotEncoder(categories='auto', dtype=output_dtype)
+    assert_array_equal(oh.fit_transform(X).toarray(), X_expected)
+    assert_array_equal(oh.fit(X).transform(X).toarray(), X_expected)
+
+    oh = OneHotEncoder(categories='auto', dtype=output_dtype, sparse=False)
+    assert_array_equal(oh.fit_transform(X), X_expected)
+    assert_array_equal(oh.fit(X).transform(X), X_expected)
+
+
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+def test_one_hot_encoder_dtype_pandas(output_dtype):
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2]})
+    X_expected = np.array([[1, 0, 1, 0], [0, 1, 0, 1]], dtype=output_dtype)
+
+    oh = OneHotEncoder(dtype=output_dtype)
+    assert_array_equal(oh.fit_transform(X_df).toarray(), X_expected)
+    assert_array_equal(oh.fit(X_df).transform(X_df).toarray(), X_expected)
+
+    oh = OneHotEncoder(dtype=output_dtype, sparse=False)
+    assert_array_equal(oh.fit_transform(X_df), X_expected)
+    assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
+
+
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
     oh = OneHotEncoder()
@@ -320,7 +351,7 @@ def check_categorical_onehot(X):
     return Xtr1.toarray()
 
 
-def test_categorical_encoder_onehot():
+def test_one_hot_encoder():
     X = [['abc', 1, 55], ['def', 2, 55]]
 
     Xtr = check_categorical_onehot(np.array(X)[:, [0]])
