@@ -4,79 +4,30 @@ Column Transformer with Mixed Types
 ===================================
 
 This example demonstrates how to use
-:class:`sklearn.compose.ColumnTransformer` on a dataset containing mixed
-data types. We take a subset of numerical and categorical features
-and use :class:`sklearn.compose.ColumnTransformer` to apply two non-sequential
-preprocessing pipelines, one for each data type:
+:class:`sklearn.compose.ColumnTransformer` on a dataset containing 
+hereogeneous data types. A subset of numerical and categorical features 
+are selected and :class:`sklearn.compose.ColumnTransformer` is used to 
+apply two non-sequential preprocessing pipelines, one for each data 
+type:
 
-* Numerical data: missing value imputation, followed by standard scaling
-* Categorical data: missing value imputation (with a custom transformer),
-and then one-hot-encode.
+* Numerical data: missing value imputation and standard scaling
+* Categorical data: missing value imputation one-hot encoding.
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
-#
+# 
 # License: BSD 3 clause
 
 from __future__ import print_function
 
-import numpy as np
 import pandas as pd
 
-from sklearn.base import TransformerMixin
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, CategoricalEncoder
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
-
-
-class CustomCategoryImputer(TransformerMixin):
-    """Impute missing values for categorical features with a desired string.
-
-    Parameters
-    ----------
-    imputer_value: string, default='missing'
-        The placeholder for the missing value.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array(['a', 'b', np.nan, 'c'], dtype=object)
-    >>> imputer = CustomCategoryImputer(imputer_value='missing')
-    >>> imputer.transform(X)
-    array([['a'],
-           ['b'],
-           ['missing'],
-           ['c']], dtype='<U7')
-    """
-
-    def __init__(self, imputer_value='missing'):
-        self.imputer_value = imputer_value
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        """Transform input filling missing values with imputer_value.
-
-        Parameters
-        ----------
-        X: numpy array
-            Categorical feature to transform
-        """
-        X_ = X.copy()
-
-        # convert to DataFrame to handle mixed types
-        if isinstance(X_, np.ndarray):
-            X_ = pd.DataFrame(X_)
-
-        mask = pd.notnull(X_)
-        X_ = X_.where(mask, self.imputer_value)
-
-        return X_.values.astype(str)
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, GridSearchCV
 
 
 # Read data from Titanic dataset
@@ -86,25 +37,25 @@ data = pd.read_csv(titanic_url)
 
 # We will train our classifier with the following features
 num_feats = ['age', 'fare']
-cat_feats = ['embarked', 'sex']
+cat_feats = ['embarked', 'sex', 'pclass']
+
+# Provisionally, use pd.fillna() to impute missing values for categorical 
+# features; SimpleImputer will eventually support strategy="constant"
+data.loc[:, cat_feats] = data.loc[:, cat_feats].fillna(value='missing')
 
 # We create the preprocessing pipelines for both numerical and categorical data
-num_pl = make_pipeline(SimpleImputer(strategy='median'), StandardScaler())
-cat_pl = make_pipeline(
-    CustomCategoryImputer(),
-    CategoricalEncoder('onehot-dense')
-)
+num_pl = make_pipeline(SimpleImputer(), StandardScaler())
+cat_pl = CategoricalEncoder('onehot-dense', handle_unknown='ignore')
 
-preprocessing_pl = ColumnTransformer(
-    [
-        ('num', num_pl, num_feats),
-        ('cat', cat_pl, cat_feats)
-    ],
+preprocessing_pl = make_column_transformer(
+    (num_feats, num_pl),
+    (cat_feats, cat_pl),
     remainder='drop'
 )
 
-# Append classifier to preprocessing process. Use RF with default params
-clf_pl = make_pipeline(preprocessing_pl, RandomForestClassifier())
+# Append classifier to preprocessing pipeline
+# Now we have a full prediction pipeline
+clf_pl = make_pipeline(preprocessing_pl, LogisticRegression())
 
 X = data.drop('survived', axis=1)
 y = data.survived.values
@@ -114,8 +65,30 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
 
 # Fit classifier
 clf_pl.fit(X_train, y_train)
+print("model score: %f" % clf_pl.score(X_test, y_test))
 
-# Assess model performance
-y_pred = clf_pl.predict_proba(X_test)[:, 1]
-score = roc_auc_score(y_test, y_pred)
-print(score)
+
+###############################################################################
+# Using our pipeline in a grid search
+###############################################################################
+# We can also perform grid search on the different preprocessing steps
+# defined in our ``ColumnTransformer``, together with the classifier's
+# hyperparameters as part of a ``Pipeline``. 
+# ``ColumnTransformer`` integrates well with the rest of scikit-learn, 
+# in particular with ``GridSearchCV`.`
+# We will search for both the imputer strategy of the numerical preprocessing 
+# as for the regularization parameter of the logistic regression
+
+
+param_grid = {
+    'columntransformer__pipeline__simpleimputer__strategy': ['mean', 'median'],
+    'logisticregression__C': [0.1, 1.0, 1.0],
+}
+
+grid_search = GridSearchCV(clf_pl, param_grid, cv=10, iid=False)
+grid_search.fit(X_train, y_train)
+
+# We can finally fit the model using the best hyperparameters found
+# and assess model performance on holdout set
+print(("best logistic regression from grid search: %f"
+       % grid_search.best_estimator_.score(X_test, y_test)))
