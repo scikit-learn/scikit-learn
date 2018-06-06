@@ -14,7 +14,7 @@ Multiclass and multilabel algorithms
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 ``multiclass`` and ``multilabel`` classification problems
-by decomposing such problems into binary classification problems. Multitarget
+by decomposing such problems into binary classification problems. Multioutput
 regression is also supported.
 
 - **Multiclass classification** means a classification task with more than
@@ -34,7 +34,8 @@ regression is also supported.
   for each data-point, such as wind direction and magnitude at a
   certain location.
 
-- **Multioutput-multiclass classification** and **multi-task classification**
+- **Multioutput-multiclass classification** 
+  (also known as **multi-task classification**)
   means that a single estimator has to handle several joint classification
   tasks. This is both a generalization of the multi-label classification
   task, which only considers binary classification, as well as a
@@ -94,7 +95,7 @@ if you're using one of these, unless you want custom multiclass behavior:
   - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
 
 
-- **Multiclass as One-Vs-All:**
+- **Multiclass as One-Vs-The-Rest:**
 
   - :class:`sklearn.ensemble.GradientBoostingClassifier`
   - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
