@@ -1455,12 +1455,25 @@ Here is a small example of usage of this function::
 Normalized Discounted Cumulative Gain
 -------------------------------------
 
-Discounted Cumulative Gain (DCG) orders the true targets (e.g. relevance of query
-answers) in the predicted order, then multiplies them by a logarithmic decay
-and sums the result. The sum can be truncated after the first :math:`K` results,
-in which case we call it DCG@K.
-Normalized Discounted Cumulative Gain (NDCG, or NDCG@K) is DCG divided by the
-DCG obtained by a perfect prediction, so that it is always between 0 and 1.
+Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
+(NDCG) are ranking metrics; they compare a predicted order to a ground-truth order.
+
+from the Wikipedia page for Discounted Cumulative Gain:
+
+"Discounted cumulative gain (DCG) is a measure of ranking quality. In
+information retrieval, it is often used to measure effectiveness of web search
+engine algorithms or related applications. Using a graded relevance scale of
+documents in a search-engine result set, DCG measures the usefulness, or gain,
+of a document based on its position in the result list. The gain is accumulated
+from the top of the result list to the bottom, with the gain of each result
+discounted at lower ranks"
+
+DCG orders the true targets (e.g. relevance of query answers) in the predicted
+order, then multiplies them by a logarithmic decay and sums the result. The sum
+can be truncated after the first :math:`K` results, in which case we call it
+DCG@K.
+NDCG, or NDCG@K is DCG divided by the DCG obtained by a perfect prediction, so
+that it is always between 0 and 1.
 
 For one sample, given the vector of continuous ground-truth values for each
 target :math:`y \in \mathbb{R}^{M}`, where :math:`M` the number of outputs, and
