@@ -211,7 +211,6 @@ def test_ignore_warning():
     assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
 
 
-# assert_warns will no longer clear all previous filters.
 class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
@@ -219,12 +218,11 @@ class TestWarns(unittest.TestCase):
             return 3
 
         # test that assert_warns doesn't affect external filters
-        warnings.resetwarnings()
-        warnings.simplefilter("ignore", UserWarning)
-        assert_equal(assert_warns(UserWarning, f), 3)
-
-        assert_equal(warnings.filters,
-                     [('ignore', None, UserWarning, None, 0)])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            filters_orig = warnings.filters[:]
+            assert_equal(assert_warns(UserWarning, f), 3)
+            assert_equal(warnings.filters, filters_orig)
 
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
