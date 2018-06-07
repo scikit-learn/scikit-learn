@@ -245,8 +245,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         # Validate hyperparameters
         if self.n_estimators == 10:
-            warnings.warn("'n_estimators' default value will change to 100 in version 0.20", DeprecationWarning)
-            self.n_estimators = 100
+            warnings.warn("'n_estimators' default value will be changed to 100 in version 0.22. For optimal performance, you should make change this value to 100", FutureWarning)
 
         # Validate or convert input data
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
