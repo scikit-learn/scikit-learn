@@ -21,7 +21,7 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, assert_no_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -209,7 +209,7 @@ def test_warning_raised_with_deprecated_n_estimator(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
                            max_depth=1)
-    assert_warns(DeprecationWarning, func=clf.fit, X=iris.data, y=iris.target)
+    assert_warns(FutureWarning, func=clf.fit, X=iris.data, y=iris.target)
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
@@ -217,7 +217,7 @@ def test_no_warning_raised_with_correct_n_estimator(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(n_estimators=100, random_state=1, max_features=1,
                            max_depth=1)
-    assert_warns(DeprecationWarning, func=clf.fit, X=iris.data, y=iris.target)
+    assert_no_warnings(FutureWarning, func=clf.fit, X=iris.data, y=iris.target)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
