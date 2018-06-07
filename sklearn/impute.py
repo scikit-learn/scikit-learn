@@ -41,7 +41,8 @@ __all__ = [
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if value_to_mask is np.nan:
-        # nan values are never equal to themselves
+        # nan values are never equal to themselves. We use this trick because
+        # np.isnan does not work on object dtypes.
         return X != X
     else:
         return X == value_to_mask
@@ -82,7 +83,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : real number, string, np.nan or None,
+    missing_values : real number, string, np.nan or None, \
         optional (default=np.nan).
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
@@ -313,7 +314,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             X = X.transpose()
             mask = mask.transpose()
 
-            most_frequent = np.empty(X.shape[0])
+            if X.dtype.kind == "O":
+                most_frequent = np.empty(X.shape[0], dtype=object)
+            else:
+                most_frequent = np.empty(X.shape[0])
 
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
                 row_mask = np.logical_not(row_mask).astype(np.bool)
@@ -352,7 +356,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         if self.strategy == "constant":
             valid_statistics = statistics
         else:
-            invalid_mask = np.isnan(statistics)
+            # same as np.isnan but also works for object dtypes
+            invalid_mask = statistics != statistics
             valid_mask = np.logical_not(invalid_mask)
             valid_statistics = statistics[valid_mask]
             valid_statistics_indexes = np.flatnonzero(valid_mask)

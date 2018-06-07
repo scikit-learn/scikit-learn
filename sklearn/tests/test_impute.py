@@ -34,6 +34,7 @@ def _check_statistics(X, X_true,
               "sparse = {0}" % (strategy, missing_values)
 
     assert_ae = assert_array_equal
+
     if X.dtype.kind == 'f' or X_true.dtype.kind == 'f':
         assert_ae = assert_array_almost_equal
 
@@ -209,6 +210,30 @@ def test_imputation_most_frequent():
     _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
 
 
+def test_imputation_most_frequent_objects():
+    # Test imputation using the most-frequent strategy.
+    for marker in (None, np.nan, "NAN", "", 0):
+        X = np.array([
+            [marker, marker, "a", "f"],
+            [marker, "c", marker, "d"],
+            [marker, "b", "d", marker],
+            [marker, "c", "d", "h"],
+        ], dtype=object)
+
+        X_true = np.array([
+            ["c", "a", "f"],
+            ["c", "d", "d"],
+            ["b", "d", "d"],
+            ["c", "d", "h"],
+        ], dtype=object)
+
+        imputer = SimpleImputer(missing_values=marker,
+                                strategy="most_frequent")
+        X_trans = imputer.fit(X).transform(X)
+
+        assert_array_equal(X_trans, X_true)
+
+
 def test_imputation_constant_integer():
     # Test imputation using the constant strategy
     # on integers
@@ -267,7 +292,7 @@ def test_imputation_constant_float():
 def test_imputation_constant_object():
     # Test imputation using the constant strategy
     # on objects
-    for marker in (None, np.nan, "NAN", 0):
+    for marker in (None, np.nan, "NAN", "", 0):
         X = np.array([
             [marker, "a", "b", marker],
             ["c", marker, "d", marker],
