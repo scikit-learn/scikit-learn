@@ -5,12 +5,12 @@ Column Transformer with Mixed Types
 
 This example demonstrates how to use
 :class:`sklearn.compose.ColumnTransformer` on a dataset containing
-hereogeneous data types. A subset of numerical and categorical features
+hereogeneous data types. A subset of numeric and categorical features
 are selected and :class:`sklearn.compose.ColumnTransformer` is used to
 apply two non-sequential preprocessing pipelines, one for each data
 type:
 
-* Numerical data: missing value imputation and standard scaling
+* Numeric data: missing value imputation and standard scaling
 * Categorical data: missing value imputation one-hot encoding.
 """
 
@@ -43,7 +43,7 @@ cat_feats = ['embarked', 'sex', 'pclass']
 # features; SimpleImputer will eventually support strategy="constant"
 data.loc[:, cat_feats] = data.loc[:, cat_feats].fillna(value='missing')
 
-# We create the preprocessing pipelines for both numerical and categorical data
+# We create the preprocessing pipelines for both numeric and categorical data
 num_pl = make_pipeline(SimpleImputer(), StandardScaler())
 cat_pl = CategoricalEncoder('onehot-dense', handle_unknown='ignore')
 
@@ -76,7 +76,7 @@ print("model score: %f" % clf_pl.score(X_test, y_test))
 # hyperparameters as part of a ``Pipeline``.
 # ``ColumnTransformer`` integrates well with the rest of scikit-learn,
 # in particular with ``GridSearchCV`.`
-# We will search for both the imputer strategy of the numerical preprocessing
+# We will search for both the imputer strategy of the numeric preprocessing
 # as for the regularization parameter of the logistic regression
 
 
