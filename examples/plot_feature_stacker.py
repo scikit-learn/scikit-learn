@@ -19,6 +19,7 @@ dataset and is only used to illustrate the usage of FeatureUnion.
 #
 # License: BSD 3 clause
 
+from __future__ import print_function
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
@@ -39,6 +40,10 @@ selection = SelectKBest(k=1)
 # Build estimator from PCA and Univariate selection:
 
 combined_features = FeatureUnion([("pca", pca), ("univ_select", selection)])
+
+# Use combined features to transform dataset:
+X_features = combined_features.fit(X, y).transform(X)
+print("Combined space has", X_features.shape[1], "features")
 
 svm = SVC(kernel="linear")
 

@@ -161,6 +161,21 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class SparseTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_shape_ = check_array(X).shape
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X):
+        X = check_array(X)
+        if X.shape[1] != self.X_shape_[1]:
+            raise ValueError('Bad number of features')
+        return sp.csr_matrix(X)
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -234,6 +249,9 @@ def test_check_estimator():
     finally:
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
+
+    # non-regression test for estimators transforming to sparse data
+    check_estimator(SparseTransformer())
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)

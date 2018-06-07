@@ -9,13 +9,14 @@
 from collections import defaultdict
 import itertools
 import array
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import sparse_min_max
+from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -566,7 +567,7 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        row_max = sparse_min_max(y, 1)[1]
+        row_max = min_max_axis(y, 1)[1]
         row_nnz = np.diff(y.indptr)
 
         y_data_repeated_max = np.repeat(row_max, row_nnz)
@@ -684,6 +685,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.OneHotEncoder : encode categorical integer features
         using a one-hot aka one-of-K scheme.
     """
+
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -794,9 +796,19 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
+        unknown = set()
         for labels in y:
-            indices.extend(set(class_mapping[label] for label in labels))
+            index = set()
+            for label in labels:
+                try:
+                    index.add(class_mapping[label])
+                except KeyError:
+                    unknown.add(label)
+            indices.extend(index)
             indptr.append(len(indices))
+        if unknown:
+            warnings.warn('unknown class(es) {0} will be ignored'
+                          .format(sorted(unknown, key=str)))
         data = np.ones(len(indices), dtype=int)
 
         return sp.csr_matrix((data, indices, indptr),

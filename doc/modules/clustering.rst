@@ -195,6 +195,12 @@ k-means++ initialization scheme, which has been implemented in scikit-learn
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
+The algorithm supports sample weights, which can be given by a parameter
+``sample_weight``. This allows to assign more weight to some samples when
+computing cluster centers and values of inertia. For example, assigning a
+weight of 2 to a sample is equivalent to adding a duplicate of that sample
+to the dataset :math:`X`.
+
 A parameter can be given to allow K-means to be run in parallel, called
 ``n_jobs``. Giving this parameter a positive value uses that many processors
 (default: 1). A value of -1 uses all available processors, with -2 using one
@@ -265,7 +271,7 @@ small, as shown in the example and cited reference.
  * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
@@ -790,9 +796,10 @@ by black points below.
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
-    - A sparse radius neighborhood graph (where missing
-      entries are presumed to be out of eps) can be precomputed in a memory-efficient
-      way and dbscan can be run over this with ``metric='precomputed'``.
+    - A sparse radius neighborhood graph (where missing entries are presumed to
+      be out of eps) can be precomputed in a memory-efficient way and dbscan
+      can be run over this with ``metric='precomputed'``.  See
+      :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
 
     - The dataset can be compressed, either by removing exact duplicates if
       these occur in your data, or by using BIRCH. Then you only have a
@@ -1566,7 +1573,7 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
-  560.39...
+  561.62...
 
 
 Advantages
@@ -1590,6 +1597,86 @@ Drawbacks
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
     `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
+
+
+.. _davies-bouldin_index:
+
+Davies-Bouldin Index
+--------------------
+
+If the ground truth labels are not known, the Davies-Bouldin index
+(:func:`sklearn.metrics.davies_bouldin_score`) can be used to evaluate the
+model, where a lower Davies-Bouldin index relates to a model with better
+separation between the clusters.
+
+The index is defined as the average similarity between each cluster :math:`C_i`
+for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
+this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
+
+- :math:`s_i`, the average distance between each point of cluster :math:`i` and
+  the centroid of that cluster -- also know as cluster diameter.
+- :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
+
+A simple choice to construct :math:`R_ij` so that it is nonnegative and
+symmetric is:
+
+.. math::
+   R_{ij} = \frac{s_i + s_j}{d_{ij}}
+
+Then the Davies-Bouldin index is defined as:
+
+.. math::
+   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+
+Zero is the lowest possible score. Values closer to zero indicate a better
+partition.
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis as follows:
+
+  >>> from sklearn import datasets
+  >>> iris = datasets.load_iris()
+  >>> X = iris.data
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics import davies_bouldin_score
+  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans.labels_
+  >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
+  0.6619...
+
+
+Advantages
+~~~~~~~~~~
+
+- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
+- The index is computed only quantities and features inherent to the dataset.
+
+Drawbacks
+~~~~~~~~~
+
+- The Davies-Boulding index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained from
+  DBSCAN.
+
+- The usage of centroid distance limits the distance metric to Euclidean space.
+- A good value reported by this method does not imply the best information retrieval.
+
+.. topic:: References
+
+ * Davies, David L.; Bouldin, Donald W. (1979).
+   "A Cluster Separation Measure"
+   IEEE Transactions on Pattern Analysis and Machine Intelligence.
+   PAMI-1 (2): 224-227.
+   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+
+ * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
+   "On Clustering Validation Techniques"
+   Journal of Intelligent Information Systems, 17(2-3), 107-145.
+   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+
+ * `Wikipedia entry for Davies-Bouldin index
+   <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
+
 
 .. _contingency_matrix:
 
