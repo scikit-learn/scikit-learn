@@ -445,7 +445,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         # Compute softmax distances
         p_ij = pairwise_distances(X_embedded, squared=True)
         np.fill_diagonal(p_ij, np.inf)
-        p_ij = np.exp(-p_ij - logsumexp(-p_ij, axis=1, keepdims=True))
+        p_ij = np.exp(-p_ij - logsumexp(-p_ij, axis=1)[:, np.newaxis])
         # (n_samples, n_samples)
 
         # Compute loss
