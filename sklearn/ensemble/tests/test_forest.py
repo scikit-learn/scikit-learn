@@ -204,7 +204,8 @@ def check_probability(name):
                                   np.exp(clf.predict_log_proba(iris.data)))
 
 
-def check_raises_n_estimator_warning(name):
+@pytest.mark.parametrize('name', FOREST_ESTIMATORS)
+def test_warning_raised_with_deprecated_n_estimator(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
                            max_depth=1)
@@ -212,8 +213,11 @@ def check_raises_n_estimator_warning(name):
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
-def test_n_estimator_raises_warning(name):
-    check_raises_n_estimator_warning(name)
+def test_no_warning_raised_with_correct_n_estimator(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(n_estimators=100, random_state=1, max_features=1,
+                           max_depth=1)
+    assert_warns(DeprecationWarning, func=clf.fit, X=iris.data, y=iris.target)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
