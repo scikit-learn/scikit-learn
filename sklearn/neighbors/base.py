@@ -574,9 +574,9 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
 
-            if issparse(dist):
+            if self.effective_metric_ == 'precomputed' and issparse(X):
                 neigh_dist, neigh_ind = _kneighbors_from_graph(
-                    dist, n_neighbors=n_neighbors - query_is_train)
+                    X, n_neighbors=n_neighbors - query_is_train)
 
                 if return_distance:
                     result = neigh_dist, neigh_ind
@@ -599,8 +599,8 @@ class KNeighborsMixin(object):
                     **kwds)
 
                 if return_distance:
-                    dist, neigh_ind = zip(*result)
-                    result = np.vstack(dist), np.vstack(neigh_ind)
+                    neigh_dist, neigh_ind = zip(*result)
+                    result = np.vstack(neigh_dist), np.vstack(neigh_ind)
                 else:
                     result = np.vstack(result)
 
@@ -860,15 +860,9 @@ class RadiusNeighborsMixin(object):
 
         if self._fit_method == 'brute':
 
-            if self.effective_metric_ == 'precomputed':
-                # TODO: improve quick refactor after merge
-                dist = 'TODO'
-                # dist = pairwise_distances(X, self._fit_X,
-                #                           self.effective_metric_,
-                #                           n_jobs=self.n_jobs,
-                #                           **self.effective_metric_params_)
+            if self.effective_metric_ == 'precomputed' and issparse(X):
                 neigh_dist, neigh_ind = _radius_neighbors_from_graph(
-                    dist, radius=radius)
+                    X, radius=radius)
                 if return_distance:
                     results = neigh_dist, neigh_ind
                 else:
@@ -891,16 +885,16 @@ class RadiusNeighborsMixin(object):
                     metric=self.effective_metric_, n_jobs=self.n_jobs,
                     **kwds)
                 if return_distance:
-                    dist_chunks, neigh_ind_chunks = zip(*results)
-                    dist_list = sum(dist_chunks, [])
+                    neigh_dist_chunks, neigh_ind_chunks = zip(*results)
+                    neigh_dist_list = sum(neigh_dist_chunks, [])
                     neigh_ind_list = sum(neigh_ind_chunks, [])
                     # See https://github.com/numpy/numpy/issues/5456
-                    # if you want to understand why this is initialized this way.
-                    dist = np.empty(len(dist_list), dtype='object')
-                    dist[:] = dist_list
+                    # to understand why this is initialized this way.
+                    neigh_dist = np.empty(len(neigh_dist_list), dtype='object')
+                    neigh_dist[:] = neigh_dist_list
                     neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
                     neigh_ind[:] = neigh_ind_list
-                    results = dist, neigh_ind
+                    results = neigh_dist, neigh_ind
                 else:
                     neigh_ind_list = sum(results, [])
                     results = np.empty(len(neigh_ind_list), dtype='object')
@@ -920,8 +914,8 @@ class RadiusNeighborsMixin(object):
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
-                neigh_ind, dist = tuple(zip(*results))
-                results = np.hstack(dist), np.hstack(neigh_ind)
+                neigh_ind, neigh_dist = tuple(zip(*results))
+                results = np.hstack(neigh_dist), np.hstack(neigh_ind)
             else:
                 results = np.hstack(results)
         else:
