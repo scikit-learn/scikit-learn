@@ -13,7 +13,7 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, defaultdict, Sequence
+from collections import Mapping, namedtuple, defaultdict, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -90,10 +90,26 @@ class ParameterGrid(object):
     """
 
     def __init__(self, param_grid):
+        if not isinstance(param_grid, (Mapping, Iterable)):
+            raise TypeError('Parameter grid is not a dict or '
+                            'a list ({!r})'.format(param_grid))
+
         if isinstance(param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
             param_grid = [param_grid]
+
+        # check if all entries are dictionaries of lists
+        for grid in param_grid:
+            if not isinstance(grid, dict):
+                raise TypeError('Parameter grid is not a '
+                                'dict ({!r})'.format(grid))
+            for key in grid:
+                if not isinstance(grid[key], Iterable):
+                    raise TypeError('Parameter grid value is not iterable '
+                                    '(key={!r}, value={!r})'
+                                    .format(key, grid[key]))
+
         self.param_grid = param_grid
 
     def __iter__(self):

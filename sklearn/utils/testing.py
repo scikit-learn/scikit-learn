@@ -49,6 +49,7 @@ from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated
 
+
 additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
@@ -543,7 +544,7 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel"]
+         "SelectFromModel", "ColumnTransformer"]
 
 # some strange ones
 DONT_TEST = ['SparseCoder', 'DictVectorizer',
@@ -688,44 +689,38 @@ def if_matplotlib(func):
     return run_test
 
 
-def skip_if_32bit(func):
-    """Test decorator that skips tests on 32bit platforms."""
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        bits = 8 * struct.calcsize("P")
-        if bits == 32:
-            raise SkipTest('Test skipped on 32bit platforms.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
+try:
+    import pytest
 
+    skip_if_32bit = pytest.mark.skipif(8 * struct.calcsize("P") == 32,
+                                       reason='skipped on 32bit platforms')
+    skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
+                                     reason='skip on travis')
 
-def if_safe_multiprocessing_with_blas(func):
-    """Decorator for tests involving both BLAS calls and multiprocessing.
+    #  Decorator for tests involving both BLAS calls and multiprocessing.
+    #
+    #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction
+    #  with some implementation of BLAS (or other libraries that manage an
+    #  internal posix thread pool) can cause a crash or a freeze of the Python
+    #  process.
+    #
+    #  In practice all known packaged distributions (from Linux distros or
+    #  Anaconda) of BLAS under Linux seems to be safe. So we this problem seems
+    #  to only impact OSX users.
+    #
+    #  This wrapper makes it possible to skip tests that can possibly cause
+    #  this crash under OS X with.
+    #
+    #  Under Python 3.4+ it is possible to use the `forkserver` start method
+    #  for multiprocessing to avoid this issue. However it can cause pickling
+    #  errors on interactively defined functions. It therefore not enabled by
+    #  default.
 
-    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
-    some implementation of BLAS (or other libraries that manage an internal
-    posix thread pool) can cause a crash or a freeze of the Python process.
-
-    In practice all known packaged distributions (from Linux distros or
-    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
-    only impact OSX users.
-
-    This wrapper makes it possible to skip tests that can possibly cause
-    this crash under OS X with.
-
-    Under Python 3.4+ it is possible to use the `forkserver` start method
-    for multiprocessing to avoid this issue. However it can cause pickling
-    errors on interactively defined functions. It therefore not enabled by
-    default.
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        if sys.platform == 'darwin':
-            raise SkipTest(
-                "Possible multi-process bug with some BLAS")
-        return func(*args, **kwargs)
-    return run_test
+    if_safe_multiprocessing_with_blas = pytest.mark.skipif(
+            sys.platform == 'darwin',
+            reason="Possible multi-process bug with some BLAS")
+except ImportError:
+    pass
 
 
 def clean_warning_registry():
@@ -742,12 +737,6 @@ def clean_warning_registry():
 def check_skip_network():
     if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
         raise SkipTest("Text tutorial requires large dataset download")
-
-
-def check_skip_travis():
-    """Skip test if being run on Travis."""
-    if os.environ.get('TRAVIS') == "true":
-        raise SkipTest("This test needs to be skipped on Travis")
 
 
 def _delete_folder(folder_path, warn=False):

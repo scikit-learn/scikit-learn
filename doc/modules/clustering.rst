@@ -195,6 +195,12 @@ k-means++ initialization scheme, which has been implemented in scikit-learn
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
+The algorithm supports sample weights, which can be given by a parameter
+``sample_weight``. This allows to assign more weight to some samples when
+computing cluster centers and values of inertia. For example, assigning a
+weight of 2 to a sample is equivalent to adding a duplicate of that sample
+to the dataset :math:`X`.
+
 A parameter can be given to allow K-means to be run in parallel, called
 ``n_jobs``. Giving this parameter a positive value uses that many processors
 (default: 1). A value of -1 uses all available processors, with -2 using one
@@ -265,7 +271,7 @@ small, as shown in the example and cited reference.
  * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
@@ -1567,7 +1573,7 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
-  560.39...
+  561.62...
 
 
 Advantages
@@ -1636,7 +1642,7 @@ cluster analysis as follows:
   >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans.labels_
   >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
-  0.6623...
+  0.6619...
 
 
 Advantages
