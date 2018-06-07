@@ -666,8 +666,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     average_method : string or None, optional (default: None)
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If None, 'max' will be used. This is likely to change in a future
-        version.
+        If None, 'max' will be used. The default will change to
+        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
 
@@ -785,8 +785,8 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     average_method : string or None, optional (default: None)
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If None, 'geometric' will be used. This is likely to change in a
-        future version.
+        If None, 'geometric' will be used. The default will change to
+        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
 
