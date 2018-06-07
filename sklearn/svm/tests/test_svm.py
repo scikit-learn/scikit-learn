@@ -871,12 +871,16 @@ def test_consistent_proba():
     assert_array_almost_equal(proba_1, proba_2)
 
 
-def test_linear_svc_convergence_warnings():
+def test_linear_svm_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
-    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
+    lsvc = svm.LinearSVC(random_state=0, max_iter=2)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
+
+    lsvr = svm.LinearSVR(random_state=0, max_iter=2)
+    assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
+    assert_equal(lsvr.n_iter_, 2)
 
 
 def test_svr_coef_sign():

@@ -80,7 +80,7 @@ def test_ovr_fit_predict():
 
 
 def test_ovr_partial_fit():
-    # Test if partial_fit is working as intented
+    # Test if partial_fit is working as intended
     X, y = shuffle(iris.data, iris.target, random_state=0)
     ovr = OneVsRestClassifier(MultinomialNB())
     ovr.partial_fit(X[:100], y[:100], np.unique(y))

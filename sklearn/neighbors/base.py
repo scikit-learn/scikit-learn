@@ -6,6 +6,8 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from functools import partial
+
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -15,7 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 from .ball_tree import BallTree
 from .kd_tree import KDTree
 from ..base import BaseEstimator
-from ..metrics import pairwise_distances
+from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
@@ -425,6 +427,12 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     "Expected n_neighbors > 0. Got %d" %
                     self.n_neighbors
                 )
+            else:
+                if not np.issubdtype(type(self.n_neighbors), np.integer):
+                    raise TypeError(
+                        "n_neighbors does not take %s value, "
+                        "enter integer value" %
+                        type(self.n_neighbors))
 
         return self
 
@@ -437,9 +445,43 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
+    def _kneighbors_reduce_func(self, dist, start,
+                                n_neighbors, return_distance):
+        """Reduce a chunk of distances to the nearest neighbors
+
+        Callback to :func:`sklearn.metrics.pairwise.pairwise_distances_chunked`
+
+        Parameters
+        ----------
+        dist : array of shape (n_samples_chunk, n_samples)
+        start : int
+            The index in X which the first row of dist corresponds to.
+        n_neighbors : int
+        return_distance : bool
+
+        Returns
+        -------
+        dist : array of shape (n_samples_chunk, n_neighbors), optional
+            Returned only if return_distance
+        neigh : array of shape (n_samples_chunk, n_neighbors)
+        """
+        sample_range = np.arange(dist.shape[0])[:, None]
+        neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+        neigh_ind = neigh_ind[:, :n_neighbors]
+        # argpartition doesn't guarantee sorted order, so we sort again
+        neigh_ind = neigh_ind[
+            sample_range, np.argsort(dist[sample_range, neigh_ind])]
+        if return_distance:
+            if self.effective_metric_ == 'euclidean':
+                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+            else:
+                result = dist[sample_range, neigh_ind], neigh_ind
+        else:
+            result = neigh_ind
+        return result
+
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
-
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
@@ -478,7 +520,7 @@ class KNeighborsMixin(object):
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
-        (array([[ 0.5]]), array([[2]]...))
+        (array([[0.5]]), array([[2]]))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
         element is at distance 0.5 and is the third element of samples
@@ -494,6 +536,17 @@ class KNeighborsMixin(object):
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
+        elif n_neighbors <= 0:
+            raise ValueError(
+                "Expected n_neighbors > 0. Got %d" %
+                n_neighbors
+            )
+        else:
+            if not np.issubdtype(type(n_neighbors), np.integer):
+                raise TypeError(
+                    "n_neighbors does not take %s value, "
+                    "enter integer value" %
+                    type(n_neighbors))
 
         if X is not None:
             query_is_train = False
@@ -520,35 +573,36 @@ class KNeighborsMixin(object):
 
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
-            # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=n_jobs, squared=True)
-            else:
-                dist = pairwise_distances(
-                    X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
-                    **self.effective_metric_params_)
 
             if issparse(dist):
                 neigh_dist, neigh_ind = _kneighbors_from_graph(
                     dist, n_neighbors=n_neighbors - query_is_train)
 
+                if return_distance:
+                    result = neigh_dist, neigh_ind
+                else:
+                    result = neigh_ind
             else:
-                neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
-                neigh_ind = neigh_ind[:, :n_neighbors]
-                # argpartition doesn't guarantee sorted order, so we sort again
-                neigh_ind = neigh_ind[
-                    sample_range, np.argsort(dist[sample_range, neigh_ind])]
+                reduce_func = partial(self._kneighbors_reduce_func,
+                                      n_neighbors=n_neighbors,
+                                      return_distance=return_distance)
+
+                # for efficiency, use squared euclidean distances
+                if self.effective_metric_ == 'euclidean':
+                    kwds = {'squared': True}
+                else:
+                    kwds = self.effective_metric_params_
+
+                result = pairwise_distances_chunked(
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric=self.effective_metric_, n_jobs=n_jobs,
+                    **kwds)
 
                 if return_distance:
-                    neigh_dist = dist[sample_range, neigh_ind]
-                    if self.effective_metric_ == 'euclidean':
-                        neigh_dist = np.sqrt(neigh_dist)
-
-            if return_distance:
-                result = neigh_dist, neigh_ind
-            else:
-                result = neigh_ind
+                    dist, neigh_ind = zip(*result)
+                    result = np.vstack(dist), np.vstack(neigh_ind)
+                else:
+                    result = np.vstack(result)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             dist = None
@@ -633,9 +687,9 @@ class KNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.toarray()
-        array([[ 1.,  0.,  1.],
-               [ 0.,  1.,  1.],
-               [ 1.,  0.,  1.]])
+        array([[1., 0., 1.],
+               [0., 1., 1.],
+               [1., 0., 1.]])
 
         See also
         --------
@@ -681,6 +735,40 @@ class KNeighborsMixin(object):
 
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
+
+    def _radius_neighbors_reduce_func(self, dist, start,
+                                      radius, return_distance):
+        """Reduce a chunk of distances to the nearest neighbors
+
+        Callback to :func:`sklearn.metrics.pairwise.pairwise_distances_chunked`
+
+        Parameters
+        ----------
+        dist : array of shape (n_samples_chunk, n_samples)
+        start : int
+            The index in X which the first row of dist corresponds to.
+        radius : float
+        return_distance : bool
+
+        Returns
+        -------
+        dist : list of n_samples_chunk 1d arrays, optional
+            Returned only if return_distance
+        neigh : list of n_samples_chunk 1d arrays
+        """
+        neigh_ind = [np.where(d <= radius)[0] for d in dist]
+
+        if return_distance:
+            if self.effective_metric_ == 'euclidean':
+                dist = [np.sqrt(d[neigh_ind[i]])
+                        for i, d in enumerate(dist)]
+            else:
+                dist = [d[neigh_ind[i]]
+                        for i, d in enumerate(dist)]
+            results = dist, neigh_ind
+        else:
+            results = neigh_ind
+        return results
 
     def radius_neighbors(self, X=None, radius=None, return_distance=True,
                          sort_results=False):
@@ -739,7 +827,7 @@ class RadiusNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
         >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
-        [ 1.5  0.5]
+        [1.5 0.5]
         >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS
         [1 2]
 
@@ -770,55 +858,72 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
-        n_samples = X.shape[0]
         if self._fit_method == 'brute':
-            # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=self.n_jobs, squared=True)
-                radius *= radius
-            else:
-                dist = pairwise_distances(X, self._fit_X,
-                                          self.effective_metric_,
-                                          n_jobs=self.n_jobs,
-                                          **self.effective_metric_params_)
 
-            if issparse(dist):
+            if self.effective_metric_ == 'precomputed':
+                # TODO: improve quick refactor after merge
+                dist = 'TODO'
+                # dist = pairwise_distances(X, self._fit_X,
+                #                           self.effective_metric_,
+                #                           n_jobs=self.n_jobs,
+                #                           **self.effective_metric_params_)
                 neigh_dist, neigh_ind = _radius_neighbors_from_graph(
                     dist, radius=radius)
-            else:
-                neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
-
-                # See https://github.com/numpy/numpy/issues/5456
-                # if you want to understand why this is initialized this way.
-                neigh_ind = np.empty(n_samples, dtype='object')
-                neigh_ind[:] = neigh_ind_list
-
                 if return_distance:
-                    neigh_dist = np.empty(n_samples, dtype='object')
-                    if self.effective_metric_ == 'euclidean':
-                        dist_list = [np.sqrt(d[neigh_ind[i]])
-                                     for i, d in enumerate(dist)]
-                    else:
-                        dist_list = [d[neigh_ind[i]]
-                                     for i, d in enumerate(dist)]
-                    neigh_dist[:] = dist_list
+                    results = neigh_dist, neigh_ind
+                else:
+                    results = neigh_ind
 
-            if return_distance:
-                results = neigh_dist, neigh_ind
             else:
-                results = neigh_ind
+                # for efficiency, use squared euclidean distances
+                if self.effective_metric_ == 'euclidean':
+                    radius *= radius
+                    kwds = {'squared': True}
+                else:
+                    kwds = self.effective_metric_params_
+
+                reduce_func = partial(self._radius_neighbors_reduce_func,
+                                      radius=radius,
+                                      return_distance=return_distance)
+
+                results = pairwise_distances_chunked(
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric=self.effective_metric_, n_jobs=self.n_jobs,
+                    **kwds)
+                if return_distance:
+                    dist_chunks, neigh_ind_chunks = zip(*results)
+                    dist_list = sum(dist_chunks, [])
+                    neigh_ind_list = sum(neigh_ind_chunks, [])
+                    # See https://github.com/numpy/numpy/issues/5456
+                    # if you want to understand why this is initialized this way.
+                    dist = np.empty(len(dist_list), dtype='object')
+                    dist[:] = dist_list
+                    neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
+                    neigh_ind[:] = neigh_ind_list
+                    results = dist, neigh_ind
+                else:
+                    neigh_ind_list = sum(results, [])
+                    results = np.empty(len(neigh_ind_list), dtype='object')
+                    results[:] = neigh_ind_list
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            results = self._tree.query_radius(X, radius,
-                                              return_distance=return_distance,
-                                              sort_results=sort_results)
+
+            # TODO: check sorting after quick merge
+            n_jobs = _get_n_jobs(self.n_jobs)
+            results = Parallel(n_jobs, backend='threading')(
+                delayed(self._tree.query_radius, check_pickle=False)(
+                    X[s], radius, return_distance, sort_results=sort_results)
+                for s in gen_even_slices(X.shape[0], n_jobs)
+            )
             if return_distance:
-                results = results[::-1]
+                neigh_ind, dist = tuple(zip(*results))
+                results = np.hstack(dist), np.hstack(neigh_ind)
+            else:
+                results = np.hstack(results)
         else:
             raise ValueError("internal: _fit_method not recognized")
 
@@ -880,9 +985,9 @@ class RadiusNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.toarray()
-        array([[ 1.,  0.,  1.],
-               [ 0.,  1.,  0.],
-               [ 1.,  0.,  1.]])
+        array([[1., 0., 1.],
+               [0., 1., 0.],
+               [1., 0., 1.]])
 
         See also
         --------

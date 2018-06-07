@@ -201,7 +201,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
-    function. Both must be initilized to 0.0. last_n is the
+    function. Both must be initialized to 0.0. last_n is the
     number of samples encountered until now and is initialized at 0.
 
     Parameters

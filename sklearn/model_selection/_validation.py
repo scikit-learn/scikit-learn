@@ -177,7 +177,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    array([ 0.33...,  0.08...,  0.03...])
+    array([0.33150734, 0.08022311, 0.03531764])
 
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
@@ -187,12 +187,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])                         # doctest: +ELLIPSIS
-    [ 0.28...  0.39...  0.22...]
+    [0.28010158 0.39088426 0.22784852]
 
     See Also
     ---------
     :func:`sklearn.model_selection.cross_val_score`:
         Run cross-validation for single metric evaluation.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
 
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
@@ -333,13 +337,17 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
-    [ 0.33150734  0.08022311  0.03531764]
+    [0.33150734 0.08022311 0.03531764]
 
     See Also
     ---------
     :func:`sklearn.model_selection.cross_validate`:
         To run cross-validation on multiple metrics and also to return
         train scores, fit times and score times.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
 
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
@@ -606,6 +614,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                       method='predict'):
     """Generate cross-validated estimates for each input data point
 
+    It is not appropriate to pass these predictions into an evaluation
+    metric. Use :func:`cross_validate` to measure generalization error.
+
     Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
@@ -676,6 +687,12 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     -------
     predictions : ndarray
         This is the result of calling ``method``
+
+    See also
+    --------
+    cross_val_score : calculate score for each CV split
+
+    cross_validate : calculate one or more scores and timings for each CV split
 
     Notes
     -----
@@ -1097,7 +1114,7 @@ def learning_curve(estimator, X, y, groups=None,
 
     Returns
     -------
-    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.

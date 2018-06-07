@@ -158,7 +158,14 @@ details.
     :toctree: generated
     :template: class.rst
 
+    compose.ColumnTransformer
     compose.TransformedTargetRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   compose.make_column_transformer
 
 .. _covariance_ref:
 
@@ -259,7 +266,6 @@ Loaders
    datasets.load_files
    datasets.load_iris
    datasets.load_linnerud
-   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -647,6 +653,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.MICEImputer
 
 .. _kernel_approximation_ref:
 
@@ -746,10 +753,10 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.lasso_stability_path
    linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:
@@ -894,6 +901,7 @@ details.
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
    metrics.calinski_harabaz_score
+   metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
    metrics.fowlkes_mallows_score
@@ -956,6 +964,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
+   metrics.pairwise_distances_chunked
 
 
 .. _mixture_ref:
@@ -1462,6 +1471,7 @@ Low-level methods
    utils.testing.assert_raise_message
    utils.testing.all_estimators
 
+
 Recently deprecated
 ===================
 
@@ -1494,6 +1504,13 @@ To be removed in 0.21
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
    neighbors.LSHForest
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   datasets.load_mlcomp
+   linear_model.lasso_stability_path
 
 
 To be removed in 0.20

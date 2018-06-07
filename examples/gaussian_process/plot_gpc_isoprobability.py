@@ -46,7 +46,7 @@ X = np.array([[-4.61611719, -6.00099547],
 # Observations
 y = np.array(g(X) > 0, dtype=int)
 
-# Instanciate and fit Gaussian Process Model
+# Instantiate and fit Gaussian Process Model
 kernel = C(0.1, (1e-5, np.inf)) * DotProduct(sigma_0=0.1) ** 2
 gp = GaussianProcessClassifier(kernel=kernel)
 gp.fit(X, y)
