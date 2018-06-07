@@ -196,7 +196,7 @@ ALL_METRICS.update(REGRESSION_METRICS)
 # is already written.
 
 # Those metrics don't support binary inputs
-METRIC_UNDEFINED_BINARY = [
+METRIC_UNDEFINED_BINARY = {
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
@@ -212,10 +212,10 @@ METRIC_UNDEFINED_BINARY = [
 
     "label_ranking_loss",
     "label_ranking_average_precision_score",
-]
+}
 
 # Those metrics don't support multiclass inputs
-METRIC_UNDEFINED_MULTICLASS = [
+METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
     "balanced_accuracy_score",
 
@@ -232,24 +232,24 @@ METRIC_UNDEFINED_MULTICLASS = [
     "f1_score",
     "f2_score",
     "f0.5_score",
-]
+}
 
 # Metric undefined with "binary" or "multiclass" input
-METRIC_UNDEFINED_BINARY_MULTICLASS = set(METRIC_UNDEFINED_BINARY).union(
-    set(METRIC_UNDEFINED_MULTICLASS))
+METRIC_UNDEFINED_BINARY_MULTICLASS = METRIC_UNDEFINED_BINARY.union(
+    METRIC_UNDEFINED_MULTICLASS)
 
 # Metrics with an "average" argument
-METRICS_WITH_AVERAGING = [
+METRICS_WITH_AVERAGING = {
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
-]
+}
 
 # Threshold-based metrics with an "average" argument
-THRESHOLDED_METRICS_WITH_AVERAGING = [
+THRESHOLDED_METRICS_WITH_AVERAGING = {
     "roc_auc_score", "average_precision_score", "partial_roc_auc",
-]
+}
 
 # Metrics with a "pos_label" argument
-METRICS_WITH_POS_LABEL = [
+METRICS_WITH_POS_LABEL = {
     "roc_curve",
 
     "brier_score_loss",
@@ -265,12 +265,12 @@ METRICS_WITH_POS_LABEL = [
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
-]
+}
 
 # Metrics with a "labels" argument
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
-METRICS_WITH_LABELS = [
+METRICS_WITH_LABELS = {
     "confusion_matrix",
 
     "hamming_loss",
@@ -287,17 +287,17 @@ METRICS_WITH_LABELS = [
     "macro_precision_score", "macro_recall_score",
 
     "cohen_kappa_score",
-]
+}
 
 # Metrics with a "normalize" option
-METRICS_WITH_NORMALIZE_OPTION = [
+METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
     "jaccard_similarity_score",
     "zero_one_loss",
-]
+}
 
 # Threshold-based metrics with "multilabel-indicator" format support
-THRESHOLDED_MULTILABEL_METRICS = [
+THRESHOLDED_MULTILABEL_METRICS = {
     "log_loss",
     "unnormalized_log_loss",
 
@@ -310,10 +310,10 @@ THRESHOLDED_MULTILABEL_METRICS = [
 
     "coverage_error", "label_ranking_loss",
     "label_ranking_average_precision_score",
-]
+}
 
 # Classification metrics with  "multilabel-indicator" format
-MULTILABELS_METRICS = [
+MULTILABELS_METRICS = {
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
@@ -330,17 +330,17 @@ MULTILABELS_METRICS = [
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
-]
+}
 
 # Regression metrics with "multioutput-continuous" format support
-MULTIOUTPUT_METRICS = [
+MULTIOUTPUT_METRICS = {
     "mean_absolute_error", "mean_squared_error", "r2_score",
     "explained_variance_score"
-]
+}
 
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
-SYMMETRIC_METRICS = [
+SYMMETRIC_METRICS = {
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
@@ -356,11 +356,11 @@ SYMMETRIC_METRICS = [
     "median_absolute_error",
 
     "cohen_kappa_score",
-]
+}
 
 # Asymmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) != metric(y_pred, y_true).
-NOT_SYMMETRIC_METRICS = [
+NOT_SYMMETRIC_METRICS = {
     "balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
@@ -373,18 +373,18 @@ NOT_SYMMETRIC_METRICS = [
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
-]
+}
 
 
 # No Sample weight support
-METRICS_WITHOUT_SAMPLE_WEIGHT = [
+METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "confusion_matrix", # Left this one here because the tests in this file do
                         # not work for confusion_matrix, as its output is a
                         # matrix instead of a number. Testing of
                         # confusion_matrix with sample_weight is in
                         # test_classification.py
     "median_absolute_error",
-]
+}
 
 
 @ignore_warnings
@@ -395,13 +395,13 @@ def test_symmetry():
     y_pred = random_state.randint(0, 2, size=(20, ))
 
     # We shouldn't forget any metrics
-    assert_equal(set(SYMMETRIC_METRICS).union(
-        NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
+    assert_equal(SYMMETRIC_METRICS.union(
+        NOT_SYMMETRIC_METRICS, set(THRESHOLDED_METRICS),
         METRIC_UNDEFINED_BINARY_MULTICLASS),
         set(ALL_METRICS))
 
     assert_equal(
-        set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
+        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
         set([]))
 
     # Symmetric metric
@@ -550,7 +550,7 @@ def test_format_invariance_with_1d_vectors(name):
 
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
-        if (name not in (MULTIOUTPUT_METRICS + THRESHOLDED_MULTILABEL_METRICS +
+        if (name not in (MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS |
                          MULTILABELS_METRICS)):
             assert_raises(ValueError, metric, y1_row, y2_row)
 
@@ -697,7 +697,7 @@ def test_single_sample(name):
     check_single_sample(name)
 
 
-@pytest.mark.parametrize('name', MULTIOUTPUT_METRICS + MULTILABELS_METRICS)
+@pytest.mark.parametrize('name', MULTIOUTPUT_METRICS | MULTILABELS_METRICS)
 def test_single_sample_multioutput(name):
     check_single_sample_multioutput(name)
 
@@ -925,7 +925,7 @@ def test_averaging_multiclass(name):
 
 
 @pytest.mark.parametrize(
-        'name', METRICS_WITH_AVERAGING + THRESHOLDED_METRICS_WITH_AVERAGING)
+        'name', METRICS_WITH_AVERAGING | THRESHOLDED_METRICS_WITH_AVERAGING)
 def test_averaging_multilabel(name):
     n_samples, n_classes = 40, 5
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
@@ -1055,8 +1055,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 @pytest.mark.parametrize(
         'name',
-        (set(ALL_METRICS).intersection(REGRESSION_METRICS)
-         - set(METRICS_WITHOUT_SAMPLE_WEIGHT)))
+        (set(ALL_METRICS).intersection(set(REGRESSION_METRICS))
+         - METRICS_WITHOUT_SAMPLE_WEIGHT))
 def test_regression_sample_weight_invariance(name):
     n_samples = 50
     random_state = check_random_state(0)
@@ -1070,7 +1070,7 @@ def test_regression_sample_weight_invariance(name):
 @pytest.mark.parametrize(
         'name',
         (set(ALL_METRICS) - set(REGRESSION_METRICS)
-         - set(METRICS_WITHOUT_SAMPLE_WEIGHT) - set(METRIC_UNDEFINED_BINARY)))
+         - METRICS_WITHOUT_SAMPLE_WEIGHT - METRIC_UNDEFINED_BINARY))
 def test_binary_sample_weight_invariance(name):
     # binary
     n_samples = 50
@@ -1088,7 +1088,7 @@ def test_binary_sample_weight_invariance(name):
 @pytest.mark.parametrize(
         'name',
         (set(ALL_METRICS) - set(REGRESSION_METRICS)
-         - set(METRICS_WITHOUT_SAMPLE_WEIGHT)
+         - METRICS_WITHOUT_SAMPLE_WEIGHT
          - METRIC_UNDEFINED_BINARY_MULTICLASS))
 def test_multiclass_sample_weight_invariance(name):
     # multiclass
@@ -1106,8 +1106,8 @@ def test_multiclass_sample_weight_invariance(name):
 
 @pytest.mark.parametrize(
         'name',
-        set(MULTILABELS_METRICS + THRESHOLDED_MULTILABEL_METRICS +
-            MULTIOUTPUT_METRICS) - set(METRICS_WITHOUT_SAMPLE_WEIGHT))
+        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS |
+         MULTIOUTPUT_METRICS) - METRICS_WITHOUT_SAMPLE_WEIGHT)
 def test_multilabel_sample_weight_invariance(name):
     # multilabel indicator
     random_state = check_random_state(0)
