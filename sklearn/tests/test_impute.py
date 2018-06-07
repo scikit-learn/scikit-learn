@@ -62,7 +62,7 @@ def test_imputation_shape():
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent']:
+    for strategy in ['mean', 'median', 'most_frequent', "constant"]:
         imputer = SimpleImputer(strategy=strategy)
         X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
         assert X_imputed.shape == (10, 2)
@@ -99,9 +99,10 @@ def test_imputation_mean_median():
     values = np.arange(1, shape[0] + 1)
     values[4::2] = - values[4::2]
 
-    tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
+    tests = [("mean", np.nan, lambda z, v, p: safe_mean(np.hstack((z, v)))),
              ("mean", 0, lambda z, v, p: np.mean(v)),
-             ("median", "NaN", lambda z, v, p: safe_median(np.hstack((z, v)))),
+             ("median", np.nan,
+              lambda z, v, p: safe_median(np.hstack((z, v)))),
              ("median", 0, lambda z, v, p: np.median(v))]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -182,7 +183,7 @@ def test_imputation_median_special_cases():
     statistics_median = [0, 5, 0, -2.5, 2.5, 4.5, -4.5, .5]
 
     _check_statistics(X, X_imputed_median, "median",
-                      statistics_median, 'NaN')
+                      statistics_median, np.nan)
 
 
 def test_imputation_most_frequent():
@@ -225,7 +226,7 @@ def test_imputation_constant_integer():
         [8, 9, 0, 0]
     ])
 
-    imputer = SimpleImputer(missing_values=-1, strategy="constant", 
+    imputer = SimpleImputer(missing_values=-1, strategy="constant",
                             fill_value=0)
     X_trans = imputer.fit(X).transform(X)
 
@@ -251,7 +252,7 @@ def test_imputation_constant_float():
             [5.5, 6.6, 0, 0],
             [7.7, 8.8, 9.9, 0]
         ])
-        
+
         X_true = sparse.csr_matrix(X_true) if format == "csr" else X_true
 
         imputer = SimpleImputer(strategy="constant", fill_value=0)
@@ -266,48 +267,26 @@ def test_imputation_constant_float():
 def test_imputation_constant_object():
     # Test imputation using the constant strategy
     # on objects
-    X = np.array([
-        [None, "a", "b", None],
-        ["c", None, "d", None],
-        ["e", "f", None, None],
-        ["g", "h", "i", None]
-    ], dtype=object)
+    for marker in (None, np.nan, "NAN", 0):
+        X = np.array([
+            [marker, "a", "b", marker],
+            ["c", marker, "d", marker],
+            ["e", "f", marker, marker],
+            ["g", "h", "i", marker]
+        ], dtype=object)
 
-    X_true = np.array([
-        ["missing", "a", "b", "missing"],
-        ["c", "missing", "d", "missing"],
-        ["e", "f", "missing", "missing"],
-        ["g", "h", "i", "missing"]
-    ], dtype=object)
+        X_true = np.array([
+            ["missing", "a", "b", "missing"],
+            ["c", "missing", "d", "missing"],
+            ["e", "f", "missing", "missing"],
+            ["g", "h", "i", "missing"]
+        ], dtype=object)
 
-    imputer = SimpleImputer(missing_values=None, strategy="constant",
-                            fill_value="missing")
-    X_trans = imputer.fit(X).transform(X)
+        imputer = SimpleImputer(missing_values=marker, strategy="constant",
+                                fill_value="missing")
+        X_trans = imputer.fit(X).transform(X)
 
-    assert_array_equal(X_trans, X_true)
-
-
-def test_imputation_constant_object_nan():
-    # Test imputation using the constant strategy
-    # on objects
-    X = np.array([
-        [np.nan, "a", "b", np.nan],
-        ["c", np.nan, "d", np.nan],
-        ["e", "f", np.nan, np.nan],
-        ["g", "h", "i", np.nan]
-    ], dtype=object)
-
-    X_true = np.array([
-        ["missing_value", "a", "b", "missing_value"],
-        ["c", "missing_value", "d", "missing_value"],
-        ["e", "f", "missing_value", "missing_value"],
-        ["g", "h", "i", "missing_value"]
-    ], dtype=object)
-
-    imputer = SimpleImputer(strategy="constant")
-    X_trans = imputer.fit(X).transform(X)
-
-    assert_array_equal(X_trans, X_true)
+        assert_array_equal(X_trans, X_true)
 
 
 def test_imputation_constant_pandas():
@@ -331,7 +310,7 @@ def test_imputation_constant_pandas():
         ], dtype=object)
 
         imputer = SimpleImputer(strategy="constant", fill_value="missing")
-        X_trans = imputer.fit(df).transform(df) 
+        X_trans = imputer.fit(df).transform(df)
 
         assert_array_equal(X_trans, X_true)
 

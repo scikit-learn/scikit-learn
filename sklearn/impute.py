@@ -37,20 +37,12 @@ __all__ = [
     'MICEImputer',
 ]
 
-def _is_scalar_nan(x):
-    """Work around limitations of numpy ufuncs"""
-    return False if x is None else np.isnan(x)
-
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or _is_scalar_nan(value_to_mask):
-        if X.dtype.kind == "O":
-            # np.isnan does not work for dtype objects. We use the trick that
-            # nan values are never equal to themselves.
-            return np.logical_not(X == X)
-        else:
-            return np.isnan(X)
+    if value_to_mask is np.nan:
+        # nan values are never equal to themselves
+        return X != X
     else:
         return X == value_to_mask
 
@@ -90,10 +82,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : integer or "NaN", optional (default="NaN")
+    missing_values : real number, string, np.nan or None,
+        optional (default=np.nan).
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed. For missing values encoded as np.nan,
-        use the string value "NaN".
+        `missing_values` will be imputed.
 
     strategy : string, optional (default="mean")
         The imputation strategy.
@@ -104,7 +96,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
           each column.
         - If "most_frequent", then replace missing using the most frequent
           value along each column.
-        - If "constant", then replace missing values with fill_value
+        - If "constant", then replace missing values with fill_value.
 
     fill_value : string or numerical value, optional (default=None)
         When strategy == "constant", fill_value is used to replace all
@@ -132,10 +124,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     Notes
     -----
     Columns which only contained missing values at `fit` are discarded upon
-    `transform` is strategy is not "constant"
+    `transform` if strategy is not "constant"
 
     """
-    def __init__(self, missing_values="NaN", strategy="mean",
+    def __init__(self, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
@@ -151,21 +143,17 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                         self.strategy))
 
         if self.strategy in ("most_frequent", "constant"):
-            dtype = None 
+            dtype = None
         else:
             dtype = FLOAT_DTYPES
 
-        if self.missing_values is None:
-            force_all_finite = "allow-nan"
+        if self.missing_values is not np.nan:
+            force_all_finite = True
         else:
-            if self.missing_values == "NaN" or np.isnan(self.missing_values):
-                force_all_finite = "allow-nan"
-            else:
-                force_all_finite = True
+            force_all_finite = "allow-nan"
 
         return check_array(X, accept_sparse='csc', dtype=dtype,
-                           force_all_finite=force_all_finite)
-
+                           force_all_finite=force_all_finite, copy=self.copy)
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -182,13 +170,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         """
         X = self._validate_input(X)
 
-        if self.strategy == "constant":
-            if (X.dtype.kind in ("i", "f") 
-                    and not isinstance(self.fill_value, numbers.Real)):
-                raise ValueError(
-                    "fill_value={0} is invalid. Expected a numerical value "
-                    "to numerical data".format(self.fill_value))
-                
+        # default missing_values is 0 for numerical input and "missing_value"
+        # otherwise
         if self.fill_value is None:
             if X.dtype.kind in ("i", "f"):
                 fill_value = 0
@@ -196,6 +179,14 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 fill_value = "missing_value"
         else:
             fill_value = self.fill_value
+
+        # fill_value should be numerical in case of numerical input
+        if self.strategy == "constant":
+            if (X.dtype.kind in ("i", "f")
+                    and not isinstance(fill_value, numbers.Real)):
+                raise ValueError(
+                    "fill_value={0} is invalid. Expected a numerical value "
+                    "to numerical data".format(fill_value))
 
         if sparse.issparse(X):
             self.statistics_ = self._sparse_fit(X,
@@ -282,11 +273,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                       n_zeros_axis[i])
 
                 return most_frequent
-            
+
             # Constant
             elif strategy == "constant":
 
-                return np.full(X.shape[0], fill_value)
+                return np.full(X.shape[1], fill_value)
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
@@ -338,8 +329,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             else:
                 dtype = object
 
-            return np.full(X.shape[0], fill_value, dtype=dtype)
-
+            return np.full(X.shape[1], fill_value, dtype=dtype)
 
     def transform(self, X):
         """Impute all missing values in X.
@@ -364,16 +354,15 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         else:
             invalid_mask = np.isnan(statistics)
             valid_mask = np.logical_not(invalid_mask)
+            valid_statistics = statistics[valid_mask]
+            valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
                 missing = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose:
                     warnings.warn("Deleting features without "
-                                "observed values: %s" % missing)
-        
-            valid_statistics = statistics[valid_mask]
-            valid_statistics_indexes = np.flatnonzero(valid_mask)
-            X = X[:, valid_statistics_indexes]
+                                  "observed values: %s" % missing)
+                X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
@@ -390,7 +379,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
-
             coordinates = np.where(mask.transpose())[::-1]
 
             X[coordinates] = values
@@ -409,10 +397,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : int or "NaN", optional (default="NaN")
+    missing_values : int, np.nan, optional (default=np.nan)
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed. For missing values encoded as
-        np.nan, use the string value "NaN".
+        ``missing_values`` will be imputed.
 
     imputation_order : str, optional (default="ascending")
         The order in which the features will be imputed. Possible values:
@@ -507,7 +494,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self,
-                 missing_values='NaN',
+                 missing_values=np.nan,
                  imputation_order='ascending',
                  n_imputations=100,
                  n_burn_in=10,
@@ -757,10 +744,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
+
         X = check_array(X, dtype=FLOAT_DTYPES, order="F",
-                        force_all_finite='allow-nan'
-                        if self.missing_values == 'NaN'
-                        or np.isnan(self.missing_values) else True)
+                        force_all_finite="allow-nan"
+                        if self.missing_values is np.nan else True)
 
         mask_missing_values = _get_mask(X, self.missing_values)
         if self.initial_imputer_ is None:
