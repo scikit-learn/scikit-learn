@@ -347,7 +347,7 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 .. topic:: References:
 
