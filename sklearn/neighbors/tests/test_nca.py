@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.testing import assert_array_equal
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises, assert_equal
 from sklearn.datasets import load_iris, make_classification
@@ -72,13 +71,12 @@ def test_finite_differences():
     nca = NeighborhoodComponentsAnalysis(init=point)
 
     X, y, init = nca._validate_params(X, y)
-    masks = OneHotEncoder(sparse=False,
-                          dtype=bool).fit_transform(y[:, np.newaxis])
+    mask = y[:, np.newaxis] == y[np.newaxis, :]  # (n_samples, n_samples)
     nca.n_iter_ = 0
 
     point = nca._initialize(X, init)
     # compute the gradient at `point`
-    _, gradient = nca._loss_grad_lbfgs(point, X, y)
+    _, gradient = nca._loss_grad_lbfgs(point, X, mask)
 
     # create a random direction of norm 1
     random_direction = rng.randn(*point.shape)
@@ -90,8 +88,10 @@ def test_finite_differences():
 
     # compute finite differences
     eps = 1e-5
-    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction, X, y)
-    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction, X, y)
+    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction, X,
+                                         mask)
+    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction, X,
+                                        mask)
     finite_differences = 1 / (2 * eps) * (right_loss - left_loss)
 
     # compute relative error

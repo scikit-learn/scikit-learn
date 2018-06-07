@@ -18,8 +18,6 @@ from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from matplotlib import cm
 from scipy.misc import logsumexp
 
-from sklearn.preprocessing import OneHotEncoder
-
 print(__doc__)
 
 n_neighbors = 1
@@ -51,10 +49,6 @@ def p_i(X, i):
     exp_dist_embedded = np.exp(-dist_embedded -
                                logsumexp(-dist_embedded))
     return exp_dist_embedded
-
-
-masks = OneHotEncoder(sparse=False,
-                      dtype=bool).fit_transform(y[:, np.newaxis])
 
 
 def relate_point(X, i, ax):

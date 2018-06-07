@@ -16,7 +16,6 @@ except ImportError:
     from scipy.misc import logsumexp
 from scipy.optimize import minimize
 from ..metrics import pairwise_distances
-from ..preprocessing import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
@@ -182,10 +181,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         # Measure the total training time
         t_train = time.time()
 
-        # Compute arrays that stay fixed during optimization:
-        # mask for fast lookup of same-class samples
-        masks = OneHotEncoder(sparse=False,
-                              dtype=bool).fit_transform(y_valid[:, np.newaxis])
+        # Compute mask that stays fixed during optimization:
+        mask = y_valid[:, np.newaxis] == y_valid[np.newaxis, :]
+        # (n_samples, n_samples)
 
         # Initialize the transformation
         transformation = self._initialize(X_valid, init)
@@ -194,7 +192,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         disp = self.verbose - 2 if self.verbose > 1 else -1
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
-                            'args': (X_valid, y_valid, -1.0),
+                            'args': (X_valid, mask, -1.0),
                             'jac': True,
                             'x0': transformation,
                             'tol': self.tol,
@@ -401,7 +399,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, sign=1.0):
+    def _loss_grad_lbfgs(self, transformation, X, mask, sign=1.0):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -413,8 +411,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         X : array, shape (n_samples, n_features)
             The training samples.
 
-        y : array, shape (n_samples,)
-            The corresponding training labels.
+        mask : array, shape (n_samples, n_samples)
+            A mask where ``mask[i, j] == 1`` if ``X[i]`` and ``X[j]`` belong
+            to the same class, and ``0`` otherwise.
 
         Returns
         -------
@@ -440,7 +439,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         transformation = transformation.reshape(-1, X.shape[1])
         X_embedded = np.dot(X, transformation.T)  # (n_samples, n_features_out)
-        mask = y[:, np.newaxis] == y[np.newaxis, :]  # (n_samples, n_samples)
 
         # Compute softmax distances
         p_ij = pairwise_distances(X_embedded, squared=True)
