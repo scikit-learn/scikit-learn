@@ -123,7 +123,7 @@ class BayesianGaussianMixture(BaseMixture):
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
             'rand_data' : Initial means are randomly selected data points.
-            'k-means++' : Use the k-means++ method for initialisation.
+            'k-means++' : Use the k-means++ method to initialize.
 
     weight_concentration_prior_type : str, defaults to 'dirichlet_process'.
         String describing the type of the weight concentration prior.

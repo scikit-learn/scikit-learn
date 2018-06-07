@@ -484,7 +484,7 @@ class GaussianMixture(BaseMixture):
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
             'rand_data' : Initial means are randomly selected data points.
-            'k-means++' : Use the k-means++ method for initialisation.
+            'k-means++' : Use the k-means++ method to initialize.
 
     weights_init : array-like, shape (n_components, ), optional
         The user-provided initial weights, defaults to None.
