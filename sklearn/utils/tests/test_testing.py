@@ -217,13 +217,13 @@ class TestWarns(unittest.TestCase):
             warnings.warn("yo")
             return 3
 
-        # test that assert_warns doesn't affect external filters
         with warnings.catch_warnings():
-            filters_orig = warnings.filters[:]
             warnings.simplefilter("ignore", UserWarning)
+            filters_orig = warnings.filters[:]
             assert_equal(assert_warns(UserWarning, f), 3)
-
-        assert_equal(warnings.filters, filters_orig)
+            # test that assert_warns doesn't have side effects on warnings
+            # filters
+            assert_equal(warnings.filters, filters_orig)
 
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
