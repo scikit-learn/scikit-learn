@@ -38,11 +38,12 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.extmath import row_norms
 from sklearn.cluster.k_means_ import _k_init
+from sklearn.datasets.samples_generator import make_blobs
 
 print(__doc__)
 
 # Generate some data
-from sklearn.datasets.samples_generator import make_blobs
+
 X, y_true = make_blobs(n_samples=400, centers=4,
                        cluster_std=0.60, random_state=0)
 X = X[:, ::-1]
@@ -107,9 +108,9 @@ def randMean(r):
 
 def kmeansPlusPlus(r):
     # Generate responsibilities that end up picking points based on k-means++
-    resp_kmpp = np.zeros((n_samples,n_components))
+    resp_kmpp = np.zeros((n_samples, n_components))
     centers, indices = _k_init(X, n_components, x_squared_norms=x_squared_norms,
-                      random_state=r)
+                               random_state=r)
     for n, i in enumerate(indices.astype(int)):
         resp_kmpp[i, n] = 1
     return resp_kmpp
@@ -140,13 +141,14 @@ def testSeed(seed):
             data = X[labels == n]
             plt.scatter(data[:, 0], data[:, 1], color=color, marker='x')
 
-        #plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis', lw=0.5,
-        #            edgecolors='black')
+        # plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis', lw=0.5,
+        #             edgecolors='black')
         plt.scatter(ini[:, 0], ini[:, 1], s=75, marker='D', c='orange',
                     lw=1.5, edgecolors='black')
         plt.xticks(())
         plt.yticks(())
         plt.title(i)
     plt.show()
+
 
 testSeed(1234)
