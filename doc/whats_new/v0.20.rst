@@ -260,12 +260,7 @@ Miscellaneous
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
-- :class:`preprocessing.FunctionTransformer` now accepts pandas DataFrame in
-  ``func`` without converting to a NumPy array when
-  ``validate='array-or-frame``. In addition the parameter ``force_all_finite``
-  was added to let pass NaN. :issue:`10655` by :user:`Guillaume Lemaitre
-  <glemaitre>`.
-  
+
 Bug fixes
 .........
 
@@ -579,7 +574,7 @@ Misc
   :issue:`#10982` by :user:`Juliet Lawton <julietcl>`
 
 - In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
-  will be from ``'array-or-frame'`` in 0.22. :issue:`10655` by
+  will be from ``False`` in 0.22. :issue:`10655` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes to estimator checks
