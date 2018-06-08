@@ -173,49 +173,14 @@ def test_check_inverse():
     assert_no_warnings(trans.fit, X_dense)
 
 
-@pytest.mark.parametrize(
-    "X",
-    [np.array([[0, 1], [2, 3]]),
-     np.array([[0, 1], [2, np.nan]]),
-     np.array([[0, 1], [2, np.inf]]),
-     np.array([[0, 1], [np.inf, np.nan]])]
-)
-@pytest.mark.parametrize("force_all_finite", [True, False, 'allow-nan'])
-def test_function_transformer_finiteness_pandas(X, force_all_finite):
-    pd = pytest.importorskip('pandas')
-    X_df = pd.DataFrame(X)
-
-    def func(X):
-        return X.columns
-
-    transformer = FunctionTransformer(force_all_finite=force_all_finite,
-                                      validate=True)
-
-    should_fail = False
-    if force_all_finite is True:
-        if not np.isfinite(X).all():
-            should_fail = True
-    elif force_all_finite == 'allow-nan':
-        if np.isinf(X).any():
-            should_fail = True
-
-    if should_fail:
-        with pytest.raises(ValueError, match="Input contains"):
-            transformer.fit_transform(X_df)
-    else:
-        transformer.fit_transform(X_df)
-
-
-@pytest.mark.parametrize("is_dataframe", [True, False])
-def test_function_transformer_future_warning(is_dataframe):
+@pytest.mark.parametrize("validate", [None, True, False])
+def test_function_transformer_future_warning(validate):
     # FIXME: to be removed in 0.22
     X = np.random.randn(100, 10)
-    transformer = FunctionTransformer()
-    if is_dataframe:
-        pd = pytest.importorskip('pandas')
-        X_df = pd.DataFrame(X)
+    transformer = FunctionTransformer(validate=validate)
+    if validate is None:
         with pytest.warns(FutureWarning):
-            transformer.fit_transform(X_df)
+            transformer.fit_transform(X)
     else:
         assert_no_warnings(transformer.fit, X)
 
@@ -223,21 +188,6 @@ def test_function_transformer_future_warning(is_dataframe):
 def test_function_transformer_frame():
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(np.random.randn(100, 10))
-    transformer = FunctionTransformer(validate='array-or-frame',
-                                      check_inverse=False)
+    transformer = FunctionTransformer(validate=False)
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, 'loc')
-
-
-@pytest.mark.parametrize(
-    "params, msg_err",
-    [({'validate': 'random'}, "'validate' should be"),
-     ({'validate': True, 'force_all_finite': 'random'},
-      "'force_all_finite' should be")]
-)
-def test_function_transformer_params_errors(params, msg_err):
-    X = np.random.randn(100, 10)
-    transformer = FunctionTransformer()
-    transformer.set_params(**params)
-    with pytest.raises(ValueError, match=msg_err):
-        transformer.fit_transform(X)

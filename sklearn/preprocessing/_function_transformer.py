@@ -1,9 +1,9 @@
 import warnings
+import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.testing import assert_allclose_dense_sparse
-from ..utils.validation import _assert_all_finite
 from ..externals.six import string_types
 
 
@@ -45,41 +45,20 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Indicate that the input X array should be checked before calling
         func. The possibilities are:
 
-        - If 'array-or-frame', X will be passed through if it is a pandas
-          DataFrame or converted to a 2-dimensional array or sparse matrix. In
-          this latest case, an exception will be raised if the conversion
-          failed.
+        - If False, there is no input validation. If and only if X is a list,
+          it will be converted to a 2-dimensional NumPy array.
         - If True, then X will be converted to a 2-dimensional NumPy array or
           sparse matrix. If the conversion is not possible an exception is
           raised.
-        - If False, there is no input validation.
-
-        When X is validated, the parameters ``accept_sparse`` and
-        ``force_all_finite`` control the validation for the sparsity and
-        the finiteness of X, respectively.
 
         .. deprecated:: 0.20
            ``validate=True`` as default will be replaced by
-           ``validate='array-or-frame'`` in 0.22.
-
-        .. versionchanged:: 0.20
-           ``validate`` takes the option ``'array-or-frame'``.
+           ``validate=False`` in 0.22.
 
     accept_sparse : boolean, optional
         Indicate that func accepts a sparse matrix as input. If validate is
         False, this has no effect. Otherwise, if accept_sparse is false,
         sparse matrix inputs will cause an exception to be raised.
-
-    force_all_finite : boolean or 'allow-nan', optional default=True
-        Whether to raise an error on np.inf and np.nan in X. If validate is
-        False, this has not effect. The possibilities are:
-
-        - If True, force all values of X to be finite.
-        - If False, accept both np.inf and np.nan in X.
-        - If 'allow-nan', accept only np.nan values in X. Values cannot be
-          infinite.
-
-        .. versionadded:: 0.20
 
     pass_y : bool, optional default=False
         Indicate that transform should forward the y argument to the
@@ -119,34 +98,17 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         # FIXME: Future warning to be removed in 0.22
         if self.validate is None:
             self._validate = True
-            if hasattr(X, 'loc'):
-                warnings.warn("The default validate=True will be replaced by "
-                              "validate='array-or-frame' in 0.22. A pandas "
-                              "DataFrame will not be converted to a 2D "
-                              "NumPy array.", FutureWarning)
+            warnings.warn("The default validate=True will be replaced by "
+                          "validate=False in 0.22.", FutureWarning)
         else:
             self._validate = self.validate
 
-        if self._validate not in (True, False, 'array-or-frame'):
-            raise ValueError("'validate' should be a boolean or "
-                             "'array-or-frame'. Got {!r} instead."
-                             .format(self._validate))
-        if ((not isinstance(self.force_all_finite, bool)) and
-                self.force_all_finite != 'allow-nan'):
-            raise ValueError("'force_all_finite' should be a boolean "
-                             "or 'allow-nan'. Got {!r} instead."
-                             .format(self.force_all_finite))
-
         if self._validate:
-            if hasattr(X, 'loc') and self._validate == 'array-or-frame':
-                if self.force_all_finite:
-                    _assert_all_finite(
-                        X.values,
-                        allow_nan=not (self.force_all_finite is True))
-                return X
-            else:
-                return check_array(X, accept_sparse=self.accept_sparse,
-                                   force_all_finite=self.force_all_finite)
+            return check_array(X, accept_sparse=self.accept_sparse)
+        else:
+            # convert X to NumPy array when this is a list
+            if isinstance(X, list):
+                return np.asarray(X)
         return X
 
     def _check_inverse_transform(self, X):
