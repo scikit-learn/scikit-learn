@@ -643,6 +643,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 # First pass
                 if not hasattr(self, 'n_samples_seen_'):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
+                    # n_samples_seen_ should take into account the number of NaNs
                     self.n_samples_seen_ = (np.ones(X.shape[1], dtype=np.int32)
                                             * X.shape[0])
                 # Next passes

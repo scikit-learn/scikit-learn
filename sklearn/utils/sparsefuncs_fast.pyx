@@ -307,6 +307,9 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # Obtain new stats first
     new_n = np.ones(n_features, dtype=np.int32) * n_samples
 
+    updated_n = np.zeros_like(new_n, dtype=np.int32)
+    last_over_new_n = np.zeros_like(new_n, dtype=dtype)
+
     if X_format == 'csr':
         # X is a CSR matrix
         new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
@@ -316,27 +319,32 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
             X_data, shape, X_indices, X_indptr)
 
-    new_n -= counts_nan
+    for i in xrange(n_features):
+        new_n[i] -= counts_nan[i]
 
     # First pass
     if np.all(last_n == 0):
         return new_mean, new_var, new_n
 
     # Next passes
-    updated_n = last_n + new_n
-    last_over_new_n = last_n / new_n
+    for i in xrange(n_features):
+        updated_n[i] = last_n[i] + new_n[i]
+        last_over_new_n[i] = last_n[i] / new_n[i]
 
     # Unnormalized stats
-    last_mean *= last_n
-    last_var *= last_n
-    new_mean *= new_n
-    new_var *= new_n
+    for i in xrange(n_features):
+        last_mean[i] *= last_n[i]
+        last_var[i] *= last_n[i]
+        new_mean[i] *= new_n[i]
+        new_var[i] *= new_n[i]
 
     # Update stats
-    updated_var = (last_var + new_var + last_over_new_n / updated_n *
-                   (last_mean / last_over_new_n - new_mean) ** 2)
-    updated_mean = (last_mean + new_mean) / updated_n
-    updated_var /= updated_n
+    for i in xrange(n_features):
+        updated_var[i] = (last_var[i] + new_var[i] +
+                          last_over_new_n[i] / updated_n[i] *
+                          (last_mean[i] / last_over_new_n[i] - new_mean[i])**2)
+        updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n[i]
+        updated_var[i] /= updated_n[i]
 
     return updated_mean, updated_var, updated_n
 
