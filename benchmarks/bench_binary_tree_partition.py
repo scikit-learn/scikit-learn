@@ -5,6 +5,7 @@ from time import time
 
 def main():
     test_cases = [
+        ("random", np.random.rand(50000)),
         ("ordered", np.arange(50000, dtype=float)),
         ("reverse ordered", np.arange(50000, 0, -1, dtype=float)),
         ("duplicated", np.zeros([50000], dtype=float))
