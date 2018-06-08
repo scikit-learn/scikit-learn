@@ -27,6 +27,7 @@ def _get_valid_samples_by_column(X, col):
     "est, support_sparse",
     [(MinMaxScaler(), False),
      (StandardScaler(), False),
+     (StandardScaler(with_mean=False), True),
      (QuantileTransformer(n_quantiles=10, random_state=42), True)]
 )
 def test_missing_value_handling(est, support_sparse):
