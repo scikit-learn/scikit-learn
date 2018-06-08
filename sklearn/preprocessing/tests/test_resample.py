@@ -1,4 +1,3 @@
-import warnings
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal

@@ -2,7 +2,6 @@
 # License: BSD 3 clause
 
 from collections import defaultdict
-import warnings
 import numbers
 
 import numpy as np
@@ -50,7 +49,7 @@ def _circular_sample(initial_n_samples, target_n_samples, random_state=None):
 def _fair_array_counts(n_samples, n_classes, random_state=None):
     """Tries to fairly partition n_samples between n_classes.
     If this cannot be done fairly, +1 is added `remainder` times
-    to the counts for random arrays until a total of `n_samples` is
+    to the counts for random classes until a total of `n_samples` is
     reached.
 
     >>> _fair_array_counts(5, 3, random_state=43)
@@ -64,7 +63,7 @@ def _fair_array_counts(n_samples, n_classes, random_state=None):
     counts = np.repeat(sample_size, n_classes)
     if sample_size_rem > 0:
         counts[:sample_size_rem] += 1
-        # Shuffle so the class inbalance varies between runs
+        # Shuffle so the class imbalance varies between runs
         random_state = check_random_state(random_state)
         random_state.shuffle(counts)
     return counts
@@ -128,7 +127,7 @@ def resample_labels(y, method=None, scaling=None, replace=False,
             over/undersampling for `len(y)` samples by default.
         "oversample" grows all classes to the count of the largest class.
         "undersample" shrinks all classes to the count of the smallest class.
-        dict with pairs of class, probability with values summing to 1
+        dict with pairs of (class, probability) with values summing to 1
     scaling : integer, float (optional)
         Number of samples to return.
         None outputs the same number of samples.
@@ -173,25 +172,7 @@ def resample_labels(y, method=None, scaling=None, replace=False,
     (array([3, 3, 3, 4, 4, 4, 2, 0, 1]),
      array([10, 10, 10, 20, 20, 20, 30, 30, 30]))
 
-    Oversample all classes to the max class count of three samples each.
-
-    >>> y = np.array([1, 2, 2, 3, 3, 3])
-    >>> indices = resample_labels(y, method="oversample", random_state=333)
-    >>> indices, y[indices]
-    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    (array([0, 0, 0, 1, 2, 1, 3, 4, 5]),
-     array([1, 1, 1, 2, 2, 2, 3, 3, 3]))
-
-    Undersample all classes to the min class count of one sample each and also
-    scale the number of samples by two.
-
-    >>> y = np.array([1, 2, 2, 3, 3, 3])
-    >>> indices = resample_labels(y, method="undersample", scaling=2.0,
-    ...                           random_state=333)
-    >>> indices, y[indices]
-    (array([0, 0, 1, 2, 3, 4]), array([1, 1, 2, 2, 3, 3]))
-
-    Sample twelve times with a probability dict.
+    Take twelve samples without replacement with a probability dict.
 
     >>> y = np.array([1, 2, 3])
     >>> indices = resample_labels(y, method={1: .1, 2: .1, 3: .8},
@@ -221,10 +202,10 @@ def resample_labels(y, method=None, scaling=None, replace=False,
             n_samples = _scale_n_samples(scaling, len(y))
         else:
             if method == 'oversample':
-                count = max(len(a) for a in indices)
+                methodCount = max(len(a) for a in indices)
             else:
-                count = min(len(a) for a in indices)
-            n_samples = _scale_n_samples(scaling, count * len(labels))
+                methodCount = min(len(a) for a in indices)
+            n_samples = _scale_n_samples(scaling, methodCount * len(labels))
         counts = _fair_array_counts(n_samples, len(labels), random_state)
 
     elif isinstance(method, dict):
@@ -238,8 +219,8 @@ def resample_labels(y, method=None, scaling=None, replace=False,
                              "some classes in `proba` dict are not in `y`: %s"
                              % list(diff))
         bincounts = np.bincount(_weighted_sample(desired_probs,
-                                                n_samples,
-                                                random_state))
+                                                 n_samples,
+                                                 random_state))
         indices = [indices[k] for k, v in enumerate(bincounts) if v > 0]
         counts = bincounts[bincounts > 0]
 

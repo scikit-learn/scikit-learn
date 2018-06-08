@@ -682,17 +682,17 @@ for growing or shrinking the dataset to any size.
 
 While the effectiveness of changing the label distribution of the training set
 is still an open question, such experiments are easy to conduct. Please note
-that this function will not generate any samples that are not in the original
-dataset, but it is possible to perturb the dataset after resampling to
-synthesize a similar but not identical dataset.
+that :func:`resample_lablels` will not generate any samples that are not in the
+original dataset, but it is possible to add noise to the dataset after resampling
+to get entirely new samples that look like the original.
 
-As an example, assume there is an unbalanced dataset with three labels ``[0, 1,
-2]`` and ``[100, 125, 150]`` samples. There are three options for the ``method``
-keyword when balancing the class distribution with the :func:`resample_labels`.
-By setting the ``method='undersample'`` parameter, the number of samples in the
-least common class determines the count of the samples for each class, which
-results in a dataset of 300 points total, with 100 points drawn from each of
-the three classes::
+As an example of resampling, assume there is an unbalanced dataset with three
+labels ``[0, 1, 2]`` and sample counts ``[100, 125, 150]``. There are three
+options if using the ``method`` keyword with :func:`resample_labels`. By setting
+the ``method='undersample'`` parameter, the number of samples in the least common
+class determines the count of the samples for each class, which in this case
+results in a dataset of 300 points total, with 100 points drawn from each of the
+three classes::
 
   >>> import numpy as np
   >>> from sklearn.preprocessing.resample import resample_labels
@@ -701,8 +701,8 @@ the three classes::
   >>> print(np.bincount(y[indices]))
   [100 100 100]
 
-With ``method='oversample'``, each class draws 150 samples and the length of the
-output is 450::
+With ``method='oversample'``, each class draws the maximum class's 150 samples
+for an output length of 450::
   >>> indices = resample_labels(y, method='oversample')
   >>> print(np.bincount(y[indices]))
   [150 150 150]
@@ -715,19 +715,19 @@ the count of each class by undersampling or oversampling as needed::
   >>> print(np.bincount(y[indices]))
   [125 125 125]
 
-Keep in mind that if your dataset changes or has rare labels that vary from
-run to run, you may end up with very few samples in your output dataset if one
-class is underrepresented or missing. One way to mitigate this problem is to use
-the ``scale`` parameter described later, but there is no substitute for being
-careful.
+Keep in mind that if your dataset starts with very few samples of a class and
+you undersample, you will get a new dataset with the number of samples from the
+smallest class times the number of labels, which will be a very small dataset.
+Using the scale keyword as described below can ensure the dataset remains large,
+but with many repeated samples. Make sure that this is what you want.
 
 
 Custom label distribution
 -------------------------
-The three built-in sampling options above produce a balanced dataset, but
-unbalancing the data by passing a ``method=dict`` is also supported. For
-instance, in the previous example, passing ``method={0: .5, 1: .25, 2: .25}``
-gives a dataset where a 0 sample is twice as likely as a 1 or 2.
+The three sampling options for the ``method`` keyword provide balanced class
+distribution, but unbalancing the classes by passing a ``method=dict`` is also
+supported. For instance, in the previous example, passing ``method={0: .5, 1: .25, 2: .25}``
+gives a dataset where a 0 class label is twice as likely as a 1 or 2.
 
 Skew the distribution with a dict::
 
