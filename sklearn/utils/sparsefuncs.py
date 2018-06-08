@@ -122,7 +122,7 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     last_var : float array with shape (n_features,)
         Array of feature-wise var to update with the new data X.
 
-    last_n : int
+    last_n : unsigned int with shape (n_features,)
         Number of samples seen so far, excluded X.
 
     Returns

@@ -15,6 +15,7 @@ import numpy as np
 import scipy.sparse as sp
 cimport cython
 from cython cimport floating
+from numpy.math cimport isnan
 
 np.import_array()
 
@@ -74,7 +75,8 @@ def csr_mean_variance_axis0(X):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    return _csr_mean_variance_axis0(X.data, X.shape, X.indices)
+    means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape, X.indices)
+    return means, variances
 
 
 def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
@@ -106,24 +108,32 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     # counts[j] contains the number of samples where feature j is non-zero
     cdef np.ndarray[int, ndim=1] counts = np.zeros(n_features,
                                                    dtype=np.int32)
+    # counts_nan[j] contains the number of NaNs for feature j
+    cdef np.ndarray[int, ndim=1] counts_nan = np.zeros(n_features,
+                                                       dtype=np.int32)
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
-        means[col_ind] += X_data[i]
-
-    means /= n_samples
-
-    for i in xrange(non_zero):
-        col_ind = X_indices[i]
-        diff = X_data[i] - means[col_ind]
-        variances[col_ind] += diff * diff
-        counts[col_ind] += 1
+        if not isnan(X_data[i]):
+            means[col_ind] += X_data[i]
+        else:
+            counts_nan[col_ind] += 1
 
     for i in xrange(n_features):
-        variances[i] += (n_samples - counts[i]) * means[i] ** 2
-        variances[i] /= n_samples
+        means[i] /= (n_samples - counts_nan[col_ind])
 
-    return means, variances
+    for i in xrange(non_zero):
+        col_ind = X_indices[i]
+        if not isnan(X_data[i]):
+            diff = X_data[i] - means[col_ind]
+            variances[col_ind] += diff * diff
+            counts[col_ind] += 1
+
+    for i in xrange(n_features):
+        variances[i] += ((n_samples - counts_nan[i]) - counts[i]) * means[i]**2
+        variances[i] /= (n_samples - counts_nan[i])
+
+    return means, variances, counts_nan
 
 
 def csc_mean_variance_axis0(X):
@@ -146,7 +156,9 @@ def csc_mean_variance_axis0(X):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    return _csc_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr)
+    means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape, X.indices,
+                                                  X.indptr)
+    return means, variances
 
 
 def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
@@ -177,27 +189,35 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     means = np.zeros(n_features, dtype=dtype)
     variances = np.zeros_like(means, dtype=dtype)
 
+    cdef np.ndarray[int, ndim=1] counts_nan = np.zeros(n_features,
+                                                       dtype=np.int32)
+
     for i in xrange(n_features):
 
         startptr = X_indptr[i]
         endptr = X_indptr[i + 1]
         counts = endptr - startptr
+        counts_nan[i] = 0
 
         for j in xrange(startptr, endptr):
-            means[i] += X_data[j]
-        means[i] /= n_samples
+            if not isnan(X_data[j]):
+                means[i] += X_data[j]
+            else:
+                counts_nan[i] += 1
+        means[i] /= (n_samples - counts_nan[i])
 
         for j in xrange(startptr, endptr):
-            diff = X_data[j] - means[i]
-            variances[i] += diff * diff
+            if not isnan(X_data[j]):
+                diff = X_data[j] - means[i]
+                variances[i] += diff * diff
 
-        variances[i] += (n_samples - counts) * means[i] * means[i]
-        variances[i] /= n_samples
+        variances[i] += (n_samples - counts_nan[i] - counts) * means[i] ** 2
+        variances[i] /= (n_samples - counts_nan[i])
 
-    return means, variances
+    return means, variances, counts_nan
 
 
-def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
+def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
@@ -254,7 +274,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                               X_format,
                               last_mean,
                               last_var,
-                              unsigned long last_n):
+                              last_n):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef unsigned long n_samples = shape[0]
@@ -279,23 +299,27 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     updated_mean = np.zeros_like(new_mean, dtype=dtype)
     updated_var = np.zeros_like(new_mean, dtype=dtype)
 
-    cdef unsigned long new_n
-    cdef unsigned long updated_n
-    cdef floating last_over_new_n
+    cdef np.ndarray[int, ndim=1] new_n
+    cdef np.ndarray[int, ndim=1] updated_n
+    cdef np.ndarray[floating, ndim=1] last_over_new_n
+    cdef np.ndarray[int, ndim=1] counts_nan
 
     # Obtain new stats first
-    new_n = n_samples
+    new_n = np.ones(n_features, dtype=np.int32) * n_samples
 
     if X_format == 'csr':
         # X is a CSR matrix
-        new_mean, new_var = _csr_mean_variance_axis0(X_data, shape, X_indices)
+        new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
+            X_data, shape, X_indices)
     else:
         # X is a CSC matrix
-        new_mean, new_var = _csc_mean_variance_axis0(X_data, shape, X_indices,
-                                                     X_indptr)
+        new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
+            X_data, shape, X_indices, X_indptr)
+
+    new_n -= counts_nan
 
     # First pass
-    if last_n == 0:
+    if np.all(last_n == 0):
         return new_mean, new_var, new_n
 
     # Next passes
