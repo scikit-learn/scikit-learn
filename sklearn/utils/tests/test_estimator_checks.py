@@ -134,6 +134,16 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class BadTransformerWithoutMixin(BaseEstimator):
+    def fit(self, X, y=None):
+        X = check_array(X)
+        return self
+
+    def transform(self, X):
+        X = check_array(X)
+        return X
+
+
 class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
         # Convert data
@@ -149,6 +159,21 @@ class NotInvariantPredict(BaseEstimator):
         if X.shape[0] > 1:
             return np.ones(X.shape[0])
         return np.zeros(X.shape[0])
+
+
+class SparseTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_shape_ = check_array(X).shape
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X):
+        X = check_array(X)
+        if X.shape[1] != self.X_shape_[1]:
+            raise ValueError('Bad number of features')
+        return sp.csr_matrix(X)
 
 
 def test_check_estimator():
@@ -225,11 +250,20 @@ def test_check_estimator():
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
 
+    # non-regression test for estimators transforming to sparse data
+    check_estimator(SparseTransformer())
+
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+
+def test_check_estimator_transformer_no_mixin():
+    # check that TransformerMixin is not required for transformer tests to run
+    assert_raises_regex(AttributeError, '.*fit_transform.*',
+                        check_estimator, BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():

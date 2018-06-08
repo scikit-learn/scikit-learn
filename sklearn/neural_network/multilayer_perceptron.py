@@ -94,11 +94,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         ----------
         activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
-
-        with_output_activation : bool, default True
-            If True, the output passes through the output activation
-            function, which is either the softmax function or the
-            logistic function
         """
         hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
@@ -143,7 +138,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        packed_parameters : array-like
+        packed_coef_inter : array-like
             A vector comprising the flattened coefficients and intercepts.
 
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -162,7 +157,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             in each layer, where z = wx + b is the value of a particular layer
             before passing through the activation function
 
-        coef_grad : list, length = n_layers - 1
+        coef_grads : list, length = n_layers - 1
             The ith element contains the amount of change used to update the
             coefficient parameters of the ith layer in an iteration.
 
@@ -174,7 +169,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         loss : float
         grad : array-like, shape (number of nodes of all layers,)
-
         """
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
@@ -206,7 +200,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             in each layer, where z = wx + b is the value of a particular layer
             before passing through the activation function
 
-        coef_grad : list, length = n_layers - 1
+        coef_grads : list, length = n_layers - 1
             The ith element contains the amount of change used to update the
             coefficient parameters of the ith layer in an iteration.
 
@@ -300,17 +294,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self.best_loss_ = np.inf
 
     def _init_coef(self, fan_in, fan_out):
+        # Use the initialization method recommended by
+        # Glorot et al.
+        factor = 6.
         if self.activation == 'logistic':
-            # Use the initialization method recommended by
-            # Glorot et al.
-            init_bound = np.sqrt(2. / (fan_in + fan_out))
-        elif self.activation in ('identity', 'tanh', 'relu'):
-            init_bound = np.sqrt(6. / (fan_in + fan_out))
-        else:
-            # this was caught earlier, just to make sure
-            raise ValueError("Unknown activation function %s" %
-                             self.activation)
+            factor = 2.
+        init_bound = np.sqrt(factor / (fan_in + fan_out))
 
+        # Generate weights and bias:
         coef_init = self._random_state.uniform(-init_bound, init_bound,
                                                (fan_in, fan_out))
         intercept_init = self._random_state.uniform(-init_bound, init_bound,
@@ -797,7 +788,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     warm_start : bool, optional, default False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default 0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
@@ -893,7 +884,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
-
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -938,7 +928,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                                  (self.classes_, classes))
         else:
             classes = unique_labels(y)
-            if np.setdiff1d(classes, self.classes_, assume_unique=True):
+            if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
@@ -998,7 +988,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y : array-like, shape (n_samples,)
             The target values.
 
-        classes : array, shape (n_classes)
+        classes : array, shape (n_classes), default None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -1181,7 +1171,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     warm_start : bool, optional, default False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     momentum : float, default 0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only
@@ -1274,7 +1264,6 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
-
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,

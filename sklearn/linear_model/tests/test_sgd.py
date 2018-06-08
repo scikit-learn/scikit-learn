@@ -1,6 +1,7 @@
 
 import pickle
 import unittest
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -548,6 +549,29 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # Provided intercept_ does match dataset.
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
+
+    def test_sgd_predict_proba_method_access(self):
+        # Checks that SGDClassifier predict_proba and predict_log_proba methods
+        # can either be accessed or raise an appropriate error message
+        # otherwise. See
+        # https://github.com/scikit-learn/scikit-learn/issues/10938 for more
+        # details.
+        for loss in SGDClassifier.loss_functions:
+            clf = SGDClassifier(loss=loss)
+            if loss in ('log', 'modified_huber'):
+                assert hasattr(clf, 'predict_proba')
+                assert hasattr(clf, 'predict_log_proba')
+            else:
+                message = ("probability estimates are not "
+                           "available for loss={!r}".format(loss))
+                assert not hasattr(clf, 'predict_proba')
+                assert not hasattr(clf, 'predict_log_proba')
+                with pytest.raises(AttributeError,
+                                   message=message):
+                    clf.predict_proba
+                with pytest.raises(AttributeError,
+                                   message=message):
+                    clf.predict_log_proba
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba
@@ -1238,16 +1262,16 @@ def test_numerical_stability_large_gradient():
     assert_true(np.isfinite(model.coef_).all())
 
 
-def test_large_regularization():
+@pytest.mark.parametrize('penalty', ['l2', 'l1', 'elasticnet'])
+def test_large_regularization(penalty):
     # Non regression tests for numerical stability issues caused by large
     # regularization parameters
-    for penalty in ['l2', 'l1', 'elasticnet']:
-        model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
-                              penalty=penalty, shuffle=False,
-                              tol=None, max_iter=6)
-        with np.errstate(all='raise'):
-            model.fit(iris.data, iris.target)
-        assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
+    model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
+                          penalty=penalty, shuffle=False,
+                          tol=None, max_iter=6)
+    with np.errstate(all='raise'):
+        model.fit(iris.data, iris.target)
+    assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
 
 
 def test_tol_parameter():
