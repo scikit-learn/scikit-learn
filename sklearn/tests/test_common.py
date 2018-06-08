@@ -84,14 +84,15 @@ def _rename_partial(val):
         return "{}({})".format(val.func.__name__, kwstring)
 
 
+@pytest.mark.filterwarning('ignore',
+                           category=(DeprecationWarning, ConvergenceWarning,
+                                     UserWarning, FutureWarning))
 @pytest.mark.parametrize(
         "name, Estimator, check",
         _generate_checks_per_estimator(_yield_all_checks,
                                        _tested_non_meta_estimators()),
         ids=_rename_partial
 )
-@ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
-                           UserWarning, FutureWarning))
 def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
     estimator = Estimator()
@@ -99,10 +100,11 @@ def test_non_meta_estimators(name, Estimator, check):
     check(name, estimator)
 
 
+@pytest.mark.filterwarnings('ignore',
+                            category=(DeprecationWarning, ConvergenceWarning,
+                                      UserWarning, FutureWarning))
 @pytest.mark.parametrize("name, Estimator",
                          _tested_non_meta_estimators())
-@ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
-                           UserWarning, FutureWarning))
 def test_no_attributes_set_in_init(name, Estimator):
     # input validation etc for non-meta estimators
     estimator = Estimator()
