@@ -191,3 +191,11 @@ def test_function_transformer_frame():
     transformer = FunctionTransformer(validate=False)
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, 'loc')
+
+
+def test_function_transformer_list():
+    # test that we convert a list to a NumPy array when validate=False
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    transformer = FunctionTransformer(validate=False)
+    X_trans = transformer.fit_transform(X)
+    assert isinstance(X_trans, np.ndarray)
