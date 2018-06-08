@@ -643,9 +643,14 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 # First pass
                 if not hasattr(self, 'n_samples_seen_'):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
-                    # n_samples_seen_ should take into account the number of NaNs
                     self.n_samples_seen_ = (np.ones(X.shape[1], dtype=np.int32)
                                             * X.shape[0])
+                    print(self.n_samples_seen_)
+                    counts_nan = sparse.csr_matrix(
+                        (np.isnan(X.data), X.indices, X.indptr)).sum(
+                            axis=0).A.ravel()
+                    self.n_samples_seen_ -= counts_nan
+                    print(self.n_samples_seen_)
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
