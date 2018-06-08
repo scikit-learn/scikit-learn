@@ -23,7 +23,7 @@ from .validation import check_array
 
 
 def _unique_multiclass(y):
-    if hasattr(y, '__array__'):
+    if hasattr(y, '__array__') or isinstance(y, Sequence):
         return np.unique(np.asarray(y))
     else:
         return set(y)
