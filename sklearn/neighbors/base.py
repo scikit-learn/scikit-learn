@@ -22,6 +22,7 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_non_negative
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..exceptions import DataConversionWarning, EfficiencyWarning
@@ -127,7 +128,7 @@ def _is_sorted_by_data(graph):
 
 
 def _check_precomputed(X):
-    """Check precomputed precomputed distance matrix
+    """Check precomputed distance matrix
 
     If the precomputed distance matrix is sparse, it checks that the non-zero
     entries are sorted by distances. If not, the matrix is copied and sorted.
@@ -145,7 +146,9 @@ def _check_precomputed(X):
         case only non-zero elements may be considered neighbors.
     """
     if not issparse(X):
-        return check_array(X)
+        X = check_array(X)
+        check_non_negative(X, whom="precomputed distance matrix.")
+        return X
     else:
         graph = X
 
@@ -154,6 +157,7 @@ def _check_precomputed(X):
                         'its handling of explicit zeros'.format(graph.format))
     copied = graph.format != 'csr'
     graph = graph.tocsr()
+    check_non_negative(graph, whom="precomputed distance matrix.")
 
     if not _is_sorted_by_data(graph):
         warnings.warn('Precomputed sparse input was not sorted by data.',
@@ -579,9 +583,9 @@ class KNeighborsMixin(object):
                     X, n_neighbors=n_neighbors - query_is_train)
 
                 if return_distance:
-                    result = neigh_dist, neigh_ind
+                    return neigh_dist, neigh_ind
                 else:
-                    result = neigh_ind
+                    return neigh_ind
             else:
                 reduce_func = partial(self._kneighbors_reduce_func,
                                       n_neighbors=n_neighbors,
@@ -598,14 +602,7 @@ class KNeighborsMixin(object):
                     metric=self.effective_metric_, n_jobs=n_jobs,
                     **kwds)
 
-                if return_distance:
-                    neigh_dist, neigh_ind = zip(*result)
-                    result = np.vstack(neigh_dist), np.vstack(neigh_ind)
-                else:
-                    result = np.vstack(result)
-
         elif self._fit_method in ['ball_tree', 'kd_tree']:
-            dist = None
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
@@ -615,15 +612,16 @@ class KNeighborsMixin(object):
                     X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
-            if return_distance:
-                neigh_dist, neigh_ind = tuple(zip(*result))
-                result = np.vstack(neigh_dist), np.vstack(neigh_ind)
-            else:
-                result = np.vstack(result)
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-        if not query_is_train or issparse(dist):
+        if return_distance:
+            neigh_dist, neigh_ind = zip(*result)
+            result = np.vstack(neigh_dist), np.vstack(neigh_ind)
+        else:
+            result = np.vstack(result)
+
+        if not query_is_train:
             return result
         else:
             # If the query data is the same as the indexed data, we would like
@@ -906,7 +904,6 @@ class RadiusNeighborsMixin(object):
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
 
-            # TODO: check sorting after quick merge
             n_jobs = _get_n_jobs(self.n_jobs)
             results = Parallel(n_jobs, backend='threading')(
                 delayed(self._tree.query_radius, check_pickle=False)(

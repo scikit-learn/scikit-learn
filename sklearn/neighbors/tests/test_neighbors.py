@@ -214,7 +214,7 @@ def test_is_sorted_by_data():
 
 def test_check_precomputed():
     # Test that _check_precomputed returns a graph sorted by data
-    X = csr_matrix(np.random.RandomState(42).randn(10, 10))
+    X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
     assert not _is_sorted_by_data(X)
     Xt = _check_precomputed(X)
     assert _is_sorted_by_data(Xt)
@@ -251,7 +251,7 @@ def test_precomputed_sparse_invalid():
     # Checks error with inconsistent distance matrix
     dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
-    msg = "Not a valid distance .*non-negative values.*"
+    msg = "Negative values in data passed to precomputed distance matrix."
     assert_raises_regex(ValueError, msg, neigh.kneighbors, dist_csr,
                         n_neighbors=1)
 

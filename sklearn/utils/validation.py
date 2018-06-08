@@ -878,6 +878,7 @@ def check_non_negative(X, whom):
     whom : string
         Who passed X to this function.
     """
-    X = X.data if sp.issparse(X) else X
-    if (X < 0).any():
+    # avoid X.min() on sparse matrix since it also sorts the indices
+    X_min = X.data.min() if sp.issparse(X) else X.min()
+    if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
