@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
+
+import pytest
+
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
@@ -139,63 +142,63 @@ def test_predict_iris():
         assert_greater(np.mean(pred == target), .95)
 
 
-def test_multinomial_validation():
-    for solver in ['lbfgs', 'newton-cg', 'sag', 'saga']:
-        lr = LogisticRegression(C=-1, solver=solver, multi_class='multinomial')
-        assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+@pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
+def test_multinomial_validation(solver):
+    lr = LogisticRegression(C=-1, solver=solver, multi_class='multinomial')
+    assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
 
 
-def test_check_solver_option():
+@pytest.mark.parametrize('LR', [LogisticRegression, LogisticRegressionCV])
+def test_check_solver_option(LR):
     X, y = iris.data, iris.target
-    for LR in [LogisticRegression, LogisticRegressionCV]:
 
-        msg = ('Logistic Regression supports only liblinear, newton-cg, '
-               'lbfgs, sag and saga solvers, got wrong_name')
-        lr = LR(solver="wrong_name")
+    msg = ('Logistic Regression supports only liblinear, newton-cg, '
+           'lbfgs, sag and saga solvers, got wrong_name')
+    lr = LR(solver="wrong_name")
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+    msg = "multi_class should be either multinomial or ovr, got wrong_name"
+    lr = LR(solver='newton-cg', multi_class="wrong_name")
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+    # only 'liblinear' solver
+    msg = "Solver liblinear does not support a multinomial backend."
+    lr = LR(solver='liblinear', multi_class='multinomial')
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+    # all solvers except 'liblinear'
+    for solver in ['newton-cg', 'lbfgs', 'sag']:
+        msg = ("Solver %s supports only l2 penalties, got l1 penalty." %
+               solver)
+        lr = LR(solver=solver, penalty='l1')
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
+    for solver in ['newton-cg', 'lbfgs', 'sag', 'saga']:
+        msg = ("Solver %s supports only dual=False, got dual=True" %
+               solver)
+        lr = LR(solver=solver, dual=True)
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
-        msg = "multi_class should be either multinomial or ovr, got wrong_name"
-        lr = LR(solver='newton-cg', multi_class="wrong_name")
-        assert_raise_message(ValueError, msg, lr.fit, X, y)
 
-        # only 'liblinear' solver
-        msg = "Solver liblinear does not support a multinomial backend."
-        lr = LR(solver='liblinear', multi_class='multinomial')
-        assert_raise_message(ValueError, msg, lr.fit, X, y)
-
-        # all solvers except 'liblinear'
-        for solver in ['newton-cg', 'lbfgs', 'sag']:
-            msg = ("Solver %s supports only l2 penalties, got l1 penalty." %
-                   solver)
-            lr = LR(solver=solver, penalty='l1')
-            assert_raise_message(ValueError, msg, lr.fit, X, y)
-        for solver in ['newton-cg', 'lbfgs', 'sag', 'saga']:
-            msg = ("Solver %s supports only dual=False, got dual=True" %
-                   solver)
-            lr = LR(solver=solver, dual=True)
-            assert_raise_message(ValueError, msg, lr.fit, X, y)
-
-
-def test_multinomial_binary():
+@pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
+def test_multinomial_binary(solver):
     # Test multinomial LR on a binary problem.
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
-    for solver in ['lbfgs', 'newton-cg', 'sag', 'saga']:
-        clf = LogisticRegression(solver=solver, multi_class='multinomial',
-                                 random_state=42, max_iter=2000)
-        clf.fit(iris.data, target)
+    clf = LogisticRegression(solver=solver, multi_class='multinomial',
+                             random_state=42, max_iter=2000)
+    clf.fit(iris.data, target)
 
-        assert_equal(clf.coef_.shape, (1, iris.data.shape[1]))
-        assert_equal(clf.intercept_.shape, (1,))
-        assert_array_equal(clf.predict(iris.data), target)
+    assert_equal(clf.coef_.shape, (1, iris.data.shape[1]))
+    assert_equal(clf.intercept_.shape, (1,))
+    assert_array_equal(clf.predict(iris.data), target)
 
-        mlr = LogisticRegression(solver=solver, multi_class='multinomial',
-                                 random_state=42, fit_intercept=False)
-        mlr.fit(iris.data, target)
-        pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data),
-                                      axis=1)]
-        assert_greater(np.mean(pred == target), .9)
+    mlr = LogisticRegression(solver=solver, multi_class='multinomial',
+                             random_state=42, fit_intercept=False)
+    mlr.fit(iris.data, target)
+    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data),
+                                  axis=1)]
+    assert_greater(np.mean(pred == target), .9)
 
 
 def test_multinomial_binary_probabilities():
@@ -1043,7 +1046,9 @@ def test_max_iter():
                 assert_equal(lr.n_iter_[0], max_iter)
 
 
-def test_n_iter():
+@pytest.mark.parametrize('solver',
+                         ['newton-cg', 'liblinear', 'sag', 'saga', 'lbfgs'])
+def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
     y_bin = y.copy()
@@ -1052,76 +1057,73 @@ def test_n_iter():
     n_Cs = 4
     n_cv_fold = 2
 
-    for solver in ['newton-cg', 'liblinear', 'sag', 'saga', 'lbfgs']:
-        # OvR case
-        n_classes = 1 if solver == 'liblinear' else np.unique(y).shape[0]
-        clf = LogisticRegression(tol=1e-2, multi_class='ovr',
-                                 solver=solver, C=1.,
-                                 random_state=42, max_iter=100)
-        clf.fit(X, y)
-        assert_equal(clf.n_iter_.shape, (n_classes,))
+    # OvR case
+    n_classes = 1 if solver == 'liblinear' else np.unique(y).shape[0]
+    clf = LogisticRegression(tol=1e-2, multi_class='ovr',
+                             solver=solver, C=1.,
+                             random_state=42, max_iter=100)
+    clf.fit(X, y)
+    assert_equal(clf.n_iter_.shape, (n_classes,))
 
-        n_classes = np.unique(y).shape[0]
-        clf = LogisticRegressionCV(tol=1e-2, multi_class='ovr',
-                                   solver=solver, Cs=n_Cs, cv=n_cv_fold,
-                                   random_state=42, max_iter=100)
-        clf.fit(X, y)
-        assert_equal(clf.n_iter_.shape, (n_classes, n_cv_fold, n_Cs))
-        clf.fit(X, y_bin)
-        assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
+    n_classes = np.unique(y).shape[0]
+    clf = LogisticRegressionCV(tol=1e-2, multi_class='ovr',
+                               solver=solver, Cs=n_Cs, cv=n_cv_fold,
+                               random_state=42, max_iter=100)
+    clf.fit(X, y)
+    assert_equal(clf.n_iter_.shape, (n_classes, n_cv_fold, n_Cs))
+    clf.fit(X, y_bin)
+    assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
 
-        # multinomial case
-        n_classes = 1
-        if solver in ('liblinear', 'sag', 'saga'):
-            break
+    # multinomial case
+    n_classes = 1
+    if solver in ('liblinear', 'sag', 'saga'):
+        return
 
-        clf = LogisticRegression(tol=1e-2, multi_class='multinomial',
-                                 solver=solver, C=1.,
-                                 random_state=42, max_iter=100)
-        clf.fit(X, y)
-        assert_equal(clf.n_iter_.shape, (n_classes,))
+    clf = LogisticRegression(tol=1e-2, multi_class='multinomial',
+                             solver=solver, C=1.,
+                             random_state=42, max_iter=100)
+    clf.fit(X, y)
+    assert_equal(clf.n_iter_.shape, (n_classes,))
 
-        clf = LogisticRegressionCV(tol=1e-2, multi_class='multinomial',
-                                   solver=solver, Cs=n_Cs, cv=n_cv_fold,
-                                   random_state=42, max_iter=100)
-        clf.fit(X, y)
-        assert_equal(clf.n_iter_.shape, (n_classes, n_cv_fold, n_Cs))
-        clf.fit(X, y_bin)
-        assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
+    clf = LogisticRegressionCV(tol=1e-2, multi_class='multinomial',
+                               solver=solver, Cs=n_Cs, cv=n_cv_fold,
+                               random_state=42, max_iter=100)
+    clf.fit(X, y)
+    assert_equal(clf.n_iter_.shape, (n_classes, n_cv_fold, n_Cs))
+    clf.fit(X, y_bin)
+    assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
 
 
-def test_warm_start():
+@pytest.mark.parametrize('solver', ('newton-cg', 'sag', 'saga', 'lbfgs'))
+@pytest.mark.parametrize('warm_start', (True, False))
+@pytest.mark.parametrize('fit_intercept', (True, False))
+@pytest.mark.parametrize('multi_class', ['ovr', 'multinomial'])
+def test_warm_start(solver, warm_start, fit_intercept, multi_class):
     # A 1-iteration second fit on same data should give almost same result
     # with warm starting, and quite different result without warm starting.
     # Warm starting does not work with liblinear solver.
     X, y = iris.data, iris.target
 
-    solvers = ['newton-cg', 'sag', 'saga', 'lbfgs']
+    clf = LogisticRegression(tol=1e-4, multi_class=multi_class,
+                             warm_start=warm_start,
+                             solver=solver,
+                             random_state=42, max_iter=100,
+                             fit_intercept=fit_intercept)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y)
+        coef_1 = clf.coef_
 
-    for warm_start in [True, False]:
-        for fit_intercept in [True, False]:
-            for solver in solvers:
-                for multi_class in ['ovr', 'multinomial']:
-                    clf = LogisticRegression(tol=1e-4, multi_class=multi_class,
-                                             warm_start=warm_start,
-                                             solver=solver,
-                                             random_state=42, max_iter=100,
-                                             fit_intercept=fit_intercept)
-                    with ignore_warnings(category=ConvergenceWarning):
-                        clf.fit(X, y)
-                        coef_1 = clf.coef_
-
-                        clf.max_iter = 1
-                        clf.fit(X, y)
-                    cum_diff = np.sum(np.abs(coef_1 - clf.coef_))
-                    msg = ("Warm starting issue with %s solver in %s mode "
-                           "with fit_intercept=%s and warm_start=%s"
-                           % (solver, multi_class, str(fit_intercept),
-                              str(warm_start)))
-                    if warm_start:
-                        assert_greater(2.0, cum_diff, msg)
-                    else:
-                        assert_greater(cum_diff, 2.0, msg)
+        clf.max_iter = 1
+        clf.fit(X, y)
+    cum_diff = np.sum(np.abs(coef_1 - clf.coef_))
+    msg = ("Warm starting issue with %s solver in %s mode "
+           "with fit_intercept=%s and warm_start=%s"
+           % (solver, multi_class, str(fit_intercept),
+              str(warm_start)))
+    if warm_start:
+        assert_greater(2.0, cum_diff, msg)
+    else:
+        assert_greater(cum_diff, 2.0, msg)
 
 
 def test_saga_vs_liblinear():

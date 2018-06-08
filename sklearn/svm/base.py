@@ -766,7 +766,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1,
                    sample_weight=None):
-    """Used by Logistic Regression (and CV) and LinearSVC.
+    """Used by Logistic Regression (and CV) and LinearSVC/LinearSVR.
 
     Preprocessing is done in this function before supplying it to liblinear.
 
@@ -891,6 +891,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+    y_ind = np.require(y_ind, requirements="W")
     if sample_weight is None:
         sample_weight = np.ones(X.shape[0])
     else:

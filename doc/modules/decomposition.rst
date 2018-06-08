@@ -347,7 +347,7 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 .. topic:: References:
 
@@ -848,7 +848,7 @@ a corpus with :math:`D` documents and :math:`K` topics:
   3. For each word :math:`i` in document :math:`d`:
 
     a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(beta_{z_{di}}.)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
