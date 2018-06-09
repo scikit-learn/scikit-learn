@@ -292,9 +292,19 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     return CM
 
-
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                                 labels=None, samplewise=False):
+    # _check_targets is extremely time consuming, avoiding redundant
+    # _check_targets makes this implementation much faster.
+    # Implementation of precision_recall_fscore_support with
+    # _multilabel_confusion_matrix is now faster than the original one.
+    return _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
+                                 sample_weight=sample_weight, labels=labels,
+                                 samplewise=samplewise)
+
+def _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
+                                 sample_weight=None, labels=None,
+                                 samplewise=False):
     """Returns a confusion matrix for each output of a multilabel problem
 
     Multiclass tasks will be treated as if binarised under a one-vs-rest
@@ -327,7 +337,8 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     if sample_weight is not None and samplewise:
         raise ValueError('sample_weight should not be used with samplewise. ')
 
-    y_type, _, _ = _check_targets(y_true, y_pred)
+    if not y_type:
+        y_type, _, _ = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -1458,7 +1469,7 @@ def precision_recall_fscore_support_with_multilabel_confusion_matrix(
                       % (pos_label, average), UserWarning)
 
     # Calculate sufficient statistics: tp_sum, pred_sum, true_sum ###
-    C = multilabel_confusion_matrix(y_true, y_pred,
+    C = _multilabel_confusion_matrix(y_true, y_pred, y_type,
                                     sample_weight=sample_weight,
                                     labels=labels,
                                     samplewise=average == 'samples')
