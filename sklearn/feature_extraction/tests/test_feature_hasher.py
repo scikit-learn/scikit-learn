@@ -7,8 +7,9 @@ from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
                                    ignore_warnings, fails_if_pypy)
 
+pytestmark = fails_if_pypy
 
-@fails_if_pypy
+
 def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
     assert_equal("dict", h.input_type)
@@ -21,7 +22,6 @@ def test_feature_hasher_dicts():
     assert_array_equal(X1.toarray(), X2.toarray())
 
 
-@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_feature_hasher_strings():
     # mix byte and Unicode strings; note that "foo" is a duplicate in row 0
@@ -46,7 +46,6 @@ def test_feature_hasher_strings():
         assert_equal(X.nnz, 6)
 
 
-@fails_if_pypy
 def test_feature_hasher_pairs():
     raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": 2},
                                        {"baz": 3, "quux": 4, "foo": -1}])
@@ -58,7 +57,6 @@ def test_feature_hasher_pairs():
     assert_equal([1, 3, 4], x2_nz)
 
 
-@fails_if_pypy
 def test_feature_hasher_pairs_with_string_values():
     raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": "a"},
                                        {"baz": u"abc", "quux": 4, "foo": -1}])
@@ -79,7 +77,6 @@ def test_feature_hasher_pairs_with_string_values():
     assert_array_equal(x1, x2)
 
 
-@fails_if_pypy
 def test_hash_empty_input():
     n_features = 16
     raw_X = [[], (), iter(range(0))]
@@ -90,7 +87,6 @@ def test_hash_empty_input():
     assert_array_equal(X.A, np.zeros((len(raw_X), n_features)))
 
 
-@fails_if_pypy
 def test_hasher_invalid_input():
     assert_raises(ValueError, FeatureHasher, input_type="gobbledygook")
     assert_raises(ValueError, FeatureHasher, n_features=-1)
@@ -110,14 +106,12 @@ def test_hasher_set_params():
     assert_raises(TypeError, hasher.fit)
 
 
-@fails_if_pypy
 def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
 
 
-@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
@@ -140,7 +134,6 @@ def test_hasher_alternate_sign():
     assert_array_equal(Xt.data, Xt_2.data)
 
 
-@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_hash_collisions():
     X = [list("Thequickbrownfoxjumped")]
@@ -160,7 +153,6 @@ def test_hash_collisions():
     assert Xt.data[0] == len(X[0])
 
 
-@fails_if_pypy
 @ignore_warnings(category=DeprecationWarning)
 def test_hasher_negative():
     X = [{"foo": 2, "bar": -4, "baz": -1}.items()]
