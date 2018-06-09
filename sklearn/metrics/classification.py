@@ -323,7 +323,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     if sample_weight is not None and sample_weight.ndim > 1:
         raise ValueError('sample_weight should be 1-d array. ')
 
-    y_type, _, _= _check_targets(y_true, y_pred)
+    y_type, _, _ = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -1291,23 +1291,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     return precision, recall, f_score, true_sum
 
-
-if __name__ == '__main__':
-    from scipy.stats import bernoulli
-
-    n_samples = 30000
-    n_labels = 2000
-
-    y_true = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
-                           size=(n_samples, n_labels))
-    y_pred = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
-                           size=(n_samples, n_labels))
-
-    precision_recall_fscore_support_with_multilabel_confusion_matrix(y_true,
-                                                                     y_pred)
-    precision_recall_fscore_support(y_true,
-                                                                     y_pred)
-    multilabel_confusion_matrix(y_true, y_pred)
 
 def precision_recall_fscore_support_with_multilabel_confusion_matrix(
                                     y_true, y_pred,
