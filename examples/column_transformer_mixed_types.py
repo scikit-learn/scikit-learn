@@ -4,14 +4,14 @@ Column Transformer with Mixed Types
 ===================================
 
 This example demonstrates how to use
-:class:`sklearn.compose.ColumnTransformer` on a dataset containing
+:class:`sklearn.compose.ColumnTransformer` on a dataset consisting of
 hereogeneous data types. A subset of numeric and categorical features
 are selected and :class:`sklearn.compose.ColumnTransformer` is used to
 apply two non-sequential preprocessing pipelines, one for each data
 type:
 
 * Numeric data: missing value imputation and standard scaling
-* Categorical data: missing value imputation one-hot encoding.
+* Categorical data: missing value imputation and one-hot encoding.
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
@@ -35,7 +35,14 @@ titanic_url = ('https://raw.githubusercontent.com/amueller/'
                'scipy-2017-sklearn/master/notebooks/datasets/titanic3.csv')
 data = pd.read_csv(titanic_url)
 
-# We will train our classifier with the following features.
+# We will train our classifier with the following features:
+# Numeric Features:
+# - age: float.
+# - fare: float.
+# Categorical Features:
+# - embarked: categories encoded as strings {'C', 'S', 'Q'}.
+# - sex: categories encoded as strings {'female', 'male'}.
+# - plcass: categories encoded as ints {1, 2, 3}.
 num_feats = ['age', 'fare']
 cat_feats = ['embarked', 'sex', 'pclass']
 
