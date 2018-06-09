@@ -4,18 +4,17 @@
 import sys
 
 import numpy as np
-
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from pytest import mark
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
@@ -141,8 +140,8 @@ def test_mini_batch_correct_shapes():
     assert_equal(U.shape, (12, 13))
 
 
+@mark.skip("skipping mini_batch_fit_transform.")
 def test_mini_batch_fit_transform():
-    raise SkipTest("skipping mini_batch_fit_transform.")
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array

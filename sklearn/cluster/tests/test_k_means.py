@@ -2,38 +2,35 @@
 import sys
 
 import numpy as np
-from scipy import sparse as sp
-
 import pytest
+from scipy import sparse as sp
+from sklearn.externals.six.moves import cStringIO as StringIO
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.utils.extmath import row_norms
-from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.cluster import homogeneity_score
-
+from sklearn.metrics.cluster import v_measure_score
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils.validation import _num_samples
 
 # non centered, sparse centers to check the
 centers = np.array([
@@ -749,7 +746,6 @@ def test_k_means_function():
     centers = cluster_centers
     assert_equal(centers.shape, (n_clusters, n_features))
 
-    labels = labels
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
     # check that the labels assignment are perfect (up to a permutation)

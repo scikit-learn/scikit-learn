@@ -4,22 +4,22 @@
 # License: BSD 3 clause
 
 import numpy as np
+from pytest import mark
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn import datasets
+from sklearn.linear_model import Ridge
+from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils import check_random_state
-from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
-from sklearn.linear_model import Ridge
-from sklearn import datasets
 
 
+@mark.skip("test_bayesian_on_diabetes is broken")
 def test_bayesian_on_diabetes():
     # Test BayesianRidge on diabetes
-    raise SkipTest("test_bayesian_on_diabetes is broken")
     diabetes = datasets.load_diabetes()
     X, y = diabetes.data, diabetes.target
 
