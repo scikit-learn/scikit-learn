@@ -294,7 +294,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
-                                labels=None, samplewise=False):
+                                labels=None):
     """Returns a confusion matrix for each output of a multilabel problem
 
     Multiclass tasks will be treated as if binarised under a one-vs-rest
@@ -309,8 +309,6 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     labels : array-like
         A list of classes or column indices to select some (or to force
         inclusion of classes absent from the data)
-    samplewise : bool, default=False
-        In the multilabel case, this calculates a confusion matrix per sample
 
     Returns
     -------
@@ -322,11 +320,14 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     y_pred = check_array(y_pred, ensure_2d=False, dtype=None,
                          accept_sparse=['csr', 'csc'])
     check_consistent_length(y_true, y_pred, sample_weight)
+    if sample_weight is not None and sample_weight.ndim > 1:
+        raise ValueError('sample_weight should be 1-d array. ')
+
+    y_type, _, _= _check_targets(y_true, y_pred)
+    if y_type not in ("binary", "multiclass", "multilabel-indicator"):
+        raise ValueError("%s is not supported" % y_type)
 
     if y_true.ndim == 1:
-        if samplewise:
-            raise ValueError("Samplewise confusion is not useful outside of "
-                             "multilabel classification.")
         present_labels = unique_labels(y_true, y_pred)
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                              labels=present_labels)
@@ -345,11 +346,11 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
             fp[not_present_mask] = 0
             fn[not_present_mask] = 0
 
+        tn = y_true.shape[0] - tp - fp - fn
+
     else:
         # check labels
-        if labels is None:
-            labels = slice(None)
-        else:
+        if labels is not None:
             max_label = y_true.shape[1] - 1
             if np.max(labels) > max_label:
                 raise ValueError('All labels must be in [0, n labels). '
@@ -358,6 +359,10 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
             if np.min(labels) < 0:
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
+
+            n_labels = len(labels)
+            y_true = y_true[:, labels[:n_labels]]
+            y_pred = y_pred[:, labels[:n_labels]]
 
         # make sure values are in (0, 1) (but avoid unnecessary copy)
         if y_true.max() != 1 or y_true.min() != 0:
@@ -372,50 +377,35 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                 y_pred = (y_pred == 1)
 
         # account for sample weight
-
-        def _sparse_row_multiply(A, w):
-            # for scipy <= 0.16 (and maybe later), A.multiply(w) will densify A
-            if A.format == 'csr':
-                return A._with_data(A.data * np.repeat(w, np.diff(A.indptr)))
-            elif A.format == 'csc':
-                return A._with_data(A.data * np.take(w, A.indices,
-                                                     mode='clip'))
+        def _normal_or_sparse_row_multiply(A, w):
+            if issparse(A):
+                return A.multiply(w)
+            elif issparse(w):
+                return w.multiply(A)
             else:
-                raise ValueError
+                return np.multiply(A, w)
+
+        true_and_pred = _normal_or_sparse_row_multiply(y_true, y_pred)
 
         if sample_weight is not None:
-            if issparse(y_true):
-                y_true = _sparse_row_multiply(y_true, sample_weight).tocsc()
-            else:
-                y_true = np.multiply(sample_weight, y_true)
-            if issparse(y_pred):
-                y_pred = _sparse_row_multiply(y_pred, sample_weight).tocsc()
-            else:
-                y_pred = np.multiply(sample_weight, y_pred)
+            sample_weight = sample_weight.reshape((len(sample_weight), 1))
+            true_and_pred = _normal_or_sparse_row_multiply(true_and_pred,
+                                                           sample_weight)
+            y_true = _normal_or_sparse_row_multiply(y_true, sample_weight)
+            y_pred = _normal_or_sparse_row_multiply(y_pred, sample_weight)
 
-        if samplewise:
-            y_true = y_true[:, labels].T
-            y_pred = y_pred[:, labels].T
-            labels = slice(None)
+        tp = np.sum(true_and_pred, axis=0)
 
-        n_outputs = y_true.shape[1]
-        y_pred_rows, y_pred_cols = y_pred.nonzero()
-        # ravel is needed for sparse matrices
-        if not len(y_pred_rows):
-            # the below doesn't work in some older scipy for empty y_pred_cols
-            tp = np.zeros(y_pred.shape[1], dtype=int)[labels]
-        else:
-            tp = np.bincount(y_pred_cols,
-                             weights=np.ravel(y_true[y_pred_rows,
-                                                     y_pred_cols]),
-                             minlength=n_outputs)[labels]
         if y_true.dtype.kind in {'i', 'u', 'b'}:
-            # bincount returns floats if weights is provided
             tp = tp.astype(np.int64)
-        fp = np.ravel(y_pred.sum(axis=0))[labels] - tp
-        fn = np.ravel(y_true.sum(axis=0))[labels] - tp
+        fp = y_pred.sum(axis=0) - tp
+        fn = y_true.sum(axis=0) - tp
 
-    tn = y_true.shape[0] - tp - fp - fn
+        if sample_weight is not None:
+            tn = sample_weight.sum() - tp - fp - fn
+        else:
+            tn = y_true.shape[0] - tp - fp - fn
+
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
@@ -1301,6 +1291,23 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     return precision, recall, f_score, true_sum
 
+
+if __name__ == '__main__':
+    from scipy.stats import bernoulli
+
+    n_samples = 30000
+    n_labels = 2000
+
+    y_true = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
+                           size=(n_samples, n_labels))
+    y_pred = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
+                           size=(n_samples, n_labels))
+
+    precision_recall_fscore_support_with_multilabel_confusion_matrix(y_true,
+                                                                     y_pred)
+    precision_recall_fscore_support(y_true,
+                                                                     y_pred)
+    multilabel_confusion_matrix(y_true, y_pred)
 
 def precision_recall_fscore_support_with_multilabel_confusion_matrix(
                                     y_true, y_pred,
