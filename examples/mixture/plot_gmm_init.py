@@ -36,7 +36,12 @@ taken but in general *k-means++* will be slower and *kmeans* slower still.
 
 The time taken for initialization is balanced with the time taken to converge.
 In this example if we use verbose output from the GaussianMixture model we can
+<<<<<<< refs/remotes/upstream/master
 see that the number of iterations is as follows.
+=======
+see that the number of iterations is as follows (performed on a normal desktop
+machine).
+>>>>>>> Add relative time taken to initialize to example and update docs
 
 - *kmeans* - 12
 - *k-means++* - 11
