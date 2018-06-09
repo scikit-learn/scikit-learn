@@ -42,12 +42,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
 """
 from __future__ import division, print_function, absolute_import
 
-
 import numpy
-import tempfile
-
 from numpy import (amin, amax, ravel, asarray, arange, ones, newaxis,
                    transpose, iscomplexobj, uint8, issubdtype, array)
+
 
 # Modification of original scipy pilutil.py to make this module importable if
 # pillow is not installed. If pillow is not installed, functions will raise

@@ -1,23 +1,20 @@
 from __future__ import division
 
-import pytest
-
 import numpy as np
+import pytest
 from scipy import sparse
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false
-
-from sklearn.impute import SimpleImputer, MICEImputer
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import BayesianRidge, ARDRegression
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
 from sklearn import tree
+from sklearn.dummy import DummyRegressor
+from sklearn.impute import SimpleImputer, MICEImputer
+from sklearn.linear_model import BayesianRidge, ARDRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 from sklearn.random_projection import sparse_random_matrix
+from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_false
 
 
 def _check_statistics(X, X_true,
