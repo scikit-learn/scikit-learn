@@ -149,8 +149,8 @@ def resample_labels(y, method=None, scaling=None, replace=False,
 
     Examples
     --------
-    Sample without replacement to reduce the size of a dataset by half
-    and keep the same class distribution. Note how to apply the indices to X.
+    Sample without replacement to scale the dataset to half the number of
+    samples and keep original class distribution.
 
     >>> from sklearn.preprocessing import resample_labels
     >>> import numpy as np
@@ -161,8 +161,8 @@ def resample_labels(y, method=None, scaling=None, replace=False,
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     (array([4, 5, 3]), array([[130], [110], [110]]), array([13, 11, 11]))
 
-    Sample with replacement the dataset to 1.5 times its size and balance
-    the class counts.
+    Sample with replacement to 1.5 times the dataset size and balance the
+    class counts.
 
     >>> y = np.array([30, 30, 30, 10, 20, 30])
     >>> indices = resample_labels(y, method="balance", scaling=1.5,
@@ -172,7 +172,8 @@ def resample_labels(y, method=None, scaling=None, replace=False,
     (array([3, 3, 3, 4, 4, 4, 2, 0, 1]),
      array([10, 10, 10, 20, 20, 20, 30, 30, 30]))
 
-    Take twelve samples without replacement with a probability dict.
+    Take twelve samples without replacement with a probability dict whose
+    values sum to 1.0.
 
     >>> y = np.array([1, 2, 3])
     >>> indices = resample_labels(y, method={1: .1, 2: .1, 3: .8},

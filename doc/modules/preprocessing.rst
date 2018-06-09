@@ -675,24 +675,19 @@ Resampling of labels
 
 Balancing labels
 ----------------
-Datasets, unless carefully designed, typically do not have an equal number
-of samples from each class. Resampling the dataset with :func:`resample_labels`
-allows for balancing or changing the label distribution, if desired, and also
-for growing or shrinking the dataset to any size.
-
-While the effectiveness of changing the label distribution of the training set
-is still an open question, such experiments are easy to conduct. Please note
-that :func:`resample_lablels` will not generate any samples that are not in the
-original dataset, but it is possible to add noise to the dataset after resampling
-to get entirely new samples that look like the original.
+Datasets, unless carefully designed, will not contain an equal number of samples
+from each class. Resampling a dataset with :func:`resample_labels` allows the user
+to change the label distribution and simultaneously grow or shrink the dataset by
+drawing from samples from the original dataset. Noise may then be added to obtain
+a better training set to get more accuracy or generalization from a machine
+learning algorithm, or to test the running time as the dataset scales.
 
 As an example of resampling, assume there is an unbalanced dataset with three
-labels ``[0, 1, 2]`` and sample counts ``[100, 125, 150]``. There are three
-options if using the ``method`` keyword with :func:`resample_labels`. By setting
-the ``method='undersample'`` parameter, the number of samples in the least common
-class determines the count of the samples for each class, which in this case
-results in a dataset of 300 points total, with 100 points drawn from each of the
-three classes::
+class labels ``[0, 1, 2]`` and sample counts ``[100, 125, 150]``. The ``method``
+keyword of :func:`resample_labels` supports three string options or instead take a
+``dict``.  By setting ``method='undersample'``, the number of samples in the least
+common class determines the count of the samples for each class, in this case 300
+total samples, 100 from each class::
 
   >>> import numpy as np
   >>> from sklearn.preprocessing.resample import resample_labels
@@ -709,17 +704,17 @@ for an output length of 450::
 
 
 Using ``method='balance'`` keeps the length of the dataset at 375 but equalizes
-the count of each class by undersampling or oversampling as needed::
+the count of each class by undersampling or oversampling classes as needed::
 
   >>> indices = resample_labels(y, method='balance')
   >>> print(np.bincount(y[indices]))
   [125 125 125]
 
 Keep in mind that if your dataset starts with very few samples of a class and
-you undersample, you will get a new dataset with the number of samples from the
-smallest class times the number of labels, which will be a very small dataset.
-Using the scale keyword as described below can ensure the dataset remains large,
-but with many repeated samples. Make sure that this is what you want.
+you choose the ``undersample`` option, the output dataset will be very small.
+Using the ``scale`` keyword as described below can ensure the dataset remains
+large, but with many repeated samples. You may then add noise or reconsider your
+approach.
 
 
 Custom label distribution
@@ -779,7 +774,7 @@ run out of samples, instead the sample pool starts over with the original
 dataset. Thus, if you set ``scale=10.0`` and sample without replacement,
 the dataset will have each sample repeated ten times. In effect, only
 the last repetition of the dataset might vary when sampling without
-replacement.
+replacement, and only if the full dataset is not repeated.
 
 Shuffling the data can take considerable CPU time and is turned off by
 default, but is possible by setting the keyword argument ``shuffle=True``.
@@ -794,10 +789,11 @@ testing datasets completely separate because estimators do very well
 on samples they have been trained on and testing results will be overly
 optimistic. When resampling, since you are duplicating samples exactly,
 there is now the possiblity that a sample could find its way into both
-sets.
+the training and testing sets.
 
 Even ruling out coding errors, techniques such as scaling a dataset
 and then running cross-validation on it would potentially place some
 samples in both datasets. The danger is that your results are not as
-good as the metrics report. Therefore, use extreme care when resampling
-so that you do not confuse the training and testing datasets.
+good as the metrics report or that model generalization is worse.
+Therefore, use extreme care when resampling so that you do not confuse
+the training and testing datasets.
