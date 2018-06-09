@@ -92,7 +92,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity when fitting and predicting.
+        Controls the verbosity of the tree building process.
 
 
     Attributes
