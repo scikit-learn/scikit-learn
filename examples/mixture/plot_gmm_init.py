@@ -54,16 +54,16 @@ n_components = 4
 x_squared_norms = row_norms(X, squared=True)
 
 
-def genGmm(init_params, seed=None):
+def gen_gmm(init_params, seed=None):
     r = np.random.RandomState(seed)
     if init_params == 'kmeans':
-        init_means = calculateMeans(kmeansMean(r))
+        init_means = calculate_means(kmeans_mean(r))
     elif init_params == 'random':
-        init_means = calculateMeans(randMean(r))
+        init_means = calculate_means(rand_mean(r))
     elif init_params == 'rand_data':
-        init_means = calculateMeans(randPointMean(r))
+        init_means = calculate_means(rand_point_mean(r))
     elif init_params == 'k-means++':
-        init_means = calculateMeans(kmeansPlusPlus(r))
+        init_means = calculate_means(kmeanspp_mean(r))
     else:
         raise ValueError("Unimplemented initialisation method '%s'"
                          % init_params)
@@ -78,7 +78,7 @@ def genGmm(init_params, seed=None):
     # plt.show()
 
 
-def kmeansMean(r):
+def kmeans_mean(r):
     # Calculate the responsibilities by kmeans
     resp_km = np.zeros((n_samples, n_components))
     label = KMeans(n_clusters=n_components,
@@ -88,7 +88,7 @@ def kmeansMean(r):
     # This will label all data points with one of the components absolutely.
 
 
-def randPointMean(r):
+def rand_point_mean(r):
     # Generate responsibilities to pick random points from the data.
     resp_select_point = np.zeros((n_samples, n_components))
     points = r.choice(range(n_samples), n_components, replace=False)
@@ -98,7 +98,7 @@ def randPointMean(r):
     # This will label one random data point for each component. All others 0.
 
 
-def randMean(r):
+def rand_mean(r):
     # Generate random responsibilities for all points.
     resp_random_orig = r.rand(n_samples, n_components)
     resp_random_orig /= resp_random_orig.sum(axis=1)[:, np.newaxis]
@@ -107,7 +107,7 @@ def randMean(r):
     # Sum of responsibilities across a given point is 1.
 
 
-def kmeansPlusPlus(r):
+def kmeanspp_mean(r):
     # Generate responsibilities that end up picking points based on k-means++
     resp_kmpp = np.zeros((n_samples, n_components))
     centers, indices = _k_init(X, n_components,
@@ -117,7 +117,7 @@ def kmeansPlusPlus(r):
     return resp_kmpp
 
 
-def calculateMeans(resp):
+def calculate_means(resp):
     # Generate the means of the components. These are the initial parameters.
     nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
     means = np.dot(resp.T, X) / nk[:, np.newaxis]
@@ -127,7 +127,7 @@ def calculateMeans(resp):
 # Example plot
 
 
-def testSeed(seed):
+def test_seed(seed):
     methods = ['random', 'kmeans', 'rand_data', 'k-means++']
     colors = ['navy', 'turquoise', 'cornflowerblue', 'darkorange']
 
@@ -135,11 +135,11 @@ def testSeed(seed):
     plt.subplots_adjust(bottom=.1, top=0.9, hspace=.15, wspace=.05,
                         left=.05, right=.95)
 
-    for n, i in enumerate(methods):
+    for n, method in enumerate(methods):
         plt.subplot(2, len(methods) // 2, n+1)
-        labels, ini, seed, params = genGmm(i, seed)
-        for n, color in enumerate(colors):
-            data = X[labels == n]
+        labels, ini, seed, params = gen_gmm(method, seed)
+        for i, color in enumerate(colors):
+            data = X[labels == i]
             plt.scatter(data[:, 0], data[:, 1], color=color, marker='x')
 
         # plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis', lw=0.5,
@@ -148,8 +148,8 @@ def testSeed(seed):
                     lw=1.5, edgecolors='black')
         plt.xticks(())
         plt.yticks(())
-        plt.title(i)
+        plt.title(method)
     plt.show()
 
 
-testSeed(1234)
+test_seed(1234)
