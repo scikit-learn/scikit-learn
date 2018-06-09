@@ -18,7 +18,7 @@ source pypy-env/bin/activate
 python --version
 which python
 
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython Tempita pytest
+pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy==1.13.3 Cython Tempita pytest
 pip install "scipy>=1.1.0"
 pip install -e .
 

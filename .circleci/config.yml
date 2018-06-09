@@ -67,7 +67,7 @@ jobs:
 
   pypy3:
     docker:
-      - image: pypy:3-5.10
+      - image: pypy:3-6.0.0
     steps:
       - checkout
       - run: ./build_tools/circle/build_test_pypy.sh
