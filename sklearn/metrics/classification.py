@@ -294,7 +294,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
-                                labels=None):
+                                labels=None, samplewise=False):
     """Returns a confusion matrix for each output of a multilabel problem
 
     Multiclass tasks will be treated as if binarised under a one-vs-rest
@@ -309,6 +309,8 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     labels : array-like
         A list of classes or column indices to select some (or to force
         inclusion of classes absent from the data)
+    samplewise : bool, default=False
+        In the multilabel case, this calculates a confusion matrix per sample
 
     Returns
     -------
@@ -322,12 +324,17 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     check_consistent_length(y_true, y_pred, sample_weight)
     if sample_weight is not None and sample_weight.ndim > 1:
         raise ValueError('sample_weight should be 1-d array. ')
+    if sample_weight is not None and samplewise:
+        raise ValueError('sample_weight should not be used with samplewise. ')
 
     y_type, _, _ = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
     if y_true.ndim == 1:
+        if samplewise:
+            raise ValueError("Samplewise confusion is not useful outside of "
+                             "multilabel classification.")
         present_labels = unique_labels(y_true, y_pred)
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                              labels=present_labels)
@@ -393,6 +400,11 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                                                            sample_weight)
             y_true = _normal_or_sparse_row_multiply(y_true, sample_weight)
             y_pred = _normal_or_sparse_row_multiply(y_pred, sample_weight)
+
+        if samplewise:
+            y_true = y_true.T
+            y_pred = y_pred.T
+            true_and_pred = true_and_pred.T
 
         tp = np.sum(true_and_pred, axis=0)
 
