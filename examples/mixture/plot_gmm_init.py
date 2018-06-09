@@ -166,7 +166,7 @@ def test_seed(seed):
     methods = ['random', 'kmeans', 'rand_data', 'k-means++']
     colors = ['navy', 'turquoise', 'cornflowerblue', 'darkorange']
     times_init = {}
-    relative_times_init = {}
+    relative_times = {}
 
     plt.figure(figsize=(3 * len(methods) // 2, 6))
     plt.subplots_adjust(bottom=.1, top=0.9, hspace=.15, wspace=.05,
@@ -188,8 +188,8 @@ def test_seed(seed):
 
         plt.xticks(())
         plt.yticks(())
-        plt.title(method, loc = 'left')
-        plt.title("{0:.2f}".format(relative_times[method]), loc = 'right')
+        plt.title(method, loc='left')
+        plt.title("{0:.2f}".format(relative_times[method]), loc='right')
     plt.suptitle('Relative time taken to initialize compared to random')
     plt.show()
 
