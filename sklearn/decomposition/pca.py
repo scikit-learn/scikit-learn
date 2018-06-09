@@ -388,7 +388,7 @@ class PCA(_BasePCA):
         else:
             n_components = self.n_components
 
-        # Handle svd_solver
+        # Handle svd_solver and _fit_method
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
             # Small problem or n_components == 'mle', just call full PCA
@@ -399,6 +399,7 @@ class PCA(_BasePCA):
             # This is also the case of n_components in (0,1)
             else:
                 svd_solver = 'full'
+        self._fit_method = svd_solver
 
         # Call different fits for either full or truncated SVD
         if svd_solver == 'full':
