@@ -80,9 +80,9 @@ print("model score: %f" % clf_pl.score(X_test, y_test))
 ###############################################################################
 # We can also perform grid search on the different preprocessing steps
 # defined in our ``ColumnTransformer``, together with the classifier's
-# hyperparameters as part of a ``Pipeline``.
+# hyperparameters as part of a :class:`sklearn.pipeline.Pipeline`
 # ``ColumnTransformer`` integrates well with the rest of scikit-learn,
-# in particular with ``GridSearchCV``.
+# in particular with :class:`sklearn.model_selection.GridSearchCV`.
 # We will search for both the imputer strategy of the numeric preprocessing
 # as for the regularization parameter of the logistic regression.
 
