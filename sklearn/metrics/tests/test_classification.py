@@ -44,6 +44,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -317,6 +318,88 @@ def test_confusion_matrix_binary():
     test(y_true, y_pred)
     test([str(y) for y in y_true],
          [str(y) for y in y_pred])
+
+
+def test_multilabel_confusion_matrix_binary():
+    # Test multilabel confusion matrix - binary classification case
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    def test(y_true, y_pred):
+        cm = multilabel_confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[[17, 8], [3, 22]],
+                                [[22, 3], [8, 17]]])
+
+    test(y_true, y_pred)
+    test([str(y) for y in y_true],
+         [str(y) for y in y_pred])
+
+
+def test_multilabel_confusion_matrix_multiclass():
+    # Test multilabel confusion matrix - multi-class case
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    def test(y_true, y_pred, string_type=False):
+        # compute confusion matrix with default labels introspection
+        cm = multilabel_confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[38, 6], [28, 3]],
+                                [[30, 25], [2, 18]]])
+
+        # compute confusion matrix with explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        cm = multilabel_confusion_matrix(y_true,
+                              y_pred,
+                              labels=labels)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[30, 25], [2, 18]],
+                                [[38, 6], [28, 3]]])
+
+    test(y_true, y_pred)
+    test(list(str(y) for y in y_true),
+         list(str(y) for y in y_pred),
+         string_type=True)
+
+
+def test_multilabel_confusion_matrix_multilabel():
+    # Test multilabel confusion matrix - multilabel-indicator case
+    from scipy.sparse import csc_matrix, csr_matrix
+
+    y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
+    y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    y_true_csr = csr_matrix(y_true)
+    y_pred_csr = csr_matrix(y_pred)
+    y_true_csc = csc_matrix(y_true)
+    y_pred_csc = csc_matrix(y_pred)
+
+    sample_weight = np.array([2, 1, 3])
+
+    real_cm = [[[1, 0], [1, 1]],
+               [[1, 0], [1, 1]],
+               [[0, 2], [1, 0]]]
+    real_cm_with_sample_weight = [[[1, 0], [3, 2]],
+                                  [[2, 0], [3, 1]],
+                                  [[0, 4], [2, 0]]]
+    real_cm_samplewise = [[[1, 0], [1, 1]],
+                          [[1, 1], [0, 1]],
+                          [[0, 1], [2, 0]]]
+
+    # cross test different types
+    trues = [y_true, y_true_csr, y_true_csc]
+    preds = [y_pred, y_pred_csr, y_pred_csc]
+
+    for y_true_tmp in trues:
+        for y_pred_tmp in preds:
+            cm = multilabel_confusion_matrix(y_true_tmp, y_pred_tmp)
+            assert_array_equal(cm, real_cm)
+
+    # test support for sample_weight
+    cm = multilabel_confusion_matrix(y_true, y_pred,
+                                     sample_weight=sample_weight)
+    assert_array_equal(cm, real_cm_with_sample_weight)
+
+    # test support for samplewise
+    cm = multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    assert_array_equal(cm, real_cm_samplewise)
 
 
 def test_cohen_kappa():

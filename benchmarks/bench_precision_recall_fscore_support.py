@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+"""
+A comparison of multiclass implementation and original implementation for
+precision_recall_fscore_support.
+"""
 from __future__ import print_function
 
 from collections import defaultdict
@@ -9,6 +14,8 @@ from numpy import random as nr
 from sklearn.metrics.classification import precision_recall_fscore_support, \
     precision_recall_fscore_support_with_multilabel_confusion_matrix
 import matplotlib.pyplot as plt
+from scipy.stats import bernoulli
+
 
 
 def compute_bench(samples_range, labels_range):
@@ -25,8 +32,15 @@ def compute_bench(samples_range, labels_range):
             print('Iteration %03d of %03d' % (it, max_it))
             print('==============================')
             print()
+
+            #y_true = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
+            #                       size=(n_samples, n_labels))
+            #y_pred = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
+            #                       size=(n_samples, n_labels))
+
             y_true = nr.randint(0, n_labels, (n_samples,))
             y_pred = nr.randint(0, n_labels, (n_samples,))
+            print("y_true", y_true)
 
             print('P/R/F/S')
             tstart = time()
