@@ -369,19 +369,11 @@ def test_multilabel_confusion_matrix_multilabel():
     y_true_csc = csc_matrix(y_true)
     y_pred_csc = csc_matrix(y_pred)
 
+    # cross test different types
     sample_weight = np.array([2, 1, 3])
-
     real_cm = [[[1, 0], [1, 1]],
                [[1, 0], [1, 1]],
                [[0, 2], [1, 0]]]
-    real_cm_with_sample_weight = [[[1, 0], [3, 2]],
-                                  [[2, 0], [3, 1]],
-                                  [[0, 4], [2, 0]]]
-    real_cm_samplewise = [[[1, 0], [1, 1]],
-                          [[1, 1], [0, 1]],
-                          [[0, 1], [2, 0]]]
-
-    # cross test different types
     trues = [y_true, y_true_csr, y_true_csc]
     preds = [y_pred, y_pred_csr, y_pred_csc]
 
@@ -393,11 +385,55 @@ def test_multilabel_confusion_matrix_multilabel():
     # test support for sample_weight
     cm = multilabel_confusion_matrix(y_true, y_pred,
                                      sample_weight=sample_weight)
-    assert_array_equal(cm, real_cm_with_sample_weight)
+    assert_array_equal(cm, [[[1, 0], [3, 2]],
+                            [[2, 0], [3, 1]],
+                            [[0, 4], [2, 0]]])
 
     # test support for samplewise
     cm = multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
-    assert_array_equal(cm, real_cm_samplewise)
+    assert_array_equal(cm, [[[1, 0], [1, 1]],
+                            [[1, 1], [0, 1]],
+                            [[0, 1], [2, 0]]])
+
+    # test support for labels
+    cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0])
+    assert_array_equal(cm, [[[0, 2], [1, 0]],
+                            [[1, 0], [1, 1]]])
+
+    # test support for labels with sample_wise
+    cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0],
+                                     samplewise=True)
+    assert_array_equal(cm, [[[0, 0], [1, 1]],
+                            [[1, 1], [0, 0]],
+                            [[0, 1], [1, 0]]])
+
+
+def test_multilabel_confusion_matrix_errors():
+    y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
+    y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+
+    # Bad sample_weight
+    sample_weight = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+    assert_raises(ValueError, multilabel_confusion_matrix,
+                  y_true, y_pred, sample_weight=sample_weight)
+
+    # Using sample_weight and samplewise together
+    sample_weight = np.array([2, 1, 3])
+    assert_raises(ValueError, multilabel_confusion_matrix,
+                  y_true, y_pred, sample_weight=sample_weight, samplewise=True)
+
+    # Using samplewise outside multilabel
+    assert_raises(ValueError, multilabel_confusion_matrix,
+                  [0, 1, 2], [1, 2, 0], samplewise=True)
+
+    # Bad y_type
+    assert_raises(ValueError, multilabel_confusion_matrix,
+                  [[0, 1, 2], [2, 1, 0]],
+                  [[1, 2, 0], [1, 0, 2]])
+
+    # Bad labels
+    assert_raises(ValueError, multilabel_confusion_matrix,
+                  y_true, y_pred, labels=[-1])
 
 
 def test_cohen_kappa():
