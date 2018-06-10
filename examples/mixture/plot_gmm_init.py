@@ -36,12 +36,8 @@ taken but in general *k-means++* will be slower and *kmeans* slower still.
 
 The time taken for initialization is balanced with the time taken to converge.
 In this example if we use verbose output from the GaussianMixture model we can
-<<<<<<< refs/remotes/upstream/master
-see that the number of iterations is as follows.
-=======
 see that the number of iterations is as follows (performed on a normal desktop
 machine).
->>>>>>> Add relative time taken to initialize to example and update docs
 
 - *kmeans* - 12
 - *k-means++* - 11
@@ -166,7 +162,7 @@ def test_seed(seed):
     methods = ['random', 'kmeans', 'rand_data', 'k-means++']
     colors = ['navy', 'turquoise', 'cornflowerblue', 'darkorange']
     times_init = {}
-    relative_times = {}
+    relative_times_init = {}
 
     plt.figure(figsize=(3 * len(methods) // 2, 6))
     plt.subplots_adjust(bottom=.1, top=0.9, hspace=.15, wspace=.05,
@@ -188,8 +184,8 @@ def test_seed(seed):
 
         plt.xticks(())
         plt.yticks(())
-        plt.title(method, loc='left')
-        plt.title("{0:.2f}".format(relative_times[method]), loc='right')
+        plt.title(method, loc = 'left')
+        plt.title("{0:.2f}".format(relative_times[method]), loc = 'right')
     plt.suptitle('Relative time taken to initialize compared to random')
     plt.show()
 
