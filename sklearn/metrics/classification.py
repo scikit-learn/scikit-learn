@@ -395,18 +395,12 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
             y_pred = y_pred.T
             true_and_pred = true_and_pred.T
 
-        def _sum(a, **kwargs):
-            if issparse(a):
-                return a.sum(**kwargs)
-            else:
-                return np.sum(a, **kwargs)
-
-        tp = _sum(true_and_pred, axis=0)
+        tp = true_and_pred.sum(axis=0)
 
         if y_true.dtype.kind in {'i', 'u', 'b'}:
             tp = tp.astype(np.int64)
-        fp = _sum(y_pred, axis=0) - tp
-        fn = _sum(y_true, axis=0) - tp
+        fp = y_pred.sum(axis=0) - tp
+        fn = y_true.sum(axis=0) - tp
 
         if sample_weight is not None:
             tn = sample_weight.sum() - tp - fp - fn

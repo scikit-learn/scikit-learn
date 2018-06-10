@@ -347,9 +347,7 @@ def test_multilabel_confusion_matrix_multiclass():
 
         # compute confusion matrix with explicit label ordering
         labels = ['0', '2', '1'] if string_type else [0, 2, 1]
-        cm = multilabel_confusion_matrix(y_true,
-                              y_pred,
-                              labels=labels)
+        cm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
         assert_array_equal(cm, [[[47, 4], [5, 19]],
                                 [[30, 25], [2, 18]],
                                 [[38, 6], [28, 3]]])
