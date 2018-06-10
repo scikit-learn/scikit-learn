@@ -861,7 +861,7 @@ class RandomForestClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1139,7 +1139,7 @@ class RandomForestRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1370,7 +1370,7 @@ class ExtraTreesClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1619,7 +1619,7 @@ class ExtraTreesRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1810,7 +1810,7 @@ class RandomTreesEmbedding(BaseForest):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
