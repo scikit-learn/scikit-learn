@@ -1260,7 +1260,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     See also
     --------
-    ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
+    sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
@@ -1423,7 +1424,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier,
+    sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
