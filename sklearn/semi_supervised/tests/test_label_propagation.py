@@ -1,7 +1,7 @@
 """ test the label propagation module """
 
 import numpy as np
-from pytest import mark, skip
+import pytest
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
@@ -22,8 +22,8 @@ ESTIMATOR_PARAMS = ({'kernel': 'rbf'},
                     {'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)})
 
 
-@mark.parametrize('estimator', ESTIMATORS)
-@mark.parametrize('parameters', ESTIMATOR_PARAMS)
+@pytest.mark.parametrize('estimator', ESTIMATORS)
+@pytest.mark.parametrize('parameters', ESTIMATOR_PARAMS)
 def test_fit_transduction(estimator, parameters):
     samples = [[1., 0.], [0., 2.], [1., 3.]]
     labels = [0, 1, -1]
@@ -31,14 +31,14 @@ def test_fit_transduction(estimator, parameters):
     assert_equal(clf.transduction_[2], 1)
 
 
-@mark.parametrize('estimator', ESTIMATORS)
-@mark.parametrize('parameters', ESTIMATOR_PARAMS)
+@pytest.mark.parametrize('estimator', ESTIMATORS)
+@pytest.mark.parametrize('parameters', ESTIMATOR_PARAMS)
 def test_distribution(estimator, parameters):
     samples = [[1., 0.], [0., 1.], [1., 1.]]
     labels = [0, 1, -1]
     clf = estimator(**parameters).fit(samples, labels)
     if parameters['kernel'] == 'knn':
-        skip('Unstable test; changes in k-NN ordering break it')
+        pytest.skip('Unstable test; changes in k-NN ordering break it')
         assert_array_almost_equal(clf.predict_proba([[1., 0.0]]),
                                   np.array([[1., 0.]]), 2)
     else:
@@ -46,8 +46,8 @@ def test_distribution(estimator, parameters):
                                   np.array([.5, .5]), 2)
 
 
-@mark.parametrize('estimator', ESTIMATORS)
-@mark.parametrize('parameters', ESTIMATOR_PARAMS)
+@pytest.mark.parametrize('estimator', ESTIMATORS)
+@pytest.mark.parametrize('parameters', ESTIMATOR_PARAMS)
 def test_predict(estimator, parameters):
     samples = [[1., 0.], [0., 2.], [1., 3.]]
     labels = [0, 1, -1]
@@ -55,8 +55,8 @@ def test_predict(estimator, parameters):
     assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
-@mark.parametrize('estimator', ESTIMATORS)
-@mark.parametrize('parameters', ESTIMATOR_PARAMS)
+@pytest.mark.parametrize('estimator', ESTIMATORS)
+@pytest.mark.parametrize('parameters', ESTIMATOR_PARAMS)
 def test_predict_proba(estimator, parameters):
     samples = [[1., 0.], [0., 1.], [1., 2.5]]
     labels = [0, 1, -1]

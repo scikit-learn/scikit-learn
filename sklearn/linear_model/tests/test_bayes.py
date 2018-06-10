@@ -4,7 +4,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-from pytest import mark
+import pytest
 
 from sklearn import datasets
 from sklearn.linear_model import Ridge
@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
 
 
-@mark.skip("test_bayesian_on_diabetes is broken")
+@pytest.mark.skip("test_bayesian_on_diabetes is broken")
 def test_bayesian_on_diabetes():
     # Test BayesianRidge on diabetes
     diabetes = datasets.load_diabetes()

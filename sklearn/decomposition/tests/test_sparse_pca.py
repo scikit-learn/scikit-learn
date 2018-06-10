@@ -4,7 +4,7 @@
 import sys
 
 import numpy as np
-from pytest import mark
+import pytest
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from sklearn.utils import check_random_state
@@ -140,7 +140,7 @@ def test_mini_batch_correct_shapes():
     assert_equal(U.shape, (12, 13))
 
 
-@mark.skip("skipping mini_batch_fit_transform.")
+@pytest.mark.skip("skipping mini_batch_fit_transform.")
 def test_mini_batch_fit_transform():
     alpha = 1
     rng = np.random.RandomState(0)
