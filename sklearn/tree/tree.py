@@ -675,7 +675,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
-        for basic usages of these attributes.
+        for basic usage of these attributes.
 
     Notes
     -----
@@ -1014,7 +1014,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object. Please refer to
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
-        for basic usages of these attributes.
+        for basic usage of these attributes.
 
     Notes
     -----
