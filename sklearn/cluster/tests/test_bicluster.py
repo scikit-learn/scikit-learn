@@ -202,9 +202,9 @@ def test_project_and_cluster():
         assert_array_equal(labels, [0, 0, 1, 1])
 
 
-@pytest.mark.skip('This test is failing on the buildbot, but'
-                  'cannot  reproduce. Temporarily disabling it until it '
-                  'can be reproduced and  fixed.')
+@pytest.mark.skip('This test is failing on the buildbot, but '
+                  'cannot reproduce. Temporarily disabling it until it '
+                  'can be reproduced and fixed.')
 def test_perfect_checkerboard():
     model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
 
