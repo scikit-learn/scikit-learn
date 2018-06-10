@@ -3,15 +3,21 @@
 Column Transformer with Mixed Types
 ===================================
 
-This example demonstrates how to use
-:class:`sklearn.compose.ColumnTransformer` on a dataset consisting of
-hereogeneous data types. A subset of numeric and categorical features
-are selected and :class:`sklearn.compose.ColumnTransformer` is used to
-apply two non-sequential preprocessing pipelines, one for each data
-type:
+This example illustrates how to apply different preprocessing and
+feature extraction pipelines to different subsets of features,
+using :class:`sklearn.compose.ColumnTransformer`.
+This is particularly handy for the case of datasets that contain
+heterogeneous data types, since we may want to scale the
+numeric features and one-hot encode the categorical ones.
 
-* Numeric data: missing value imputation and standard scaling
-* Categorical data: missing value imputation and one-hot encoding.
+In this example, the numeric data is standard-scaled after
+mean-imputation, while the categorical data is one-hot
+endcoded after imputing missing values with a new category
+(:code:`'missing'`).
+
+Finally, the preprocessing pipeline is integrated in a
+full prediction pipeline using :class:`sklearn.pipeline.Pipeline`,
+together with a simple classification model.
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
@@ -76,15 +82,14 @@ print("model score: %f" % clf_pl.score(X_test, y_test))
 
 
 ###############################################################################
-# Using our pipeline in a grid search
+# Using the prediction pipeline in a grid search
 ###############################################################################
-# We can also perform grid search on the different preprocessing steps
-# defined in our ``ColumnTransformer``, together with the classifier's
-# hyperparameters as part of a :class:`sklearn.pipeline.Pipeline`
-# ``ColumnTransformer`` integrates well with the rest of scikit-learn,
-# in particular with :class:`sklearn.model_selection.GridSearchCV`.
+# Grid search can also be performed on the different preprocessing steps
+# defined in the ``ColumnTransformer`` object, together with the classifier's
+# hyperparameters as part of the ``Pipeline``.
 # We will search for both the imputer strategy of the numeric preprocessing
-# as for the regularization parameter of the logistic regression.
+# and the regularization parameter of the logistic regression using
+# :class:`sklearn.model_selection.GridSearchCV`.
 
 
 param_grid = {
@@ -95,7 +100,5 @@ param_grid = {
 grid_search = GridSearchCV(clf_pl, param_grid, cv=10, iid=False)
 grid_search.fit(X_train, y_train)
 
-# We can finally fit the model using the best hyperparameters found
-# and assess model performance on holdout set
 print(("best logistic regression from grid search: %f"
-       % grid_search.best_estimator_.score(X_test, y_test)))
+       % grid_search.score(X_test, y_test)))
