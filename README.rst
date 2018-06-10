@@ -60,7 +60,7 @@ scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
 the system CBLAS will be detected by the build system and used if present.
 CBLAS exists in many implementations; see `Linear algebra libraries
-<http://scikit-learn.org/stable/modules/computational_performance.html#linear-algebra-libraries>`_
+<http://scikit-learn.org/dev/modules/computational_performance.html#linear-algebra-libraries>`_
 for known issues.
 
 User installation
@@ -75,7 +75,7 @@ or ``conda``::
 
     conda install scikit-learn
 
-The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
+The documentation includes more detailed `installation instructions <http://scikit-learn.org/dev/install.html>`_.
 
 
 Development
@@ -83,7 +83,7 @@ Development
 
 We welcome new contributors of all experience levels. The scikit-learn
 community goals are to be helpful, welcoming, and effective. The
-`Development Guide <http://scikit-learn.org/stable/developers/index.html>`_
+`Development Guide <http://scikit-learn.org/dev/developers/index.html>`_
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
 
@@ -126,7 +126,7 @@ Submitting a Pull Request
 
 Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
-with our guidelines: http://scikit-learn.org/stable/developers/index.html
+with our guidelines: http://scikit-learn.org/dev/developers/index.html
 
 
 Project History
@@ -149,7 +149,7 @@ Documentation
 
 - HTML documentation (stable release): http://scikit-learn.org
 - HTML documentation (development version): http://scikit-learn.org/dev/
-- FAQ: http://scikit-learn.org/stable/faq.html
+- FAQ: http://scikit-learn.org/dev/faq.html
 
 Communication
 ~~~~~~~~~~~~~
@@ -162,4 +162,4 @@ Communication
 Citation
 ~~~~~~~~
 
-If you use scikit-learn in a scientific publication, we would appreciate citations: http://scikit-learn.org/stable/about.html#citing-scikit-learn
+If you use scikit-learn in a scientific publication, we would appreciate citations: http://scikit-learn.org/dev/about.html#citing-scikit-learn
