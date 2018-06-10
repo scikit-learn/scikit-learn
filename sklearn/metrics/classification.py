@@ -18,6 +18,7 @@ the lower the better
 #          Jatin Shah <jatindshah@gmail.com>
 #          Saurabh Jha <saurabh.jhaa@gmail.com>
 #          Bernardo Stein <bernardovstein@gmail.com>
+#          Shangwu Yao <shangwuyao@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -295,18 +296,6 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                                 labels=None, samplewise=False):
-    # _check_targets is extremely time consuming, avoiding redundant
-    # _check_targets makes this implementation much faster.
-    # Implementation of precision_recall_fscore_support with
-    # _multilabel_confusion_matrix is now faster than the original one.
-    return _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
-                                 sample_weight=sample_weight, labels=labels,
-                                 samplewise=samplewise)
-
-
-def _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
-                                 sample_weight=None, labels=None,
-                                 samplewise=False):
     """Returns a confusion matrix for each output of a multilabel problem
 
     Multiclass tasks will be treated as if binarised under a one-vs-rest
@@ -339,8 +328,7 @@ def _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
     if sample_weight is not None and samplewise:
         raise ValueError('sample_weight should not be used with samplewise. ')
 
-    if not y_type:
-        y_type, _, _ = _check_targets(y_true, y_pred)
+    y_type, _, _ = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -384,18 +372,6 @@ def _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
-        # make sure values are in (0, 1) (but avoid unnecessary copy)
-        if y_true.max() != 1 or y_true.min() != 0:
-            if issparse(y_true):
-                y_true = y_true._with_data(y_true.data == 1)
-            else:
-                y_true = (y_true == 1)
-        if y_pred.max() != 1 or y_pred.min() != 0:
-            if issparse(y_pred):
-                y_pred = y_pred._with_data(y_pred.data == 1)
-            else:
-                y_pred = (y_pred == 1)
-
         # account for sample weight
         def _normal_or_sparse_row_multiply(A, w):
             if issparse(A):
@@ -419,12 +395,18 @@ def _multilabel_confusion_matrix(y_true, y_pred, y_type=None,
             y_pred = y_pred.T
             true_and_pred = true_and_pred.T
 
-        tp = np.sum(true_and_pred, axis=0)
+        def _sum(a, **kwargs):
+            if issparse(a):
+                return a.sum(**kwargs)
+            else:
+                return np.sum(a, **kwargs)
+
+        tp = _sum(true_and_pred, axis=0)
 
         if y_true.dtype.kind in {'i', 'u', 'b'}:
             tp = tp.astype(np.int64)
-        fp = y_pred.sum(axis=0) - tp
-        fn = y_true.sum(axis=0) - tp
+        fp = _sum(y_pred, axis=0) - tp
+        fn = _sum(y_true, axis=0) - tp
 
         if sample_weight is not None:
             tn = sample_weight.sum() - tp - fp - fn
