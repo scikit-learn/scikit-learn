@@ -235,8 +235,7 @@ def test_imputation_most_frequent_objects():
 
 
 def test_imputation_constant_integer():
-    # Test imputation using the constant strategy
-    # on integers
+    # Test imputation using the constant strategy on integers
     X = np.array([
         [-1, 2, 3, -1],
         [4, -1, 5, -1],
@@ -259,8 +258,7 @@ def test_imputation_constant_integer():
 
 
 def test_imputation_constant_float():
-    # Test imputation using the constant strategy
-    # on floats
+    # Test imputation using the constant strategy on floats
     for format in ["csr", "array"]:
         X = np.array([
             [np.nan, 1.1, 2.2, np.nan],
@@ -290,8 +288,7 @@ def test_imputation_constant_float():
 
 
 def test_imputation_constant_object():
-    # Test imputation using the constant strategy
-    # on objects
+    # Test imputation using the constant strategy on objects
     for marker in (None, np.nan, "NAN", "", 0):
         X = np.array([
             [marker, "a", "b", marker],
@@ -315,8 +312,7 @@ def test_imputation_constant_object():
 
 
 def test_imputation_constant_pandas():
-    # Test imputation using the constant strategy
-    # on pandas df
+    # Test imputation using the constant strategy on pandas df
     pd = pytest.importorskip("pandas")
 
     for dtype in [object, "category"]:

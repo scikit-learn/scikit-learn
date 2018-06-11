@@ -1605,6 +1605,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 def choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
+
 def check_classifiers_classes(name, classifier_orig):
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
                                             cluster_std=0.1)

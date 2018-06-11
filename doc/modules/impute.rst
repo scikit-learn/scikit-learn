@@ -20,9 +20,10 @@ Univariate feature imputation
 =============================
 
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
-values, either using the mean, the median or the most frequent value of
-the row or column in which the missing values are located. This class
-also allows for different missing values encodings.
+values. Missing values can be imputed with a provided value, or using the
+statistics (mean, median or most frequent) of each column in which the missing
+values are located. This class also allows for different missing values
+encodings.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
@@ -30,9 +31,9 @@ that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.impute import SimpleImputer
-    >>> imp = SimpleImputer(missing_values='NaN', strategy='mean')
+    >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])       # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, missing_values='NaN', strategy='mean', verbose=0)
+    SimpleImputer(copy=True, missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
@@ -51,6 +52,9 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     [[4.          2.        ]
      [6.          3.666...]
      [7.          6.        ]]
+
+Object
+
 
 Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing

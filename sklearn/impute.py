@@ -185,7 +185,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         if self.strategy == "constant":
             if (X.dtype.kind in ("i", "f")
                     and not isinstance(fill_value, numbers.Real)):
-                raise ValueError(
+                raise TypeError(
                     "fill_value={0} is invalid. Expected a numerical value "
                     "to numerical data".format(fill_value))
 
@@ -244,7 +244,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             with np.errstate(all="ignore"):
                 return np.ravel(sums) / np.ravel(n_non_missing)
 
-        # Median + Most frequent
+        # Median + Most frequent + Constant
         else:
             # Remove the missing values, for each column
             columns_all = np.hsplit(X.data, X.indptr[1:-1])
@@ -277,7 +277,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
             # Constant
             elif strategy == "constant":
-
                 return np.full(X.shape[1], fill_value)
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
@@ -328,12 +327,12 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Constant
         elif strategy == "constant":
-            if isinstance(fill_value, numbers.Real):
+            """if isinstance(fill_value, numbers.Real):
                 dtype = None
             else:
                 dtype = object
-
-            return np.full(X.shape[1], fill_value, dtype=dtype)
+            """
+            return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
     def transform(self, X):
         """Impute all missing values in X.
@@ -749,10 +748,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
+        force_all_finite = "allow-nan" if self.missing_values is np.nan \
+                           else True
 
         X = check_array(X, dtype=FLOAT_DTYPES, order="F",
-                        force_all_finite="allow-nan"
-                        if self.missing_values is np.nan else True)
+                        force_all_finite=force_all_finite)
 
         mask_missing_values = _get_mask(X, self.missing_values)
         if self.initial_imputer_ is None:
