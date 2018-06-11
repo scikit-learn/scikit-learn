@@ -5,12 +5,10 @@ import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
 
-import pytest
-
 from sklearn import metrics
 from sklearn import neighbors, datasets
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -130,6 +128,7 @@ def test_n_neighbors_datatype():
                         neighbors_.kneighbors, X=X, n_neighbors=3.)
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def check_precomputed(make_train_test):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -214,6 +213,7 @@ def test_is_sorted_by_data():
     assert _is_sorted_by_data(X)
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def test_check_precomputed():
     # Test that _check_precomputed returns a graph sorted by data
     X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
@@ -231,6 +231,7 @@ def test_check_precomputed():
     assert _is_sorted_by_data(Xt)
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def test_precomputed_sparse_invalid():
     dist = np.array([[0., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
@@ -827,6 +828,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def test_kneighbors_regressor_sparse(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,

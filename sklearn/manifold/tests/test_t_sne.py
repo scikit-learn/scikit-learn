@@ -4,11 +4,10 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-import pytest
-
-from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
+from sklearn.exceptions import EfficiencyWarning
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -375,6 +374,7 @@ def test_high_perplexity_precomputed_sparse_distances():
     assert_raises_regexp(ValueError, msg, tsne.fit_transform, bad_dist)
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def test_sparse_precomputed_distance():
     """Make sure that TSNE works identically for sparse and dense matrix"""
     random_state = check_random_state(0)
@@ -623,17 +623,6 @@ def test_reduction_to_one_component():
     X = random_state.randn(5, 2)
     X_embedded = tsne.fit(X).embedding_
     assert(np.all(np.isfinite(X_embedded)))
-
-
-def test_no_sparse_on_barnes_hut():
-    # No sparse matrices allowed on Barnes-Hut.
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
-    X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_iter=199, method='barnes_hut')
-    assert_raises_regexp(TypeError, "A sparse matrix was.*",
-                         tsne.fit_transform, X_csr)
 
 
 @pytest.mark.parametrize('method', ['barnes_hut', 'exact'])

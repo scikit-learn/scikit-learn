@@ -5,7 +5,7 @@ from sklearn.neighbors import KNeighborsTransformer, RadiusNeighborsTransformer
 from sklearn.neighbors.base import _is_sorted_by_data
 
 
-def test_transformer_nonzero():
+def test_transformer_result():
     # Test the number of neighbors returned
     n_neighbors = 5
     n_samples_fit = 20

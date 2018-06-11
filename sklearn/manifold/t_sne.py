@@ -20,6 +20,7 @@ from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils.validation import check_non_negative
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
@@ -657,7 +658,7 @@ class TSNE(BaseEstimator):
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. Note that this
-            when method='barnes_hut', X cannot be a sparse array and if need be
+            when method='barnes_hut', X can be a sparse array and if need be
             will be converted to a 32 bit float array. Method='exact' allows
             sparse arrays and 64bit floating point inputs.
 
@@ -682,12 +683,16 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            # avoid X.min() on sparse matrix since it also sorts the indices
-            X_min = X.data.min() if issparse(X) else X.min()
-            if X_min < 0:
-                raise ValueError("All distances should be positive, the "
-                                 "precomputed distances given as X is not "
-                                 "correct")
+
+            check_non_negative(X, "TSNE.fit(). With metric='precomputed', X "
+                                  "should contain positive distances.")
+
+            if self.method == "exact" and issparse(X):
+                raise TypeError(
+                    'TSNE with method="exact" does not accept sparse '
+                    'precomputed distance matrix. Use method="barnes_hut" '
+                    'or provide the dense distance matrix.')
+
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
@@ -709,11 +714,6 @@ class TSNE(BaseEstimator):
             # computing it.
             if self.metric == "precomputed":
                 distances = X
-                if issparse(X):
-                    raise TypeError(
-                        'TSNE with method="exact" does not accept sparse '
-                        'precomputed distance matrix. Use method="barnes_hut" '
-                        'or provide the dense distance matrix.')
             else:
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")

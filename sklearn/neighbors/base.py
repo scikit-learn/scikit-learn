@@ -505,11 +505,11 @@ class KNeighborsMixin(object):
 
         Returns
         -------
-        neigh_dist : array, shape (n_samples, n_neighbors)
+        neigh_dist : array, shape (n_query, n_neighbors)
             Array representing the lengths to points, only present if
             return_distance=True
 
-        neigh_ind : array, shape (n_samples, n_neighbors)
+        neigh_ind : array, shape (n_query, n_neighbors)
             Indices of the nearest points in the population matrix.
 
         Examples
@@ -672,7 +672,7 @@ class KNeighborsMixin(object):
 
         Returns
         -------
-        A : sparse matrix in CSR format, shape = [n_samples, n_samples_fit]
+        A : sparse matrix in CSR format, shape = [n_query, n_samples_fit]
             n_samples_fit is the number of samples in the fitted data
             A[i, j] is assigned the weight of edge that connects i to j.
 
@@ -696,24 +696,13 @@ class KNeighborsMixin(object):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        # kneighbors does the None handling.
-        if X is not None:
-            if getattr(self, 'effective_metric_', '') == 'precomputed':
-                X = _check_precomputed(X)
-            else:
-                X = check_array(X, accept_sparse='csr')
-            n_samples1 = X.shape[0]
-        else:
-            n_samples1 = self._fit_X.shape[0]
-
-        n_samples2 = self._fit_X.shape[0]
-        n_nonzero = n_samples1 * n_neighbors
-        A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
+        # check the input only in self.kneighbors
 
         # construct CSR matrix representation of the k-NN graph
         if mode == 'connectivity':
-            A_data = np.ones(n_samples1 * n_neighbors)
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
+            n_samples1 = A_ind.shape[0]
+            A_data = np.ones(n_samples1 * n_neighbors)
 
         elif mode == 'distance':
             A_data, A_ind = self.kneighbors(
@@ -724,6 +713,11 @@ class KNeighborsMixin(object):
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity" '
                 'or "distance" but got "%s" instead' % mode)
+
+        n_samples1 = A_ind.shape[0]
+        n_samples2 = self._fit_X.shape[0]
+        n_nonzero = n_samples1 * n_neighbors
+        A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
         kneighbors_graph = csr_matrix((A_data, A_ind.ravel(), A_indptr),
                                       shape=(n_samples1, n_samples2))
@@ -984,13 +978,8 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        if X is not None:
-            if getattr(self, 'effective_metric_', '') == 'precomputed':
-                X = _check_precomputed(X)
-            else:
-                X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        # check the input only in self.radius_neighbors
 
-        n_samples2 = self._fit_X.shape[0]
         if radius is None:
             radius = self.radius
 
@@ -1010,6 +999,7 @@ class RadiusNeighborsMixin(object):
                 'or "distance" but got %s instead' % mode)
 
         n_samples1 = A_ind.shape[0]
+        n_samples2 = self._fit_X.shape[0]
         n_neighbors = np.array([len(a) for a in A_ind])
         A_ind = np.concatenate(list(A_ind))
         if A_data is None:

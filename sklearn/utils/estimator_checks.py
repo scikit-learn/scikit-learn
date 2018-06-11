@@ -1730,6 +1730,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
     X = rng.normal(size=(10, 4))
+    X = pairwise_estimator_convert_X(X, regressor_orig)
     regressor = clone(regressor_orig)
     y = multioutput_estimator_convert_y_2d(regressor, X[:, 0])
 

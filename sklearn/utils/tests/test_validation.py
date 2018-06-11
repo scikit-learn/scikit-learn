@@ -35,7 +35,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
-    check_memory
+    check_memory,
+    check_non_negative
 )
 import sklearn
 
@@ -700,3 +701,22 @@ def test_check_array_memmap(copy):
         X_checked = check_array(X_memmap, copy=copy)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags['WRITEABLE'] == copy
+
+
+@pytest.mark.parametrize('retype', [
+    np.asarray, sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.lil_matrix,
+    sp.bsr_matrix, sp.dok_matrix, sp.dia_matrix
+])
+def test_check_non_negative(retype):
+    A = np.array([[1, 1, 0, 0],
+                  [1, 1, 0, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 0]])
+    X = retype(A)
+    check_non_negative(X, "")
+    X = retype([[0, 0], [0, 0]])
+    check_non_negative(X, "")
+
+    A[0, 0] = -1
+    X = retype(A)
+    assert_raises_regex(ValueError, "Negative ", check_non_negative, X, "")
