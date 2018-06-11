@@ -6,7 +6,6 @@ from sklearn.utils.random import sample_without_replacement
 from sklearn.utils.random import random_choice_csc
 from sklearn.utils.fixes import comb
 from sklearn.utils.random import loguniform
-from sklearn.model_selection import ParameterSampler
 
 from sklearn.utils.testing import (
     assert_raises,
@@ -185,16 +184,22 @@ def test_random_choice_csc_errors():
 
 
 @pytest.mark.parametrize("low,high,base", [
-    (-4, 0, 10),
-    (-6, 1, np.exp(1)),
-    (-8, 4, 2),
+    (-1, 0, 10),
+    (0, 2, np.exp(1)),
+    (-1, 1, 2),
 ])
 def test_log_uniform(low, high, base):
     rv = loguniform(low, high, base=base)
     rvs = rv.rvs(size=100)
-    assert (base**low <= rvs).all() and (rvs <= base**high).all()
+    assert_true((base**low <= rvs).all() and (rvs <= base**high).all())
 
-    y = loguniform(low, high)
-    rvs = y.rvs(size=100)
-    assert (10**low <= rvs).all() and (rvs <= 10**high).all()
-    assert isinstance(y.rvs(), np.ndarray)
+    assert_true((loguniform(low, high, base=base).rvs(random_state=0) ==
+                 loguniform(low, high, base=base).rvs(random_state=0)))
+
+
+
+def test_log_uniform_default_base(low=-1, high=0):
+    rv = loguniform(low, high)
+    rvs = rv.rvs(size=100)
+    assert_true(isinstance(rvs, np.ndarray))
+    assert_true((10**low <= rvs).all() and (rvs <= 10**high).all())

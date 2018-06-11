@@ -69,6 +69,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.utils.random import loguniform
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -813,14 +814,14 @@ def test_gridsearch_no_predict():
     assert_equal(search.best_score_, 42)
 
 
-def test_param_sampler():
+@pytest.mark.parametrize("C", [uniform(1e-1, 0.9), loguniform(-1, 0)])
+def test_param_sampler(C):
     # test basic properties of param sampler
-    param_distributions = {"kernel": ["rbf", "linear"],
-                           "C": uniform(0, 1)}
+    param_distributions = {"kernel": ["rbf", "linear"], "C": C}
     sampler = ParameterSampler(param_distributions=param_distributions,
-                               n_iter=10, random_state=0)
+                               n_iter=30, random_state=0)
     samples = [x for x in sampler]
-    assert_equal(len(samples), 10)
+    assert_equal(len(samples), 30)
     for sample in samples:
         assert sample["kernel"] in ["rbf", "linear"]
         assert 0 <= sample["C"] <= 1
@@ -832,7 +833,7 @@ def test_param_sampler():
     assert_equal([x for x in sampler], [x for x in sampler])
 
     if sp_version >= (0, 16):
-        param_distributions = {"C": uniform(0, 1)}
+        param_distributions = {"C": C}
         sampler = ParameterSampler(param_distributions=param_distributions,
                                    n_iter=10, random_state=0)
         assert_equal([x for x in sampler], [x for x in sampler])

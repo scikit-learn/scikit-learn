@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 import numpy as np
 import scipy.sparse as sp
-from scipy.stats import rv_continuous
 
 import array
 
@@ -98,6 +97,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
                          (n_samples, len(classes)),
                          dtype=int)
 
+
 class loguniform:
     """
     A class supporting log-uniform random variables. That is, for any ``a``
@@ -105,9 +105,12 @@ class loguniform:
 
         base**a <= loguniform(a, b, base=base).rvs() <= base**b
 
-    The logarithmic PDF is uniform. For some constant ``c`` at a point ``x``,
+    The logarithmic PDF is uniform. For some constant float ``c``
+    at a float ``x``,
 
         log(pdf(x)) = c
+
+    log(x) = math.log(x, base).
     """
     def __init__(self, low, high, base=10):
         """
@@ -126,7 +129,7 @@ class loguniform:
         self._high = high
         self._base = base
 
-    def rvs(self, size=1):
+    def rvs(self, size=None, random_state=None):
         """
         Generates random variables with ``base**low <= rv <= base**high``
         where ``base``, ``low`` and ``high`` are definited in ``__init__`` and
@@ -136,7 +139,16 @@ class loguniform:
         ----------
         size : int or tuple, optional
             The size of the random variable.
+        random_state : int, RandomState
+            A seed (int) or random number generator (RandomState).
+
+        Returns
+        -------
+        rv : float or np.ndarray
+            Either a single log-uniform random variable or an array of them
         """
+        _rng = check_random_state(random_state)
         a, b, base = self._low, self._high, self._base
-        unif = np.random.uniform(a, b, size=size)
-        return np.power(base, unif)
+        unif = _rng.uniform(a, b, size=size)
+        rv = np.power(base, unif)
+        return rv

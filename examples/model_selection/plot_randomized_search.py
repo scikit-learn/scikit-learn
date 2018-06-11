@@ -23,21 +23,20 @@ print(__doc__)
 import numpy as np
 
 from time import time
-from scipy.stats import randint as sp_randint
-import sklearn.utils.random as r
+import scipy.stats as stats
 from sklearn.utils.random import loguniform
 
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.datasets import load_digits
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import SGDClassifier
 
 # get some data
 digits = load_digits()
 X, y = digits.data, digits.target
 
 # build a classifier
-clf = RandomForestClassifier(n_estimators=20)
+clf = SGDClassifier(loss='hinge', penalty='elasticnet',
+                    fit_intercept=True)
 
 
 # Utility function to report best scores
@@ -54,12 +53,9 @@ def report(results, n_top=3):
 
 
 # specify parameters and distributions to sample from
-param_dist = {"max_depth": [3, None],
-              "max_features": sp_randint(1, 11),
-              "min_samples_split": sp_randint(2, 11),
-              "min_samples_leaf": loguniform(0, 1, base=10),
-              "bootstrap": [True, False],
-              "criterion": ["gini", "entropy"]}
+param_dist = {'average': [True, False],
+              'l1_ratio': stats.uniform(0, 1),
+              'alpha': loguniform(-4, 0, base=10)}
 
 # run randomized search
 n_iter_search = 20
@@ -73,11 +69,9 @@ print("RandomizedSearchCV took %.2f seconds for %d candidates"
 report(random_search.cv_results_)
 
 # use a full grid over all parameters
-param_grid = {"max_depth": [3, None],
-              "max_features": [1, 3, 10],
-              "min_samples_split": [2, 3, 10],
-              "bootstrap": [True, False],
-              "criterion": ["gini", "entropy"]}
+param_grid = {'average': [True, False],
+              'l1_ratio': np.linspace(0, 1, num=10),
+              'alpha': [10**-i for i in [-4, -3, -2, -1, 0]]}
 
 # run grid search
 grid_search = GridSearchCV(clf, param_grid=param_grid, cv=5, iid=False)
