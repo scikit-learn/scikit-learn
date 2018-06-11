@@ -49,26 +49,27 @@ data = pd.read_csv(titanic_url)
 # - embarked: categories encoded as strings {'C', 'S', 'Q'}.
 # - sex: categories encoded as strings {'female', 'male'}.
 # - plcass: categories encoded as ints {1, 2, 3}.
-num_feats = ['age', 'fare']
-cat_feats = ['embarked', 'sex', 'pclass']
+numeric_features = ['age', 'fare']
+categorical_features = ['embarked', 'sex', 'pclass']
 
 # Provisionally, use pd.fillna() to impute missing values for categorical
 # features; SimpleImputer will eventually support strategy="constant".
-data.loc[:, cat_feats] = data.loc[:, cat_feats].fillna(value='missing')
+data[categorical_features] = data[categorical_features].fillna(value='missing')
 
 # We create the preprocessing pipelines for both numeric and categorical data.
-num_pl = make_pipeline(SimpleImputer(), StandardScaler())
-cat_pl = CategoricalEncoder('onehot-dense', handle_unknown='ignore')
+numeric_transformer = make_pipeline(SimpleImputer(), StandardScaler())
+categorical_transformer = CategoricalEncoder('onehot-dense',
+                                             handle_unknown='ignore')
 
 preprocessing_pl = make_column_transformer(
-    (num_feats, num_pl),
-    (cat_feats, cat_pl),
+    (numeric_features, numeric_transformer),
+    (categorical_features, categorical_transformer),
     remainder='drop'
 )
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
-clf_pl = make_pipeline(preprocessing_pl, LogisticRegression())
+clf = make_pipeline(preprocessing_pl, LogisticRegression())
 
 X = data.drop('survived', axis=1)
 y = data.survived.values
@@ -76,9 +77,8 @@ y = data.survived.values
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
                                                     shuffle=True)
 
-# Fit classifier
-clf_pl.fit(X_train, y_train)
-print("model score: %f" % clf_pl.score(X_test, y_test))
+clf.fit(X_train, y_train)
+print("model score: %f" % clf.score(X_test, y_test))
 
 
 ###############################################################################
@@ -97,7 +97,7 @@ param_grid = {
     'logisticregression__C': [0.1, 1.0, 1.0],
 }
 
-grid_search = GridSearchCV(clf_pl, param_grid, cv=10, iid=False)
+grid_search = GridSearchCV(clf, param_grid, cv=10, iid=False)
 grid_search.fit(X_train, y_train)
 
 print(("best logistic regression from grid search: %f"
