@@ -1,3 +1,4 @@
+"""
 Testing for Gaussian Process module (sklearn.gaussian_process)
 """
 
