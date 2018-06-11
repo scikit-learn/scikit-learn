@@ -554,6 +554,8 @@ Python runtime
 
     the optimal size of temporary arrays used by some algoritms.
 
+.. _environment_variable:
+
 Environment variables
 ......................
 
@@ -563,7 +565,11 @@ These environment variables should be set before importing scikit-learn.
 
     When this environment variable is set to a non zero value,
     scikit-learn uses the site joblib rather than its vendored version.
-    Consequently, joblib must be installed for scikit-learn to run
+    Consequently, joblib must be installed for scikit-learn to run.
+    Note that using the site joblib is at your own risks: the versions of
+    scikt-learn and joblib need to be compatible. In addition, dumps from
+    joblib.Memory might be incompatible, and you might loose some caches
+    and have to redownload some datasets.
 
 :SKLEARN_ASSUME_FINITE:
 
