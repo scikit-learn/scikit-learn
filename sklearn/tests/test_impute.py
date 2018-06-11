@@ -230,7 +230,7 @@ def test_imputation_most_frequent():
 
 def test_imputation_most_frequent_objects():
     # Test imputation using the most-frequent strategy.
-    for marker in (None, np.nan, "NAN", "", 0):
+    for marker in (np.nan, "NAN", "", 0):
         X = np.array([
             [marker, marker, "a", "f"],
             [marker, "c", marker, "d"],

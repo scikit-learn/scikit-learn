@@ -45,7 +45,9 @@ def _get_mask(X, value_to_mask):
         # np.isnan does not work on object dtypes.
         return X != X
     else:
-        return X == value_to_mask
+        # X == value_to_mask with object dytpes does not always perform
+        # element-wise for old versions of numpy
+        return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
