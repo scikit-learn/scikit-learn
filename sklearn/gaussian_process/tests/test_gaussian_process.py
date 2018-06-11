@@ -1,4 +1,3 @@
-"""
 Testing for Gaussian Process module (sklearn.gaussian_process)
 """
 
@@ -144,6 +143,7 @@ def test_batch_size():
 
 
 def test_random_starts():
+    # Test that an increasing number of random-starts of GP fitting only
     # increases the reduced likelihood function of the optimal theta.
     n_samples, n_features = 50, 3
     rng = np.random.RandomState(0)
