@@ -120,7 +120,7 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             counts_nan[col_ind] += 1
 
     for i in xrange(n_features):
-        means[i] /= (n_samples - counts_nan[col_ind])
+        means[i] /= (n_samples - counts_nan[i])
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
@@ -129,8 +129,10 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             variances[col_ind] += diff * diff
             counts[col_ind] += 1
 
+    print(variances)
+
     for i in xrange(n_features):
-        variances[i] += ((n_samples - counts_nan[i]) - counts[i]) * means[i]**2
+        variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
     return means, variances, counts_nan
@@ -197,13 +199,13 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         startptr = X_indptr[i]
         endptr = X_indptr[i + 1]
         counts = endptr - startptr
-        counts_nan[i] = 0
 
         for j in xrange(startptr, endptr):
             if not isnan(X_data[j]):
                 means[i] += X_data[j]
             else:
                 counts_nan[i] += 1
+        counts -= counts_nan[i]
         means[i] /= (n_samples - counts_nan[i])
 
         for j in xrange(startptr, endptr):
@@ -211,7 +213,9 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                 diff = X_data[j] - means[i]
                 variances[i] += diff * diff
 
-        variances[i] += (n_samples - counts_nan[i] - counts) * means[i] ** 2
+        print(n_samples, counts_nan, counts)
+
+        variances[i] += (n_samples - counts_nan[i] - counts) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
     return means, variances, counts_nan
