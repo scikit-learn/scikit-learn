@@ -645,12 +645,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
                     self.n_samples_seen_ = (np.ones(X.shape[1], dtype=np.int32)
                                             * X.shape[0])
-                    print(self.n_samples_seen_)
-                    counts_nan = sparse.csr_matrix(
-                        (np.isnan(X.data), X.indices, X.indptr)).sum(
-                            axis=0).A.ravel()
+                    sparse_constr = (sparse.csr_matrix if X.format == 'csr'
+                                     else sparse.csc_matrix)
+                    counts_nan = sparse_constr(
+                        (np.isnan(X.data), X.indices, X.indptr),
+                        shape=X.shape).sum(axis=0).A.ravel()
                     self.n_samples_seen_ -= counts_nan
-                    print(self.n_samples_seen_)
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
