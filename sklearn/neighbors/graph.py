@@ -443,7 +443,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
             Only the neighbors have an explicit value.
         """
         check_is_fitted(self, '_fit_X')
-        return self.radius_neighbors_graph(X, mode=self.mode)
+        return self.radius_neighbors_graph(X, mode=self.mode,
+                                           sort_results=True)
 
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.

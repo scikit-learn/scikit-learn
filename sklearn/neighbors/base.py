@@ -934,7 +934,8 @@ class RadiusNeighborsMixin(object):
                 return neigh_dist, neigh_ind
             return neigh_ind
 
-    def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity'):
+    def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity',
+                               sort_results=False):
         """Computes the (weighted) graph of Neighbors for points in X
 
         Neighborhoods are restricted the points at a distance lower than
@@ -955,6 +956,11 @@ class RadiusNeighborsMixin(object):
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
+
+        sort_results : boolean, optional. Defaults to False.
+            If True, the distances and indices will be sorted before being
+            returned. If False, the results will not be sorted.
+            Only used with mode='distance'.
 
         Returns
         -------
@@ -991,7 +997,7 @@ class RadiusNeighborsMixin(object):
         elif mode == 'distance':
             dist, A_ind = self.radius_neighbors(X, radius,
                                                 return_distance=True,
-                                                sort_results=True)
+                                                sort_results=sort_results)
             A_data = np.concatenate(list(dist))
         else:
             raise ValueError(
