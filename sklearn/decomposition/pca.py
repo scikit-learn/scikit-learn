@@ -388,7 +388,7 @@ class PCA(_BasePCA):
         else:
             n_components = self.n_components
 
-        # Handle _fit_svd_solver according to value of self.svd_solver
+        # Handle _svd_solver
         self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == 'auto':
             # Small problem or n_components == 'mle', just call full PCA
