@@ -98,10 +98,13 @@ def random_choice_csc(n_samples, classes, class_probability=None,
                          (n_samples, len(classes)),
                          dtype=int)
 
-class loguniform(rv_continuous):
-    """
+class loguniform:
+    def __init__(self, low, high, base=10):
+        self._low = low
+        self._high = high
+        self._base = base
 
-    """
-
-    def _rvs(self, low=0, high=1, size=None, base=np.exp(1)):
-        return np.power(base, np.random.uniform(low, high, size))
+    def rvs(self, size=1):
+        a, b, base = self._low, self._high, self._base
+        unif = np.random.uniform(a, b, size=size)
+        return np.power(base, unif)

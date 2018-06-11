@@ -5,10 +5,14 @@ from numpy.testing import assert_array_almost_equal
 from sklearn.utils.random import sample_without_replacement
 from sklearn.utils.random import random_choice_csc
 from sklearn.utils.fixes import comb
+from sklearn.utils.random import loguniform
+from sklearn.model_selection import ParameterSampler
 
 from sklearn.utils.testing import (
     assert_raises,
     assert_equal)
+
+import pytest
 
 
 ###############################################################################
@@ -178,3 +182,19 @@ def test_random_choice_csc_errors():
     class_probabilities = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilities, 1)
+
+
+@pytest.mark.parametrize("low,high,base", [
+    (-4, 0, 10),
+    (-6, 1, np.exp(1)),
+    (-8, 4, 2),
+])
+def test_log_uniform(low, high, base):
+    rv = loguniform(low, high, base=base)
+    rvs = rv.rvs(size=100)
+    assert (base**low <= rvs).all() and (rvs <= base**high).all()
+
+    y = loguniform(low, high)
+    rvs = y.rvs(size=100)
+    assert (10**low <= rvs).all() and (rvs <= 10**high).all()
+    assert isinstance(y.rvs(), np.ndarray)
