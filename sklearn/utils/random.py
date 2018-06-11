@@ -99,12 +99,44 @@ def random_choice_csc(n_samples, classes, class_probability=None,
                          dtype=int)
 
 class loguniform:
+    """
+    A class supporting log-uniform random variables. That is, for any ``a``
+    ,``b`` and ``base``,
+
+        base**a <= loguniform(a, b, base=base).rvs() <= base**b
+
+    The logarithmic PDF is uniform. For some constant ``c`` at a point ``x``,
+
+        log(pdf(x)) = c
+    """
     def __init__(self, low, high, base=10):
+        """
+        Create a log-uniform random variable.
+
+        Parameters
+        ----------
+        low : float
+            The log minimum value
+        high : float
+            The log maximum value
+        base : float
+            The base for the exponent.
+        """
         self._low = low
         self._high = high
         self._base = base
 
     def rvs(self, size=1):
+        """
+        Generates random variables with ``base**low <= rv <= base**high``
+        where ``base``, ``low`` and ``high`` are definited in ``__init__`` and
+        ``rv`` is the return value of this function.
+
+        Parameters
+        ----------
+        size : int or tuple, optional
+            The size of the random variable.
+        """
         a, b, base = self._low, self._high, self._base
         unif = np.random.uniform(a, b, size=size)
         return np.power(base, unif)

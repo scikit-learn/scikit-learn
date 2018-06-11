@@ -24,6 +24,8 @@ import numpy as np
 
 from time import time
 from scipy.stats import randint as sp_randint
+import sklearn.utils.random as r
+from sklearn.utils.random import loguniform
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
@@ -55,6 +57,7 @@ def report(results, n_top=3):
 param_dist = {"max_depth": [3, None],
               "max_features": sp_randint(1, 11),
               "min_samples_split": sp_randint(2, 11),
+              "min_samples_leaf": loguniform(0, 1, base=10),
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
 
