@@ -524,6 +524,8 @@ Links
 Parallelism, resource management, and configuration
 =====================================================
 
+.. _parallelism:
+
 Parallel and distributed computing
 -----------------------------------
 
@@ -532,7 +534,8 @@ library to enable parallel computing inside its estimators. See the
 joblib documentation for the switches to control parallel computing.
 
 Note that, by default, scikit-learn uses its embedded (vendored) version
-of joblib.
+of joblib. A configuration switch (documented below) controls this
+behavior.
 
 Configuration switches
 -----------------------
