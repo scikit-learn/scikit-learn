@@ -7,6 +7,7 @@ from __future__ import division
 
 import warnings
 import re
+import itertools
 
 import numpy as np
 import numpy.linalg as la
@@ -60,6 +61,7 @@ from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
+from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
@@ -699,6 +701,37 @@ def test_scaler_without_centering():
     assert_true(X_csc_scaled_back is not X_csc)
     assert_true(X_csc_scaled_back is not X_csc_scaled)
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
+
+
+def test_scaler_return_identity():
+    # test that the scaler return identity when with_mean and with_std are
+    # False
+    X_csr = sparse.random(1000, 10).tocsr()
+    X_csc = X_csr.tocsc()
+    X_dense = X_csr.A
+
+    transformer_dense = StandardScaler(with_mean=False, with_std=False)
+    X_trans_dense = transformer_dense.fit_transform(X_dense)
+
+    transformer_csr = clone(transformer_dense)
+    X_trans_csr = transformer_csr.fit_transform(X_csr)
+
+    transformer_csc = clone(transformer_dense)
+    X_trans_csc = transformer_csc.fit_transform(X_csc)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+
+        assert trans_1.mean_ == trans_2.mean_
+        assert trans_1.var_ == trans_2.var_
+        assert trans_1.scale_ == trans_2.scale_
+        assert trans_1.n_samples_seen_ == trans_2.n_samples_seen_
+
+    assert_array_almost_equal(X_trans_csr.A, X_csr.A)
+    assert_array_almost_equal(X_trans_csc.A, X_csc.A)
+    assert_array_almost_equal(X_trans_dense, X_dense)
 
 
 def test_scaler_int():
