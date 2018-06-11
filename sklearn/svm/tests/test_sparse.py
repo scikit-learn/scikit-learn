@@ -11,6 +11,11 @@ from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
                                    assert_warns, assert_raise_message,
                                    ignore_warnings)
+import pytest
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])

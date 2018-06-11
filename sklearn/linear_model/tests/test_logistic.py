@@ -29,6 +29,10 @@ from sklearn.linear_model.logistic import (
     _multinomial_grad_hess, _logistic_loss,
 )
 
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
+
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
 Y1 = [0, 1, 1]

@@ -17,6 +17,12 @@ from sklearn.utils import check_random_state
 from sklearn import datasets
 
 from numpy.testing import assert_equal
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 def test_graphical_lasso(random_state=0):

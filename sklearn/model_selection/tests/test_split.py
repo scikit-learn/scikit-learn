@@ -60,6 +60,12 @@ from sklearn.externals.six.moves import zip
 from sklearn.utils.fixes import comb
 
 from sklearn.svm import SVC
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 X = np.ones(10)
 y = np.arange(10) // 2

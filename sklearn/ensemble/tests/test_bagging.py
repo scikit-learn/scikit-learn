@@ -7,6 +7,8 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 import numpy as np
 
+import pytest
+
 from sklearn.base import BaseEstimator
 
 from sklearn.utils.testing import assert_array_equal
@@ -36,6 +38,8 @@ from sklearn.utils import check_random_state
 from sklearn.preprocessing import Imputer
 
 from scipy.sparse import csc_matrix, csr_matrix
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=DeprecationWarning)
 
 rng = check_random_state(0)
 

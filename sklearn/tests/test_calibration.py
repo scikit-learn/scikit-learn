@@ -22,6 +22,12 @@ from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 @ignore_warnings

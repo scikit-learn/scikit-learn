@@ -32,6 +32,11 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 ###############################################################################

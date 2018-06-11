@@ -41,6 +41,10 @@ from sklearn.model_selection import KFold
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
 
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
+
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
 ind = np.arange(X_diabetes.shape[0])

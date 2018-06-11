@@ -21,6 +21,11 @@ from sklearn.utils.testing import (assert_true, assert_greater,
                                    ignore_warnings, assert_raises)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 rng = np.random.RandomState(0)

@@ -22,6 +22,12 @@ from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model.base import _preprocess_data
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 diabetes = load_diabetes()
 X = diabetes.data

@@ -80,6 +80,11 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.model_selection import GridSearchCV
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 try:

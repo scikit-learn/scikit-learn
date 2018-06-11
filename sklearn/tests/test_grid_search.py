@@ -54,6 +54,12 @@ with warnings.catch_warnings():
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 # Neither of the following two estimators inherit from BaseEstimator,

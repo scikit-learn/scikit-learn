@@ -71,6 +71,10 @@ from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
+
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.

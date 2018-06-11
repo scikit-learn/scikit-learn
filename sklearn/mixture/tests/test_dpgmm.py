@@ -18,6 +18,12 @@ from sklearn.mixture.tests.test_gmm import GMMTester
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.mixture.dpgmm import digamma, gammaln
 from sklearn.mixture.dpgmm import wishart_log_det, wishart_logz
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 np.seterr(all='warn')

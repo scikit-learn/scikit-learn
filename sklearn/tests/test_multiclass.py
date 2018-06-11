@@ -34,6 +34,12 @@ from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
 from sklearn.externals.six.moves import zip
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)

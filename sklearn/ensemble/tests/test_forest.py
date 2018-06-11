@@ -47,6 +47,7 @@ from sklearn.utils.fixes import comb
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
 
+pytestmark = pytest.mark.filterwarnings('ignore', category=DeprecationWarning)
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

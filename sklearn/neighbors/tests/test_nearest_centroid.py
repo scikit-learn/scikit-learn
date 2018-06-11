@@ -10,6 +10,12 @@ from numpy.testing import assert_equal
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
 from sklearn.utils.testing import assert_raises
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

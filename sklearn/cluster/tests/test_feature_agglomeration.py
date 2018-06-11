@@ -6,6 +6,12 @@ import numpy as np
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_almost_equal
+import pytest
+from sklearn.exceptions import ConvergenceWarning
+
+pytestmark = pytest.mark.filterwarnings('ignore', category=(
+    DeprecationWarning, ConvergenceWarning,
+    UserWarning, FutureWarning))
 
 
 def test_feature_agglomeration():
