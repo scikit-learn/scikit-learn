@@ -30,7 +30,7 @@ def _circular_sample(initial_n_samples, target_n_samples, random_state=None):
     Take each sample once per loop except for the last loop, which takes
     (n % len(array)) samples at random. Results are returned unshuffled.
     >>> _circular_sample(3, 8, random_state=46)
-    array([0, 0, 1, 1, 2, 2, 1, 0])
+    array([0, 0, 1, 1, 2, 2, 0, 2])
     """
     random_state = check_random_state(random_state)
     n_full_sets = int(target_n_samples // initial_n_samples)
@@ -159,7 +159,7 @@ def resample_labels(y, method=None, scaling=None, replace=False,
     >>> indices = resample_labels(y, scaling=.5, random_state=333)
     >>> indices, X[indices], y[indices]
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    (array([4, 5, 3]), array([[130], [110], [110]]), array([13, 11, 11]))
+    (array([3, 0, 2]), array([[110], [100], [130]]), array([11, 10, 13]))
 
     Sample with replacement to 1.5 times the dataset size and balance the
     class counts.
