@@ -137,7 +137,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
@@ -321,7 +320,6 @@ class _IgnoreWarnings(object):
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            # very important to avoid uncontrolled state propagation
             clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
@@ -339,14 +337,14 @@ class _IgnoreWarnings(object):
         return "%s(%s)" % (name, ", ".join(args))
 
     def __enter__(self):
-        clean_warning_registry()  # be safe and not propagate state + chaos
-        warnings.simplefilter("ignore", self.category)
         if self._entered:
             raise RuntimeError("Cannot enter %r twice" % self)
         self._entered = True
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
+        clean_warning_registry()
+        warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
         if not self._entered:
@@ -354,7 +352,7 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()  # be safe and not propagate state + chaos
+        clean_warning_registry()
 
 
 assert_less = _dummy.assertLess
@@ -724,8 +722,13 @@ except ImportError:
 
 
 def clean_warning_registry():
-    """Safe way to reset warnings."""
-    warnings.resetwarnings()
+    """Clean Python warning registry for easier testing of warning messages.
+
+    We may not need to do this any more when getting rid of Python 2, not
+    entirely sure. See https://bugs.python.org/issue4180 and
+    https://bugs.python.org/issue21724 for more details.
+
+    """
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
         if 'six.moves' in mod_name:
