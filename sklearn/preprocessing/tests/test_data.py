@@ -712,9 +712,11 @@ def _check_attributes_scalers(scaler_1, scaler_2):
 def test_scaler_return_identity():
     # test that the scaler return identity when with_mean and with_std are
     # False
-    X_csr = sparse.random(1000, 10).tocsr()
+    X_dense = np.array([[0, 1, 3],
+                        [5, 6, 0],
+                        [8, 0, 10]])
+    X_csr = csr_matrix(X_dense)
     X_csc = X_csr.tocsc()
-    X_dense = X_csr.A
 
     transformer_dense = StandardScaler(with_mean=False, with_std=False)
     X_trans_dense = transformer_dense.fit_transform(X_dense)
