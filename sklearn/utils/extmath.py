@@ -691,7 +691,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     last_sum = last_mean * last_sample_count
     new_sum = np.nansum(X, axis=0)
 
-    new_sample_count = np.nansum(~np.isnan(X), axis=0)
+    new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
