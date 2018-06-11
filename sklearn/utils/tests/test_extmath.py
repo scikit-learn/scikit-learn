@@ -9,6 +9,8 @@ from scipy import sparse
 from scipy import linalg
 from scipy import stats
 
+import pytest
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -170,9 +172,10 @@ def check_randomized_svd_low_rank(dtype):
         assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
 
 
-def test_randomized_svd_low_rank_all_dtypes():
-    for dtype in (np.int32, np.int64, np.float32, np.float64):
-        yield check_randomized_svd_low_rank, dtype
+@pytest.mark.parametrize('dtype',
+                         (np.int32, np.int64, np.float32, np.float64))
+def test_randomized_svd_low_rank_all_dtypes(dtype):
+    check_randomized_svd_low_rank(dtype)
 
 
 @ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
@@ -191,34 +194,35 @@ def test_norm_squared_norm():
                     squared_norm, X.astype(int))
 
 
-def test_row_norms():
+@pytest.mark.parametrize('dtype',
+                         (np.float32, np.float64))
+def test_row_norms(dtype):
     X = np.random.RandomState(42).randn(100, 100)
-    for dtype in (np.float32, np.float64):
-        if dtype is np.float32:
-            precision = 4
-        else:
-            precision = 5
+    if dtype is np.float32:
+        precision = 4
+    else:
+        precision = 5
 
-        X = X.astype(dtype)
-        sq_norm = (X ** 2).sum(axis=1)
+    X = X.astype(dtype)
+    sq_norm = (X ** 2).sum(axis=1)
 
-        assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
+    assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
+                              precision)
+    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
+
+    for csr_index_dtype in [np.int32, np.int64]:
+        Xcsr = sparse.csr_matrix(X, dtype=dtype)
+        # csr_matrix will use int32 indices by default,
+        # up-casting those to int64 when necessary
+        if csr_index_dtype is np.int64:
+            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
+            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+        assert Xcsr.indices.dtype == csr_index_dtype
+        assert Xcsr.indptr.dtype == csr_index_dtype
+        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
                                   precision)
-        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
-
-        for csr_index_dtype in [np.int32, np.int64]:
-            Xcsr = sparse.csr_matrix(X, dtype=dtype)
-            # csr_matrix will use int32 indices by default,
-            # up-casting those to int64 when necessary
-            if csr_index_dtype is np.int64:
-                Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
-                Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
-            assert Xcsr.indices.dtype == csr_index_dtype
-            assert Xcsr.indptr.dtype == csr_index_dtype
-            assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
-                                      precision)
-            assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr),
-                                      precision)
+        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr),
+                                  precision)
 
 
 def test_randomized_svd_low_rank_with_noise():
