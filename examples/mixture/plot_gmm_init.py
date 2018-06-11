@@ -28,21 +28,15 @@ the *ini_param*. The rest of the data is represented as crosses and the
 colouring represents the eventual associated classification after the gmm has
 finished.
 
-The number in the top right of each subplot represents the time taken for the
-initialization part of the algorithm to run. Each number is represented as the
-ratio of the time taken for that method versus the time taken for the *random*
-method. As you can see *random* and *rand_data* are on similar orders of time
-taken but in general *k-means++* will be slower and *kmeans* slower still.
+The numbers in the top right of each subplot represent the number of
+iterations taken for the GaussianMixture to converge and the relative time
+taken for the initialization part of the algorithm to run. The shorter
+initialization times tend to have a greater number of iterations to converge.
 
-The time taken for initialization is balanced with the time taken to converge.
-In this example if we use verbose output from the GaussianMixture model we can
-see that the number of iterations is as follows (performed on a normal desktop
-machine).
-
-- *kmeans* - 12
-- *k-means++* - 11
-- *rand_data* - 31
-- *random* - 48
+The initialization time is the ratio of the time taken for that method versus
+the time taken for the *random* method. As you can see *random* and *rand_data*
+are on similar orders of time taken but in general *k-means++* will be slower
+and *kmeans* slower still.
 
 In this example, when initialized with *rand_data* or *random* the model takes
 more iterations to converge.
@@ -90,52 +84,42 @@ def gen_gmm(init_params, seed=None):
                          % init_params)
     end = timer()
     init_time = end - start
-    # init_time = "{0:.8f}".format(end - start)
 
     gmm = GaussianMixture(n_components=4, means_init=init_means, tol=1e-9,
                           max_iter=2000, random_state=r).fit(X)
 
-    # Use this gmm call for verbose output to show the number of iterations
-    # until convergence.
-    # gmm = GaussianMixture(n_components=4, means_init=init_means, tol=1e-9,
-    #                       max_iter=2000, random_state=r, verbose=1,
-    #                       verbose_interval=1).fit(X)
-
     labels = gmm.predict(X)
-    # plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis')
-    # plt.scatter(init_means[:, 0], init_means[:, 1], s=100,
-    #             marker='x', c='black')
-    return labels, init_means, seed, init_params, init_time
-    # plt.show()
+    iterations = gmm.n_iter_
+    return labels, init_means, seed, init_params, init_time, iterations
 
 
 def kmeans_mean(r):
     # Calculate the responsibilities by kmeans
+    # This will label all data points with one of the components absolutely.
     resp_km = np.zeros((n_samples, n_components))
     label = KMeans(n_clusters=n_components,
                    n_init=1, random_state=r).fit(X).labels_
     resp_km[np.arange(n_samples), label] = 1
     return resp_km
-    # This will label all data points with one of the components absolutely.
 
 
 def rand_point_mean(r):
     # Generate responsibilities to pick random points from the data.
+    # This will label one random data point for each component. All others 0.
     resp_select_point = np.zeros((n_samples, n_components))
     points = r.choice(range(n_samples), n_components, replace=False)
     for n, i in enumerate(points):
         resp_select_point[i, n] = 1
     return resp_select_point
-    # This will label one random data point for each component. All others 0.
 
 
 def rand_mean(r):
     # Generate random responsibilities for all points.
+    # This will label all points with random weighting.
+    # Sum of responsibilities across a given point is 1.
     resp_random_orig = r.rand(n_samples, n_components)
     resp_random_orig /= resp_random_orig.sum(axis=1)[:, np.newaxis]
     return resp_random_orig
-    # This will label all points with random weighting.
-    # Sum of responsibilities across a given point is 1.
 
 
 def kmeanspp_mean(r):
@@ -176,17 +160,16 @@ def test_seed(seed):
             data = X[labels == i]
             plt.scatter(data[:, 0], data[:, 1], color=color, marker='x')
 
-        # plt.scatter(X[:, 0], X[:, 1], c=labels, s=40, cmap='viridis', lw=0.5,
-        #             edgecolors='black')
         plt.scatter(ini[:, 0], ini[:, 1], s=75, marker='D', c='orange',
                     lw=1.5, edgecolors='black')
         relative_times[method] = times_init[method] / times_init[methods[0]]
 
         plt.xticks(())
         plt.yticks(())
-        plt.title(method, loc = 'left')
-        plt.title("{0:.2f}".format(relative_times[method]), loc = 'right')
-    plt.suptitle('Relative time taken to initialize compared to random')
+        plt.title(method, loc='left')
+        plt.title("Iter %i | Init Time %.2fx" % (iters, relative_times[method]),
+                  loc='right', fontsize=10)
+    plt.suptitle('Gmm iterations and relative time taken to initialize')
     plt.show()
 
 
