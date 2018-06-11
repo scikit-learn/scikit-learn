@@ -2001,11 +2001,17 @@ def check_parameters_default_constructible(name, Estimator):
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
+            print("init_params:")
+            print(init_params)
+            print()
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
         params = estimator.get_params()
+        print("params:")
+        print(params)
+        print()
         if name in META_ESTIMATORS:
             # they can need a non-default argument
             init_params = init_params[1:]
@@ -2031,7 +2037,11 @@ def check_parameters_default_constructible(name, Estimator):
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                assert_equal(param_value, init_param.default, init_param.name)
+                # Allows to set default parameters to np.nan
+                if (param_value is not np.nan or
+                        init_param.default is not np.nan):
+                    assert_equal(param_value, init_param.default,
+                                 init_param.name)
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):

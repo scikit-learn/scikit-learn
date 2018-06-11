@@ -75,6 +75,24 @@ def test_imputation_shape():
         assert X_imputed.shape == (10, 2)
 
 
+def test_imputation_valid_types():
+    # Verify that exceptions are raised on invalid inputs
+    tests = [(1, 0, "fill_value", None),
+             (1., np.nan, "fill_value", None),
+             ("a", "", 0, object),
+             (True, "nan", "fill_value", "c")]
+
+    for X_data, missing_value, fill_value, dtype in tests:
+        X = np.full((3, 5), X_data, dtype=dtype)
+        X[0, 0] = missing_value
+
+        with pytest.raises(TypeError):
+            imputer = SimpleImputer(missing_values=missing_value,
+                                    strategy="constant",
+                                    fill_value=fill_value)
+            imputer.fit(X).transform(X)
+
+
 def safe_median(arr, *args, **kwargs):
     # np.median([]) raises a TypeError for numpy >= 1.10.1
     length = arr.size if hasattr(arr, 'size') else len(arr)

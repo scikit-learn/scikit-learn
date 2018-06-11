@@ -84,7 +84,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     missing_values : real number, string, np.nan or None, \
-        optional (default=np.nan).
+optional (default=np.nan).
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
@@ -183,11 +183,23 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # fill_value should be numerical in case of numerical input
         if self.strategy == "constant":
-            if (X.dtype.kind in ("i", "f")
-                    and not isinstance(fill_value, numbers.Real)):
+            if X.dtype.kind in ("i", "f"):
+                if not isinstance(fill_value, numbers.Real):
+                    raise TypeError(
+                        "fill_value={0} is invalid. Expected a numerical value"
+                        " to numerical data".format(fill_value))
+
+            elif X.dtype.kind == "O":
+                if not isinstance(fill_value, six.string_types):
+                    raise TypeError(
+                        "fill_value={0} is invalid. Expected an str instance "
+                        "when imputing categorical data.".format(fill_value))
+
+            else:
                 raise TypeError(
-                    "fill_value={0} is invalid. Expected a numerical value "
-                    "to numerical data".format(fill_value))
+                    "SimpleImputer cannot work on data with dtype={0}: "
+                    "expecting numerical or categorical data with "
+                    "dtype=object.".format(X.dtype))
 
         if sparse.issparse(X):
             self.statistics_ = self._sparse_fit(X,
