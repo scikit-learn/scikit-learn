@@ -703,6 +703,12 @@ def test_scaler_without_centering():
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
+def _check_attributes_scalers(scaler_1, scaler_2):
+    assert scaler_1.mean_ == scaler_2.mean_
+    assert scaler_1.var_ == scaler_2.var_
+    assert scaler_1.scale_ == scaler_2.scale_
+    assert scaler_1.n_samples_seen_ == scaler_2.n_samples_seen_
+
 def test_scaler_return_identity():
     # test that the scaler return identity when with_mean and with_std are
     # False
@@ -719,19 +725,35 @@ def test_scaler_return_identity():
     transformer_csc = clone(transformer_dense)
     X_trans_csc = transformer_csc.fit_transform(X_csc)
 
+    assert_array_almost_equal(X_trans_csr.A, X_csr.A)
+    assert_array_almost_equal(X_trans_csc.A, X_csc.A)
+    assert_array_almost_equal(X_trans_dense, X_dense)
+
     for trans_1, trans_2 in itertools.combinations([transformer_dense,
                                                     transformer_csr,
                                                     transformer_csc],
                                                    2):
+        _check_attributes_scalers(trans_1, trans_2)
 
-        assert trans_1.mean_ == trans_2.mean_
-        assert trans_1.var_ == trans_2.var_
-        assert trans_1.scale_ == trans_2.scale_
-        assert trans_1.n_samples_seen_ == trans_2.n_samples_seen_
+    transformer_dense.partial_fit(X_dense)
+    transformer_csr.partial_fit(X_csr)
+    transformer_csc.partial_fit(X_csc)
 
-    assert_array_almost_equal(X_trans_csr.A, X_csr.A)
-    assert_array_almost_equal(X_trans_csc.A, X_csc.A)
-    assert_array_almost_equal(X_trans_dense, X_dense)
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_attributes_scalers(trans_1, trans_2)
+
+    transformer_dense.fit(X_dense)
+    transformer_csr.fit(X_csr)
+    transformer_csc.fit(X_csc)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_attributes_scalers(trans_1, trans_2)
 
 
 def test_scaler_int():
