@@ -1,4 +1,0 @@
-future
-libfuturize
-libpasteurize
-past

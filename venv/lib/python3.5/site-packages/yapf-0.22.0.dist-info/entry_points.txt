@@ -1,3 +1,0 @@
-[console_scripts]
-yapf = yapf:run_main
-

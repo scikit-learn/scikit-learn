@@ -1,3 +1,0 @@
-"""
-External or vendor files
-"""

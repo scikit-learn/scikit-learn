@@ -1,1 +1,0 @@
-import os, sys;exec('if \'COV_CORE_SOURCE\' in os.environ:\n try:\n  from pytest_cov.embed import init\n  init()\n except Exception as exc:\n  sys.stderr.write(\n   "pytest-cov: Failed to setup subprocess coverage. "\n   "Environ: {0!r} "\n   "Exception: {1!r}\\n".format(\n    dict((k, v) for k, v in os.environ.items() if k.startswith(\'COV_CORE\')),\n    exc\n   )\n  )\n')

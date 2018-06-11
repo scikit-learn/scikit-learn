@@ -167,8 +167,8 @@ def test_seed(seed):
         plt.xticks(())
         plt.yticks(())
         plt.title(method, loc='left')
-        plt.title("Iter %i | Init Time %.2fx" % (iters, relative_times[method]),
-                  loc='right', fontsize=10)
+        plt.title("Iter %i | Init Time %.2fx"
+                  % (iters, relative_times[method]), loc='right', fontsize=10)
     plt.suptitle('Gmm iterations and relative time taken to initialize')
     plt.show()
 

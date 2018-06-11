@@ -1,7 +1,0 @@
-[console_scripts]
-nosetests = nose:run_exit
-nosetests-3.4 = nose:run_exit
-
-[distutils.commands]
-nosetests = nose.commands:nosetests
-

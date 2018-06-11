@@ -1,2 +1,0 @@
-class PyCallGraphException(Exception):
-    pass

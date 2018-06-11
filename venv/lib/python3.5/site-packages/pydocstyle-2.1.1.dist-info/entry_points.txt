@@ -1,3 +1,0 @@
-[console_scripts]
-pydocstyle = pydocstyle.cli:main
-
