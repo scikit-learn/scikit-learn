@@ -229,7 +229,7 @@ Preprocessing
   :issue:`10404` by :user:`Lucija Gregov <LucijaGregov>`.
 
 - Updated :func:`preprocessing.minmax_scale` to pass through NaN values.
-  :issue:`` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :issue:`11243` by :user:`Guillaume Lemaitre <glemaitre>`.
          
 Model evaluation and meta-estimators
 
