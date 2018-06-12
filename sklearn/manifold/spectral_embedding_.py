@@ -537,3 +537,27 @@ class SpectralEmbedding(BaseEstimator):
         """
         self.fit(X)
         return self.embedding_
+    
+    def transform(self, X, y=None):
+        """Apply dimensionality reduction to X using the previously fitted model.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vector, where n_samples is the number of samples
+            and n_features is the number of features.
+
+            If affinity is "precomputed"
+            X : array-like, shape (n_samples, n_samples),
+            Interpret X as precomputed adjacency graph computed from
+            samples.
+
+        Y: Ignored.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+        """
+        
+        return self.embedding_
+
