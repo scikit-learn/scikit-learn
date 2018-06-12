@@ -1071,7 +1071,7 @@ Target Types
     multioutput
     multi-output
         A target where each sample has multiple classification/regression
-        labels. See :term:`multiclass multioutput` and :term:`continous
+        labels. See :term:`multiclass multioutput` and :term:`continuous
         multioutput`. We do not currently support modelling mixed
         classification and regression targets.
 
