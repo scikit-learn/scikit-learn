@@ -301,10 +301,10 @@ def check_estimator(Estimator):
     for check in _yield_all_checks(name, estimator):
         try:
             check(name, estimator)
-        except SkipTest as message:
+        except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
-            warnings.warn(message, SkipTestWarning)
+            warnings.warn(str(exception), SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
@@ -327,7 +327,6 @@ def set_checking_parameters(estimator):
             and not isinstance(estimator, BaseSGD)):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC

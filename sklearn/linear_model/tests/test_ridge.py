@@ -3,6 +3,8 @@ import scipy.sparse as sp
 from scipy import linalg
 from itertools import product
 
+import pytest
+
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -57,41 +59,42 @@ DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 
-def test_ridge():
+@pytest.mark.parametrize('solver',
+                         ("svd", "sparse_cg", "cholesky", "lsqr", "sag"))
+def test_ridge(solver):
     # Ridge regression convergence test using score
     # TODO: for this test to be robust, we should use a dataset instead
     # of np.random.
     rng = np.random.RandomState(0)
     alpha = 1.0
 
-    for solver in ("svd", "sparse_cg", "cholesky", "lsqr", "sag"):
-        # With more samples than features
-        n_samples, n_features = 6, 5
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
+    # With more samples than features
+    n_samples, n_features = 6, 5
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
 
-        ridge = Ridge(alpha=alpha, solver=solver)
-        ridge.fit(X, y)
-        assert_equal(ridge.coef_.shape, (X.shape[1], ))
+    ridge = Ridge(alpha=alpha, solver=solver)
+    ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (X.shape[1], ))
+    assert_greater(ridge.score(X, y), 0.47)
+
+    if solver in ("cholesky", "sag"):
+        # Currently the only solvers to support sample_weight.
+        ridge.fit(X, y, sample_weight=np.ones(n_samples))
         assert_greater(ridge.score(X, y), 0.47)
 
-        if solver in ("cholesky", "sag"):
-            # Currently the only solvers to support sample_weight.
-            ridge.fit(X, y, sample_weight=np.ones(n_samples))
-            assert_greater(ridge.score(X, y), 0.47)
+    # With more features than samples
+    n_samples, n_features = 5, 10
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    ridge = Ridge(alpha=alpha, solver=solver)
+    ridge.fit(X, y)
+    assert_greater(ridge.score(X, y), .9)
 
-        # With more features than samples
-        n_samples, n_features = 5, 10
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        ridge = Ridge(alpha=alpha, solver=solver)
-        ridge.fit(X, y)
-        assert_greater(ridge.score(X, y), .9)
-
-        if solver in ("cholesky", "sag"):
-            # Currently the only solvers to support sample_weight.
-            ridge.fit(X, y, sample_weight=np.ones(n_samples))
-            assert_greater(ridge.score(X, y), 0.9)
+    if solver in ("cholesky", "sag"):
+        # Currently the only solvers to support sample_weight.
+        ridge.fit(X, y, sample_weight=np.ones(n_samples))
+        assert_greater(ridge.score(X, y), 0.9)
 
 
 def test_primal_dual_relationship():
@@ -153,6 +156,8 @@ def test_ridge_regression_convergence_fail():
 
 def test_ridge_sample_weights():
     # TODO: loop over sparse data as well
+    # Note: parametrizing this test with pytest results in failed
+    #       assertions, meaning that is is not extremely robust
 
     rng = np.random.RandomState(0)
     param_grid = product((1.0, 1e-2), (True, False),
@@ -483,15 +488,13 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-def test_dense_sparse():
-    for test_func in (_test_ridge_loo,
-                      _test_ridge_cv,
-                      _test_ridge_cv_normalize,
-                      _test_ridge_diabetes,
-                      _test_multi_ridge_diabetes,
-                      _test_ridge_classifiers,
-                      _test_tolerance):
-        yield check_dense_sparse, test_func
+@pytest.mark.parametrize(
+        'test_func',
+        (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
+         _test_ridge_diabetes, _test_multi_ridge_diabetes,
+         _test_ridge_classifiers, _test_tolerance))
+def test_dense_sparse(test_func):
+    check_dense_sparse(test_func)
 
 
 def test_ridge_cv_sparse_svd():
@@ -543,33 +546,33 @@ def test_class_weights():
     assert_array_almost_equal(reg.intercept_, rega.intercept_)
 
 
-def test_class_weight_vs_sample_weight():
+@pytest.mark.parametrize('reg', (RidgeClassifier, RidgeClassifierCV))
+def test_class_weight_vs_sample_weight(reg):
     """Check class_weights resemble sample_weights behavior."""
-    for reg in (RidgeClassifier, RidgeClassifierCV):
 
-        # Iris is balanced, so no effect expected for using 'balanced' weights
-        reg1 = reg()
-        reg1.fit(iris.data, iris.target)
-        reg2 = reg(class_weight='balanced')
-        reg2.fit(iris.data, iris.target)
-        assert_almost_equal(reg1.coef_, reg2.coef_)
+    # Iris is balanced, so no effect expected for using 'balanced' weights
+    reg1 = reg()
+    reg1.fit(iris.data, iris.target)
+    reg2 = reg(class_weight='balanced')
+    reg2.fit(iris.data, iris.target)
+    assert_almost_equal(reg1.coef_, reg2.coef_)
 
-        # Inflate importance of class 1, check against user-defined weights
-        sample_weight = np.ones(iris.target.shape)
-        sample_weight[iris.target == 1] *= 100
-        class_weight = {0: 1., 1: 100., 2: 1.}
-        reg1 = reg()
-        reg1.fit(iris.data, iris.target, sample_weight)
-        reg2 = reg(class_weight=class_weight)
-        reg2.fit(iris.data, iris.target)
-        assert_almost_equal(reg1.coef_, reg2.coef_)
+    # Inflate importance of class 1, check against user-defined weights
+    sample_weight = np.ones(iris.target.shape)
+    sample_weight[iris.target == 1] *= 100
+    class_weight = {0: 1., 1: 100., 2: 1.}
+    reg1 = reg()
+    reg1.fit(iris.data, iris.target, sample_weight)
+    reg2 = reg(class_weight=class_weight)
+    reg2.fit(iris.data, iris.target)
+    assert_almost_equal(reg1.coef_, reg2.coef_)
 
-        # Check that sample_weight and class_weight are multiplicative
-        reg1 = reg()
-        reg1.fit(iris.data, iris.target, sample_weight ** 2)
-        reg2 = reg(class_weight=class_weight)
-        reg2.fit(iris.data, iris.target, sample_weight)
-        assert_almost_equal(reg1.coef_, reg2.coef_)
+    # Check that sample_weight and class_weight are multiplicative
+    reg1 = reg()
+    reg1.fit(iris.data, iris.target, sample_weight ** 2)
+    reg2 = reg(class_weight=class_weight)
+    reg2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(reg1.coef_, reg2.coef_)
 
 
 def test_class_weights_cv():
