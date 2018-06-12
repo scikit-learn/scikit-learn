@@ -12,8 +12,8 @@ numeric features and one-hot encode the categorical ones.
 
 In this example, the numeric data is standard-scaled after
 mean-imputation, while the categorical data is one-hot
-endcoded after imputing missing values with a new category
-(:code:`'missing'`).
+encoded after imputing missing values with a new category
+(``'missing'``).
 
 Finally, the preprocessing pipeline is integrated in a
 full prediction pipeline using :class:`sklearn.pipeline.Pipeline`,
@@ -38,7 +38,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 
 # Read data from Titanic dataset.
 titanic_url = ('https://raw.githubusercontent.com/amueller/'
-               'scipy-2017-sklearn/master/notebooks/datasets/titanic3.csv')
+               'scipy-2017-sklearn/091d371/notebooks/datasets/titanic3.csv')
 data = pd.read_csv(titanic_url)
 
 # We will train our classifier with the following features:
@@ -48,7 +48,7 @@ data = pd.read_csv(titanic_url)
 # Categorical Features:
 # - embarked: categories encoded as strings {'C', 'S', 'Q'}.
 # - sex: categories encoded as strings {'female', 'male'}.
-# - plcass: categories encoded as ints {1, 2, 3}.
+# - pclass: ordinal integers {1, 2, 3}.
 numeric_features = ['age', 'fare']
 categorical_features = ['embarked', 'sex', 'pclass']
 
