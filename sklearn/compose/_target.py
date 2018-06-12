@@ -33,6 +33,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     The computation during ``predict`` is::
 
         inverse_func(regressor.predict(X))
+
     or::
 
         transformer.inverse_transform(regressor.predict(X))

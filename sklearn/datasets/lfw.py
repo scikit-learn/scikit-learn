@@ -473,8 +473,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
         will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
-            ``subset``.
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on ``subset``
         Each row has 2 face images corresponding to same or different person
         from the dataset containing 5749 people. Changing the ``slice_``,
         ``resize`` or ``subset`` parameters will change the shape of the
