@@ -162,6 +162,84 @@ def check_paired_arrays(X, Y):
 
 
 # Pairwise distances
+def _euclidean_distances_float64(X, Y, Y_norm_squared=None, squared=False,
+                                 X_norm_squared=None):
+    """
+    Compute the euclidean distances between X and Y when both are arrays of
+    float64.
+    """
+    if X_norm_squared is not None:
+        XX = check_array(X_norm_squared)
+        if XX.shape == (1, X.shape[0]):
+            XX = XX.T
+        elif XX.shape != (X.shape[0], 1):
+            raise ValueError(
+                "Incompatible dimensions for X and X_norm_squared")
+
+    else:
+        XX = row_norms(X, squared=True)[:, np.newaxis]
+
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    elif Y_norm_squared is not None:
+        YY = np.atleast_2d(Y_norm_squared)
+
+        if YY.shape != (1, Y.shape[0]):
+            raise ValueError(
+                "Incompatible dimensions for Y and Y_norm_squared")
+
+    else:
+        YY = row_norms(Y, squared=True)[np.newaxis, :]
+
+    distances = safe_sparse_dot(X, Y.T, dense_output=True)
+    distances *= -2
+    distances += XX
+    distances += YY
+    np.maximum(distances, 0, out=distances)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        distances.flat[::distances.shape[0] + 1] = 0.0
+
+    return distances if squared else np.sqrt(distances, out=distances)
+
+
+def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
+                              squared=False, X_norm_squared=None):
+    """
+    Compute the euclidean distance matrix between X and Y by casting to float64
+    for a greater numerical stability.
+
+    The computation is done by blocks to limit additional memory usage.
+    """
+    bs = 1024
+    distances = np.zeros((X.shape[0], Y.shape[0]), dtype=outdtype)
+
+    for i in range(0, X.shape[0], bs):
+        for j in range(i, Y.shape[0], bs):
+            ipbs = min(i + bs, X.shape[0])
+            jpbs = min(j + bs, Y.shape[0])
+
+            for k in range(0, X.shape[1], bs):
+                kpbs = min(k + bs, X.shape[1])
+
+                Xc = _cast_if_needed(X[i:ipbs, k:kpbs], np.float64)
+                if X is Y:
+                    Yc = Xc
+                else:
+                    Yc = _cast_if_needed(Y[j:jpbs, k:kpbs], np.float64)
+
+                d = _euclidean_distances_float64(Xc, Yc, Y_norm_squared=None,
+                                        squared=True, X_norm_squared=None)
+                distances[i:ipbs, j:jpbs] += d
+
+            if X is Y and j > i:
+                distances[j:jpbs, i:ipbs] = distances[i:ipbs, j:jpbs].T
+
+    return distances if squared else np.sqrt(distances, out=distances)
+
+
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
                         X_norm_squared=None):
     """
@@ -232,66 +310,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     outdtype = (X[0, 0] + Y[0, 0]).dtype
 
-    if X.dtype != np.float64 or Y.dtype != np.float64:
-        bs = 1024
-        distances = np.zeros((X.shape[0], Y.shape[0]), dtype=outdtype)
-
-        for i in range(0, X.shape[0], bs):
-            for j in range(i, Y.shape[0], bs):
-                ipbs = min(i + bs, X.shape[0])
-                jpbs = min(j + bs, Y.shape[0])
-
-                for k in range(0, X.shape[1], bs):
-                    kpbs = min(k + bs, X.shape[1])
-
-                    Xc = _cast_if_needed(X[i:ipbs, k:kpbs], np.float64)
-                    if X is Y:
-                        Yc = None
-                    else:
-                        Yc = _cast_if_needed(Y[j:jpbs, k:kpbs], np.float64)
-
-                    d = euclidean_distances(Xc, Yc, Y_norm_squared=None,
-                                            squared=True, X_norm_squared=None)
-                    distances[i:ipbs, j:jpbs] += d
-
-                if X is Y and j > i:
-                    distances[j:jpbs, i:ipbs] = distances[i:ipbs, j:jpbs].T
-
-        return distances if squared else np.sqrt(distances, out=distances)
-
-    if X_norm_squared is not None:
-        XX = check_array(X_norm_squared)
-        if XX.shape == (1, X.shape[0]):
-            XX = XX.T
-        elif XX.shape != (X.shape[0], 1):
-            raise ValueError(
-                "Incompatible dimensions for X and X_norm_squared")
+    if X.dtype == np.float64 and Y.dtype == np.float64:
+        return _euclidean_distances_float64(X, Y, Y_norm_squared, squared,
+                                            X_norm_squared)
     else:
-        XX = row_norms(X, squared=True)[:, np.newaxis]
-
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
-    elif Y_norm_squared is not None:
-        YY = np.atleast_2d(Y_norm_squared)
-
-        if YY.shape != (1, Y.shape[0]):
-            raise ValueError(
-                "Incompatible dimensions for Y and Y_norm_squared")
-    else:
-        YY = row_norms(Y, squared=True)[np.newaxis, :]
-
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, out=distances)
-
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
-
-    return distances if squared else np.sqrt(distances, out=distances)
+        return _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared,
+                                         squared, X_norm_squared)
 
 
 def _argmin_min_reduce(dist, start):
