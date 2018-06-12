@@ -455,7 +455,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
-                    dtype=FLOAT_DTYPES)
+                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     original_ndim = X.ndim
 
     if original_ndim == 1:
