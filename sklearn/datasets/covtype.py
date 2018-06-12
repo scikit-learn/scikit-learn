@@ -66,7 +66,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         Whether to shuffle dataset.
 
     return_X_y : boolean, default=False.
-        If True, returns ``(data.data, data.target)`` instead of a Bunch object.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
 
         .. versionadded:: 0.20
 
