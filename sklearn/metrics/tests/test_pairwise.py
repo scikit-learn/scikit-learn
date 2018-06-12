@@ -570,6 +570,13 @@ def test_euclidean_distances():
     assert_array_almost_equal(D32_64, D64)
     assert_array_almost_equal(D32_32, D64)
 
+    # Check that the accuracy with float32 is not too bad
+    X = np.array([[0.9215765222065525, 0.9682577158572608],
+                  [0.9221151778782808, 0.9681831844652774]])
+    D64 = euclidean_distances(X)
+    D32 = euclidean_distances(X.astype(np.float32))
+    assert_array_almost_equal(D32, D64)
+
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
