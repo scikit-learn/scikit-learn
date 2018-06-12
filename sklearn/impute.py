@@ -22,6 +22,7 @@ from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
+from .utils.fixes import custom_isnan
 
 from .externals import six
 
@@ -38,12 +39,20 @@ __all__ = [
 ]
 
 
+def _custom_isnan(x):
+    # np.nan is never equal to np.nan. Return true only if x is np.nan
+    return x != x
+
+
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if value_to_mask is np.nan:
-        # nan values are never equal to themselves. We use this trick because
-        # np.isnan does not work on object dtypes.
-        return X != X
+        if X.dtype.kind in ("i", "u", "f"):
+            return np.isnan(X)
+        else:
+            # np.isnan does not work on object dtypes.
+            return custom_isnan(X)
+
     else:
         # X == value_to_mask with object dytpes does not always perform
         # element-wise for old versions of numpy
@@ -185,7 +194,7 @@ optional (default=np.nan).
 
         # fill_value should be numerical in case of numerical input
         if self.strategy == "constant":
-            if X.dtype.kind in ("i", "f"):
+            if X.dtype.kind in ("i", "u", "f"):
                 if not isinstance(fill_value, numbers.Real):
                     raise TypeError(
                         "fill_value={0} is invalid. Expected a numerical value"
@@ -341,11 +350,6 @@ optional (default=np.nan).
 
         # Constant
         elif strategy == "constant":
-            """if isinstance(fill_value, numbers.Real):
-                dtype = None
-            else:
-                dtype = object
-            """
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
     def transform(self, X):
@@ -361,6 +365,7 @@ optional (default=np.nan).
         X = self._validate_input(X)
 
         statistics = self.statistics_
+
         if X.shape[1] != statistics.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
@@ -370,7 +375,7 @@ optional (default=np.nan).
             valid_statistics = statistics
         else:
             # same as np.isnan but also works for object dtypes
-            invalid_mask = statistics != statistics
+            invalid_mask = _get_mask(statistics, np.nan)
             valid_mask = np.logical_not(invalid_mask)
             valid_statistics = statistics[valid_mask]
             valid_statistics_indexes = np.flatnonzero(valid_mask)

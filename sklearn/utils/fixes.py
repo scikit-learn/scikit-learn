@@ -334,3 +334,19 @@ if np_version < (1, 11):
             return np.array([np.nan] * size_q)
 else:
     from numpy import nanpercentile  # noqa
+
+
+# Fix for behavior inconsistency on numpy.equal for object dtypes.
+# For numpy versions < 1.13, numpy.equal tests identity of objects instead of
+# equality
+
+test_array = np.array([np.nan], dtype=object)
+test_mask = test_array != test_array
+
+if np.array_equal(test_mask, np.array([True])):
+    def custom_isnan(X):
+        return X != X
+
+else:
+    def custom_isnan(X):
+        return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
