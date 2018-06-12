@@ -556,6 +556,20 @@ def test_euclidean_distances():
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
+    # Check euclidean_distances when using float32 for one or both arguments
+    X32 = X.astype(np.float32)
+    Y32 = Y.astype(np.float32)
+    D64 = euclidean_distances(X, Y)
+    D64_32 = euclidean_distances(X, Y32)
+    D32_64 = euclidean_distances(X32, Y)
+    D32_32 = euclidean_distances(X32, Y32)
+    assert_equal(D64_32.dtype, np.float64)
+    assert_equal(D32_64.dtype, np.float64)
+    assert_equal(D32_32.dtype, np.float32)
+    assert_array_almost_equal(D64_32, D64)
+    assert_array_almost_equal(D32_64, D64)
+    assert_array_almost_equal(D32_32, D64)
+
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
