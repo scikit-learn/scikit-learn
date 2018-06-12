@@ -19,6 +19,7 @@ import numbers
 from operator import itemgetter
 import re
 import unicodedata
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -1037,7 +1038,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     The goal of using tf-idf instead of the raw frequencies of occurrence of a
     token in a given document is to scale down the impact of tokens that occur
     very frequently in a given corpus and that are hence empirically less
-    informative than features that occur in a small fraction of the training
+    informative nnthan features that occur in a small fraction of the training
     corpus.
 
     The formula that is used to compute the tf-idf of term t is
@@ -1117,16 +1118,14 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
-        X = check_array(X, accept_sparse='csc')
-
+        X = check_array(X, accept_sparse=('csr', 'csc'))
         if not sp.issparse(X):
-            X = sp.csc_matrix(X)
+            X = sp.csr_matrix(X)
+        dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
 
         if self.use_idf:
             n_samples, n_features = X.shape
-            df = _document_frequency(X).astype(X.dtype
-                                               if X.dtype in FLOAT_DTYPES
-                                               else np.float64)
+            df = _document_frequency(X).astype(dtype)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1138,9 +1137,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             self._idf_diag = sp.diags(idf, offsets=0,
                                       shape=(n_features, n_features),
                                       format='csr',
-                                      dtype=X.dtype
-                                      if X.dtype in FLOAT_DTYPES
-                                      else np.float64)
+                                      dtype=dtype)
 
         return self
 
@@ -1373,7 +1370,7 @@ class TfidfVectorizer(CountVectorizer):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
-                 dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
+                 dtype=np.float64, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
@@ -1438,6 +1435,13 @@ class TfidfVectorizer(CountVectorizer):
                                  (len(value), len(self.vocabulary)))
         self._tfidf.idf_ = value
 
+    def _check_params(self):
+        if self.dtype not in FLOAT_DTYPES:
+            warnings.warn("Only {} 'dtype' should be used. {} 'dtype' will "
+                          "be converted to np.float64."
+                          .format(FLOAT_DTYPES, self.dtype),
+                          UserWarning)
+
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
 
@@ -1450,6 +1454,7 @@ class TfidfVectorizer(CountVectorizer):
         -------
         self : TfidfVectorizer
         """
+        self._check_params()
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -1470,6 +1475,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
+        self._check_params()
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so
