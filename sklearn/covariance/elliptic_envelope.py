@@ -81,9 +81,9 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
 
     References
     ----------
-    ..  [R99] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
-        minimum covariance determinant estimator" Technometrics 41(3), 212
-        (1999)
+    .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
+       minimum covariance determinant estimator" Technometrics 41(3), 212
+       (1999)
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
