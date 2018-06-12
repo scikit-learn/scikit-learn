@@ -41,12 +41,11 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         kwargs forwarded. If inverse_func is None, then inverse_func
         will be the identity function.
 
-    validate : bool or 'array-or-frame', optional default=True
+    validate : bool, optional default=True
         Indicate that the input X array should be checked before calling
-        func. The possibilities are:
+        ``func``. The possibilities are:
 
-        - If False, there is no input validation. If and only if X is a list,
-          it will be converted to a 2-dimensional NumPy array.
+        - If False, there is no input validation.
         - If True, then X will be converted to a 2-dimensional NumPy array or
           sparse matrix. If the conversion is not possible an exception is
           raised.
@@ -105,10 +104,6 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         if self._validate:
             return check_array(X, accept_sparse=self.accept_sparse)
-        else:
-            # convert X to NumPy array when this is a list
-            if isinstance(X, list):
-                return np.asarray(X)
         return X
 
     def _check_inverse_transform(self, X):

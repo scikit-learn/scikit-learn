@@ -645,9 +645,8 @@ Misc
   :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
 
 - In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
-  will be from ``True`` to ``False`` in 0.22. ``validate=False`` also convert
-  ``X`` to a 2D NumPy array when given as a list. :issue:`10655` by
-  :user:`Guillaume Lemaitre <glemaitre>`.
+  will be from ``True`` to ``False`` in 0.22.
+  :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes to estimator checks
 ---------------------------
