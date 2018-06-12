@@ -48,7 +48,7 @@ def test_missing_value_handling(est, func, support_sparse):
     # missing values should still be missing, and only them
     assert_array_equal(np.isnan(Xt), np.isnan(X_test))
 
-    # check that the function lead to the same results than the class
+    # check that the function leads to the same results as the class
     Xt_class = est.transform(X_train)
     Xt_func = func(X_train, **est.get_params())
     assert_array_equal(np.isnan(Xt_func), np.isnan(Xt_class))
