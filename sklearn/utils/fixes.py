@@ -295,3 +295,15 @@ if np.array_equal(_nan_object_mask, np.array([True])):
 else:
     def _object_dtype_isnan(X):
         return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+
+
+if sp_version < (1, 0):
+    # Before scipy 1.0, sp.sparse.csr_matrix.astype didn't have a 'copy'
+    # argument.
+    def _cast_if_needed(arr, dtype):
+        if arr.dtype == dtype:
+            return arr
+        return arr.astype(dtype)
+else:
+    def _cast_if_needed(arr, dtype):
+        return arr.astype(dtype, copy=False)

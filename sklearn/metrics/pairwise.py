@@ -22,6 +22,7 @@ from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils.fixes import _cast_if_needed
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -222,6 +223,41 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     paired_distances : distances betweens pairs of elements of X and Y.
     """
     X, Y = check_pairwise_arrays(X, Y)
+
+    if X_norm_squared is not None and X_norm_squared.dtype != X.dtype:
+        warnings.warn("X_norm_squared has a different dtype than X")
+
+    if Y_norm_squared is not None and Y_norm_squared.dtype != Y.dtype:
+        warnings.warn("Y_norm_squared has a different dtype than Y")
+
+    outdtype = (X[0, 0] + Y[0, 0]).dtype
+
+    if X.dtype != np.float64 or Y.dtype != np.float64:
+        bs = 1024
+        distances = np.zeros((X.shape[0], Y.shape[0]), dtype=outdtype)
+
+        for i in range(0, X.shape[0], bs):
+            for j in range(i, Y.shape[0], bs):
+                ipbs = min(i + bs, X.shape[0])
+                jpbs = min(j + bs, Y.shape[0])
+
+                for k in range(0, X.shape[1], bs):
+                    kpbs = min(k + bs, X.shape[1])
+
+                    Xc = _cast_if_needed(X[i:ipbs, k:kpbs], np.float64)
+                    if X is Y:
+                        Yc = None
+                    else:
+                        Yc = _cast_if_needed(Y[j:jpbs, k:kpbs], np.float64)
+
+                    d = euclidean_distances(Xc, Yc, Y_norm_squared=None,
+                                            squared=True, X_norm_squared=None)
+                    distances[i:ipbs, j:jpbs] += d
+
+                if X is Y and j > i:
+                    distances[j:jpbs, i:ipbs] = distances[i:ipbs, j:jpbs].T
+
+        return distances if squared else np.sqrt(distances, out=distances)
 
     if X_norm_squared is not None:
         XX = check_array(X_norm_squared)
