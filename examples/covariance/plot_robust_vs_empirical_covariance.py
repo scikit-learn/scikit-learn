@@ -23,7 +23,7 @@ fact that the estimates were learned from only a portion of the initial data,
 we end up with robust estimates of the data set location and covariance.
 
 The Minimum Covariance Determinant estimator (MCD) has been introduced by
-P.J.Rousseuw in [1]_.
+P.J.Rousseuw in [R84]_.
 
 Evaluation
 ----------
@@ -42,12 +42,12 @@ distributed data sets:
 
 References
 ----------
-.. [1] P. J. Rousseeuw. Least median of squares regression. Journal of American
+.. [R84] P. J. Rousseeuw. Least median of squares regression. Journal of American
     Statistical Ass., 79:871, 1984.
-.. [2] Johanna Hardin, David M Rocke. The distribution of robust distances.
+.. [H05] Johanna Hardin, David M Rocke. The distribution of robust distances.
     Journal of Computational and Graphical Statistics. December 1, 2005,
     14(4): 928-946.
-.. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
+.. [Z12] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
     estimation in signal processing: A tutorial-style treatment of
     fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
 
