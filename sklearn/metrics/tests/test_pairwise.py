@@ -570,6 +570,17 @@ def test_euclidean_distances():
     assert_array_almost_equal(D32_64, D64)
     assert_array_almost_equal(D32_32, D64)
 
+    # Check that {X,Y}_norm_squared are used with float32 arguments
+    X32_norm_sq = 0.5 * (X32 ** 2).sum(axis=1).reshape(1, -1)
+    Y32_norm_sq = 0.5 * (Y32 ** 2).sum(axis=1).reshape(1, -1)
+    DYN = euclidean_distances(X32, Y32, Y_norm_squared=Y32_norm_sq)
+    DXN = euclidean_distances(X32, Y32, X_norm_squared=X32_norm_sq)
+    DXYN = euclidean_distances(X32, Y32, X_norm_squared=X32_norm_sq,
+                               Y_norm_squared=Y32_norm_sq)
+    assert_greater(np.max(np.abs(DYN - D64)), .01)
+    assert_greater(np.max(np.abs(DXN - D64)), .01)
+    assert_greater(np.max(np.abs(DXYN - D64)), .01)
+
     # Check that the accuracy with float32 is not too bad
     X = np.array([[0.9215765222065525, 0.9682577158572608],
                   [0.9221151778782808, 0.9681831844652774]])
