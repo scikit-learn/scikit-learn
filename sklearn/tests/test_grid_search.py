@@ -11,6 +11,7 @@ import pickle
 import warnings
 import sys
 
+import pytest
 import numpy as np
 import scipy.sparse as sp
 
@@ -44,7 +45,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import Ridge
 
-from sklearn.exceptions import FitFailedWarning
+from sklearn.exceptions import FitFailedWarning, ConvergenceWarning
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -54,8 +55,6 @@ with warnings.catch_warnings():
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
     DeprecationWarning, ConvergenceWarning,

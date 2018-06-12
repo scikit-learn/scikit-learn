@@ -2,6 +2,7 @@
 from __future__ import division
 import warnings
 
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
@@ -47,8 +48,6 @@ from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
     DeprecationWarning, ConvergenceWarning,
