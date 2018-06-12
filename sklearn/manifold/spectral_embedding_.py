@@ -539,7 +539,7 @@ class SpectralEmbedding(BaseEstimator):
         return self.embedding_
     
     def transform(self, X, y=None):
-        """Apply dimensionality reduction to X using the model.
+        """Apply dimensionality reduction to X using the previously fitted model.
 
         Parameters
         ----------
