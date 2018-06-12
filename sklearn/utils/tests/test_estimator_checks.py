@@ -2,7 +2,6 @@ import unittest
 import sys
 
 import numpy as np
-import pytest
 
 import scipy.sparse as sp
 
@@ -26,11 +25,6 @@ from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_X_y, check_array
-from sklearn.exceptions import ConvergenceWarning
-
-pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
-    UserWarning, FutureWarning))
 
 
 class CorrectNotFittedError(ValueError):
