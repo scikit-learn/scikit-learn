@@ -19,7 +19,7 @@ python --version
 which python
 
 pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy==1.14.4 Cython pytest
-pip install "scipy>=1.0.0"
+pip install "scipy>=1.1.0"
 pip install -e .
 
 pytest sklearn/
