@@ -381,6 +381,19 @@ last document::
   array([0, 0, 0, 1]...)
 
 
+.. topic:: Using stop words
+
+    Stop words are words like "and", "the", "him", which are presumed to be
+    uninformative in representing the content of a text, and which may be
+    removed to avoid them being construed as signal for prediciton.  Sometimes,
+    however, similar words are useful for prediction, such as in classifying
+    writing style or personality.
+
+    Popular stop word lists may include words that are highly informative to
+    some tasks, such as "computer".  You should also make sure that the stop
+    word list has had the same preprocessing and tokenization applied as you
+    use in the vectorizer. Please take care in choosing a stop word list.
+
 .. _tfidf:
 
 Tf–idf term weighting
