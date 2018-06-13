@@ -181,8 +181,10 @@ def test_function_transformer_future_warning(validate, expected_warning):
     # FIXME: to be removed in 0.22
     X = np.random.randn(100, 10)
     transformer = FunctionTransformer(validate=validate)
-    with pytest.warns(expected_warning):
+    with pytest.warns(expected_warning) as results:
         transformer.fit_transform(X)
+    if expected_warning is None:
+        assert len(results) == 0
 
 
 def test_function_transformer_frame():
