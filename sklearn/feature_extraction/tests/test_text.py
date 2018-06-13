@@ -1053,20 +1053,18 @@ def test_tfidf_transformer_type(X_dtype):
 
 
 @pytest.mark.parametrize(
-    "vectorizer_dtype, output_dtype, raise_warning",
-    [(np.int32, np.float64, True),
-     (np.int64, np.float64, True),
-     (np.float32, np.float32, False),
-     (np.float64, np.float64, False)]
+    "vectorizer_dtype, output_dtype, expected_warning, msg_warning",
+    [(np.int32, np.float64, UserWarning, "'dtype' should be used."),
+     (np.int64, np.float64, UserWarning, "'dtype' should be used."),
+     (np.float32, np.float32, None, None),
+     (np.float64, np.float64, None, None)]
 )
-def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype, raise_warning):
+def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
+                               expected_warning, msg_warning):
     X = np.array(["numpy", "scipy", "sklearn"])
     vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
-    if raise_warning:
-        with pytest.warns(UserWarning, match="'dtype' should be used."):
+    with pytest.warns(expected_warning, match=msg_warning):
             X_idf = vectorizer.fit_transform(X)
-    else:
-        X_idf = assert_no_warnings(vectorizer.fit_transform, X)
     assert X_idf.dtype == output_dtype
 
 
