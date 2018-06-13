@@ -63,10 +63,11 @@ categorical_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
     ('onehot', CategoricalEncoder('onehot-dense', handle_unknown='ignore'))])
 
-preprocessor = ColumnTransformer(transformers=[
-    ('num', numeric_transformer, numeric_features),
-    ('cat', categorical_transformer, categorical_features)],
-                                 remainder='drop')
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features),
+        ('cat', categorical_transformer, categorical_features)],
+    remainder='drop')
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
