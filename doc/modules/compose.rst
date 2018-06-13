@@ -464,3 +464,4 @@ above example would be::
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_column_transformer.py`
+ * :ref:`sphx_glr_auto_examples_compose_column_transformer_mixed_types.py`
