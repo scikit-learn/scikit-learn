@@ -3,7 +3,6 @@ import warnings
 
 import pytest
 from scipy import sparse
-from scipy.sparse import rand
 
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
@@ -1047,13 +1046,13 @@ def test_vectorizer_string_object_as_input():
 
 @pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
 def test_tfidf_transformer_type(X_dtype):
-    X = rand(10, 20000, dtype=X_dtype, random_state=42)
+    X = sparse.rand(10, 20000, dtype=X_dtype, random_state=42)
     X_trans = TfidfTransformer().fit_transform(X)
     assert X_trans.dtype == X.dtype
 
 
 def test_tfidf_transformer_sparse():
-    X = rand(10, 20000, dtype=np.float64, random_state=42)
+    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
     X_csc = sparse.csc_matrix(X)
     X_csr = sparse.csr_matrix(X)
 
