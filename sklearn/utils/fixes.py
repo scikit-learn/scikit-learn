@@ -340,13 +340,13 @@ else:
 # For numpy versions < 1.13, numpy.equal tests identity of objects instead of
 # equality
 
-test_array = np.array([np.nan], dtype=object)
-test_mask = test_array != test_array
+_nan_object_array = np.array([np.nan], dtype=object)
+_nan_object_mask = _nan_object_array != _nan_object_array
 
-if np.array_equal(test_mask, np.array([True])):
-    def custom_isnan(X):
+if np.array_equal(_nan_object_mask, np.array([True])):
+    def _compat_isnan(X):
         return X != X
 
 else:
-    def custom_isnan(X):
+    def _compat_isnan(X):
         return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)

@@ -22,7 +22,7 @@ from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
-from .utils.fixes import custom_isnan
+from .utils.fixes import _compat_isnan
 
 from .externals import six
 
@@ -39,11 +39,6 @@ __all__ = [
 ]
 
 
-def _custom_isnan(x):
-    # np.nan is never equal to np.nan. Return true only if x is np.nan
-    return x != x
-
-
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if value_to_mask is np.nan:
@@ -51,7 +46,7 @@ def _get_mask(X, value_to_mask):
             return np.isnan(X)
         else:
             # np.isnan does not work on object dtypes.
-            return custom_isnan(X)
+            return _compat_isnan(X)
 
     else:
         # X == value_to_mask with object dytpes does not always perform
@@ -198,7 +193,7 @@ optional (default=np.nan).
                 if not isinstance(fill_value, numbers.Real):
                     raise TypeError(
                         "fill_value={0} is invalid. Expected a numerical value"
-                        " to numerical data".format(fill_value))
+                        " when imputing numerical data".format(fill_value))
 
             elif X.dtype.kind == "O":
                 if not isinstance(fill_value, six.string_types):

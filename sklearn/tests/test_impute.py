@@ -5,6 +5,8 @@ import pytest
 import numpy as np
 from scipy import sparse
 
+import io
+
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -252,6 +254,33 @@ def test_imputation_most_frequent_objects():
         assert_array_equal(X_trans, X_true)
 
 
+def test_imputation_most_frequent_pandas():
+    # Test imputation using the most frequent strategy on pandas df
+    pd = pytest.importorskip("pandas")
+
+    f = io.StringIO(u"Cat1,Cat2,Cat3,Cat4\n"
+                    ",i,x,\n"
+                    "a,,y,\n"
+                    "a,j,,\n"
+                    "b,j,x,")
+
+    for dtype in (object, "category"):
+        df = pd.read_csv(f, dtype=dtype)
+        f.seek(0)
+
+        X_true = np.array([
+            ["a", "i", "x"],
+            ["a", "j", "y"],
+            ["a", "j", "x"],
+            ["b", "j", "x"]
+        ], dtype=object)
+
+        imputer = SimpleImputer(strategy="most_frequent")
+        X_trans = imputer.fit(df).transform(df)
+
+        assert_array_equal(X_trans, X_true)
+
+
 def test_imputation_constant_integer():
     # Test imputation using the constant strategy on integers
     X = np.array([
@@ -333,19 +362,21 @@ def test_imputation_constant_pandas():
     # Test imputation using the constant strategy on pandas df
     pd = pytest.importorskip("pandas")
 
-    for dtype in [object, "category"]:
-        df = pd.DataFrame([
-            [np.nan, "a", "b", np.nan],
-            ["c", np.nan, "d", np.nan],
-            ["e", "f", np.nan, np.nan],
-            ["g", "h", "i", np.nan]
-        ], dtype=dtype)
+    f = io.StringIO(u"Cat1,Cat2,Cat3,Cat4\n"
+                    ",i,x,\n"
+                    "a,,y,\n"
+                    "a,j,,\n"
+                    "b,j,x,")
+
+    for dtype in (object, "category"):
+        df = pd.read_csv(f, dtype=dtype)
+        f.seek(0)
 
         X_true = np.array([
-            ["missing", "a", "b", "missing"],
-            ["c", "missing", "d", "missing"],
-            ["e", "f", "missing", "missing"],
-            ["g", "h", "i", "missing"]
+            ["missing", "i", "x", "missing"],
+            ["a", "missing", "y", "missing"],
+            ["a", "j", "missing", "missing"],
+            ["b", "j", "x", "missing"]
         ], dtype=object)
 
         imputer = SimpleImputer(strategy="constant", fill_value="missing")

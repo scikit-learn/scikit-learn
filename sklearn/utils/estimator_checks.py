@@ -8,6 +8,7 @@ import pickle
 from copy import deepcopy
 import struct
 from functools import partial
+import numbers
 
 import numpy as np
 from scipy import sparse
@@ -2038,6 +2039,14 @@ def check_parameters_default_constructible(name, Estimator):
                         init_param.default is not np.nan):
                     assert_equal(param_value, init_param.default,
                                  init_param.name)
+
+                def _isscalarnan(x):
+                    return isinstance(x, numbers.Real) and np.isnan(x)
+
+                if _isscalarnan(param_value):
+                    assert param_value is init_param.default, init_param.name
+                else:
+                    assert param_value == init_param.default, init_param.name
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):
