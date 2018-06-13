@@ -173,16 +173,16 @@ def test_check_inverse():
     assert_no_warnings(trans.fit, X_dense)
 
 
-@pytest.mark.parametrize("validate", [None, True, False])
-def test_function_transformer_future_warning(validate):
+@pytest.mark.parametrize("validate, expected_warning",
+                         [(None, FutureWarning),
+                          (True, None),
+                          (False, None)])
+def test_function_transformer_future_warning(validate, expected_warning):
     # FIXME: to be removed in 0.22
     X = np.random.randn(100, 10)
     transformer = FunctionTransformer(validate=validate)
-    if validate is None:
-        with pytest.warns(FutureWarning):
-            transformer.fit_transform(X)
-    else:
-        assert_no_warnings(transformer.fit, X)
+    with pytest.warns(expected_warning):
+        transformer.fit_transform(X)
 
 
 def test_function_transformer_frame():
@@ -191,11 +191,3 @@ def test_function_transformer_frame():
     transformer = FunctionTransformer(validate=False)
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, 'loc')
-
-
-def test_function_transformer_list():
-    # test that we convert a list to a NumPy array when validate=False
-    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    transformer = FunctionTransformer(validate=False)
-    X_trans = transformer.fit_transform(X)
-    assert isinstance(X_trans, np.ndarray)
