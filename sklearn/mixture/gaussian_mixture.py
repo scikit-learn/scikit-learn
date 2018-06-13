@@ -448,8 +448,7 @@ class GaussianMixture(BaseMixture):
     n_components : int, defaults to 1.
         The number of mixture components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'},
-            defaults to 'full'.
+    covariance_type : {'full' (default), 'tied', 'diag', 'spherical'}
         String describing the type of covariance parameters to use.
         Must be one of:
 
