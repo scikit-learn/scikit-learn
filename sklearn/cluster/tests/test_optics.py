@@ -10,6 +10,7 @@ from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -138,7 +139,7 @@ def test_sigmin_pruning():
     _cluster_tree(root, None, _find_local_maxima(reach, ordering, 5),
                   reach, ordering, 5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
-    assert_equal(np.r_[0:15], root.children[0].points)
+    assert_array_equal(np.r_[0:15], root.children[0].points)
 
 
 def test_reach_dists():
