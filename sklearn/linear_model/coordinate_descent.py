@@ -140,7 +140,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -269,7 +269,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    r"""Compute elastic net path with coordinate descent
+    """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -355,7 +355,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
 
-    coefs : array, shape (n_features, n_alphas) or \\
+    coefs : array, shape (n_features, n_alphas) or \
             (n_outputs, n_features, n_alphas)
         Coefficients along the path.
 
