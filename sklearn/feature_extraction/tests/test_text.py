@@ -1075,3 +1075,14 @@ def test_vectorizer_stop_words_english():
         vec.set_params(stop_words='english')
         assert_warns_message(DeprecationWarning, message, vec.fit_transform,
                              ["good news everyone"])
+
+
+def test_vectorizer_stop_words_inconsistent():
+    message = ('Your stop_words may be inconsistent with your '
+               'preprocessing. Tokenizing the stop words generated '
+               'tokens [\'and\', \'ll\', \'ve\'] not in stop_words.')
+    for vec in [CountVectorizer(),
+                TfidfVectorizer(), HashingVectorizer()]:
+        vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
+        assert_warns_message(UserWarning, message, vec.fit_transform,
+                             ['hello world'])

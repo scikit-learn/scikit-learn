@@ -268,6 +268,18 @@ class VectorizerMixin(object):
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
 
+            inconsistent = set()
+            for w in stop_words or ():
+                tokens = list(tokenize(preprocess(w)))
+                for token in tokens:
+                    if token not in stop_words:
+                        inconsistent.add(token)
+            if inconsistent:
+                warnings.warn('Your stop_words may be inconsistent with your '
+                              'preprocessing. Tokenizing the stop words '
+                              'generated tokens %r not in stop_words.' %
+                              sorted(inconsistent))
+
             return lambda doc: self._word_ngrams(
                 tokenize(preprocess(self.decode(doc))), stop_words)
 
