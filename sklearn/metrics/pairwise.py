@@ -238,6 +238,11 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
         ipbs = min(i + bs, X.shape[0])
         Xc = _cast_if_needed(X[i:ipbs, :], np.float64)
 
+        if X_norm_squared is not None:
+            Xnc = X_norm_squared[i:ipbs, :]
+        else:
+            Xnc = None
+
         for j in range(i, Y.shape[0], bs):
             jpbs = min(j + bs, Y.shape[0])
             if X is Y and i == j:
@@ -245,8 +250,13 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
             else:
                 Yc = _cast_if_needed(Y[j:jpbs, :], np.float64)
 
-            d = _euclidean_distances_float64(Xc, Yc, Y_norm_squared=None,
-                                             squared=True, X_norm_squared=None)
+            if Y_norm_squared is not None:
+                Ync = Y_norm_squared[:, j:jpbs]
+            else:
+                Ync = None
+
+            d = _euclidean_distances_float64(Xc, Yc, Y_norm_squared=Ync,
+                                             squared=True, X_norm_squared=Xnc)
             distances[i:ipbs, j:jpbs] = d
 
             if X is Y and j > i:
