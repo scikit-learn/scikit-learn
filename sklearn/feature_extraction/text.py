@@ -1157,9 +1157,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
-            X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
+            X = sp.csr_matrix(X, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
