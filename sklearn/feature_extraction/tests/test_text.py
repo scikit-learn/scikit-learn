@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import ENGLISH_MINIMAL_STOP_WORDS
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -28,7 +29,7 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises)
+                                   SkipTest, assert_raises, assert_warns)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -289,7 +290,10 @@ def test_countvectorizer_custom_vocabulary_gap_index():
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')
-    assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
+    assert_equal(assert_warns(DeprecationWarning, cv.get_stop_words),
+                 ENGLISH_STOP_WORDS)
+    cv.set_params(stop_words='english-minimal')
+    assert_equal(cv.get_stop_words(), ENGLISH_MINIMAL_STOP_WORDS)
     cv.set_params(stop_words='_bad_str_stop_')
     assert_raises(ValueError, cv.get_stop_words)
     cv.set_params(stop_words='_bad_unicode_stop_')

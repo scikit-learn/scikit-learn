@@ -29,12 +29,13 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
-from .stop_words import ENGLISH_STOP_WORDS
+from .stop_words import ENGLISH_STOP_WORDS, ENGLISH_MINIMAL_STOP_WORDS
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
+           'ENGLISH_MINIMAL_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
            'strip_accents_ascii',
@@ -93,6 +94,8 @@ def _check_stop_list(stop):
                       "stop words or consider using the max_df parameter, "
                       "if possible.", DeprecationWarning)
         return ENGLISH_STOP_WORDS
+    elif stop == 'english-minimal':
+        return ENGLISH_MINIMAL_STOP_WORDS
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
@@ -429,8 +432,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words : string {'english'}, list, or None (default)
-        If 'english', a built-in stop word list for English is used.
+    stop_words : string {'english-minimal'}, list, or None (default)
+        If 'english-minimal', a small built-in stop word list for English is
+        used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -666,8 +670,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words : string {'english'}, list, or None (default)
-        If 'english', a built-in stop word list for English is used.
+    stop_words : string {'english-minimal'}, list, or None (default)
+        If 'english-minimal', a small built-in stop word list for English is
+        used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -1282,10 +1287,9 @@ class TfidfVectorizer(CountVectorizer):
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words : string {'english'}, list, or None (default)
-        If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned. 'english' is currently the only supported string
-        value.
+    stop_words : string {'english-minimal'}, list, or None (default)
+        If 'english-minimal', a small built-in stop word list for English is
+        used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
