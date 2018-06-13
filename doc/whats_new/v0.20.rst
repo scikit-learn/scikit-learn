@@ -186,6 +186,10 @@ Classifiers and regressors
 - :func:`manifold.t_sne.trustworthiness` accepts metrics other than
   Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
 
+- :mod:`Nearest neighbors <neighbors>` query methods are now more memory
+  efficient when ``algorithm='brute'``. :issue:`11136` by `Joel Nothman`_
+  and :user:`Aman Dalmia <dalmia>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
@@ -221,8 +225,10 @@ Preprocessing
 - :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
   :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values.
-  :issue:`10404` by :user:`Lucija Gregov <LucijaGregov>`.
+- Updated :class:`preprocessing.MinMaxScaler` and
+  :func:`preprocessing.minmax_scale` to pass through NaN values.
+  :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation and meta-estimators
 
@@ -264,6 +270,11 @@ Metrics
 - Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
   False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
+
+- :func:`metrics.cluster.silhouette_score` and
+  :func:`metrics.cluster.silhouette_samples` are more memory efficient and run
+  faster. This avoids some reported freezes and MemoryErrors.
+  :issue:`11135` by `Joel Nothman`_.
 
 Linear, kernelized and related models
 
@@ -490,6 +501,10 @@ Preprocessing
 - Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
+
+- Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
+  when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
+  Morales <DanielMorales9>`.
 
 Feature selection
 

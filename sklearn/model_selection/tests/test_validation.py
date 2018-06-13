@@ -387,8 +387,8 @@ def test_cross_validate():
         scores = (train_mse_scores, test_mse_scores, train_r2_scores,
                   test_r2_scores, fitted_estimators)
 
-        yield check_cross_validate_single_metric, est, X, y, scores
-        yield check_cross_validate_multi_metric, est, X, y, scores
+        check_cross_validate_single_metric(est, X, y, scores)
+        check_cross_validate_multi_metric(est, X, y, scores)
 
 
 def test_cross_validate_return_train_score_warn():
