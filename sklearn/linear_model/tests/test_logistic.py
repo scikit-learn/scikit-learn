@@ -1218,7 +1218,7 @@ def test_warm_start_converge_LR():
     lr2_loss = []
     for i in range(5):
         lr2.fit(X, y)
-        p2 = lr2.predict_proba(Z)
+        p2 = lr2.predict_proba(X)
         lr2_loss.append(log_loss(y, p2))
 
     for i in range(5):
