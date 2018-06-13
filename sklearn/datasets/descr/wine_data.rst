@@ -4,6 +4,7 @@ Wine Data Database
 Notes
 -----
 Data Set Characteristics:
+
     :Number of Instances: 178 (50 in each of three classes)
     :Number of Attributes: 13 numeric, predictive attributes and the class
     :Attribute Information:
@@ -72,8 +73,8 @@ Lichman, M. (2013). UCI Machine Learning Repository
 [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
 School of Information and Computer Science. 
 
-References
-----------
+.. topic:: References
+
 (1) 
 S. Aeberhard, D. Coomans and O. de Vel, 
 Comparison of Classifiers in High Dimensional Settings, 

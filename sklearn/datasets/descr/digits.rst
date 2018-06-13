@@ -4,6 +4,7 @@ Optical Recognition of Handwritten Digits Data Set
 Notes
 -----
 Data Set Characteristics:
+
     :Number of Instances: 5620
     :Number of Attributes: 64
     :Attribute Information: 8x8 image of integer pixels in the range 0..16.
@@ -31,8 +32,8 @@ T. Candela, D. L. Dimmick, J. Geist, P. J. Grother, S. A. Janet, and C.
 L. Wilson, NIST Form-Based Handprint Recognition System, NISTIR 5469,
 1994.
 
-References
-----------
+.. topic:: References
+
   - C. Kaynak (1995) Methods of Combining Multiple Classifiers and Their
     Applications to Handwritten Digit Recognition, MSc Thesis, Institute of
     Graduate Studies in Science and Engineering, Bogazici University.

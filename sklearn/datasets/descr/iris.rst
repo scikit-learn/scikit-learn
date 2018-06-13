@@ -4,6 +4,7 @@ Iris Plants Database
 Notes
 -----
 Data Set Characteristics:
+
     :Number of Instances: 150 (50 in each of three classes)
     :Number of Attributes: 4 numeric, predictive attributes and the class
     :Attribute Information:
@@ -43,8 +44,8 @@ data set contains 3 classes of 50 instances each, where each class refers to a
 type of iris plant.  One class is linearly separable from the other 2; the
 latter are NOT linearly separable from each other.
 
-References
-----------
+.. topic:: References
+
    - Fisher, R.A. "The use of multiple measurements in taxonomic problems"
      Annual Eugenics, 7, Part II, 179-188 (1936); also in "Contributions to
      Mathematical Statistics" (John Wiley, NY, 1950).
