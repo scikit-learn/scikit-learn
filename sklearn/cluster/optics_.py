@@ -574,7 +574,6 @@ def _automatic_cluster(reachability_plot, reachability_ordering,
         neighborhood_size = min_neighborhood_size
 
     local_maxima_points = _find_local_maxima(reachability_plot,
-                                             reachability_ordering,
                                              neighborhood_size)
     root_node = _TreeNode(reachability_ordering, 0,
                           len(reachability_ordering), None)
@@ -603,32 +602,24 @@ class _TreeNode(object):
         self.children.append(child)
 
 
-def _is_local_maxima(index, reachability_plot, reachability_ordering,
-                     neighborhood_size):
-    for i in range(1, neighborhood_size + 1):
-        # process objects to the right of index
-        if index + i < len(reachability_plot):
-            if reachability_plot[index] < reachability_plot[index + i]:
-                return False
-        # process objects to the left of index
-        if index - i >= 0:
-            if reachability_plot[index] < reachability_plot[index - i]:
-                return False
-    return True
+def _is_local_maxima(index, reachability_plot, neighborhood_size):
+    right_idx = slice(index + 1, index + neighborhood_size + 1)
+    left_idx = slice(max(1, index - neighborhood_size - 1), index)
+    return (np.all(reachability_plot[index] >= reachability_plot[left_idx]) and
+            np.all(reachability_plot[index] >= reachability_plot[right_idx]))
 
 
-def _find_local_maxima(reachability_plot, reachability_ordering,
-                       neighborhood_size):
+def _find_local_maxima(reachability_plot, neighborhood_size):
     local_maxima_points = {}
     # 1st and last points on Reachability Plot are not taken
     # as local maxima points
-    for i in range(1, len(reachability_ordering) - 1):
+    for i in range(1, len(reachability_plot) - 1):
         # if the point is a local maxima on the reachability plot with
         # regard to neighborhood_size, insert it into priority queue and
         # maxima list
         if (reachability_plot[i] > reachability_plot[i - 1] and
             reachability_plot[i] >= reachability_plot[i + 1] and
-            _is_local_maxima(i, reachability_plot, reachability_ordering,
+            _is_local_maxima(i, np.array(reachability_plot),
                              neighborhood_size) == 1):
             local_maxima_points[i] = reachability_plot[i]
 
@@ -689,8 +680,6 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     check_ratio = .8
     check_value_1 = int(np.round(check_ratio * len(node_1.points)))
     check_value_2 = int(np.round(check_ratio * len(node_2.points)))
-    # if check_value_2 == 0:
-    #    check_value_2 = 1
     avg_reach1 = np.mean(reachability_plot[(node_1.end -
                                             check_value_1):node_1.end])
     avg_reach2 = np.mean(reachability_plot[node_2.start:(node_2.start
