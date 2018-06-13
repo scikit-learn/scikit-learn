@@ -111,11 +111,11 @@ def test_cluster_pruning():
     reach = reach / np.max(reach[1:])
 
     ordering = np.r_[0:20]
-    cluster_boundaries = _find_local_maxima(reach, ordering, 5)
+    cluster_boundaries = _find_local_maxima(reach, 5)
     root = _TreeNode(ordering, 0, 20, None)
 
     # Build cluster tree inplace on root node
-    _cluster_tree(root, None, _find_local_maxima(reach, ordering, 5),
+    _cluster_tree(root, None, _find_local_maxima(reach, 5),
                   reach, ordering, 5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
     assert_equal(2, len(root.children))
@@ -132,11 +132,11 @@ def test_sigmin_pruning():
     reach = reach / np.max(reach[1:])
 
     ordering = np.r_[0:20]
-    cluster_boundaries = _find_local_maxima(reach, ordering, 5)
+    cluster_boundaries = _find_local_maxima(reach, 5)
     root = _TreeNode(ordering, 0, 20, None)
 
     # Build cluster tree inplace on root node
-    _cluster_tree(root, None, _find_local_maxima(reach, ordering, 5),
+    _cluster_tree(root, None, _find_local_maxima(reach, 5),
                   reach, ordering, 5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
     assert_array_equal(np.r_[0:15], root.children[0].points)
