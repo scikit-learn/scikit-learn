@@ -43,7 +43,7 @@ Note that it is common that a small subset of those parameters can have a large
 impact on the predictive or computation performance of the model while others
 can be left to their default values. It is recommended to read the docstring of
 the estimator class to get a finer understanding of their expected behavior,
-possibly by reading the enclosed reference to the literature.  
+possibly by reading the enclosed reference to the literature.
 
 Exhaustive Grid Search
 ======================
@@ -121,6 +121,7 @@ discrete choices (which will be sampled uniformly) can be specified::
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
 ``uniform`` or ``randint``.
+
 In principle, any function can be passed that provides a ``rvs`` (random
 variate sample) method to sample a value. A call to the ``rvs`` function should
 provide independent random samples from possible parameter values on
@@ -138,6 +139,19 @@ consecutive calls.
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
+
+We implement a log-uniform random variable with
+:class:`utils.random.lograndom`, which is continuous version of ``[1, 10, 100,
+1000]`` and are all equally likely with a log-uniform random variable.
+Formally, this means that ``loguniform(0, 1) == 10**x`` for some ``x`` that
+is uniformly distributed between 0 and 1.
+
+Mirroring the example above in grid search, we can specify a continuous random
+variable that is log-uniformly distributed between ``10**0`` and ``10**-3``:
+
+  from sklearn.utils.random import loguniform
+  {'C': loguniform(0, 3), 'gamma': loguniform(-4, -3),
+    'kernel': ['rbf'], 'class_weight':['balanced', None]}
 
 .. topic:: Examples:
 

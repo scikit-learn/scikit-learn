@@ -12,8 +12,8 @@ The randomized search and the grid search explore exactly the same space of
 parameters. The result in parameter settings is quite similar, while the run
 time for randomized search is drastically lower.
 
-The performance is slightly worse for the randomized search, though this
-is most likely a noise effect and would not carry over to a held-out test set.
+The performance is may slightly worse for the randomized search, and is likely
+due to a noise effect and would not carry over to a held-out test set.
 
 Note that in practice, one would not search over this many different parameters
 simultaneously using grid search, but pick only the ones deemed most important.

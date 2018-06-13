@@ -1418,6 +1418,7 @@ Low-level methods
    :toctree: generated/
    :template: class.rst
 
+   utils.random.loguniform
    utils.testing.mock_mldata_urlopen
 
 .. autosummary::

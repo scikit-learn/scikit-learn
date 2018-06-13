@@ -99,31 +99,36 @@ def random_choice_csc(n_samples, classes, class_probability=None,
 
 
 class loguniform:
-    """
-    A class supporting log-uniform random variables. That is, for any ``a``
-    ,``b`` and ``base``,
+    """A class supporting log-uniform random variables.
 
-        base**a <= loguniform(a, b, base=base).rvs() <= base**b
+    Parameters
+    ----------
+    low : float
+        The log minimum value
+    high : float
+        The log maximum value
+    base : float
+        The base for the exponent.
 
-    The logarithmic PDF is uniform. For some constant float ``c``
-    at a float ``x``,
+    Methods
+    -------
+    rvs(self, size=None, random_state=None)
+        Generate log-uniform random variables
 
-        log(pdf(x)) = c
+    Notes
+    -----
+    This class generates values between ``base**low`` and ``base**high`` or
 
-    log(x) = math.log(x, base).
+        base**low <= loguniform(low, high, base=base).rvs() <= base**high
+
+    The logarithmic probability density function (PDF) is uniform. When
+    ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
+    are random variales that are equally likely to be returned.
+
     """
     def __init__(self, low, high, base=10):
         """
         Create a log-uniform random variable.
-
-        Parameters
-        ----------
-        low : float
-            The log minimum value
-        high : float
-            The log maximum value
-        base : float
-            The base for the exponent.
         """
         self._low = low
         self._high = high
@@ -132,14 +137,13 @@ class loguniform:
     def rvs(self, size=None, random_state=None):
         """
         Generates random variables with ``base**low <= rv <= base**high``
-        where ``base``, ``low`` and ``high`` are definited in ``__init__`` and
-        ``rv`` is the return value of this function.
+        where ``rv`` is the return value of this function.
 
         Parameters
         ----------
         size : int or tuple, optional
             The size of the random variable.
-        random_state : int, RandomState
+        random_state : int, RandomState, optional
             A seed (int) or random number generator (RandomState).
 
         Returns
@@ -148,7 +152,6 @@ class loguniform:
             Either a single log-uniform random variable or an array of them
         """
         _rng = check_random_state(random_state)
-        a, b, base = self._low, self._high, self._base
-        unif = _rng.uniform(a, b, size=size)
-        rv = np.power(base, unif)
+        unif = _rng.uniform(self._low, self._high, size=size)
+        rv = np.power(self._base, unif)
         return rv

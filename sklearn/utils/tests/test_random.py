@@ -2,6 +2,8 @@
 import numpy as np
 import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
+import pytest
+
 from sklearn.utils.random import sample_without_replacement
 from sklearn.utils.random import random_choice_csc
 from sklearn.utils.fixes import comb
@@ -10,8 +12,6 @@ from sklearn.utils.random import loguniform
 from sklearn.utils.testing import (
     assert_raises,
     assert_equal)
-
-import pytest
 
 
 ###############################################################################
@@ -191,15 +191,15 @@ def test_random_choice_csc_errors():
 def test_log_uniform(low, high, base):
     rv = loguniform(low, high, base=base)
     rvs = rv.rvs(size=100)
-    assert_true((base**low <= rvs).all() and (rvs <= base**high).all())
+    assert (base**low <= rvs).all() and (rvs <= base**high).all()
+    assert len(rvs) == 100
 
-    assert_true((loguniform(low, high, base=base).rvs(random_state=0) ==
-                 loguniform(low, high, base=base).rvs(random_state=0)))
-
+    assert (loguniform(low, high, base=base).rvs(random_state=0) ==
+            loguniform(low, high, base=base).rvs(random_state=0))
 
 
 def test_log_uniform_default_base(low=-1, high=0):
     rv = loguniform(low, high)
     rvs = rv.rvs(size=100)
-    assert_true(isinstance(rvs, np.ndarray))
-    assert_true((10**low <= rvs).all() and (rvs <= 10**high).all())
+    assert isinstance(rvs, np.ndarray)
+    assert (10**low <= rvs).all() and (rvs <= 10**high).all()
