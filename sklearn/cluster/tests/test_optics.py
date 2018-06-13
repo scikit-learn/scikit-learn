@@ -105,7 +105,7 @@ def test_cluster_pruning():
     # Parameters chosen specifically for this task
 
     # Three pseudo clusters, 2 of which are too small
-    reach = np.array([np.inf, 0.9, 0.9, 10, 0.89, 0.88, 10, .9, .9, .9,
+    reach = np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9,
                       10, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, .9])
     # Normalize
     reach = reach / np.max(reach[1:])
