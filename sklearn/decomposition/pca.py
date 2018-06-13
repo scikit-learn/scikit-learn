@@ -389,25 +389,25 @@ class PCA(_BasePCA):
             n_components = self.n_components
 
         # Handle svd_solver
-        svd_solver = self.svd_solver
-        if svd_solver == 'auto':
+        self._fit_svd_solver = self.svd_solver
+        if self._fit_svd_solver == 'auto':
             # Small problem or n_components == 'mle', just call full PCA
             if max(X.shape) <= 500 or n_components == 'mle':
-                svd_solver = 'full'
+                self._fit_svd_solver = 'full'
             elif n_components >= 1 and n_components < .8 * min(X.shape):
-                svd_solver = 'randomized'
+                self._fit_svd_solver = 'randomized'
             # This is also the case of n_components in (0,1)
             else:
-                svd_solver = 'full'
+                self._fit_svd_solver = 'full'
 
         # Call different fits for either full or truncated SVD
-        if svd_solver == 'full':
+        if self._fit_svd_solver == 'full':
             return self._fit_full(X, n_components)
-        elif svd_solver in ['arpack', 'randomized']:
-            return self._fit_truncated(X, n_components, svd_solver)
+        elif self._fit_svd_solver in ['arpack', 'randomized']:
+            return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
-                             "".format(svd_solver))
+                             "".format(self._fit_svd_solver))
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X"""
