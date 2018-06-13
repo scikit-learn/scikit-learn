@@ -94,7 +94,7 @@ Here is an example snippet::
     >>> imp = MICEImputer(n_imputations=10, random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
     MICEImputer(imputation_order='ascending', initial_strategy='mean',
-          max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
+          max_value=None, min_value=None, missing_values=nan, n_burn_in=10,
           n_imputations=10, n_nearest_features=None, predictor=None,
           random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
