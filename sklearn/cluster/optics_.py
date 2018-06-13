@@ -689,8 +689,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     check_ratio = .8
     check_value_1 = int(np.round(check_ratio * len(node_1.points)))
     check_value_2 = int(np.round(check_ratio * len(node_2.points)))
-    if check_value_2 == 0:
-        check_value_2 = 1
+    # if check_value_2 == 0:
+    #    check_value_2 = 1
     avg_reach1 = np.mean(reachability_plot[(node_1.end -
                                             check_value_1):node_1.end])
     avg_reach2 = np.mean(reachability_plot[node_2.start:(node_2.start
@@ -722,7 +722,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         # cluster 1 is too small
         node_list.remove((node_1, local_max_1))
     if (len(node_2.points) < min_cluster_size and
-            node_list.count((node_2, local_max_1)) > 0):
+            node_list.count((node_2, local_max_2)) > 0):
         # cluster 2 is too small
         node_list.remove((node_2, local_max_2))
     if not node_list:

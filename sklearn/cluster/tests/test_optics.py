@@ -6,6 +6,8 @@ import numpy as np
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
+from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
+from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -97,6 +99,48 @@ def test_auto_extract_hier():
     assert_equal(len(set(clust.labels_)), 6)
 
 
+def test_cluster_pruning():
+    # Tests pruning left and right, deletion of empty node_lists
+    # Parameters chosen specifically for this task
+
+    # Three pseudo clusters, 2 of which are too small
+    reach = np.array([np.inf, 0.9, 0.9, 10, 0.89, 0.88, 10, .9, .9, .9,
+                      10, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, .9])
+    # Normalize
+    reach = reach / np.max(reach[1:])
+
+    ordering = np.r_[0:20]
+    cluster_boundaries = _find_local_maxima(reach, ordering, 5)
+    root = _TreeNode(ordering, 0, 20, None)
+
+    # Build cluster tree inplace on root node
+    _cluster_tree(root, None, _find_local_maxima(reach, ordering, 5),
+                  reach, ordering, 5, .75, .7, .4, .3)
+    assert_equal(root.split_point, cluster_boundaries[0])
+    assert_equal(2, len(root.children))
+
+
+def test_sigmin_pruning():
+    # Tests pruning of insignificant splitpoints
+    # Parameters chosen specifically for this task
+
+    # Two pseudo clusters, 1 of which are too small
+    reach = np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9,
+                      10, 0.9, 0.9, 0.89, 0.88, 100, .9, .9, .9, .9])
+    # Normalize
+    reach = reach / np.max(reach[1:])
+
+    ordering = np.r_[0:20]
+    cluster_boundaries = _find_local_maxima(reach, ordering, 5)
+    root = _TreeNode(ordering, 0, 20, None)
+
+    # Build cluster tree inplace on root node
+    _cluster_tree(root, None, _find_local_maxima(reach, ordering, 5),
+                  reach, ordering, 5, .75, .7, .4, .3)
+    assert_equal(root.split_point, cluster_boundaries[0])
+    assert_equal(np.r_[0:15], root.children[0].points)
+
+
 def test_reach_dists():
     # Tests against known extraction array
 
@@ -120,7 +164,7 @@ def test_reach_dists():
 
     # Expected values, matches 'RD' results from:
     # http://chemometria.us.edu.pl/download/optics.py
-    # Skip to line 340
+    # Skip to line 385
 
     v = [np.inf, 0.606005, 0.472013, 0.162951, 0.161000, 0.385547, 0.179715,
          0.213507, 0.348468, 0.308146, 0.560519, 0.266072, 0.764384, 0.253164,
