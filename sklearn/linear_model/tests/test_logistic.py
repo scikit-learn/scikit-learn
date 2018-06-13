@@ -1201,14 +1201,13 @@ def test_warm_start_converge_LR():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
-    
+
     lr1 = LogisticRegression(C=1000000, multi_class='multinomial',
                              solver='sag', tol=0.0001, warm_start=False,
                              verbose=0)
     lr2 = LogisticRegression(C=1000000, multi_class='multinomial',
                              solver='sag', tol=0.0001, warm_start=True,
                              verbose=0)
-
     lr1_loss = []
     for i in range(5):
         lr1.fit(X, y)
