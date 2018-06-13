@@ -1038,7 +1038,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     The goal of using tf-idf instead of the raw frequencies of occurrence of a
     token in a given document is to scale down the impact of tokens that occur
     very frequently in a given corpus and that are hence empirically less
-    informative nnthan features that occur in a small fraction of the training
+    informative than features that occur in a small fraction of the training
     corpus.
 
     The formula that is used to compute the tf-idf of term t is
