@@ -225,8 +225,10 @@ Preprocessing
 - :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
   :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values.
-  :issue:`10404` by :user:`Lucija Gregov <LucijaGregov>`.
+- Updated :class:`preprocessing.MinMaxScaler` and
+  :func:`preprocessing.minmax_scale` to pass through NaN values.
+  :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation and meta-estimators
 
