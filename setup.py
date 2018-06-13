@@ -41,8 +41,12 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-SCIPY_MIN_VERSION = '0.13.3'
-NUMPY_MIN_VERSION = '1.8.2'
+if '__pypy__' in sys.modules:
+    SCIPY_MIN_VERSION = '1.1.0'
+    NUMPY_MIN_VERSION = '1.4.0'
+else:
+    SCIPY_MIN_VERSION = '0.13.3'
+    NUMPY_MIN_VERSION = '1.8.2'
 
 
 # Optional setuptools features
@@ -185,6 +189,10 @@ def setup_package():
                                  'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: CPython'),
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
                     install_requires=[
