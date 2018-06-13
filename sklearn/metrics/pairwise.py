@@ -308,6 +308,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     if Y_norm_squared is not None and Y_norm_squared.dtype != Y.dtype:
         warnings.warn("Y_norm_squared has a different dtype than Y")
 
+    if X is Y:
+        if X_norm_squared is None and Y_norm_squared is not None:
+            X_norm_squared = Y_norm_squared.T
+        if X_norm_squared is not None and Y_norm_squared is None:
+            Y_norm_squared = X_norm_squared.T
+
     outdtype = (X[0, 0] + Y[0, 0]).dtype
 
     if X.dtype == np.float64 and Y.dtype == np.float64:
