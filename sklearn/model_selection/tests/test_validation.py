@@ -618,36 +618,45 @@ def test_cross_val_score_fit_params():
     cross_val_score(clf, X, y, fit_params=fit_params)
 
 
-@pytest.mark.parametrize("fit", [
-    lambda est, X, y, **fit_params: est.partial_fit(X, y, **fit_params),
-    'partial_fit',
-])
-def test_cross_validate_fit_kwarg(fit):
+@pytest.mark.parametrize("partial_fit", [True, 4, 8])
+def test_cross_validate_fit_kwarg(partial_fit):
     X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
     classes = np.unique(y)
 
-    with warnings.catch_warnings(record=True):
-        clf = SGDClassifier(random_state=0)
-        clf2 = SGDClassifier(random_state=0)
-        with pytest.raises(NotFittedError):
-            cross_validate(clf, X, y, fit=lambda est, *args, **kwargs: est)
+    tol = -np.inf
+    clf_p_fit = SGDClassifier(random_state=0, tol=tol, max_iter=10)
+    clf_fit = SGDClassifier(random_state=0, tol=tol, max_iter=100)
 
-    # repeat to make sure estimator is still pickleable
-    for _ in range(5):
-        scores_no_fit = cross_validate(clf, X, y, fit=fit,
-                                       fit_params={'classes': classes})
-    scores_fit = cross_validate(clf2, X, y)
+    cv = 2
+    # scores_partial_fit
+    scores_p_fit = cross_validate(clf_p_fit, X, y, partial_fit=partial_fit,
+                                  fit_params={'classes': classes},
+                                  return_estimator=True, cv=cv)
+    # score_fit
+    scores_fit = cross_validate(clf_fit, X, y, return_estimator=True, cv=cv)
+    assert_true(set(scores_p_fit.keys()) == set(scores_fit.keys()))
 
-    assert_true(set(scores_no_fit.keys()) == set(scores_fit.keys()))
+    clfs_p_fit = scores_p_fit.pop('estimator')
+    clfs_fit = scores_fit.pop('estimator')
+    for clf_fit, clf_p_fit in zip(clfs_fit, clfs_p_fit):
+        assert_true(clf_p_fit.t_ * 10 < clf_fit.t_)
+        assert_true(clf_p_fit.t_ - 1 ==
+                    int(partial_fit * X.shape[0] * (cv - 1) / cv))
 
 
-def test_cross_validate_fit_kwarg_raises():
+@pytest.mark.parametrize("partial_fit", ['foo', 1.0, 1, True])
+def test_cross_validate_fit_kwarg_raises(partial_fit):
     clf = SGDClassifier(random_state=0)
     X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
     classes = np.unique(y)
-    with warnings.catch_warnings(record=True):
-        with pytest.raises(ValueError, match='fit should be'):
-            cross_validate(clf, X, y, fit='foo')
+
+    if isinstance(partial_fit, (bool, int)):
+        cross_validate(clf, X, y, partial_fit=partial_fit,
+                       fit_params={'classes': classes})
+    else:
+        with pytest.raises(ValueError, match='partial_fit must be'):
+            cross_validate(clf, X, y, partial_fit=partial_fit,
+                           fit_params={'classes': classes})
 
 
 def test_cross_val_score_score_func():
