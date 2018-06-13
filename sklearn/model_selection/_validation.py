@@ -40,7 +40,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False):
+                   return_estimator=False, fit=None):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -133,6 +133,13 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
+    fit : callable, str, optional
+        If None (default), call ``estimator.fit`` before scoring the model.
+        If callable, call ``fit(est, X, y, **fit_params)``. If
+        ``fit=='partial_fit'``, call ``estimator.partial_fit`` before scoring.
+        If ``fit`` is not None, the estimator is assumed to be pickleable.
+
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -209,13 +216,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
+    # We do not clonse the estimator if a custom fit function is supplied,
+    # implying that the estimator has been trained.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
         delayed(_fit_and_score)(
-            clone(estimator), X, y, scorers, train, test, verbose, None,
-            fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator)
+            clone(estimator) if fit is None else estimator, X, y, scorers,
+            train, test, verbose, None, fit_params,
+            return_train_score=return_train_score, return_times=True,
+            return_estimator=return_estimator, fit=fit)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
@@ -254,7 +264,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs'):
+                    pre_dispatch='2*n_jobs', fit=None):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -323,6 +333,12 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    fit : callable, str, optional
+        If None (default), call ``estimator.fit`` before scoring the model.
+        If callable, call ``fit`` before scoring (which assumes the model can
+        be pickled). If ``fit=='partial_fit'``, call ``estimator.partial_fit``
+        before scoring.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -361,7 +377,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                 return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
-                                pre_dispatch=pre_dispatch)
+                                pre_dispatch=pre_dispatch, fit=fit)
     return cv_results['test_score']
 
 
@@ -369,7 +385,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating'):
+                   error_score='raise-deprecating', fit=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -431,6 +447,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
+    fit : callable, str, optional
+        If None (default), call ``estimator.fit`` before scoring the model.
+        If callable, call ``fit(est, X, y, **fit_params)``. If
+        ``fit=='partial_fit'``, call ``estimator.partial_fit`` before scoring.
+        If ``fit`` is not None, the estimator is assumed to be pickleable.
+
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
@@ -469,7 +491,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                       for k, v in fit_params.items()])
 
     train_scores = {}
-    if parameters is not None:
+    if parameters is not None and fit is None:
         estimator.set_params(**parameters)
 
     start_time = time.time()
@@ -481,10 +503,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     n_scorers = len(scorer.keys()) if is_multimetric else 1
 
     try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
+        fn = 'fit' if fit is None else fit
+        if isinstance(fn, str) and fn in {'fit', 'partial_fit'}:
+            if y_train is None:
+                getattr(estimator, fn)(X_train, **fit_params)
+            else:
+                getattr(estimator, fn)(X_train, y_train, **fit_params)
+        elif callable(fn):
+            if y_train is None:
+                fit(estimator, X_train, **fit_params)
+            else:
+                fit(estimator, X_train, y_train, **fit_params)
         else:
-            estimator.fit(X_train, y_train, **fit_params)
+            msg = ('keyword argument fit="{fit}" not recognized. fit should '
+                   'be "fit", "partial_fit" or callable.')
+            raise ValueError(msg.format(fit=fit))
 
     except Exception as e:
         # Note fit time as time until error

@@ -109,6 +109,11 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+- A ``fit`` keyword argument has been added to
+  :func:`model_selection.cross_val_score` and
+  :func:`model_selection.cross_validate` to control calling ``estimator.fit``
+  before scoring. See :issue:`` by :user:`Scott Sievert <stsievert>`.
+
 Decomposition, manifold learning and clustering
 
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage

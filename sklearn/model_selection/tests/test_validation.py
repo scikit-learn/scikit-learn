@@ -10,7 +10,7 @@ from time import sleep
 import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
-from sklearn.exceptions import FitFailedWarning
+from sklearn.exceptions import FitFailedWarning, NotFittedError
 
 from sklearn.tests.test_grid_search import FailingClassifier
 
@@ -616,6 +616,38 @@ def test_cross_val_score_fit_params():
                   'dummy_obj': DUMMY_OBJ,
                   'callback': assert_fit_params}
     cross_val_score(clf, X, y, fit_params=fit_params)
+
+
+@pytest.mark.parametrize("fit", [
+    lambda est, X, y, **fit_params: est.partial_fit(X, y, **fit_params),
+    'partial_fit',
+])
+def test_cross_validate_fit_kwarg(fit):
+    X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
+    classes = np.unique(y)
+
+    with warnings.catch_warnings(record=True):
+        clf = SGDClassifier(random_state=0)
+        clf2 = SGDClassifier(random_state=0)
+        with pytest.raises(NotFittedError):
+            cross_validate(clf, X, y, fit=lambda est, *args, **kwargs: est)
+
+    # repeat to make sure estimator is still pickleable
+    for _ in range(5):
+        scores_no_fit = cross_validate(clf, X, y, fit=fit,
+                                       fit_params={'classes': classes})
+    scores_fit = cross_validate(clf2, X, y)
+
+    assert_true(set(scores_no_fit.keys()) == set(scores_fit.keys()))
+
+
+def test_cross_validate_fit_kwarg_raises():
+    clf = SGDClassifier(random_state=0)
+    X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
+    classes = np.unique(y)
+    with warnings.catch_warnings(record=True):
+        with pytest.raises(ValueError, match='fit should be'):
+            cross_validate(clf, X, y, fit='foo')
 
 
 def test_cross_val_score_score_func():
