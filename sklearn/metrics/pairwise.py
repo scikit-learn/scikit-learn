@@ -202,29 +202,55 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
 
     The computation is done by blocks to limit additional memory usage.
     """
-    bs = 1024
-    distances = np.zeros((X.shape[0], Y.shape[0]), dtype=outdtype)
+    # No more than 10MB of additional memory will be used to cast X and Y to
+    # float64 and to get the float64 result.
+    maxmem = 10*1024*1024
+    itemsize = np.float64(0).itemsize
+    maxmem /= itemsize
+
+    # Compute the block size that won't use more than maxmem bytes of
+    # additional (temporary) memory.
+    # The amount of additional memory required is:
+    # - a float64 copy of a block of the rows of X if needed;
+    # - a float64 copy of a block of the rows of Y if needed;
+    # - the float64 block result;
+    # - a block of X_norm_squared if needed;
+    # - a block of Y_norm_squared if needed.
+    # This is a quadratic equation that we solve to compute the block size that
+    # would use maxmem bytes.
+    XYmem = 0
+    if X.dtype != np.float64:
+        XYmem += X.shape[1]
+    if Y.dtype != np.float64:
+        XYmem += Y.shape[1]  # Note that Y.shape[1] == X.shape[1]
+    if X_norm_squared is None:
+        XYmem += 1
+    if Y_norm_squared is None:
+        XYmem += 1
+
+    delta = XYmem ** 2 + 4 * maxmem
+    bs = int((-XYmem + np.sqrt(delta)) // 2)
+    bs = max(1, bs)
+
+    distances = np.empty((X.shape[0], Y.shape[0]), dtype=outdtype)
 
     for i in range(0, X.shape[0], bs):
         for j in range(i, Y.shape[0], bs):
             ipbs = min(i + bs, X.shape[0])
             jpbs = min(j + bs, Y.shape[0])
 
-            for k in range(0, X.shape[1], bs):
-                kpbs = min(k + bs, X.shape[1])
+            Xc = _cast_if_needed(X[i:ipbs, :], np.float64)
+            if X is Y and i == j:
+                Yc = Xc
+            else:
+                Yc = _cast_if_needed(Y[j:jpbs, :], np.float64)
 
-                Xc = _cast_if_needed(X[i:ipbs, k:kpbs], np.float64)
-                if X is Y:
-                    Yc = Xc
-                else:
-                    Yc = _cast_if_needed(Y[j:jpbs, k:kpbs], np.float64)
-
-                d = _euclidean_distances_float64(Xc, Yc, Y_norm_squared=None,
-                                        squared=True, X_norm_squared=None)
-                distances[i:ipbs, j:jpbs] += d
+            d = _euclidean_distances_float64(Xc, Yc, Y_norm_squared=None,
+                                             squared=True, X_norm_squared=None)
+            distances[i:ipbs, j:jpbs] = d
 
             if X is Y and j > i:
-                distances[j:jpbs, i:ipbs] = distances[i:ipbs, j:jpbs].T
+                distances[j:jpbs, i:ipbs] = d.T
 
     return distances if squared else np.sqrt(distances, out=distances)
 
