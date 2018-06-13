@@ -1,5 +1,4 @@
 import warnings
-import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
