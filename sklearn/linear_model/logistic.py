@@ -676,7 +676,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                         coef.shape[0], coef.shape[1], classes.size,
                         n_features, classes.size, n_features + 1))
 
-            if(n_classes == 1):
+            if n_classes == 1:
                 w0[0, :coef.shape[1]] = -coef
                 w0[1, :coef.shape[1]] = coef
             else:
