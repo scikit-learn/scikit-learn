@@ -861,15 +861,15 @@ class RandomForestClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : dict, list of dicts, "balanced",
-        "balanced_subsample" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
+    None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1139,7 +1139,7 @@ class RandomForestRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1370,14 +1370,15 @@ class ExtraTreesClassifier(ForestClassifier):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
+    None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1618,7 +1619,7 @@ class ExtraTreesRegressor(ForestRegressor):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1809,7 +1810,7 @@ class RandomTreesEmbedding(BaseForest):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the tree building process.
+        Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit

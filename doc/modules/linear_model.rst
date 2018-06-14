@@ -114,7 +114,7 @@ its ``coef_`` member::
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
-   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
