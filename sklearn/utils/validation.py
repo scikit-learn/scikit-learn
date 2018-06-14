@@ -709,7 +709,7 @@ def column_or_1d(y, warn=False):
                           DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
-    raise ValueError("bad input shape {0}".format(shape))
+    raise ValueError("The value of y cannot be None")
 
 
 def check_random_state(seed):
