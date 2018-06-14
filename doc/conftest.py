@@ -1,3 +1,4 @@
+import os
 from os.path import exists
 from os.path import join
 
@@ -53,6 +54,8 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
+    if IS_PYPY and os.environ.get('CI', None):
+        raise SkipTest('Skipping too slow test with PyPy on CI')
     check_skip_network()
 
 
