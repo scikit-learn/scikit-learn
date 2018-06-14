@@ -57,17 +57,17 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
-The :class:`SimpleImputer` class also supports categorical datas represented as
+The :class:`SimpleImputer` class also supports categorical data represented as
 string values or pandas categoricals when using the ``most_frequent`` or
 ``constant`` strategy::
 
     >>> import pandas as pd
     >>> df = pd.DataFrame([["a", "x"],
-    ...                    ["", "y"],
-    ...                    ["a", ""],
+    ...                    [np.nan, "y"],
+    ...                    ["a", np.nan],
     ...                    ["b", "y"]], dtype="category")
     ...
-    >>> imp = SimpleImputer(missing_values="", strategy="most_frequent")
+    >>> imp = SimpleImputer(strategy="most_frequent")
     >>> print(imp.fit_transform(df))      # doctest: +NORMALIZE_WHITESPACE
     [['a' 'x']
      ['a' 'y']

@@ -78,24 +78,6 @@ def test_imputation_shape():
         assert X_imputed.shape == (10, 2)
 
 
-@pytest.mark.parametrize("X_data, missing_value, fill_value, dtype, match",
-                         [(1, 0, "x", None, "imputing numerical"),
-                          (1., np.nan, "x", None, "imputing numerical"),
-                          ("a", "", 0, object, "imputing categorical"),
-                          (True, "nan", "x", "c", "cannot work")])
-def test_imputation_error_invalid_types(X_data, missing_value,
-                                        fill_value, dtype, match):
-    # Verify that exceptions are raised on invalid inputs
-    X = np.full((3, 5), X_data, dtype=dtype)
-    X[0, 0] = missing_value
-
-    with pytest.raises(TypeError, match=match):
-        imputer = SimpleImputer(missing_values=missing_value,
-                                strategy="constant",
-                                fill_value=fill_value)
-        imputer.fit_transform(X)
-
-
 def safe_median(arr, *args, **kwargs):
     # np.median([]) raises a TypeError for numpy >= 1.10.1
     length = arr.size if hasattr(arr, 'size') else len(arr)
@@ -281,6 +263,24 @@ def test_imputation_most_frequent_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
+@pytest.mark.parametrize("X_data, missing_value, fill_value, dtype, match",
+                         [(1, 0, "x", None, "imputing numerical"),
+                          (1., np.nan, "x", None, "imputing numerical"),
+                          ("a", "", 0, object, "imputing categorical"),
+                          (True, "nan", "x", "c", "cannot work")])
+def test_imputation_constant_error_invalid_types(X_data, missing_value,
+                                                 fill_value, dtype, match):
+    # Verify that exceptions are raised on invalid inputs
+    X = np.full((3, 5), X_data, dtype=dtype)
+    X[0, 0] = missing_value
+
+    with pytest.raises(TypeError, match=match):
+        imputer = SimpleImputer(missing_values=missing_value,
+                                strategy="constant",
+                                fill_value=fill_value)
+        imputer.fit_transform(X)
+
+
 def test_imputation_constant_integer():
     # Test imputation using the constant strategy on integers
     X = np.array([
@@ -374,13 +374,13 @@ def test_imputation_constant_pandas(dtype):
     df = pd.read_csv(f, dtype=dtype)
 
     X_true = np.array([
-        ["missing", "i", "x", "missing"],
-        ["a", "missing", "y", "missing"],
-        ["a", "j", "missing", "missing"],
-        ["b", "j", "x", "missing"]
+        ["missing_value", "i", "x", "missing_value"],
+        ["a", "missing_value", "y", "missing_value"],
+        ["a", "j", "missing_value", "missing_value"],
+        ["b", "j", "x", "missing_value"]
     ], dtype=object)
 
-    imputer = SimpleImputer(strategy="constant", fill_value="missing")
+    imputer = SimpleImputer(strategy="constant")
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)

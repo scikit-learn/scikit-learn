@@ -60,7 +60,13 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        mode = stats.mode(array)
+        with warnings.catch_warnings():
+            # stats.mode raises a warning when input array contains objects due
+            # to incapacity to detect NaNs. Irrelevant here since input array
+            # has already been NaN-masked.
+            warnings.simplefilter("ignore", RuntimeWarning)
+            mode = stats.mode(array)
+
         most_frequent_value = mode[0][0]
         most_frequent_count = mode[1][0]
     else:
@@ -177,7 +183,7 @@ optional (default=np.nan)
         """
         X = self._validate_input(X)
 
-        # default missing_values is 0 for numerical input and "missing_value"
+        # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
         if self.fill_value is None:
             if X.dtype.kind in ("i", "f"):
