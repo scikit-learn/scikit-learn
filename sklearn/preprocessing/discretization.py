@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 # Author: Henry Lin <hlin117@gmail.com>
+#         Tom Dupré la Tour
 
 # License: BSD
 
@@ -8,12 +11,13 @@ import numbers
 import numpy as np
 import warnings
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing.data import _transform_selected
-from sklearn.utils.validation import check_array
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.validation import column_or_1d
+from . import OneHotEncoder
+from . import QuantileTransformer
+from .data import _transform_selected
+from ..base import BaseEstimator, TransformerMixin
+from ..utils.validation import check_array
+from ..utils.validation import check_is_fitted
+from ..utils.validation import column_or_1d
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -52,6 +56,22 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
+    strategy : {'uniform', 'quantile', 'kmeans'}, (default='uniform')
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins in each feature have identical widths.
+        quantile
+            Widths are defined by a quantile transform, to have a uniform
+            number of samples in each bin.
+        kmeans
+            Widths are defined by a k-means on each features.
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation. Used only with 'kmeans' strategy.
+        Use an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
+
     Attributes
     ----------
     offset_ : float array, shape (n_features,)
@@ -62,7 +82,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Number of bins per feature. An ignored feature at index ``i``
         will have ``n_bins_[i] == 0``.
 
-    bin_width_ : float array, shape (n_features,)
+    bin_width_ : array, shape (n_features,)
+        Contain floats with 'uniform' strategy, and arrays of varying shapes
+        (n_bins_, ) otherwise.
         The width of each bin. Ignored features will have widths equal
         to ``0``.
 
@@ -115,11 +137,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_bins=2, ignored_features=None, encode='onehot',
-                 dtype=np.float64):
+                 dtype=np.float64, strategy='uniform', random_state=None):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
         self.encode = encode
         self.dtype = dtype
+        self.strategy = strategy
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fits the estimator.
@@ -142,6 +166,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             raise ValueError("Valid options for 'encode' are {}. "
                              "Got 'encode = {}' instead."
                              .format(valid_encode, self.encode))
+        valid_strategy = ('uniform', 'quantile', 'kmeans')
+        if self.strategy not in valid_strategy:
+            raise ValueError("Valid options for 'strategy' are {}. "
+                             "Got 'strategy = {}' instead."
+                             .format(valid_strategy, self.strategy))
 
         n_features = X.shape[1]
         ignored = self._validate_ignored_features(n_features)
@@ -152,16 +181,45 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.offset_ = offset
         self.n_bins_ = self._validate_n_bins(n_features, ignored)
 
-        ptp = np.ptp(X, axis=0)
-        same_min_max = np.where(ptp == 0)[0]
-        if len(same_min_max) > 0:
-            warnings.warn("Features {} are constant and will be replaced with "
-                          "0.".format(", ".join(str(i) for i in same_min_max)))
+        if self.strategy == 'uniform':
+            ptp = np.ptp(X, axis=0)
+            same_min_max = np.where(ptp == 0)[0]
+            if len(same_min_max) > 0:
+                warnings.warn(
+                    "Features {} are constant and will be replaced with "
+                    "0.".format(", ".join(str(i) for i in same_min_max)))
 
-        with np.errstate(divide='ignore', invalid='ignore'):
-            bin_widths = ptp / self.n_bins_
-        bin_widths[ignored] = 0
+            with np.errstate(divide='ignore', invalid='ignore'):
+                bin_widths = ptp / self.n_bins_
+            bin_widths[ignored] = 0
+
+        elif self.strategy in ('quantile', 'kmeans'):
+            bin_widths = np.zeros(n_features, dtype=object)
+            for jj in range(n_features):
+                if jj in ignored:
+                    bin_widths[jj] = np.array([])
+                    continue
+                col = X[:, jj][:, None]
+
+                if self.strategy == 'quantile':
+                    n_quantiles = self.n_bins_[jj] + 1
+                    qt = QuantileTransformer(n_quantiles=n_quantiles).fit(col)
+                    boundaries = qt.quantiles_[:, 0]
+
+                elif self.strategy == 'kmeans':
+                    from ..cluster import KMeans
+                    n_clusters = self.n_bins_[jj]
+                    km = KMeans(n_clusters=n_clusters,
+                                random_state=self.random_state).fit(col)
+                    centers = np.sort(km.cluster_centers_[:, 0],
+                                      kind='mergesort')
+                    boundaries = (centers[1:] + centers[:-1]) * 0.5
+                    boundaries = np.r_[offset[jj], boundaries, col.max()]
+
+                bin_widths[jj] = np.diff(boundaries)
+
         self.bin_width_ = bin_widths
+
         return self
 
     def _validate_n_bins(self, n_features, ignored):
@@ -180,7 +238,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 raise ValueError("{} received an invalid number "
                                  "of bins. Received {}, expected at least 2."
                                  .format(KBinsDiscretizer.__name__, orig_bins))
-            return np.ones(n_features) * orig_bins
+            return np.ones(n_features, dtype=np.int) * orig_bins
 
         n_bins = check_array(orig_bins, dtype=np.int, copy=True,
                              ensure_2d=False)
@@ -268,21 +326,28 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X -= self.offset_[trans]
         bin_width = self.bin_width_[trans]
 
-        # Rescale into [-1, bin_width] range
-        with np.errstate(divide='ignore', invalid='ignore'):
-            X /= bin_width
+        if self.strategy == 'uniform':
+            # Rescale into [-1, bin_width] range
+            with np.errstate(divide='ignore', invalid='ignore'):
+                X /= bin_width
 
-        # Values which are a multiple of the bin width are susceptible to
-        # numeric instability. Add eps to X so these values are binned
-        # correctly. See documentation for numpy.isclose for an explanation
-        # of ``rtol`` and ``atol``.
-        rtol = 1.e-5
-        atol = 1.e-8
-        eps = atol + rtol * bin_width
-        np.floor(X + eps, out=X)
+            # Values which are a multiple of the bin width are susceptible to
+            # numeric instability. Add eps to X so these values are binned
+            # correctly. See documentation for numpy.isclose for an explanation
+            # of ``rtol`` and ``atol``.
+            rtol = 1.e-5
+            atol = 1.e-8
+            eps = atol + rtol * bin_width
+            np.floor(X + eps, out=X)
 
-        X[~np.isfinite(X)] = 0  # Case when a feature is constant
+            X[~np.isfinite(X)] = 0  # Case when a feature is constant
+
+        elif self.strategy in ('quantile', 'kmeans'):
+            for jj in range(X.shape[1]):
+                X[:, jj] = np.digitize(X[:, jj], np.cumsum(bin_width[jj]))
+
         np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
+
         return X
 
     def inverse_transform(self, Xt):
@@ -315,9 +380,20 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv = Xt.copy()
         Xinv_sel = Xinv[:, trans]
 
-        Xinv_sel += 0.5
-        Xinv_sel *= self.bin_width_[trans]
-        Xinv_sel += self.offset_[trans]
+        if self.strategy == 'uniform':
+            Xinv_sel += 0.5
+            Xinv_sel *= self.bin_width_[trans]
+            Xinv_sel += self.offset_[trans]
+
+        elif self.strategy in ('quantile', 'kmeans'):
+            n_features = Xinv_sel.shape[1]
+            for jj in range(n_features):
+                boundaries = np.cumsum(self.bin_width_[trans][jj])
+                boundaries = np.r_[0, boundaries]
+                centers = (boundaries[1:] + boundaries[:-1]) * 0.5
+                Xinv_sel[:, jj] = centers[np.int_(Xinv_sel[:, jj])]
+
+            Xinv_sel += self.offset_[trans]
 
         Xinv[:, trans] = Xinv_sel
         return Xinv

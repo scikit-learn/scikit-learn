@@ -28,8 +28,6 @@ The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
 """
-print(__doc__)
-
 # Code source: Tom Dupré la Tour
 # Adapted from plot_classifier_comparison by Gaël Varoquaux and Andreas Müller
 #
@@ -47,6 +45,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.svm import SVC, LinearSVC
 from sklearn.ensemble import GradientBoostingClassifier
+
+print(__doc__)
 
 h = .02  # step size in the mesh
 

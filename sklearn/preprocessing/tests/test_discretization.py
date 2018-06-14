@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
+import pytest
 import numpy as np
 import scipy.sparse as sp
 import warnings
 
+from sklearn.datasets import make_blobs
 from sklearn.externals.six.moves import xrange as range
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
@@ -32,6 +34,7 @@ def test_fit_transform():
 def test_valid_n_bins():
     KBinsDiscretizer(n_bins=2).fit_transform(X)
     KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
+    assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(np.int)
 
 
 def test_invalid_n_bins():
@@ -228,3 +231,75 @@ def test_one_hot_encode_with_ignored_features():
                    [0, 0, 1, 0, 1, 0, 3.5, -2],
                    [0, 0, 1, 0, 0, 1, 4.5, -1]]
     assert_array_equal(Xt_expected, Xt)
+
+
+def test_invalid_strategy_option():
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy')
+    assert_raise_message(ValueError, "Valid options for 'strategy' are "
+                         "('uniform', 'quantile', 'kmeans'). "
+                         "Got 'strategy = invalid-strategy' instead.",
+                         est.fit, X)
+
+
+def test_nonuniform_strategies():
+    X = np.array([0, 1, 2, 3, 9, 10]).reshape(-1, 1)
+
+    # with 2 bins
+    Xt_expected = np.array([0, 0, 0, 1, 1, 1])
+    Xt = KBinsDiscretizer(n_bins=2, strategy='quantile',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt.ravel())
+    Xt_expected = np.array([0, 0, 0, 0, 1, 1])
+    Xt = KBinsDiscretizer(n_bins=2, strategy='kmeans',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt.ravel())
+    Xt_expected = np.array([0, 0, 0, 0, 1, 1])
+    Xt = KBinsDiscretizer(n_bins=2, strategy='uniform',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt.ravel())
+
+    # with 3 bins
+    Xt_expected = np.array([0, 0, 1, 1, 2, 2])
+    Xt = KBinsDiscretizer(n_bins=3, strategy='quantile',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt.ravel())
+    Xt = KBinsDiscretizer(n_bins=3, strategy='kmeans',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt.ravel())
+    Xt_expected = np.array([0, 0, 0, 0, 2, 2])
+    Xt = KBinsDiscretizer(n_bins=3, strategy='uniform',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt.ravel())
+
+
+def test_kmeans_strategy():
+    X, y = make_blobs(cluster_std=0.2, centers=np.array([0, 5, 8, 8])[:, None])
+    y[y == 3] = 2
+    Xt = KBinsDiscretizer(n_bins=3, strategy='kmeans',
+                          encode='ordinal').fit_transform(X)
+    assert_array_equal(Xt.ravel(), y)
+
+
+@pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
+def test_inverse_transform(strategy):
+    X = np.random.RandomState(0).randn(100, 3)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal')
+    Xt = kbd.fit_transform(X)
+    assert_array_equal(Xt.max(axis=0) + 1, kbd.n_bins_)
+
+    X2 = kbd.inverse_transform(Xt)
+    X2t = kbd.fit_transform(X2)
+    assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
+    assert_array_equal(Xt, X2t)
+
+
+@pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
+def test_transform_outside_fit_range(strategy):
+    X = np.array([0, 1, 2, 3])[:, None]
+    kbd = KBinsDiscretizer(n_bins=4, strategy=strategy, encode='ordinal')
+    kbd.fit(X)
+
+    X2 = np.array([-2, 5])[:, None]
+    X2t = kbd.transform(X2)
+    assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
+    assert_array_equal(X2t.min(axis=0), [0])
