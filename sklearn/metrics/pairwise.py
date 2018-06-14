@@ -235,11 +235,11 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
     distances = np.empty((X.shape[0], Y.shape[0]), dtype=outdtype)
 
     for i in range(0, X.shape[0], bs):
-        for j in range(i, Y.shape[0], bs):
-            ipbs = min(i + bs, X.shape[0])
-            jpbs = min(j + bs, Y.shape[0])
+        ipbs = min(i + bs, X.shape[0])
+        Xc = _cast_if_needed(X[i:ipbs, :], np.float64)
 
-            Xc = _cast_if_needed(X[i:ipbs, :], np.float64)
+        for j in range(i, Y.shape[0], bs):
+            jpbs = min(j + bs, Y.shape[0])
             if X is Y and i == j:
                 Yc = Xc
             else:
