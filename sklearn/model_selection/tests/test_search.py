@@ -12,6 +12,7 @@ import re
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_equal
@@ -126,7 +127,19 @@ def assert_grid_iter_equals_getitem(grid):
     assert_equal(list(grid), [grid[i] for i in range(len(grid))])
 
 
+@pytest.mark.parametrize(
+    "input, error_type, error_message",
+    [(0, TypeError, 'Parameter grid is not a dict or a list (0)'),
+     ([{'foo': [0]}, 0], TypeError, 'Parameter grid is not a dict (0)'),
+     ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
+      "(key='foo', value=0)")]
+)
+def test_validate_parameter_grid_input(input, error_type, error_message):
+    with pytest.raises(error_type, message=error_message):
+        ParameterGrid(input)
+
 def test_parameter_grid():
+
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)

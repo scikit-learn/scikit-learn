@@ -455,7 +455,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
-                    dtype=FLOAT_DTYPES)
+                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     original_ndim = X.ndim
 
     if original_ndim == 1:
@@ -1825,7 +1825,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True):
+def _transform_selected(X, transform, dtype, selected="all", copy=True):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -1835,6 +1835,9 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
     transform : callable
         A callable transform(X) -> X_transformed
+
+    dtype : number type
+        Desired dtype of output.
 
     copy : boolean, optional
         Copy X even if it could be avoided.
@@ -1869,7 +1872,10 @@ def _transform_selected(X, transform, selected="all", copy=True):
         return transform(X)
     else:
         X_sel = transform(X[:, ind[sel]])
-        X_not_sel = X[:, ind[not_sel]]
+        # The columns of X which are not transformed need
+        # to be casted to the desire dtype before concatenation.
+        # Otherwise, the stacking will cast to the higher-precision dtype.
+        X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
         if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
             return sparse.hstack((X_sel, X_not_sel))
@@ -2061,7 +2067,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        return _transform_selected(X, self._fit_transform,
+        return _transform_selected(X, self._fit_transform, self.dtype,
                                    self.categorical_features, copy=True)
 
     def _transform(self, X):
@@ -2117,7 +2123,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
-        return _transform_selected(X, self._transform,
+        return _transform_selected(X, self._transform, self.dtype,
                                    self.categorical_features, copy=True)
 
 

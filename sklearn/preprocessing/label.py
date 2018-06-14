@@ -16,7 +16,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import sparse_min_max
+from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -567,7 +567,7 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        row_max = sparse_min_max(y, 1)[1]
+        row_max = min_max_axis(y, 1)[1]
         row_nnz = np.diff(y.indptr)
 
         y_data_repeated_max = np.repeat(row_max, row_nnz)

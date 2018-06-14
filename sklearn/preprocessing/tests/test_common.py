@@ -8,8 +8,11 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.base import clone
 
-from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import quantile_transform
+
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import QuantileTransformer
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -23,11 +26,11 @@ def _get_valid_samples_by_column(X, col):
 
 
 @pytest.mark.parametrize(
-    "est, support_sparse",
-    [(MinMaxScaler(), False),
-     (QuantileTransformer(n_quantiles=10, random_state=42), True)]
+    "est, func, support_sparse",
+    [(MinMaxScaler(), minmax_scale, False),
+     (QuantileTransformer(n_quantiles=10), quantile_transform, True)]
 )
-def test_missing_value_handling(est, support_sparse):
+def test_missing_value_handling(est, func, support_sparse):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
@@ -44,6 +47,12 @@ def test_missing_value_handling(est, support_sparse):
     Xt = est.fit(X_train).transform(X_test)
     # missing values should still be missing, and only them
     assert_array_equal(np.isnan(Xt), np.isnan(X_test))
+
+    # check that the function leads to the same results as the class
+    Xt_class = est.transform(X_train)
+    Xt_func = func(X_train, **est.get_params())
+    assert_array_equal(np.isnan(Xt_func), np.isnan(Xt_class))
+    assert_allclose(Xt_func[~np.isnan(Xt_func)], Xt_class[~np.isnan(Xt_class)])
 
     # check that the inverse transform keep NaN
     Xt_inv = est.inverse_transform(Xt)

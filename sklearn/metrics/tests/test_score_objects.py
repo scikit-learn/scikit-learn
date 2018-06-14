@@ -6,6 +6,8 @@ import numbers
 
 import numpy as np
 
+import pytest
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -491,12 +493,12 @@ def check_scorer_memmap(scorer_name):
     assert isinstance(score, numbers.Number), scorer_name
 
 
-def test_scorer_memmap_input():
+@pytest.mark.parametrize('name', SCORERS)
+def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
-    for name in SCORERS.keys():
-        yield check_scorer_memmap, name
+    check_scorer_memmap(name)
 
 
 def test_deprecated_names():
