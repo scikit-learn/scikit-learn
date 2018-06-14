@@ -513,6 +513,14 @@ Preprocessing
   when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
   Morales <DanielMorales9>`.
 
+- Fix ``fit`` and ``partial_fit`` in :class:`preprocessing.StandardScaler` in
+  the rare case when `with_mean=False` and `with_std=False` which was crashing
+  by calling ``fit`` more than once and giving inconsistent results for
+  ``mean_`` whether the input was a sparse or a dense matrix. ``mean_`` will be
+  set to ``None`` with both sparse and dense inputs. ``n_samples_seen_`` will
+  be also reported for both input types.
+  :issue:`11235` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Feature selection
 
 - Fixed computation of ``n_features_to_compute`` for edge case with tied CV
