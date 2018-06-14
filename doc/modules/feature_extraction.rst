@@ -385,7 +385,7 @@ last document::
 
     Stop words are words like "and", "the", "him", which are presumed to be
     uninformative in representing the content of a text, and which may be
-    removed to avoid them being construed as signal for prediciton.  Sometimes,
+    removed to avoid them being construed as signal for prediction.  Sometimes,
     however, similar words are useful for prediction, such as in classifying
     writing style or personality.
 
@@ -394,7 +394,7 @@ last document::
     some tasks, such as *computer*.
 
     You should also make sure that the stop word list has had the same
-    preprocessing and tokenization applied as you use in the vectorizer.
+    preprocessing and tokenization applied as the one used in the vectorizer.
     The word *we've* is split into *we* and *ve* by CountVectorizer's default
     tokenizer, so if *we've* is in ``stop_words``, but *ve* is not, *ve* will
     be retained from *we've* in transformed text.  Our vectorizers will try to

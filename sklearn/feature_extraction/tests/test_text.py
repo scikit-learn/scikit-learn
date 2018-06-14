@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import warnings
 
+from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -1082,9 +1083,13 @@ def test_vectorizer_stop_words_english():
 
 
 def test_vectorizer_stop_words_inconsistent():
+    if PY2:
+        lstr = "[u'and', u'll', u've']"
+    else:
+        lstr = "['and', 'll', 've']"
     message = ('Your stop_words may be inconsistent with your '
                'preprocessing. Tokenizing the stop words generated '
-               'tokens [\'and\', \'ll\', \'ve\'] not in stop_words.')
+               'tokens %s not in stop_words.' % lstr)
     for vec in [CountVectorizer(),
                 TfidfVectorizer(), HashingVectorizer()]:
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
