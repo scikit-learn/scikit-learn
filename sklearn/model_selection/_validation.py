@@ -214,9 +214,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
-
     ests = _get_estimators(estimator, cv.get_n_splits(X, y, groups))
+    scorers, _ = _check_multimetric_scoring(ests[0], scoring=scoring)
+
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
@@ -262,14 +262,18 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _get_estimators(estimator, n):
-    if isinstance(estimator, (list, tuple)):
-        ests = (e for e in estimator)
-        if len(ests) != n:
+    if isinstance(estimator, tuple):
+        estimator = list(estimator)
+    if isinstance(estimator, list):
+        ret = estimator
+        if len(ret) != n:
             msg = ('the number of estimators ({n_ests}) being fit is not equal to '
                    'the number of splits for cross validation ({n_splits}).')
-            raise ValueError(msg.format(n_ests=len(ests), n_splits=cv.n_splits))
-        return ests
-    return (clone(estimator) for _ in range(n))
+            raise ValueError(msg.format(n_ests=len(ests), n_splits=n))
+        return ret
+    else:
+        ret = [clone(estimator) for _ in range(n)]
+    return ret
 
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,

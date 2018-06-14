@@ -10,7 +10,7 @@ from time import sleep
 import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
-from sklearn.exceptions import FitFailedWarning, NotFittedError
+from sklearn.exceptions import FitFailedWarning
 
 from sklearn.tests.test_grid_search import FailingClassifier
 
@@ -636,8 +636,8 @@ def test_cross_validate_fit_kwarg(partial_fit):
     scores_fit = cross_validate(clf_fit, X, y, return_estimator=True, cv=cv)
     assert_true(set(scores_p_fit.keys()) == set(scores_fit.keys()))
 
-    clfs_p_fit = scores_p_fit.pop('estimator')
-    clfs_fit = scores_fit.pop('estimator')
+    clfs_p_fit = scores_p_fit['estimator']
+    clfs_fit = scores_fit['estimator']
     for clf_fit, clf_p_fit in zip(clfs_fit, clfs_p_fit):
         assert_true(clf_p_fit.t_ * 10 < clf_fit.t_)
         assert_true(clf_p_fit.t_ - 1 ==
@@ -669,11 +669,41 @@ def test_cross_validate_val_set():
     y_test = (np.sign(rng.randn(n)) + 1) / 2
 
     clf = SGDClassifier(random_state=0)
-    ret = cross_validate(clf, X_train, y_train, val_data=(X_test, y_test))
+    r = cross_validate(clf, X_train, y_train, test_data=(X_test, y_test))
 
-    assert_true(ret['test_score'].max() < ret['train_score'].min())
-    assert_true(ret['test_score'].max() < 0.48)
-    assert_true(0.85 < ret['train_score'].min())
+    assert_true(r['test_score'].max() < 0.48 < 0.85 < r['train_score'].min())
+
+
+def test_cross_validate_repeated_call():
+    n, d = 100, 80
+    cv = 3
+    X, y = make_classification(n_samples=n, n_features=d, n_classes=2,
+                               random_state=0, n_redundant=0,
+                               n_informative=2)
+    classes = np.unique(y)
+    one_epoch = X.shape[0] * (cv - 1) / cv
+
+    clf = SGDClassifier(random_state=0)
+    ret1 = cross_validate(clf, X, y, fit_params={'classes': classes},
+                          return_estimator=True, partial_fit=True, cv=cv)
+    iters1 = [(est.t_ - 1) / one_epoch for est in ret1['estimator']]
+    assert isinstance(ret1['estimator'], tuple)
+    assert all([isinstance(e, BaseEstimator) for e in ret1['estimator']])
+
+    ret2 = cross_validate(ret1['estimator'], X, y, return_estimator=True, partial_fit=True,
+                          cv=cv)
+
+    assert set(ret1.keys()) == set(ret2.keys())
+    for k, v1 in ret1.items():
+        v2 = ret2[k]
+        assert len(v1) == len(v2)
+        if k == 'train_score':
+            assert v1.mean() < 0.90 < 0.93 < v2.mean()
+        if k == 'test_score':
+            assert v1.mean() < 0.73 < 0.75 < v2.mean()
+
+    iters2 = [(est.t_ - 1) / one_epoch for est in ret2['estimator']]
+    assert sum(iters1) / cv == 1 and sum(iters2) / cv == 2
 
 
 def test_cross_val_score_score_func():
