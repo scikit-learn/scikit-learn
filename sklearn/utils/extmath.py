@@ -15,8 +15,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from scipy import linalg
-from scipy.sparse import issparse, csr_matrix
+from scipy import linalg, sparse
 
 from . import check_random_state, deprecated
 from .fixes import np_version
@@ -60,9 +59,9 @@ def row_norms(X, squared=False):
 
     Performs no input validation.
     """
-    if issparse(X):
-        if not isinstance(X, csr_matrix):
-            X = csr_matrix(X)
+    if sparse.issparse(X):
+        if not isinstance(X, sparse.csr_matrix):
+            X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)
@@ -131,7 +130,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     dot_product : array or sparse matrix
         sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
     """
-    if issparse(a) or issparse(b):
+    if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
@@ -321,6 +320,15 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
+
+    if isinstance(M, sparse.lil_matrix):
+        warnings.warn("Calculating SVD of a lil_matrix is expensive. "
+                      "csr_matrix is more efficient.",
+                      sparse.SparseEfficiencyWarning)
+    elif isinstance(M, sparse.dok_matrix):
+        warnings.warn("Calculating SVD of a dok_matrix is expensive. "
+                      "csr_matrix is more efficient.",
+                      sparse.SparseEfficiencyWarning)
 
     Q = randomized_range_finder(M, n_random, n_iter,
                                 power_iteration_normalizer, random_state)
@@ -620,7 +628,7 @@ def safe_min(X):
     Adapated from http://stackoverflow.com/q/13426580
 
     """
-    if issparse(X):
+    if sparse.issparse(X):
         if len(X.data) == 0:
             return 0
         m = X.data.min()
@@ -633,7 +641,7 @@ def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`."""
     min_ = safe_min(X)
     if min_ < min_value:
-        if issparse(X):
+        if sparse.issparse(X):
             raise ValueError("Cannot make the data matrix"
                              " nonnegative because it is sparse."
                              " Adding a value to every entry would"
