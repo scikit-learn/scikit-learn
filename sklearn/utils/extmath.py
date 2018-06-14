@@ -321,14 +321,10 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    if isinstance(M, sparse.lil_matrix):
-        warnings.warn("Calculating SVD of a lil_matrix is expensive. "
-                      "csr_matrix is more efficient.",
-                      sparse.SparseEfficiencyWarning)
-    elif isinstance(M, sparse.dok_matrix):
-        warnings.warn("Calculating SVD of a dok_matrix is expensive. "
-                      "csr_matrix is more efficient.",
-                      sparse.SparseEfficiencyWarning)
+    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+        warnings.warn("Calculating SVD of a {} is expensive. "
+                      "csr_matrix is more efficient.".format(
+                          type(M).__name__))
 
     Q = randomized_range_finder(M, n_random, n_iter,
                                 power_iteration_normalizer, random_state)
