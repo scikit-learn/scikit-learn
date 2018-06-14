@@ -49,6 +49,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ordinal
             Return the bin identifier encoded as an integer value.
 
+    dtype : number type, default=np.float
+        Desired dtype of output.
+
     Attributes
     ----------
     offset_ : float array, shape (n_features,)
@@ -111,10 +114,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=2, ignored_features=None, encode='onehot'):
+    def __init__(self, n_bins=2, ignored_features=None, encode='onehot',
+                 dtype=np.float):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
         self.encode = encode
+        self.dtype = dtype
 
     def fit(self, X, y=None):
         """Fits the estimator.
@@ -229,7 +234,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, ["offset_", "bin_width_"])
         X = self._validate_X_post_fit(X)
 
-        Xt = _transform_selected(X, self._transform,
+        Xt = _transform_selected(X, self._transform, self.dtype,
                                  self.transformed_features_, copy=True,
                                  retain_order=True)
 
