@@ -8,9 +8,10 @@ from __future__ import division
 import itertools
 import numbers
 import numpy as np
-from warnings import warn
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
+from .base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
 from ..externals.six import with_metaclass
@@ -18,13 +19,11 @@ from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils import indices_to_mask, check_consistent_length
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
-
-from .base import BaseEnsemble, _partition_estimators
+from ..utils.random import sample_without_replacement
+from ..utils.validation import has_fit_parameter, check_is_fitted
 
 
 __all__ = ["BaggingClassifier",
@@ -242,7 +241,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
@@ -275,12 +273,14 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         self : object
-            Returns self.
         """
         random_state = check_random_state(self.random_state)
 
-        # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        # Convert data (X is required to be 2d and indexable)
+        X, y = check_X_y(
+            X, y, ['csr', 'csc'], dtype=None, force_all_finite=False,
+            multi_output=True
+        )
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -390,8 +390,10 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
-        # Default implementation
-        return column_or_1d(y, warn=True)
+        if len(y.shape) == 1 or y.shape[1] == 1:
+            return column_or_1d(y, warn=True)
+        else:
+            return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -459,13 +461,15 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
@@ -480,7 +484,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
-        a whole new ensemble.
+        a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
         .. versionadded:: 0.17
            *warm_start* constructor parameter.
@@ -496,7 +500,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
@@ -667,7 +671,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         check_is_fitted(self, "classes_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(
+            X, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False
+        )
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -714,7 +721,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(X, accept_sparse=['csr', 'csc'])
+            X = check_array(
+                X, accept_sparse=['csr', 'csc'], dtype=None,
+                force_all_finite=False
+            )
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
@@ -769,7 +779,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
 
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(
+            X, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False
+        )
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -827,13 +840,15 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
@@ -848,7 +863,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
-        a whole new ensemble.
+        a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -861,7 +876,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
@@ -945,7 +960,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         """
         check_is_fitted(self, "estimators_features_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(
+            X, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False
+        )
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,

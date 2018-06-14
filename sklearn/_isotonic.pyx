@@ -100,7 +100,7 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
         if x != current_x:
             # next unique value
             x_out[i] = current_x
-            weights_out[i] = current_weight / current_count
+            weights_out[i] = current_weight
             y_out[i] = current_y / current_weight
             i += 1
             current_x = x
@@ -113,6 +113,6 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
             current_count += 1
 
     x_out[i] = current_x
-    weights_out[i] = current_weight / current_count
+    weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
     return x_out, y_out, weights_out

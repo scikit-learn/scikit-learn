@@ -296,7 +296,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             probas = self._collect_probas(X)
             if self.flatten_transform is None:
                 warnings.warn("'flatten_transform' default value will be "
-                              "changed to True in 0.21."
+                              "changed to True in 0.21. "
                               "To silence this warning you may"
                               " explicitly set flatten_transform=False.",
                               DeprecationWarning)
@@ -316,7 +316,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        params: keyword arguments
+        params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
             In addition, to setting the parameters of the ``VotingClassifier``,
             the individual classifiers of the ``VotingClassifier`` can also be

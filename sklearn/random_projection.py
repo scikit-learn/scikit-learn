@@ -337,7 +337,8 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             matrix dimensions based on the theory referenced in the
             afore mentioned papers.
 
-        y : is not used: placeholder to allow for usage in a Pipeline.
+        y
+            Ignored
 
         Returns
         -------

@@ -68,7 +68,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     include_self : bool, default=False.
         Whether or not to mark each sample as the first nearest neighbor to
         itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibilty.
+        for mode='distance' as this will preserve backwards compatibility.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -85,9 +85,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     >>> from sklearn.neighbors import kneighbors_graph
     >>> A = kneighbors_graph(X, 2, mode='connectivity', include_self=True)
     >>> A.toarray()
-    array([[ 1.,  0.,  1.],
-           [ 0.,  1.,  1.],
-           [ 1.,  0.,  1.]])
+    array([[1., 0., 1.],
+           [0., 1., 1.],
+           [1., 0., 1.]])
 
     See also
     --------
@@ -143,7 +143,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     include_self : bool, default=False
         Whether or not to mark each sample as the first nearest neighbor to
         itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibilty.
+        for mode='distance' as this will preserve backwards compatibility.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -160,9 +160,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     >>> from sklearn.neighbors import radius_neighbors_graph
     >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity', include_self=True)
     >>> A.toarray()
-    array([[ 1.,  0.,  1.],
-           [ 0.,  1.,  0.],
-           [ 1.,  0.,  1.]])
+    array([[1., 0., 1.],
+           [0., 1., 0.],
+           [1., 0., 1.]])
 
     See also
     --------

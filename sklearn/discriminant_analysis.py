@@ -83,18 +83,18 @@ def _class_means(X, y):
 
     Returns
     -------
-    means : array-like, shape (n_features,)
+    means : array-like, shape (n_classes, n_features)
         Class means.
     """
-    means = []
-    classes = np.unique(y)
-    for group in classes:
-        Xg = X[y == group, :]
-        means.append(Xg.mean(0))
-    return np.asarray(means)
+    classes, y = np.unique(y, return_inverse=True)
+    cnt = np.bincount(y)
+    means = np.zeros(shape=(len(classes), X.shape[1]))
+    np.add.at(means, y, X)
+    means /= cnt[:, None]
+    return means
 
 
-def _class_cov(X, y, priors=None, shrinkage=None):
+def _class_cov(X, y, priors, shrinkage=None):
     """Compute class covariance matrix.
 
     Parameters
@@ -120,11 +120,11 @@ def _class_cov(X, y, priors=None, shrinkage=None):
         Class covariance matrix.
     """
     classes = np.unique(y)
-    covs = []
-    for group in classes:
+    cov = np.zeros(shape=(X.shape[1], X.shape[1]))
+    for idx, group in enumerate(classes):
         Xg = X[y == group, :]
-        covs.append(np.atleast_2d(_cov(Xg, shrinkage)))
-    return np.average(covs, axis=0, weights=priors)
+        cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
+    return cov
 
 
 class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
@@ -650,7 +650,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
-            raise ValueError('y has less than 2 classes')
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:

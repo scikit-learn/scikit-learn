@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+from collections import Iterable
 import warnings
 
 import numpy as np
@@ -26,7 +27,7 @@ import numpy as np
 from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss,
+               precision_score, recall_score, log_loss, balanced_accuracy_score,
                explained_variance_score, brier_score_loss)
 
 from .cluster import adjusted_rand_score
@@ -300,6 +301,10 @@ def check_scoring(estimator, scoring=None, allow_none=False):
                 "If no scoring is specified, the estimator passed should "
                 "have a 'score' method. The estimator %r does not."
                 % estimator)
+    elif isinstance(scoring, Iterable):
+        raise ValueError("For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead. "
+                         "{0} was passed.".format(scoring))
     else:
         raise ValueError("scoring value should either be a callable, string or"
                          " None. %r was passed" % scoring)
@@ -500,6 +505,7 @@ median_absolute_error_scorer._deprecation_msg = deprecation_msg
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 f1_scorer = make_scorer(f1_score)
+balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
 roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
@@ -543,6 +549,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                log_loss=log_loss_scorer,
                neg_log_loss=neg_log_loss_scorer,

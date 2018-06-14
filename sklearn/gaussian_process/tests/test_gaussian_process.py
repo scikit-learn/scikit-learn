@@ -7,12 +7,15 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 
 import numpy as np
 
+import pytest
+
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
 from sklearn.datasets import make_regression
 from sklearn.utils.testing import assert_greater, assert_true, assert_raises
 
+pytestmark = pytest.mark.filterwarnings('ignore', category=DeprecationWarning)
 
 f = lambda x: x * np.sin(x)
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
@@ -100,16 +103,17 @@ def test_wrong_number_of_outputs():
     assert_raises(ValueError, gp.fit, [[1, 2, 3], [4, 5, 6]], [1, 2, 3])
 
 
-def test_more_builtin_correlation_models(random_start=1):
+@pytest.mark.parametrize(
+        'corr',
+        ['absolute_exponential', 'squared_exponential', 'cubic', 'linear'])
+def test_more_builtin_correlation_models(corr):
     # Repeat test_1d and test_2d for several built-in correlation
     # models specified as strings.
-    all_corr = ['absolute_exponential', 'squared_exponential', 'cubic',
-                'linear']
+    random_start = 1
 
-    for corr in all_corr:
-        test_1d(regr='constant', corr=corr, random_start=random_start)
-        test_2d(regr='constant', corr=corr, random_start=random_start)
-        test_2d_2d(regr='constant', corr=corr, random_start=random_start)
+    test_1d(regr='constant', corr=corr, random_start=random_start)
+    test_2d(regr='constant', corr=corr, random_start=random_start)
+    test_2d_2d(regr='constant', corr=corr, random_start=random_start)
 
 
 def test_ordinary_kriging():

@@ -104,8 +104,8 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
         (n_features,) if `1`
         (n_features, n_samples) otherwise
     """
-    _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
-                     random_state=None)
+    return _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                            random_state=None)
 
 
 def _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
@@ -234,10 +234,10 @@ class _GMMBase(BaseEstimator):
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, tol=0.001, verbose=0)
     >>> np.round(g.weights_, 2)
-    array([ 0.75,  0.25])
+    array([0.75, 0.25])
     >>> np.round(g.means_, 2)
-    array([[ 10.05],
-           [  0.06]])
+    array([[10.05],
+           [ 0.06]])
     >>> np.round(g.covars_, 2) # doctest: +SKIP
     array([[[ 1.02]],
            [[ 0.96]]])
@@ -252,7 +252,7 @@ class _GMMBase(BaseEstimator):
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, tol=0.001, verbose=0)
     >>> np.round(g.weights_, 2)
-    array([ 0.5,  0.5])
+    array([0.5, 0.5])
 
     """
 

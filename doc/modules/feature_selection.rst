@@ -198,7 +198,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
+    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
 
@@ -226,7 +226,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
 
 Tree-based feature selection
