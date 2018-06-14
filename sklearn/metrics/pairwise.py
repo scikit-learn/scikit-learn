@@ -169,25 +169,14 @@ def _euclidean_distances_float64(X, Y, Y_norm_squared=None, squared=False,
     float64.
     """
     if X_norm_squared is not None:
-        XX = check_array(X_norm_squared)
-        if XX.shape == (1, X.shape[0]):
-            XX = XX.T
-        elif XX.shape != (X.shape[0], 1):
-            raise ValueError(
-                "Incompatible dimensions for X and X_norm_squared")
-
+        XX = X_norm_squared
     else:
         XX = row_norms(X, squared=True)[:, np.newaxis]
 
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is not None:
-        YY = np.atleast_2d(Y_norm_squared)
-
-        if YY.shape != (1, Y.shape[0]):
-            raise ValueError(
-                "Incompatible dimensions for Y and Y_norm_squared")
-
+        YY = Y_norm_squared
     else:
         YY = row_norms(Y, squared=True)[np.newaxis, :]
 
@@ -307,6 +296,22 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     if Y_norm_squared is not None and Y_norm_squared.dtype != Y.dtype:
         warnings.warn("Y_norm_squared has a different dtype than Y")
+
+    if X_norm_squared is not None:
+        X_norm_squared = np.atleast_2d(X_norm_squared)
+        X_norm_squared = check_array(X_norm_squared)
+        if X_norm_squared.shape == (1, X.shape[0]):
+            X_norm_squared = X_norm_squared.T
+        elif X_norm_squared.shape != (X.shape[0], 1):
+            raise ValueError(
+                    "Incompatible dimensions between X and X_norm_squared")
+
+    if Y_norm_squared is not None:
+        Y_norm_squared = np.atleast_2d(Y_norm_squared)
+        Y_norm_squared = check_array(Y_norm_squared)
+        if Y_norm_squared.shape != (1, Y.shape[0]):
+            raise ValueError(
+                    "Incompatible dimensions between Y and Y_norm_squared")
 
     if X is Y:
         if X_norm_squared is None and Y_norm_squared is not None:
