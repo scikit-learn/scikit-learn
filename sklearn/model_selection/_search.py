@@ -388,6 +388,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Implementers should provide ``__init__`` and either ``_get_param_iterator``
     or ``_generate_candidates``.
+
+    Methods
+    -------
+    _generate_candidates
+    _get_param_iterator
     """
 
     @abstractmethod
