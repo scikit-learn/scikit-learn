@@ -407,13 +407,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Abstract base class for hyper parameter search with cross-validation.
 
-    Implementers should provide ``__init__`` and either ``_get_param_iterator``
-    or ``_generate_candidates``.
+    Implementers should provide ``__init__`` and ``_generate_candidates``:
 
-    Methods
-    -------
-    _generate_candidates
-    _get_param_iterator
+    .. automethod:: _generate_candidates
     """
 
     @abstractmethod
@@ -585,6 +581,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
+    @abstractmethod
     def _generate_candidates(self):
         """Supplies candidates to search in response to accumulated results
 
@@ -602,8 +599,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 results = yield self.initial_candidates()
                 while self.not_good_enough(results):
                     results = yield self.more_candidates()
+
+        A toy example:
+
+        ::
+
+            def _generate_candidates(self):
+                'Try C=0.1 only if C=1 is better than C=10'
+                results = yield [{'C': 1}, {'C': 10}]
+                score = ['mean_test_score']
+                if score[0] < score[1]:
+                    yield [{'C': 0.1}]
         """
-        yield self._get_param_iterator()
 
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
@@ -1172,9 +1179,9 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def _get_param_iterator(self):
+    def _generate_candidates(self):
         """Return ParameterGrid instance for the given param_grid"""
-        return ParameterGrid(self.param_grid)
+        yield ParameterGrid(self.param_grid)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1480,7 +1487,7 @@ class RandomizedSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
-    def _get_param_iterator(self):
+    def _generate_candidates(self):
         """Return ParameterSampler instance for the given distributions"""
         return ParameterSampler(
             self.param_distributions, self.n_iter,
