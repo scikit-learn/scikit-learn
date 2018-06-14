@@ -455,7 +455,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
-                    dtype=FLOAT_DTYPES)
+                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     original_ndim = X.ndim
 
     if original_ndim == 1:
@@ -652,6 +652,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             else:
                 self.mean_ = None
                 self.var_ = None
+                if not hasattr(self, 'n_samples_seen_'):
+                    self.n_samples_seen_ = X.shape[0]
+                else:
+                    self.n_samples_seen_ += X.shape[0]
         else:
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
@@ -662,9 +666,14 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 else:
                     self.var_ = None
 
-            self.mean_, self.var_, self.n_samples_seen_ = \
-                _incremental_mean_and_var(X, self.mean_, self.var_,
-                                          self.n_samples_seen_)
+            if not self.with_mean and not self.with_std:
+                self.mean_ = None
+                self.var_ = None
+                self.n_samples_seen_ += X.shape[0]
+            else:
+                self.mean_, self.var_, self.n_samples_seen_ = \
+                    _incremental_mean_and_var(X, self.mean_, self.var_,
+                                              self.n_samples_seen_)
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
@@ -1825,7 +1834,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True,
+def _transform_selected(X, transform, dtype, selected="all", copy=True,
                         retain_order=False):
     """Apply a transform function to portion of selected features.
 
@@ -1839,6 +1848,9 @@ def _transform_selected(X, transform, selected="all", copy=True,
 
     transform : callable
         A callable transform(X) -> X_transformed
+
+    dtype : number type
+        Desired dtype of output.
 
     copy : boolean, default=True
         Copy X even if it could be avoided.
@@ -1881,6 +1893,12 @@ def _transform_selected(X, transform, selected="all", copy=True,
     elif n_selected == n_features:
         # All features selected.
         return transform(X)
+    else:
+        X_sel = transform(X[:, ind[sel]])
+        # The columns of X which are not transformed need
+        # to be casted to the desire dtype before concatenation.
+        # Otherwise, the stacking will cast to the higher-precision dtype.
+        X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
     X_sel = transform(X[:, ind[sel]])
     X_not_sel = X[:, ind[not_sel]]
@@ -2085,7 +2103,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
         """
-        return _transform_selected(X, self._fit_transform,
+        return _transform_selected(X, self._fit_transform, self.dtype,
                                    self.categorical_features, copy=True)
 
     def _transform(self, X):
@@ -2141,7 +2159,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
-        return _transform_selected(X, self._transform,
+        return _transform_selected(X, self._transform, self.dtype,
                                    self.categorical_features, copy=True)
 
 

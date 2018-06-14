@@ -192,6 +192,10 @@ Classifiers and regressors
 - :func:`manifold.t_sne.trustworthiness` accepts metrics other than
   Euclidean. :issue:`9775` by :user:`William de Vazelhes <wdevazelhes>`.
 
+- :mod:`Nearest neighbors <neighbors>` query methods are now more memory
+  efficient when ``algorithm='brute'``. :issue:`11136` by `Joel Nothman`_
+  and :user:`Aman Dalmia <dalmia>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
@@ -227,8 +231,10 @@ Preprocessing
 - :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
   :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values.
-  :issue:`10404` by :user:`Lucija Gregov <LucijaGregov>`.
+- Updated :class:`preprocessing.MinMaxScaler` and
+  :func:`preprocessing.minmax_scale` to pass through NaN values.
+  :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation and meta-estimators
 
@@ -486,6 +492,13 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
+- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which 
+  was ignoring the parameter ``dtype``. In addition,
+  :class:`feature_extraction.text.TFIDFTransformer` will preserve ``dtype``
+  for floating and raise a warning if ``dtype`` requested is integer.
+  :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+  
 Utils
 
 - :func:`utils.check_array` yield a ``FutureWarning`` indicating
@@ -501,6 +514,18 @@ Preprocessing
 - Fix ValueError in :class:`preprocessing.LabelEncoder` when using
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
+
+- Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
+  when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
+  Morales <DanielMorales9>`.
+
+- Fix ``fit`` and ``partial_fit`` in :class:`preprocessing.StandardScaler` in
+  the rare case when `with_mean=False` and `with_std=False` which was crashing
+  by calling ``fit`` more than once and giving inconsistent results for
+  ``mean_`` whether the input was a sparse or a dense matrix. ``mean_`` will be
+  set to ``None`` with both sparse and dense inputs. ``n_samples_seen_`` will
+  be also reported for both input types.
+  :issue:`11235` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Feature selection
 

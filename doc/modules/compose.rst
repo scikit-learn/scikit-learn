@@ -119,10 +119,10 @@ ignored by setting them to ``None``::
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
- * :ref:`sphx_glr_auto_examples_plot_digits_pipe.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
- * :ref:`sphx_glr_auto_examples_plot_compare_reduction.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
 .. topic:: See also:
 
@@ -218,7 +218,7 @@ object::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_plot_compare_reduction.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
 .. _transformed_target_regressor:
 
@@ -293,6 +293,10 @@ each other. However, it is possible to bypass this checking by setting
    pair of functions ``func`` and ``inverse_func``. However, setting both
    options will raise an error.
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
+
 
 .. _feature_union:
 
@@ -360,7 +364,7 @@ and ignored by setting to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_feature_stacker.py`
 
 
 .. _column_transformer:
@@ -459,4 +463,5 @@ above example would be::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_column_transformer.py`
+ * :ref:`sphx_glr_auto_examples_compose_column_transformer.py`
+ * :ref:`sphx_glr_auto_examples_compose_column_transformer_mixed_types.py`

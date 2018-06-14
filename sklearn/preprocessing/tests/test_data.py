@@ -7,6 +7,7 @@ from __future__ import division
 
 import warnings
 import re
+import itertools
 
 import numpy as np
 import numpy.linalg as la
@@ -60,6 +61,7 @@ from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
+from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
@@ -699,6 +701,63 @@ def test_scaler_without_centering():
     assert_true(X_csc_scaled_back is not X_csc)
     assert_true(X_csc_scaled_back is not X_csc_scaled)
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
+
+
+def _check_identity_scalers_attributes(scaler_1, scaler_2):
+    assert scaler_1.mean_ is scaler_2.mean_ is None
+    assert scaler_1.var_ is scaler_2.var_ is None
+    assert scaler_1.scale_ is scaler_2.scale_ is None
+    assert scaler_1.n_samples_seen_ == scaler_2.n_samples_seen_
+
+
+def test_scaler_return_identity():
+    # test that the scaler return identity when with_mean and with_std are
+    # False
+    X_dense = np.array([[0, 1, 3],
+                        [5, 6, 0],
+                        [8, 0, 10]],
+                       dtype=np.float64)
+    X_csr = sparse.csr_matrix(X_dense)
+    X_csc = X_csr.tocsc()
+
+    transformer_dense = StandardScaler(with_mean=False, with_std=False)
+    X_trans_dense = transformer_dense.fit_transform(X_dense)
+
+    transformer_csr = clone(transformer_dense)
+    X_trans_csr = transformer_csr.fit_transform(X_csr)
+
+    transformer_csc = clone(transformer_dense)
+    X_trans_csc = transformer_csc.fit_transform(X_csc)
+
+    assert_allclose(X_trans_csr.toarray(), X_csr.toarray())
+    assert_allclose(X_trans_csc.toarray(), X_csc.toarray())
+    assert_allclose(X_trans_dense, X_dense)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_identity_scalers_attributes(trans_1, trans_2)
+
+    transformer_dense.partial_fit(X_dense)
+    transformer_csr.partial_fit(X_csr)
+    transformer_csc.partial_fit(X_csc)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_identity_scalers_attributes(trans_1, trans_2)
+
+    transformer_dense.fit(X_dense)
+    transformer_csr.fit(X_csr)
+    transformer_csc.fit(X_csc)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_identity_scalers_attributes(trans_1, trans_2)
 
 
 def test_scaler_int():
@@ -1909,26 +1968,29 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_transform_selected(X, X_expected, sel):
+def _check_transform_selected(X, X_expected, dtype, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, sel)
+        Xtr = _transform_selected(M, Binarizer().transform, dtype, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
-def test_transform_selected():
-    X = [[3, 2, 1], [0, 1, 1]]
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
+def test_transform_selected(output_dtype, input_dtype):
+    X = np.asarray([[3, 2, 1], [0, 1, 1]], dtype=input_dtype)
 
-    X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0])
-    _check_transform_selected(X, X_expected, [True, False, False])
+    X_expected = np.asarray([[1, 2, 1], [0, 1, 1]], dtype=output_dtype)
+    _check_transform_selected(X, X_expected, output_dtype, [0])
+    _check_transform_selected(X, X_expected, output_dtype,
+                              [True, False, False])
 
-    X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0, 1, 2])
-    _check_transform_selected(X, X_expected, [True, True, True])
-    _check_transform_selected(X, X_expected, "all")
+    X_expected = np.asarray([[1, 1, 1], [0, 1, 1]], dtype=output_dtype)
+    _check_transform_selected(X, X_expected, output_dtype, [0, 1, 2])
+    _check_transform_selected(X, X_expected, output_dtype, [True, True, True])
+    _check_transform_selected(X, X_expected, output_dtype, "all")
 
-    _check_transform_selected(X, X, [])
-    _check_transform_selected(X, X, [False, False, False])
+    _check_transform_selected(X, X, output_dtype, [])
+    _check_transform_selected(X, X, output_dtype, [False, False, False])
 
 
 def test_transform_selected_retain_order():
@@ -1962,18 +2024,20 @@ def test_transform_selected_retain_order():
     assert_array_equal(toarray(Xtr), X_expected)
 
 
-def test_transform_selected_copy_arg():
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
+def test_transform_selected_copy_arg(output_dtype, input_dtype):
     # transformer that alters X
     def _mutating_transformer(X):
         X[0, 0] = X[0, 0] + 1
         return X
 
-    original_X = np.asarray([[1, 2], [3, 4]])
-    expected_Xtr = [[2, 2], [3, 4]]
+    original_X = np.asarray([[1, 2], [3, 4]], dtype=input_dtype)
+    expected_Xtr = np.asarray([[2, 2], [3, 4]], dtype=output_dtype)
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
-                              selected='all')
+    Xtr = _transform_selected(X, _mutating_transformer, output_dtype,
+                              copy=True, selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
     assert_array_equal(toarray(Xtr), expected_Xtr)
@@ -2016,6 +2080,17 @@ def test_one_hot_encoder_categorical_features():
     # Edge case: all categorical
     cat = [True, True, True]
     _check_one_hot(X, X2, cat, 5)
+
+
+@pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("input_dtype",  [np.int32, np.float32, np.float64])
+@pytest.mark.parametrize("sparse", [True, False])
+def test_one_hot_encoder_preserve_type(input_dtype, output_dtype, sparse):
+    X = np.array([[0, 1, 0, 0], [1, 2, 0, 0]], dtype=input_dtype)
+    transformer = OneHotEncoder(categorical_features=[0, 1],
+                                dtype=output_dtype, sparse=sparse)
+    X_trans = transformer.fit_transform(X)
+    assert X_trans.dtype == output_dtype
 
 
 def test_one_hot_encoder_unknown_transform():
