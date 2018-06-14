@@ -3,6 +3,7 @@ from os.path import join
 
 import numpy as np
 
+from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_network
 from sklearn.datasets import get_data_home
@@ -76,6 +77,8 @@ def pytest_runtest_setup(item):
         setup_working_with_text_data()
     elif fname.endswith('modules/compose.rst'):
         setup_compose()
+    elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
+        raise SkipTest('FeatureHasher is not compatible with PyPy')
 
 
 def pytest_runtest_teardown(item):
