@@ -324,7 +324,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn("Calculating SVD of a {} is expensive. "
                       "csr_matrix is more efficient.".format(
-                          type(M).__name__))
+                          type(M).__name__),
+                      sparse.SparseEfficiencyWarning)
 
     Q = randomized_range_finder(M, n_random, n_iter,
                                 power_iteration_normalizer, random_state)
