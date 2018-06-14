@@ -486,6 +486,13 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
+- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which 
+  was ignoring the parameter ``dtype``. In addition,
+  :class:`feature_extraction.text.TFIDFTransformer` will preserve ``dtype``
+  for floating and raise a warning if ``dtype`` requested is integer.
+  :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+  
 Utils
 
 - :func:`utils.check_array` yield a ``FutureWarning`` indicating
