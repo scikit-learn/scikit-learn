@@ -58,8 +58,8 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 The :class:`SimpleImputer` class also supports categorical datas represented as
-string values or pandas categoricals when using the "most_frequent" or
-"constant" strategy::
+string values or pandas categoricals when using the ``most_frequent`` or
+``constant`` strategy::
 
     >>> import pandas as pd
     >>> df = pd.DataFrame([["a", "x"],

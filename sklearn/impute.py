@@ -131,7 +131,7 @@ optional (default=np.nan).
     Notes
     -----
     Columns which only contained missing values at `fit` are discarded upon
-    `transform` if strategy is not "constant"
+    `transform` if strategy is not "constant".
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
@@ -192,14 +192,15 @@ optional (default=np.nan).
             if X.dtype.kind in ("i", "u", "f"):
                 if not isinstance(fill_value, numbers.Real):
                     raise TypeError(
-                        "fill_value={0} is invalid. Expected a numerical value"
-                        " when imputing numerical data".format(fill_value))
+                        "'fill_value'={0} is invalid. Expected a numerical"
+                        " value when imputing numerical"
+                        " data".format(fill_value))
 
             elif X.dtype.kind == "O":
                 if not isinstance(fill_value, six.string_types):
                     raise TypeError(
-                        "fill_value={0} is invalid. Expected an str instance "
-                        "when imputing categorical data.".format(fill_value))
+                        "'fill_value'={0} is invalid. Expected an str instance"
+                        " when imputing categorical data.".format(fill_value))
 
             else:
                 raise TypeError(

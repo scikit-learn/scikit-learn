@@ -2036,16 +2036,11 @@ def check_parameters_default_constructible(name, Estimator):
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                # Allows to set default parameters to np.nan
-                if (param_value is not np.nan or
-                        init_param.default is not np.nan):
-                    assert_equal(param_value, init_param.default,
-                                 init_param.name)
-
                 def _isscalarnan(x):
                     return isinstance(x, numbers.Real) and np.isnan(x)
 
                 if _isscalarnan(param_value):
+                    # Allows to set default parameters to np.nan
                     assert param_value is init_param.default, init_param.name
                 else:
                     assert param_value == init_param.default, init_param.name
