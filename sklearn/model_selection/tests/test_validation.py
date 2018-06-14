@@ -659,6 +659,23 @@ def test_cross_validate_fit_kwarg_raises(partial_fit):
                            fit_params={'classes': classes})
 
 
+def test_cross_validate_val_set():
+    n, d = 100, 2
+    X_train, y_train = make_classification(n_samples=n, n_classes=2,
+                                           n_features=d, random_state=0,
+                                           n_redundant=0, n_informative=d)
+    rng = np.random.RandomState(0)
+    X_test = rng.randn(n, d)
+    y_test = (np.sign(rng.randn(n)) + 1) / 2
+
+    clf = SGDClassifier(random_state=0)
+    ret = cross_validate(clf, X_train, y_train, val_data=(X_test, y_test))
+
+    assert_true(ret['test_score'].max() < ret['train_score'].min())
+    assert_true(ret['test_score'].max() < 0.48)
+    assert_true(0.85 < ret['train_score'].min())
+
+
 def test_cross_val_score_score_func():
     clf = MockClassifier()
     _score_func_args = []

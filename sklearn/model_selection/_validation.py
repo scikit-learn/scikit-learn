@@ -32,6 +32,7 @@ from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 from copy import deepcopy
+from ..base import BaseEstimator
 
 
 __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
@@ -41,7 +42,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False, partial_fit=False):
+                   return_estimator=False, partial_fit=False, test_data=None):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -215,19 +216,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
 
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
-    # We do not clone the estimator if a custom fit function is supplied,
-    # implying that the estimator has been trained.
+    ests = _get_estimators(estimator, cv.get_n_splits(X, y, groups))
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
         delayed(_fit_and_score)(
-            clone(estimator) if not partial_fit else deepcopy(estimator), X, y, scorers,
-            train, test, verbose, None, fit_params,
+            est, X, y, scorers, train, test, verbose, None, fit_params,
             return_train_score=return_train_score, return_times=True,
-            return_estimator=return_estimator, partial_fit=partial_fit)
-        for train, test in cv.split(X, y, groups))
+            return_estimator=return_estimator, partial_fit=partial_fit,
+            test_data=test_data)
+        for est, (train, test) in zip(ests, cv.split(X, y, groups)))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
@@ -263,9 +261,20 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return ret
 
 
+def _get_estimators(estimator, n):
+    if isinstance(estimator, (list, tuple)):
+        ests = (e for e in estimator)
+        if len(ests) != n:
+            msg = ('the number of estimators ({n_ests}) being fit is not equal to '
+                   'the number of splits for cross validation ({n_splits}).')
+            raise ValueError(msg.format(n_ests=len(ests), n_splits=cv.n_splits))
+        return ests
+    return (clone(estimator) for _ in range(n))
+
+
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs', partial_fit=False):
+                    pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -334,12 +343,6 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    partial_fit : boolean, integer, default False
-        If False (default), call ``fit``. If True, call
-        ``estimator.partial_fit`` once.  If an integer, call ``partial_fit``
-        times. ``estimator`` is assumed to be pickleable if ``partial_fit``
-        is not True.
-
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -378,8 +381,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                 return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
-                                pre_dispatch=pre_dispatch,
-                                partial_fit=partial_fit)
+                                pre_dispatch=pre_dispatch)
     return cv_results['test_score']
 
 
@@ -387,7 +389,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating', partial_fit=False):
+                   error_score='raise-deprecating', partial_fit=False,
+                   test_data=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -498,8 +501,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     start_time = time.time()
 
-    X_train, y_train = _safe_split(estimator, X, y, train)
-    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    if test_data is None:
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+    else:
+        X_train, y_train = X, y
+        X_test = test_data[0]
+        y_test = test_data[1] if y_train is not None else None
+    train_data = (X_train, y_train) if y_train is not None else (X_train, )
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
@@ -507,17 +516,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     try:
         if not isinstance(partial_fit, (bool, int)):
             raise ValueError('partial_fit must be a boolean or an integer')
-        if isinstance(partial_fit, bool) and not partial_fit:
-            if y_train is None:
-                estimator.fit(X_train, **fit_params)
-            else:
-                estimator.fit(X_train, y_train, **fit_params)
+        if not partial_fit:
+            estimator.fit(*train_data, **fit_params)
         else:
             for _ in range(int(partial_fit)):
-                if y_train is None:
-                    estimator.partial_fit(X_train, **fit_params)
-                else:
-                    estimator.partial_fit(X_train, y_train, **fit_params)
+                estimator.partial_fit(*train_data, **fit_params)
 
     except Exception as e:
         # Note fit time as time until error
