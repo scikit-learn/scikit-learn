@@ -278,9 +278,9 @@ _nan_object_array = np.array([np.nan], dtype=object)
 _nan_object_mask = _nan_object_array != _nan_object_array
 
 if np.array_equal(_nan_object_mask, np.array([True])):
-    def _compat_isnan(X):
+    def _object_dtype_isnan(X):
         return X != X
 
 else:
-    def _compat_isnan(X):
+    def _object_dtype_isnan(X):
         return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)

@@ -333,10 +333,6 @@ def test_imputation_constant_float(format):
     imputer = SimpleImputer(strategy="constant", fill_value=0)
     X_trans = imputer.fit_transform(X)
 
-    print(X_trans)
-    print()
-    print(X_true)
-
     assert_allclose_dense_sparse(X_trans, X_true)
 
 

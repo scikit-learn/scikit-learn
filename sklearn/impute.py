@@ -22,7 +22,7 @@ from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
-from .utils.fixes import _compat_isnan
+from .utils.fixes import _object_dtype_isnan
 
 from .externals import six
 
@@ -46,7 +46,7 @@ def _get_mask(X, value_to_mask):
             return np.isnan(X)
         else:
             # np.isnan does not work on object dtypes.
-            return _compat_isnan(X)
+            return _object_dtype_isnan(X)
 
     else:
         # X == value_to_mask with object dytpes does not always perform
@@ -90,7 +90,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     missing_values : real number, string, np.nan or None, \
-optional (default=np.nan).
+optional (default=np.nan)
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
@@ -105,7 +105,7 @@ optional (default=np.nan).
           value along each column.
         - If "constant", then replace missing values with fill_value.
 
-    fill_value : string or numerical value, optional (default=None)
+    fill_value : string or numerical value, optional
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
         If left to the default, fill_value will be 0 when imputing numerical
