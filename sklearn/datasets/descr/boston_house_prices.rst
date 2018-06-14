@@ -1,15 +1,13 @@
-Boston House Prices dataset
-===========================
+.. _boston_dataset:
 
-Notes
-------
-Data Set Characteristics:  
+Boston house prices dataset
+---------------------------
+
+**Data Set Characteristics:**  
 
     :Number of Instances: 506 
 
-    :Number of Attributes: 13 numeric/categorical predictive
-    
-    :Median Value (attribute 14) is usually the target
+    :Number of Attributes: 13 numeric/categorical predictive. Median Value (attribute 14) is usually the target.
 
     :Attribute Information (in order):
         - CRIM     per capita crime rate by town

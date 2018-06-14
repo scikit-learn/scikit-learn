@@ -1,9 +1,9 @@
-Breast Cancer Wisconsin (Diagnostic) Database
-=============================================
+.. _breast_cancer_dataset:
 
-Notes
------
-Data Set Characteristics:
+Breast cancer wisconsin (diagnostic) dataset
+--------------------------------------------
+
+**Data Set Characteristics:**
 
     :Number of Instances: 569
 

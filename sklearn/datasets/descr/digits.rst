@@ -1,9 +1,9 @@
-Optical Recognition of Handwritten Digits Data Set
-===================================================
+.. _digits_dataset:
 
-Notes
------
-Data Set Characteristics:
+Optical recognition of handwritten digits dataset
+--------------------------------------------------
+
+**Data Set Characteristics:**
 
     :Number of Instances: 5620
     :Number of Attributes: 64

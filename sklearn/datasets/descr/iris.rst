@@ -1,9 +1,9 @@
-Iris Plants Database
-====================
+.. _iris_dataset:
 
-Notes
------
-Data Set Characteristics:
+Iris plants dataset
+--------------------
+
+**Data Set Characteristics:**
 
     :Number of Instances: 150 (50 in each of three classes)
     :Number of Attributes: 4 numeric, predictive attributes and the class
@@ -16,6 +16,7 @@ Data Set Characteristics:
                 - Iris-Setosa
                 - Iris-Versicolour
                 - Iris-Virginica
+                
     :Summary Statistics:
 
     ============== ==== ==== ======= ===== ====================

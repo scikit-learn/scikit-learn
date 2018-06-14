@@ -1,9 +1,9 @@
-Linnerrud dataset
-=================
+.. _linnerrud_dataset:
 
-Notes
------
-Data Set Characteristics:
+Linnerrud dataset
+-----------------
+
+**Data Set Characteristics:**
 
     :Number of Instances: 20
     :Number of Attributes: 3
