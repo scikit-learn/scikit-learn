@@ -788,6 +788,10 @@ by black points below.
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
+    - Use OPTICS clustering in conjunction with the `extract_dbscan` method. OPTICS
+      clustering also calculates the full pairwise matrix, but only keeps one row in
+      memory at a time (memory complexity n).
+
     - A sparse radius neighborhood graph (where missing
       entries are presumed to be out of eps) can be precomputed in a memory-efficient
       way and dbscan can be run over this with ``metric='precomputed'``.
@@ -825,7 +829,7 @@ thought of as the maximum cluster object size (in diameter) that OPTICS will be
 able to extract. The results from OPTICS ``extract_dbscan`` method and DBSCAN
 are not quite identical; this is because the first sample processed by OPTICS
 will always have a reachability distance that is set to ``inf``, and will thus
-always be marked as noise regardless of the surrounding density of other
+generally be marked as noise regardless of the surrounding density of other
 samples. This affects adjacent points when they are considered as candidates
 for being marked as *core samples*; this effect is quite local to the starting
 point of the dataset and is unlikely to be noticed on even moderately large
@@ -870,10 +874,9 @@ children of a larger parent cluster.
     ``max_bound`` that was used to fit; using a value close to ``max_bound``
     will throw a warning, and using a value larger will result in an exception. 
 
-    As with DBSCAN, spatial indexing trees are used to avoid calculating the
-    full distance matrix, and allow for efficient memory usage on large sets
-    of samples. Different distance metrics can be supplied via the
-    ``metric`` keyword.
+    Spatial indexing trees are used to avoid calculating the full distance
+    matrix, and allow for efficient memory usage on large sets of samples.
+    Different distance metrics can be supplied via the ``metric`` keyword.
 
 .. topic:: Computational Complexity
 
