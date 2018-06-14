@@ -1085,31 +1085,7 @@ def _pairwise_callable(X, Y, metric, **kwds):
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    if X is Y:
-        # Only calculate metric for upper triangle
-        out = np.zeros((X.shape[0], Y.shape[0]), dtype='float')
-        iterator = itertools.combinations(range(X.shape[0]), 2)
-        for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
-
-        # Make symmetric
-        # NB: out += out.T will produce incorrect results
-        out = out + out.T
-
-        # Calculate diagonal
-        # NB: nonzero diagonals are allowed for both metrics and kernels
-        for i in range(X.shape[0]):
-            x = X[i]
-            out[i, i] = metric(x, x, **kwds)
-
-    else:
-        # Calculate all cells
-        out = np.empty((X.shape[0], Y.shape[0]), dtype='float')
-        iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
-        for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
-
-    return out
+    return metric(X, Y, **kwds)
 
 
 _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
