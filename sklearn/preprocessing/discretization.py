@@ -115,7 +115,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_bins=2, ignored_features=None, encode='onehot',
-                 dtype=np.float):
+                 dtype=np.float64):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
         self.encode = encode

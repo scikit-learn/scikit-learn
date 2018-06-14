@@ -1900,9 +1900,6 @@ def _transform_selected(X, transform, dtype, selected="all", copy=True,
         # Otherwise, the stacking will cast to the higher-precision dtype.
         X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
-    X_sel = transform(X[:, ind[sel]])
-    X_not_sel = X[:, ind[not_sel]]
-
     if retain_order:
         if X_sel.shape[1] + X_not_sel.shape[1] != n_features:
             raise ValueError("The retain_order option can only be set to True "

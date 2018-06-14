@@ -2000,7 +2000,7 @@ def test_transform_selected_retain_order():
                          "The retain_order option can only be set to True "
                          "for dense matrices.",
                          _transform_selected, sparse.csr_matrix(X),
-                         Binarizer().transform, selected=[0],
+                         Binarizer().transform, dtype=np.int, selected=[0],
                          retain_order=True)
 
     def transform(X):
@@ -2010,17 +2010,17 @@ def test_transform_selected_retain_order():
                          "The retain_order option can only be set to True "
                          "if the dimensions of the input array match the "
                          "dimensions of the transformed array.",
-                         _transform_selected, X, transform,
+                         _transform_selected, X, transform, dtype=np.int,
                          selected=[0], retain_order=True)
 
     X_expected = [[-1, 1], [2, 0]]
-    Xtr = _transform_selected(X, Binarizer().transform, selected=[1],
-                              retain_order=True)
+    Xtr = _transform_selected(X, Binarizer().transform, dtype=np.int,
+                              selected=[1], retain_order=True)
     assert_array_equal(toarray(Xtr), X_expected)
 
     X_expected = [[0, 1], [1, -2]]
-    Xtr = _transform_selected(X, Binarizer().transform, selected=[0],
-                              retain_order=True)
+    Xtr = _transform_selected(X, Binarizer().transform, dtype=np.int,
+                              selected=[0], retain_order=True)
     assert_array_equal(toarray(Xtr), X_expected)
 
 
