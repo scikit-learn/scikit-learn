@@ -626,13 +626,19 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
+                        warn_on_dtype=True, estimator=self,
+                        force_all_finite='allow-nan', dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
         if sparse.issparse(X):
+            # FIXME: remove this check statement
+            X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                            warn_on_dtype=True, estimator=self,
+                            dtype=FLOAT_DTYPES)
+
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
@@ -653,6 +659,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 self.mean_ = None
                 self.var_ = None
         else:
+            X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                            warn_on_dtype=True, estimator=self,
+                            dtype=FLOAT_DTYPES)
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
                 self.mean_ = .0
@@ -663,8 +672,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     self.var_ = None
 
             self.mean_, self.var_, self.n_samples_seen_ = \
-                _incremental_mean_and_var(X, self.mean_, self.var_,
-                                          self.n_samples_seen_)
+                _incremental_mean_and_var(
+                    X, self.mean_, self.var_,
+                    self.n_samples_seen_ * np.ones(X.shape[1]))
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))

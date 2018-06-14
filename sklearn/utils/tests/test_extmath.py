@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
@@ -471,6 +472,31 @@ def test_logistic_sigmoid():
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
+def test_incremental_mean_and_var_nan():
+    # Test mean and variance when an array has floating NaN values
+
+    X1 = np.array([[600, 470, 170, 430, np.nan],
+                   [600, np.nan, 170, 430, 300],
+                   [np.nan, np.nan, np.nan, np.nan, np.nan],
+                   [600, 470, 170, 430, 300]])
+
+    X2 = np.array([[np.nan, np.nan, np.nan, np.nan, np.nan],
+                   [600, 470, 170, 430, 300]])
+    A = np.concatenate((X1, X2,), axis=0)
+    X_means, X_variances, X_count = _incremental_mean_and_var(
+        X1, np.array([0, 0, 0, 0, 0]), np.array([0, 0, 0, 0, 0]),
+        np.array([0, 0, 0, 0, 0]), ignore_nan=True)
+    A_means = np.nanmean(A, axis=0)
+    A_variances = np.nanvar(A, axis=0)
+    A_count = np.array([4, 3, 4, 4, 3])
+
+    final_means, final_variances, final_count = _incremental_mean_and_var(
+        X2, X_means, X_variances, X_count, ignore_nan=True)
+    assert_almost_equal(A_means, final_means)
+    assert_almost_equal(A_variances, final_variances)
+    assert_almost_equal(A_count, final_count)
+
+
 def test_incremental_variance_update_formulas():
     # Test Youngs and Cramer incremental variance formulas.
     # Doggie data from http://www.mathsisfun.com/data/standard-deviation.html
@@ -487,7 +513,7 @@ def test_incremental_variance_update_formulas():
     old_sample_count = X1.shape[0]
     final_means, final_variances, final_count = \
         _incremental_mean_and_var(X2, old_means, old_variances,
-                                  old_sample_count)
+                                  old_sample_count * np.ones(X2.shape[1]))
     assert_almost_equal(final_means, A.mean(axis=0), 6)
     assert_almost_equal(final_variances, A.var(axis=0), 6)
     assert_almost_equal(final_count, A.shape[0])
@@ -566,7 +592,8 @@ def test_incremental_variance_numerical_stability():
     for i in range(A1.shape[0]):
         mean, var, n = \
             _incremental_mean_and_var(A1[i, :].reshape((1, A1.shape[1])),
-                                      mean, var, n)
+                                      mean, var, n * np.ones(A1.shape[1]))
+        n = n[0]
     assert_equal(n, A.shape[0])
     assert_array_almost_equal(A.mean(axis=0), mean)
     assert_greater(tol, np.abs(stable_var(A) - var).max())
@@ -593,9 +620,10 @@ def test_incremental_variance_ddof():
             else:
                 result = _incremental_mean_and_var(
                     batch, incremental_means, incremental_variances,
-                    sample_count)
+                    sample_count * np.ones(batch.shape[1]))
                 (incremental_means, incremental_variances,
                  incremental_count) = result
+                incremental_count = incremental_count[0]
                 sample_count += batch.shape[0]
 
             calculated_means = np.mean(X[:j], axis=0)
