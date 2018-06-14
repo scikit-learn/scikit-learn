@@ -379,6 +379,8 @@ class MDS(BaseEstimator):
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
+        y: Ignored
+
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
@@ -396,6 +398,8 @@ class MDS(BaseEstimator):
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
+
+        y: Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF

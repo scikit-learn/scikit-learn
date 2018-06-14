@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 from scipy import stats, sparse
 
-from numpy.testing import run_module_suite
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -280,8 +279,8 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_array_equal(np.sort(scores[support]),
-                       np.sort(scores)[-support.sum():])
+    assert_array_almost_equal(np.sort(scores[support]),
+                              np.sort(scores)[-support.sum():])
 
 
 def test_select_percentile_regression():
@@ -670,7 +669,3 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
-
-
-if __name__ == '__main__':
-    run_module_suite()

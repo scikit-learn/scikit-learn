@@ -15,6 +15,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..externals.six import moves
 from ..externals.six import string_types
@@ -116,7 +117,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
             break
     else:
         warnings.warn('FastICA did not converge. Consider increasing '
-                      'tolerance or the maximum number of iterations.')
+                      'tolerance or the maximum number of iterations.',
+                      ConvergenceWarning)
 
     return W, ii + 1
 
@@ -180,10 +182,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. The derivative should be averaged along its last dimension.
+        Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, np.mean(3 * x ** 2, axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -267,7 +270,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES).T
+    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES,
+                    ensure_min_samples=2).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -451,6 +455,9 @@ class FastICA(BaseEstimator, TransformerMixin):
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super(FastICA, self).__init__()
+        if max_iter < 1:
+            raise ValueError("max_iter should be greater than 1, got "
+                             "(max_iter={})".format(max_iter))
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -509,6 +516,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
@@ -523,6 +532,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------

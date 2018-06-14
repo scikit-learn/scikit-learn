@@ -824,7 +824,6 @@ class SparseCodingMixin(TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-        n_samples, n_features = X.shape
 
         code = sparse_encode(
             X, self.components_, algorithm=self.transform_algorithm,
@@ -927,9 +926,9 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+        X : Ignored
+
+        y : Ignored
 
         Returns
         -------
@@ -1080,6 +1079,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -1251,6 +1252,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -1283,6 +1286,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         iter_offset : integer, optional
             The number of iteration on data batches that has been

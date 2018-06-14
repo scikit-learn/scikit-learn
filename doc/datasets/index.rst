@@ -64,7 +64,7 @@ require to download any file from some external website.
    load_breast_cancer
 
 These datasets are useful to quickly illustrate the behavior of the
-various algorithms implemented in the scikit. They are however often too
+various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
 .. _sample_images:
@@ -72,7 +72,7 @@ small to be representative of real world machine learning tasks.
 Sample images
 =============
 
-The scikit also embed a couple of sample JPEG images published under Creative
+Scikit-learn also embed a couple of sample JPEG images published under Creative
 Commons license by their authors. Those image can be useful to test algorithms
 and pipeline on 2D data.
 
@@ -289,11 +289,7 @@ refer to:
 
 * `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
   `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_ 
-  for loading images and videos to numpy arrays
-* `scipy.misc.imread <https://docs.scipy.org/doc/scipy/reference/generated/scipy.
-  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
-  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
-  data from various image file formats
+  for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read 
   <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ 
   for reading WAV files into a numpy array
@@ -321,6 +317,7 @@ writing data in that format.
     labeled_faces
     covtype
     rcv1
+    kddcup99
 
 
 .. include:: olivetti_faces.rst
@@ -334,6 +331,8 @@ writing data in that format.
 .. include:: covtype.rst
 
 .. include:: rcv1.rst
+
+.. include:: kddcup99.rst
 
 .. _boston_house_prices:
 

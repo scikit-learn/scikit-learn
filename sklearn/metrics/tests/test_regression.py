@@ -64,6 +64,13 @@ def test_regression_metrics_at_limits():
     assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
                         "used when targets contain negative values.",
                         mean_squared_log_error, [-1.], [-1.])
+    assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
+                        "used when targets contain negative values.",
+                        mean_squared_log_error, [1., 2., 3.], [1., -2., 3.])
+    assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
+                        "used when targets contain negative values.",
+                        mean_squared_log_error, [1., -2., 3.], [1., 2., 3.])
+
 
 
 def test__check_reg_targets():

@@ -62,6 +62,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
+
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
 
     class_weight : dict, {class_label: weight} or "balanced" or None, optional
         Preset for the class_weight fit parameter.
@@ -114,13 +119,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> clf = PassiveAggressiveClassifier(random_state=0)
     >>> clf.fit(X, y)
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
-                  fit_intercept=True, loss='hinge', max_iter=5, n_iter=None,
+                  fit_intercept=True, loss='hinge', max_iter=None, n_iter=None,
                   n_jobs=1, random_state=0, shuffle=True, tol=None, verbose=0,
                   warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.49324685  1.0552176   1.49519589  1.33798314]]
+    [[0.49324685 1.0552176  1.49519589 1.33798314]]
     >>> print(clf.intercept_)
-    [ 2.18438388]
+    [2.18438388]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -281,6 +286,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
+
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
@@ -319,11 +329,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> regr = PassiveAggressiveRegressor(random_state=0)
     >>> regr.fit(X, y)
     PassiveAggressiveRegressor(C=1.0, average=False, epsilon=0.1,
-                  fit_intercept=True, loss='epsilon_insensitive', max_iter=5,
-                  n_iter=None, random_state=0, shuffle=True, tol=None,
-                  verbose=0, warm_start=False)
+                  fit_intercept=True, loss='epsilon_insensitive',
+                  max_iter=None, n_iter=None, random_state=0, shuffle=True,
+                  tol=None, verbose=0, warm_start=False)
     >>> print(regr.coef_)
-    [ 20.48736655  34.18818427  67.59122734  87.94731329]
+    [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)
     [-0.02306214]
     >>> print(regr.predict([[0, 0, 0, 0]]))
@@ -377,6 +387,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",

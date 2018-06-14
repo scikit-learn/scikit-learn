@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import scipy.sparse as sp
 
@@ -344,60 +345,27 @@ def test_inplace_swap_column():
     assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
 
 
-def test_min_max_axis0():
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("axis", [0, 1, None])
+@pytest.mark.parametrize("sparse_format", [sp.csr_matrix, sp.csc_matrix])
+@pytest.mark.parametrize(
+    "missing_values, min_func, max_func, ignore_nan",
+    [(0, np.min, np.max, False),
+     (np.nan, np.nanmin, np.nanmax, True)]
+)
+def test_min_max(dtype, axis, sparse_format, missing_values, min_func,
+                 max_func, ignore_nan):
     X = np.array([[0, 3, 0],
-                  [2, -1, 0],
+                  [2, -1, missing_values],
                   [0, 0, 0],
-                  [9, 8, 7],
-                  [4, 0, 5]], dtype=np.float64)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
+                  [9, missing_values, 7],
+                  [4, 0, 5]], dtype=dtype)
+    X_sparse = sparse_format(X)
 
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=0)
-    assert_array_equal(mins_csr, X.min(axis=0))
-    assert_array_equal(maxs_csr, X.max(axis=0))
-
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=0)
-    assert_array_equal(mins_csc, X.min(axis=0))
-    assert_array_equal(maxs_csc, X.max(axis=0))
-
-    X = X.astype(np.float32)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=0)
-    assert_array_equal(mins_csr, X.min(axis=0))
-    assert_array_equal(maxs_csr, X.max(axis=0))
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=0)
-    assert_array_equal(mins_csc, X.min(axis=0))
-    assert_array_equal(maxs_csc, X.max(axis=0))
-
-
-def test_min_max_axis1():
-    X = np.array([[0, 3, 0],
-                  [2, -1, 0],
-                  [0, 0, 0],
-                  [9, 8, 7],
-                  [4, 0, 5]], dtype=np.float64)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
-
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=1)
-    assert_array_equal(mins_csr, X.min(axis=1))
-    assert_array_equal(maxs_csr, X.max(axis=1))
-
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=1)
-    assert_array_equal(mins_csc, X.min(axis=1))
-    assert_array_equal(maxs_csc, X.max(axis=1))
-
-    X = X.astype(np.float32)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=1)
-    assert_array_equal(mins_csr, X.min(axis=1))
-    assert_array_equal(maxs_csr, X.max(axis=1))
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=1)
-    assert_array_equal(mins_csc, X.min(axis=1))
-    assert_array_equal(maxs_csc, X.max(axis=1))
+    mins_sparse, maxs_sparse = min_max_axis(X_sparse, axis=axis,
+                                            ignore_nan=ignore_nan)
+    assert_array_equal(mins_sparse, min_func(X, axis=axis))
+    assert_array_equal(maxs_sparse, max_func(X, axis=axis))
 
 
 def test_min_max_axis_errors():
@@ -478,8 +446,16 @@ def test_inplace_normalize():
         for dtype in (np.float64, np.float32):
             X = rs.randn(10, 5).astype(dtype)
             X_csr = sp.csr_matrix(X)
-            inplace_csr_row_normalize(X_csr)
-            assert_equal(X_csr.dtype, dtype)
-            if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
-                X_csr.data **= 2
-            assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)
+            for index_dtype in [np.int32, np.int64]:
+                # csr_matrix will use int32 indices by default,
+                # up-casting those to int64 when necessary
+                if index_dtype is np.int64:
+                    X_csr.indptr = X_csr.indptr.astype(index_dtype)
+                    X_csr.indices = X_csr.indices.astype(index_dtype)
+                assert X_csr.indices.dtype == index_dtype
+                assert X_csr.indptr.dtype == index_dtype
+                inplace_csr_row_normalize(X_csr)
+                assert_equal(X_csr.dtype, dtype)
+                if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
+                    X_csr.data **= 2
+                assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)

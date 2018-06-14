@@ -422,7 +422,7 @@ cdef class _QuadTree:
             the query point:
             - results[idx:idx+n_dimensions] contains the coordinate-wise
                 difference between the query point and the summary cell idx.
-                This is usefull in t-SNE to compute the negative forces.
+                This is useful in t-SNE to compute the negative forces.
             - result[idx+n_dimensions+1] contains the squared euclidean
                 distance to the summary cell idx.
             - result[idx+n_dimensions+2] contains the number of point of the
@@ -521,7 +521,7 @@ cdef class _QuadTree:
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
         d = {}
-        # capacity is infered during the __setstate__ using nodes
+        # capacity is inferred during the __setstate__ using nodes
         d["max_depth"] = self.max_depth
         d["cell_count"] = self.cell_count
         d["capacity"] = self.capacity

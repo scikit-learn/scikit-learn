@@ -330,7 +330,7 @@ application of Occam's razor: *prefer simpler models*.
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
-    >>> print(regr.coef_)
+    >>> print(regr.coef_)  # doctest: +NORMALIZE_WHITESPACE
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 
@@ -455,9 +455,9 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
+        kernel='linear', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False)
 
 
 .. warning:: **Normalizing data**

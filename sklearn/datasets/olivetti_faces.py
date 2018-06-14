@@ -64,11 +64,10 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    random_state : int, RandomState instance or None, optional (default=0)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default=0)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available

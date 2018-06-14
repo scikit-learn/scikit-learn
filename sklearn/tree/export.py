@@ -68,6 +68,8 @@ def _color_brew(n):
 class Sentinel(object):
     def __repr__(self):
         return '"tree.dot"'
+
+
 SENTINEL = Sentinel()
 
 
@@ -92,7 +94,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
     Parameters
     ----------
-    decision_tree : decision tree classifier
+    decision_tree : decision tree regressor or classifier
         The decision tree to be exported to GraphViz.
 
     out_file : file object or string, optional (default='tree.dot')
@@ -458,10 +460,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             out_file.write('rankdir=LR ;\n')
 
         # Now recurse the tree and add node & edge attributes
-        if isinstance(decision_tree, _tree.Tree):
-            recurse(decision_tree, 0, criterion="impurity")
-        else:
-            recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
+        recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
 
         # If required, draw leaf nodes at same depth as each other
         if leaves_parallel:

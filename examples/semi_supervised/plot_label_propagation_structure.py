@@ -30,7 +30,7 @@ labels[-1] = inner
 
 # #############################################################################
 # Learn with LabelSpreading
-label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=0.2)
+label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=0.8)
 label_spread.fit(X, labels)
 
 # #############################################################################

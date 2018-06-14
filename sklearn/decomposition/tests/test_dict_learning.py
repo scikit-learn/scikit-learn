@@ -121,8 +121,8 @@ def test_dict_learning_split():
     dico.split_sign = True
     split_code = dico.transform(X)
 
-    assert_array_equal(split_code[:, :n_components] -
-                       split_code[:, n_components:], code)
+    assert_array_almost_equal(split_code[:, :n_components] -
+                              split_code[:, n_components:], code)
 
 
 def test_dict_learning_online_shapes():

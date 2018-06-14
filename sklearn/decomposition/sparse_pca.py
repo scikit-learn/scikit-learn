@@ -107,6 +107,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -242,9 +244,6 @@ class MiniBatchSparsePCA(SparsePCA):
     components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    error_ : array
-        Vector of errors at each iteration.
-
     n_iter_ : int
         Number of iterations run.
 
@@ -274,6 +273,8 @@ class MiniBatchSparsePCA(SparsePCA):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
