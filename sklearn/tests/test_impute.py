@@ -304,33 +304,28 @@ def test_imputation_constant_integer():
     assert_array_equal(X_trans, X_true)
 
 
-@pytest.mark.parametrize("format", ["csr", "array"])
-def test_imputation_constant_float(format):
+@pytest.mark.parametrize("array_constructor", [sparse.csr_matrix, np.asarray])
+def test_imputation_constant_float(array_constructor):
     # Test imputation using the constant strategy on floats
     X = np.array([
-        [np.nan, 1.1, 2.2, np.nan],
-        [3.3, np.nan, 4.4, np.nan],
-        [5.5, 6.6, np.nan, np.nan],
-        [7.7, 8.8, 9.9, np.nan]
+        [np.nan, 1.1, 0, np.nan],
+        [1.2, np.nan, 1.3, np.nan],
+        [0, 0, np.nan, np.nan],
+        [1.4, 1.5, 0, np.nan]
     ])
-
-    X = sparse.csr_matrix(X) if format == "csr" else X
 
     X_true = np.array([
-        [0, 1.1, 2.2, 0],
-        [3.3, 0, 4.4, 0],
-        [5.5, 6.6, 0, 0],
-        [7.7, 8.8, 9.9, 0]
+        [-1, 1.1, 0, -1],
+        [1.2, -1, 1.3, -1],
+        [0, 0, -1, -1],
+        [1.4, 1.5, 0, -1]
     ])
 
-    if format == "csr":
-        X_true = sparse.csr_matrix(X_true)
-        X_true[np.array([[True, False, False, True],
-                         [False, True, False, True],
-                         [False, False, True, True],
-                         [False, False, False, True]])] = 0
+    X = array_constructor(X)
 
-    imputer = SimpleImputer(strategy="constant", fill_value=0)
+    X_true = array_constructor(X_true)
+
+    imputer = SimpleImputer(strategy="constant", fill_value=-1)
     X_trans = imputer.fit_transform(X)
 
     assert_allclose_dense_sparse(X_trans, X_true)
