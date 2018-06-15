@@ -13,6 +13,7 @@ import pytest
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
@@ -491,6 +492,30 @@ def test_incremental_variance_update_formulas():
     assert_almost_equal(final_means, A.mean(axis=0), 6)
     assert_almost_equal(final_variances, A.var(axis=0), 6)
     assert_almost_equal(final_count, A.shape[0])
+
+
+def test_incremental_mean_and_variance_ignore_nan():
+    old_means = np.array([535., 535., 535., 535.])
+    old_variances = np.array([4225., 4225., 4225., 4225.])
+    old_sample_count = np.array([2, 2, 2, 2], dtype=np.int32)
+
+    X = np.array([[170, 170, 170, 170],
+                  [430, 430, 430, 430],
+                  [300, 300, 300, 300]])
+
+    X_nan = np.array([[170, np.nan, 170, 170],
+                      [np.nan, 170, 430, 430],
+                      [430, 430, np.nan, 300],
+                      [300, 300, 300, np.nan]])
+
+    X_means, X_variances, X_count = _incremental_mean_and_var(
+        X, old_means, old_variances, old_sample_count)
+    X_nan_means, X_nan_variances, X_nan_count = _incremental_mean_and_var(
+        X_nan, old_means, old_variances, old_sample_count)
+
+    assert_allclose(X_nan_means, X_means)
+    assert_allclose(X_nan_variances, X_variances)
+    assert_allclose(X_nan_count, X_count)
 
 
 @skip_if_32bit

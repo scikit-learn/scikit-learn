@@ -675,6 +675,10 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
 
     updated_sample_count : array, shape (n_features,)
 
+    Notes
+    -----
+    NaNs are ignored during the algorithm.
+
     References
     ----------
     T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
