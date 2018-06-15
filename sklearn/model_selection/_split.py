@@ -647,7 +647,7 @@ class StratifiedKFold(_BaseKFold):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
+        Yields
         -------
         train : ndarray
             The training set indices for that split.
@@ -1603,7 +1603,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
+        Yields
         -------
         train : ndarray
             The training set indices for that split.
