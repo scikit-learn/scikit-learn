@@ -434,10 +434,9 @@ HTML output by building the documentation website.
 Building the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
-``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
+Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
 
 To build the documentation, you need to be in the ``doc`` folder::
 
