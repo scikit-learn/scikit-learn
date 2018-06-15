@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 from scipy import stats, sparse
 
-from numpy.testing import run_module_suite
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -670,7 +669,3 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
-
-
-if __name__ == '__main__':
-    run_module_suite()

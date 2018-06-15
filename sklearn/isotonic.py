@@ -92,10 +92,10 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Parameters
     ----------
-    y : iterable of floating-point values
+    y : iterable of floats
         The data.
 
-    sample_weight : iterable of floating-point values, optional, default: None
+    sample_weight : iterable of floats, optional, default: None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
@@ -111,7 +111,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Returns
     -------
-    y_ : list of floating-point values
+    y_ : list of floats
         Isotonic fit of y.
 
     References

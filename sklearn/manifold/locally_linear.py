@@ -138,8 +138,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Tolerance for 'arpack' method.
         Not used if eigen_solver=='dense'.
 
-    max_iter : maximum number of iterations for 'arpack' method
-        not used if eigen_solver=='dense'
+    max_iter : int
+        Maximum number of iterations for 'arpack' method.
+        Not used if eigen_solver=='dense'
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

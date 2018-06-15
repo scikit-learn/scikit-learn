@@ -7,6 +7,8 @@ from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.decomposition import nmf   # For testing internals
 from scipy.sparse import csc_matrix
 
+import pytest
+
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
@@ -95,26 +97,26 @@ def test_nmf_fit_nn_output():
                          (transf < 0).any())
 
 
-def test_nmf_fit_close():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+def test_nmf_fit_close(solver):
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
-    for solver in ('cd', 'mu'):
-        pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
-                   max_iter=600)
-        X = np.abs(rng.randn(6, 5))
-        assert_less(pnmf.fit(X).reconstruction_err_, 0.1)
+    pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
+               max_iter=600)
+    X = np.abs(rng.randn(6, 5))
+    assert_less(pnmf.fit(X).reconstruction_err_, 0.1)
 
 
-def test_nmf_transform():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+def test_nmf_transform(solver):
     # Test that NMF.transform returns close values
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    for solver in ['cd', 'mu']:
-        m = NMF(solver=solver, n_components=3, init='random',
-                random_state=0, tol=1e-5)
-        ft = m.fit_transform(A)
-        t = m.transform(A)
-        assert_array_almost_equal(ft, t, decimal=2)
+    m = NMF(solver=solver, n_components=3, init='random',
+            random_state=0, tol=1e-5)
+    ft = m.fit_transform(A)
+    t = m.transform(A)
+    assert_array_almost_equal(ft, t, decimal=2)
 
 
 def test_nmf_transform_custom_init():
@@ -132,16 +134,16 @@ def test_nmf_transform_custom_init():
     m.transform(A)
 
 
-def test_nmf_inverse_transform():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+def test_nmf_inverse_transform(solver):
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
-    for solver in ('cd', 'mu'):
-        m = NMF(solver=solver, n_components=4, init='random', random_state=0,
-                max_iter=1000)
-        ft = m.fit_transform(A)
-        A_new = m.inverse_transform(ft)
-        assert_array_almost_equal(A, A_new, decimal=2)
+    m = NMF(solver=solver, n_components=4, init='random', random_state=0,
+            max_iter=1000)
+    ft = m.fit_transform(A)
+    A_new = m.inverse_transform(ft)
+    assert_array_almost_equal(A, A_new, decimal=2)
 
 
 def test_n_components_greater_n_features():

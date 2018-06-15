@@ -65,3 +65,14 @@ cdef class Criterion:
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self, double impurity) nogil
     cdef double proxy_impurity_improvement(self) nogil
+
+cdef class ClassificationCriterion(Criterion):
+    """Abstract criterion for classification."""
+
+    cdef SIZE_t* n_classes
+    cdef SIZE_t sum_stride
+
+cdef class RegressionCriterion(Criterion):
+    """Abstract regression criterion."""
+
+    cdef double sq_sum_total

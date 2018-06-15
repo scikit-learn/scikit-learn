@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 
@@ -669,6 +670,30 @@ def test_check_input_false():
     assert_raises(ValueError, clf.fit, X, y, check_input=False)
 
 
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_copy_X_True(check_input):
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=True)
+    enet.fit(X, y, check_input=check_input)
+
+    assert_array_equal(original_X, X)
+
+
+def test_enet_copy_X_False_check_input_False():
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=False)
+    enet.fit(X, y, check_input=False)
+
+    # No copying, X is overwritten
+    assert_true(np.any(np.not_equal(original_X, X)))
+
+
 def test_overrided_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
@@ -778,3 +803,9 @@ def test_enet_l1_ratio():
         est.fit(X, y[:, None])
         est_desired.fit(X, y[:, None])
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+
+def test_coef_shape_not_zero():
+    est_no_intercept = Lasso(fit_intercept=False)
+    est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
+    assert est_no_intercept.coef_.shape == (1,)

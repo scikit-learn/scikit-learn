@@ -280,29 +280,27 @@ def test_error():
 def test_base_estimator():
     # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier
-    from sklearn.svm import SVC
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
     clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(gamma="scale"), algorithm="SAMME")
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
-    from sklearn.svm import SVR
 
     clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
     clf.fit(X, y_regr)
 
-    clf = AdaBoostRegressor(SVR(), random_state=0)
+    clf = AdaBoostRegressor(SVR(gamma='scale'), random_state=0)
     clf.fit(X, y_regr)
 
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(gamma="scale"), algorithm="SAMME")
     assert_raises_regexp(ValueError, "worse than random",
                          clf.fit, X_fail, y_fail)
 
@@ -344,14 +342,14 @@ def test_sparse_classification():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(probability=True),
+            base_estimator=CustomSVC(gamma='scale', probability=True),
             random_state=1,
             algorithm="SAMME"
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(probability=True),
+            base_estimator=CustomSVC(gamma='scale', probability=True),
             random_state=1,
             algorithm="SAMME"
         ).fit(X_train, y_train)
@@ -438,13 +436,13 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(),
+            base_estimator=CustomSVR(gamma='scale'),
             random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(),
+            base_estimator=CustomSVR(gamma='scale'),
             random_state=1
         ).fit(X_train, y_train)
 

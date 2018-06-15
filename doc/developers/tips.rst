@@ -17,25 +17,29 @@ as GitHub gists; to install them, click on the "Raw" button on the gist page.
 .. _TamperMonkey: https://tampermonkey.net
 .. _GreaseMonkey: http://www.greasespot.net
 
+
+.. _viewing_rendered_html_documentation:
+
 Viewing the rendered HTML documentation for a pull request
 ----------------------------------------------------------
 
 We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, we provide a redirect as described in the
-:ref:`documentation section of the contributor guide
-<contribute_documentation>`. Instead of typing the address by hand, we provide a
-`userscript <https://gist.github.com/lesteve/470170f288884ec052bcf4bc4ffe958a>`_
-that adds a button to every PR. After installing the userscript, navigate to any
-GitHub PR; a new button labeled "See CircleCI doc for this PR" should appear in
-the top-right area.
+access that documentation, instructions are provided in the :ref:`documentation
+section of the contributor guide <contribute_documentation>`. To save you a few
+clicks, we provide a `userscript
+<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`_
+that adds a button to every PR. After installing the userscript, navigate to
+any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
+appear in the top-right area.
 
 Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
 changed in the mean while. This `userscript
-<https://gist.github.com/lesteve/b4ef29bccd42b354a834>`_ provides a button to
-unfold all such hidden discussions at once, so you can catch up.
+<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`_
+provides a shortcut (Control-Alt-P at the time of writing but look at the code
+to be sure) to unfold all such hidden discussions at once, so you can catch up.
 
 Checking out pull requests as remote-tracking branches
 ------------------------------------------------------
@@ -60,8 +64,22 @@ will be displayed as a color background behind the line number.
 Useful pytest aliases and flags
 -------------------------------
 
-We recommend using pytest to run unit tests. When a unit tests fail, the
-following tricks can make debugging easier:
+The full test suite takes fairly long to run. For faster iterations,
+it is possibly to select a subset of tests using pytest selectors.
+In particular, one can run a `single test based on its node ID
+<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_::
+
+  pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
+
+or use the `-k pytest parameter
+<https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
+to select tests based on their name. For instance,::
+
+  pytest sklearn/tests/test_common.py -v -k LogisticRegression
+
+will run all :term:`common tests` for the ``LogisticRegression`` estimator.
+
+When a unit tests fail, the following tricks can make debugging easier:
 
   1. The command line argument ``pytest -l`` instructs pytest to print the local
      variables when a failure occurs.
