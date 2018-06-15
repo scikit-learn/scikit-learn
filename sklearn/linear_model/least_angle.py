@@ -64,6 +64,9 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         matrix is precomputed from the given X, if there are more samples
         than features.
 
+    n_samples: integer or float, optional (default=None)
+        Equivalent size of sample.
+
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
 
@@ -150,30 +153,16 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                       ' This option will be removed in version 0.22.',
                       DeprecationWarning)
 
-    if Gram is None:
-        n_features = X.shape[1]
-        n_samples = y.size
+    if not n_samples:
+        if y is not None:
+            n_samples = y.size
+        else:
+            raise ValueError('y cannot be None while n_samples is None.')
+
+    if Xy is None:
+        Cov = np.dot(X.T, y)
     else:
-        n_features = Xy.shape[0]
-        if Gram.shape != (n_features, n_features):
-            raise ValueError('The shapes of the inputs Gram and Xy'
-                             ' do not match.')
-    max_features = min(max_iter, n_features)
-
-    if return_path:
-        coefs = np.zeros((max_features + 1, n_features))
-        alphas = np.zeros(max_features + 1)
-    else:
-        coef, prev_coef = np.zeros(n_features), np.zeros(n_features)
-        alpha, prev_alpha = np.array([0.]), np.array([0.])  # better ideas?
-
-    n_iter, n_active = 0, 0
-    active, indices = list(), np.arange(n_features)
-    # holds the sign of covariance
-    sign_active = np.empty(max_features, dtype=np.int8)
-    drop = False
-
-
+        Cov = Xy.copy()
 
     if Gram is None or Gram is False:
         Gram = None
@@ -191,10 +180,27 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     elif copy_Gram:
         Gram = Gram.copy()
 
-    if Xy is None:
-        Cov = np.dot(X.T, y)
+    if Gram is None:
+        n_features = X.shape[1]
     else:
-        Cov = Xy.copy()
+        n_features = Cov.shape[0]
+        if Gram.shape != (n_features, n_features):
+            raise ValueError('The shapes of the inputs Gram and Xy'
+                             ' do not match.')
+    max_features = min(max_iter, n_features)
+
+    if return_path:
+        coefs = np.zeros((max_features + 1, n_features))
+        alphas = np.zeros(max_features + 1)
+    else:
+        coef, prev_coef = np.zeros(n_features), np.zeros(n_features)
+        alpha, prev_alpha = np.array([0.]), np.array([0.])  # better ideas?
+
+    n_iter, n_active = 0, 0
+    active, indices = list(), np.arange(n_features)
+    # holds the sign of covariance
+    sign_active = np.empty(max_features, dtype=np.int8)
+    drop = False
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
@@ -239,9 +245,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             prev_alpha = alphas[n_iter - 1, np.newaxis]
             prev_coef = coefs[n_iter - 1]
 
-        alpha[0] = C
-        if n_sampels is not None:
-            alpha[0] /= n_samples
+        alpha[0] = C / n_samples
 
         if alpha[0] <= alpha_min + equality_tolerance:  # early stopping
             if abs(alpha[0] - alpha_min) > equality_tolerance:
@@ -444,7 +448,7 @@ def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
             # handle the case when idx is not length of 1
             [arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii) for ii in
-                idx]
+             idx]
 
             n_active -= 1
             m, n = idx, n_active
@@ -635,10 +639,9 @@ class Lars(LinearModel, RegressorMixin):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        self.copy_X)
+        X, y, X_offset, y_offset, X_scale = (
+            self._preprocess_data(X, y, self.fit_intercept, self.normalize,
+                                  self.copy_X))
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
