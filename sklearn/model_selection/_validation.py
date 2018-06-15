@@ -31,8 +31,6 @@ from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
-from copy import deepcopy
-from ..base import BaseEstimator
 
 
 __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
@@ -42,7 +40,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False, partial_fit=False, test_data=None):
+                   return_estimator=False, partial_fit=False, X_test=None,
+                   y_test=None):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -224,7 +223,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             est, X, y, scorers, train, test, verbose, None, fit_params,
             return_train_score=return_train_score, return_times=True,
             return_estimator=return_estimator, partial_fit=partial_fit,
-            test_data=test_data)
+            X_test=X_test, y_test=y_test)
         for est, (train, test) in zip(ests, cv.split(X, y, groups)))
 
     zipped_scores = list(zip(*scores))
@@ -267,9 +266,9 @@ def _get_estimators(estimator, n):
     if isinstance(estimator, list):
         ret = estimator
         if len(ret) != n:
-            msg = ('the number of estimators ({n_ests}) being fit is not equal to '
+            msg = ('the number of estimators ({n}) being fit is not equal to '
                    'the number of splits for cross validation ({n_splits}).')
-            raise ValueError(msg.format(n_ests=len(ests), n_splits=n))
+            raise ValueError(msg.format(n=len(ret), n_splits=n))
         return ret
     else:
         ret = [clone(estimator) for _ in range(n)]
@@ -394,7 +393,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
                    error_score='raise-deprecating', partial_fit=False,
-                   test_data=None):
+                   X_test=None, y_test=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -505,13 +504,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     start_time = time.time()
 
-    if test_data is None:
+    if X_test is None and y_test is None:
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
     else:
         X_train, y_train = X, y
-        X_test = test_data[0]
-        y_test = test_data[1] if y_train is not None else None
     train_data = (X_train, y_train) if y_train is not None else (X_train, )
 
     is_multimetric = not callable(scorer)
@@ -525,7 +522,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             for _ in range(int(partial_fit)):
                 estimator.partial_fit(*train_data, **fit_params)
-
     except Exception as e:
         # Note fit time as time until error
         fit_time = time.time() - start_time

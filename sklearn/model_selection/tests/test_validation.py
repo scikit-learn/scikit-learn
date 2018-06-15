@@ -669,9 +669,9 @@ def test_cross_validate_val_set():
     y_test = (np.sign(rng.randn(n)) + 1) / 2
 
     clf = SGDClassifier(random_state=0)
-    r = cross_validate(clf, X_train, y_train, test_data=(X_test, y_test))
+    r = cross_validate(clf, X_train, y_train, X_test=X_test, y_test=y_test)
 
-    assert_true(r['test_score'].max() < 0.48 < 0.85 < r['train_score'].min())
+    assert_true(r['test_score'].mean() < 0.48 < 0.85 < r['train_score'].mean())
 
 
 def test_cross_validate_repeated_call():
@@ -690,8 +690,8 @@ def test_cross_validate_repeated_call():
     assert isinstance(ret1['estimator'], tuple)
     assert all([isinstance(e, BaseEstimator) for e in ret1['estimator']])
 
-    ret2 = cross_validate(ret1['estimator'], X, y, return_estimator=True, partial_fit=True,
-                          cv=cv)
+    ret2 = cross_validate(ret1['estimator'], X, y, return_estimator=True,
+                          partial_fit=True, cv=cv)
 
     assert set(ret1.keys()) == set(ret2.keys())
     for k, v1 in ret1.items():
