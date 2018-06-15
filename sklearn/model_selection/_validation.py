@@ -48,8 +48,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
+    estimator : estimator object implementing 'fit', list of estimators
+        The object to use to fit the data. If a list, do not clone each
+        estimator and it must be the same length as the number of cross
+        validation splits.
 
     X : array-like
         The data to fit. Can be for example a list, or an array.
@@ -139,6 +141,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         ``estimator.partial_fit`` once.  If an integer, call ``partial_fit``
         times. ``estimator`` is assumed to be pickleable if ``partial_fit``
         is not True.
+
+    X_test : array-like, optional
+        If present, treat this as the validation set and use
+        ``X`` and ``y`` for training as the training set.
+
+    y_test : array-like, optional
+        If present, treat this as the validation set and use
+        ``X`` and ``y`` for training as the training set.
 
 
     Returns
