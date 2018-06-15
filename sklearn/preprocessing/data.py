@@ -401,6 +401,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X /= self.scale_
         return X
 
+    def _get_tags(self):
+        return _update_tags(super(MinMaxScaler, self),
+                            missing_values=True)
+
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     """Transforms features by scaling each feature to a given range.
