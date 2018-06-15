@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
+from ..base import BaseEstimator, RegressorMixin, clone, _update_tags
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, safe_indexing
 from ..preprocessing import FunctionTransformer
@@ -223,3 +223,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
+
+    def _get_tags(self):
+        return _update_tags(super(TransformedTargetRegressor, self),
+                            input_validation=False)
