@@ -55,6 +55,7 @@ from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
+from sklearn.preprocessing.data import Winsorizer
 from sklearn.preprocessing.data import power_transform
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
@@ -2053,3 +2054,23 @@ def test_power_transformer_lambda_zero():
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
+
+
+def test_winsorizer_notfitted():
+    win = Winsorizer()
+    X = np.abs(X_2d)
+    assert_raises(NotFittedError, win.transform, X)
+
+
+def test_winsorizer():
+    X = np.abs(X_2d)
+    quantile = 0.1
+    win = Winsorizer(quantile)
+
+    X_trans = win.fit_transform(X)
+
+    lb = np.percentile(X, 100 * quantile, axis=0)
+    ub = np.percentile(X, 100 * (1 - quantile), axis=0)
+    X_expected = np.clip(X, lb, ub)
+
+    assert_array_almost_equal(X_trans, X_expected)
