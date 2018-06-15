@@ -183,7 +183,8 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # a deprecated fit method
 
     class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
-        @deprecated("Deprecated for the purpose of testing check_fit_score_takes_y")
+        @deprecated("Deprecated for the purpose of testing "
+                    "check_fit_score_takes_y")
         def fit(self, X, y):
             return self
 

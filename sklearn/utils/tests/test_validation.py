@@ -569,7 +569,8 @@ def test_has_fit_parameter():
         def fit(self, X, y, sample_weight=None):
             pass
 
-    assert_true(has_fit_parameter(TestClassWithDeprecatedFitMethod, "sample_weight"))
+    assert_true(has_fit_parameter(TestClassWithDeprecatedFitMethod,
+                                  "sample_weight"))
 
 
 def test_check_symmetric():
