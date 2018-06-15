@@ -93,6 +93,7 @@ def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
         assert_array_almost_equal(x, y, decimal=decimal,
                                   err_msg=err_msg)
 
+
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
              'MinMaxScaler', 'QuantileTransformer']
 
@@ -924,10 +925,6 @@ def _check_transformer(name, transformer_orig, X, y):
         else:
             X_pred2 = transformer.transform(X)
             X_pred3 = transformer.fit_transform(X, y=y_)
-        # raises error on malformed input for transform
-        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless"):
-            # If it's not an array, it does not have a 'T' property
-            assert_raises(ValueError, transformer.transform, X.T)
 
         if not _safe_tags(transformer_orig, 'deterministic'):
             msg = name + ' is non deterministic'
@@ -959,7 +956,7 @@ def _check_transformer(name, transformer_orig, X, y):
             assert_equal(_num_samples(X_pred3), n_samples)
 
         # raises error on malformed input for transform
-        if hasattr(X, 'T'):
+        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless"):
             # If it's not an array, it does not have a 'T' property
             with assert_raises(ValueError, msg="The transformer {} does "
                                "not raise an error when the number of "
@@ -1349,11 +1346,13 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         set_random_state(classifier)
         # raises error on malformed input for fit
         if tags["input_validation"]:
-            with assert_raises(ValueError, msg="The classifier {} does not"
-                            " raise an error when incorrect/malformed input "
-                            "data for fit is passed. The number of training "
-                            "examples is not the same as the number of labels."
-                            " Perhaps use check_X_y in fit.".format(name)):
+            with assert_raises(
+                ValueError,
+                msg="The classifier {} does not "
+                    "raise an error when incorrect/malformed input "
+                    "data for fit is passed. The number of training "
+                    "examples is not the same as the number of labels. "
+                    "Perhaps use check_X_y in fit.".format(name)):
                 classifier.fit(X, y[:-1])
 
         # fit
@@ -1372,13 +1371,13 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
             if _is_pairwise(classifier):
                 with assert_raises(ValueError, msg="The classifier {} does not"
                                    " raise an error when shape of X"
-                                   "in predict is not equal to (n_test_samples,"
-                                   "n_training_samples)".format(name)):
+                                   "in predict is not equal to (n_test_samples"
+                                   ", n_training_samples)".format(name)):
                     classifier.predict(X.reshape(-1, 1))
             else:
-                with assert_raises(ValueError, msg="The classifier {} does not"
-                                   " raise an error when the number of features "
-                                   "in predict is different from the number of"
+                with assert_raises(ValueError, msg="The classifier {} does not "
+                                   "raise an error when the number of features"
+                                   " in predict is different from the number of"
                                    " features in fit.".format(name)):
                     classifier.predict(X.T)
 
