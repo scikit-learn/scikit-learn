@@ -55,8 +55,8 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     axes = []
     emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
     for col in range(X.shape[1]):
-        X_interior = X[(X[:, col] >= emp_percentiles[0, col]) & 
-                       (X[:, col] <= emp_percentiles[1, col]), 
+        X_interior = X[(X[:, col] >= emp_percentiles[0, col]) &
+                       (X[:, col] <= emp_percentiles[1, col]),
                        col]
         uniques = np.unique(X_interior)
 
