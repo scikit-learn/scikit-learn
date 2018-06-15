@@ -558,8 +558,6 @@ class DensityMixin(object):
         pass
 
 
-<<<<<<< HEAD
-=======
 class OutlierMixin(object):
     """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
@@ -584,7 +582,6 @@ class OutlierMixin(object):
 
 
 ###############################################################################
->>>>>>> master
 class MetaEstimatorMixin(object):
     _required_parameters = ["estimator"]
 
