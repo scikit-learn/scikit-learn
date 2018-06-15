@@ -96,7 +96,7 @@ def test_incr_mean_variance_axis():
         # default params for incr_mean_variance
         last_mean = np.zeros(n_features)
         last_var = np.zeros_like(last_mean)
-        last_n = 0
+        last_n = np.zeros_like(last_mean, dtype=np.int64)
 
         # Test errors
         X = np.array(data_chunks[0])
@@ -138,6 +138,8 @@ def test_incr_mean_variance_axis():
         for input_dtype, output_dtype in expected_dtypes:
             for X_sparse in (X_csr, X_csc):
                 X_sparse = X_sparse.astype(input_dtype)
+                last_mean = last_mean.astype(output_dtype)
+                last_var = last_var.astype(output_dtype)
                 X_means, X_vars = mean_variance_axis(X_sparse, axis)
                 X_means_incr, X_vars_incr, n_incr = \
                     incr_mean_variance_axis(X_sparse, axis, last_mean,
@@ -154,7 +156,7 @@ def test_incr_mean_variance_axis():
 def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
     old_means = np.array([535., 535., 535., 535.])
     old_variances = np.array([4225., 4225., 4225., 4225.])
-    old_sample_count = np.array([2, 2, 2, 2], dtype=np.int32)
+    old_sample_count = np.array([2, 2, 2, 2], dtype=np.int64)
 
     X = sparse_constructor(
         np.array([[170, 170, 170, 170],

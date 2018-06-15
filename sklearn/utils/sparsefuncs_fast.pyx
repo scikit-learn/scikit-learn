@@ -65,7 +65,6 @@ def csr_mean_variance_axis0(X):
 
     Returns
     -------
-
     means : float array with shape (n_features,)
         Feature-wise means
 
@@ -75,22 +74,22 @@ def csr_mean_variance_axis0(X):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape, X.indices)
+    means, variances, _ =  _csr_mean_variance_axis0(X.data, X.shape[0],
+                                                    X.shape[1], X.indices)
     return means, variances
 
 
 def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
-                             shape,
-                             np.ndarray[int, ndim=1] X_indices):
+                             unsigned long long n_samples,
+                             unsigned long long n_features,
+                             np.ndarray[integral, ndim=1] X_indices):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
-    cdef unsigned int n_samples = shape[0]
-    cdef unsigned int n_features = shape[1]
-
-    cdef unsigned int i
-    cdef unsigned int non_zero = X_indices.shape[0]
-    cdef unsigned int col_ind
-    cdef floating diff
+    cdef:
+        np.npy_intp i
+        unsigned long long non_zero = X_indices.shape[0]
+        np.npy_intp col_ind
+        floating diff
 
     # means[j] contains the mean of feature j
     cdef np.ndarray[floating, ndim=1] means
@@ -105,12 +104,13 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     means = np.zeros(n_features, dtype=dtype)
     variances = np.zeros_like(means, dtype=dtype)
 
-    # counts[j] contains the number of samples where feature j is non-zero
-    cdef np.ndarray[int, ndim=1] counts = np.zeros(n_features,
-                                                   dtype=np.int32)
-    # counts_nan[j] contains the number of NaNs for feature j
-    cdef np.ndarray[int, ndim=1] counts_nan = np.zeros(n_features,
-                                                       dtype=np.int32)
+    cdef:
+        # counts[j] contains the number of samples where feature j is non-zero
+        np.ndarray[np.int64_t, ndim=1] counts = np.zeros(n_features,
+                                                         dtype=np.int64)
+        # counts_nan[j] contains the number of NaNs for feature j
+        np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
+                                                             dtype=np.int64)
 
     for i in xrange(non_zero):
         col_ind = X_indices[i]
@@ -146,7 +146,6 @@ def csc_mean_variance_axis0(X):
 
     Returns
     -------
-
     means : float array with shape (n_features,)
         Feature-wise means
 
@@ -156,31 +155,30 @@ def csc_mean_variance_axis0(X):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape, X.indices,
+    means, variances, _ = _csc_mean_variance_axis0(X.data, X.shape[0],
+                                                   X.shape[1], X.indices,
                                                   X.indptr)
     return means, variances
 
 
 def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
-                             shape,
-                             np.ndarray[int, ndim=1] X_indices,
-                             np.ndarray[int, ndim=1] X_indptr):
+                             unsigned long long n_samples,
+                             unsigned long long n_features,
+                             np.ndarray[integral, ndim=1] X_indices,
+                             np.ndarray[integral, ndim=1] X_indptr):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
-    cdef unsigned int n_samples = shape[0]
-    cdef unsigned int n_features = shape[1]
+    cdef:
+        np.npy_intp i, j
+        unsigned long long counts
+        unsigned long long startptr
+        unsigned long long endptr
+        floating diff
+        # means[j] contains the mean of feature j
+        np.ndarray[floating, ndim=1] means
+        # variances[j] contains the variance of feature j
+        np.ndarray[floating, ndim=1] variances
 
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef unsigned int counts
-    cdef unsigned int startptr
-    cdef unsigned int endptr
-    cdef floating diff
-
-    # means[j] contains the mean of feature j
-    cdef np.ndarray[floating, ndim=1] means
-    # variances[j] contains the variance of feature j
-    cdef np.ndarray[floating, ndim=1] variances
     if floating is float:
         dtype = np.float32
     else:
@@ -189,8 +187,8 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     means = np.zeros(n_features, dtype=dtype)
     variances = np.zeros_like(means, dtype=dtype)
 
-    cdef np.ndarray[int, ndim=1] counts_nan = np.zeros(n_features,
-                                                       dtype=np.int32)
+    cdef np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
+                                                              dtype=np.int64)
 
     for i in xrange(n_features):
 
@@ -235,19 +233,18 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
     last_var : float array with shape (n_features,)
       Array of feature-wise var to update with the new data X.
 
-    last_n : int
+    last_n : int array with shape (n_features,)
       Number of samples seen so far, before X.
 
     Returns
     -------
-
     updated_mean : float array with shape (n_features,)
       Feature-wise means
 
     updated_variance : float array with shape (n_features,)
       Feature-wise variances
 
-    updated_n : int
+    updated_n : int array with shape (n_features,)
       Updated number of samples seen
 
     References
@@ -263,32 +260,35 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
     """
     if X.dtype != np.float32:
         X = X.astype(np.float64)
-    return _incr_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr,
-                                     X.format, last_mean, last_var, last_n)
+    return _incr_mean_variance_axis0(X.data, X.shape[0], X.shape[1], X.indices,
+                                     X.indptr, X.format, last_mean, last_var,
+                                     last_n)
 
 
 def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
-                              shape,
-                              np.ndarray[int, ndim=1] X_indices,
-                              np.ndarray[int, ndim=1] X_indptr,
-                              X_format,
-                              last_mean,
-                              last_var,
-                              last_n):
+                              unsigned long long n_samples,
+                              unsigned long long n_features,
+                              np.ndarray[integral, ndim=1] X_indices,
+                              np.ndarray[integral, ndim=1] X_indptr,
+                              str X_format,
+                              np.ndarray[floating, ndim=1] last_mean,
+                              np.ndarray[floating, ndim=1] last_var,
+                              np.ndarray[np.int64_t, ndim=1] last_n):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
-    cdef unsigned long n_samples = shape[0]
-    cdef unsigned int n_features = shape[1]
-    cdef unsigned int i
+    cdef:
+        np.npy_intp i
 
     # last = stats until now
     # new = the current increment
     # updated = the aggregated stats
     # when arrays, they are indexed by i per-feature
-    cdef np.ndarray[floating, ndim=1] new_mean
-    cdef np.ndarray[floating, ndim=1] new_var
-    cdef np.ndarray[floating, ndim=1] updated_mean
-    cdef np.ndarray[floating, ndim=1] updated_var
+    cdef:
+        np.ndarray[floating, ndim=1] new_mean
+        np.ndarray[floating, ndim=1] new_var
+        np.ndarray[floating, ndim=1] updated_mean
+        np.ndarray[floating, ndim=1] updated_var
+
     if floating is float:
         dtype = np.float32
     else:
@@ -299,31 +299,36 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     updated_mean = np.zeros_like(new_mean, dtype=dtype)
     updated_var = np.zeros_like(new_mean, dtype=dtype)
 
-    cdef np.ndarray[int, ndim=1] new_n
-    cdef np.ndarray[int, ndim=1] updated_n
-    cdef np.ndarray[floating, ndim=1] last_over_new_n
-    cdef np.ndarray[int, ndim=1] counts_nan
+    cdef:
+        np.ndarray[np.int64_t, ndim=1] new_n
+        np.ndarray[np.int64_t, ndim=1] updated_n
+        np.ndarray[floating, ndim=1] last_over_new_n
+        np.ndarray[np.int64_t, ndim=1] counts_nan
 
     # Obtain new stats first
-    new_n = np.ones(n_features, dtype=np.int32) * n_samples
-
-    updated_n = np.zeros_like(new_n, dtype=np.int32)
+    new_n = np.ones(n_features, dtype=np.int64) * n_samples
+    updated_n = np.zeros_like(new_n, dtype=np.int64)
     last_over_new_n = np.zeros_like(new_n, dtype=dtype)
 
     if X_format == 'csr':
         # X is a CSR matrix
         new_mean, new_var, counts_nan = _csr_mean_variance_axis0(
-            X_data, shape, X_indices)
+            X_data, n_samples, n_features, X_indices)
     else:
         # X is a CSC matrix
         new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
-            X_data, shape, X_indices, X_indptr)
+            X_data, n_samples, n_features, X_indices, X_indptr)
 
     for i in xrange(n_features):
         new_n[i] -= counts_nan[i]
 
     # First pass
-    if np.all(last_n == 0):
+    cdef bint is_first_pass = True
+    for i in xrange(n_features):
+        if last_n[i] > 0:
+            is_first_pass = False
+            break
+    if is_first_pass:
         return new_mean, new_var, new_n
 
     # Next passes
