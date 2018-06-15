@@ -19,17 +19,11 @@ import pytest
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import SkipTestWarning
 
 import sklearn
-from warnings import warn
-from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import Ridge
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -84,6 +78,7 @@ def test_all_estimator_no_base_class():
         set_checking_parameters(estimator)
         for check in _yield_all_checks(name, estimator):
             yield check, name, estimator """
+
 
 @pytest.mark.parametrize(
         'name, Estimator',
@@ -186,7 +181,6 @@ def test_configure():
 
 def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
-
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
