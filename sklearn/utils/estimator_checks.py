@@ -699,6 +699,10 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     set_random_state(estimator, 1)
     estimator.fit(X, y)
+    tags = _safe_tags(estimator)
+    if not tags["input_validation"]:
+        # FIXME this is a bit loose
+        return
 
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
@@ -831,6 +835,10 @@ def check_fit1d(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(np.int)
     estimator = clone(estimator_orig)
+    tags = _safe_tags(estimator)
+    if not tags["input_validation"]:
+        # FIXME this is a bit loose
+        return
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
