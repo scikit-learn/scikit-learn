@@ -593,7 +593,7 @@ def softmax(X, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (M, N)
+    X : array-like of floats, shape (M, N)
         Argument to the logistic function
 
     copy : bool, optional

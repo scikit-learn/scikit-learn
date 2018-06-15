@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
 import warnings
 
+import pytest
+from scipy import sparse
+
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -28,14 +31,13 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises)
+                                   SkipTest, assert_raises,
+                                   assert_allclose_dense_sparse)
 
 from collections import defaultdict, Mapping
 from functools import partial
 import pickle
 from io import StringIO
-
-import pytest
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -1036,6 +1038,42 @@ def test_vectorizer_string_object_as_input(Vectorizer):
             ValueError, message, vec.fit_transform, "hello world!")
     assert_raise_message(ValueError, message, vec.fit, "hello world!")
     assert_raise_message(ValueError, message, vec.transform, "hello world!")
+
+
+@pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
+def test_tfidf_transformer_type(X_dtype):
+    X = sparse.rand(10, 20000, dtype=X_dtype, random_state=42)
+    X_trans = TfidfTransformer().fit_transform(X)
+    assert X_trans.dtype == X.dtype
+
+
+def test_tfidf_transformer_sparse():
+    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X_csc = sparse.csc_matrix(X)
+    X_csr = sparse.csr_matrix(X)
+
+    X_trans_csc = TfidfTransformer().fit_transform(X_csc)
+    X_trans_csr = TfidfTransformer().fit_transform(X_csr)
+    assert_allclose_dense_sparse(X_trans_csc, X_trans_csr)
+    assert X_trans_csc.format == X_trans_csr.format
+
+
+@pytest.mark.parametrize(
+    "vectorizer_dtype, output_dtype, expected_warning, msg_warning",
+    [(np.int32, np.float64, UserWarning, "'dtype' should be used."),
+     (np.int64, np.float64, UserWarning, "'dtype' should be used."),
+     (np.float32, np.float32, None, None),
+     (np.float64, np.float64, None, None)]
+)
+def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
+                               expected_warning, msg_warning):
+    X = np.array(["numpy", "scipy", "sklearn"])
+    vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
+    with pytest.warns(expected_warning, match=msg_warning) as record:
+            X_idf = vectorizer.fit_transform(X)
+    if expected_warning is None:
+        assert len(record) == 0
+    assert X_idf.dtype == output_dtype
 
 
 @pytest.mark.parametrize("vec", [
