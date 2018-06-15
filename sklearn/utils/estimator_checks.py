@@ -518,7 +518,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
             X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
                           [2, 1], [2, 2], [2, 3], [2, 4]])
             X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 2, 2, 2])
+            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2])
             weights = pd.Series([1] * 8)
             if _safe_tags(estimator, "multioutput_only"):
                 y = pd.DataFrame(y)
