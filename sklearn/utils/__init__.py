@@ -569,6 +569,19 @@ def is_scalar_nan(x):
     Returns
     -------
     boolean
+
+    Examples
+    --------
+    >>> is_scalar_nan(np.nan)
+    True
+    >>> is_scalar_nan(float("nan"))
+    True
+    >>> is_scalar_nan(None)
+    False
+    >>> is_scalar_nan("")
+    False
+    >>> is_scalar_nan([np.nan])
+    False
     """
 
     return isinstance(x, numbers.Real) and np.isnan(x)
