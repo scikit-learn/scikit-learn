@@ -1152,10 +1152,10 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed",
-        default: (1e-5, 1e5)
-        The lower and upper bound on length_scale. If set to "fixed",
-        length_scale cannot be changed during hyperparameter tuning.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale (default: (1e-5, 1e5)).
+        If set to "fixed", length_scale cannot be changed during
+        hyperparameter tuning.
 
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
@@ -1267,10 +1267,10 @@ class Matern(RBF):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed",
-        default: (1e-5, 1e5)
-        The lower and upper bound on length_scale. If set to "fixed",
-        length_scale cannot be changed during hyperparameter tuning.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale (default: (1e-5, 1e5)).
+        If set to "fixed", length_scale cannot be changed during
+        hyperparameter tuning.
 
     nu: float, default: 1.5
         The parameter nu controlling the smoothness of the learned function.
@@ -1417,10 +1417,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     alpha : float > 0, default: 1.0
         Scale mixture parameter
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed",
-        default: (1e-5, 1e5)
-        The lower and upper bound on length_scale. If set to "fixed",
-        length_scale cannot be changed during hyperparameter tuning.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale (default: (1e-5, 1e5)).
+        If set to "fixed", length_scale cannot be changed during
+        hyperparameter tuning.
 
     alpha_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on alpha
@@ -1531,10 +1531,10 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     periodicity : float > 0, default: 1.0
         The periodicity of the kernel.
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed",
-        default: (1e-5, 1e5)
-        The lower and upper bound on length_scale. If set to "fixed",
-        length_scale cannot be changed during hyperparameter tuning.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale (default: (1e-5, 1e5)).
+        If set to "fixed", length_scale cannot be changed during
+        hyperparameter tuning.
 
     periodicity_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on periodicity
