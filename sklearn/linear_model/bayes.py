@@ -237,7 +237,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
                 s += 0.5 * (n_features * log(lambda_) +
                             n_samples * log(alpha_) -
                             alpha_ * rmse_ -
-                            (lambda_ * np.sum(coef_ ** 2)) -
+                            (lambda_ * np.sum(coef_ ** 2)) +
                             logdet_sigma_ -
                             n_samples * log(2 * np.pi))
                 self.scores_.append(s)
