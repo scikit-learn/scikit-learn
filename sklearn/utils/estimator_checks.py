@@ -41,9 +41,9 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import Ridge
 
 
-from sklearn.base import (clone, TransformerMixin, ClusterMixin,
+from sklearn.base import (clone, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor,
-                          ClassifierMixin, _DEFAULT_TAGS, RegressorMixin,
+                          _DEFAULT_TAGS, RegressorMixin,
                           is_outlier_detector)
 
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -1654,6 +1654,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 def choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
+
 def check_classifiers_classes(name, classifier_orig):
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
                                             cluster_std=0.1)
@@ -1935,7 +1936,7 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 estimator = Estimator(LinearDiscriminantAnalysis())
         else:
             raise SkipTest("Can't instantiate estimator {} which"
-                           "requires parameters {}".format(
+                           " requires parameters {}".format(
                                name, required_parameters))
     estimator = Estimator()
     for attr in dir(estimator):
