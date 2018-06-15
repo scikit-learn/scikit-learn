@@ -94,11 +94,32 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True,
-                 sort=True):
+                 sort=True, n_features=None):
+        if n_features is not None:
+            self._validate_params(n_features)
+
         self.dtype = dtype
         self.separator = separator
         self.sparse = sparse
         self.sort = sort
+        self.n_features = n_features
+
+    @staticmethod
+    def _validate_params(n_features):
+        # strangely, np.int16 instances are not instances of Integral,
+        # while np.int64 instances are...
+        if not isinstance(n_features, (numbers.Integral, np.integer)):
+            raise TypeError("n_features must be integral, got %r (%s)."
+                            % (n_features, type(n_features)))
+        elif n_features < 1 or n_features >= 2 ** 31:
+            raise ValueError("Invalid number of features (%d)." % n_features)
+    
+    @staticmethod
+    def _validate_feature_name(feature,x):
+        # strangely, np.int16 instances are not instances of Integral,
+        # while np.int64 instances are...
+        if feature.isdigit():
+            raise ValueError("For fixed size features must be nondigit, got %s on %s." % (feature,x))
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -114,27 +135,47 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        feature_names = []
-        vocab = {}
+        return self._partial_fit(X,y)
 
+    def partial_fit(self, X, y=None):
+        self._partial_fit(X, y)
+        return self.transform(X)
+
+    def _partial_fit(self, X, y=None):
+        if getattr(self, "feature_names_", None) is None:
+            self.feature_names_ = []
+            
+        if getattr(self, "vocabulary_", None) is None:
+            self.vocabulary_ = {}
+            
+        feature_names = self.feature_names_
+        vocab = self.vocabulary_
+        
         for x in X:
             for f, v in six.iteritems(x):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
+                    self._validate_feature_name(f,x)
+                    if len(feature_names) == self.n_features:
+                        raise ValueError("The size of vocab is larger than n_features.")
                     feature_names.append(f)
                     vocab[f] = len(vocab)
-
+                    
+        
         if self.sort:
             feature_names.sort()
             vocab = dict((f, i) for i, f in enumerate(feature_names))
+        
+        for k in range(len(feature_names),self.n_features):
+            vocab[str(k)] = None
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
-
+        
         return self
 
-    def _transform(self, X, fitting):
+    def _transform(self, X):
         # Sanity check: Python's array has no way of explicitly requesting the
         # signed 32-bit integers that scipy.sparse needs, so we use the next
         # best thing: typecode "i" (int). However, if that gives larger or
@@ -145,12 +186,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             " include the output from platform.platform() in your bug report")
 
         dtype = self.dtype
-        if fitting:
-            feature_names = []
-            vocab = {}
-        else:
-            feature_names = self.feature_names_
-            vocab = self.vocabulary_
+        feature_names = self.feature_names_
+        vocab = self.vocabulary_
 
         # Process everything as sparse regardless of setting
         X = [X] if isinstance(X, Mapping) else X
@@ -171,12 +208,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 if f in vocab:
                     indices.append(vocab[f])
                     values.append(dtype(v))
-                else:
-                    if fitting:
-                        feature_names.append(f)
-                        vocab[f] = len(vocab)
-                        indices.append(vocab[f])
-                        values.append(dtype(v))
 
             indptr.append(len(indices))
 
@@ -190,23 +221,10 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         result_matrix = sp.csr_matrix((values, indices, indptr),
                                       shape=shape, dtype=dtype)
 
-        # Sort everything if asked
-        if fitting and self.sort:
-            feature_names.sort()
-            map_index = np.empty(len(feature_names), dtype=np.int32)
-            for new_val, f in enumerate(feature_names):
-                map_index[new_val] = vocab[f]
-                vocab[f] = new_val
-            result_matrix = result_matrix[:, map_index]
-
         if self.sparse:
             result_matrix.sort_indices()
         else:
             result_matrix = result_matrix.toarray()
-
-        if fitting:
-            self.feature_names_ = feature_names
-            self.vocabulary_ = vocab
 
         return result_matrix
 
@@ -228,7 +246,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        return self._transform(X, fitting=True)
+        self._partial_fit(X,y)
+        return self.transform(X)
 
     def inverse_transform(self, X, dict_type=dict):
         """Transform array or sparse matrix X back to feature mappings.
@@ -289,7 +308,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Feature vectors; always 2-d.
         """
         if self.sparse:
-            return self._transform(X, fitting=False)
+            return self._transform(X)
 
         else:
             dtype = self.dtype
