@@ -2857,6 +2857,25 @@ class Winsorizer(BaseEstimator, TransformerMixin):
 
     data_ub_ : pandas Series, shape (n_features,)
         Per-feature upper bound to clip to.
+
+    Examples
+    --------
+	>>> import numpy as np
+	>>> from sklearn.preprocessing import Winsorizer
+	>>> winsorizer = Winsorizer(0.2)
+	>>> X = np.arange(22.).reshape(11,2)
+	>>> winsorizer.fit_transform(X)
+	array([[ 4.,  5.],
+	       [ 4.,  5.],
+	       [ 4.,  5.],
+	       [ 6.,  7.],
+	       [ 8.,  9.],
+	       [10., 11.],
+	       [12., 13.],
+	       [14., 15.],
+	       [16., 17.],
+	       [16., 17.],
+	       [16., 17.]])
     """
 
     def __init__(self, quantile=0.05, copy=True):
