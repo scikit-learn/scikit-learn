@@ -241,7 +241,7 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
         if X_norm_squared is not None:
             Xnc = _cast_if_needed(X_norm_squared[i:ipbs, :], np.float64)
         else:
-            Xnc = None
+            Xnc = row_norms(Xc, squared=True)[:, np.newaxis]
 
         for j in range(i, Y.shape[0], bs):
             jpbs = min(j + bs, Y.shape[0])
