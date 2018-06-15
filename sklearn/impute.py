@@ -15,7 +15,7 @@ from scipy import stats
 from collections import namedtuple
 
 from .base import BaseEstimator, TransformerMixin
-from .base import clone
+from .base import clone, _update_tags
 from .preprocessing import normalize
 from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
@@ -333,6 +333,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+    def _get_tags(self):
+        return _update_tags(super(SimpleImputer, self),
+                            missing_values=True)
 
 
 class MICEImputer(BaseEstimator, TransformerMixin):
@@ -873,3 +877,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
         self.fit_transform(X)
         return self
+
+    def _get_tags(self):
+        return _update_tags(super(MICEImputer, self),
+                            missing_values=True)
