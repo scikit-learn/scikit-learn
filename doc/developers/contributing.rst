@@ -53,11 +53,14 @@ project maintainers.
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
-link to it from your website, or simply say "I use it":
+link to it from your website, or simply star to say "I use it":
 
 .. raw:: html
 
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+   <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
+   data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+   scikit-learn/scikit-learn on GitHub">Star</a>
+   <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 Submitting a bug report or a feature request
 ============================================
