@@ -54,6 +54,7 @@ __all__ = [
     'StandardScaler',
     'QuantileTransformer',
     'PowerTransformer',
+    'Winsorizer',
     'add_dummy_feature',
     'binarize',
     'normalize',
@@ -2831,6 +2832,76 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              "got {} instead."
                              .format(valid_methods, self.method))
 
+        return X
+
+
+class Winsorizer(BaseEstimator, TransformerMixin):
+    """Transforms each feature by clipping from below at the pth quantile
+    and from above by the (1-p)th quantile.
+
+    Parameters
+    ----------
+    quantile : float
+        The quantile to clip to.
+
+    copy : boolean, optional, default=True
+        Set to False to perform inplace computation during transformation.
+
+    Attributes
+    ----------
+    quantile : float
+        The quantile to clip to.
+
+    data_lb_ : pandas Series, shape (n_features,)
+        Per-feature lower bound to clip to.
+
+    data_ub_ : pandas Series, shape (n_features,)
+        Per-feature upper bound to clip to.
+    """
+
+    def __init__(self, quantile=0.05, copy=True):
+        self.quantile = quantile
+        self.copy = copy
+
+    def _reset(self):
+        """Reset internal data-dependent state of the transformer, if
+        necessary. __init__ parameters are not touched.
+        """
+        if hasattr(self, 'data_lb_'):
+            del self.data_lb_
+            del self.data_ub_
+
+    def fit(self, X, y=None):
+        """Compute the pth and (1-p)th quantiles of each feature to be used
+        later for clipping.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data to determine clip upper and lower bounds.
+
+        y : Ignored
+        """
+
+        X = check_array(X, copy=self.copy, warn_on_dtype=True, estimator=self,
+                        dtype=FLOAT_DTYPES)
+        self._reset()
+        self.data_lb_ = np.percentile(X, 100 * self.quantile, axis=0)
+        self.data_ub_ = np.percentile(X, 100 * (1 - self.quantile), axis=0)
+        return self
+
+    def transform(self, X):
+        """Clips the feature DataFrame X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data to transform.
+        """
+
+        check_is_fitted(self, ['data_lb_', 'data_ub_'])
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        X = np.clip(X, self.data_lb_, self.data_ub_)
         return X
 
 
