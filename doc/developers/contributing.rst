@@ -810,6 +810,50 @@ In the following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
+If a parameter's default value is to be deprecated, use ``DeprecationWarning``
+appropriately. In the following example, ``n_estimators`` has a default value 
+of 10 which is deprecated and changed to 100::
+
+    import warnings
+
+    
+    class ExtraTreesClassifier(ForestClassifier):
+        def __init__(self,
+                 n_estimators=100,
+                 criterion="gini",
+                 max_depth=None,
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_features="auto",
+                 max_leaf_nodes=None,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
+                 bootstrap=False,
+                 oob_score=False,
+                 n_jobs=1,
+                 random_state=None,
+                 verbose=0,
+                 warm_start=False,
+                 class_weight=None):
+        super(ExtraTreesClassifier, self).__init__(
+            base_estimator=ExtraTreeClassifier(),
+            n_estimators=n_estimators,
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_decrease", "min_impurity_split",
+                              "random_state"),
+            bootstrap=bootstrap,
+            oob_score=oob_score,
+            n_jobs=n_jobs,
+            random_state=random_state,
+            verbose=verbose,
+            warm_start=warm_start,
+            class_weight=class_weight)
+            warnings.warn("'n_estimators''s default value was changed to 100
+            in version 0.19", DeprecationWarning) 
+
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
