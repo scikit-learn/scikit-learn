@@ -106,11 +106,11 @@ def _yield_non_meta_checks(name, estimator):
     yield check_sample_weights_list
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
-    yield check_complex_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
     if tags["input_validation"]:
+        yield check_complex_data
         yield check_dtype_object
         yield check_estimators_empty_data_messages
 
@@ -136,6 +136,8 @@ def _yield_non_meta_checks(name, estimator):
 
 
 def _yield_classifier_checks(name, classifier):
+    tags = _safe_tags(classifier)
+
     # test classifiers can handle non-array data
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
@@ -146,8 +148,9 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
     yield check_classifiers_regression_target
-    yield check_supervised_y_no_nan
-    yield check_supervised_y_2d
+    if tags["input_validation"]:
+        yield check_supervised_y_no_nan
+        yield check_supervised_y_2d
     # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
@@ -182,6 +185,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
 
 
 def _yield_regressor_checks(name, regressor):
+    tags = _safe_tags(regressor)
     # TODO: test with intercept
     # TODO: test with multiple responses
     # basic testing
@@ -190,7 +194,8 @@ def _yield_regressor_checks(name, regressor):
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
-    yield check_supervised_y_2d
+    if tags["input_validation"]:
+        yield check_supervised_y_2d
     yield check_supervised_y_no_nan
     if name != 'CCA':
         # check that the regressor handles int input
@@ -755,8 +760,10 @@ def check_methods_subset_invariance(name, estimator_orig):
                "to a subset.").format(method=method, name=name)
         # TODO remove cases when corrected
         if (name, method) in [('SVC', 'decision_function'),
+                              ('NuSVC', 'decision_function'),
                               ('SparsePCA', 'transform'),
                               ('MiniBatchSparsePCA', 'transform'),
+                              ('DummyClassifier', 'predict'),
                               ('BernoulliRBM', 'score_samples')]:
             raise SkipTest(msg)
 
@@ -1375,7 +1382,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
                                    ", n_training_samples)".format(name)):
                     classifier.predict(X.reshape(-1, 1))
             else:
-                with assert_raises(ValueError, msg="The classifier {} does not "
+                with assert_raises(ValueError, msg="The classifier {} does not"
                                    "raise an error when the number of features"
                                    " in predict is different from the number of"
                                    " features in fit.".format(name)):
