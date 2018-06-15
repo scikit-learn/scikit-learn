@@ -202,6 +202,15 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
 
     The computation is done by blocks to limit additional memory usage.
     """
+    # For performance reasons, swap X and Y if I got X_norm_squared but not
+    # Y_norm_squared
+    if X_norm_squared is not None and Y_norm_squared is None:
+        swap = True
+        X, Y = Y, X
+        X_norm_squared, Y_norm_squared = None, X_norm_squared.T
+    else:
+        swap = False
+
     # No more than 10MB of additional memory will be used to cast X and Y to
     # float64 and to get the float64 result.
     maxmem = 10*1024*1024
@@ -261,6 +270,9 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
 
             if X is Y and j > i:
                 distances[j:jpbs, i:ipbs] = d.T
+
+    if swap:
+        distances = distances.T
 
     return distances if squared else np.sqrt(distances, out=distances)
 
