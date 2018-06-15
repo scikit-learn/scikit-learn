@@ -172,12 +172,11 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
     def fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm.
 
-        The method first fit the model `n_init` times and set the parameters with
+        The method fits the model `n_init` times and set the parameters with
         which the model has the largest likelihood or lower bound. Within each
         trial, the method iterates between E-step and M-step for `max_iter`
         times until the change of likelihood or lower bound is less than
-        `tol`, otherwise, a `ConvergenceWarning` is raised. After fitting, it
-        predicts the most probable label for the input data points.
+        `tol`, otherwise, a `ConvergenceWarning` is raised.
 
         Parameters
         ----------
@@ -195,7 +194,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
     def fit_predict(self, X, y=None):
         """Estimate model parameters using X and predict the labels for X.
 
-        The method first fit the model `n_init` times and set the parameters with
+        The method first fits the model `n_init` times and set the parameters with
         which the model has the largest likelihood or lower bound. Within each
         trial, the method iterates between E-step and M-step for `max_iter`
         times until the change of likelihood or lower bound is less than
