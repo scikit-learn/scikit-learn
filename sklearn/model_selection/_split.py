@@ -648,7 +648,7 @@ class StratifiedKFold(_BaseKFold):
             Always ignored, exists for compatibility.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1604,7 +1604,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             Always ignored, exists for compatibility.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
