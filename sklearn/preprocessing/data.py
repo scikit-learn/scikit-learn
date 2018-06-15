@@ -520,28 +520,31 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    scale_ : ndarray, shape (n_features,)
-        Per feature relative scaling of the data.
+    scale_ : ndarray or None, shape (n_features,)
+        Per feature relative scaling of the data. Equal to ``None`` when
+        ``with_std=False``.
 
         .. versionadded:: 0.17
            *scale_*
 
-    mean_ : array of floats with shape [n_features]
+    mean_ : ndarray or None, shape (n_features,)
         The mean value for each feature in the training set.
+        Equal to ``None`` when ``with_mean=False``.
 
-    var_ : array of floats with shape [n_features]
+    var_ : ndarray or None, shape (n_features,)
         The variance for each feature in the training set. Used to compute
-        `scale_`
+        `scale_`. Equal to ``None`` when ``with_std=False``.
 
-    n_samples_seen_ : array, shape(n_features,)
+    n_samples_seen_ : int or array, shape (n_features,)
         The number of samples processed by the estimator for each feature.
+        If there is not missing samples, the ``n_samples_seen`` will be an
+        integer, otherwise it will be an array.
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
     Examples
     --------
     >>> from sklearn.preprocessing import StandardScaler
-    >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler()
     >>> print(scaler.fit(data))
@@ -634,23 +637,32 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
+        # if n_samples_seen_ is an integer (i.e. no missing values), we need to
+        # transform it to a NumPy array of shape (n_features,) required by
+        # incr_mean_variance_axis and _incremental_variance_axis
+        if (hasattr(self, 'n_samples_seen_') and
+                isinstance(self.n_samples_seen_, (int, np.integer))):
+            self.n_samples_seen_ = np.repeat(self.n_samples_seen_, X.shape[1])
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
-            if self.with_std:
-                # First pass
-                if not hasattr(self, 'n_samples_seen_'):
-                    self.mean_, self.var_ = mean_variance_axis(X, axis=0)
-                    self.n_samples_seen_ = (np.ones(X.shape[1], dtype=np.int32)
-                                            * X.shape[0])
-                    sparse_constr = (sparse.csr_matrix if X.format == 'csr'
-                                     else sparse.csc_matrix)
-                    counts_nan = sparse_constr(
+
+            sparse_constructor = (sparse.csr_matrix
+                                  if X.format == 'csr' else sparse.csc_matrix)
+            counts_nan = sparse_constructor(
                         (np.isnan(X.data), X.indices, X.indptr),
                         shape=X.shape).sum(axis=0).A.ravel()
-                    self.n_samples_seen_ -= counts_nan
+
+            if not hasattr(self, 'n_samples_seen_'):
+                self.n_samples_seen_ = X.shape[0] - counts_nan
+
+            if self.with_std:
+                # First pass
+                if not hasattr(self, 'scale_'):
+                    self.mean_, self.var_ = mean_variance_axis(X, axis=0)
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
@@ -661,29 +673,34 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             else:
                 self.mean_ = None
                 self.var_ = None
-                if not hasattr(self, 'n_samples_seen_'):
-                    self.n_samples_seen_ = X.shape[0]
-                else:
-                    self.n_samples_seen_ += X.shape[0]
+                if hasattr(self, 'scale_'):
+                    self.n_samples_seen_ += X.shape[0] - counts_nan
         else:
-            # First pass
             if not hasattr(self, 'n_samples_seen_'):
-                self.mean_ = .0
                 self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int32)
+
+            # First pass
+            if not hasattr(self, 'scale_'):
+                self.mean_ = .0
                 if self.with_std:
                     self.var_ = .0
-
                 else:
                     self.var_ = None
 
             if not self.with_mean and not self.with_std:
                 self.mean_ = None
                 self.var_ = None
-                self.n_samples_seen_ += X.shape[0]
+                self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
                                               self.n_samples_seen_)
+
+        # for back-compatibility, reduce n_samples_seen_ to an integer with the
+        # same number of samples is equal for each feature (i.e. no missing
+        # values)
+        if np.ptp(self.n_samples_seen_) == 0:
+            self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))

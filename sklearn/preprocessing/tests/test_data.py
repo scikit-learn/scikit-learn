@@ -33,6 +33,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
 
@@ -426,7 +427,7 @@ def test_standard_scaler_partial_fit():
             assert_correct_incr(i, batch_start=batch.start,
                                 batch_stop=batch.stop, n=n,
                                 chunk_size=chunk_size,
-                                n_samples_seen=scaler_incr.n_samples_seen_[0])
+                                n_samples_seen=scaler_incr.n_samples_seen_)
 
         assert_array_almost_equal(scaler_batch.var_, scaler_incr.var_)
         assert_array_equal(scaler_batch.n_samples_seen_,
@@ -731,8 +732,8 @@ def test_scaler_return_identity():
     transformer_csc = clone(transformer_dense)
     X_trans_csc = transformer_csc.fit_transform(X_csc)
 
-    assert_allclose(X_trans_csr.toarray(), X_csr.toarray())
-    assert_allclose(X_trans_csc.toarray(), X_csc.toarray())
+    assert_allclose_dense_sparse(X_trans_csr, X_csr)
+    assert_allclose_dense_sparse(X_trans_csc, X_csc)
     assert_allclose(X_trans_dense, X_dense)
 
     for trans_1, trans_2 in itertools.combinations([transformer_dense,
