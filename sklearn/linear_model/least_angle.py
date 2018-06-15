@@ -30,7 +30,7 @@ from ..externals.six import string_types
 solve_triangular_args = {'check_finite': False}
 
 
-def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
+def lars_path(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=0, return_path=True,
@@ -48,10 +48,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     Parameters
     -----------
-    X : array, shape: (n_samples, n_features)
+    X : None or ndarray, shape: (n_samples, n_features)
         Input data.
 
-    y : array, shape: (n_samples)
+    y : None or ndarray, shape: (n_samples)
         Input targets.
 
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
@@ -150,8 +150,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                       ' This option will be removed in version 0.22.',
                       DeprecationWarning)
 
-    n_features = X.shape[1]
-    n_samples = y.size
+    if Gram is None:
+        n_features = X.shape[1]
+        n_samples = y.size
+    else:
+        n_features = Xy.shape[0]
+        if Gram.shape != (n_features, n_features):
+            raise ValueError('The shapes of the inputs Gram and Xy'
+                             ' do not match.')
     max_features = min(max_iter, n_features)
 
     if return_path:
@@ -167,11 +173,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     sign_active = np.empty(max_features, dtype=np.int8)
     drop = False
 
-    # will hold the cholesky factorization. Only lower part is
-    # referenced.
-    L = np.empty((max_features, max_features), dtype=X.dtype)
-    swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
-    solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
+
 
     if Gram is None or Gram is False:
         Gram = None
@@ -193,6 +195,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Cov = np.dot(X.T, y)
     else:
         Cov = Xy.copy()
+
+    # will hold the cholesky factorization. Only lower part is
+    # referenced.
+    if Gram is None:
+        L = np.empty((max_features, max_features), dtype=X.dtype)
+        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
+        solve_cholesky, = get_lapack_funcs(('potrs',), (L,))
+    else:
+        L = np.empty((max_features, max_features), dtype=Gram.dtype)
+        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (Cov,))
+        solve_cholesky, = get_lapack_funcs(('potrs',), (L,))
 
     if verbose:
         if verbose > 1:
@@ -226,7 +239,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             prev_alpha = alphas[n_iter - 1, np.newaxis]
             prev_coef = coefs[n_iter - 1]
 
-        alpha[0] = C / n_samples
+        alpha[0] = C
+        if n_sampels is not None:
+            alpha[0] /= n_samples
+
         if alpha[0] <= alpha_min + equality_tolerance:  # early stopping
             if abs(alpha[0] - alpha_min) > equality_tolerance:
                 # interpolation factor 0 <= ss < 1
@@ -544,7 +560,7 @@ class Lars(LinearModel, RegressorMixin):
         remove fit_intercept which is set True by default.
 
         .. deprecated:: 0.20
-        
+
             The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
