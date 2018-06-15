@@ -23,6 +23,8 @@ from .data import minmax_scale
 from .data import quantile_transform
 from .data import power_transform
 from .data import PowerTransformer
+
+from .data import Winsorizer
 from .data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
@@ -53,6 +55,7 @@ __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder',
     'PowerTransformer',
+    'Winsorizer',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
