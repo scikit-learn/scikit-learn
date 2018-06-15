@@ -35,7 +35,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
-    check_memory
+    check_memory,
+    column_or_1d
 )
 import sklearn
 
@@ -700,3 +701,8 @@ def test_check_array_memmap(copy):
         X_checked = check_array(X_memmap, copy=copy)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags['WRITEABLE'] == copy
+
+
+def test_check_column_or_1d():
+    # check None target y raises ValueError
+    assert_raises(ValueError, column_or_1d, None)

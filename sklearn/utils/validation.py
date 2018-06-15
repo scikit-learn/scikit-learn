@@ -698,6 +698,8 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    if y is None:
+        raise ValueError('Array y was not passed.')
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
