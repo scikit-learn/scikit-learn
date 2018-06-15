@@ -295,7 +295,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
-                                labels=None, samplewise=False):
+                                labels=None, samplewise=False,
+                                y_type=None, present_labels=None):
     """Returns a confusion matrix for each output of a multilabel problem
 
     Multiclass tasks will be treated as if binarised under a one-vs-rest
@@ -328,7 +329,8 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     if sample_weight is not None and samplewise:
         raise ValueError('sample_weight should not be used with samplewise. ')
 
-    y_type, _, _ = _check_targets(y_true, y_pred)
+    if y_type is None:
+        y_type, _, _ = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -336,25 +338,58 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
         if samplewise:
             raise ValueError("Samplewise confusion is not useful outside of "
                              "multilabel classification.")
-        present_labels = unique_labels(y_true, y_pred)
-        C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
-                             labels=present_labels)
+
+        if present_labels is None:
+            present_labels = unique_labels(y_true, y_pred)
         if labels is None:
-            label_idx = slice(None)
+            labels = present_labels
+            n_labels = None
         else:
-            present_labels = {l: i for i, l in enumerate(present_labels)}
-            label_idx = np.array([present_labels.get(l, -1) for l in labels])
+            n_labels = len(labels)
+            labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
+                                                     assume_unique=True)])
 
-        tp = np.diag(C)[label_idx]
-        fp = C.sum(axis=0)[label_idx] - tp
-        fn = C.sum(axis=1)[label_idx] - tp
-        if labels is not None:
-            not_present_mask = label_idx == -1
-            tp[not_present_mask] = 0
-            fp[not_present_mask] = 0
-            fn[not_present_mask] = 0
+        le = LabelEncoder()
+        le.fit(labels)
+        y_true = le.transform(y_true)
+        y_pred = le.transform(y_pred)
+        sorted_labels = le.classes_
 
-        tn = y_true.shape[0] - tp - fp - fn
+        # labels are now from 0 to len(labels) - 1 -> use bincount
+        tp = y_true == y_pred
+        tp_bins = y_true[tp]
+        if sample_weight is not None:
+            tp_bins_weights = np.asarray(sample_weight)[tp]
+        else:
+            tp_bins_weights = None
+
+        if len(tp_bins):
+            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
+                                 minlength=len(labels))
+        else:
+            # Pathological case
+            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
+        if len(y_pred):
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
+                                   minlength=len(labels))
+        if len(y_true):
+            true_sum = np.bincount(y_true, weights=sample_weight,
+                                   minlength=len(labels))
+
+        # Retain only selected labels
+        indices = np.searchsorted(sorted_labels, labels[:n_labels])
+        tp_sum = tp_sum[indices]
+        true_sum = true_sum[indices]
+        pred_sum = pred_sum[indices]
+
+        fp = pred_sum - tp_sum
+        fn = true_sum - tp_sum
+        tp = tp_sum
+
+        if sample_weight is not None:
+            tn = sample_weight.sum() - tp - fp - fn
+        else:
+            tn = y_true.shape[0] - tp - fp - fn
 
     else:
         # check labels
@@ -1450,7 +1485,9 @@ def precision_recall_fscore_support(
     C = multilabel_confusion_matrix(y_true, y_pred,
                                     sample_weight=sample_weight,
                                     labels=labels,
-                                    samplewise=average == 'samples')
+                                    samplewise=average == 'samples',
+                                    y_type=y_type,
+                                    present_labels=present_labels)
 
     if average == 'micro':
         C = C.sum(axis=0).reshape(1, 2, 2)

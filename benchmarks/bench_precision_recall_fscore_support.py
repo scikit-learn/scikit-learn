@@ -12,10 +12,9 @@ import numpy as np
 from numpy import random as nr
 
 from sklearn.metrics.classification import precision_recall_fscore_support, \
-    precision_recall_fscore_support_with_multilabel_confusion_matrix
+    old_precision_recall_fscore_support
 import matplotlib.pyplot as plt
 from scipy.stats import bernoulli
-
 
 
 def compute_bench(samples_range, labels_range):
@@ -34,20 +33,24 @@ def compute_bench(samples_range, labels_range):
             print()
 
             # multilabel case
-            #y_true = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
-            #                       size=(n_samples, n_labels))
-            #y_pred = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
-            #                       size=(n_samples, n_labels))
+            y_true = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
+                                   size=(n_samples, n_labels))
+            y_pred = bernoulli.rvs(np.ones((n_samples, n_labels)) / 2,
+                                   size=(n_samples, n_labels))
 
             # multiclass case
-            y_true = nr.randint(0, n_labels, (n_samples,))
-            y_pred = nr.randint(0, n_labels, (n_samples,))
+            #y_true = nr.randint(0, n_labels, (n_samples,))
+            #y_pred = nr.randint(0, n_labels, (n_samples,))
+
+            # binary case
+            #y_true = nr.randint(0, 2, (n_samples,))
+            #y_pred = nr.randint(0, 2, (n_samples,))
             print("y_true", y_true)
 
             print('P/R/F/S')
             tstart = time()
 
-            precision_recall_fscore_support(y_true, y_pred)
+            old_precision_recall_fscore_support(y_true, y_pred)
 
             delta = time() - tstart
             print("Speed: %0.6fs" % delta)
@@ -59,7 +62,7 @@ def compute_bench(samples_range, labels_range):
 
             tstart = time()
 
-            precision_recall_fscore_support_with_multilabel_confusion_matrix(
+            precision_recall_fscore_support(
                 y_true, y_pred)
 
             delta = time() - tstart
@@ -77,6 +80,7 @@ if __name__ == '__main__':
 
     samples_range = np.linspace(50, 15000, 20).astype(np.int)
     labels_range = [2, 5, 20, 100, 1000]
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 
     results = compute_bench(samples_range, labels_range)
 
@@ -84,9 +88,11 @@ if __name__ == '__main__':
     plt.rcParams["figure.figsize"] = [40, 20]
     for i in range(len(labels_range)):
         plt.plot(samples_range, results[i]['P/R/F/S'],
+                 color=colors[i], marker='o',
                  label='Original P/R/F/S, n_label:%d' % labels_range[i])
         plt.plot(samples_range,
                  results[i]['P/R/F/S with multilabel confusion metrics'],
+                 color=colors[i], marker='s',
                  label='With multilabel confusion metrics, n_label:%d'
                        % labels_range[i])
 
