@@ -1489,6 +1489,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
     def _generate_candidates(self):
         """Return ParameterSampler instance for the given distributions"""
-        return ParameterSampler(
+        yield ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state)
