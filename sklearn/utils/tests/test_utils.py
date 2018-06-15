@@ -317,7 +317,7 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
         assert type(actual) is type(expected)
 
 
-@pytest.mark.parametrize("input, result", [(float("nan"), True),
+@pytest.mark.parametrize("value, result", [(float("nan"), True),
                                            (np.nan, True),
                                            (np.float("nan"), True),
                                            (np.float32("nan"), True),
@@ -328,5 +328,5 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
                                            ("", False),
                                            ("nan", False),
                                            ([np.nan], False)])
-def test_is_scalar_nan(input, result):
-    assert is_scalar_nan(input) is result
+def test_is_scalar_nan(value, result):
+    assert is_scalar_nan(value) is result

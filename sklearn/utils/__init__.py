@@ -584,4 +584,6 @@ def is_scalar_nan(x):
     False
     """
 
-    return isinstance(x, numbers.Real) and np.isnan(x)
+    # convert from numpy.bool_ to python bool to ensure that testing
+    # is_scalar_nan(x) is True does not fail.
+    return bool(isinstance(x, numbers.Real) and np.isnan(x))

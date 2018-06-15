@@ -462,8 +462,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     initial_strategy : str, optional (default="mean")
         Which strategy to use to initialize the missing values. Same as the
-        ``strategy`` parameter in :class:`sklearn.preprocessing.Imputer`
-        Valid values: {"mean", "median", or "most_frequent"}.
+        ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
+        Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
     min_value : float, optional (default=None)
         Minimum possible imputed value. Default of ``None`` will set minimum
