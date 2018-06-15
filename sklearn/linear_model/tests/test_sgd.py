@@ -22,9 +22,12 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.linear_model import (PassiveAggressiveClassifier,
+                                  PassiveAggressiveRegressor)
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.base import is_classifier
 
 from sklearn.linear_model import sgd_fast
 
@@ -1214,6 +1217,26 @@ def test_tol_parameter():
     model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
     model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
     assert_equal(model_3.n_iter_, 3)
+
+
+@pytest.mark.parametrize("SGDEstimator", [SGDClassifier, SGDRegressor,
+                                          PassiveAggressiveClassifier,
+                                          PassiveAggressiveRegressor])
+@pytest.mark.parametrize("iters", [1, 2, 4, 8])
+def test_sgd_iters(SGDEstimator, iters):
+    X, y = datasets.make_classification(n_samples=1000, n_features=4,
+                                        random_state=0)
+    y = np.sign(np.random.randn(1000))
+    classes = np.unique(y)
+    one_epoch = X.shape[0]
+
+    sgd = SGDEstimator(iters=iters)
+    assert sgd.iters == iters
+
+    kwargs = {'classes': classes} if is_classifier(sgd) else {}
+    sgd.partial_fit(X, y, **kwargs)
+
+    assert (sgd.t_ - 1) / one_epoch == iters
 
 
 def test_future_and_deprecation_warnings():
