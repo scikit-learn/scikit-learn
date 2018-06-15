@@ -428,7 +428,7 @@ def test_invariant_translation():
 def test_bayesian_mixture_fit_predict():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng, scale=7)
-    n_components, n_features = 2 * rand_data.n_components, 2
+    n_components = 2 * rand_data.n_components
 
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(n_components=n_components,
@@ -437,7 +437,6 @@ def test_bayesian_mixture_fit_predict():
         bgmm1.covariance_type = covar_type
         bgmm2 = copy.deepcopy(bgmm1)
         X = rand_data.X[covar_type]
-        Y = rand_data.Y
 
         Y_pred1 = bgmm1.fit(X).predict(X)
         Y_pred2 = bgmm2.fit_predict(X)
@@ -447,7 +446,6 @@ def test_bayesian_mixture_fit_predict():
 def test_bayesian_mixture_predict_predict_proba():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
-    rand_means = rng.rand(rand_data.n_components) * 50
     for prior_type in PRIOR_TYPE:
         for covar_type in COVARIANCE_TYPE:
             X = rand_data.X[covar_type]
