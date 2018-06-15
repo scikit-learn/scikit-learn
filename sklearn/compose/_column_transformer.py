@@ -129,6 +129,7 @@ boolean mask array
            [0.5, 0.5, 0. , 1. ]])
 
     """
+    _required_parameters = ['transformers']
 
     def __init__(self, transformers, remainder='passthrough', n_jobs=1,
                  transformer_weights=None):
