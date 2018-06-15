@@ -77,7 +77,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             train/test set.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -302,7 +302,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             train/test set.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -735,7 +735,7 @@ class TimeSeriesSplit(_BaseKFold):
             Always ignored, exists for compatibility.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1007,7 +1007,7 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             train/test set.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1183,7 +1183,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
             train/test set.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1764,7 +1764,7 @@ class PredefinedSplit(BaseCrossValidator):
             Always ignored, exists for compatibility.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1848,7 +1848,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             Always ignored, exists for compatibility.
 
         Yields
-        -------
+        ------
         train : ndarray
             The training set indices for that split.
 
