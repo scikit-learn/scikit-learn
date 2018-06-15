@@ -480,7 +480,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
             y_std = np.ravel(y_std)
-            
+
         return (y, y_std) if return_std else y
 
     def _get_tags(self):

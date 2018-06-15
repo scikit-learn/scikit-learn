@@ -1201,7 +1201,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
 
-     def _get_tags(self):
+    def _get_tags(self):
         return _update_tags(super(TfidfTransformer, self),
                             input_types=["sparse"])
 
