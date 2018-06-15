@@ -144,7 +144,9 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray, shape (n_samples,)
-            The array of log(density) evaluations. These are normalized to be probability densities, so values will be low for high-dimensional data. 
+            The array of log(density) evaluations. These are normalized to be
+            probability densities, so values will be low for high-dimensional
+            data.
         """
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
@@ -170,7 +172,9 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         logprob : float
-            Total log-likelihood of the data in X. This is normalized to be a probability density, so the value will be low for high-dimensional data.
+            Total log-likelihood of the data in X. This is normalized to be a
+            probability density, so the value will be low for high-dimensional
+            data.
         """
         return np.sum(self.score_samples(X))
 
