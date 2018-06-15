@@ -696,8 +696,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     _incremental_mean_and_var(X, self.mean_, self.var_,
                                               self.n_samples_seen_)
 
-        # for back-compatibility, reduce n_samples_seen_ to an integer with the
-        # same number of samples is equal for each feature (i.e. no missing
+        # for back-compatibility, reduce n_samples_seen_ to an integer if the
+        # number of samples is the same for each feature (i.e. no missing
         # values)
         if np.ptp(self.n_samples_seen_) == 0:
             self.n_samples_seen_ = self.n_samples_seen_[0]
