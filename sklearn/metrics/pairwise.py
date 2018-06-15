@@ -214,8 +214,8 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
     # - a float64 copy of a block of the rows of X if needed;
     # - a float64 copy of a block of the rows of Y if needed;
     # - the float64 block result;
-    # - a block of X_norm_squared if needed;
-    # - a block of Y_norm_squared if needed.
+    # - a float64 copy of a block of X_norm_squared if needed;
+    # - a float64 copy of a block of Y_norm_squared if needed.
     # This is a quadratic equation that we solve to compute the block size that
     # would use maxmem bytes.
     XYmem = 0
@@ -223,9 +223,9 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
         XYmem += X.shape[1]
     if Y.dtype != np.float64:
         XYmem += Y.shape[1]  # Note that Y.shape[1] == X.shape[1]
-    if X_norm_squared is None:
+    if X_norm_squared is None or X_norm_squared.dtype != np.float64:
         XYmem += 1
-    if Y_norm_squared is None:
+    if Y_norm_squared is None or Y_norm_squared.dtype != np.float64:
         XYmem += 1
 
     delta = XYmem ** 2 + 4 * maxmem
@@ -239,7 +239,7 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
         Xc = _cast_if_needed(X[i:ipbs, :], np.float64)
 
         if X_norm_squared is not None:
-            Xnc = X_norm_squared[i:ipbs, :]
+            Xnc = _cast_if_needed(X_norm_squared[i:ipbs, :], np.float64)
         else:
             Xnc = None
 
@@ -251,7 +251,7 @@ def _euclidean_distances_cast(X, Y, outdtype, Y_norm_squared=None,
                 Yc = _cast_if_needed(Y[j:jpbs, :], np.float64)
 
             if Y_norm_squared is not None:
-                Ync = Y_norm_squared[:, j:jpbs]
+                Ync = _cast_if_needed(Y_norm_squared[:, j:jpbs], np.float64)
             else:
                 Ync = None
 
