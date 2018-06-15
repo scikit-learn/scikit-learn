@@ -13,8 +13,8 @@ from ..utils import check_array, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _check_large_sparse
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import check_is_fitted, _check_large_sparse, _num_samples
+from ..utils.validation import _check_sample_weight, check_consistent_length
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
@@ -143,9 +143,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64,
-                         order='C', accept_sparse='csr',
-                         accept_large_sparse=False)
+        if callable(self.kernel):
+            check_consistent_length(X, y)
+        else:
+            X, y = check_X_y(X, y, dtype=np.float64,
+                             order='C', accept_sparse='csr',
+                             accept_large_sparse=False)
+            X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
+
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -154,17 +159,18 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
-        if solver_type != 2 and X.shape[0] != y.shape[0]:
+        n_samples = _num_samples(X)
+        if solver_type != 2 and n_samples != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
+                             (n_samples, y.shape[0]))
 
-        if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
+        if self.kernel == "precomputed" and n_samples != X.shape[1]:
             raise ValueError("Precomputed matrix must be a square matrix."
                              " Input is a {}x{} matrix."
                              .format(X.shape[0], X.shape[1]))
 
-        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
+        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != n_samples:
             raise ValueError("sample_weight and X have incompatible shapes: "
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
@@ -199,7 +205,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
         # see comment on the other call to np.iinfo in this file
 
-        self.shape_fit_ = X.shape
+        if hasattr(X, 'shape'):
+            self.shape_fit_ = X.shape
+        else:
+            self.shape_fit_ = (_num_samples(X),)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ and self._dual_coef_
@@ -443,8 +452,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def _validate_for_predict(self, X):
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
-                        accept_large_sparse=False)
+        if not callable(self.kernel):
+            X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
+                            accept_large_sparse=False)
+
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
@@ -454,14 +465,15 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "cannot use sparse input in %r trained on dense data"
                 % type(self).__name__)
-        n_samples, n_features = X.shape
+        if not callable(self.kernel):
+            n_features = X.shape[1]
 
         if self.kernel == "precomputed":
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
-        elif n_features != self.shape_fit_[1]:
+        elif not callable(self.kernel) and n_features != self.shape_fit_[1]:
             raise ValueError("X.shape[1] = %d should be equal to %d, "
                              "the number of features at training time" %
                              (n_features, self.shape_fit_[1]))

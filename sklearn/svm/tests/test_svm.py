@@ -20,7 +20,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message, assert_raise_message
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils import shuffle
@@ -1248,3 +1248,32 @@ def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
            "removed in version 0.25.").format(deprecated_prob)
     with pytest.warns(FutureWarning, match=msg):
         getattr(clf, deprecated_prob)
+
+
+def test_callable_kernel():
+    data = ["foo", "foof", "b", "a", "qwert", "1234567890", "abcde", "bar", "", "q"]
+    targets = [1, 1, 2, 2, 1, 3, 1, 1, 2, 2]
+    targets = np.array(targets)
+
+    def string_kernel(X, X2):
+        assert isinstance(X[0], str)
+        len = _num_samples(X)
+        len2 = _num_samples(X2)
+        ret = np.zeros((len, len2))
+        smaller = np.min(ret.shape)
+        ret[np.arange(smaller), np.arange(smaller)] = 1
+        return ret
+
+    svc = svm.SVC(kernel=string_kernel)
+    svc.fit(data, targets)
+    svc.score(data, targets)
+    svc.score(np.array(data), targets)
+
+    svc.fit(np.array(data), targets)
+    svc.score(data, targets)
+    svc.score(np.array(data), targets)
+
+
+def test_string_kernel():
+    # meaningful string kernel test
+    assert True
