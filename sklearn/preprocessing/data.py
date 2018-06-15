@@ -2514,6 +2514,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self._transform(X, inverse=True)
 
+    def _get_tags(self):
+        return _update_tags(super(QuantileTransformer, self),
+                            missing_values=True)
+
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
@@ -3190,3 +3194,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     X_tr[mask, idx] = None
 
         return X_tr
+
+    def _get_tags(self):
+        # FIXME this skips way too many tests
+        return _update_tags(super(CategoricalEncoder, self),
+                            input_types=["categorical"])
