@@ -46,7 +46,6 @@ X_list = [
 ]
 
 figure = plt.figure(figsize=(14, 9))
-cm = plt.cm.viridis
 i = 1
 for ds_cnt, X in enumerate(X_list):
 
@@ -77,10 +76,10 @@ for ds_cnt, X in enumerate(X_list):
 
         # horizontal stripes
         horizontal = grid_encoded[:, 0].reshape(xx.shape)
-        ax.contourf(xx, yy, horizontal, cmap=cm, alpha=.5)
+        ax.contourf(xx, yy, horizontal, alpha=.5)
         # vertical stripes
         vertical = grid_encoded[:, 1].reshape(xx.shape)
-        ax.contourf(xx, yy, vertical, cmap=cm, alpha=.5)
+        ax.contourf(xx, yy, vertical, alpha=.5)
 
         ax.scatter(X[:, 0], X[:, 1], edgecolors='k')
         ax.set_xlim(xx.min(), xx.max())
