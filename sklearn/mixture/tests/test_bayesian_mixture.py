@@ -422,6 +422,7 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
 
+
 def test_bayesian_mixture_fit_predict():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng, scale=7)
