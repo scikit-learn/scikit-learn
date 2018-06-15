@@ -2582,6 +2582,73 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
+def power_transform(X, method='box-cox', standardize=True, copy=True):
+    """Apply a power transform featurewise to make data more Gaussian-like.
+
+    Power transforms are a family of parametric, monotonic transformations
+    that are applied to make data more Gaussian-like. This is useful for
+    modeling issues related to heteroscedasticity (non-constant variance),
+    or other situations where normality is desired.
+
+    Currently, power_transform() supports the Box-Cox transform. Box-Cox
+    requires input data to be strictly positive. The optimal parameter
+    for stabilizing variance and minimizing skewness is estimated
+    through maximum likelihood.
+
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
+
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        The data to be transformed using a power transformation.
+
+    method : str, (default='box-cox')
+        The power transform method. Currently, 'box-cox' (Box-Cox transform)
+        is the only option available.
+
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
+
+    copy : boolean, optional, default=True
+        Set to False to perform inplace computation.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import power_transform
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(power_transform(data))  # doctest: +ELLIPSIS
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
+
+    See also
+    --------
+    PowerTransformer: Performs power transformation using the ``Transformer``
+        API (as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
+    quantile_transform : Maps data to a standard normal distribution with
+        the parameter `output_distribution='normal'`.
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    References
+    ----------
+    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
+    Royal Statistical Society B, 26, 211-252 (1964).
+    """
+    pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
+    return pt.fit_transform(X)
+
+
 class Winsorizer(BaseEstimator, TransformerMixin):
     """Transforms each feature by clipping from below at the pth quantile
     and from above by the (1-p)th quantile.
