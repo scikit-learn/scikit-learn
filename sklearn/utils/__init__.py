@@ -2,6 +2,7 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections import Sequence
+import numbers
 
 import numpy as np
 from scipy.sparse import issparse
@@ -553,3 +554,21 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
                       (working_memory, np.ceil(row_bytes * 2 ** -20)))
         chunk_n_rows = 1
     return chunk_n_rows
+
+
+def is_scalar_nan(x):
+    """Tests if x is NaN
+
+    This function is meant to overcome the issue that np.isnan does not allow
+    non-numerical types as input, and that np.nan is not np.float('nan').
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
+
+    return isinstance(x, numbers.Real) and np.isnan(x)

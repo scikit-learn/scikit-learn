@@ -8,7 +8,6 @@ import pickle
 from copy import deepcopy
 import struct
 from functools import partial
-import numbers
 
 import numpy as np
 from scipy import sparse
@@ -37,6 +36,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
+from sklearn.utils import is_scalar_nan
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
@@ -2036,10 +2036,7 @@ def check_parameters_default_constructible(name, Estimator):
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                def _isscalarnan(x):
-                    return isinstance(x, numbers.Real) and np.isnan(x)
-
-                if _isscalarnan(param_value):
+                if is_scalar_nan(param_value):
                     # Allows to set default parameters to np.nan
                     assert param_value is init_param.default, init_param.name
                 else:

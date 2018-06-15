@@ -23,6 +23,7 @@ from .utils.sparsefuncs import _get_median
 from .utils.validation import check_is_fitted
 from .utils.validation import FLOAT_DTYPES
 from .utils.fixes import _object_dtype_isnan
+from .utils import is_scalar_nan
 
 from .externals import six
 
@@ -160,7 +161,7 @@ optional (default=np.nan)
         else:
             dtype = FLOAT_DTYPES
 
-        if self.missing_values is not np.nan:
+        if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
@@ -186,7 +187,7 @@ optional (default=np.nan)
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
         if self.fill_value is None:
-            if X.dtype.kind in ("i", "f"):
+            if X.dtype.kind in ("i", "u", "f"):
                 fill_value = 0
             else:
                 fill_value = "missing_value"
@@ -769,8 +770,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
-        force_all_finite = "allow-nan" if self.missing_values is np.nan \
-                           else True
+        if is_scalar_nan(self.missing_values):
+            force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
 
         X = check_array(X, dtype=FLOAT_DTYPES, order="F",
                         force_all_finite=force_all_finite)
