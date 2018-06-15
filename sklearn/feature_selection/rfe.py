@@ -329,7 +329,7 @@ class RFECV(RFE, MetaEstimatorMixin):
     min_features_to_select : int, (default=1)
         The minimum number of features to be selected. This number of features
         will always be scored, even if the difference between the original
-        feature count and ``min_features_to_select`` isn't divisible by zero.
+        feature count and ``min_features_to_select`` isn't divisible by ``step``.
 
     Attributes
     ----------
