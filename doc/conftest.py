@@ -47,12 +47,14 @@ def setup_rcv1():
 
 def setup_twenty_newsgroups():
     data_home = get_data_home()
-    if not exists(join(data_home, '20news_home')):
+    if not exists(join(data_home, "20news-bydate_py3.pkz")):
         raise SkipTest("Skipping dataset loading doctests")
 
 
 def setup_working_with_text_data():
     check_skip_network()
+    if not exists(join(get_data_home(), "20news-bydate_py3.pkz")):
+        raise SkipTest("Skipping dataset loading doctests")
 
 
 def setup_compose():
