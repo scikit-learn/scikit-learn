@@ -2582,95 +2582,6 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-class Winsorizer(BaseEstimator, TransformerMixin):
-    """Transforms each feature by clipping from below at the pth quantile
-    and from above by the (1-p)th quantile.
-
-    Parameters
-    ----------
-    quantile : float
-        The quantile to clip to.
-
-    copy : boolean, optional, default=True
-        Set to False to perform inplace computation during transformation.
-
-    Attributes
-    ----------
-    quantile : float
-        The quantile to clip to.
-
-    data_lb_ : pandas Series, shape (n_features,)
-        Per-feature lower bound to clip to.
-
-    data_ub_ : pandas Series, shape (n_features,)
-        Per-feature upper bound to clip to.
-
-    Examples
-    --------
-	>>> import numpy as np
-	>>> from sklearn.preprocessing import Winsorizer
-	>>> winsorizer = Winsorizer(0.2)
-	>>> X = np.arange(22.).reshape(11,2)
-	>>> winsorizer.fit_transform(X)
-	array([[ 4.,  5.],
-	       [ 4.,  5.],
-	       [ 4.,  5.],
-	       [ 6.,  7.],
-	       [ 8.,  9.],
-	       [10., 11.],
-	       [12., 13.],
-	       [14., 15.],
-	       [16., 17.],
-	       [16., 17.],
-	       [16., 17.]])
-    """
-
-    def __init__(self, quantile=0.05, copy=True):
-        self.quantile = quantile
-        self.copy = copy
-
-    def _reset(self):
-        """Reset internal data-dependent state of the transformer, if
-        necessary. __init__ parameters are not touched.
-        """
-        if hasattr(self, 'data_lb_'):
-            del self.data_lb_
-            del self.data_ub_
-
-    def fit(self, X, y=None):
-        """Compute the pth and (1-p)th quantiles of each feature to be used
-        later for clipping.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            The data to determine clip upper and lower bounds.
-
-        y : Ignored
-        """
-
-        X = check_array(X, copy=self.copy, warn_on_dtype=True, estimator=self,
-                        dtype=FLOAT_DTYPES)
-        self._reset()
-        self.data_lb_ = np.percentile(X, 100 * self.quantile, axis=0)
-        self.data_ub_ = np.percentile(X, 100 * (1 - self.quantile), axis=0)
-        return self
-
-    def transform(self, X):
-        """Clips the feature DataFrame X.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            The data to transform.
-        """
-
-        check_is_fitted(self, ['data_lb_', 'data_ub_'])
-        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
-        X = np.clip(X, self.data_lb_, self.data_ub_)
-        return X
-
-
 def power_transform(X, method='box-cox', standardize=True, copy=True):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
@@ -2725,6 +2636,9 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded to compute the statistics,
+    and maintained during the data transformation.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -2824,76 +2738,6 @@ class Winsorizer(BaseEstimator, TransformerMixin):
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
         X = np.clip(X, self.data_lb_, self.data_ub_)
         return X
-
-
-def power_transform(X, method='box-cox', standardize=True, copy=True):
-    """Apply a power transform featurewise to make data more Gaussian-like.
-
-    Power transforms are a family of parametric, monotonic transformations
-    that are applied to make data more Gaussian-like. This is useful for
-    modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired.
-
-    Currently, power_transform() supports the Box-Cox transform. Box-Cox
-    requires input data to be strictly positive. The optimal parameter
-    for stabilizing variance and minimizing skewness is estimated
-    through maximum likelihood.
-
-    By default, zero-mean, unit-variance normalization is applied to the
-    transformed data.
-
-    Read more in the :ref:`User Guide <preprocessing_transformer>`.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        The data to be transformed using a power transformation.
-
-    method : str, (default='box-cox')
-        The power transform method. Currently, 'box-cox' (Box-Cox transform)
-        is the only option available.
-
-    standardize : boolean, default=True
-        Set to True to apply zero-mean, unit-variance normalization to the
-        transformed output.
-
-    copy : boolean, optional, default=True
-        Set to False to perform inplace computation.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import power_transform
-    >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data))  # doctest: +ELLIPSIS
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
-
-    See also
-    --------
-    PowerTransformer: Performs power transformation using the ``Transformer``
-        API (as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-
-    quantile_transform : Maps data to a standard normal distribution with
-        the parameter `output_distribution='normal'`.
-
-    Notes
-    -----
-    NaNs are treated as missing values: disregarded to compute the statistics,
-    and maintained during the data transformation.
-
-    For a comparison of the different scalers, transformers, and normalizers,
-    see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
-    References
-    ----------
-    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
-    Royal Statistical Society B, 26, 211-252 (1964).
-    """
-    pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
-    return pt.fit_transform(X)
 
 
 class CategoricalEncoder:
