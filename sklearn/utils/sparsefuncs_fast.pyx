@@ -90,11 +90,10 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         unsigned long long non_zero = X_indices.shape[0]
         np.npy_intp col_ind
         floating diff
-
-    # means[j] contains the mean of feature j
-    cdef np.ndarray[floating, ndim=1] means
-    # variances[j] contains the variance of feature j
-    cdef np.ndarray[floating, ndim=1] variances
+        # means[j] contains the mean of feature j
+        np.ndarray[floating, ndim=1] means
+        # variances[j] contains the variance of feature j
+        np.ndarray[floating, ndim=1] variances
 
     if floating is float:
         dtype = np.float32
@@ -247,9 +246,12 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n):
     updated_n : int array with shape (n_features,)
       Updated number of samples seen
 
+    Notes
+    -----
+    NaNs are ignored during the computation.
+
     References
     ----------
-
     T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
       variance: recommendations, The American Statistician, Vol. 37, No. 3,
       pp. 242-247
