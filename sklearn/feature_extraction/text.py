@@ -852,7 +852,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Returns a reordered matrix and modifies the vocabulary in place
         """
         sorted_features = sorted(six.iteritems(vocabulary))
-        map_index = np.empty(len(sorted_features), dtype=np.int32)
+        map_index = np.empty(len(sorted_features), dtype=X.indices.dtype)
         for new_val, (term, old_val) in enumerate(sorted_features):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
