@@ -11,6 +11,10 @@ clip outliers in feature data. Note that :class:`preprocessing.Winsorization`
 follows the ``Transformer`` API so it can be used as part of a preprocessing
 :class:`sklearn.pipeline.Pipeline`). However, because it follows the
 ``Transformer`` API, it does not allow for winsorization of target variables.
+The advantage of having this functionality available in a pipeline (as
+opposed to directly calling :func:`numpy.clip`, e.g.) is one can use the
+pipeline in cross-validation, fitting the upper and lower winsorization
+bounds with train sets only, and use these upper and lower bounds for testing.
 
 Ordinary least squares regression (:class:`linear_model.LinearRegression`) is
 particularly sensitive to outliers. Winsorization can be used as a
@@ -21,6 +25,8 @@ is the fit procedure for :class:`linear_model.HuborRegressor` can be more
 computationally intensive because it uses BFGS, an iterative method, to solve
 a nonlinear optimization problem. This is especially the case when the number
 of samples in the data set is much larger than the number of features.
+Similar computational issues arise when considering other estimation methods
+designed to deal with outliers such as :class:`linear_model.RANSACRegressor`.
 """
 
 print(__doc__)
