@@ -230,7 +230,7 @@ Preprocessing
   :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- :class:`preprocessing.MaxAbsScaler` and :func:`preprocessingmaxabs_scale`
+- :class:`preprocessing.MaxAbsScaler` and :func:`preprocessing.maxabs_scale`
   handles and ignores NaN values.
   :issue:`11011` by `Lucija Gregov <LucihaGregov>` and
   :user:`Guillaume Lemaitre <glemaitre>`
