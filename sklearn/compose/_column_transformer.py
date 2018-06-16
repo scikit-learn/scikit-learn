@@ -584,6 +584,11 @@ def _get_column_indices(X, key):
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         return list(np.arange(n_columns)[key])
+    elif callable(key):
+        if not hasattr(X, 'columns'):
+            raise ValueError("Using column selector callables is only "
+                             "supported for pandas DataFrames")
+        return list(np.arange(n_columns)[key(X)])
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
