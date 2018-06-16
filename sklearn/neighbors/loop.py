@@ -3,20 +3,18 @@
 
 from math import erf
 import numpy as np
-from warnings import warn
-from scipy.stats import scoreatpercentile
 
 from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
+from .base import LocalOutlierMixin
 
 from ..utils.validation import check_is_fitted
-from ..utils import check_array
 
 __all__ = ["LocalOutlierProbability"]
 
 
-class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
+class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin, LocalOutlierMixin):
     """Unsupervised Outlier Detection using Local Outlier Probabilities (LoOP)
 
     The outlier score of each sample is called the Local Outlier Probability.
@@ -122,13 +120,13 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
     References
     ----------
-    .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
+    .. [1] Breunig, M. M., Kriegel, H.-P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
-    .. [2] Kriegel H., Kröger P., Schubert E., Zimek A. LoOP: Local Outlier
+    .. [2] Kriegel H.-P., Kroeger P., Schubert E., Zimek A. LoOP: Local Outlier
            Probabilities. 18th ACM conference on Information and knowledge
            management, CIKM (2009).
     .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised Anomaly
-           Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016)
+           Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016).
     """
 
     def __init__(self, n_neighbors=20, norm_factor=0.95, algorithm='auto', leaf_size=30,
@@ -182,44 +180,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
         super(LocalOutlierProbability, self).fit(X)
 
-        n_samples = self._fit_X.shape[0]
-        if self.n_neighbors > n_samples:
-            warn("n_neighbors (%s) is greater than the "
-                 "total number of samples (%s). n_neighbors "
-                 "will be set to (n_samples - 1) for estimation."
-                 % (self.n_neighbors, n_samples))
-        self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
-
-        self._distances_fit_X_, _neighbors_indices_fit_X_ = (
-            self.kneighbors(None, n_neighbors=self.n_neighbors_))
-
-        if not self._distances_fit_X_.any():
-            warn('Neighborhood distances all zero. Try using a larger value for n_neighbors.', RuntimeWarning)
-
-        # Compute loop score
-        ssd = self._ssd(self._distances_fit_X_)
-        self._standard_distances_fit_X_ = self._standard_distances(ssd)
-        self._prob_distances_fit_X_ = self._prob_distances(self._standard_distances_fit_X_)
-        self._prob_distances_ev_fit_X_ = self._prob_distances_ev(self._prob_distances_fit_X_)
-        prob_local_outlier_factors = self._prob_local_outlier_factors(self._prob_distances_fit_X_,
-                                                                      self._prob_distances_ev_fit_X_)
-        self._prob_local_outlier_factors_ev_fit_X_ = self._prob_local_outlier_factors_ev(prob_local_outlier_factors)
-        norm_prob_local_outlier_factors = self._norm_prob_local_outlier_factors(
-            self._prob_local_outlier_factors_ev_fit_X_)
-        self.negative_local_outlier_probability_ = self._neg_local_outlier_probability(prob_local_outlier_factors,
-                                                                                       norm_prob_local_outlier_factors)
-
-        # Compute the local reachability density using the probabilistic set distance to define threshold_:
-        self._lrd = self._local_reachability_density(
-            self._prob_distances_fit_X_, _neighbors_indices_fit_X_)
-
-        lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_] /
-                            self._lrd[:, np.newaxis])
-
-        self.lrd_ratios_ = -np.mean(lrd_ratios_array, axis=1)
-
-        self.threshold_ = scoreatpercentile(
-            self.lrd_ratios_, 100. * (1. - self.norm_factor))
+        LocalOutlierMixin.fit(self, X, y, mode='loop')
 
         return self
 
@@ -246,14 +207,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         check_is_fitted(self, ["threshold_", "negative_local_outlier_probability_",
                                "n_neighbors_", "_distances_fit_X_"])
 
-        if X is not None:
-            X = check_array(X, accept_sparse='csr')
-            is_inlier = np.ones(X.shape[0], dtype=int)
-            is_inlier[self._decision_function(X) <= self.threshold_] = -1
-        else:
-            is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
-            is_inlier[self.lrd_ratios_ <= self.threshold_] = -1
-
+        is_inlier = LocalOutlierMixin._assign_label(self, X, mode='loop')
+        if X is None:
             return is_inlier
 
     @staticmethod
@@ -461,52 +416,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             The opposite of the local reachability density of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self, ["norm_factor", "n_neighbors", "_distances_fit_X_", "negative_local_outlier_probability_"])
+        check_is_fitted(self,
+                        ["norm_factor", "n_neighbors", "_distances_fit_X_", "negative_local_outlier_probability_"])
 
-        X = check_array(X, accept_sparse='csr')
-
-        distances_X, neighbors_indices_X = (
-            self.kneighbors(X, n_neighbors=self.n_neighbors_))
-
-        ssd = self._ssd(distances_X)
-        standard_distances_X = self._standard_distances(ssd)
-        prob_distances = self._prob_distances(standard_distances_X)
-
-        X_lrd = self._local_reachability_density(prob_distances,
-                                                 neighbors_indices_X)
-
-        lrd_ratios_array = (self._lrd[neighbors_indices_X] /
-                            X_lrd[:, np.newaxis])
-
-        # as bigger is better:
-        return -np.mean(lrd_ratios_array, axis=1)
-
-    def _local_reachability_density(self, distances_X, neighbors_indices):
-        """The local reachability density (LRD)
-
-        The LRD of a sample is the inverse of the probabilistic
-        distance of its k-nearest neighbors.
-
-        Parameters
-        ----------
-        distances_X : array, shape (n_query, self.n_neighbors)
-            Probabilistic distances to the neighbors (in the training samples `self._fit_X`)
-            of each query point to compute the LRD.
-
-        neighbors_indices : array, shape (n_query, self.n_neighbors)
-            Neighbors indices (of each query point) among training samples
-            self._fit_X.
-
-        Returns
-        -------
-        local_reachability_density : array, shape (n_samples,)
-            The local reachability density of each sample.
-        """
-        self._prob_set_distances_fit_X_tiled_ = np.tile(self._prob_distances_fit_X_, (self.n_neighbors_, 1)).T
-        dist_k = self._prob_set_distances_fit_X_tiled_[neighbors_indices, self.n_neighbors_ - 1]
-        prob_set_distances_tiled = np.tile(distances_X, (self.n_neighbors_, 1)).T
-
-        reach_dist_array = np.maximum(prob_set_distances_tiled, dist_k)
-
-        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
-        return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
+        return LocalOutlierMixin._decision_function(self, X, mode='loop')

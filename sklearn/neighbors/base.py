@@ -11,6 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
+from scipy.stats import scoreatpercentile
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
@@ -801,3 +802,133 @@ class UnsupervisedMixin(object):
             or [n_samples, n_samples] if metric='precomputed'.
         """
         return self._fit(X)
+
+
+class LocalOutlierMixin(object):
+
+    """Mixin for Local Outlier Factor (LOF) and Local Outlier Probability (LoOP) approaches"""
+
+    def _distance_neighbors(self):
+        n_samples = self._fit_X.shape[0]
+        if self.n_neighbors > n_samples:
+            warnings.warn("n_neighbors (%s) is greater than the "
+                 "total number of samples (%s). n_neighbors "
+                 "will be set to (n_samples - 1) for estimation."
+                 % (self.n_neighbors, n_samples))
+        self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
+
+        self._distances_fit_X_, self._neighbors_indices_fit_X_ = (
+            self.kneighbors(None, n_neighbors=self.n_neighbors_))
+
+    def _decision_function(self, X, mode='lof'):
+
+        X = check_array(X, accept_sparse='csr')
+
+        distances_X, neighbors_indices_X = (
+            self.kneighbors(X, n_neighbors=self.n_neighbors_))
+
+        if mode == 'loop':
+            ssd = self._ssd(distances_X)
+            standard_distances_X = self._standard_distances(ssd)
+            distances_X = self._prob_distances(standard_distances_X)
+
+        X_lrd = LocalOutlierMixin._local_reachability_density(self, distances_X, neighbors_indices_X, mode=mode)
+
+        lrd_ratios_array = (self._lrd[neighbors_indices_X] /
+                            X_lrd[:, np.newaxis])
+
+        # as bigger is better:
+        return -np.mean(lrd_ratios_array, axis=1)
+
+    def _local_reachability_density(self, distances_X, neighbors_indices, mode='lof'):
+        """The local reachability density (LRD)
+
+        The LRD of a sample is the inverse of the average reachability
+        distance of its k-nearest neighbors.
+
+        Parameters
+        ----------
+        distances_X : array, shape (n_query, self.n_neighbors)
+            Distances to the neighbors (in the training samples `self._fit_X`)
+            of each query point to compute the LRD.
+
+        neighbors_indices : array, shape (n_query, self.n_neighbors)
+            Neighbors indices (of each query point) among training samples
+            self._fit_X.
+
+        Returns
+        -------
+        local_reachability_density : array, shape (n_samples,)
+            The local reachability density of each sample.
+        """
+        if mode == 'loop':
+            self._prob_set_distances_fit_X_tiled_ = np.tile(self._distances_fit_X_, (self.n_neighbors_, 1)).T
+            dist_k = self._prob_set_distances_fit_X_tiled_[neighbors_indices,
+                                            self.n_neighbors_ - 1]
+        else:
+            dist_k = self._distances_fit_X_[neighbors_indices,
+                                        self.n_neighbors_ - 1]
+        if mode == 'loop':
+            distances_X = np.tile(distances_X, (self.n_neighbors_, 1)).T
+
+        reach_dist_array = np.maximum(distances_X, dist_k)
+
+        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
+        return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
+
+    def _assign_label(self, X, mode='lof'):
+
+        if X is not None:
+            X = check_array(X, accept_sparse='csr')
+            is_inlier = np.ones(X.shape[0], dtype=int)
+            is_inlier[self._decision_function(X) <= self.threshold_] = -1
+        else:
+            is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
+            if mode == 'loop':
+                is_inlier[self.lrd_ratios_ <= self.threshold_] = -1
+            else:
+                is_inlier[self.negative_outlier_factor_ <= self.threshold_] = -1
+
+        return is_inlier
+
+    def fit(self, X, y=None, mode='lof'):
+
+        LocalOutlierMixin._distance_neighbors(self)
+
+        if mode == 'loop':
+            ssd = self._ssd(self._distances_fit_X_)
+            self._standard_distances_fit_X_ = self._standard_distances(ssd)
+            self._distances_fit_X_ = self._prob_distances(self._standard_distances_fit_X_)
+            self._distances_ev_fit_X_ = self._prob_distances_ev(self._distances_fit_X_)
+            prob_local_outlier_factors = self._prob_local_outlier_factors(self._distances_fit_X_,
+                                                                          self._distances_ev_fit_X_)
+            self._prob_local_outlier_factors_ev_fit_X_ = self._prob_local_outlier_factors_ev(prob_local_outlier_factors)
+            norm_prob_local_outlier_factors = self._norm_prob_local_outlier_factors(
+                self._prob_local_outlier_factors_ev_fit_X_)
+            self.negative_local_outlier_probability_ = self._neg_local_outlier_probability(prob_local_outlier_factors,
+                                                                                           norm_prob_local_outlier_factors)
+
+        self._lrd = LocalOutlierMixin._local_reachability_density(self,
+                                                                  self._distances_fit_X_,
+                                                                  self._neighbors_indices_fit_X_, mode=mode)
+
+        # Compute score over training samples to define threshold_:
+        lrd_ratios_array = (self._lrd[self._neighbors_indices_fit_X_] /
+                            self._lrd[:, np.newaxis])
+
+        self.lrd_ratios_ = -np.mean(lrd_ratios_array, axis=1)
+
+        if mode == 'loop':
+            self.threshold_ = scoreatpercentile(
+                self.lrd_ratios_, 100. * (1. - self.norm_factor))
+        else:
+            self.negative_outlier_factor_ = self.lrd_ratios_
+            self.threshold_ = -scoreatpercentile(
+                -self.negative_outlier_factor_, 100. * (1. - self.contamination))
+
+        return self
+
+
+
+
+

@@ -21,6 +21,10 @@ different ways of performing :ref:`outlier_detection`:
 - using the Local Outlier Factor to measure the local deviation of a given
   data point with respect to its neighbors by comparing their local density.
 
+- using the Local Outlier Probability to measure the probability that a given
+  data point is an outlier with respect to its neighbors by comparing their
+  local probabilistic density.
+
 The ground truth about inliers and outliers is given by the points colors
 while the orange-filled area indicates which points are reported as inliers
 by each method.
@@ -63,7 +67,8 @@ classifiers = {
         n_neighbors=35,
         contamination=outliers_fraction),
     "Local Outlier Probability": LocalOutlierProbability(
-        n_neighbors=35, norm_factor=0.75
+        n_neighbors=35,
+        norm_factor=0.75
     )
 }
 
@@ -85,7 +90,7 @@ for i, offset in enumerate(clusters_separation):
     X = np.r_[X, np.random.uniform(low=-6, high=6, size=(n_outliers, 2))]
 
     # Fit the model
-    plt.figure(figsize=(9, 7))
+    plt.figure(figsize=(9, 13))
     for i, (clf_name, clf) in enumerate(classifiers.items()):
         # fit the data and tag outliers
         if clf_name == "Local Outlier Factor":
