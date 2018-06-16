@@ -1801,7 +1801,7 @@ class AdaptiveSearchCV(BaseSearchCV):
                  n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
-        super(GridSearchCV, self).__init__(
+        super(AdaptiveSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
