@@ -698,9 +698,10 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
-    if y is None:
-        raise ValueError('Parameter y cannot be None')
+
     shape = np.shape(y)
+    if len(shape) == 0:
+        raise ValueError('Array size must bigger than zero')
     if len(shape) == 1:
         return np.ravel(y)
     if len(shape) == 2 and shape[1] == 1:
