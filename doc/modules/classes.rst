@@ -1044,7 +1044,7 @@ Hyper-parameter optimizers
    :toctree: generated/
    :template: class.rst
 
-   model_selection.BaseSearchCV
+   model_selection.AdaptiveSearchCV
    model_selection.GridSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
