@@ -241,7 +241,8 @@ def test_rfec_grid_scores_size():
                       min_features_to_select=min_features_to_select)
         rfecv.fit(X, y)
 
-        score_len = np.ceil((X.shape[1] - min_features_to_select) / step) + 1
+        score_len = np.ceil(
+            (X.shape[1] - min_features_to_select) * 1.0 / step) + 1
         assert_equal(len(rfecv.grid_scores_), score_len)
         assert_equal(len(rfecv.ranking_), X.shape[1])
 

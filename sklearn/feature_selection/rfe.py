@@ -59,8 +59,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         are selected.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then ``step`` corresponds to the (integer)
-        number of features to remove at each iteration.
+        If greater than or equal to 1, then ``step`` corresponds to the
+        (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
@@ -289,8 +289,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         attribute or through a ``feature_importances_`` attribute.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then ``step`` corresponds to the (integer)
-        number of features to remove at each iteration.
+        If greater than or equal to 1, then ``step`` corresponds to the
+        (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
         Note that the last iteration may remove fewer than ``step`` features in
@@ -329,7 +329,8 @@ class RFECV(RFE, MetaEstimatorMixin):
     min_features_to_select : int, (default=1)
         The minimum number of features to be selected. This number of features
         will always be scored, even if the difference between the original
-        feature count and ``min_features_to_select`` isn't divisible by ``step``.
+        feature count and ``min_features_to_select`` isn't divisible by
+        ``step``.
 
     Attributes
     ----------
