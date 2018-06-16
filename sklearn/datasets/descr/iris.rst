@@ -32,10 +32,9 @@ Data Set Characteristics:
     :Donor: Michael Marshall (MARSHALL%PLU@io.arc.nasa.gov)
     :Date: July, 1988
 
-This is a copy of UCI ML iris datasets.
-http://archive.ics.uci.edu/ml/datasets/Iris
-
-The famous Iris database, first used by Sir R.A. Fisher
+The famous Iris database, first used by Sir R.A. Fisher. The dataset is taken
+from Fisher's paper. Note that it's the same as in R, but not as in the UCI
+Machine Learning Repository, which has two wrong data points.
 
 This is perhaps the best known database to be found in the
 pattern recognition literature.  Fisher's paper is a classic in the field and

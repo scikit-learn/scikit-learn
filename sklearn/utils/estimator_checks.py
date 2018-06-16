@@ -301,10 +301,10 @@ def check_estimator(Estimator):
     for check in _yield_all_checks(name, estimator):
         try:
             check(name, estimator)
-        except SkipTest as message:
+        except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
-            warnings.warn(message, SkipTestWarning)
+            warnings.warn(str(exception), SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
@@ -327,7 +327,6 @@ def set_checking_parameters(estimator):
             and not isinstance(estimator, BaseSGD)):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
@@ -486,10 +485,11 @@ def check_sample_weights_pandas_series(name, estimator_orig):
     if has_fit_parameter(estimator, "sample_weight"):
         try:
             import pandas as pd
-            X = np.array([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+            X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                          [2, 1], [2, 2], [2, 3], [2, 4]])
             X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 2, 2, 2])
-            weights = pd.Series([1] * 6)
+            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2])
+            weights = pd.Series([1] * 8)
             try:
                 estimator.fit(X, y, sample_weight=weights)
             except ValueError:
@@ -675,7 +675,7 @@ def check_fit2d_predict1d(name, estimator_orig):
                                  getattr(estimator, method), X[0])
 
 
-def _apply_func(func, X):
+def _apply_on_subsets(func, X):
     # apply function on the whole set and on mini batches
     result_full = func(X)
     n_features = X.shape[1]
@@ -686,6 +686,9 @@ def _apply_func(func, X):
         result_full = result_full[0]
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
+    if sparse.issparse(result_full):
+        result_full = result_full.A
+        result_by_batch = [x.A for x in result_by_batch]
     return np.ravel(result_full), np.ravel(result_by_batch)
 
 
@@ -721,7 +724,7 @@ def check_methods_subset_invariance(name, estimator_orig):
             raise SkipTest(msg)
 
         if hasattr(estimator, method):
-            result_full, result_by_batch = _apply_func(
+            result_full, result_by_batch = _apply_on_subsets(
                 getattr(estimator, method), X)
             assert_allclose(result_full, result_by_batch,
                             atol=1e-7, err_msg=msg)

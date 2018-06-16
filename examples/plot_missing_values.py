@@ -104,7 +104,7 @@ for j in xval:
     ax1.barh(j, mses_diabetes[j], xerr=stds_diabetes[j],
              color=colors[j], alpha=0.6, align='center')
 
-ax1.set_title('Feature Selection Techniques with Diabetes Data')
+ax1.set_title('Imputation Techniques with Diabetes Data')
 ax1.set_xlim(left=np.min(mses_diabetes) * 0.9,
              right=np.max(mses_diabetes) * 1.1)
 ax1.set_yticks(xval)
@@ -118,7 +118,7 @@ for j in xval:
     ax2.barh(j, mses_boston[j], xerr=stds_boston[j],
              color=colors[j], alpha=0.6, align='center')
 
-ax2.set_title('Feature Selection Techniques with Boston Data')
+ax2.set_title('Imputation Techniques with Boston Data')
 ax2.set_yticks(xval)
 ax2.set_xlabel('MSE')
 ax2.invert_yaxis()

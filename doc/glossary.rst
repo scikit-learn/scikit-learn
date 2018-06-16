@@ -939,8 +939,9 @@ such as:
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
-        test data, returning a number. See :ref:`scoring_parameter`; see also
-        :term:`evaluation metric`.
+        test data, returning a number. Unlike :term:`evaluation metrics`,
+        a greater returned number must correspond with a *better* score.
+        See :ref:`scoring_parameter`.
 
 Further examples:
 

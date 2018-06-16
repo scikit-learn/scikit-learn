@@ -1,4 +1,7 @@
 import numpy as np
+
+import pytest
+
 from sklearn.utils.testing import (assert_allclose, assert_raises,
                                    assert_equal)
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
@@ -40,21 +43,25 @@ def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
                     atol=atol, rtol=max(1E-7, rtol))
 
 
-def test_kernel_density(n_samples=100, n_features=3):
+@pytest.mark.parametrize(
+        'kernel',
+        ['gaussian', 'tophat', 'epanechnikov',
+         'exponential', 'linear', 'cosine'])
+@pytest.mark.parametrize('bandwidth', [0.01, 0.1, 1])
+def test_kernel_density(kernel, bandwidth):
+    n_samples, n_features = (100, 3)
+
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
     Y = rng.randn(n_samples, n_features)
 
-    for kernel in ['gaussian', 'tophat', 'epanechnikov',
-                   'exponential', 'linear', 'cosine']:
-        for bandwidth in [0.01, 0.1, 1]:
-            dens_true = compute_kernel_slow(Y, X, kernel, bandwidth)
+    dens_true = compute_kernel_slow(Y, X, kernel, bandwidth)
 
-            for rtol in [0, 1E-5]:
-                for atol in [1E-6, 1E-2]:
-                    for breadth_first in (True, False):
-                        yield (check_results, kernel, bandwidth, atol, rtol,
-                               X, Y, dens_true)
+    for rtol in [0, 1E-5]:
+        for atol in [1E-6, 1E-2]:
+            for breadth_first in (True, False):
+                check_results(kernel, bandwidth, atol, rtol,
+                              X, Y, dens_true)
 
 
 def test_kernel_density_sampling(n_samples=100, n_features=3):
@@ -91,23 +98,24 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     assert_equal(kde.sample().shape, (1, 1))
 
 
-def test_kde_algorithm_metric_choice():
+@pytest.mark.parametrize('algorithm', ['auto', 'ball_tree', 'kd_tree'])
+@pytest.mark.parametrize('metric',
+                         ['euclidean', 'minkowski', 'manhattan',
+                          'chebyshev', 'haversine'])
+def test_kde_algorithm_metric_choice(algorithm, metric):
     # Smoke test for various metrics and algorithms
     rng = np.random.RandomState(0)
     X = rng.randn(10, 2)    # 2 features required for haversine dist.
     Y = rng.randn(10, 2)
 
-    for algorithm in ['auto', 'ball_tree', 'kd_tree']:
-        for metric in ['euclidean', 'minkowski', 'manhattan',
-                       'chebyshev', 'haversine']:
-            if algorithm == 'kd_tree' and metric not in KDTree.valid_metrics:
-                assert_raises(ValueError, KernelDensity,
-                              algorithm=algorithm, metric=metric)
-            else:
-                kde = KernelDensity(algorithm=algorithm, metric=metric)
-                kde.fit(X)
-                y_dens = kde.score_samples(Y)
-                assert_equal(y_dens.shape, Y.shape[:1])
+    if algorithm == 'kd_tree' and metric not in KDTree.valid_metrics:
+        assert_raises(ValueError, KernelDensity,
+                      algorithm=algorithm, metric=metric)
+    else:
+        kde = KernelDensity(algorithm=algorithm, metric=metric)
+        kde.fit(X)
+        y_dens = kde.score_samples(Y)
+        assert_equal(y_dens.shape, Y.shape[:1])
 
 
 def test_kde_score(n_samples=100, n_features=3):
