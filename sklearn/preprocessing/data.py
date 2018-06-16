@@ -540,7 +540,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     n_samples_seen_ : int or array, shape (n_features,)
         The number of samples processed by the estimator for each feature.
-        If there is not missing samples, the ``n_samples_seen`` will be an
+        If there are not missing samples, the ``n_samples_seen`` will be an
         integer, otherwise it will be an array.
         Will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
