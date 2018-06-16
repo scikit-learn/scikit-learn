@@ -1,3 +1,11 @@
+"""
+=======================
+Select Column Functions
+=======================
+
+TODO
+"""
+
 # Author: Pedro Morales <part.morales@gmail.com>
 #
 # License: BSD 3 clause
