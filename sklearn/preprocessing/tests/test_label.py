@@ -181,7 +181,7 @@ def test_label_encoder():
     assert_raises(ValueError, le.transform, [0, 6])
 
     le.fit(["apple", "orange"])
-    msg = "bad input shape"
+    msg = "Array size must bigger than zero"
     assert_raise_message(ValueError, msg, le.transform, "apple")
 
 
@@ -210,7 +210,7 @@ def test_label_encoder_errors():
     assert_raise_message(ValueError, msg, le.inverse_transform, [-2, -3, -4])
 
     # Fail on inverse_transform("")
-    msg = "bad input shape ()"
+    msg = "Array size must bigger than zero"
     assert_raise_message(ValueError, msg, le.inverse_transform, "")
 
 
