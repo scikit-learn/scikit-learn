@@ -800,6 +800,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -855,10 +858,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
                         force_all_finite='allow-nan')
 
         if sparse.issparse(X):
-            mins, maxs = min_max_axis(X, axis=0)
+            mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = np.abs(X).max(axis=0)
+            max_abs = np.nanmax(np.abs(X), axis=0)
 
         # First pass
         if not hasattr(self, 'n_samples_seen_'):
@@ -940,6 +943,9 @@ def maxabs_scale(X, axis=0, copy=True):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded to compute the statistics,
+    and maintained during the data transformation.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.

@@ -8,9 +8,11 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.base import clone
 
+from sklearn.preprocessing import maxabs_scale
 from sklearn.preprocessing import minmax_scale
 from sklearn.preprocessing import quantile_transform
 
+from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import QuantileTransformer
 
@@ -27,7 +29,8 @@ def _get_valid_samples_by_column(X, col):
 
 @pytest.mark.parametrize(
     "est, func, support_sparse",
-    [(MinMaxScaler(), minmax_scale, False),
+    [(MaxAbsScaler(), maxabs_scale, True),
+     (MinMaxScaler(), minmax_scale, False),
      (QuantileTransformer(n_quantiles=10), quantile_transform, True)]
 )
 def test_missing_value_handling(est, func, support_sparse):
