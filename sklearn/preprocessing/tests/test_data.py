@@ -704,6 +704,28 @@ def test_scaler_without_centering():
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
+@pytest.mark.parametrize("with_mean", [True, False])
+@pytest.mark.parametrize("with_std", [True, False])
+@pytest.mark.parametrize("array_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+def test_scaler_n_samples_seen_with_nan(with_mean, with_std,
+                                        array_constructor):
+    X = np.array([[0, 1, 3],
+                  [np.nan, 6, 10],
+                  [5, 4, np.nan],
+                  [8, 0, np.nan]],
+                 dtype=np.float64)
+    X = array_constructor(X)
+
+    if sparse.issparse(X) and with_mean:
+        pytest.skip("'with_mean=True' cannot be used with sparse matrix.")
+
+    transformer = StandardScaler(with_mean=with_mean, with_std=with_std)
+    transformer.fit(X)
+
+    assert_array_equal(transformer.n_samples_seen_, np.array([3, 4, 2]))
+
+
 def _check_identity_scalers_attributes(scaler_1, scaler_2):
     assert scaler_1.mean_ is scaler_2.mean_ is None
     assert scaler_1.var_ is scaler_2.var_ is None
