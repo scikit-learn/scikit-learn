@@ -22,6 +22,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
@@ -90,6 +91,49 @@ def test_error():
         msg = "Maximum number of iteration must be positive"
         assert_raise_message(ValueError, msg, LR(max_iter=-1).fit, X, Y1)
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
+
+
+def test_logistic_cv_mock_scorer():
+
+    class MockScorer(object):
+        def __init__(self):
+            self.calls = 0
+            self.scores = [0.1, 0.4, 0.8, 0.5]
+
+        def __call__(self, model, X, y, sample_weight=None):
+            score = self.scores[self.calls % len(self.scores)]
+            self.calls += 1
+            return score
+
+    mock_scorer = MockScorer()
+    Cs = [1, 2, 3, 4]
+    cv = 2
+
+    lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
+    lr.fit(X, Y1)
+
+    # Cs[2] has the highest score (0.8) from MockScorer
+    assert lr.C_[0] == Cs[2]
+
+    # scorer called 8 times (cv*len(Cs))
+    assert mock_scorer.calls == cv * len(Cs)
+
+    # reset mock_scorer
+    mock_scorer.calls = 0
+    with pytest.warns(ChangedBehaviorWarning):
+        custom_score = lr.score(X, lr.predict(X))
+
+    assert custom_score == mock_scorer.scores[0]
+    assert mock_scorer.calls == 1
+
+
+def test_logistic_cv_score_does_not_warn_by_default():
+    lr = LogisticRegressionCV(cv=2)
+    lr.fit(X, Y1)
+
+    with pytest.warns(None) as record:
+        lr.score(X, lr.predict(X))
+    assert len(record) == 0
 
 
 def test_lr_liblinear_warning():
