@@ -7,6 +7,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -1202,23 +1203,12 @@ def test_warm_start_converge_LR():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
 
-    lr1 = LogisticRegression(C=1000000, multi_class='multinomial',
-                             solver='sag', tol=0.0001, warm_start=False,
-                             verbose=0)
-    lr2 = LogisticRegression(C=1000000, multi_class='multinomial',
-                             solver='sag', tol=0.0001, warm_start=True,
-                             verbose=0)
-    lr1_loss = []
-    for i in range(5):
-        lr1.fit(X, y)
-        p1 = lr1.predict_proba(X)
-        lr1_loss.append(log_loss(y, p1))
+    lr_no_ws = LogisticRegression(multi_class='multinomial',
+                             solver='sag', warm_start=False)
+    lr_ws = LogisticRegression(multi_class='multinomial',
+                             solver='sag', warm_start=True)
 
-    lr2_loss = []
+    lr_no_ws_loss = [log_loss(y, lr_no_ws.fit(X, y).predict_proba(X)) for _ in range(5)]
+    lr_ws_loss = [log_loss(y, lr_ws.fit(X, y).predict_proba(X)) for _ in range(5)]
     for i in range(5):
-        lr2.fit(X, y)
-        p2 = lr2.predict_proba(X)
-        lr2_loss.append(log_loss(y, p2))
-
-    for i in range(5):
-        assert_almost_equal(lr1_loss[i], lr2_loss[i], decimal=4)
+        assert_allclose(lr_no_ws_loss[i], lr_ws_loss[i])
