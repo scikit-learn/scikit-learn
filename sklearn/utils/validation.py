@@ -733,28 +733,6 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 
-def get_random_seed(random_state):
-    """Gets int seed from a random_state
-
-    Parameters
-    ----------
-    random_state : None | int | instance of RandomState
-        If random_state is None, return the seed corresponding to RandomState
-        singleton used by np.random.
-        If random_state is a RandomState instance, return a first int from its
-        get_state() tuple.
-        If random_state is already an int, return it.
-        Otherwise raise ValueError.
-    """
-    if random_state is None or random_state is np.random:
-        return get_random_seed(np.random.mtrand._rand)
-    if isinstance(random_state, (numbers.Integral, np.integer)):
-        return random_state
-    if isinstance(random_state, np.random.RandomState):
-        return random_state.get_state()[1][0]
-    raise ValueError('%r cannot be used to extract int seed' % random_state)
-
-
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
 

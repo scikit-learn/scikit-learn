@@ -1107,7 +1107,8 @@ def learning_curve(estimator, X, y, groups=None,
         based on``train_sizes``.
 
     stratify : boolean, optional
-        Whether to stratify training data before taking prefixes of it;
+        Whether to split training data into subsets of varying sizes
+        (during each iteration of cross-validation) in a stratified fashion;
         when True, each training set will be sampled such that the proportion
         of each class matches the full training data (for the current iteration
         of cross-validation) as well as possible.
@@ -1148,9 +1149,9 @@ def learning_curve(estimator, X, y, groups=None,
         elif y is None:
             raise ValueError(
                 "Stratification is meaningless for y=None")
-        # we need to use random_seed, not RandomState instance,
+        # we need to use random_seed, i.e. integer, not RandomState instance,
         # in order to make training subsets growing, not disjoint
-        random_seed = get_random_seed(random_state)
+        random_seed = check_random_state(random_state).randint(2**31)
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))

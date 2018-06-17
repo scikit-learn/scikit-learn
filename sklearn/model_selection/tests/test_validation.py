@@ -1244,7 +1244,7 @@ def test_learning_curve_with_stratify():
         strata_ids_lengths_diff = np.diff(strata_ids_lengths)
 
         max_nat_diff = len(y) * (folds_count - 1) / folds_count % iters_count
-        assert(max(strata_ids_lengths_diff) <= max_nat_diff)
+        assert max(strata_ids_lengths_diff) <= max_nat_diff
 
     ones = 25
     zeros = 2475
