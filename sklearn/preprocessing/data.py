@@ -2380,7 +2380,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
             #  for inverse transform, match a uniform PDF
-            X_col = output_distribution.cdf(X_col)
+            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+                X_col = output_distribution.cdf(X_col)
         # find index for lower and higher bounds
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
