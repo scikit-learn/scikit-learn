@@ -18,6 +18,7 @@ from distutils.version import LooseVersion
 import numpy as np
 from scipy import sparse
 from scipy import stats
+from scipy import special
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -2776,7 +2777,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         transformed = []
 
         for col in X.T:
-            col_trans, lmbda = stats.boxcox(col, lmbda=None)
+            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+                col_trans, lmbda = stats.boxcox(col, lmbda=None)
             self.lambdas_.append(lmbda)
             transformed.append(col_trans)
 
@@ -2801,7 +2803,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X = self._check_input(X, check_positive=True, check_shape=True)
 
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
+            X[:, i] = special.boxcox(X[:, i], lmbda)
 
         if self.standardize:
             X = self._scaler.transform(X)
@@ -2856,9 +2858,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         check_method : bool
             If True, check that the transformation method is valid.
         """
-        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy,
+                        force_all_finite='allow-nan')
 
-        if check_positive and self.method == 'box-cox' and np.any(X <= 0):
+        if check_positive and self.method == 'box-cox' and np.nanmin(X) <= 0:
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
 
