@@ -368,8 +368,8 @@ def test_randomized_svd_power_iteration_normalizer():
 def test_randomized_svd_sparse_warnings():
     # randomized_svd throws a warning for lil and dok matrix
     rng = np.random.RandomState(42)
-    X = make_low_rank_matrix(100, 500, effective_rank=50, random_state=rng)
-    n_components = 50
+    X = make_low_rank_matrix(50, 20, effective_rank=10, random_state=rng)
+    n_components = 5
     for cls in (sparse.lil_matrix, sparse.dok_matrix):
         X = cls(X)
         assert_warns_message(
