@@ -54,8 +54,6 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
     Xt = est.fit(X_train).transform(X_test)
-    if hasattr(est, 'lambdas_'):
-        print(est.lambdas_)
     # missing values should still be missing, and only them
     assert_array_equal(np.isnan(Xt), np.isnan(X_test))
 
@@ -75,12 +73,6 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     for i in range(X.shape[1]):
         # train only on non-NaN
         est.fit(_get_valid_samples_by_column(X_train, i))
-        if hasattr(est, 'lambdas_'):
-            print(est.lambdas_)
-            print('========')
-        est.fit(X_train[:, [i]])
-        if hasattr(est, 'lambdas_'):
-            print(est.lambdas_)
         # check transforming with NaN works even when training without NaN
         Xt_col = est.transform(X_test[:, [i]])
         assert_allclose(Xt_col, Xt[:, [i]])

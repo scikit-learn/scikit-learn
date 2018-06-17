@@ -2777,8 +2777,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         transformed = []
 
         for col in X.T:
-            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                col_trans, lmbda = stats.boxcox(col, lmbda=None)
+            # the computation of lambda is influenced by NaNs and we need to
+            # get rid of them to compute them.
+            _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
+            col_trans = special.boxcox(col, lmbda)
             self.lambdas_.append(lmbda)
             transformed.append(col_trans)
 
