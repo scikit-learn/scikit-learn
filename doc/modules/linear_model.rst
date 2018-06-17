@@ -213,7 +213,7 @@ the duality gap computation used for convergence control.
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_.
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
     * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
       S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
       in IEEE Journal of Selected Topics in Signal Processing, 2007
@@ -380,7 +380,7 @@ the duality gap computation used for convergence control.
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_.
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
     * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
       S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
       in IEEE Journal of Selected Topics in Signal Processing, 2007
