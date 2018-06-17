@@ -78,6 +78,26 @@ def test_imputation_shape():
         assert X_imputed.shape == (10, 2)
 
 
+@pytest.mark.parametrize("strategy", ["const", 101, None])
+def test_imputation_error_invalid_strategy(strategy):
+    X = np.ones((3, 5))
+    X[0, 0] = np.nan
+
+    with pytest.raises(ValueError, match=str(strategy)):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning(strategy):
+    X = np.ones((3, 5))
+    X[:, 0] = np.nan
+
+    with pytest.warns(UserWarning, match="Deleting"):
+        imputer = SimpleImputer(strategy=strategy, verbose=True)
+        imputer.fit_transform(X)
+
+
 def safe_median(arr, *args, **kwargs):
     # np.median([]) raises a TypeError for numpy >= 1.10.1
     length = arr.size if hasattr(arr, 'size') else len(arr)
