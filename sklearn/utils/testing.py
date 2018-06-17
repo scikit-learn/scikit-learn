@@ -49,6 +49,7 @@ from sklearn.externals import joblib
 from sklearn.utils.fixes import signature
 from sklearn.utils import deprecated
 
+
 additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
@@ -136,7 +137,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
@@ -320,7 +320,6 @@ class _IgnoreWarnings(object):
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            # very important to avoid uncontrolled state propagation
             clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
@@ -338,14 +337,14 @@ class _IgnoreWarnings(object):
         return "%s(%s)" % (name, ", ".join(args))
 
     def __enter__(self):
-        clean_warning_registry()  # be safe and not propagate state + chaos
-        warnings.simplefilter("ignore", self.category)
         if self._entered:
             raise RuntimeError("Cannot enter %r twice" % self)
         self._entered = True
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
+        clean_warning_registry()
+        warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
         if not self._entered:
@@ -353,7 +352,7 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()  # be safe and not propagate state + chaos
+        clean_warning_registry()
 
 
 assert_less = _dummy.assertLess
@@ -543,7 +542,7 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel"]
+         "SelectFromModel", "ColumnTransformer"]
 
 # some strange ones
 DONT_TEST = ['SparseCoder', 'DictVectorizer',
@@ -696,41 +695,40 @@ try:
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
 
+    #  Decorator for tests involving both BLAS calls and multiprocessing.
+    #
+    #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction
+    #  with some implementation of BLAS (or other libraries that manage an
+    #  internal posix thread pool) can cause a crash or a freeze of the Python
+    #  process.
+    #
+    #  In practice all known packaged distributions (from Linux distros or
+    #  Anaconda) of BLAS under Linux seems to be safe. So we this problem seems
+    #  to only impact OSX users.
+    #
+    #  This wrapper makes it possible to skip tests that can possibly cause
+    #  this crash under OS X with.
+    #
+    #  Under Python 3.4+ it is possible to use the `forkserver` start method
+    #  for multiprocessing to avoid this issue. However it can cause pickling
+    #  errors on interactively defined functions. It therefore not enabled by
+    #  default.
+
+    if_safe_multiprocessing_with_blas = pytest.mark.skipif(
+            sys.platform == 'darwin',
+            reason="Possible multi-process bug with some BLAS")
 except ImportError:
     pass
 
 
-def if_safe_multiprocessing_with_blas(func):
-    """Decorator for tests involving both BLAS calls and multiprocessing.
-
-    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
-    some implementation of BLAS (or other libraries that manage an internal
-    posix thread pool) can cause a crash or a freeze of the Python process.
-
-    In practice all known packaged distributions (from Linux distros or
-    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
-    only impact OSX users.
-
-    This wrapper makes it possible to skip tests that can possibly cause
-    this crash under OS X with.
-
-    Under Python 3.4+ it is possible to use the `forkserver` start method
-    for multiprocessing to avoid this issue. However it can cause pickling
-    errors on interactively defined functions. It therefore not enabled by
-    default.
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        if sys.platform == 'darwin':
-            raise SkipTest(
-                "Possible multi-process bug with some BLAS")
-        return func(*args, **kwargs)
-    return run_test
-
-
 def clean_warning_registry():
-    """Safe way to reset warnings."""
-    warnings.resetwarnings()
+    """Clean Python warning registry for easier testing of warning messages.
+
+    We may not need to do this any more when getting rid of Python 2, not
+    entirely sure. See https://bugs.python.org/issue4180 and
+    https://bugs.python.org/issue21724 for more details.
+
+    """
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
         if 'six.moves' in mod_name:

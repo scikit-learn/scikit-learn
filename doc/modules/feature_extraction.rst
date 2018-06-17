@@ -657,12 +657,12 @@ In particular in a **supervised setting** it can be successfully combined
 with fast and scalable linear models to train **document classifiers**,
 for instance:
 
- * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+ * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 In an **unsupervised setting** it can be used to group similar documents
 together by applying clustering algorithms such as :ref:`k_means`:
 
-  * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
+  * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
@@ -916,7 +916,7 @@ Some tips and tricks:
     (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform some British spelling 
+    The following example will, for instance, transform some British spelling
     to American spelling::
 
         >>> import re
