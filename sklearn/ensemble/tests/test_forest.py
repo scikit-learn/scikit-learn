@@ -729,7 +729,9 @@ def check_min_samples_split(name):
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
                    "Failed with {0}".format(name))
 
-    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est = ForestEstimator(min_samples_split=0.5,
+                          n_estimators=1,
+                          random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]

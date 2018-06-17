@@ -34,8 +34,9 @@ def test_binomial_deviance():
                            np.array([100.0, -100.0, -100.0])), 0)
 
     # check if same results as alternative definition of deviance (from ESLII)
-    alt_dev = lambda y, pred: np.mean(np.logaddexp(0.0, -2.0 *
-                                                   (2.0 * y - 1) * pred))
+    def alt_dev(y, pred):
+        return np.mean(np.logaddexp(0.0, -2.0 * (2.0 * y - 1) * pred))
+
     test_data = [(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])),
                  (np.array([0.0, 0.0, 0.0]), np.array([100.0, 100.0, 100.0])),
                  (np.array([0.0, 0.0, 0.0]),
@@ -47,7 +48,9 @@ def test_binomial_deviance():
         assert_almost_equal(bd(*datum), alt_dev(*datum))
 
     # check the gradient against the
-    alt_ng = lambda y, pred: (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
+    def alt_ng(y, pred):
+        return (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
+
     for datum in test_data:
         assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
 
@@ -155,7 +158,6 @@ def test_quantile_loss_function():
 def test_sample_weight_deviance():
     # Test if deviance supports sample weights.
     rng = check_random_state(13)
-    X = rng.rand(100, 2)
     sample_weight = np.ones(100)
     reg_y = rng.rand(100)
     clf_y = rng.randint(0, 2, size=100)
