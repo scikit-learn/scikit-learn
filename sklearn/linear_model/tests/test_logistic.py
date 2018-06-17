@@ -1211,4 +1211,4 @@ def test_warm_start_converge_LR():
     lr_no_ws_loss = [log_loss(y, lr_no_ws.fit(X, y).predict_proba(X)) for _ in range(5)]
     lr_ws_loss = [log_loss(y, lr_ws.fit(X, y).predict_proba(X)) for _ in range(5)]
     for i in range(5):
-        assert_allclose(lr_no_ws_loss[i], lr_ws_loss[i])
+        assert_allclose(lr_no_ws_loss[i], lr_ws_loss[i], decimal = 4)
