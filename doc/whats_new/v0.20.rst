@@ -253,6 +253,10 @@ Model evaluation and meta-estimators
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
 
+- Add `stratify` parameter to :func:`model_selection.learning_curve` to support
+  stratified splits of training data during each iteration of cross-validation.
+  :issue:`11054` by :user:`Nikita Astrakhantsev <astrakhantsev>`.
+
 Decomposition and manifold learning
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
