@@ -332,6 +332,11 @@ Classifiers and regressors
   returning incorrect probabilities in the case of binary outcomes.
   :issue:`9939` by :user:`Roger Westover <rwolst>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+  ``score`` method always computes accuracy, not the metric given by
+  the ``scoring`` parameter.
+  :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
