@@ -576,7 +576,7 @@ Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
 bins, whereas discretization focuses on assigning feature values to these bins.
 
-:class:`KBinsDiscretizer` implement different binning strategies, which can be
+:class:`KBinsDiscretizer` implements different binning strategies, which can be
 selected with the ``strategy`` parameter. The 'uniform' strategy uses
 constant-width bins. The 'quantile' strategy uses the quantiles values to have
 equally populated bins in each feature. The 'kmeans' strategy defines bins based

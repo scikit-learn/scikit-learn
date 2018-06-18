@@ -12,7 +12,6 @@ import numpy as np
 import warnings
 
 from . import OneHotEncoder
-from . import QuantileTransformer
 from .data import _transform_selected
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
@@ -74,19 +73,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    offset_ : float array, shape (n_features,)
-        Minimum value per feature in ``X``. An ignored feature at index
-        ``i`` will have ``offset_[i] == 0``.
-
     n_bins_ : int array, shape (n_features,)
         Number of bins per feature. An ignored feature at index ``i``
         will have ``n_bins_[i] == 0``.
 
-    bin_width_ : array, shape (n_features,)
-        Contain floats with 'uniform' strategy, and arrays of varying shapes
-        (n_bins_, ) otherwise.
-        The width of each bin. Ignored features will have widths equal
-        to ``0``.
+    bin_edges_ : array of arrays, shape (n_features, )
+        The edges of each bin. Contain arrays of varying shapes (n_bins_, ).
+        Ignored features will have widths equal to ``0``. TODO
 
     transformed_features_ : int array, shape (n_features,)
         Features which are transformed.
@@ -109,11 +102,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Sometimes it may be useful to convert the data back into the original
     feature space. The ``inverse_transform`` function converts the binned
-    data into the original feature space. Each value will be a distance
-    of ``bin_width_ / 2`` from the nearest bin edge.
+    data into the original feature space. Each value will be equal to the mean
+    of the two bin edges.
 
-    >>> est.bin_width_
-    array([1., 1., 1., 1.])
+    >>> est.bin_edges_[0]
+    array([-2., -1.,  0.,  1.])
     >>> est.inverse_transform(Xt)
     array([[-1.5,  1.5, -3.5, -0.5],
            [-0.5,  2.5, -2.5, -0.5],
@@ -122,13 +115,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    Bin edges for feature ``i`` are defined as::
+    In bin edges for feature ``i``, the first and last values are used only for
+    ``inverse_transform``. During transform, bin edges are extended to::
 
-      np.concatenate([
-        -np.inf,
-        offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]),
-        np.inf
-      ])
+      np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
 
     See also
     --------
@@ -178,33 +168,40 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         offset = np.min(X, axis=0)
         offset[ignored] = 0
-        self.offset_ = offset
         self.n_bins_ = self._validate_n_bins(n_features, ignored)
 
         if self.strategy == 'uniform':
             ptp = np.ptp(X, axis=0)
-            same_min_max = np.where(ptp == 0)[0]
-            if len(same_min_max) > 0:
-                warnings.warn(
-                    "Features {} are constant and will be replaced with "
-                    "0.".format(", ".join(str(i) for i in same_min_max)))
-
             with np.errstate(divide='ignore', invalid='ignore'):
                 bin_widths = ptp / self.n_bins_
             bin_widths[ignored] = 0
-
-        elif self.strategy in ('quantile', 'kmeans'):
-            bin_widths = np.zeros(n_features, dtype=object)
+            bin_edges = np.zeros(n_features, dtype=object)
             for jj in range(n_features):
                 if jj in ignored:
-                    bin_widths[jj] = np.array([])
+                    bin_edges[jj] = np.array([])
+                    continue
+                edges = np.arange(self.n_bins_[jj] + 1) * bin_widths[jj]
+                edges += offset[jj]
+
+                if edges[0] == edges[-1] and self.n_bins_[jj] > 2:
+                    warnings.warn("Features %d is constant and will be "
+                                  "replaced with 0." % jj)
+                    self.n_bins_[jj] = 1
+                    edges = np.array([-np.inf, np.inf])
+                bin_edges[jj] = edges
+
+        elif self.strategy in ('quantile', 'kmeans'):
+            bin_edges = np.zeros(n_features, dtype=object)
+            for jj in range(n_features):
+                if jj in ignored:
+                    bin_edges[jj] = np.array([])
                     continue
                 col = X[:, jj][:, None]
 
                 if self.strategy == 'quantile':
                     n_quantiles = self.n_bins_[jj] + 1
-                    qt = QuantileTransformer(n_quantiles=n_quantiles).fit(col)
-                    boundaries = qt.quantiles_[:, 0]
+                    edges = np.percentile(
+                        col, np.linspace(0, 100, n_quantiles))
 
                 elif self.strategy == 'kmeans':
                     from ..cluster import KMeans
@@ -213,12 +210,17 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                                 random_state=self.random_state).fit(col)
                     centers = np.sort(km.cluster_centers_[:, 0],
                                       kind='mergesort')
-                    boundaries = (centers[1:] + centers[:-1]) * 0.5
-                    boundaries = np.r_[offset[jj], boundaries, col.max()]
+                    edges = (centers[1:] + centers[:-1]) * 0.5
+                    edges = np.r_[col.min(), edges, col.max()]
 
-                bin_widths[jj] = np.diff(boundaries)
+                if edges[0] == edges[-1] and self.n_bins_[jj] > 2:
+                    warnings.warn("Features %d is constant and will be "
+                                  "replaced with 0." % jj)
+                    self.n_bins_[jj] = 1
+                    edges = np.array([-np.inf, np.inf])
+                bin_edges[jj] = edges
 
-        self.bin_width_ = bin_widths
+        self.bin_edges_ = bin_edges
 
         return self
 
@@ -289,7 +291,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt : numeric array-like or sparse matrix
             Data in the binned space.
         """
-        check_is_fitted(self, ["offset_", "bin_width_"])
+        check_is_fitted(self, ["bin_edges_"])
         X = self._validate_X_post_fit(X)
 
         Xt = _transform_selected(X, self._transform, self.dtype,
@@ -323,28 +325,17 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """Performs transformation on X, with no ignored features."""
         trans = self.transformed_features_
 
-        X -= self.offset_[trans]
-        bin_width = self.bin_width_[trans]
-
-        if self.strategy == 'uniform':
-            # Rescale into [-1, bin_width] range
-            with np.errstate(divide='ignore', invalid='ignore'):
-                X /= bin_width
-
+        bin_edges = self.bin_edges_[trans]
+        for jj in range(X.shape[1]):
             # Values which are a multiple of the bin width are susceptible to
             # numeric instability. Add eps to X so these values are binned
             # correctly. See documentation for numpy.isclose for an explanation
             # of ``rtol`` and ``atol``.
             rtol = 1.e-5
             atol = 1.e-8
-            eps = atol + rtol * bin_width
-            np.floor(X + eps, out=X)
+            eps = atol + rtol * np.abs(X[:, jj])
 
-            X[~np.isfinite(X)] = 0  # Case when a feature is constant
-
-        elif self.strategy in ('quantile', 'kmeans'):
-            for jj in range(X.shape[1]):
-                X[:, jj] = np.digitize(X[:, jj], np.cumsum(bin_width[jj]))
+            X[:, jj] = np.digitize(X[:, jj] + eps, bin_edges[jj][1:])
 
         np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
 
@@ -366,7 +357,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv : numeric array-like
             Data in the original feature space.
         """
-        check_is_fitted(self, ["offset_", "bin_width_"])
+        check_is_fitted(self, ["bin_edges_"])
 
         # Currently, OneHotEncoder doesn't support inverse_transform
         if self.encode != 'ordinal':
@@ -380,20 +371,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv = Xt.copy()
         Xinv_sel = Xinv[:, trans]
 
-        if self.strategy == 'uniform':
-            Xinv_sel += 0.5
-            Xinv_sel *= self.bin_width_[trans]
-            Xinv_sel += self.offset_[trans]
-
-        elif self.strategy in ('quantile', 'kmeans'):
-            n_features = Xinv_sel.shape[1]
-            for jj in range(n_features):
-                boundaries = np.cumsum(self.bin_width_[trans][jj])
-                boundaries = np.r_[0, boundaries]
-                centers = (boundaries[1:] + boundaries[:-1]) * 0.5
-                Xinv_sel[:, jj] = centers[np.int_(Xinv_sel[:, jj])]
-
-            Xinv_sel += self.offset_[trans]
+        n_features = Xinv_sel.shape[1]
+        for jj in range(n_features):
+            bin_edges = self.bin_edges_[trans][jj]
+            bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
+            Xinv_sel[:, jj] = bin_centers[np.int_(Xinv_sel[:, jj])]
 
         Xinv[:, trans] = Xinv_sel
         return Xinv
