@@ -296,21 +296,29 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                                 labels=None, samplewise=False):
-    """Returns a confusion matrix for each output of a multilabel problem
+    """Compute confusion matrix label-wisely (default) or sample-wisely
+    (samplewise=True) to evaluate the accuracy of a classification
 
-    Multiclass tasks will be treated as if binarised under a one-vs-rest
-    transformation. Returned confusion matrices will be in the order of
-    sorted unique labels in the union of (y_true, y_pred).
+    In multilabel confusion matrix :math:`MCM`, the count of true negatives
+    is :math:`MCM_{:,0,0}`, false negatives is :math:`MCM_{:,1,0}`,
+    true positives is :math:`MCM_{:,1,1}` and false positives is
+    :math:`MCM_{:,0,1}`.
+
+    Multiclass and multilabel-indicator tasks will be treated as if
+    binarised under a one-vs-rest transformation. Returned confusion
+    matrices will be in the order of sorted unique labels in the union
+    of (y_true, y_pred).
 
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
-        Shape (n_samples, n_outputs) or (n_samples,)
+        of shape (n_samples, n_outputs) or (n_samples,)
         Ground truth (correct) target values.
     y_pred : 1d array-like, or label indicator array / sparse matrix
-        Shape (n_samples, n_outputs) or (n_samples,)
+        of shape (n_samples, n_outputs) or (n_samples,)
         Estimated targets as returned by a classifier
-    sample_weight : array, (n_samples,), optional
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights
     labels : array-like
         A list of classes or column indices to select some (or to force
         inclusion of classes absent from the data)
@@ -321,14 +329,53 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     -------
     multi_confusion : array, shape (n_outputs, 2, 2)
         A 2x2 confusion matrix corresponding to each output in the input.
+        When calculating label-wise multi_confusion (default), then
+        n_outputs = n_labels; when calculating sample-wise multi_confusion
+        (samplewise=True), n_outputs = n_samples.
+
+    Examples
+    --------
+    Multilabel-indicator case:
+    >>> from sklearn.metrics import multilabel_confusion_matrix
+    >>> y_true = [[1, 0, 1], [0, 1, 0]]
+    >>> y_pred = [[1, 0, 0], [0, 1, 1]]
+    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    array([[[1, 0],
+            [1, 1]],
+
+           [[1, 1],
+            [0, 1]]])
+
+    Multiclass case:
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             labels=["ant", "bird", "cat"])
+    array([[[3, 1],
+            [0, 2]],
+
+           [[5, 0],
+            [1, 0]],
+
+           [[2, 1],
+            [1, 2]]])
+
+    Binary case:
+    >>> y_true = [0, 1, 0, 1]
+    >>> y_pred = [1, 1, 1, 0]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             sample_weight=[1, 2, 3, 4])
+    array([[[1, 1],
+            [2, 0]],
+
+           [[0, 2],
+            [1, 1]]])
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None,
                          accept_sparse=['csr', 'csc'])
     y_pred = check_array(y_pred, ensure_2d=False, dtype=None,
                          accept_sparse=['csr', 'csc'])
     check_consistent_length(y_true, y_pred, sample_weight)
-    if sample_weight is not None and sample_weight.ndim > 1:
-        raise ValueError('sample_weight should be 1-d array. ')
     if sample_weight is not None and samplewise:
         raise ValueError('sample_weight should not be used with samplewise. ')
 
@@ -1191,12 +1238,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == 'samples'
-    C = multilabel_confusion_matrix(y_true, y_pred,
+    MCM = multilabel_confusion_matrix(y_true, y_pred,
                                     sample_weight=sample_weight,
                                     labels=labels, samplewise=samplewise)
-    tp_sum = C[:, 1, 1]
-    pred_sum = C[:, 1, 1] + C[:, 0, 1]
-    true_sum = C[:, 1, 1] + C[:, 1, 0]
+    tp_sum = MCM[:, 1, 1]
+    pred_sum = MCM[:, 1, 1] + MCM[:, 0, 1]
+    true_sum = MCM[:, 1, 1] + MCM[:, 1, 0]
 
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
