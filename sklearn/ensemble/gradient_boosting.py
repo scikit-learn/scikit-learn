@@ -779,8 +779,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort,
-                normalize_feature_importances=False)
+                presort=self.presort)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1230,7 +1229,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(tree.feature_importances_
+            stage_sum = sum(tree.tree_.compute_feature_importances_(normalize=False)
                             for tree in stage) / len(stage)
             total_sum += stage_sum
 
