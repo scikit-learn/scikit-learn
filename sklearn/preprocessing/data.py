@@ -1046,18 +1046,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         self.quantile_range = quantile_range
         self.copy = copy
 
-    def _check_array(self, X, copy):
-        """Makes sure centering is not enabled for sparse matrices."""
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES)
-
-        if sparse.issparse(X):
-            if self.with_centering:
-                raise ValueError(
-                    "Cannot center sparse matrices: use `with_centering=False`"
-                    " instead. See docstring for motivation and alternatives.")
-        return X
-
     def fit(self, X, y=None):
         """Compute the median and quantiles to be used for scaling.
 
@@ -1067,21 +1055,43 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
         """
+        X = check_array(X, accept_sparse='csc', copy=self.copy,estimator=self,
+                        dtype=FLOAT_DTYPES)
+
+        q_min, q_max = self.quantile_range
+        if not 0 <= q_min <= q_max <= 100:
+            raise ValueError("Invalid quantile range: %s" %
+                             str(self.quantile_range))
+
         if sparse.issparse(X):
-            raise TypeError("RobustScaler cannot be fitted on sparse inputs")
-        X = self._check_array(X, self.copy)
-        if self.with_centering:
-            self.center_ = np.median(X, axis=0)
+            if self.with_centering:
+                raise ValueError(
+                    "Cannot center sparse matrices: use `with_centering=False`"
+                    " instead. See docstring for motivation and alternatives.")
+
+            if self.with_scaling:
+                for feature_idx in range(X.shape[1]):
+                    column_nnz = X.data[X.indptr[feature_idx]:
+                                        X.indptr[feature_idx + 1]]
+                    quantiles = ([0, 0] if not column_nnz.size
+                                 else nanpercentile(column_nnz,
+                                                    self.quantile_range))
+                    quantiles = np.transpose(quantiles)
+        else:
+            if self.with_centering:
+                self.center_ = np.nanmedian(X, axis=0)
+            else:
+                self.center_ = None
+
+            if self.with_scaling:
+                quantiles = np.percentile(X, self.quantile_range, axis=0)
 
         if self.with_scaling:
-            q_min, q_max = self.quantile_range
-            if not 0 <= q_min <= q_max <= 100:
-                raise ValueError("Invalid quantile range: %s" %
-                                 str(self.quantile_range))
-
-            q = np.percentile(X, self.quantile_range, axis=0)
-            self.scale_ = (q[1] - q[0])
+            self.scale_ = (quantiles[1] - quantiles[0])
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
+        else:
+            self.scale_ = None
+
         return self
 
     def transform(self, X):
@@ -1095,10 +1105,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data used to scale along the specified axis.
         """
-        if self.with_centering:
-            check_is_fitted(self, 'center_')
-        if self.with_scaling:
-            check_is_fitted(self, 'scale_')
+        check_is_fitted(self, 'center_', 'scale_')
         X = self._check_array(X, self.copy)
 
         if sparse.issparse(X):
@@ -1119,10 +1126,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : array-like
             The data used to scale along the specified axis.
         """
-        if self.with_centering:
-            check_is_fitted(self, 'center_')
-        if self.with_scaling:
-            check_is_fitted(self, 'scale_')
+        check_is_fitted(self, 'center_', 'scale_')
         X = self._check_array(X, self.copy)
 
         if sparse.issparse(X):
