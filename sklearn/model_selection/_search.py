@@ -1083,7 +1083,7 @@ class GridSearchCV(BaseSearchCV):
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
 
-        This is present only if ``refit`` is set to ``True``.
+        This is present only if ``refit`` is not False.
 
     Notes
     ------
@@ -1399,7 +1399,7 @@ class RandomizedSearchCV(BaseSearchCV):
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
 
-        This is present only if ``refit`` is set to ``True``.
+        This is present only if ``refit`` is not False.
 
     Notes
     -----
