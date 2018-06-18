@@ -1516,13 +1516,14 @@ class AdaptiveSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    nominate : callable
-        This will be called repeatedly to get more candidates.
-        Given the results so far (formatted as with ``cv_results_``), this
-        should return a list of candidate dicts, each mapping parameter names
-        to values. The search ends when nominate returns an empty list.
-
-        The first call to nominate will be passed None.
+    search : callable
+        A function which iteratively nominates candidates to a callback,
+        ``evaluate_candidates``, guided by results so far.
+        It should call ``evaluate_candidates``, passing a list of candidates,
+        where each candidate is a dict of parameter settings.
+        ``evaluate_candidates`` will return all results so far, in the same
+        format as ``cv_results_``.
+        The return value of ``search`` is ignored.
 
     scoring : string, callable, list/tuple, dict or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -1793,7 +1794,7 @@ class AdaptiveSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, nominate, scoring=None, fit_params=None,
+    def __init__(self, estimator, search, scoring=None, fit_params=None,
                  n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
@@ -1802,13 +1803,7 @@ class AdaptiveSearchCV(BaseSearchCV):
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
-        self.nominate = nominate
+        self.search = search
 
     def _run_search(self, evaluate_candidates):
-        candidates = self.nominate(None)
-        if not candidates:
-            raise ValueError('Expected non-empty candidates for the first '
-                             'call to nominate')
-        while candidates:
-            results = evaluate_candidates(candidates)
-            candidates = self.nominate(results)
+        self.search(evaluate_candidates)
