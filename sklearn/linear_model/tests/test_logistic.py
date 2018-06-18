@@ -1198,7 +1198,7 @@ def test_dtype_match():
 def test_warm_start_converge_LR():
     # Test to see that the logistic regression converges on warm start,
     # with multi_class='multinomial'
-    # Set independent variable values
+
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
@@ -1208,7 +1208,7 @@ def test_warm_start_converge_LR():
     lr_ws = LogisticRegression(multi_class='multinomial',
                                solver='sag', warm_start=True)
 
-    lr_no_ws_loss = log_loss(lr_no_ws.fit(X, y).predict_proba(X))
+    lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
     lr_ws_loss = [log_loss(y, lr_ws.fit(X, y).predict_proba(X)) 
                  for _ in range(5)]
 
