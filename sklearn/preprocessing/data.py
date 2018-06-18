@@ -1058,37 +1058,37 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         # convert sparse matrices to csc for optimized computation of the
         # quantiles.
         X = check_array(X, accept_sparse='csc', copy=self.copy, estimator=self,
-                        dtype=FLOAT_DTYPES)
+                        dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
         q_min, q_max = self.quantile_range
         if not 0 <= q_min <= q_max <= 100:
             raise ValueError("Invalid quantile range: %s" %
                              str(self.quantile_range))
 
-        if sparse.issparse(X):
-            if self.with_centering:
+        if self.with_centering:
+            if sparse.issparse(X):
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
-
-            if self.with_scaling:
-                for feature_idx in range(X.shape[1]):
-                    column_nnz = X.data[X.indptr[feature_idx]:
-                                        X.indptr[feature_idx + 1]]
-                    quantiles = ([0, 0] if not column_nnz.size
-                                 else nanpercentile(column_nnz,
-                                                    self.quantile_range))
-                    quantiles = np.transpose(quantiles)
+            self.center_ = np.nanmedian(X, axis=0)
         else:
-            if self.with_centering:
-                self.center_ = np.nanmedian(X, axis=0)
-            else:
-                self.center_ = None
-
-            if self.with_scaling:
-                quantiles = np.percentile(X, self.quantile_range, axis=0)
+            self.center_ = None
 
         if self.with_scaling:
+            quantiles = []
+            for feature_idx in range(X.shape[1]):
+                if sparse.issparse(X):
+                    column_data = X.data[X.indptr[feature_idx]:
+                                         X.indptr[feature_idx + 1]]
+                else:
+                    column_data = X[:, feature_idx]
+
+                quantiles.append(
+                    nanpercentile(column_data, self.quantile_range)
+                    if column_data.size else [0, 0])
+
+            quantiles = np.transpose(quantiles)
+
             self.scale_ = (quantiles[1] - quantiles[0])
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         else:
@@ -1109,7 +1109,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'center_', 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1131,7 +1132,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'center_', 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1204,7 +1206,8 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
-                    ensure_2d=False, dtype=FLOAT_DTYPES)
+                    ensure_2d=False, dtype=FLOAT_DTYPES,
+                    force_all_finite='allow-nan')
     original_ndim = X.ndim
 
     if original_ndim == 1:

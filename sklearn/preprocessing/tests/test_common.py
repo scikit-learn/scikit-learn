@@ -10,9 +10,11 @@ from sklearn.base import clone
 
 from sklearn.preprocessing import minmax_scale
 from sklearn.preprocessing import quantile_transform
+from sklearn.preprocessing import robust_scale
 
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import RobustScaler
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
@@ -28,7 +30,9 @@ def _get_valid_samples_by_column(X, col):
 @pytest.mark.parametrize(
     "est, func, support_sparse",
     [(MinMaxScaler(), minmax_scale, False),
-     (QuantileTransformer(n_quantiles=10), quantile_transform, True)]
+     (QuantileTransformer(n_quantiles=10), quantile_transform, True),
+     (RobustScaler(), robust_scale, False),
+     (RobustScaler(with_centering=False), robust_scale, True)]
 )
 def test_missing_value_handling(est, func, support_sparse):
     # check that the preprocessing method let pass nan
