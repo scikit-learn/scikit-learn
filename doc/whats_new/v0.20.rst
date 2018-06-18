@@ -486,6 +486,13 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
+- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which 
+  was ignoring the parameter ``dtype``. In addition,
+  :class:`feature_extraction.text.TFIDFTransformer` will preserve ``dtype``
+  for floating and raise a warning if ``dtype`` requested is integer.
+  :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+  
 Utils
 
 - :func:`utils.check_array` yield a ``FutureWarning`` indicating
@@ -505,6 +512,14 @@ Preprocessing
 - Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the ``dtype``
   when returning a sparse matrix output. :issue:`11042` by :user:`Daniel
   Morales <DanielMorales9>`.
+
+- Fix ``fit`` and ``partial_fit`` in :class:`preprocessing.StandardScaler` in
+  the rare case when `with_mean=False` and `with_std=False` which was crashing
+  by calling ``fit`` more than once and giving inconsistent results for
+  ``mean_`` whether the input was a sparse or a dense matrix. ``mean_`` will be
+  set to ``None`` with both sparse and dense inputs. ``n_samples_seen_`` will
+  be also reported for both input types.
+  :issue:`11235` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Feature selection
 
@@ -591,12 +606,12 @@ Imputer
   :class:`impute.SimpleImputer`. :issue:`9726` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
-- The ``axis`` parameter in :class:`impute.SimpleImputer` was removed. The
-  behavior is equivalent to ``axis=0`` (impute along columns). Row-wise
-  imputation can be performed with FunctionTransformer (e.g.,
-  ``FunctionTransformer(lambda X: Imputer().fit_transform(X.T).T)``).
-  :issue:`10829` by :user:`Guillaume Lemaitre <glemaitre>` and :user:`Gilberto
-  Olimpio <gilbertoolimpio>`.
+- The ``axis`` parameter that was in :class:`preprocessing.Imputer` is no
+  longer present in :class:`impute.SimpleImputer`. The behavior is equivalent
+  to ``axis=0`` (impute along columns). Row-wise imputation can be performed
+  with FunctionTransformer (e.g., ``FunctionTransformer(lambda X:
+  SimpleImputer().fit_transform(X.T).T)``). :issue:`10829` by :user:`Guillaume
+  Lemaitre <glemaitre>` and :user:`Gilberto Olimpio <gilbertoolimpio>`.
 
 Outlier Detection models
 

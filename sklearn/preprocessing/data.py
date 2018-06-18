@@ -652,6 +652,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             else:
                 self.mean_ = None
                 self.var_ = None
+                if not hasattr(self, 'n_samples_seen_'):
+                    self.n_samples_seen_ = X.shape[0]
+                else:
+                    self.n_samples_seen_ += X.shape[0]
         else:
             # First pass
             if not hasattr(self, 'n_samples_seen_'):
@@ -662,9 +666,14 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 else:
                     self.var_ = None
 
-            self.mean_, self.var_, self.n_samples_seen_ = \
-                _incremental_mean_and_var(X, self.mean_, self.var_,
-                                          self.n_samples_seen_)
+            if not self.with_mean and not self.with_std:
+                self.mean_ = None
+                self.var_ = None
+                self.n_samples_seen_ += X.shape[0]
+            else:
+                self.mean_, self.var_, self.n_samples_seen_ = \
+                    _incremental_mean_and_var(X, self.mean_, self.var_,
+                                              self.n_samples_seen_)
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
