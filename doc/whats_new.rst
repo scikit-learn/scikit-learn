@@ -8,11 +8,6 @@ Release History
 Release notes for current and recent releases are detailed on this page, with
 :ref:`previous releases <previous_releases_whats_new>` linked below.
 
-.. The following two lines are duplicated in ../README.rst
-   so remember to make any changes in both places.
-   (Can't use an `.. include::` here to be more DRY because
-   GitHub's rst renderer ignores include directives.)
-
 **Tip:** `Subscribe to scikit-learn releases <https://libraries.io/pypi/scikit-learn>`__
 on libraries.io to be notified when new versions are released.
 

@@ -84,15 +84,6 @@ Changelog
 See the `changelog <http://scikit-learn.org/dev/whats_new.html>`__
 for a history of notable changes to scikit-learn.
 
-.. The following two lines are duplicated in doc/whats_new.rst
-   so remember to make any changes in both places.
-   (Can't use an `.. include::` here to be more DRY because
-   GitHub's rst renderer ignores include directives.)
-
-**Tip:** `Subscribe to scikit-learn releases <https://libraries.io/pypi/scikit-learn>`__
-on libraries.io to be notified when new versions are released.
-
-
 Development
 -----------
 
