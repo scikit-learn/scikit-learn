@@ -67,8 +67,7 @@ for ds_cnt, X in enumerate(X_list):
     i += 1
     # transform the dataset with KBinsDiscretizer
     for strategy in strategies:
-        enc = KBinsDiscretizer(n_bins=4, encode='ordinal', strategy=strategy,
-                               random_state=random_state)
+        enc = KBinsDiscretizer(n_bins=4, encode='ordinal', strategy=strategy)
         enc.fit(X)
         grid_encoded = enc.transform(grid)
 
