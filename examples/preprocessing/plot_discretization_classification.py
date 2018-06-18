@@ -47,6 +47,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.svm import SVC, LinearSVC
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 h = .02  # step size in the mesh
 
@@ -81,7 +83,7 @@ classifiers = [
     (GradientBoostingClassifier(n_estimators=50, random_state=0), {
         'learning_rate': np.logspace(-4, 0, 10)
     }),
-    (SVC(random_state=0), {
+    (SVC(random_state=0, gamma='scale'), {
         'C': np.logspace(-2, 7, 10)
     }),
 ]
@@ -136,8 +138,10 @@ for ds_cnt, (X, y) in enumerate(datasets):
     for name, (estimator, param_grid) in zip(names, classifiers):
         ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
 
-        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5)
-        clf.fit(X_train, y_train)
+        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5,
+                           iid=False)
+        with ignore_warnings(category=ConvergenceWarning):
+            clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         print('%s: %.2f' % (name, score))
 
