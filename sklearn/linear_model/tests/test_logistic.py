@@ -1208,7 +1208,7 @@ def test_warm_start_converge_LR():
     lr_ws = LogisticRegression(multi_class='multinomial',
                                solver='sag', warm_start=True)
 
-    lr_no_ws_loss = lr_no_ws.fit(X, y).predict_proba(X)
+    lr_no_ws_loss = log_loss(lr_no_ws.fit(X, y).predict_proba(X))
     lr_ws_loss = [log_loss(y, lr_ws.fit(X, y).predict_proba(X)) 
                  for _ in range(5)]
 
