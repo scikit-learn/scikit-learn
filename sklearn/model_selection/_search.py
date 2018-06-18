@@ -1505,7 +1505,10 @@ class AdaptiveSearchCV(BaseSearchCV):
     estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
-    by cross-validated search defined by the ``nominate`` callback.
+    by cross-validated search defined by the ``search`` function.
+
+    Note that this does not implement a particular adaptive search strategy
+    but allows users to implement their own.
 
     Read more in the :ref:`User Guide <grid_search>`.
 
