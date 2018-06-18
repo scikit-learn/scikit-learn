@@ -582,34 +582,27 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.classes_
 
     @abstractmethod
-    def _generate_candidates(self):
-        """Supplies candidates to search in response to accumulated results
+    def _run_search(self, evaluate_candidates):
+        """Repeatedly calls evaluate_candidates to conduct a search
 
-        To be overridden by implementers.
+        Parameters
+        ----------
+        evaluate_candidates : callable
+            This callback accepts a list of candidates, where each candidate is
+            a dict of parameter settings. It returns a dict of all results so
+            far, formatted like ``cv_results_``.
 
-        As in the following snippet, an implementation should yield an
-        initial list of candidates, where each candidate is a dict of
-        parameter settings.  The yield expression then returns the results
-        dict corresponding to all candidates so far, and further yields can
-        be used to evaluate more candidates.
-
-        ::
-
-            def _generate_candidates(self):
-                results = yield self.initial_candidates()
-                while self.not_good_enough(results):
-                    results = yield self.more_candidates()
-
-        A toy example:
+        Examples
+        --------
 
         ::
 
-            def _generate_candidates(self):
+            def _run_search(self):
                 'Try C=0.1 only if C=1 is better than C=10'
-                results = yield [{'C': 1}, {'C': 10}]
-                score = ['mean_test_score']
+                all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
+                score = all_results['mean_test_score']
                 if score[0] < score[1]:
-                    yield [{'C': 0.1}]
+                    evaluate_candidates([{'C': 0.1}])
         """
 
     def fit(self, X, y=None, groups=None, **fit_params):
@@ -677,9 +670,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
 
-        # Regenerate parameter iterable for each fit
-        candidate_generator = self._generate_candidates()
-        candidate_params = list(next(candidate_generator))
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
                                     return_train_score=self.return_train_score,
@@ -688,10 +678,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                     return_parameters=False,
                                     error_score=self.error_score,
                                     verbose=self.verbose)
+        results_container = [{}]
         with parallel:
             all_candidate_params = []
             all_out = []
-            while True:
+
+            def evaluate_candidates(candidate_params):
+                candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
                 if self.verbose > 0:
@@ -710,13 +703,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
-                results = self._format_results(all_candidate_params, scorers,
-                                               n_splits, all_out)
 
-                try:
-                    candidate_params = list(candidate_generator.send(results))
-                except StopIteration:
-                    break
+                # XXX: When we drop Python 2 support, we can use nonlocal
+                # instead of results_container
+                results_container[0] = self._format_results(
+                    all_candidate_params, scorers, n_splits, all_out)
+                return results_container[0]
+
+            self._run_search(evaluate_candidates)
+
+        results = results_container[0]
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -1179,9 +1175,9 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def _generate_candidates(self):
-        """Return ParameterGrid instance for the given param_grid"""
-        yield ParameterGrid(self.param_grid)
+    def _run_search(self, evaluate_candidates):
+        """Search all candidates in param_grid"""
+        evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1491,11 +1487,11 @@ class RandomizedSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
-    def _generate_candidates(self):
-        """Return ParameterSampler instance for the given distributions"""
-        yield ParameterSampler(
+    def _run_search(self, evaluate_candidates):
+        """Search n_iter candidates from param_distributions"""
+        evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
-            random_state=self.random_state)
+            random_state=self.random_state))
 
 
 class AdaptiveSearchCV(BaseSearchCV):
@@ -1808,11 +1804,11 @@ class AdaptiveSearchCV(BaseSearchCV):
             return_train_score=return_train_score)
         self.nominate = nominate
 
-    def _generate_candidates(self):
+    def _run_search(self, evaluate_candidates):
         candidates = self.nominate(None)
         if not candidates:
             raise ValueError('Expected non-empty candidates for the first '
                              'call to nominate')
         while candidates:
-            results = yield candidates
+            results = evaluate_candidates(candidates)
             candidates = self.nominate(results)
