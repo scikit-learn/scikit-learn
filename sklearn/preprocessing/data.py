@@ -1055,8 +1055,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
         """
-        # convert sparse matrices to csc for optimized computation of the
-        # quantiles.
+        # at fit, convert sparse matrices to csc for optimized computation of
+        # the quantiles
         X = check_array(X, accept_sparse='csc', copy=self.copy, estimator=self,
                         dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
