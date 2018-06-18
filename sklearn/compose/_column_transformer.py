@@ -78,8 +78,9 @@ boolean mask array
         By using ``remainder='drop'``, only the specified columns in
         `transformers` are transformed and combined in the output, and the
         non-specified columns are dropped.
-        By setting ``remainder`` to be an estimator, the remaining non-specified
-        columns will use the ``remainder`` estimator. The estimator must support
+        By setting ``remainder`` to be an estimator, the remaining
+        non-specified columns will use the ``remainder`` estimator. The
+        estimator must support
         `fit` and `transform`.
 
     n_jobs : int, optional
@@ -101,10 +102,9 @@ boolean mask array
         Keys are transformer names and values are the fitted transformer
         objects.
 
-    remainder_transformers_ : list or None
-        The collection of fitted remainder transformers as tuples of
-        (column_index, fitted_remainder_transformer). This collection is
-        set when the ``remainder`` parameter is an estimator.
+    remainder_transformer_ : estimator or None
+        The fitted remainder transformer. This attribute is set when the
+        ``remainder`` parameter is an estimator.
 
     Notes
     -----
@@ -181,7 +181,7 @@ boolean mask array
 
         if hasattr(self.remainder, 'get_params'):
             for key, value in six.iteritems(
-                        self.remainder.get_params(deep=True)):
+                    self.remainder.get_params(deep=True)):
                 params['remainder__%s' % key] = value
         return params
 
@@ -224,19 +224,6 @@ boolean mask array
 
             yield (name, trans, sub, get_weight(name))
 
-    def _iter_remainder(self, X=None, fitted=False):
-        """Generate (trans, column, sub) tuples for remainder transforms
-        """
-        if fitted:
-            remainder_transformers = self.remainder_transformers_
-        else:
-            remainder_transformers = [(col_idx, clone(self.remainder))
-                                      for col_idx in self._passthrough]
-
-        for col_idx, trans in remainder_transformers:
-            sub = X if X is None else _get_column(X, col_idx)
-            yield (col_idx, trans, sub)
-
     def _validate_transformers(self):
         names, transformers, _, _ = zip(*self._iter())
 
@@ -259,7 +246,8 @@ boolean mask array
         is_transformer = ((hasattr(self.remainder, "fit")
                            or hasattr(self.remainder, "fit_transform"))
                           and hasattr(self.remainder, "transform"))
-        if self.remainder not in ('drop', 'passthrough') and not is_transformer:
+        if (self.remainder not in ('drop', 'passthrough')
+                and not is_transformer):
             raise ValueError(
                 "The remainder keyword needs to be one of 'drop', "
                 "'passthrough', or estimator. '%s' was passed instead" %
@@ -379,12 +367,14 @@ boolean mask array
         """
         Private function to fit and/or transform remainding columns
         """
+        if fitted:
+            remainder_transformer = self.remainder_transformer_
+        else:
+            remainder_transformer = clone(self.remainder)
+
+        X_sel = X if X is None else _get_column(X, self._passthrough)
         try:
-            return Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(clone(trans)
-                              if not fitted else trans, X_sel, y, 1)
-                for _, trans, X_sel in self._iter_remainder(
-                    X=X, fitted=fitted))
+            return func(remainder_transformer, X_sel, y, 1)
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
@@ -417,12 +407,8 @@ boolean mask array
         self._update_fitted_transformers(transformers)
 
         if self._remainder_is_transformer:
-            r_transformers = self._fit_transform_remainder(
+            self.remainder_transformer_ = self._fit_transform_remainder(
                 X, y, _fit_one_transformer)
-            self.remainder_transformers_ = [
-                (col_idx, trans)
-                for col_idx, trans in zip(self._passthrough, r_transformers)
-            ]
         return self
 
     def fit_transform(self, X, y=None):
@@ -451,29 +437,29 @@ boolean mask array
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
-        Xr = []
+        Xr = None
         if self._passthrough is not None:
-            if not self._remainder_is_transformer:
-                Xr = [_get_column(X, self._passthrough)]
-            else:
+            if self._remainder_is_transformer:
                 Xr = self._fit_transform_remainder(
                     X, None, _transform_one)
-                self._validate_output(Xr)
+                self._validate_output([Xr])
+            else:
+                Xr = _get_column(X, self._passthrough)
 
         if not result:
             # All transformers are None
-            if not Xr:
+            if Xr is None:
                 return np.zeros((X.shape[0], 0))
             else:
-                return _hstack(Xr)
+                return Xr
 
         Xs, transformers = zip(*result)
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        if Xr:
-            Xs = list(Xs) + Xr
+        if Xr is not None:
+            Xs = list(Xs) + [Xr]
         return _hstack(Xs)
 
     def transform(self, X):
@@ -498,24 +484,24 @@ boolean mask array
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
-        Xr = []
+        Xr = None
         if self._passthrough is not None:
-            if not self._remainder_is_transformer:
-                Xr = [_get_column(X, self._passthrough)]
-            else:
+            if self._remainder_is_transformer:
                 Xr = self._fit_transform_remainder(
                     X, None, _transform_one, fitted=True)
-                self._validate_output(Xr)
+                self._validate_output([Xr])
+            else:
+                Xr = _get_column(X, self._passthrough)
 
         if not Xs:
             # All transformers are None
-            if not Xr:
+            if Xr is None:
                 return np.zeros((X.shape[0], 0))
             else:
-                return _hstack(Xr)
+                return Xr
 
-        if Xr:
-            Xs = list(Xs) + Xr
+        if Xr is not None:
+            Xs = list(Xs) + [Xr]
         return _hstack(Xs)
 
 
@@ -557,8 +543,6 @@ def _hstack(X):
     Supports input types (X): list of
         numpy arrays, sparse arrays and DataFrames
     """
-    if len(X) == 1:
-        return X[0]
     if any(sparse.issparse(f) for f in X):
         return sparse.hstack(X).tocsr()
     else:

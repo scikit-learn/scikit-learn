@@ -48,6 +48,7 @@ class DoubleTrans(BaseEstimator):
         # 1D array -> 2D array
         if X.ndim == 1:
             return 2*np.atleast_2d(X).T
+        return 2*X
 
 
 class SparseMatrixTrans(BaseEstimator):
@@ -629,12 +630,12 @@ def test_column_transformer_sparse_remainder_transformer():
 
     X_trans = ct.fit_transform(X_array)
     assert_true(sparse.issparse(X_trans))
-    # ``remainder`` has 2 columns and SparseMatrixTrans creates 3 features
-    # for each column. There is one column in ``transformers``, thus:
-    assert_equal(X_trans.shape, (3, 2 * 3 + 1))
+    # SparseMatrixTrans creates 3 features for each column. There is
+    # one column in ``transformers``, thus:
+    assert_equal(X_trans.shape, (3, 3 + 1))
 
     exp_array = np.hstack(
-        (X_array[:, 0].reshape(-1, 1), np.eye(3), np.eye(3)))
+        (X_array[:, 0].reshape(-1, 1), np.eye(3)))
     assert_array_equal(X_trans.toarray(), exp_array)
 
 
@@ -647,12 +648,11 @@ def test_column_transformer_drop_all_sparse_remainder_transformer():
 
     X_trans = ct.fit_transform(X_array)
     assert_true(sparse.issparse(X_trans))
-    # ``remainder`` has 2 columns and SparseMatrixTrans creates 3 features
-    # for each column, thus:
-    assert_equal(X_trans.shape, (3, 2 * 3))
 
-    exp_array = np.hstack((np.eye(3), np.eye(3)))
-    assert_array_equal(X_trans.toarray(), exp_array)
+    #  SparseMatrixTrans creates 3 features for each column, thus:
+    assert_equal(X_trans.shape, (3, 3))
+
+    assert_array_equal(X_trans.toarray(), np.eye(3))
 
 
 def test_column_transformer_get_set_params_with_remainder():
