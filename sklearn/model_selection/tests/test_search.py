@@ -1175,7 +1175,8 @@ def test_search_cv_timing():
 
         assert_true(hasattr(search, "refit_time_"))
         assert_true(isinstance(search.refit_time_, float))
-        assert_greater(search.refit_time_, 0)
+        if sys.version_info[0] >= 3:
+            assert_greater(search.refit_time_, 0)
 
 
 def test_grid_search_correct_score_results():
