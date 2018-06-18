@@ -120,8 +120,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> clf.fit(X, y)
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=0, tol=1e-05,
-         verbose=0)
+         multi_class='ovr', penalty='l2', random_state=0, tol=1e-05, verbose=0)
     >>> print(clf.coef_)
     [[0.08551385 0.39414796 0.49847831 0.37513797]]
     >>> print(clf.intercept_)
@@ -333,7 +332,7 @@ class LinearSVR(LinearModel, RegressorMixin):
          intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
          random_state=0, tol=1e-05, verbose=0)
     >>> print(regr.coef_)
-    [16.35750999 26.91499923 42.30652207 60.47843124]
+    [16.35... 26.91... 42.30... 60.47...]
     >>> print(regr.intercept_)
     [-4.29756543]
     >>> print(regr.predict([[0, 0, 0, 0]]))
@@ -352,7 +351,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     sklearn.linear_model.SGDRegressor
         SGDRegressor can optimize the same cost function as LinearSVR
-        by adjusting the penalty and loss parameters. In addition it requires
+        by adjusting the penalty and loss parameters. In addition it .requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
     """
