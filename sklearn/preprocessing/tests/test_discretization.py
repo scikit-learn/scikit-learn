@@ -95,6 +95,12 @@ def test_fit_transform_n_bins_array(strategy, expected):
                            strategy=strategy).fit(X)
     assert_array_equal(expected, est.transform(X))
 
+    # test the shape of bin_edges_
+    n_features = np.array(X).shape[1]
+    assert est.bin_edges_.shape == (n_features, )
+    for bin_edges, n_bins in zip(est.bin_edges_, est.n_bins_):
+        assert bin_edges.shape == (n_bins + 1, )
+
 
 def test_invalid_n_features():
     est = KBinsDiscretizer(n_bins=3).fit(X)
@@ -199,7 +205,7 @@ def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
     assert_raise_message(ValueError, "Valid options for 'encode' are "
                          "('onehot', 'onehot-dense', 'ordinal'). "
-                         "Got 'encode = invalid-encode' instead.",
+                         "Got encode='invalid-encode' instead.",
                          est.fit, X)
 
 
@@ -214,7 +220,7 @@ def test_encode_options():
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
                        .fit_transform(Xt_1), Xt_2)
     assert_raise_message(ValueError, "inverse_transform only supports "
-                         "'encode = ordinal'. Got 'encode = onehot-dense' "
+                         "'encode = ordinal'. Got encode='onehot-dense' "
                          "instead.", est.inverse_transform, Xt_2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
@@ -224,7 +230,7 @@ def test_encode_options():
                        .fit_transform(Xt_1).toarray(),
                        Xt_3.toarray())
     assert_raise_message(ValueError, "inverse_transform only supports "
-                         "'encode = ordinal'. Got 'encode = onehot' "
+                         "'encode = ordinal'. Got encode='onehot' "
                          "instead.", est.inverse_transform, Xt_2)
 
 
@@ -243,7 +249,7 @@ def test_invalid_strategy_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy')
     assert_raise_message(ValueError, "Valid options for 'strategy' are "
                          "('uniform', 'quantile', 'kmeans'). "
-                         "Got 'strategy = invalid-strategy' instead.",
+                         "Got strategy='invalid-strategy' instead.",
                          est.fit, X)
 
 

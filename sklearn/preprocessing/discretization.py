@@ -148,12 +148,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
             raise ValueError("Valid options for 'encode' are {}. "
-                             "Got 'encode = {}' instead."
+                             "Got encode={!r} instead."
                              .format(valid_encode, self.encode))
         valid_strategy = ('uniform', 'quantile', 'kmeans')
         if self.strategy not in valid_strategy:
             raise ValueError("Valid options for 'strategy' are {}. "
-                             "Got 'strategy = {}' instead."
+                             "Got strategy={!r} instead."
                              .format(valid_strategy, self.strategy))
 
         n_features = X.shape[1]
@@ -356,8 +356,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         # Currently, OneHotEncoder doesn't support inverse_transform
         if self.encode != 'ordinal':
             raise ValueError("inverse_transform only supports "
-                             "'encode = ordinal'. "
-                             "Got 'encode = {}' instead."
+                             "'encode = ordinal'. Got encode={!r} instead."
                              .format(self.encode))
 
         Xt = self._validate_X_post_fit(Xt)
