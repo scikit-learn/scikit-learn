@@ -210,6 +210,44 @@ def test_imputation_median_special_cases():
                       statistics_median, np.nan)
 
 
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+@pytest.mark.parametrize("dtype", [None, object, str])
+def test_imputation_mean_median_error_invalid_type(strategy, dtype):
+    X = np.array([["a", "b", 3],
+                  [4, "e", 6],
+                  ["g", "h", 9]], dtype=dtype)
+
+    with pytest.raises(TypeError, match="non-numeric data"):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["constant", "most_frequent"])
+@pytest.mark.parametrize("dtype", [None, object, str])
+def test_imputation_non_numeric(strategy, dtype):
+    # Test imputation on non-numeric data using "most_frequent" and "constant"
+    # strategy
+    X = np.array([
+        ["", "a", "f"],
+        ["c", "d", "d"],
+        ["b", "d", "d"],
+        ["c", "d", "h"],
+    ], dtype=dtype)
+
+    X_true = np.array([
+        ["c", "a", "f"],
+        ["c", "d", "d"],
+        ["b", "d", "d"],
+        ["c", "d", "h"],
+    ], dtype=dtype)
+
+    imputer = SimpleImputer(missing_values="", strategy=strategy,
+                            fill_value="c")
+    X_trans = imputer.fit(X).transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
 def test_imputation_most_frequent():
     # Test imputation using the most-frequent strategy.
     X = np.array([
@@ -283,21 +321,16 @@ def test_imputation_most_frequent_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-@pytest.mark.parametrize("X_data, missing_value, fill_value, dtype, match",
-                         [(1, 0, "x", None, "imputing numerical"),
-                          (1., np.nan, "x", None, "imputing numerical"),
-                          ("a", "", 0, object, "imputing categorical"),
-                          (True, "nan", "x", "c", "cannot work")])
-def test_imputation_constant_error_invalid_types(X_data, missing_value,
-                                                 fill_value, dtype, match):
-    # Verify that exceptions are raised on invalid inputs
-    X = np.full((3, 5), X_data, dtype=dtype)
+@pytest.mark.parametrize("X_data, missing_value", [(1, 0), (1., np.nan)])
+def test_imputation_constant_error_invalid_type(X_data, missing_value):
+    # Verify that exceptions are raised on invalid fill_value type
+    X = np.full((3, 5), X_data)
     X[0, 0] = missing_value
 
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match="imputing numerical"):
         imputer = SimpleImputer(missing_values=missing_value,
                                 strategy="constant",
-                                fill_value=fill_value)
+                                fill_value="x")
         imputer.fit_transform(X)
 
 

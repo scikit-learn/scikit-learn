@@ -99,8 +99,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : real number, string, np.nan or None, \
-optional (default=np.nan)
+    missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
@@ -108,12 +107,13 @@ optional (default=np.nan)
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
-          each column.
+          each column. Can only be used with numeric data.
         - If "median", then replace missing values using the median along
-          each column.
+          each column. Can only be used with numeric data.
         - If "most_frequent", then replace missing using the most frequent
-          value along each column.
-        - If "constant", then replace missing values with fill_value.
+          value along each column. Can be used with strings or numeric data.
+        - If "constant", then replace missing values with fill_value. Can be
+          used with strings or numeric data.
 
     fill_value : string or numerical value, optional
         When strategy == "constant", fill_value is used to replace all
@@ -169,8 +169,17 @@ optional (default=np.nan)
         else:
             force_all_finite = "allow-nan"
 
-        return check_array(X, accept_sparse='csc', dtype=dtype,
-                           force_all_finite=force_all_finite, copy=self.copy)
+        try:
+            X = check_array(X, accept_sparse='csc', dtype=dtype,
+                            force_all_finite=force_all_finite, copy=self.copy)
+        except TypeError:
+            raise TypeError("Cannot use {0} strategy with non-numeric "
+                            "data.".format(self.strategy))
+
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            X = X.astype(object)
+
+        return X
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -198,25 +207,12 @@ optional (default=np.nan)
             fill_value = self.fill_value
 
         # fill_value should be numerical in case of numerical input
-        if self.strategy == "constant":
-            if X.dtype.kind in ("i", "u", "f"):
-                if not isinstance(fill_value, numbers.Real):
-                    raise TypeError(
-                        "'fill_value'={0} is invalid. Expected a numerical"
-                        " value when imputing numerical"
-                        " data".format(fill_value))
-
-            elif X.dtype.kind == "O":
-                if not isinstance(fill_value, six.string_types):
-                    raise TypeError(
-                        "'fill_value'={0} is invalid. Expected an str instance"
-                        " when imputing categorical data.".format(fill_value))
-
-            else:
-                raise TypeError(
-                    "SimpleImputer cannot work on data with dtype={0}: "
-                    "expecting numerical or categorical data with "
-                    "dtype=object.".format(X.dtype))
+        if (self.strategy == "constant" and
+                X.dtype.kind in ("i", "u", "f") and
+                not isinstance(fill_value, numbers.Real)):
+            raise TypeError("'fill_value'={0} is invalid. Expected a numerical"
+                            " value when imputing numerical"
+                            " data".format(fill_value))
 
         if sparse.issparse(X):
             self.statistics_ = self._sparse_fit(X,
