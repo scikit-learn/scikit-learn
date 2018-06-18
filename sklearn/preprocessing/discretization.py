@@ -162,48 +162,46 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ignored = self._validate_ignored_features(n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
 
-        self.n_bins_ = self._validate_n_bins(n_features, ignored)
+        n_bins = self._validate_n_bins(n_features, ignored)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
             if jj in ignored:
                 bin_edges[jj] = np.array([])
                 continue
-            col = X[:, jj][:, None]
+            column = X[:, jj][:, None]
 
             if self.strategy == 'uniform':
-                edges = np.linspace(col.min(), col.max(), self.n_bins_[jj] + 1)
+                bin_edges[jj] = np.linspace(column.min(), column.max(),
+                                            n_bins[jj] + 1)
 
             elif self.strategy == 'quantile':
-                quantiles = np.linspace(0, 100, self.n_bins_[jj] + 1)
+                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 if np_version < (1, 9):
                     quantiles = list(quantiles)
-                edges = np.asarray(np.percentile(col, quantiles))
+                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == 'kmeans':
                 from ..cluster import KMeans
-                n_clusters = self.n_bins_[jj]
-
                 # Deterministic initialization with uniform spacing
-                uniform_edges = np.linspace(X[:, jj].min(), X[:, jj].max(),
-                                            n_clusters + 1)
-                init = (uniform_edges[1:] + uniform_edges[:-1]) * 0.5
-                init = init[:, None]
+                col_min, col_max = column.min(), column.max()
+                uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)
+                init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_clusters, init=init, n_init=1)
-                centers = km.fit(col).cluster_centers_[:, 0]
-                edges = (centers[1:] + centers[:-1]) * 0.5
-                edges = np.r_[col.min(), edges, col.max()]
+                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                centers = km.fit(column).cluster_centers_[:, 0]
+                bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
+                bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
 
-            if edges[0] == edges[-1] and self.n_bins_[jj] > 2:
+            if bin_edges[jj][0] == bin_edges[jj][-1] and n_bins[jj] > 2:
                 warnings.warn("Feature %d is constant and will be "
                               "replaced with 0." % jj)
-                self.n_bins_[jj] = 1
-                edges = np.array([-np.inf, np.inf])
-            bin_edges[jj] = edges
+                n_bins[jj] = 1
+                bin_edges[jj] = np.array([-np.inf, np.inf])
 
         self.bin_edges_ = bin_edges
+        self.n_bins_ = n_bins
 
         return self
 
