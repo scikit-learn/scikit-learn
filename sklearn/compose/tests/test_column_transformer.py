@@ -37,6 +37,19 @@ class Trans(BaseEstimator):
         return X
 
 
+class DoubleTrans(BaseEstimator):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        # 1D Series -> 2D DataFrame
+        if hasattr(X, 'to_frame'):
+            return 2*X.to_frame()
+        # 1D array -> 2D array
+        if X.ndim == 1:
+            return 2*np.atleast_2d(X).T
+
+
 class SparseMatrixTrans(BaseEstimator):
     def fit(self, X, y=None):
         return self
@@ -532,12 +545,12 @@ def test_column_transformer_remainder():
     ct = ColumnTransformer([('trans1', Trans(), [0])], remainder=1)
     assert_raise_message(
         ValueError,
-        "remainder keyword needs to be one of \'drop\' or \'passthrough\'",
-        ct.fit, X_array)
+        "remainder keyword needs to be one of \'drop\', \'passthrough\', "
+        "or estimator.", ct.fit, X_array)
     assert_raise_message(
         ValueError,
-        "remainder keyword needs to be one of \'drop\' or \'passthrough\'",
-        ct.fit_transform, X_array)
+        "remainder keyword needs to be one of \'drop\', \'passthrough\', "
+        "or estimator.", ct.fit_transform, X_array)
 
 
 @pytest.mark.parametrize("key", [[0], np.array([0]), slice(0, 1),
@@ -571,3 +584,106 @@ def test_column_transformer_remainder_pandas(key):
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
+
+
+@pytest.mark.parametrize("key", [[0], np.array([0]), slice(0, 1),
+                                 np.array([True, False, False])])
+def test_column_transformer_remainder_transformer(key):
+    X_array = np.array([[0, 1, 2],
+                        [2, 4, 6],
+                        [8, 6, 4]]).T
+    X_res_both = X_array.copy()
+
+    # second and third columns are doubled when remainder = DoubleTrans
+    X_res_both[:, 1:3] *= 2
+
+    ct = ColumnTransformer([('trans1', Trans(), key)],
+                           remainder=DoubleTrans())
+
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+
+
+def test_column_transformer_drops_all_remainder_transformer():
+    X_array = np.array([[0, 1, 2],
+                        [2, 4, 6],
+                        [8, 6, 4]]).T
+
+    # columns are doubled when remainder = DoubleTrans
+    X_res_both = 2 * X_array.copy()[:, 1:3]
+
+    ct = ColumnTransformer([('trans1', 'drop', [0])],
+                           remainder=DoubleTrans())
+
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+
+
+def test_column_transformer_sparse_remainder_transformer():
+    X_array = np.array([[0, 1, 2],
+                        [2, 4, 6],
+                        [8, 6, 4]]).T
+
+    ct = ColumnTransformer([('trans1', Trans(), [0])],
+                           remainder=SparseMatrixTrans())
+
+    X_trans = ct.fit_transform(X_array)
+    assert_true(sparse.issparse(X_trans))
+    # ``remainder`` has 2 columns and SparseMatrixTrans creates 3 features
+    # for each column. There is one column in ``transformers``, thus:
+    assert_equal(X_trans.shape, (3, 2 * 3 + 1))
+
+    exp_array = np.hstack(
+        (X_array[:, 0].reshape(-1, 1), np.eye(3), np.eye(3)))
+    assert_array_equal(X_trans.toarray(), exp_array)
+
+
+def test_column_transformer_drop_all_sparse_remainder_transformer():
+    X_array = np.array([[0, 1, 2],
+                        [2, 4, 6],
+                        [8, 6, 4]]).T
+    ct = ColumnTransformer([('trans1', 'drop', [0])],
+                           remainder=SparseMatrixTrans())
+
+    X_trans = ct.fit_transform(X_array)
+    assert_true(sparse.issparse(X_trans))
+    # ``remainder`` has 2 columns and SparseMatrixTrans creates 3 features
+    # for each column, thus:
+    assert_equal(X_trans.shape, (3, 2 * 3))
+
+    exp_array = np.hstack((np.eye(3), np.eye(3)))
+    assert_array_equal(X_trans.toarray(), exp_array)
+
+
+def test_column_transformer_get_set_params_with_remainder():
+    ct = ColumnTransformer([('trans1', StandardScaler(), [0])],
+                           remainder=StandardScaler())
+
+    exp = {'n_jobs': 1,
+           'remainder': ct.remainder,
+           'remainder__copy': True,
+           'remainder__with_mean': True,
+           'remainder__with_std': True,
+           'trans1': ct.transformers[0][1],
+           'trans1__copy': True,
+           'trans1__with_mean': True,
+           'trans1__with_std': True,
+           'transformers': ct.transformers,
+           'transformer_weights': None}
+
+    assert_dict_equal(ct.get_params(), exp)
+
+    ct.set_params(remainder__with_std=False)
+    assert_false(ct.get_params()['remainder__with_std'])
+
+    ct.set_params(trans1='passthrough')
+    exp = {'n_jobs': 1,
+           'remainder': ct.remainder,
+           'remainder__copy': True,
+           'remainder__with_mean': True,
+           'remainder__with_std': False,
+           'trans1': 'passthrough',
+           'transformers': ct.transformers,
+           'transformer_weights': None}
+
+    assert_dict_equal(ct.get_params(), exp)
