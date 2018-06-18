@@ -35,6 +35,8 @@ from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
 
+# stub, remove in version 0.21
+from .data import CategoricalEncoder  # noqa
 
 __all__ = [
     'Binarizer',

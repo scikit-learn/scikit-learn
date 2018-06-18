@@ -18,8 +18,8 @@ from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing._encoders import _transform_selected
 from sklearn.preprocessing.data import Binarizer
-from sklearn.preprocessing._encoders import OneHotEncoder
-from sklearn.preprocessing._encoders import OrdinalEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
 
 
 def toarray(a):
@@ -535,3 +535,8 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
+
+
+def test_categorical_encoder_stub():
+    from sklearn.preprocessing import CategoricalEncoder
+    assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')
