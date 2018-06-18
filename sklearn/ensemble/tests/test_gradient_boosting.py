@@ -457,8 +457,8 @@ def test_feature_importance_regression():
     # Make sure that results are summed, then normalized to avoid
     # over-weighting features from later stages
     boston = datasets.load_boston()
-    X, y = shuffle(boston.data, boston.target, random_state=13)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False,
+    X, y = boston.data, boston.target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True,
                                                         random_state=1)
 
     clf = GradientBoostingRegressor(n_estimators=500, min_samples_split=2,
@@ -471,8 +471,8 @@ def test_feature_importance_regression():
                                   feature_importance.max())
     sorted_idx = np.argsort(feature_importance)
 
-    ordered_features = ['ZN', 'CHAS', 'RAD', 'INDUS', 'B', 'AGE', 'TAX',
-                        'PTRATIO', 'NOX', 'CRIM', 'DIS', 'RM', 'LSTAT']
+    ordered_features = ['ZN', 'CHAS', 'RAD', 'INDUS', 'B', 'TAX', 'AGE',
+                        'CRIM', 'NOX', 'PTRATIO', 'DIS', 'RM', 'LSTAT']
 
     assert boston.feature_names[sorted_idx].tolist() == ordered_features
 
