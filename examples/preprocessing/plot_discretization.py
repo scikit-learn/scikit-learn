@@ -77,8 +77,7 @@ reg = DecisionTreeRegressor(min_samples_split=3,
 ax2.plot(line, reg.predict(line_binned), linewidth=2, color='red',
          linestyle=':', label='decision tree')
 ax2.plot(X[:, 0], y, 'o', c='k')
-bins = enc.offset_[0] + enc.bin_width_[0] * np.arange(1, enc.n_bins_[0])
-ax2.vlines(bins, *plt.gca().get_ylim(), linewidth=1, alpha=.2)
+ax2.vlines(enc.bin_edges_[0], *plt.gca().get_ylim(), linewidth=1, alpha=.2)
 ax2.legend(loc="best")
 ax2.set_xlabel("Input feature")
 ax2.set_title("Result after discretization")

@@ -61,10 +61,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         uniform
             All bins in each feature have identical widths.
         quantile
-            Widths are defined by a quantile transform, to have a uniform
-            number of samples in each bin.
+            All bins in each feature have the same number of points.
         kmeans
-            Widths are defined by a k-means on each features.
+            Values in each bin have the same nearest center of a 1D k-means
+            cluster.
 
     Attributes
     ----------
@@ -170,8 +170,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             col = X[:, jj][:, None]
 
             if self.strategy == 'uniform':
-                edges = np.linspace(col.min(), col.max(),
-                                    self.n_bins_[jj] + 1)
+                edges = np.linspace(col.min(), col.max(), self.n_bins_[jj] + 1)
 
             elif self.strategy == 'quantile':
                 edges = np.percentile(
@@ -194,7 +193,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 edges = np.r_[col.min(), edges, col.max()]
 
             if edges[0] == edges[-1] and self.n_bins_[jj] > 2:
-                warnings.warn("Features %d is constant and will be "
+                warnings.warn("Feature %d is constant and will be "
                               "replaced with 0." % jj)
                 self.n_bins_[jj] = 1
                 edges = np.array([-np.inf, np.inf])
@@ -307,10 +306,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         bin_edges = self.bin_edges_[trans]
         for jj in range(X.shape[1]):
-            # Values which are a multiple of the bin width are susceptible to
-            # numeric instability. Add eps to X so these values are binned
-            # correctly. See documentation for numpy.isclose for an explanation
-            # of ``rtol`` and ``atol``.
+            # Values which are close to a bin edge are susceptible to numeric
+            # instability. Add eps to X so these values are binned correctly
+            # with respect to their decimal truncation. See documentation of
+            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
             rtol = 1.e-5
             atol = 1.e-8
             eps = atol + rtol * np.abs(X[:, jj])
