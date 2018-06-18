@@ -18,7 +18,6 @@ from distutils.version import LooseVersion
 import numpy as np
 from scipy import sparse
 from scipy import stats
-from scipy import special
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
