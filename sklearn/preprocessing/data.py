@@ -25,7 +25,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import _argmax, nanpercentile
+from ..utils.fixes import _argmax, nanpercentile, nanmedian
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1070,7 +1070,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
-            self.center_ = np.nanmedian(X, axis=0)
+            self.center_ = nanmedian(X, axis=0)
         else:
             self.center_ = None
 

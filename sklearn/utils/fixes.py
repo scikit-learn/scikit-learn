@@ -267,3 +267,16 @@ if np_version < (1, 11):
             return np.array([np.nan] * size_q)
 else:
     from numpy import nanpercentile  # noqa
+
+
+if np_version < (1, 9):
+    def nanmedian(a, axis=None):
+        if axis is None:
+            data = a.reshape(-1)
+            return np.median(np.compress(~np.isnan(data), data))
+        else:
+            data = a.T if not axis else a
+            return np.array([np.median(np.compress(~np.isnan(row), row))
+                             for row in data])
+else:
+    from numpy import nanmedian  # noqa
