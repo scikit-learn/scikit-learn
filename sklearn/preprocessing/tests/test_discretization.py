@@ -22,12 +22,14 @@ X = [[-2, 1.5, -4, -1],
      [1, 4.5, -1, 2]]
 
 
-def test_fit_transform():
-    est = KBinsDiscretizer(n_bins=3, encode='ordinal').fit(X)
-    expected = [[0, 0, 0, 0],
-                [1, 1, 1, 0],
-                [2, 2, 2, 1],
-                [2, 2, 2, 2]]
+@pytest.mark.parametrize(
+    'strategy, expected',
+    [('uniform', [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]]),
+     ('kmeans', [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]]),
+     ('quantile', [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]])])
+def test_fit_transform(strategy, expected):
+    est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy=strategy)
+    est.fit(X)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -83,12 +85,14 @@ def test_invalid_n_bins_array():
                          est.fit_transform, X)
 
 
-def test_fit_transform_n_bins_array():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal').fit(X)
-    expected = [[0, 0, 0, 0],
-                [0, 1, 1, 0],
-                [1, 2, 2, 1],
-                [1, 2, 2, 2]]
+@pytest.mark.parametrize(
+    'strategy, expected',
+    [('uniform', [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]]),
+     ('kmeans', [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]]),
+     ('quantile', [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]])])
+def test_fit_transform_n_bins_array(strategy, expected):
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal',
+                           strategy=strategy).fit(X)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -100,16 +104,18 @@ def test_invalid_n_features():
                          "received 5", est.transform, bad_X)
 
 
-def test_ignored_transform():
+@pytest.mark.parametrize(
+    'strategy, expected',
+    [('uniform', [[0., 1.5, 0., 0.], [1., 2.5, 1., 0.],
+                  [2., 3.5, 2., 1.], [2., 4.5, 2., 2.]]),
+     ('kmeans', [[0., 1.5, 0., 0.], [0., 2.5, 0., 0.],
+                 [1., 3.5, 1., 1.], [2., 4.5, 2., 2.]]),
+     ('quantile', [[0., 1.5, 0., 0.], [1., 2.5, 1., 1.],
+                   [2., 3.5, 2., 2.], [2., 4.5, 2., 2.]])])
+def test_ignored_transform(strategy, expected):
     # Feature at col_idx=1 should not change
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1],
-                           encode='ordinal').fit(X)
-
-    expected = [[0., 1.5, 0., 0.],
-                [1., 2.5, 1., 0.],
-                [2., 3.5, 2., 1.],
-                [2., 4.5, 2., 2.]]
-
+                           encode='ordinal', strategy=strategy).fit(X)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -163,7 +169,7 @@ def test_transform_1d_behavior():
 
 def test_inverse_transform_with_ignored():
     est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2],
-                           encode='ordinal').fit(X)
+                           encode='ordinal', strategy='uniform').fit(X)
     Xt = [[0, 1, -4.5, 0],
           [0, 2, -3.5, 0],
           [1, 3, -2.5, 1],
@@ -224,7 +230,7 @@ def test_encode_options():
 
 def test_one_hot_encode_with_ignored_features():
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
-                           encode='onehot-dense').fit(X)
+                           encode='onehot-dense', strategy='uniform').fit(X)
     Xt = est.transform(X)
     Xt_expected = [[1, 0, 0, 1, 0, 0, 1.5, -4],
                    [0, 1, 0, 1, 0, 0, 2.5, -3],
@@ -241,35 +247,23 @@ def test_invalid_strategy_option():
                          est.fit, X)
 
 
-def test_nonuniform_strategies():
+@pytest.mark.parametrize(
+    'strategy, expected_2bins, expected_3bins',
+    [('uniform', [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2]),
+     ('kmeans', [0, 0, 0, 0, 1, 1], [0, 1, 1, 1, 2, 2]),
+     ('quantile', [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2])])
+def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
     X = np.array([0, 1, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
-    Xt_expected = np.array([0, 0, 0, 1, 1, 1])
-    Xt = KBinsDiscretizer(n_bins=2, strategy='quantile',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt_expected, Xt.ravel())
-    Xt_expected = np.array([0, 0, 0, 0, 1, 1])
-    Xt = KBinsDiscretizer(n_bins=2, strategy='kmeans',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt_expected, Xt.ravel())
-    Xt_expected = np.array([0, 0, 0, 0, 1, 1])
-    Xt = KBinsDiscretizer(n_bins=2, strategy='uniform',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt_expected, Xt.ravel())
+    est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode='ordinal')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_2bins, Xt.ravel())
 
     # with 3 bins
-    Xt_expected = np.array([0, 0, 1, 1, 2, 2])
-    Xt = KBinsDiscretizer(n_bins=3, strategy='quantile',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt_expected, Xt.ravel())
-    Xt = KBinsDiscretizer(n_bins=3, strategy='kmeans',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt_expected, Xt.ravel())
-    Xt_expected = np.array([0, 0, 0, 0, 2, 2])
-    Xt = KBinsDiscretizer(n_bins=3, strategy='uniform',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt_expected, Xt.ravel())
+    est = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal')
+    Xt = est.fit_transform(X)
+    assert_array_equal(expected_3bins, Xt.ravel())
 
 
 def test_kmeans_strategy():

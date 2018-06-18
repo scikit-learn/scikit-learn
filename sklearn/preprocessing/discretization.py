@@ -55,7 +55,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    strategy : {'uniform', 'quantile', 'kmeans'}, (default='uniform')
+    strategy : {'uniform', 'quantile', 'kmeans'}, (default='quantile')
         Strategy used to define the widths of the bins.
 
         uniform
@@ -65,11 +65,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             number of samples in each bin.
         kmeans
             Widths are defined by a k-means on each features.
-
-    random_state : int, RandomState instance or None (default)
-        Determines random number generation. Used only with 'kmeans' strategy.
-        Use an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -90,7 +85,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
-    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal')
+    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
     >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -127,13 +122,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_bins=2, ignored_features=None, encode='onehot',
-                 dtype=np.float64, strategy='uniform', random_state=None):
+                 dtype=np.float64, strategy='quantile', random_state=None):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
         self.encode = encode
         self.dtype = dtype
         self.strategy = strategy
-        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fits the estimator.
@@ -166,22 +160,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ignored = self._validate_ignored_features(n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
 
-        offset = np.min(X, axis=0)
-        offset[ignored] = 0
         self.n_bins_ = self._validate_n_bins(n_features, ignored)
 
         if self.strategy == 'uniform':
-            ptp = np.ptp(X, axis=0)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                bin_widths = ptp / self.n_bins_
-            bin_widths[ignored] = 0
             bin_edges = np.zeros(n_features, dtype=object)
             for jj in range(n_features):
                 if jj in ignored:
                     bin_edges[jj] = np.array([])
                     continue
-                edges = np.arange(self.n_bins_[jj] + 1) * bin_widths[jj]
-                edges += offset[jj]
+                edges = np.linspace(X[:, jj].min(), X[:, jj].max(),
+                                    self.n_bins_[jj] + 1)
 
                 if edges[0] == edges[-1] and self.n_bins_[jj] > 2:
                     warnings.warn("Features %d is constant and will be "
@@ -206,10 +194,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 elif self.strategy == 'kmeans':
                     from ..cluster import KMeans
                     n_clusters = self.n_bins_[jj]
-                    km = KMeans(n_clusters=n_clusters,
-                                random_state=self.random_state).fit(col)
-                    centers = np.sort(km.cluster_centers_[:, 0],
-                                      kind='mergesort')
+
+                    # Deterministic initialization with uniform spacing
+                    uniform_edges = np.linspace(X[:, jj].min(), X[:, jj].max(),
+                                                n_clusters + 1)
+                    init = (uniform_edges[1:] + uniform_edges[:-1]) * 0.5
+                    init = init[:, None]
+
+                    # 1D k-means procedure
+                    km = KMeans(n_clusters=n_clusters, init=init, n_init=1)
+                    centers = km.fit(col).cluster_centers_[:, 0]
                     edges = (centers[1:] + centers[:-1]) * 0.5
                     edges = np.r_[col.min(), edges, col.max()]
 
