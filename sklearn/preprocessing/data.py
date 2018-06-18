@@ -1055,7 +1055,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
         """
-        X = check_array(X, accept_sparse='csc', copy=self.copy,estimator=self,
+        # convert sparse matrices to csc for optimized computation of the
+        # quantiles.
+        X = check_array(X, accept_sparse='csc', copy=self.copy, estimator=self,
                         dtype=FLOAT_DTYPES)
 
         q_min, q_max = self.quantile_range
@@ -1106,7 +1108,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the specified axis.
         """
         check_is_fitted(self, 'center_', 'scale_')
-        X = self._check_array(X, self.copy)
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1127,7 +1130,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the specified axis.
         """
         check_is_fitted(self, 'center_', 'scale_')
-        X = self._check_array(X, self.copy)
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_scaling:
