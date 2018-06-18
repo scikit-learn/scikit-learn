@@ -2783,7 +2783,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             # the computation of lambda is influenced by NaNs and we need to
             # get rid of them to compute them.
             _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
-            col_trans = special.boxcox(col, lmbda)
+            # FIXME: stats.boxcox should be changed by special.boxcox which
+            # handles NaN and does not raise warnings. Check SciPy 0.14.X
+            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+                col_trans = stats.boxcox(col, lmbda)
             self.lambdas_.append(lmbda)
             transformed.append(col_trans)
 
@@ -2807,8 +2810,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_positive=True, check_shape=True)
 
-        for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = special.boxcox(X[:, i], lmbda)
+        # FIXME: stats.boxcox should be changed by special.boxcox which handles
+        # NaN and does not raise warnings. Check SciPy 0.14.X
+        with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+            for i, lmbda in enumerate(self.lambdas_):
+                X[:, i] = stats.boxcox(X[:, i], lmbda)
 
         if self.standardize:
             X = self._scaler.transform(X)
