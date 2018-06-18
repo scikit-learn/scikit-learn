@@ -453,14 +453,13 @@ def test_max_feature_regression():
 
 
 def test_feature_importance_regression():
-    # Test to make sure GINI importance is calculated correctly
+    # Test to make sure Gini importance is calculated correctly
     # Make sure that results are summed, then normalized to avoid
     # over-weighting features from later stages
     boston = datasets.load_boston()
     X, y = shuffle(boston.data, boston.target, random_state=13)
-    X = X.astype(np.float32)
-    offset = int(X.shape[0] * 0.9)
-    X_train, y_train = X[:offset], y[:offset]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False,
+                                                        random_state=1)
 
     clf = GradientBoostingRegressor(n_estimators=500, min_samples_split=2,
                                     max_depth=4, learning_rate=0.01, loss='ls',
@@ -472,10 +471,10 @@ def test_feature_importance_regression():
                                   feature_importance.max())
     sorted_idx = np.argsort(feature_importance)
 
-    feature_order = ['CHAS', 'ZN', 'RAD', 'INDUS', 'B', 'AGE', 'TAX',
-                     'PTRATIO', 'CRIM', 'NOX', 'DIS', 'RM', 'LSTAT']
+    ordered_features = ['ZN', 'CHAS', 'RAD', 'INDUS', 'B', 'AGE', 'TAX',
+                        'PTRATIO', 'NOX', 'CRIM', 'DIS', 'RM', 'LSTAT']
 
-    assert_equal(list(boston.feature_names[sorted_idx]), feature_order)
+    assert boston.feature_names[sorted_idx].tolist() == ordered_features
 
 
 def test_max_feature_auto():
