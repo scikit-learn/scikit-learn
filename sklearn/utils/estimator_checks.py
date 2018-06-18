@@ -77,7 +77,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
-             'MinMaxScaler', 'QuantileTransformer']
+             'MinMaxScaler', 'QuantileTransformer', 'RobustScaler']
 
 
 def _yield_non_meta_checks(name, estimator):

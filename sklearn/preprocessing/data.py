@@ -1078,8 +1078,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             quantiles = []
             for feature_idx in range(X.shape[1]):
                 if sparse.issparse(X):
-                    column_data = X.data[X.indptr[feature_idx]:
-                                         X.indptr[feature_idx + 1]]
+                    column_nnz_data = X.data[X.indptr[feature_idx]:
+                                             X.indptr[feature_idx + 1]]
+                    column_data = np.zeros(shape=X.shape[0], dtype=X.dtype)
+                    column_data[:len(column_nnz_data)] = column_nnz_data
                 else:
                     column_data = X[:, feature_idx]
 

@@ -951,6 +951,20 @@ def test_robust_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
 
 
+def test_robust_scaler_equivalence_dense_sparse():
+    # Check the equivalence of the fitting with dense and sparse matrices
+    X_sparse = sparse.rand(1000, 5, density=0.5).tocsc()
+    X_dense = X_sparse.toarray()
+
+    scaler_sparse = RobustScaler(with_centering=False)
+    scaler_dense = RobustScaler(with_centering=False)
+
+    scaler_sparse.fit(X_sparse)
+    scaler_dense.fit(X_dense)
+
+    assert_allclose(scaler_sparse.scale_, scaler_dense.scale_)
+
+
 def test_robust_scaler_transform_one_row_csr():
     # Check RobustScaler on transforming csr matrix with one row
     rng = np.random.RandomState(0)
