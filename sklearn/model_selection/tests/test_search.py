@@ -48,9 +48,9 @@ from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.model_selection import LeavePGroupsOut
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import AdaptiveSearchCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 
@@ -1561,8 +1561,7 @@ def test_transform_inverse_transform_round_trip():
     assert_array_equal(X, X_round_trip)
 
 
-"""
-def test_generate_candidates():
+def test_adaptive_search_cv():
     def check_results(results, gscv):
         exp_results = gscv.cv_results_
         assert_equal(sorted(results.keys()), sorted(exp_results))
@@ -1577,26 +1576,24 @@ def test_generate_candidates():
                     assert_almost_equal(exp_results[k], results[k],
                                         err_msg='Checking ' + k)
 
+
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid).fit(X, y)
 
-    class MySearchCV(BaseSearchCV):
-        def __init__(self, *args, **kwargs):
-            super(MySearchCV, self).__init__(*args, **kwargs)
+    def search(evaluate):
+        results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
+        check_results(results, fit_grid({'max_depth': [1, 2]}))
+        results = evaluate([{'min_samples_split': 5},
+                            {'min_samples_split': 10}])
+        check_results(results, fit_grid([{'max_depth': [1, 2]},
+                                         {'min_samples_split': [5, 10]}]))
 
-        def _generate_candidates(self):
-            results = yield [{'max_depth': 1}, {'max_depth': 2}]
-            check_results(results, fit_grid({'max_depth': [1, 2]}))
-            results = yield [{'min_samples_split': 5},
-                             {'min_samples_split': 10}]
-            check_results(results, fit_grid([{'max_depth': [1, 2]},
-                                             {'min_samples_split': [5, 10]}]))
 
     # Using regressor to make sure each score differs
     clf = DecisionTreeRegressor(random_state=0)
     X, y = make_classification(n_samples=100, n_informative=4,
                                random_state=0)
-    mycv = MySearchCV(clf).fit(X, y)
+    mycv = AdaptiveSearchCV(clf, search).fit(X, y)
     gscv = fit_grid([{'max_depth': [1, 2]},
                      {'min_samples_split': [5, 10]}])
 
@@ -1608,7 +1605,6 @@ def test_generate_candidates():
                         'grid_scores_'}:
             assert_equal(getattr(gscv, attr), getattr(mycv, attr),
                          msg='Attribute %s not equal' % attr)
-"""
 
 
 def test_deprecated_grid_search_iid():
