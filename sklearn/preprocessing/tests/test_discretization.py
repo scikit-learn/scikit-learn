@@ -151,7 +151,7 @@ def test_same_min_max():
                   [1, 0],
                   [1, 1]])
     est = assert_warns_message(UserWarning,
-                               "Features 0 is constant and will be replaced "
+                               "Feature 0 is constant and will be replaced "
                                "with 0.", KBinsDiscretizer
                                (n_bins=3, encode='ordinal').fit, X)
     Xt = est.transform(X)

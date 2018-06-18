@@ -13,10 +13,12 @@ import warnings
 
 from . import OneHotEncoder
 from .data import _transform_selected
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
+from ..utils.fixes import np_version
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -173,8 +175,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 edges = np.linspace(col.min(), col.max(), self.n_bins_[jj] + 1)
 
             elif self.strategy == 'quantile':
-                edges = np.percentile(
-                    col, np.linspace(0, 100, self.n_bins_[jj] + 1))
+                quantiles = np.linspace(0, 100, self.n_bins_[jj] + 1)
+                if np_version < (1, 9):
+                    quantiles = list(quantiles)
+                edges = np.asarray(np.percentile(col, quantiles))
 
             elif self.strategy == 'kmeans':
                 from ..cluster import KMeans
