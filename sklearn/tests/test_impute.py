@@ -223,29 +223,21 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
 
 
 @pytest.mark.parametrize("strategy", ["constant", "most_frequent"])
-@pytest.mark.parametrize("dtype", [None, object, str])
-def test_imputation_non_numeric(strategy, dtype):
+@pytest.mark.parametrize("dtype", [str, np.dtype('U'), np.dtype('S')])
+def test_imputation_const_mostf_error_invalid_types(strategy, dtype):
     # Test imputation on non-numeric data using "most_frequent" and "constant"
     # strategy
     X = np.array([
-        ["", "a", "f"],
-        ["c", "d", "d"],
-        ["b", "d", "d"],
-        ["c", "d", "h"],
+        [np.nan, np.nan, "a", "f"],
+        [np.nan, "c", np.nan, "d"],
+        [np.nan, "b", "d", np.nan],
+        [np.nan, "c", "d", "h"],
     ], dtype=dtype)
 
-    X_true = np.array([
-        ["c", "a", "f"],
-        ["c", "d", "d"],
-        ["b", "d", "d"],
-        ["c", "d", "h"],
-    ], dtype=dtype)
-
-    imputer = SimpleImputer(missing_values="", strategy=strategy,
-                            fill_value="c")
-    X_trans = imputer.fit(X).transform(X)
-
-    assert_array_equal(X_trans, X_true)
+    err_msg = "SimpleImputer does not support this datatype"
+    with pytest.raises(TypeError, match=err_msg):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit(X).transform(X)
 
 
 def test_imputation_most_frequent():

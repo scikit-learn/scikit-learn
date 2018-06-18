@@ -492,10 +492,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
             try:
                 warnings.simplefilter('error', ComplexWarning)
                 array = np.asarray(array, dtype=dtype, order=order)
-            except ValueError as ve:
-                if "convert" in ve:
-                    raise TypeError("Invalid dtype conversion from {0} to "
-                                    "{1}".format(dtype_orig, dtype))
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
