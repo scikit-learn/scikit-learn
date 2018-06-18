@@ -46,7 +46,7 @@ X = np.array([[-4.61611719, -6.00099547],
 # Observations
 y = np.array(g(X) > 0, dtype=int)
 
-# Instanciate and fit Gaussian Process Model
+# Instantiate and fit Gaussian Process Model
 kernel = C(0.1, (1e-5, np.inf)) * DotProduct(sigma_0=0.1) ** 2
 gp = GaussianProcessClassifier(kernel=kernel)
 gp.fit(X, y)
@@ -85,7 +85,7 @@ plt.plot(X[y <= 0, 0], X[y <= 0, 1], 'r.', markersize=12)
 
 plt.plot(X[y > 0, 0], X[y > 0, 1], 'b.', markersize=12)
 
-cs = plt.contour(x1, x2, y_true, [0.], colors='k', linestyles='dashdot')
+plt.contour(x1, x2, y_true, [0.], colors='k', linestyles='dashdot')
 
 cs = plt.contour(x1, x2, y_prob, [0.666], colors='b',
                  linestyles='solid')

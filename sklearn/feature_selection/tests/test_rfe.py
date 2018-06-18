@@ -11,6 +11,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
@@ -166,6 +167,11 @@ def test_rfecv():
                   scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+    # In the event of cross validation score ties, the expected behavior of
+    # RFECV is to return the FEWEST features that maximize the CV score.
+    # Because test_scorer always returns 1.0 in this example, RFECV should
+    # reduce the dimensionality to a single feature (i.e. n_features_ = 1)
+    assert_equal(rfecv.n_features_, 1)
 
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
@@ -328,3 +334,21 @@ def test_rfe_cv_n_jobs():
     rfecv.fit(X, y)
     assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
     assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
+
+
+def test_rfe_cv_groups():
+    generator = check_random_state(0)
+    iris = load_iris()
+    number_groups = 4
+    groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
+    X = iris.data
+    y = (iris.target > 0).astype(int)
+
+    est_groups = RFECV(
+        estimator=RandomForestClassifier(random_state=generator),
+        step=1,
+        scoring='accuracy',
+        cv=GroupKFold(n_splits=2)
+    )
+    est_groups.fit(X, y, groups=groups)
+    assert est_groups.n_features_ > 0

@@ -8,13 +8,14 @@ from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
 from .base import LocalOutlierMixin
+from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted
 
 __all__ = ["LocalOutlierProbability"]
 
 
-class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin, LocalOutlierMixin):
+class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin, OutlierMixin, LocalOutlierMixin):
     """Unsupervised Outlier Detection using Local Outlier Probabilities (LoOP)
 
     The outlier score of each sample is called the Local Outlier Probability.
@@ -132,7 +133,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def __init__(self, n_neighbors=20, norm_factor=0.95, algorithm='auto', leaf_size=30,
                  metric='euclidean', p=2, metric_params=None, n_jobs=1):
 
-        self._init_params(n_neighbors=n_neighbors,
+        super(LocalOutlierProbability, self).__init__(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
                           metric=metric, p=p,
@@ -207,7 +208,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         check_is_fitted(self, ["threshold_", "negative_local_outlier_probability_",
                                "n_neighbors_", "_distances_fit_X_"])
 
-        is_inlier = LocalOutlierMixin._assign_label(self, X, mode='loop')
+        is_inlier = LocalOutlierMixin._score_samples(self, X, mode='loop')
         if X is None:
             return is_inlier
 

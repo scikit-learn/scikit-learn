@@ -194,9 +194,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                 random_state=42)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances                                        # doctest: +ELLIPSIS
-      array([[ 0.069...,  0.149...],
-             [ 0.229...,  0.481...],
-             [ 0.004...,  0.014...]])
+      array([[0.069..., 0.149...],
+             [0.229..., 0.481...],
+             [0.004..., 0.014...]])
       >>> indices
       array([[1, 2],
              [2, 0],
@@ -354,7 +354,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         self._fit_X = check_array(X, accept_sparse='csr')

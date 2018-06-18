@@ -1,6 +1,9 @@
 .. _general_examples:
 
-General examples
+Examples
+========
+
+Miscellaneous examples
 ----------------
 
-General-purpose and introductory examples for the scikit.
+Miscellaneous and introductory examples for scikit-learn.

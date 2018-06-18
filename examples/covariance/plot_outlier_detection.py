@@ -136,6 +136,5 @@ for i, offset in enumerate(clusters_separation):
         subplot.set_xlim((-7, 7))
         subplot.set_ylim((-7, 7))
     plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
-    plt.suptitle("Outlier detection")
 
 plt.show()

@@ -24,12 +24,15 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
 
-# The original data can be found at:
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt2.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt3.dat.gz
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_train.dat.gz
+# The original vectorized data can be found at:
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt2.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt3.dat.gz
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_train.dat.gz
+# while the original stemmed token files can be found
+# in the README, section B.12.i.:
+#    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/lyrl2004_rcv1v2_README.htm
 XY_METADATA = (
     RemoteFileMetadata(
         url='https://ndownloader.figshare.com/files/5976069',
@@ -70,7 +73,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False):
+               random_state=None, shuffle=False, return_X_y=False):
     """Load the RCV1 multilabel dataset, downloading it if necessary.
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
@@ -102,15 +105,19 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    return_X_y : boolean, default=False. If True, returns ``(dataset.data,
+    dataset.target)`` instead of a Bunch object. See below for more
+    information about the `dataset.data` and `dataset.target` object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -131,6 +138,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     dataset.DESCR : string
         Description of the RCV1 dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
 
     References
     ----------
@@ -166,10 +177,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
 
-        # delete archives
-        for f in files:
-            remove(f.name)
-
         # Training data is before testing data
         X = sp.vstack([Xy[8], Xy[0], Xy[2], Xy[4], Xy[6]]).tocsr()
         sample_id = np.hstack((Xy[9], Xy[1], Xy[3], Xy[5], Xy[7]))
@@ -177,6 +184,11 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(sample_id, sample_id_path, compress=9)
+
+        # delete archives
+        for f in files:
+            f.close()
+            remove(f.name)
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
@@ -195,20 +207,21 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
-        for line in GzipFile(filename=topics_archive_path, mode='rb'):
-            line_components = line.decode("ascii").split(u" ")
-            if len(line_components) == 3:
-                cat, doc, _ = line_components
-                if cat not in category_names:
-                    n_cat += 1
-                    category_names[cat] = n_cat
+        with GzipFile(filename=topics_archive_path, mode='rb') as f:
+            for line in f:
+                line_components = line.decode("ascii").split(u" ")
+                if len(line_components) == 3:
+                    cat, doc, _ = line_components
+                    if cat not in category_names:
+                        n_cat += 1
+                        category_names[cat] = n_cat
 
-                doc = int(doc)
-                if doc != doc_previous:
-                    doc_previous = doc
-                    n_doc += 1
-                    sample_id_bis[n_doc] = doc
-                y[n_doc, category_names[cat]] = 1
+                    doc = int(doc)
+                    if doc != doc_previous:
+                        doc_previous = doc
+                        n_doc += 1
+                        sample_id_bis[n_doc] = doc
+                    y[n_doc, category_names[cat]] = 1
 
         # delete archive
         remove(topics_archive_path)
@@ -250,6 +263,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
+
+    if return_X_y:
+        return X, y
 
     return Bunch(data=X, target=y, sample_id=sample_id,
                  target_names=categories, DESCR=__doc__)

@@ -41,7 +41,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
         np.int_t n_population,
         np.int_t n_samples,
         random_state=None):
-    """Sample integers without replacement.
+    r"""Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
     replacement.
