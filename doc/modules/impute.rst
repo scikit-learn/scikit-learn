@@ -61,8 +61,8 @@ values than observed values.
 Multivariate feature imputation
 ===============================
 
-A more sophisticated approach is to use the :class:`MICEImputer` class, which
-implements the Multivariate Imputation by Chained Equations technique. MICE
+A more sophisticated approach is to use the :class:`ChainedImputer` class, which
+implements the the technique of Multivariate Imputation by Chained Equations. MICE
 models each feature with missing values as a function of other features, and
 uses that estimate for imputation. It does so in a round-robin fashion: at
 each step, a feature column is designated as output `y` and the other feature
@@ -72,10 +72,10 @@ repeated for each feature, and then is done for a number of imputation rounds.
 Here is an example snippet::
 
     >>> import numpy as np
-    >>> from sklearn.impute import MICEImputer
-    >>> imp = MICEImputer(n_imputations=10, random_state=0)
+    >>> from sklearn.impute import ChainedImputer
+    >>> imp = ChainedImputer(n_imputations=10, random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
-    MICEImputer(imputation_order='ascending', initial_strategy='mean',
+    ChainedImputer(imputation_order='ascending', initial_strategy='mean',
           max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
           n_imputations=10, n_nearest_features=None, predictor=None,
           random_state=0, verbose=False)
@@ -85,6 +85,13 @@ Here is an example snippet::
      [ 6.  4.]
      [13.  6.]]
 
-Both :class:`SimpleImputer` and :class:`MICEImputer` can be used in a Pipeline
+Note that MICE has traditionally been used in the statistics community to obtain
+multiple imputations, to which the entire subsequent analysis pipeline is applied.
+This allows one to estimate the variance that is inherent in having missing values
+in the first place. In the above example, however, we are using
+:class:`ChainedImputer` simply as a way to fill-in missing values as accurately as possible.
+As such, we average the last `n_imputations` imputations to get the average imputation.
+
+Both :class:`SimpleImputer` and :class:`ChainedImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.

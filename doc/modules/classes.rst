@@ -653,7 +653,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
-   impute.MICEImputer
+   impute.ChainedImputer
 
 .. _kernel_approximation_ref:
 
