@@ -14,7 +14,7 @@ predict, decision_function and score_samples methods. See
 outlier detection and novelty detection and how to use LOF for novelty
 detection.
 
-The number of neighbors considered, (parameter n_neighbors) is typically
+The number of neighbors considered (parameter n_neighbors) is typically
 set 1) greater than the minimum number of samples a cluster has to contain,
 so that other samples can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by samples that can potentially be
