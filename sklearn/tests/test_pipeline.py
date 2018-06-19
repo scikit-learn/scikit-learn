@@ -1014,7 +1014,7 @@ def test_make_pipeline_memory():
 
 def test_pipeline_partial_fit():
     X, y = make_classification(random_state=0)
-    clf = SGDClassifier()
+    clf = SGDClassifier(random_state=0)
     pipeline = Pipeline([
         ('features', Normalizer()),
         ('clf', clf)
@@ -1037,7 +1037,7 @@ def test_pipeline_partial_fit_partially_fit_misspecified():
     X, y = make_classification(random_state=0)
     pipeline = Pipeline([
         ('features', Normalizer()),
-        ('clf', SGDClassifier())
+        ('clf', SGDClassifier(random_state=0))
     ], partially_fit=['features'])
     with pytest.raises(ValueError, match=('Not all models specified have '
                                           'partial_fit support')):
@@ -1047,8 +1047,8 @@ def test_pipeline_partial_fit_partially_fit_misspecified():
 def test_pipeline_partial_fit_works_middle():
     X, y = make_classification(random_state=0)
     # n_iter specifies number of iterations to run in partial_fit
-    d = MiniBatchDictionaryLearning(n_iter=10)
-    clf = SGDClassifier(max_iter=5, epsilon=0)
+    d = MiniBatchDictionaryLearning(n_iter=10, random_state=0)
+    clf = SGDClassifier(max_iter=5, epsilon=0, random_state=0)
 
     # All 3 of these have partial fit support
     pipeline = Pipeline([
@@ -1064,8 +1064,8 @@ def test_pipeline_partial_fit_works_middle():
 def test_pipeline_partial_fit_works_end():
     X, y = make_classification(random_state=0)
     # n_iter specifies number of iterations to run in partial_fit
-    d = MiniBatchDictionaryLearning(n_iter=10)
-    clf = SGDClassifier(max_iter=5, epsilon=0)
+    d = MiniBatchDictionaryLearning(n_iter=10, random_state=0)
+    clf = SGDClassifier(max_iter=5, epsilon=0, random_state=0)
 
     # All 3 of these have partial fit support
     pipeline = Pipeline([
