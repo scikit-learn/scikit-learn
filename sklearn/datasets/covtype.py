@@ -16,7 +16,7 @@ Courtesy of Jock A. Blackard and Colorado State University.
 
 from gzip import GzipFile
 import logging
-from os.path import exists, join
+from os.path import dirname, exists, join
 from os import remove
 
 import numpy as np
@@ -43,9 +43,10 @@ logger = logging.getLogger(__name__)
 
 def fetch_covtype(data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False):
-    """Load the covertype dataset, downloading it if necessary.
+    """Load the covertype dataset, downloading it if necessary \
+(classification).
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <covtype>`.
 
     Parameters
     ----------
@@ -126,7 +127,11 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         X = X[ind]
         y = y[ind]
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, DESCR=__doc__)
+    return Bunch(data=X, target=y, DESCR=fdescr)
