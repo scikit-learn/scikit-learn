@@ -1,4 +1,4 @@
-.. _rcv1:
+.. _rcv1_dataset:
 
 RCV1 dataset
 ------------

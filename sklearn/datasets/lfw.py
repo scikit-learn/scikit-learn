@@ -227,7 +227,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     """Load the Labeled Faces in the Wild (LFW) people dataset, downloading \
 it if necessary (classification).
 
-    Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
     ----------
@@ -392,7 +392,7 @@ it if necessary (classification).
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.
 
-    Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
     ----------

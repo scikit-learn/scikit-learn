@@ -138,7 +138,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     """Load the filenames and data from the 20 newsgroups dataset, downloading\
  it if necessary (classification).
 
-    Read more in the :ref:`User Guide <20newsgroups>`.
+    Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
     Parameters
     ----------
@@ -289,7 +289,7 @@ downloading it if necessary (classification).
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
 
-    Read more in the :ref:`User Guide <20newsgroups>`.
+    Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
     Parameters
     ----------

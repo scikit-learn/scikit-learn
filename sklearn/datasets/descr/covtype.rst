@@ -1,4 +1,4 @@
-.. _covtype:
+.. _covtype_dataset:
 
 Forest covertypes
 -----------------

@@ -1,4 +1,4 @@
-.. _labeled_faces_in_the_wild:
+.. _labeled_faces_in_the_wild_dataset:
 
 The Labeled Faces in the Wild face recognition dataset
 ------------------------------------------------------

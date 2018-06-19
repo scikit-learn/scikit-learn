@@ -1,4 +1,4 @@
-.. _20newsgroups:
+.. _20newsgroups_dataset:
 
 The 20 newsgroups text dataset
 ------------------------------

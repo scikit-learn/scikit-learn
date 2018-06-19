@@ -1,4 +1,4 @@
-.. _kddcup99:
+.. _kddcup99_dataset:
 
 Kddcup 99 dataset
 -----------------

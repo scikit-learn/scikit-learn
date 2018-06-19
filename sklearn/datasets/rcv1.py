@@ -83,7 +83,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     Version: RCV1-v2, vectors, full sets, topics multilabels.
 
-    Read more in the :ref:`User Guide <rcv1>`.
+    Read more in the :ref:`User Guide <rcv1_dataset>`.
 
     .. versionadded:: 0.17
 

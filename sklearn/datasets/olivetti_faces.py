@@ -40,7 +40,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     """Load the Olivetti faces data-set from AT&T, downloading it if necessary\
  (classification).
 
-    Read more in the :ref:`User Guide <olivetti_faces>`.
+    Read more in the :ref:`User Guide <olivetti_faces_dataset>`.
 
     Parameters
     ----------

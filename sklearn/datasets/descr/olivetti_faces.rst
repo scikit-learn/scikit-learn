@@ -1,4 +1,4 @@
-.. _olivetti_faces:
+.. _olivetti_faces_dataset:
 
 The Olivetti faces dataset
 --------------------------
