@@ -88,9 +88,10 @@ Here is an example snippet::
 Note that MICE has traditionally been used in the statistics community to obtain
 multiple imputations, to which the entire subsequent analysis pipeline is applied.
 This allows one to estimate the variance that is inherent in having missing values
-in the first place. In the above example, however, we are using
-:class:`ChainedImputer` simply as a way to fill-in missing values as accurately as possible.
-As such, we average the last `n_imputations` imputations to get the average imputation.
+in the first place. In the above example, however, we are using :class:`ChainedImputer`
+in way that is common for machine learning applications: to fill-in missing values
+as accurately as possible. We thus we average the last 10 imputations to obtain a
+single one.
 
 Both :class:`SimpleImputer` and :class:`ChainedImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
