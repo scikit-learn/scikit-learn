@@ -62,6 +62,11 @@ class Pipeline(_BaseComposition):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
+    partially_fit : list
+        List of names of models to perform partial fit on when
+        ``self.partial_fit`` is called.
+
+
     Attributes
     ----------
     named_steps : bunch object, a dictionary with attribute access
@@ -114,10 +119,11 @@ class Pipeline(_BaseComposition):
 
     # BaseEstimator interface
 
-    def __init__(self, steps, memory=None):
+    def __init__(self, steps, memory=None, partially_fit=[]):
         self.steps = steps
         self._validate_steps()
         self.memory = memory
+        self.partially_fit = partially_fit
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -188,6 +194,7 @@ class Pipeline(_BaseComposition):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
+        iters = fit_params.pop('__sklearn_partial_fit', False)
         # shallow copy of steps - this should really be steps_
         self.steps = list(self.steps)
         self._validate_steps()
@@ -202,19 +209,28 @@ class Pipeline(_BaseComposition):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
+
         for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
             if transformer is None:
                 pass
             else:
-                if hasattr(memory, 'cachedir') and memory.cachedir is None:
+                partially_fit = ((iters and self.partially_fit == [])
+                                 or (iters and name in self.partially_fit))
+                if (hasattr(memory, 'cachedir') and memory.cachedir is None
+                        or partially_fit):
                     # we do not clone when caching is disabled to preserve
                     # backward compatibility
                     cloned_transformer = transformer
                 else:
                     cloned_transformer = clone(transformer)
+
+                if partially_fit:
+                    step_iters = hasattr(cloned_transformer, 'partial_fit')
+                else:
+                    step_iters = None
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
-                    cloned_transformer, Xt, y, None,
+                    cloned_transformer, Xt, y, None, iters=step_iters,
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
@@ -253,6 +269,31 @@ class Pipeline(_BaseComposition):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
             self._final_estimator.fit(Xt, y, **fit_params)
+        return self
+
+    def partial_fit(self, X, y, **fit_params):
+        if not any(hasattr(step_est, 'partial_fit')
+                   for _, step_est in self.steps):
+            raise ValueError('At least one estimator must have '
+                             'partial_fit support')
+        if self.partially_fit:
+            partial_fit_models = [name for name, step in self.steps
+                                  if hasattr(step, 'partial_fit')]
+            if not set(self.partially_fit).issubset(set(partial_fit_models)):
+                msg = ("Not all models specified have partial_fit support.\n"
+                       "Specified: {}\nPartial fit support: {}")
+                raise ValueError(msg.format(self.partially_fit,
+                                            partial_fit_models))
+        Xt, fit_params = self._fit(X, y, __sklearn_partial_fit=True,
+                                   **fit_params)
+        final_name = self.steps[-1][0]
+        final_partially_fit = (self.partially_fit == [] or
+                               final_name in self.partially_fit)
+        if self._final_estimator is not None:
+            if (hasattr(self._final_estimator, 'partial_fit') and final_partially_fit):
+                self._final_estimator.partial_fit(Xt, y, **fit_params)
+            else:
+                self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -597,9 +638,12 @@ def _transform_one(transformer, X, y, weight, **fit_params):
     return res * weight
 
 
-def _fit_transform_one(transformer, X, y, weight, **fit_params):
+def _fit_transform_one(transformer, X, y, weight, iters=False, **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
+    elif iters:
+        transformer.partial_fit(X, y, **fit_params)
+        res = transformer.transform(X, y, **fit_params)
     else:
         res = transformer.fit(X, y, **fit_params).transform(X)
     # if we have a weight for this transformer, multiply output

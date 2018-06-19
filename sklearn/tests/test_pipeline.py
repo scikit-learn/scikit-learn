@@ -9,6 +9,8 @@ import time
 import numpy as np
 from scipy import sparse
 
+import pytest
+
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -29,11 +31,12 @@ from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
-from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.datasets import load_iris
-from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA, TruncatedSVD, MiniBatchDictionaryLearning
+from sklearn.datasets import load_iris, make_classification
+from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.externals.joblib import Memory
+from sklearn.linear_model import SGDClassifier
 
 
 JUNK_FOOD_DOCS = (
@@ -1006,3 +1009,69 @@ def test_make_pipeline_memory():
     assert_true(pipeline.memory is None)
 
     shutil.rmtree(cachedir)
+
+
+def test_pipeline_partial_fit():
+    X, y = make_classification(random_state=0)
+    clf = SGDClassifier()
+    pipeline = Pipeline([
+        ('features', Normalizer()),
+        ('clf', clf)
+    ])
+    pipeline.partial_fit(X, y, clf__classes=np.unique(y))
+    epochs = (clf.t_ - 1) / X.shape[0]
+    assert_true(epochs == 1)
+
+
+def test_pipeline_partial_fit_raises():
+    X, y = make_classification(random_state=0)
+    pipeline = Pipeline([
+        ('features', Normalizer()),
+    ])
+    with pytest.raises(ValueError, match='At least one'):
+        pipeline.partial_fit(X, y)
+
+
+def test_pipeline_partial_fit_partially_fit_misspecified():
+    X, y = make_classification(random_state=0)
+    pipeline = Pipeline([
+        ('features', Normalizer()),
+        ('clf', SGDClassifier())
+    ], partially_fit=['features'])
+    with pytest.raises(ValueError, match=('Not all models specified have '
+                                          'partial_fit support')):
+        pipeline.partial_fit(X, y)
+
+
+def test_pipeline_partial_fit_works_middle():
+    X, y = make_classification(random_state=0)
+    # n_iter specifies number of iterations to run in partial_fit
+    d = MiniBatchDictionaryLearning(n_iter=10)
+    clf = SGDClassifier(max_iter=5, epsilon=0)
+
+    # All 3 of these have partial fit support
+    pipeline = Pipeline([
+        ('d', d),
+        ('clf', clf)
+    ], partially_fit=['d'])
+    pipeline.partial_fit(X, y)
+    clf_epochs = (clf.t_ - 1) / X.shape[0]
+    assert_true(clf_epochs == 5)
+    assert_true(d.n_iter_ == 10)
+
+
+def test_pipeline_partial_fit_works_end():
+    X, y = make_classification(random_state=0)
+    # n_iter specifies number of iterations to run in partial_fit
+    d = MiniBatchDictionaryLearning(n_iter=10)
+    clf = SGDClassifier(max_iter=5, epsilon=0)
+
+    # All 3 of these have partial fit support
+    pipeline = Pipeline([
+        ('d', d),
+        ('clf', clf)
+    ], partially_fit=['clf'])
+    pipeline.partial_fit(X, y, clf__classes=np.unique(y))
+    clf_epochs = (clf.t_ - 1) / X.shape[0]
+    assert_true(clf_epochs == 1)
+    assert_true(d.n_iter_ == 10)
