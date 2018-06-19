@@ -351,7 +351,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     sklearn.linear_model.SGDRegressor
         SGDRegressor can optimize the same cost function as LinearSVR
-        by adjusting the penalty and loss parameters. In addition it .requires
+        by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
     """
