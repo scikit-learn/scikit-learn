@@ -209,8 +209,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                                "n_neighbors_", "_distances_fit_X_"])
 
         is_inlier = LocalOutlierMixin._score_samples(self, X, mode='loop')
-        if X is None:
-            return is_inlier
+
+        return is_inlier
 
     @staticmethod
     def _ssd(distances_X):

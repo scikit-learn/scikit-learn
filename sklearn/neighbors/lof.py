@@ -222,8 +222,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                                "n_neighbors_", "_distances_fit_X_"])
 
         is_inlier = LocalOutlierMixin._score_samples(self, X)
-        if X is None:
-            return is_inlier
+
+        return is_inlier
 
     def _decision_function(self, X):
         """Shifted opposite of the Local Outlier Factor of X

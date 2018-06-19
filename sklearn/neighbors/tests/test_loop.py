@@ -3,7 +3,7 @@
 #          Valentino Constantinou <vc@valentino.io>
 # License: BSD 3 clause
 
-from math import sqrt
+from math import log10, sqrt
 import numpy as np
 from sklearn import neighbors
 
@@ -32,19 +32,18 @@ iris.target = iris.target[perm]
 
 def test_loop():
     # Toy sample (the last two samples are outliers):
-    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 2], [1, 2], [2, 1], [5, 3], [-4, 2]]
 
     # Test LocalOutlierFactor:
     clf = neighbors.LocalOutlierProbability(n_neighbors=5)
-    score = clf.fit(X).negative_local_outlier_probability_
+    score = -1. * clf.fit(X).negative_local_outlier_probability_
     assert_array_equal(clf._fit_X, X)
 
     # Assert smallest outlier score is greater than largest inlier score:
-    assert_greater(np.max(score[-2:]), np.min(score[:-2]))
+    assert_greater(np.min(score[-2:]), np.max(score[:-2]))
 
     # Assert predict() works:
-    clf = neighbors.LocalOutlierProbability(norm_factor=0.25,
-                                       n_neighbors=5).fit(X)
+    clf = neighbors.LocalOutlierProbability(n_neighbors=5, norm_factor=0.8).fit(X)
     assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
 
 
@@ -63,7 +62,7 @@ def test_loop_performance():
     clf = neighbors.LocalOutlierProbability().fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = -clf._decision_function(X_test, mode='loop')
+    y_pred = -clf._decision_function(X_test)
 
     # check that roc_auc is good
     assert_greater(roc_auc_score(y_test, y_pred), .99)
@@ -72,20 +71,21 @@ def test_loop_performance():
 def test_loop_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
-    clf1 = neighbors.LocalOutlierProbability(n_neighbors=2,
-                                        norm_factor=0.9).fit(X_train)
+    clf1 = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=0.94).fit(X_train)
     clf2 = neighbors.LocalOutlierProbability(n_neighbors=2).fit(X_train)
-    s_0 = 2. * sqrt(2.) / (1. + sqrt(2.))
-    s_1 = (1. + sqrt(2)) * (1. / (4. * sqrt(2.)) + 1. / (2. + 2. * sqrt(2)))
+    s_0 = 0. # inlier
+    s_0_label = 1 # inlier
+    s_1 = log10(3.493965) # outlier
+    s_1_label = -1 # outlier
     # check predict()
     assert_array_almost_equal(-clf1.negative_local_outlier_probability_, [s_0, s_1, s_1])
     assert_array_almost_equal(-clf2.negative_local_outlier_probability_, [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf1._score_samples([[2., 2.]], mode='loop'), [s_0])
-    assert_array_almost_equal(-clf2._score_samples([[2., 2.]], mode='loop'), [s_0])
+    assert_array_almost_equal(-clf1._score_samples([[2., 2.]], mode='loop'), [s_0_label])
+    assert_array_almost_equal(-clf2._score_samples([[2., 2.]], mode='loop'), [s_0_label])
     # check predict(one sample already in train)
-    assert_array_almost_equal(-clf1._score_samples([[1., 1.]], mode='loop'), [s_1])
-    assert_array_almost_equal(-clf2._score_samples([[1., 1.]], mode='loop'), [s_1])
+    assert_array_almost_equal(-clf1._score_samples([[1., 1.]], mode='loop'), [s_1_label])
+    assert_array_almost_equal(-clf2._score_samples([[1., 1.]], mode='loop'), [s_1_label])
 
 
 def test_loop_precomputed(random_state=42):
@@ -130,21 +130,18 @@ def test_score_samples():
     clf1 = neighbors.LocalOutlierProbability(n_neighbors=2,
                                         norm_factor=0.9).fit(X_train)
     clf2 = neighbors.LocalOutlierProbability(n_neighbors=2).fit(X_train)
-    assert_array_equal(clf1._score_samples([[2., 2.]]),
-                       clf1._decision_function([[2., 2.]]) + clf1.offset_)
-    assert_array_equal(clf2._score_samples([[2., 2.]]),
-                       clf2._decision_function([[2., 2.]]) + clf2.offset_)
-    assert_array_equal(clf1._score_samples([[2., 2.]]),
-                       clf2._score_samples([[2., 2.]]))
+    assert_array_equal(clf1._score_samples([[2., 2.]], mode='loop'),
+                       clf1._decision_function([[2., 2.]]))
+
+    assert_array_equal(clf2._score_samples([[2., 2.]], mode='loop'),
+                       clf2._decision_function([[2., 2.]]))
+    assert_array_equal(clf1._score_samples([[2., 2.]], mode='loop'),
+                       clf2._score_samples([[2., 2.]], mode='loop'))
 
 
 def test_norm_factor():
     X = [[1, 1], [1, 0]]
-    clf = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=0.9)
+    clf = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=1.2)
     assert_raises(ValueError, clf.fit, X)
-
-
-
-
 
 
