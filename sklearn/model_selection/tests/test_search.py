@@ -5,6 +5,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.joblib._compat import PY3_OR_LATER
 from itertools import chain, product
+import os
 import pickle
 import sys
 from types import GeneratorType
@@ -1175,7 +1176,7 @@ def test_search_cv_timing():
 
         assert_true(hasattr(search, "refit_time_"))
         assert_true(isinstance(search.refit_time_, float))
-        if sys.version_info[0] >= 3:
+        if os.name in ('mac', 'posix'):
             assert_greater(search.refit_time_, 0)
 
 
