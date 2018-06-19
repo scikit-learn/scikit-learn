@@ -444,6 +444,7 @@ def test_bayesian_mixture_fit_predict():
 
 
 def test_bayesian_mixture_predict_predict_proba():
+    # this is the same test as test_gaussian_mixture_predict_predict_proba()
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     for prior_type in PRIOR_TYPE:
