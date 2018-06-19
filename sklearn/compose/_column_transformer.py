@@ -675,7 +675,7 @@ def make_column_transformer(*transformers, **kwargs):
     ----------
     *transformers : tuples of column selections and transformers
 
-    remainder : {'passthrough', 'drop'}, default 'passthrough'
+    remainder : {'passthrough', 'drop'} or estimator, default 'passthrough'
         By default, all remaining columns that were not specified in
         `transformers` will be automatically passed through (default of
         ``'passthrough'``). This subset of columns is concatenated with the
@@ -683,6 +683,10 @@ def make_column_transformer(*transformers, **kwargs):
         By using ``remainder='drop'``, only the specified columns in
         `transformers` are transformed and combined in the output, and the
         non-specified columns are dropped.
+        By setting ``remainder`` to be an estimator, the remaining
+        non-specified columns will use the ``remainder`` estimator. The
+        estimator must support
+        `fit` and `transform`.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).

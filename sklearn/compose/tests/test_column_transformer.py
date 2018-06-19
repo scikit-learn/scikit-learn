@@ -361,6 +361,15 @@ def test_make_column_transformer_kwargs():
     )
 
 
+def test_make_column_transformer_remainder_transformer():
+    scaler = StandardScaler()
+    norm = Normalizer()
+    remainder = StandardScaler()
+    ct = make_column_transformer(('first', scaler), (['second'], norm),
+                                 remainder=remainder)
+    assert_equal(ct.remainder, remainder)
+
+
 def test_column_transformer_get_set_params():
     ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
                             ('trans2', StandardScaler(), [1])])
