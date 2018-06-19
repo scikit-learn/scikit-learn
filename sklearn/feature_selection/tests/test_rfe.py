@@ -239,8 +239,8 @@ def test_rfec_grid_scores_size():
     # Non-regression test for varying combinations of step and
     # min_features_to_select.
     for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
-        rfecv = RFECV(estimator=MockClassifier(), step=step, cv=5,
-                      min_features_to_select=min_features_to_select)
+        rfecv = RFECV(estimator=MockClassifier(), step=step,
+                      min_features_to_select=min_features_to_select, cv=5)
         rfecv.fit(X, y)
 
         score_len = np.ceil(
