@@ -43,8 +43,9 @@ logger = logging.getLogger(__name__)
 
 def fetch_covtype(data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False):
-    """Load the covertype dataset, downloading it if necessary \
-(classification).
+    """Load the covertype dataset (classification).
+    
+    Download it if necessary.
 
     Read more in the :ref:`User Guide <covtype_dataset>`.
 

@@ -224,8 +224,10 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                      min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
                      download_if_missing=True, return_X_y=False):
-    """Load the Labeled Faces in the Wild (LFW) people dataset, downloading \
-it if necessary (classification).
+    """Load the Labeled Faces in the Wild (LFW) people dataset \
+(classification).
+    
+    Download it if necessary.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
@@ -380,8 +382,9 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
-    """Load the Labeled Faces in the Wild (LFW) pairs dataset, downloading \
-it if necessary (classification).
+    """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
+    
+    Download it if necessary.
 
     In the official `README.txt`_ this task is described as the
     "Restricted" task.  As I am not sure as to implement the

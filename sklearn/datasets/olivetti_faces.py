@@ -37,8 +37,9 @@ FACES = RemoteFileMetadata(
 
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
-    """Load the Olivetti faces data-set from AT&T, downloading it if necessary\
- (classification).
+    """Load the Olivetti faces data-set from AT&T (classification).
+    
+    Download it if necessary.
 
     Read more in the :ref:`User Guide <olivetti_faces_dataset>`.
 

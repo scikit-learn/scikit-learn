@@ -135,8 +135,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
                        download_if_missing=True):
-    """Load the filenames and data from the 20 newsgroups dataset, downloading\
- it if necessary (classification).
+    """Load the filenames and data from the 20 newsgroups dataset \
+(classification).
+
+    Download it if necessary.
 
     Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
@@ -281,8 +283,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors, \
-downloading it if necessary (classification).
+    """Load the 20 newsgroups dataset and transform it into tf-idf vectors \
+(classification).
+
+    Download it if necessary.
 
     This is a convenience function; the tf-idf transformation is done using the
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more

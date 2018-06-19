@@ -129,17 +129,17 @@ Real world datasets
     rcv1
     kddcup99
 
-.. include:: ./olivetti_faces.rst
+.. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 
-.. include:: ./twenty_newsgroups.rst
+.. include:: ../../sklearn/datasets/descr/twenty_newsgroups.rst
 
 .. include:: ../../sklearn/datasets/descr/lfw.rst
 
-.. include:: ./covtype.rst
+.. include:: ../../sklearn/datasets/descr/covtype.rst
 
-.. include:: ./rcv1.rst
+.. include:: ../../sklearn/datasets/descr/rcv1.rst
 
-.. include:: ./kddcup99.rst
+.. include:: ../../sklearn/datasets/descr/kddcup99.rst
 
 .. _generated_datasets:
 
