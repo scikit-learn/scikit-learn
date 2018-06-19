@@ -296,6 +296,12 @@ class RFECV(RFE, MetaEstimatorMixin):
         Note that the last iteration may remove fewer than ``step`` features in
         order to reach ``min_features_to_select``.
 
+    min_features_to_select : int, (default=1)
+        The minimum number of features to be selected. This number of features
+        will always be scored, even if the difference between the original
+        feature count and ``min_features_to_select`` isn't divisible by
+        ``step``.
+
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -325,12 +331,6 @@ class RFECV(RFE, MetaEstimatorMixin):
         Number of cores to run in parallel while fitting across folds.
         Defaults to 1 core. If ``n_jobs=-1``, then number of jobs is set
         to number of cores.
-
-    min_features_to_select : int, (default=1)
-        The minimum number of features to be selected. This number of features
-        will always be scored, even if the difference between the original
-        feature count and ``min_features_to_select`` isn't divisible by
-        ``step``.
 
     Attributes
     ----------
@@ -390,8 +390,8 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
-                 n_jobs=1, min_features_to_select=1):
+    def __init__(self, estimator, step=1, min_features_to_select=1, cv=None,
+                 scoring=None, verbose=0, n_jobs=1):
         self.estimator = estimator
         self.step = step
         self.cv = cv
