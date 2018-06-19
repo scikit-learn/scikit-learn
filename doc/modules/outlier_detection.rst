@@ -78,32 +78,14 @@ detection.
    :align: center
    :scale: 50
 
-The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus does
-not perform very well for outlier detection. This estimator is best suited for
-novelty detection when the training set is not contaminated by outliers.
-That said, outlier detection in high-dimension, or without any assumptions on
-the distribution of the inlying data is very challenging, and a One-class SVM
-might give useful results in these situations depending on the value of its
-hyperparameters.
-
-:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
-an ellipse. It thus degrades when the data is not unimodal. Notice however
-that this estimator is robust to outliers.
-
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
-seem to perform reasonably well for multi-modal data sets. The advantage of
-:class:`neighbors.LocalOutlierFactor` over the other estimators is shown for
-the third data set, where the two modes have different densities. This
-advantage is explained by the local aspect of LOF, meaning that it only
-compares the score of abnormality of one sample with the scores of its
-neighbors.
-
-Finally, for the last data set, it is hard to say that one sample is more
-abnormal than another sample as they are uniformly distributed in a
-hypercube. Except for the :class:`svm.OneClassSVM` which overfits a little, all
-estimators present decent solutions for this situation. In such a case, it
-would be wise to look more closely at the scores of abnormality of the samples
-as a good estimator should assign similar scores to all the samples.
+perform reasonably well on the data sets considered here.
+The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
+does not perform very well for outlier detection. Finally,
+:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
+an ellipse. For more details on the different estimators refer to the example
+:ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` and the sections
+hereunder.
 
 .. topic:: Examples:
 
