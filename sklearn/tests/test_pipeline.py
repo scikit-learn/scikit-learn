@@ -31,7 +31,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
-from sklearn.decomposition import PCA, TruncatedSVD, MiniBatchDictionaryLearning
+from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.datasets import load_iris, make_classification
 from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.feature_extraction.text import CountVectorizer
