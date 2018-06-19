@@ -27,7 +27,7 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -1176,8 +1176,7 @@ def test_search_cv_timing():
 
         assert_true(hasattr(search, "refit_time_"))
         assert_true(isinstance(search.refit_time_, float))
-        if os.name in ('mac', 'posix'):
-            assert_greater(search.refit_time_, 0)
+        assert_greater_equal(search.refit_time_, 0)
 
 
 def test_grid_search_correct_score_results():
