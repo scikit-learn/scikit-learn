@@ -133,7 +133,7 @@ Real world datasets
 
 .. include:: ./twenty_newsgroups.rst
 
-.. include:: ./labeled_faces.rst
+.. include:: ../../sklearn/datasets/descr/lfw.rst
 
 .. include:: ./covtype.rst
 
