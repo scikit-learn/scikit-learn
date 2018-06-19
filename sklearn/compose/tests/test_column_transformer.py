@@ -42,12 +42,6 @@ class DoubleTrans(BaseEstimator):
         return self
 
     def transform(self, X):
-        # 1D Series -> 2D DataFrame
-        if hasattr(X, 'to_frame'):
-            return 2*X.to_frame()
-        # 1D array -> 2D array
-        if X.ndim == 1:
-            return 2*np.atleast_2d(X).T
         return 2*X
 
 
@@ -58,6 +52,23 @@ class SparseMatrixTrans(BaseEstimator):
     def transform(self, X, y=None):
         n_samples = len(X)
         return sparse.eye(n_samples, n_samples).tocsr()
+
+
+class TransNo2D(BaseEstimator):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X
+
+
+class TransRaise(BaseEstimator):
+
+    def fit(self, X, y=None):
+        raise ValueError("specific message")
+
+    def transform(self, X, y=None):
+        raise ValueError("specific message")
 
 
 def test_column_transformer():
@@ -255,28 +266,12 @@ def test_column_transformer_error_msg_1D():
     assert_raise_message(ValueError, "1D data passed to a transformer",
                          col_trans.fit_transform, X_array)
 
-    class TransRaise(BaseEstimator):
-
-        def fit(self, X, y=None):
-            raise ValueError("specific message")
-
-        def transform(self, X, y=None):
-            raise ValueError("specific message")
-
     col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
     for func in [col_trans.fit, col_trans.fit_transform]:
         assert_raise_message(ValueError, "specific message", func, X_array)
 
 
 def test_2D_transformer_output():
-
-    class TransNo2D(BaseEstimator):
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X, y=None):
-            return X
-
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     # if one transformer is dropped, test that name is still correct
@@ -291,13 +286,6 @@ def test_2D_transformer_output():
 
 def test_2D_transformer_output_pandas():
     pd = pytest.importorskip('pandas')
-
-    class TransNo2D(BaseEstimator):
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X, y=None):
-            return X
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['col1', 'col2'])
@@ -687,3 +675,18 @@ def test_column_transformer_get_set_params_with_remainder():
            'transformer_weights': None}
 
     assert_dict_equal(ct.get_params(), exp)
+
+
+def test_column_transformer_remainder_transformer_error_msg_1D():
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+
+    col_trans = ColumnTransformer([('trans', StandardScaler(), 0)],
+                                  remainder=StandardScaler())
+    assert_raise_message(ValueError, "1D data passed to a transformer",
+                         col_trans.fit, X_array)
+    assert_raise_message(ValueError, "1D data passed to a transformer",
+                         col_trans.fit_transform, X_array)
+
+    col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
+    for func in [col_trans.fit, col_trans.fit_transform]:
+        assert_raise_message(ValueError, "specific message", func, X_array)

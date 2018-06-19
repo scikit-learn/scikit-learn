@@ -377,7 +377,7 @@ boolean mask array
             return func(remainder_transformer, X_sel, y, 1)
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
+                raise ValueError("1D data passed to remainder transformer")
             else:
                 raise
 
