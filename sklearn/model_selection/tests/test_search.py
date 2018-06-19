@@ -5,7 +5,6 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.joblib._compat import PY3_OR_LATER
 from itertools import chain, product
-import os
 import pickle
 import sys
 from types import GeneratorType
