@@ -272,6 +272,31 @@ class Pipeline(_BaseComposition):
         return self
 
     def partial_fit(self, X, y, **fit_params):
+        """Partially fit the model
+
+        Fit all the transforms one after the other and transform the
+        data, then fit the transformed data using the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps of
+            the pipeline.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of each step, where
+            each parameter name is prefixed such that parameter ``p`` for step
+            ``s`` has key ``s__p``.
+
+        Returns
+        -------
+        self : Pipeline
+            This estimator
+        """
         if not any(hasattr(step_est, 'partial_fit')
                    for _, step_est in self.steps):
             raise ValueError('At least one estimator must have '
@@ -290,7 +315,8 @@ class Pipeline(_BaseComposition):
         final_partially_fit = (self.partially_fit == [] or
                                final_name in self.partially_fit)
         if self._final_estimator is not None:
-            if (hasattr(self._final_estimator, 'partial_fit') and final_partially_fit):
+            if (hasattr(self._final_estimator, 'partial_fit') and
+                    final_partially_fit):
                 self._final_estimator.partial_fit(Xt, y, **fit_params)
             else:
                 self._final_estimator.fit(Xt, y, **fit_params)

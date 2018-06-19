@@ -602,6 +602,7 @@ def test_set_pipeline_step_none():
                        'm3': None,
                        'last': mult5,
                        'memory': None,
+                       'partially_fit': [],
                        'm2__mult': 2,
                        'last__mult': 5,
                        })
