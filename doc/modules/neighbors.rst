@@ -584,8 +584,8 @@ classes:
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> knn.fit(nca.transform(X_train), y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(knn.score(nca.transform(X_test), y_test))
-    0.961904761905
+    >>> print(knn.score(nca.transform(X_test), y_test)) # doctest: +ELLIPSIS
+    0.96190476...
 
 Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
 that automatically applies the transformation when fitting or predicting:
@@ -596,8 +596,8 @@ that automatically applies the transformation when fitting or predicting:
     >>> nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
     >>> nca_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
     Pipeline(...)
-    >>> print(nca_pipe.score(X_test, y_test))
-    0.961904761905
+    >>> print(nca_pipe.score(X_test, y_test)) # doctest: +ELLIPSIS
+    0.96190476...
 
 .. |nca_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_classification_001.png
    :target: ../auto_examples/neighbors/plot_nca_classification.html
