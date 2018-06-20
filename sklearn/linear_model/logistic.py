@@ -29,8 +29,8 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from..exceptions import (NotFittedError, ConvergenceWarning,
-                         ChangedBehaviorWarning)
+from ..exceptions import (NotFittedError, ConvergenceWarning,
+                          ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
