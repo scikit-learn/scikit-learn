@@ -365,6 +365,21 @@ def test_randomized_svd_power_iteration_normalizer():
             assert_greater(15, np.abs(error_2 - error))
 
 
+def test_randomized_svd_sparse_warnings():
+    # randomized_svd throws a warning for lil and dok matrix
+    rng = np.random.RandomState(42)
+    X = make_low_rank_matrix(50, 20, effective_rank=10, random_state=rng)
+    n_components = 5
+    for cls in (sparse.lil_matrix, sparse.dok_matrix):
+        X = cls(X)
+        assert_warns_message(
+            sparse.SparseEfficiencyWarning,
+            "Calculating SVD of a {} is expensive. "
+            "csr_matrix is more efficient.".format(cls.__name__),
+            randomized_svd, X, n_components, n_iter=1,
+            power_iteration_normalizer='none')
+
+
 def test_svd_flip():
     # Check that svd_flip works in both situations, and reconstructs input.
     rs = np.random.RandomState(1999)
