@@ -26,9 +26,7 @@ from sklearn.preprocessing.label import label_binarize
 
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
-from sklearn.preprocessing.label import (
-    _encode_numpy, _encode_pandas, _encode_python, _factorize_numpy,
-    _factorize_pandas, _factorize_python)
+from sklearn.preprocessing.label import _encode
 
 from sklearn import datasets
 
@@ -543,7 +541,6 @@ def test_inverse_binarize_multiclass():
     assert_array_equal(got, np.array([1, 1, 0]))
 
 
-@pytest.mark.parametrize('engine', ['numpy', 'python', 'pandas'])
 @pytest.mark.parametrize(
         "values, expected",
         [(np.array([2, 1, 3, 1, 3], dtype='int64'),
@@ -553,21 +550,11 @@ def test_inverse_binarize_multiclass():
          (np.array(['b', 'a', 'c', 'a', 'c']),
           np.array(['a', 'b', 'c']))],
         ids=['int64', 'object', 'str'])
-def test_factorize_encode_utils(engine, values, expected):
-    # test that all different encoders are equivalent
-
-    if engine == 'numpy':
-        factorize = lambda values: _factorize_numpy(values)
-        encode = lambda values, uniques: _encode_numpy(values, uniques)
-    elif engine == 'python':
-        factorize = lambda values: _factorize_python(values)
-        encode = lambda values, uniques: _encode_python(values, uniques)
-    elif engine == 'pandas':
-        pytest.importorskip('pandas')
-        factorize = lambda values: _factorize_pandas(values)
-        encode = lambda values, uniques: _encode_pandas(values, uniques)
-
-    uniques = factorize(values)
+def test_encode_util(values, expected):
+    uniques = _encode(values)
     assert_array_equal(uniques, expected)
-    encoded = encode(values, uniques)
+    uniques, encoded = _encode(values, encode=True)
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    _, encoded = _encode(values, uniques, encode=True)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
