@@ -253,6 +253,13 @@ Model evaluation and meta-estimators
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
 
+- New ``refit_time_`` attribute will be stored in
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` if ``refit`` is set to ``True``.
+  This will allow measuring the complete time it takes to perform
+  hyperparameter optimization and refitting the best model on the whole
+  dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
+
 Decomposition and manifold learning
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
@@ -617,6 +624,17 @@ Imputer
   with FunctionTransformer (e.g., ``FunctionTransformer(lambda X:
   SimpleImputer().fit_transform(X.T).T)``). :issue:`10829` by :user:`Guillaume
   Lemaitre <glemaitre>` and :user:`Gilberto Olimpio <gilbertoolimpio>`.
+
+- The :class:`impute.SimpleImputer` has a new strategy, ``'constant'``, to
+  complete missing values with a fixed one, given by the ``fill_value``
+  parameter. This strategy supports numeric and non-numeric data, and so does
+  the ``'most_frequent'`` strategy now. :issue:`11211` by :user:`Jeremie du
+  Boisberranger <jeremiedbb>`.
+
+- The NaN marker for the missing values has been changed between the
+  :class:`preprocessing.Imputer` and the :class:`impute.SimpleImputer`.
+  ``missing_values='NaN'`` should now be ``missing_values=np.nan``.
+  :issue:`11211` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 Outlier Detection models
 

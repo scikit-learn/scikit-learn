@@ -36,6 +36,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
+from sklearn.utils import is_scalar_nan
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
@@ -1607,6 +1608,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 def choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
+
 def check_classifiers_classes(name, classifier_orig):
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
                                             cluster_std=0.1)
@@ -2002,11 +2004,13 @@ def check_parameters_default_constructible(name, Estimator):
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
+
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
         params = estimator.get_params()
+
         if name in META_ESTIMATORS:
             # they can need a non-default argument
             init_params = init_params[1:]
@@ -2032,7 +2036,11 @@ def check_parameters_default_constructible(name, Estimator):
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                assert_equal(param_value, init_param.default, init_param.name)
+                if is_scalar_nan(param_value):
+                    # Allows to set default parameters to np.nan
+                    assert param_value is init_param.default, init_param.name
+                else:
+                    assert param_value == init_param.default, init_param.name
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):
