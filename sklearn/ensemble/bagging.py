@@ -574,6 +574,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             random_state=random_state,
             verbose=verbose)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
+
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
         super(BaggingClassifier, self)._validate_estimator(
@@ -940,6 +944,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def predict(self, X):
         """Predict regression target for X.

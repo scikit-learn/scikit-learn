@@ -30,7 +30,6 @@ from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
-    set_checking_parameters,
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
@@ -94,9 +93,8 @@ def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        estimator = Estimator()
-        set_checking_parameters(estimator)
-        check(name, estimator)
+        for params in Estimator._generate_test_params():
+            check(name, Estimator(**params))
 
 
 @pytest.mark.parametrize("name, Estimator",

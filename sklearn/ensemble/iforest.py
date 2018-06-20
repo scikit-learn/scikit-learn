@@ -158,6 +158,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
                           DeprecationWarning)
         self.contamination = contamination
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
+
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 

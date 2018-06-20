@@ -468,6 +468,10 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.w_init = w_init
         self.random_state = random_state
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
+
     def _fit(self, X, compute_sources=False):
         """Fit the model
 

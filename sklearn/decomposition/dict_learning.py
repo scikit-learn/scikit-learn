@@ -1071,6 +1071,10 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.verbose = verbose
         self.random_state = random_state
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
+
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -1242,6 +1246,10 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.batch_size = batch_size
         self.split_sign = split_sign
         self.random_state = random_state
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_iter=5)
 
     def fit(self, X, y=None):
         """Fit the model from data in X.

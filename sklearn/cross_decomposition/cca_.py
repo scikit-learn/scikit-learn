@@ -105,3 +105,7 @@ class CCA(_PLS):
                                   deflation_mode="canonical", mode="B",
                                   norm_y_weights=True, algorithm="nipals",
                                   max_iter=max_iter, tol=tol, copy=copy)
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

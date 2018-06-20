@@ -188,6 +188,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=20)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -371,6 +375,10 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.max_iter = max_iter
         self.dual = dual
         self.loss = loss
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=20)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -594,6 +602,10 @@ class SVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             random_state=random_state)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(decision_function_shape='ovo')
+
 
 class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
@@ -754,6 +766,10 @@ class NuSVC(BaseSVC):
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
             random_state=random_state)
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(decision_function_shape='ovo')
 
 
 class SVR(BaseLibSVM, RegressorMixin):

@@ -132,3 +132,7 @@ class Perceptron(BaseSGDClassifier):
                                          class_weight=class_weight,
                                          n_jobs=n_jobs,
                                          n_iter=n_iter)
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

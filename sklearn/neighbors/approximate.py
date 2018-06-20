@@ -219,6 +219,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                       "in 0.19. It will be removed in version 0.21.",
                       DeprecationWarning)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
+
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.
 

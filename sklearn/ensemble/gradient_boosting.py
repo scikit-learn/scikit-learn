@@ -1552,6 +1552,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
+
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -1999,6 +2003,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol)
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def predict(self, X):
         """Predict regression target for X.

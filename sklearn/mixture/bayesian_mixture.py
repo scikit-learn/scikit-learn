@@ -328,6 +328,10 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
         self.covariance_prior = covariance_prior
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
+
     def _check_parameters(self, X):
         """Check that the parameters are well defined.
 

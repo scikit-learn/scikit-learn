@@ -209,6 +209,10 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.fit_intercept = fit_intercept
         self.tol = tol
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 

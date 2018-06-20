@@ -140,6 +140,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_iter=5)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model
 

@@ -1176,6 +1176,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.warm_start = warm_start
         self.n_jobs = n_jobs
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -1583,6 +1587,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.random_state = random_state
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.

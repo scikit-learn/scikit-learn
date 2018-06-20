@@ -103,6 +103,10 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_init=2)
+
     def _check_parameters(self):
         legal_svd_methods = ('randomized', 'arpack')
         if self.svd_method not in legal_svd_methods:
@@ -278,6 +282,10 @@ class SpectralCoclustering(BaseSpectral):
                                                    n_jobs,
                                                    random_state)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_init=2)
+
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
@@ -412,6 +420,10 @@ class SpectralBiclustering(BaseSpectral):
         self.method = method
         self.n_components = n_components
         self.n_best = n_best
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_init=2)
 
     def _check_parameters(self):
         super(SpectralBiclustering, self)._check_parameters()

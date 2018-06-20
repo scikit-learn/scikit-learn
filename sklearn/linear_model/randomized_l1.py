@@ -77,6 +77,10 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
     _preprocess_data = staticmethod(_preprocess_data)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(n_resampling=5)
+
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -333,6 +337,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         self.selection_threshold = selection_threshold
         self.pre_dispatch = pre_dispatch
         self.memory = memory
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def _make_estimator_and_params(self, X, y):
         alpha = self.alpha

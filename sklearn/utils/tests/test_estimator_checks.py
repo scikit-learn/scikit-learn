@@ -14,7 +14,6 @@ from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
-from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
@@ -289,20 +288,20 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
+        params = next(Estimator._generate_test_params())
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
-            est = Estimator()
-        set_checking_parameters(est)
+            est = Estimator(**params)
         set_random_state(est)
         # without fitting
         old_hash = joblib.hash(est)
         check_estimator(est)
         assert_equal(old_hash, joblib.hash(est))
 
+        params = next(Estimator._generate_test_params())
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
-            est = Estimator()
-        set_checking_parameters(est)
+            est = Estimator(**params)
         set_random_state(est)
         # with fitting
         est.fit(iris.data + 10, iris.target)

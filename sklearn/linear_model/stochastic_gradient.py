@@ -801,6 +801,10 @@ class SGDClassifier(BaseSGDClassifier):
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
             average=average, n_iter=n_iter)
 
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
+
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
@@ -1363,3 +1367,7 @@ class SGDRegressor(BaseSGDRegressor):
                                            eta0=eta0, power_t=power_t,
                                            warm_start=warm_start,
                                            average=average, n_iter=n_iter)
+
+    @classmethod
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

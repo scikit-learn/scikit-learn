@@ -485,6 +485,11 @@ class SelectKBest(_BaseFilter):
         super(SelectKBest, self).__init__(score_func)
         self.k = k
 
+    @classmethod
+    def _generate_test_params(cls):
+        # k=10 is more features than we have in tests
+        yield dict(k=1)
+
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError("k should be >=0, <= n_features = %d; got %r. "
@@ -608,6 +613,11 @@ class SelectFdr(_BaseFilter):
     def __init__(self, score_func=f_classif, alpha=5e-2):
         super(SelectFdr, self).__init__(score_func)
         self.alpha = alpha
+
+    @classmethod
+    def _generate_test_params(cls):
+        # be tolerant of noisy datasets (not actually speed)
+        yield dict(alpha=.5)
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
