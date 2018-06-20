@@ -11,11 +11,16 @@ import inspect
 import warnings
 import re
 import os
+import collections
 
 from ._compat import _basestring
 from .logger import pformat
 from ._memory_helpers import open_py_source
 from ._compat import PY3_OR_LATER
+
+full_argspec_fields = ('args varargs varkw defaults kwonlyargs '
+                       'kwonlydefaults annotations')
+full_argspec_type = collections.namedtuple('FullArgSpec', full_argspec_fields)
 
 
 def get_func_code(func):
@@ -169,18 +174,13 @@ def getfullargspec(func):
         return inspect.getfullargspec(func)
     except AttributeError:
         arg_spec = inspect.getargspec(func)
-        import collections
-        tuple_fields = ('args varargs varkw defaults kwonlyargs '
-                        'kwonlydefaults annotations')
-        tuple_type = collections.namedtuple('FullArgSpec', tuple_fields)
-
-        return tuple_type(args=arg_spec.args,
-                          varargs=arg_spec.varargs,
-                          varkw=arg_spec.keywords,
-                          defaults=arg_spec.defaults,
-                          kwonlyargs=[],
-                          kwonlydefaults=None,
-                          annotations={})
+        return full_argspec_type(args=arg_spec.args,
+                                 varargs=arg_spec.varargs,
+                                 varkw=arg_spec.keywords,
+                                 defaults=arg_spec.defaults,
+                                 kwonlyargs=[],
+                                 kwonlydefaults=None,
+                                 annotations={})
 
 
 def _signature_str(function_name, arg_spec):
