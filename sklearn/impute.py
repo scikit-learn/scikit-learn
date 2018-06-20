@@ -174,17 +174,19 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                             force_all_finite=force_all_finite, copy=self.copy)
         except ValueError as ve:
             if "could not convert" in str(ve):
-                raise TypeError("Cannot use {0} strategy with non-numeric "
-                                "data. Received datatype :{1}."
-                                "".format(self.strategy, X.dtype.kind))
+                raise ValueError("Cannot use {0} strategy with non-numeric "
+                                 "data. Received datatype :{1}."
+                                 "".format(self.strategy, X.dtype.kind))
             else:
                 raise ve
 
         if X.dtype.kind not in ("i", "u", "f", "O"):
-            raise TypeError("The SimpleImputer does not support this datatype"
-                            " ({0}). Please provide either numeric data or"
-                            " categorical data represented by integer or "
-                            "object datatypes.".format(X.dtype))
+            raise ValueError("SimpleImputer does not work on data with dtype "
+                             "{0}. Please provide either a numeric array (with"
+                             " a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
 
         return X
 
