@@ -188,6 +188,27 @@ def test_label_encoder():
     assert_raise_message(ValueError, msg, le.transform, "apple")
 
 
+@pytest.mark.parametrize(
+        "values, classes, unknown",
+        [(np.array([2, 1, 3, 1, 3], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64'), np.array([4], dtype='int64')),
+         (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object),
+          np.array(['d'], dtype=object)),
+         (np.array(['b', 'a', 'c', 'a', 'c']),
+          np.array(['a', 'b', 'c']), np.array(['d']))],
+        ids=['int64', 'object', 'str'])
+def test_label_encoder_dtypes(values, classes, unknown):
+    # Test LabelEncoder's transform and inverse_transform methods
+    le = LabelEncoder()
+    le.fit(values)
+    assert_array_equal(le.classes_, classes)
+    assert_array_equal(le.transform(values), [1, 0, 2, 0, 2])
+    assert_array_equal(le.inverse_transform([1, 0, 2, 0, 2]), values)
+    msg = "unseen labels"
+    assert_raise_message(ValueError, msg, le.transform, unknown)
+
+
 def test_label_encoder_fit_transform():
     # Test fit_transform
     le = LabelEncoder()

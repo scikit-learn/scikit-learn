@@ -46,6 +46,11 @@ def _encode_numpy(values, uniques=None, encode=False):
             # unique sorts
             return np.unique(values)
     if encode:
+        uniques_values = np.unique(values)
+        if len(np.intersect1d(uniques_values, uniques)) < len(uniques_values):
+            diff = np.setdiff1d(uniques_values, uniques)
+            raise ValueError(
+                    "y contains previously unseen labels: %s" % str(diff))
         encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
@@ -58,7 +63,11 @@ def _encode_python(values, uniques=None, encode=False):
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
-        encoded = np.array([table[v] for v in values])
+        try:
+            encoded = np.array([table[v] for v in values])
+        except KeyError as e:
+            raise ValueError(
+                    "y contains previously unseen labels: %s" % str(e))
         return uniques, encoded
     else:
         return uniques
@@ -192,11 +201,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if _num_samples(y) == 0:
             return np.array([])
 
-        classes = np.unique(y)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError(
-                    "y contains previously unseen labels: %s" % str(diff))
         _, y = _encode(y, uniques=self.classes_, encode=True)
         return y
 
