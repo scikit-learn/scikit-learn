@@ -617,7 +617,7 @@ class SelectFdr(_BaseFilter):
     @classmethod
     def _get_test_instances(cls):
         # be tolerant of noisy datasets (not actually speed)
-        return cls(alpha=.5)
+        yield cls(alpha=.5)
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')

@@ -604,7 +604,7 @@ class SVC(BaseSVC):
 
     @classmethod
     def _get_test_instances(cls):
-        yield cls(max_iter=5)
+        yield cls(max_iter=5, decision_function_shape='ovo')
 
 
 class NuSVC(BaseSVC):
@@ -896,7 +896,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     @classmethod
     def _get_test_instances(cls):
-        yield cls(max_iter=5, decision_function_shape='ovo')
+        yield cls(max_iter=5)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):

@@ -93,8 +93,8 @@ def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        for i, estimator in enumerate(Estimator._get_test_instances()):
-            check('%s-%d' % (name, i), estimator)
+        for estimator in Estimator._get_test_instances():
+            check(name, estimator)
 
 
 @pytest.mark.parametrize("name, Estimator",
