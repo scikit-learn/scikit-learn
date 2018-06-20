@@ -36,10 +36,11 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
+from sklearn.utils.deprecation import deprecated
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-from sklearn.base import (clone, TransformerMixin, ClusterMixin,
+from sklearn.base import (clone, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor,
                           is_outlier_detector)
 
@@ -317,6 +318,45 @@ def _boston_subset(n_samples=200):
         X = StandardScaler().fit_transform(X)
         BOSTON = X, y
     return BOSTON
+
+
+@deprecated('set_checking_parameters will be removed in version 0.22')
+def set_checking_parameters(estimator):
+    # set parameters to speed up some estimators and
+    # avoid deprecated behaviour
+    params = estimator.get_params()
+    if "n_iter" in params:
+        estimator.set_params(n_iter=5)
+    if "max_iter" in params:
+        if estimator.max_iter is not None:
+            estimator.set_params(max_iter=min(5, estimator.max_iter))
+    if "n_resampling" in params:
+        # randomized lasso
+        estimator.set_params(n_resampling=5)
+    if "n_estimators" in params:
+        # especially gradient boosting with default 100
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+    if "max_trials" in params:
+        # RANSAC
+        estimator.set_params(max_trials=10)
+    if "n_init" in params:
+        # K-Means
+        estimator.set_params(n_init=2)
+    if "decision_function_shape" in params:
+        # SVC
+        estimator.set_params(decision_function_shape='ovo')
+
+    if isinstance(estimator, BaseRandomProjection):
+        # Due to the jl lemma and often very few samples, the number
+        # of components of the random matrix projection will be probably
+        # greater than the number of features.
+        # So we impose a smaller number (avoid "auto" mode)
+        estimator.set_params(n_components=2)
+
+    if isinstance(estimator, SelectKBest):
+        # SelectKBest has a default of k=10
+        # which is more feature than we have in most case.
+        estimator.set_params(k=1)
 
 
 class NotAnArray(object):
