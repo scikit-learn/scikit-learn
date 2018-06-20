@@ -62,14 +62,15 @@ Multivariate feature imputation
 ===============================
 
 A more sophisticated approach is to use the :class:`ChainedImputer` class, which
-implements the the technique of Multivariate Imputation by Chained Equations. MICE
-models each feature with missing values as a function of other features, and
-uses that estimate for imputation. It does so in a round-robin fashion: at
-each step, a feature column is designated as output `y` and the other feature
-columns are treated as inputs `X`. A regressor is fit on `(X, y)` for known `y`.
-Then, the regressor is used to predict the unknown values of `y`. This is
-repeated for each feature, and then is done for a number of imputation rounds.
-Here is an example snippet::
+implements MICE: Multivariate Imputation by Chained Equations. MICE is usually used
+to generate multiple imputations, but :class:`ChainedImputer` generates a single
+(averaged) imputation, which is why it is not named `MICEImputer`. MICE models each
+feature with missing values as a function of other features, and uses that estimate
+for imputation. It does so in a round-robin fashion: at each step, a feature column
+is designated as output `y` and the other feature columns are treated as inputs `X`.
+A regressor is fit on `(X, y)` for known `y`. Then, the regressor is used to predict
+the unknown values of `y`. This is repeated for each feature, and then is done for a
+number of imputation rounds, in a chained fashion. Here is an example snippet::
 
     >>> import numpy as np
     >>> from sklearn.impute import ChainedImputer
