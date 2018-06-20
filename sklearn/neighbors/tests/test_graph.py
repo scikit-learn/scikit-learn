@@ -55,35 +55,23 @@ def _has_explicit_diagonal(X):
     return len(explicit) == X.shape[0]
 
 
-def test_include_self_logic():
-    # Test the effect of parameter include_self
+def test_explicit_diagonal():
+    # Test that the diagonal is explicitly stored in the sparse graph
     n_neighbors = 5
     n_samples_fit, n_samples_transform, n_features = 20, 18, 10
     rng = np.random.RandomState(42)
     X = rng.randn(n_samples_fit, n_features)
     X2 = rng.randn(n_samples_transform, n_features)
 
-    # Same behavior for both cases
-    for include_self in [True, False]:
-        nnt = KNeighborsTransformer(n_neighbors=n_neighbors,
-                                    include_self=include_self)
-        Xt = nnt.fit_transform(X)
-
-        # Using transform on the fit data always returns explicit diagonal
-        Xt = nnt.transform(X)
-        assert _has_explicit_diagonal(Xt)
-        assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors)[:, 0] == 0)
-        # Using transform on new data should not always have zero diagonal
-        X2t = nnt.transform(X2)
-        assert not _has_explicit_diagonal(X2t)
-
-    # The only difference is explicit/implicit zero diagonal on fit_transform
-    nnt = KNeighborsTransformer(n_neighbors=n_neighbors, include_self=True)
+    nnt = KNeighborsTransformer(n_neighbors=n_neighbors)
     Xt = nnt.fit_transform(X)
-    # explicit zero diagonal
     assert _has_explicit_diagonal(Xt)
+    assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors)[:, 0] == 0)
 
-    nnt = KNeighborsTransformer(n_neighbors=n_neighbors, include_self=False)
-    Xt = nnt.fit_transform(X)
-    # implicit zero diagonal
-    assert not _has_explicit_diagonal(Xt)
+    Xt = nnt.transform(X)
+    assert _has_explicit_diagonal(Xt)
+    assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors)[:, 0] == 0)
+
+    # Using transform on new data should not always have zero diagonal
+    X2t = nnt.transform(X2)
+    assert not _has_explicit_diagonal(X2t)

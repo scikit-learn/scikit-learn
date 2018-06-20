@@ -20,16 +20,14 @@ from sklearn.manifold import Isomap
 from sklearn.manifold import TSNE
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_spectral_clustering(include_self):
+def test_spectral_clustering():
     # Test chaining KNeighborsTransformer and SpectralClustering
     n_neighbors = 5
     X, _ = make_blobs(random_state=0)
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity',
-                              include_self=include_self),
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity'),
         SpectralClustering(n_neighbors=n_neighbors, affinity='precomputed',
                            random_state=42))
     est_compact = SpectralClustering(
@@ -39,8 +37,7 @@ def test_spectral_clustering(include_self):
     assert_array_almost_equal(labels_chain, labels_compact)
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_spectral_embedding(include_self):
+def test_spectral_embedding():
     # Test chaining KNeighborsTransformer and SpectralEmbedding
     n_neighbors = 5
 
@@ -56,8 +53,7 @@ def test_spectral_embedding(include_self):
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity',
-                              include_self=include_self),
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode='connectivity'),
         SpectralEmbedding(n_neighbors=n_neighbors, affinity='precomputed',
                           random_state=42))
     est_compact = SpectralEmbedding(
@@ -67,8 +63,7 @@ def test_spectral_embedding(include_self):
     assert_array_almost_equal(St_chain, St_compact)
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_dbscan(include_self):
+def test_dbscan():
     # Test chaining RadiusNeighborsTransformer and DBSCAN
     radius = 0.3
     n_clusters = 3
@@ -76,8 +71,7 @@ def test_dbscan(include_self):
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        RadiusNeighborsTransformer(radius=radius, mode='distance',
-                                   include_self=include_self),
+        RadiusNeighborsTransformer(radius=radius, mode='distance'),
         DBSCAN(metric='precomputed', eps=radius))
     est_compact = DBSCAN(eps=radius)
 
@@ -86,8 +80,7 @@ def test_dbscan(include_self):
     assert_array_almost_equal(labels_chain, labels_compact)
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_isomap(include_self):
+def test_isomap():
     # Test chaining KNeighborsTransformer and Isomap with
     # neighbors_algorithm='precomputed'
     algorithm = 'auto'
@@ -98,8 +91,8 @@ def test_isomap(include_self):
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, algorithm=algorithm,
-                              mode='distance', include_self=include_self),
+        KNeighborsTransformer(n_neighbors=n_neighbors + 1, algorithm=algorithm,
+                              mode='distance'),
         Isomap(n_neighbors=n_neighbors, neighbors_algorithm='precomputed'))
     est_compact = Isomap(n_neighbors=n_neighbors,
                          neighbors_algorithm=algorithm)
@@ -113,8 +106,7 @@ def test_isomap(include_self):
     assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_tsne(include_self):
+def test_tsne():
     # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
     perplexity = 5
@@ -127,8 +119,8 @@ def test_tsne(include_self):
 
         # compare the chained version and the compact version
         est_chain = make_pipeline(
-            KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                                  metric=metric, include_self=include_self),
+            KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance',
+                                  metric=metric),
             TSNE(metric='precomputed', perplexity=perplexity,
                  method="barnes_hut", random_state=42, n_iter=n_iter))
         est_compact = TSNE(metric=metric, perplexity=perplexity, n_iter=n_iter,
@@ -139,8 +131,7 @@ def test_tsne(include_self):
         assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_lof(include_self):
+def test_lof():
     # Test chaining KNeighborsTransformer and LocalOutlierFactor
     n_neighbors = 4
 
@@ -149,8 +140,7 @@ def test_lof(include_self):
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                              include_self=include_self),
+        KNeighborsTransformer(n_neighbors=n_neighbors + 1, mode='distance'),
         LocalOutlierFactor(metric='precomputed', n_neighbors=n_neighbors))
     est_compact = LocalOutlierFactor(n_neighbors=n_neighbors)
 
@@ -159,8 +149,7 @@ def test_lof(include_self):
     assert_array_almost_equal(pred_chain, pred_compact)
 
 
-@pytest.mark.parametrize('include_self', [True, False])
-def test_kneighbors_regressor(include_self):
+def test_kneighbors_regressor():
     # Test chaining KNeighborsTransformer and classifiers/regressors
     rng = np.random.RandomState(0)
     X = 2 * rng.rand(40, 5) - 1
@@ -173,15 +162,13 @@ def test_kneighbors_regressor(include_self):
     # k-neighbors estimator after radius-neighbors transformer, and vice-versa.
     factor = 2
 
-    k_trans = KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                                    include_self=include_self)
+    k_trans = KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance')
     k_trans_factor = KNeighborsTransformer(n_neighbors=int(
-        n_neighbors * factor), mode='distance', include_self=include_self)
+        n_neighbors * factor), mode='distance')
 
-    r_trans = RadiusNeighborsTransformer(radius=radius, mode='distance',
-                                         include_self=include_self)
+    r_trans = RadiusNeighborsTransformer(radius=radius, mode='distance')
     r_trans_factor = RadiusNeighborsTransformer(radius=int(
-        radius * factor), mode='distance', include_self=include_self)
+        radius * factor), mode='distance')
 
     k_reg = KNeighborsRegressor(n_neighbors=n_neighbors)
     r_reg = RadiusNeighborsRegressor(radius=radius)

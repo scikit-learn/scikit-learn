@@ -81,10 +81,12 @@ def test_dbscan_sparse():
     assert_array_equal(labels_dense, labels_sparse)
 
 
-def test_dbscan_sparse_precomputed():
+@pytest.mark.parametrize('include_self', [False, True])
+def test_dbscan_sparse_precomputed(include_self):
     D = pairwise_distances(X)
     nn = NearestNeighbors(radius=.9).fit(X)
-    D_sparse = nn.radius_neighbors_graph(mode='distance')
+    X_ = X if include_self else None
+    D_sparse = nn.radius_neighbors_graph(X=X_, mode='distance')
     # Ensure it is sparse not merely on diagonals:
     assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
     core_sparse, labels_sparse = dbscan(D_sparse,

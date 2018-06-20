@@ -370,7 +370,7 @@ def test_high_perplexity_precomputed_sparse_distances():
     dist = np.array([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.]])
     bad_dist = sp.csr_matrix(dist)
     tsne = TSNE(metric="precomputed")
-    msg = "2 neighbors per samples are required, but some samples have only 1"
+    msg = "3 neighbors per samples are required, but some samples have only 1"
     assert_raises_regexp(ValueError, msg, tsne.fit_transform, bad_dist)
 
 
@@ -380,7 +380,8 @@ def test_sparse_precomputed_distance():
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
 
-    D_sparse = kneighbors_graph(X, n_neighbors=99, mode='distance')
+    D_sparse = kneighbors_graph(X, n_neighbors=100, mode='distance',
+                                include_self=True)
     D = pairwise_distances(X)
     assert sp.issparse(D_sparse)
     assert_almost_equal(D_sparse.A, D)

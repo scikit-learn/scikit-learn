@@ -190,8 +190,8 @@ def test_precomputed_dense():
 @pytest.mark.parametrize('fmt', ['csr', 'lil'])
 def test_precomputed_sparse(fmt):
     def make_train_test(X_train, X_test):
-        nn = neighbors.NearestNeighbors(n_neighbors=3).fit(X_train)
-        return (nn.kneighbors_graph(None, mode='distance').asformat(fmt),
+        nn = neighbors.NearestNeighbors(n_neighbors=3 + 1).fit(X_train)
+        return (nn.kneighbors_graph(X_train, mode='distance').asformat(fmt),
                 nn.kneighbors_graph(X_test, mode='distance').asformat(fmt))
 
     check_precomputed(make_train_test)
@@ -237,7 +237,7 @@ def test_precomputed_sparse_invalid():
     dist_csr = csr_matrix(dist)
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
     neigh.fit(dist_csr)
-    neigh.kneighbors(None, n_neighbors=2)
+    neigh.kneighbors(None, n_neighbors=1)
     neigh.kneighbors(np.array([[0., 0., 0.]]), n_neighbors=2)
 
     # Ensures enough number of nearest neighbors
@@ -245,11 +245,11 @@ def test_precomputed_sparse_invalid():
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     msg = "2 neighbors per samples are required, but some samples have only 1"
-    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=2)
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=1)
 
     # Same with an empty matrix
     dist_csr = csr_matrix(np.zeros((3, 3)))
-    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=2)
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=1)
 
     # Checks error with inconsistent distance matrix
     dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])

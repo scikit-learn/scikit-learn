@@ -65,12 +65,11 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
     """Wrapper for using annoy.AnnoyIndex as sklearn's KNeighborsTransformer"""
 
     def __init__(self, n_neighbors=5, metric='euclidean', n_trees=10,
-                 search_k=-1, include_self=False):
+                 search_k=-1):
         self.n_neighbors = n_neighbors
         self.n_trees = n_trees
         self.search_k = search_k
         self.metric = metric
-        self.include_self = include_self
 
     def fit(self, X):
         self.n_samples_fit = X.shape[0]
@@ -91,20 +90,13 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
         distances = np.empty((n_samples_transform, self.n_neighbors))
 
         if X is None:
-            if self.include_self:
-                n_neighbors = self.n_neighbors
-            else:
-                # add a neighbors and remove it later
-                n_neighbors = self.n_neighbors + 1
+            n_neighbors = self.n_neighbors
 
             for i in range(self.annoy_.get_n_items()):
                 ind, dist = self.annoy_.get_nns_by_item(
                     i, n_neighbors, self.search_k, include_distances=True)
 
-                if self.include_self:
-                    indices[i], distances[i] = ind, dist
-                else:
-                    indices[i], distances[i] = ind[1:], dist[1:]
+                indices[i], distances[i] = ind, dist
         else:
             for i, x in enumerate(X):
                 indices[i], distances[i] = self.annoy_.get_nns_by_vector(
@@ -128,14 +120,13 @@ def test_annoy_transformer():
     """
     X = np.random.RandomState(42).randn(10, 2)
 
-    for include_self in [True, False]:
-        ann = AnnoyTransformer(include_self=include_self)
-        Xt = ann.fit_transform(X)
+    ann = AnnoyTransformer()
+    Xt = ann.fit_transform(X)
 
-        knn = KNeighborsTransformer(mode='distance', include_self=include_self)
-        Xt2 = knn.fit_transform(X)
+    knn = KNeighborsTransformer(mode='distance')
+    Xt2 = knn.fit_transform(X)
 
-        assert_array_almost_equal(Xt.toarray(), Xt2.toarray(), decimal=5)
+    assert_array_almost_equal(Xt.toarray(), Xt2.toarray(), decimal=5)
 
 
 def load_mnist(n_samples):
@@ -155,21 +146,20 @@ def run_benchmark():
     perplexity = 30
     # TSNE requires a certain number of neighbors which depends on the
     # perplexity parameter
-    n_neighbors = int(3. * perplexity + 1)
+    # Add one since we include each sample as its own neighbor.
+    n_neighbors = int(3. * perplexity + 1) + 1
 
     transformers = {
         'AnnoyTransformer':  # without TSNE, for speed benchmark only
-        AnnoyTransformer(n_neighbors=n_neighbors, include_self=False,
-                         metric='euclidean'),
+        AnnoyTransformer(n_neighbors=n_neighbors, metric='euclidean'),
 
         'KNeighborsTransformer':  # without TSNE, for speed benchmark only
         KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                              metric='sqeuclidean', include_self=False),
+                              metric='sqeuclidean'),
 
         'TSNE with AnnoyTransformer':
         make_pipeline(
-            AnnoyTransformer(n_neighbors=n_neighbors, include_self=False,
-                             metric='euclidean'),
+            AnnoyTransformer(n_neighbors=n_neighbors, metric='euclidean'),
             TSNE(metric='precomputed', perplexity=perplexity,
                  method="barnes_hut", random_state=42, n_iter=n_iter),
         ),
@@ -177,7 +167,7 @@ def run_benchmark():
         'TSNE with KNeighborsTransformer':
         make_pipeline(
             KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                                  metric='sqeuclidean', include_self=False),
+                                  metric='sqeuclidean'),
             TSNE(metric='precomputed', perplexity=perplexity,
                  method="barnes_hut", random_state=42, n_iter=n_iter),
         ),

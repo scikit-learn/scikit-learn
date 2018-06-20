@@ -572,20 +572,19 @@ class KNeighborsMixin(object):
                 " but n_samples = %d, n_neighbors = %d" %
                 (train_size, n_neighbors)
             )
-        n_samples, _ = X.shape
-        sample_range = np.arange(n_samples)[:, None]
 
         n_jobs = _get_n_jobs(self.n_jobs)
+        chunked_results = None
         if self._fit_method == 'brute':
 
             if self.effective_metric_ == 'precomputed' and issparse(X):
                 neigh_dist, neigh_ind = _kneighbors_from_graph(
-                    X, n_neighbors=n_neighbors - query_is_train)
+                    X, n_neighbors=n_neighbors)
 
                 if return_distance:
-                    return neigh_dist, neigh_ind
+                    result = neigh_dist, neigh_ind
                 else:
-                    return neigh_ind
+                    result = neigh_ind
             else:
                 reduce_func = partial(self._kneighbors_reduce_func,
                                       n_neighbors=n_neighbors,
@@ -597,7 +596,7 @@ class KNeighborsMixin(object):
                 else:
                     kwds = self.effective_metric_params_
 
-                result = pairwise_distances_chunked(
+                chunked_results = pairwise_distances_chunked(
                     X, self._fit_X, reduce_func=reduce_func,
                     metric=self.effective_metric_, n_jobs=n_jobs,
                     **kwds)
@@ -607,7 +606,7 @@ class KNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            result = Parallel(n_jobs, backend='threading')(
+            chunked_results = Parallel(n_jobs, backend='threading')(
                 delayed(self._tree.query, check_pickle=False)(
                     X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
@@ -615,11 +614,12 @@ class KNeighborsMixin(object):
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-        if return_distance:
-            neigh_dist, neigh_ind = zip(*result)
-            result = np.vstack(neigh_dist), np.vstack(neigh_ind)
-        else:
-            result = np.vstack(result)
+        if chunked_results is not None:
+            if return_distance:
+                neigh_dist, neigh_ind = zip(*chunked_results)
+                result = np.vstack(neigh_dist), np.vstack(neigh_ind)
+            else:
+                result = np.vstack(chunked_results)
 
         if not query_is_train:
             return result
@@ -632,6 +632,8 @@ class KNeighborsMixin(object):
             else:
                 neigh_ind = result
 
+            n_samples, _ = X.shape
+            sample_range = np.arange(n_samples)[:, None]
             sample_mask = neigh_ind != sample_range
 
             # Corner case: When the number of duplicates are more

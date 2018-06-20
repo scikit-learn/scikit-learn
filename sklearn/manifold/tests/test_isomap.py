@@ -126,8 +126,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
     # compare the chained version and the compact version
     est_chain = pipeline.make_pipeline(
         neighbors.KNeighborsTransformer(
-            n_neighbors=n_neighbors, algorithm=algorithm, mode='distance',
-            include_self=False),
+            n_neighbors=n_neighbors + 1, algorithm=algorithm, mode='distance'),
         manifold.Isomap(n_neighbors=n_neighbors,
                         neighbors_algorithm='precomputed'))
     est_compact = manifold.Isomap(n_neighbors=n_neighbors,
@@ -140,6 +139,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
     Xt_chain = est_chain.transform(X2)
     Xt_compact = est_compact.transform(X2)
     assert_array_almost_equal(Xt_chain, Xt_compact)
+
 
 def test_isomap_clone_bug():
     # regression test for bug reported in #6062

@@ -128,15 +128,15 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     if metric == 'precomputed' and sparse.issparse(X):
         neighborhoods = np.empty(X.shape[0], dtype=object)
         X.sum_duplicates()  # XXX: modifies X's internals in-place
+
+        # set the diagonal to explicit zeros, as a point is its own neighbor
+        X.setdiag(np.zeros(X.shape[0]))
+
         X_mask = X.data <= eps
         masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
-        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))[X.indptr[1:]]
+        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))
+        masked_indptr = masked_indptr[X.indptr[1:-1]]
 
-        # insert the diagonal: a point is its own neighbor, but 0 distance
-        # means absence from sparse matrix data
-        masked_indices = np.insert(masked_indices, masked_indptr,
-                                   np.arange(X.shape[0]))
-        masked_indptr = masked_indptr[:-1] + np.arange(1, X.shape[0])
         # split into rows
         neighborhoods[:] = np.split(masked_indices, masked_indptr)
     else:

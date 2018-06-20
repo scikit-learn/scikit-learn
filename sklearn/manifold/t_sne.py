@@ -758,8 +758,7 @@ class TSNE(BaseEstimator):
                     n_samples, duration))
 
             t0 = time()
-            distances_nn = knn.kneighbors_graph(
-                n_neighbors=n_neighbors, mode='distance')
+            distances_nn = knn.kneighbors_graph(mode='distance')
             duration = time() - t0
             if self.verbose:
                 print("[t-SNE] Computed neighbors for {} samples "

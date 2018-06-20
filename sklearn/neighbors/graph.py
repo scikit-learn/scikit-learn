@@ -201,11 +201,6 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    include_self : bool or 'auto', default='auto'
-        Whether or not to mark each sample as the first nearest neighbor to
-        itself, in fit_transform (but not in transform). If 'auto', then True
-        is used for mode='connectivity' and False for mode='distance'.
-
     n_neighbors : int, optional (default = 5)
         Number of neighbors to use for :meth:`kneighbors` queries.
 
@@ -275,15 +270,14 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
-    def __init__(self, mode='distance', include_self='auto',
-                 n_neighbors=5, algorithm='auto', leaf_size=30,
-                 metric='minkowski', p=2, metric_params=None, n_jobs=1):
+    def __init__(self, mode='distance', n_neighbors=5, algorithm='auto',
+                 leaf_size=30, metric='minkowski', p=2, metric_params=None,
+                 n_jobs=1):
         super(KNeighborsTransformer, self).__init__(
             n_neighbors=n_neighbors, radius=None, algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
-        self.include_self = include_self
 
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X
@@ -320,12 +314,9 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         Xt : CSR sparse matrix, shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
-            The diagonal is explicit if include_self.
+            The diagonal is always explicit.
         """
-        self.fit(X)
-
-        X = _query_include_self(X, self.include_self, self.mode)
-        return self.transform(X)
+        return self.fit(X).transform(X)
 
 
 class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
@@ -343,11 +334,6 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
-
-    include_self : bool or 'auto', default='auto'
-        Whether or not to mark each sample as the first nearest neighbor to
-        itself, in fit_transform (but not in transform). If 'auto', then True
-        is used for mode='connectivity' and False for mode='distance'.
 
     radius : float, optional (default = 1.)
         Range of parameter space to use for :meth:`radius_neighbors`
@@ -418,15 +404,14 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='distance', include_self='auto',
-                 radius=1., algorithm='auto', leaf_size=30,
-                 metric='minkowski', p=2, metric_params=None, n_jobs=1):
+    def __init__(self, mode='distance', radius=1., algorithm='auto',
+                 leaf_size=30, metric='minkowski', p=2, metric_params=None,
+                 n_jobs=1):
         super(RadiusNeighborsTransformer, self).__init__(
             n_neighbors=None, radius=radius, algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
-        self.include_self = include_self
 
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X
@@ -464,9 +449,6 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         Xt : CSR sparse matrix, shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
-            The diagonal is explicit if include_self.
+            The diagonal is always explicit.
         """
-        self.fit(X)
-
-        X = _query_include_self(X, self.include_self, self.mode)
-        return self.transform(X)
+        return self.fit(X).transform(X)

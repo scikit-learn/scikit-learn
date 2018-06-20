@@ -199,7 +199,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
         self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
-            None, n_neighbors=self.n_neighbors_)
+            n_neighbors=self.n_neighbors_)
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_)

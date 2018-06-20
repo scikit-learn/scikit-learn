@@ -888,12 +888,6 @@ def _check_transformer(name, transformer_orig, X, y):
         # check for consistent n_samples
         assert_equal(X_pred.shape[0], n_samples)
 
-    # Transformers whose fit_transform() is different from fit().transform()
-    skip_fit_transform_check = [
-        'KNeighborsTransformer',  # with include_self=False
-        'RadiusNeighborsTransformer',  # with include_self=False
-    ]
-
     if hasattr(transformer, 'transform'):
         if name in CROSS_DECOMPOSITION:
             X_pred2 = transformer.transform(X, y_)
@@ -903,24 +897,22 @@ def _check_transformer(name, transformer_orig, X, y):
             X_pred3 = transformer.fit_transform(X, y=y_)
         if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
-                if name not in skip_fit_transform_check:
-                    assert_allclose_dense_sparse(
-                        x_pred, x_pred2, atol=1e-2,
-                        err_msg="fit_transform and transform outcomes "
-                                "not consistent in %s"
-                        % transformer)
+                assert_allclose_dense_sparse(
+                    x_pred, x_pred2, atol=1e-2,
+                    err_msg="fit_transform and transform outcomes "
+                            "not consistent in %s"
+                    % transformer)
                 assert_allclose_dense_sparse(
                     x_pred, x_pred3, atol=1e-2,
                     err_msg="consecutive fit_transform outcomes "
                             "not consistent in %s"
                     % transformer)
         else:
-            if name not in skip_fit_transform_check:
-                assert_allclose_dense_sparse(
-                    X_pred, X_pred2,
-                    err_msg="fit_transform and transform outcomes "
-                            "not consistent in %s"
-                    % transformer, atol=1e-2)
+            assert_allclose_dense_sparse(
+                X_pred, X_pred2,
+                err_msg="fit_transform and transform outcomes "
+                        "not consistent in %s"
+                % transformer, atol=1e-2)
             assert_allclose_dense_sparse(
                 X_pred, X_pred3, atol=1e-2,
                 err_msg="consecutive fit_transform outcomes "
