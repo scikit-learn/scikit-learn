@@ -486,7 +486,7 @@ class SelectKBest(_BaseFilter):
         self.k = k
 
     @classmethod
-    def _get_test_instances(cls):
+    def _generate_test_params(cls):
         # k=10 is more features than we have in tests
         yield cls(k=1)
 
@@ -615,7 +615,7 @@ class SelectFdr(_BaseFilter):
         self.alpha = alpha
 
     @classmethod
-    def _get_test_instances(cls):
+    def _generate_test_params(cls):
         # be tolerant of noisy datasets (not actually speed)
         yield cls(alpha=.5)
 

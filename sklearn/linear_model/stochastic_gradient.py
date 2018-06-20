@@ -802,8 +802,8 @@ class SGDClassifier(BaseSGDClassifier):
             average=average, n_iter=n_iter)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
@@ -1369,5 +1369,5 @@ class SGDRegressor(BaseSGDRegressor):
                                            average=average, n_iter=n_iter)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

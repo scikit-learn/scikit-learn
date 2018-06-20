@@ -343,8 +343,8 @@ class GraphicalLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y=None):
         """Fits the GraphicalLasso model to X.
@@ -579,8 +579,8 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_jobs = n_jobs
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     @property
     @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
@@ -870,8 +870,8 @@ class GraphLasso(GraphicalLasso):
     """
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
@@ -979,5 +979,5 @@ class GraphLassoCV(GraphicalLassoCV):
     """
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

@@ -189,8 +189,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.loss = loss
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=20)
+    def _generate_test_params(cls):
+        yield dict(max_iter=20)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -377,8 +377,8 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.loss = loss
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=20)
+    def _generate_test_params(cls):
+        yield dict(max_iter=20)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -603,8 +603,8 @@ class SVC(BaseSVC):
             random_state=random_state)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(decision_function_shape='ovo')
+    def _generate_test_params(cls):
+        yield dict(decision_function_shape='ovo')
 
 
 class NuSVC(BaseSVC):
@@ -768,8 +768,8 @@ class NuSVC(BaseSVC):
             random_state=random_state)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(decision_function_shape='ovo')
+    def _generate_test_params(cls):
+        yield dict(decision_function_shape='ovo')
 
 
 class SVR(BaseLibSVM, RegressorMixin):

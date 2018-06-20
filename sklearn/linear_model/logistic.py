@@ -1177,8 +1177,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.n_jobs = n_jobs
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1589,8 +1589,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.random_state = random_state
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.

@@ -302,25 +302,26 @@ class BaseEstimator(object):
             self.__dict__.update(state)
 
     @classmethod
-    def _get_test_instances(cls):
-        """Generates instances of this estimator to run check_estimator on
+    def _generate_test_params(cls):
+        """Generates estimator initialization parameters for check_estimator
 
         To be overridden where parameters are required or specific settings are
         helpful for testing.
 
         Yields
         ------
-        obj : instance of cls
-            Should yield at least one
+        param_dict : dict
+            Should yield at least one dict that can be passed to cls's
+            constructor as kwargs
         """
         try:
-            yield cls()
+            yield {}
         except TypeError as exc:
             raise TypeError('TypeError %s raised when constructing %r.'
                             'Scikit-learn compatible estimators should '
                             'usually be constructible without any required '
                             'parameters.  If this is not possible, '
-                            'classmethod _get_test_instances should be '
+                            'classmethod _generate_test_params should be '
                             'overridden.' % (exc, cls))
 
 

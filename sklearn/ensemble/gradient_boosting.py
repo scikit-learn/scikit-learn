@@ -1553,8 +1553,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             n_iter_no_change=n_iter_no_change, tol=tol)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
@@ -2005,8 +2005,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             n_iter_no_change=n_iter_no_change, tol=tol)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def predict(self, X):
         """Predict regression target for X.

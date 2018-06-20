@@ -329,8 +329,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         self.affinity = affinity
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     @property
     def _pairwise(self):

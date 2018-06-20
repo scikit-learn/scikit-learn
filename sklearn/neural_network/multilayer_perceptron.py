@@ -910,8 +910,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      n_iter_no_change=n_iter_no_change)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=100)
+    def _generate_test_params(cls):
+        yield dict(max_iter=100)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1295,8 +1295,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      n_iter_no_change=n_iter_no_change)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=100)
+    def _generate_test_params(cls):
+        yield dict(max_iter=100)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.

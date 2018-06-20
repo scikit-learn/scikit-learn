@@ -425,8 +425,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.n_jobs = n_jobs
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_init=2)
+    def _generate_test_params(cls):
+        yield dict(n_init=2)
 
     def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,

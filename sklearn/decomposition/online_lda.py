@@ -286,8 +286,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.n_topics = n_topics
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def _check_params(self):
         """Check model parameters."""

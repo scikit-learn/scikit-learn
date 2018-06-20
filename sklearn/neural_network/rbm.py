@@ -107,8 +107,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_iter=5)
+    def _generate_test_params(cls):
+        yield dict(n_iter=5)
 
     def transform(self, X):
         """Compute the hidden layer activation probabilities, P(h=1|v=X).

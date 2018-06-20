@@ -385,8 +385,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         self.algorithm = algorithm
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier from the training set (X, y).
@@ -936,8 +936,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         self.random_state = random_state
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted regressor from the training set (X, y).

@@ -1015,8 +1015,8 @@ class RandomForestClassifier(ForestClassifier):
         self.min_impurity_split = min_impurity_split
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1257,8 +1257,8 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_split = min_impurity_split
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1506,8 +1506,8 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_impurity_split = min_impurity_split
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1720,8 +1720,8 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_impurity_split = min_impurity_split
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1889,8 +1889,8 @@ class RandomTreesEmbedding(BaseForest):
         self.sparse_output = sparse_output
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")

@@ -273,18 +273,20 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
+        params = next(Estimator._generate_test_params())
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
-            est = next(Estimator._get_test_instances())
+            est = Estimator(**params)
         set_random_state(est)
         # without fitting
         old_hash = joblib.hash(est)
         check_estimator(est)
         assert_equal(old_hash, joblib.hash(est))
 
+        params = next(Estimator._generate_test_params())
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
-            est = next(Estimator._get_test_instances())
+            est = Estimator(**params)
         set_random_state(est)
         # with fitting
         est.fit(iris.data + 10, iris.target)

@@ -667,8 +667,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.selection = selection
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
@@ -942,8 +942,8 @@ class Lasso(ElasticNet):
             selection=selection)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 ###############################################################################
@@ -1079,8 +1079,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.selection = selection
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1403,8 +1403,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
             random_state=random_state, selection=selection)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1610,8 +1610,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 ###############################################################################
@@ -1817,8 +1817,8 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -1940,8 +1940,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.selection = selection
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
@@ -2125,8 +2125,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2267,5 +2267,5 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             selection=selection)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

@@ -134,5 +134,5 @@ class Perceptron(BaseSGDClassifier):
                                          n_iter=n_iter)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)

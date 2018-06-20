@@ -366,8 +366,8 @@ class MDS(BaseEstimator):
         self.random_state = random_state
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5, n_init=2)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5, n_init=2)
 
     @property
     def _pairwise(self):

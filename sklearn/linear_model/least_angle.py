@@ -848,8 +848,8 @@ class LassoLars(Lars):
         self.fit_path = fit_path
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 ###############################################################################
@@ -1092,8 +1092,8 @@ class LarsCV(Lars):
                                      positive=positive)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1331,8 +1331,8 @@ class LassoLarsCV(LarsCV):
         # to avoid setting n_nonzero_coefs
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class LassoLarsIC(LassoLars):
@@ -1467,8 +1467,8 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
     def fit(self, X, y, copy_X=True):
         """Fit the model using X, y as training data.

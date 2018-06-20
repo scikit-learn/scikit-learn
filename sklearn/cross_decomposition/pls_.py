@@ -596,8 +596,8 @@ class PLSRegression(_PLS):
             copy=copy)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class PLSCanonical(_PLS):
@@ -746,8 +746,8 @@ class PLSCanonical(_PLS):
             max_iter=max_iter, tol=tol, copy=copy)
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
+    def _generate_test_params(cls):
+        yield dict(max_iter=5)
 
 
 class PLSSVD(BaseEstimator, TransformerMixin):

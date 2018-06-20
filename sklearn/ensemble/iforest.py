@@ -159,8 +159,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         self.contamination = contamination
 
     @classmethod
-    def _get_test_instances(cls):
-        yield cls(n_estimators=5)
+    def _generate_test_params(cls):
+        yield dict(n_estimators=5)
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
