@@ -131,6 +131,10 @@ Metrics
 
 Misc
 
+- Added ``min_features_to_select`` parameter to
+  :class:`feature_selection.RFECV` to bound evaluated features counts.
+  :issue:`11293` by :user:`Brent Yi <brentyi>`.
+
 - A new configuration parameter, ``working_memory`` was added to control memory
   consumption limits in chunked operations, such as the new
   :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
@@ -492,7 +496,7 @@ Feature Extraction
   for floating and raise a warning if ``dtype`` requested is integer.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Utils
 
 - :func:`utils.check_array` yield a ``FutureWarning`` indicating

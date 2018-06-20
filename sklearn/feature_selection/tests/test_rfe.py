@@ -230,7 +230,7 @@ def test_rfecv_verbose_output():
     assert_greater(len(verbose_output.readline()), 0)
 
 
-def test_rfec_grid_scores_size():
+def test_rfecv_grid_scores_size():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
