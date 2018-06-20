@@ -313,7 +313,16 @@ class BaseEstimator(object):
         obj : instance of cls
             Should yield at least one
         """
-        yield cls()
+        try:
+            yield cls()
+        except TypeError as exc:
+            raise TypeError('TypeError %s raises when constructing %r.'
+                            'Scikit-learn compatible estimators should '
+                            'usually be constructible without any required '
+                            'parameters.  If this is not possible, '
+                            'classmethod _get_test_instances should be '
+                            'overridden.' %
+                            (exc, cls))
 
 
 ###############################################################################
