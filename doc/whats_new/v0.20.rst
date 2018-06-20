@@ -625,6 +625,17 @@ Imputer
   SimpleImputer().fit_transform(X.T).T)``). :issue:`10829` by :user:`Guillaume
   Lemaitre <glemaitre>` and :user:`Gilberto Olimpio <gilbertoolimpio>`.
 
+- The :class:`impute.SimpleImputer` has a new strategy, ``'constant'``, to
+  complete missing values with a fixed one, given by the ``fill_value``
+  parameter. This strategy supports numeric and non-numeric data, and so does
+  the ``'most_frequent'`` strategy now. :issue:`11211` by :user:`Jeremie du
+  Boisberranger <jeremiedbb>`.
+
+- The NaN marker for the missing values has been changed between the
+  :class:`preprocessing.Imputer` and the :class:`impute.SimpleImputer`.
+  ``missing_values='NaN'`` should now be ``missing_values=np.nan``.
+  :issue:`11211` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 Outlier Detection models
 
 - More consistent outlier detection API:
