@@ -581,7 +581,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
 
 def _check_large_sparse(X, accept_large_sparse=False):
-    """Indices Regulation of Sparse Matrices
+    """Raise a TypeError if X has 64bit indices and accept_large_sparse=False
     """
     if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
         supported_indices = ["int32"]
