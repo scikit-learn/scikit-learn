@@ -6,6 +6,8 @@ import numpy as np
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_network
 from sklearn.datasets import get_data_home
+from sklearn.datasets.base import _pkl_filepath
+from sklearn.datasets.twenty_newsgroups import CACHE_NAME
 from sklearn.utils.testing import install_mldata_mock
 from sklearn.utils.testing import uninstall_mldata_mock
 
@@ -47,12 +49,23 @@ def setup_rcv1():
 
 def setup_twenty_newsgroups():
     data_home = get_data_home()
-    if not exists(join(data_home, '20news_home')):
+    cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
+    if not exists(cache_path):
         raise SkipTest("Skipping dataset loading doctests")
 
 
 def setup_working_with_text_data():
     check_skip_network()
+    cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
+    if not exists(cache_path):
+        raise SkipTest("Skipping dataset loading doctests")
+
+
+def setup_compose():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
 def pytest_runtest_setup(item):
@@ -67,6 +80,8 @@ def pytest_runtest_setup(item):
         setup_twenty_newsgroups()
     elif fname.endswith('tutorial/text_analytics/working_with_text_data.rst'):
         setup_working_with_text_data()
+    elif fname.endswith('modules/compose.rst'):
+        setup_compose()
 
 
 def pytest_runtest_teardown(item):

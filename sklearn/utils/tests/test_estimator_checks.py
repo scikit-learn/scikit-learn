@@ -181,6 +181,21 @@ class LargeSparseNotSetClassifier(BaseEstimator):
         return self
 
 
+class SparseTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_shape_ = check_array(X).shape
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X):
+        X = check_array(X)
+        if X.shape[1] != self.X_shape_[1]:
+            raise ValueError('Bad number of features')
+        return sp.csr_matrix(X)
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -263,6 +278,9 @@ def test_check_estimator():
     if LARGE_SPARSE_SUPPORTED:
         assert_raises_regex(AssertionError, msg, check_estimator,
                             LargeSparseNotSetClassifier)
+
+    # non-regression test for estimators transforming to sparse data
+    check_estimator(SparseTransformer())
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)

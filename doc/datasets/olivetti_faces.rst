@@ -2,7 +2,7 @@
 .. _olivetti_faces:
 
 The Olivetti faces dataset
-==========================
+--------------------------
 
 
 `This dataset contains a set of face images`_ taken between April 1992 and April

@@ -1,7 +1,7 @@
 .. _labeled_faces_in_the_wild:
 
 The Labeled Faces in the Wild face recognition dataset
-======================================================
+------------------------------------------------------
 
 This dataset is a collection of JPEG pictures of famous people collected
 over the internet, all details are available on the official website:
@@ -25,7 +25,7 @@ face detector from various online websites.
 
 
 Usage
------
+~~~~~
 
 ``scikit-learn`` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
@@ -113,6 +113,6 @@ an evaluation ``10_folds`` set meant to compute performance metrics using a
 
 
 Examples
---------
+~~~~~~~~
 
 :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
