@@ -226,7 +226,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                      download_if_missing=True, return_X_y=False):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
-    
+
     Download it if necessary.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
@@ -383,7 +383,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
-    
+
     Download it if necessary.
 
     In the official `README.txt`_ this task is described as the

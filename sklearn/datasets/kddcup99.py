@@ -49,7 +49,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
                    random_state=None,
                    percent10=True, download_if_missing=True, return_X_y=False):
     """Load the kddcup99 dataset (classification).
-    
+
     Download it if necessary.
 
     Read more in the :ref:`User Guide <kddcup99_dataset>`.
