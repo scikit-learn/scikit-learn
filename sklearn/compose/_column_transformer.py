@@ -179,7 +179,7 @@ boolean mask array
 
         if hasattr(self.remainder, 'get_params'):
             for key, value in six.iteritems(
-                    self.remainder.get_params(deep=True)):
+                    self.remainder.get_params(deep=deep)):
                 params['remainder__%s' % key] = value
         return params
 
