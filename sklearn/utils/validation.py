@@ -384,6 +384,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
 
+        .. versionadded:: 0.20
+
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
@@ -640,6 +642,8 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
+
+        .. versionadded:: 0.20
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
