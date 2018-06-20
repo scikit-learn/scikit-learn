@@ -321,8 +321,7 @@ class BaseEstimator(object):
                             'usually be constructible without any required '
                             'parameters.  If this is not possible, '
                             'classmethod _get_test_instances should be '
-                            'overridden.' %
-                            (exc, cls))
+                            'overridden.' % (exc, cls))
 
 
 ###############################################################################
