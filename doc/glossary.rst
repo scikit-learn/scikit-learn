@@ -433,6 +433,31 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
+        One type of imputation algorithm is univariate, which imputes values in
+        the i-th feature dimension using only non-missing values in that
+        feature dimension (e.g. :class:`impute.SimpleImputer`). By contrast,
+        multivariate imputation algorithms use the entire set of available
+        feature dimensions to estimate the missing values
+        (e.g. :class:`impute.ChainedImputer`).
+
+        In the statistics community, it is common practice to perform multiple
+        imputations, generating, for example, 10 different imputations for a
+        single feature matrix. Each of these 10 imputations is then put
+        through the rest of the analysis pipeline (e.g. clustering, regression,
+        classification). The 10 final results allow the data scientist to
+        obtain understanding of the uncertainty inherent in the missing values.
+        The above practice is called multiple imputation. The
+        :class:`impute.ChainedImputer` class can be used for multiple
+        imputations by applying it to the same dataset with different random
+        seeds.
+
     indexable
         An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
         sequence (usually a list).
