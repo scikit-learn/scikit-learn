@@ -1,8 +1,7 @@
-
 .. _kddcup99:
 
 Kddcup 99 dataset
-=================
+-----------------
 
 The KDD Cup '99 dataset was created by processing the tcpdump portions
 of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,

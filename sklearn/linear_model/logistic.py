@@ -29,7 +29,8 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import NotFittedError, ConvergenceWarning
+from..exceptions import (NotFittedError, ConvergenceWarning,
+                         ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
@@ -1789,3 +1790,37 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         return self
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the score using the `scoring` option on the given
+        test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples,)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score of self.predict(X) wrt. y.
+
+        """
+
+        if self.scoring is not None:
+            warnings.warn("The long-standing behavior to use the "
+                          "accuracy score has changed. The scoring "
+                          "parameter is now used. "
+                          "This warning will disappear in version 0.22.",
+                          ChangedBehaviorWarning)
+        scoring = self.scoring or 'accuracy'
+        if isinstance(scoring, six.string_types):
+            scoring = get_scorer(scoring)
+
+        return scoring(self, X, y, sample_weight=sample_weight)

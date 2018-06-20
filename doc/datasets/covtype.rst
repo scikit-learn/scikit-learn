@@ -1,8 +1,7 @@
-
 .. _covtype:
 
 Forest covertypes
-=================
+-----------------
 
 The samples in this dataset correspond to 30×30m patches of forest in the US,
 collected for the task of predicting each patch's cover type,
