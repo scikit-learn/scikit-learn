@@ -219,9 +219,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         if (self.strategy == "constant" and
                 X.dtype.kind in ("i", "u", "f") and
                 not isinstance(fill_value, numbers.Real)):
-            raise TypeError("'fill_value'={0} is invalid. Expected a numerical"
-                            " value when imputing numerical"
-                            " data".format(fill_value))
+            raise ValueError("'fill_value'={0} is invalid. Expected a "
+                             "numerical value when imputing numerical "
+                             "data".format(fill_value))
 
         if sparse.issparse(X):
             self.statistics_ = self._sparse_fit(X,

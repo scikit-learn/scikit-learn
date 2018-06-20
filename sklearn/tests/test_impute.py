@@ -319,7 +319,7 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
     X = np.full((3, 5), X_data)
     X[0, 0] = missing_value
 
-    with pytest.raises(TypeError, match="imputing numerical"):
+    with pytest.raises(ValueError, match="imputing numerical"):
         imputer = SimpleImputer(missing_values=missing_value,
                                 strategy="constant",
                                 fill_value="x")
