@@ -316,7 +316,7 @@ class BaseEstimator(object):
         try:
             yield cls()
         except TypeError as exc:
-            raise TypeError('TypeError %s raises when constructing %r.'
+            raise TypeError('TypeError %s raised when constructing %r.'
                             'Scikit-learn compatible estimators should '
                             'usually be constructible without any required '
                             'parameters.  If this is not possible, '
