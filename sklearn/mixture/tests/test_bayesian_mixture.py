@@ -432,8 +432,8 @@ def test_bayesian_mixture_fit_predict():
 
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(n_components=n_components,
-                                        max_iter=100, random_state=rng, tol=1e-3,
-                                        reg_covar=0)
+                                        max_iter=100, random_state=rng,
+                                        tol=1e-3, reg_covar=0)
         bgmm1.covariance_type = covar_type
         bgmm2 = copy.deepcopy(bgmm1)
         X = rand_data.X[covar_type]
@@ -452,15 +452,16 @@ def test_bayesian_mixture_predict_predict_proba():
             X = rand_data.X[covar_type]
             Y = rand_data.Y
             bgmm = BayesianGaussianMixture(n_components=rand_data.n_components,
-                                random_state=rng,
-                                weight_concentration_prior_type=prior_type,
-                                covariance_type=covar_type)
+                                           random_state=rng,
+                                           weight_concentration_prior_type=prior_type,
+                                           covariance_type=covar_type)
 
             # Check a warning message arrive if we don't do fit
             assert_raise_message(NotFittedError,
-                                 "This BayesianGaussianMixture instance is not fitted "
-                                 "yet. Call 'fit' with appropriate arguments "
-                                 "before using this method.", bgmm.predict, X)
+                                 "This BayesianGaussianMixture instance"
+                                 " is not fitted yet. Call 'fit' with "
+                                 "appropriate arguments before using "
+                                 "this method.", bgmm.predict, X)
 
             bgmm.fit(X)
             Y_pred = bgmm.predict(X)
