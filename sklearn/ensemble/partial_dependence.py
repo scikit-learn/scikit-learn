@@ -301,11 +301,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     names = []
     try:
         for fxs in features:
-            l = []
+            lst = []
             # explicit loop so "i" is bound for exception below
             for i in fxs:
-                l.append(feature_names[i])
-            names.append(l)
+                lst.append(feature_names[i])
+            names.append(lst)
     except IndexError:
         raise ValueError('All entries of features must be less than '
                          'len(feature_names) = {0}, got {1}.'
