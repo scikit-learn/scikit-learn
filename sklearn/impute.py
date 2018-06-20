@@ -115,6 +115,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
 
+        .. versionadded:: 0.20
+           strategy="constant" for fixed value imputation.
+
     fill_value : string or numerical value, optional
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
