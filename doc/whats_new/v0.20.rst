@@ -253,6 +253,13 @@ Model evaluation and meta-estimators
   return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
   <bellet>`.
 
+- New ``refit_time_`` attribute will be stored in
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` if ``refit`` is set to ``True``.
+  This will allow measuring the complete time it takes to perform
+  hyperparameter optimization and refitting the best model on the whole
+  dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
+
 Decomposition and manifold learning
 
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
