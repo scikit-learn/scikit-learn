@@ -303,7 +303,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if isinstance(accept_sparse, six.string_types):
         accept_sparse = [accept_sparse]
 
-    # Indices Datatype regulation
+    # Indices dtype validation
     _check_large_sparse(spmatrix, accept_large_sparse)
 
     if accept_sparse is False:

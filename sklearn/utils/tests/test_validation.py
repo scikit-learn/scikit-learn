@@ -482,7 +482,6 @@ def test_check_array_accept_large_sparse_no_exception(X_64bit):
 
 
 def test_check_array_accept_large_sparse_raise_exception(X_64bit):
-    print(X_64bit)
     # When large sparse are not allowed
     if LARGE_SPARSE_SUPPORTED:
         msg = ("Only sparse matrices with 32-bit integer indices "
