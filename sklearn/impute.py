@@ -181,7 +181,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 raise ve
 
         if X.dtype.kind not in ("i", "u", "f", "O"):
-            raise ValueError("SimpleImputer does not work on data with dtype "
+            raise ValueError("SimpleImputer does not support data with dtype "
                              "{0}. Please provide either a numeric array (with"
                              " a floating point or integer dtype) or "
                              "categorical data represented either as an array "

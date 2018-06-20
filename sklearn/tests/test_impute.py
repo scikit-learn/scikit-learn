@@ -217,7 +217,7 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
                   [4, "e", 6],
                   ["g", "h", 9]], dtype=dtype)
 
-    with pytest.raises(TypeError, match="non-numeric data"):
+    with pytest.raises(ValueError, match="non-numeric data"):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
 
@@ -234,8 +234,8 @@ def test_imputation_const_mostf_error_invalid_types(strategy, dtype):
         [np.nan, "c", "d", "h"],
     ], dtype=dtype)
 
-    err_msg = "SimpleImputer does not support this datatype"
-    with pytest.raises(TypeError, match=err_msg):
+    err_msg = "SimpleImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit(X).transform(X)
 
