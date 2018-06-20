@@ -647,10 +647,6 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     max_iter=max_iter, tol=tol, solver=solver,
                                     random_state=random_state)
 
-    @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
-
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
@@ -791,10 +787,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
             random_state=random_state)
         self.class_weight = class_weight
-
-    @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.

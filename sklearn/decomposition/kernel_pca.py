@@ -151,10 +151,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
-    @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
-
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"

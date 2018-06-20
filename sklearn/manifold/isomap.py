@@ -99,10 +99,6 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.neighbors_algorithm = neighbors_algorithm
         self.n_jobs = n_jobs
 
-    @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
-
     def _fit_transform(self, X):
         X = check_array(X)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,

@@ -828,10 +828,6 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    @classmethod
-    def _get_test_instances(cls):
-        yield cls(max_iter=5)
-
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
