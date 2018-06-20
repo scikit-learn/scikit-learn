@@ -483,7 +483,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         # of components of the random matrix projection will be probably
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
-        yield cls(n_components=2)
+        yield dict(n_components=2)
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix
@@ -616,7 +616,7 @@ class SparseRandomProjection(BaseRandomProjection):
         # of components of the random matrix projection will be probably
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
-        yield cls(n_components=2)
+        yield dict(n_components=2)
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix

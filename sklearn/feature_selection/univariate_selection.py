@@ -488,7 +488,7 @@ class SelectKBest(_BaseFilter):
     @classmethod
     def _generate_test_params(cls):
         # k=10 is more features than we have in tests
-        yield cls(k=1)
+        yield dict(k=1)
 
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
@@ -617,7 +617,7 @@ class SelectFdr(_BaseFilter):
     @classmethod
     def _generate_test_params(cls):
         # be tolerant of noisy datasets (not actually speed)
-        yield cls(alpha=.5)
+        yield dict(alpha=.5)
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
