@@ -291,9 +291,10 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        estimator = Estimator()
-        check_parameters_default_constructible(name, Estimator)
-        check_no_attributes_set_in_init(name, estimator)
+        for params in Estimator._generate_test_params():
+            check_parameters_default_constructible(name, Estimator, params)
+            estimator = Estimator(**params)
+            check_no_attributes_set_in_init(name, estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -1952,16 +1953,14 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-def check_parameters_default_constructible(name, Estimator):
+def check_parameters_default_constructible(name, Estimator,
+                                           construct_params=None):
     # this check works on classes, not instances
-    classifier = LinearDiscriminantAnalysis()
-    # test default-constructibility
+    # test constructibility with construct_params
     # get rid of deprecation warnings
+    construct_params = construct_params or {}
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        if name in META_ESTIMATORS:
-            estimator = Estimator(classifier)
-        else:
-            estimator = Estimator()
+        estimator = Estimator(**construct_params)
         # test cloning
         clone(estimator)
         # test __repr__
@@ -1992,10 +1991,6 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if name in META_ESTIMATORS:
-            # they can need a non-default argument
-            init_params = init_params[1:]
-
         for init_param in init_params:
             assert_not_equal(init_param.default, init_param.empty,
                              "parameter %s for %s has no default value"
@@ -2014,10 +2009,12 @@ def check_parameters_default_constructible(name, Estimator):
                 continue
 
             param_value = params[init_param.name]
+            expected_value = construct_params.get(init_param.name,
+                                                  init_param.default)
             if isinstance(param_value, np.ndarray):
-                assert_array_equal(param_value, init_param.default)
+                assert_array_equal(param_value, expected_value)
             else:
-                assert_equal(param_value, init_param.default, init_param.name)
+                assert_equal(param_value, expected_value, init_param.name)
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):
