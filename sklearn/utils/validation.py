@@ -601,7 +601,7 @@ def _check_large_sparse(X, accept_large_sparse=False):
                                     " indices, please upgrade your scipy"
                                     " to 0.14.0 or above" % scipy_version)
                 raise TypeError("Only sparse matrices with 32-bit integer"
-                                " indices are accepted. Got % s indices."
+                                " indices are accepted. Got %s indices."
                                 % indices_datatype)
 
 

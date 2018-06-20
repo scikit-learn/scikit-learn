@@ -501,7 +501,7 @@ def check_estimator_sparse_data(name, estimator_orig):
             if 'sparse' not in repr(e).lower():
                 if "64" in matrix_format:
                     msg = ("Estimator %s doesn't seem to support %s matrix, "
-                           "and is not failing gracefuly, e.g. by using "
+                           "and is not failing gracefully, e.g. by using "
                            "check_array(X, accept_large_sparse=False)")
                     raise AssertionError(msg % (name, matrix_format))
                 else:
