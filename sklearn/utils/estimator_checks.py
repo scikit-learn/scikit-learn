@@ -405,24 +405,22 @@ def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
 
 def _generate_sparse_matrix(X_csr):
-    """Generate matrices in multiple formats for CSR,CSC and COO matrices
+    """Generate sparse matrices with {32,64}bit indices of diverse format
 
         Parameters
         ----------
-
         X_csr: CSR Matrix
             Input matrix in CSR format
 
         Returns
         -------
-
         out: iter(Matrices)
             In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
              'coo_64', 'csc_64', 'csr_64']
     """
 
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
-        yield sparse_format, X_csr.asformat(sparse_format)
+        yield sparse_format, X_csr.asformat(sparse_format, copy=True)
 
     if LARGE_SPARSE_SUPPORTED:
         # Generate large indices matrix only if its supported by scipy
