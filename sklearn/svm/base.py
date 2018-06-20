@@ -145,7 +145,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._sparse = sparse and not callable(self.kernel)
 
         X, y = check_X_y(X, y, dtype=np.float64,
-                         order='C', accept_sparse='csr')
+                         order='C', accept_sparse='csr',
+                         accept_large_sparse=False)
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -329,7 +330,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
         if X.ndim == 1:
-            X = check_array(X, order='C')
+            X = check_array(X, order='C', accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(self.kernel):
@@ -413,7 +414,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return dec_func
 
     def _dense_decision_function(self, X):
-        X = check_array(X, dtype=np.float64, order="C")
+        X = check_array(X, dtype=np.float64, order="C",
+                        accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(kernel):
@@ -452,7 +454,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
+                        accept_large_sparse=False)
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
