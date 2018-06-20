@@ -889,7 +889,7 @@ class UnsupervisedMixin(object):
 
 class LocalOutlierMixin(object):
 
-    """Mixin for Local Outlier Factor (LOF) and Local Outlier Probability (LoOP) approaches"""
+    """Mixin for Local Outlier Factor (LOF) and Local Outlier Probability (LoOP) approaches."""
 
     def _distance_neighbors(self):
         n_samples = self._fit_X.shape[0]
@@ -948,12 +948,10 @@ class LocalOutlierMixin(object):
             self._prob_set_distances_fit_X_tiled_ = np.tile(self._distances_fit_X_, (self.n_neighbors_, 1)).T
             dist_k = self._prob_set_distances_fit_X_tiled_[neighbors_indices,
                                             self.n_neighbors_ - 1]
+            distances_X = np.tile(distances_X, (self.n_neighbors_, 1)).T
         else:
             dist_k = self._distances_fit_X_[neighbors_indices,
                                         self.n_neighbors_ - 1]
-        if mode == 'loop':
-            distances_X = np.tile(distances_X, (self.n_neighbors_, 1)).T
-
         reach_dist_array = np.maximum(distances_X, dist_k)
 
         #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
@@ -1020,8 +1018,3 @@ class LocalOutlierMixin(object):
                     self.negative_outlier_factor_, 100. * self.contamination)
 
         return self
-
-
-
-
-

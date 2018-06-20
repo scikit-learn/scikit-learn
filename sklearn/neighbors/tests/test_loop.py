@@ -3,7 +3,7 @@
 #          Valentino Constantinou <vc@valentino.io>
 # License: BSD 3 clause
 
-from math import log10, sqrt
+from math import log10
 import numpy as np
 from sklearn import neighbors
 
@@ -71,12 +71,13 @@ def test_loop_performance():
 def test_loop_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
-    clf1 = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=0.94).fit(X_train)
+    clf1 = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=0.95).fit(X_train)
     clf2 = neighbors.LocalOutlierProbability(n_neighbors=2).fit(X_train)
-    s_0 = 0. # inlier
-    s_0_label = 1 # inlier
-    s_1 = log10(3.493965) # outlier
-    s_1_label = -1 # outlier
+    # define test values and labels
+    s_0 = 0.
+    s_1 = log10(3.493965)
+    s_0_label = 1
+    s_1_label = -1
     # check predict()
     assert_array_almost_equal(-clf1.negative_local_outlier_probability_, [s_0, s_1, s_1])
     assert_array_almost_equal(-clf2.negative_local_outlier_probability_, [s_0, s_1, s_1])

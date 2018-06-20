@@ -43,8 +43,7 @@ import matplotlib.font_manager
 from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.neighbors import LocalOutlierProbability
+from sklearn.neighbors import LocalOutlierFactor, LocalOutlierProbability
 
 print(__doc__)
 
@@ -68,7 +67,7 @@ classifiers = {
         contamination=outliers_fraction),
     "Local Outlier Probability": LocalOutlierProbability(
         n_neighbors=35,
-        norm_factor=0.75
+        norm_factor=outliers_fraction
     )
 }
 
