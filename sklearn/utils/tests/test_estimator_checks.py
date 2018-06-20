@@ -161,7 +161,7 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
-class LargeSparseNotSetClassifier(BaseEstimator):
+class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = check_X_y(X, y,
                          accept_sparse=("csr", "csc", "coo"),
@@ -170,7 +170,7 @@ class LargeSparseNotSetClassifier(BaseEstimator):
                          y_numeric=True)
         if sp.issparse(X):
             if X.getformat() == "coo":
-                if X.col.dtype == "int64" or X.col.dtype == "int64":
+                if X.row.dtype == "int64" or X.col.dtype == "int64":
                     raise ValueError(
                         "Estimator doesn't support 64-bit indices")
             elif X.getformat() in ["csc", "csr"]:
@@ -271,13 +271,12 @@ def test_check_estimator():
     assert_true(msg in string_buffer.getvalue())
 
     # Large indices test on bad estimator
-    msg = ('Estimator LargeSparseNotSetClassifier doesn\'t seem to support '
-           r'\S{3}_64 matrix yet, also it has not been handled gracefully by '
-           'accept_large_sparse.')
+    msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
+           r'support \S{3}_64 matrix, and is not failing gracefully.*')
     # only supported by scipy version more than 0.14.0
     if LARGE_SPARSE_SUPPORTED:
         assert_raises_regex(AssertionError, msg, check_estimator,
-                            LargeSparseNotSetClassifier)
+                            LargeSparseNotSupportedClassifier)
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())

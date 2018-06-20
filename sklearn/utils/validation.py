@@ -351,11 +351,11 @@ def _ensure_no_complex_data(array):
                          "{}\n".format(array))
 
 
-def check_array(array, accept_sparse=False, dtype="numeric", order=None,
-                copy=False, force_all_finite=True, ensure_2d=True,
-                allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None,
-                accept_large_sparse=False):
+def check_array(array, accept_sparse=False, accept_large_sparse=True,
+                dtype="numeric", order=None, copy=False, force_all_finite=True,
+                ensure_2d=True, allow_nd=False, ensure_min_samples=1,
+                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -378,6 +378,11 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
            Passing 'None' to parameter ``accept_sparse`` in methods is
            deprecated in version 0.19 "and will be removed in 0.21. Use
            ``accept_sparse=False`` instead.
+
+    accept_large_sparse : bool (default=True)
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -582,7 +587,7 @@ def _check_large_sparse(X, accept_large_sparse=False):
         supported_indices = ["int32"]
         if X.getformat() == "coo":
             index_keys = ['col', 'row']
-        elif X.getformat() in ["csr", "csc"]:
+        elif X.getformat() in ["csr", "csc", "bsr"]:
             index_keys = ['indices', 'indptr']
         else:
             return
@@ -590,19 +595,19 @@ def _check_large_sparse(X, accept_large_sparse=False):
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
                 if not LARGE_SPARSE_SUPPORTED:
-                    raise ValueError("Scipy version %s does not support large"
-                                     " indices, please upgrade your scipy"
-                                     " to 0.14.0 or above" % scipy_version)
-                raise ValueError("Only sparse matrices with 32-bit integer"
-                                 " indices are accepted. Got % s indices."
-                                 % indices_datatype)
+                    raise TypeError("Scipy version %s does not support large"
+                                    " indices, please upgrade your scipy"
+                                    " to 0.14.0 or above" % scipy_version)
+                raise TypeError("Only sparse matrices with 32-bit integer"
+                                " indices are accepted. Got % s indices."
+                                % indices_datatype)
 
 
-def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
-              copy=False, force_all_finite=True, ensure_2d=True,
-              allow_nd=False, multi_output=False, ensure_min_samples=1,
-              ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None, accept_large_sparse=False):
+def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
+              dtype="numeric", order=None, copy=False, force_all_finite=True,
+              ensure_2d=True, allow_nd=False, multi_output=False,
+              ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
+              warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
@@ -630,6 +635,11 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
            Passing 'None' to parameter ``accept_sparse`` in methods is
            deprecated in version 0.19 "and will be removed in 0.21. Use
            ``accept_sparse=False`` instead.
+
+    accept_large_sparse : bool (default=True)
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -699,10 +709,15 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
     y_converted : object
         The converted and validated y.
     """
-    X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
-                    ensure_2d, allow_nd, ensure_min_samples,
-                    ensure_min_features, warn_on_dtype, estimator,
-                    accept_large_sparse=accept_large_sparse)
+    X = check_array(X, accept_sparse=accept_sparse,
+                    accept_large_sparse=accept_large_sparse,
+                    dtype=dtype, order=order, copy=copy,
+                    force_all_finite=force_all_finite,
+                    ensure_2d=ensure_2d, allow_nd=allow_nd,
+                    ensure_min_samples=ensure_min_samples,
+                    ensure_min_features=ensure_min_features,
+                    warn_on_dtype=warn_on_dtype,
+                    estimator=estimator)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
                         dtype=None)

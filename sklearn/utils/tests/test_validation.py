@@ -472,7 +472,9 @@ def test_check_array_accept_large_sparse_no_exception():
         X = sp.rand(10, 1000, format='csr')
         X.indices = X.indices.astype('int64')
         X.indptr = X.indptr.astype('int64')
-        check_array(X, accept_large_sparse=True, accept_sparse=True)
+        for fmt in ['csr', 'csc', 'coo', 'bsr']:
+            check_array(X.asformat(fmt),
+                        accept_large_sparse=True, accept_sparse=True)
 
 
 def test_check_array_accept_large_sparse_raise_exception():
@@ -483,9 +485,11 @@ def test_check_array_accept_large_sparse_raise_exception():
         X.indptr = X.indptr.astype('int64')
         msg = "Only sparse matrices with 32-bit integer indices" + \
             " are accepted. Got int64 indices."
-        assert_raise_message(ValueError, msg.format([]),
-                             check_array, X, accept_sparse=True,
-                             accept_large_sparse=False)
+        for fmt in ['csr', 'csc', 'coo', 'bsr']:
+            assert_raise_message(TypeError, msg.format([]),
+                                 check_array, X.asformat(fmt),
+                                 accept_sparse=True,
+                                 accept_large_sparse=False)
 
 
 def test_check_array_large_indices_non_supported_scipy_version():
@@ -498,8 +502,9 @@ def test_check_array_large_indices_non_supported_scipy_version():
                " indices, please upgrade your scipy"
                " to 0.14.0 or above" % scipy_version)
 
-        assert_raise_message(ValueError, msg.format([]), check_array,
-                             X, accept_sparse='csc')
+        for fmt in ['csr', 'csc', 'coo', 'bsr']:
+            assert_raise_message(TypeError, msg.format([]), check_array,
+                                 X.asformat(fmt), accept_sparse='csc')
 
 
 def test_check_array_min_samples_and_features_messages():
