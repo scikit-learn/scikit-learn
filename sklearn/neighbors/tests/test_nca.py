@@ -1,7 +1,13 @@
+import sys
+
 import numpy as np
 from numpy.testing import assert_array_equal
+
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.externals.six import StringIO
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises, assert_equal
+from sklearn.utils.testing import assert_raises, assert_equal, \
+    assert_raise_message, assert_warns_message
 from sklearn.datasets import load_iris, make_classification
 from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
@@ -26,7 +32,7 @@ def test_simple_example():
     """
     X = np.array([[0, 0], [0, 1], [2, 0], [2, 1]])
     y = np.array([1, 0, 1, 0])
-    nca = NeighborhoodComponentsAnalysis(n_features_out=2, init='identity',
+    nca = NeighborhoodComponentsAnalysis(n_components=2, init='identity',
                                          random_state=42)
     nca.fit(X, y)
     Xansformed = nca.transform(X)
@@ -110,16 +116,32 @@ def test_params_validation():
     assert_raises(TypeError, NCA(max_iter='21').fit, X, y)
     assert_raises(TypeError, NCA(verbose='true').fit, X, y)
     assert_raises(TypeError, NCA(tol=1).fit, X, y)
-    assert_raises(TypeError, NCA(n_features_out='invalid').fit, X, y)
+    assert_raises(TypeError, NCA(n_components='invalid').fit, X, y)
 
     # ValueError
-    assert_raises(ValueError, NCA(init=1).fit, X, y)
-    assert_raises(ValueError, NCA(max_iter=-1).fit, X, y)
+    assert_raise_message(ValueError,
+                  "`init` must be 'pca', 'identity', 'random' or a numpy "
+                  "array of shape (n_components, n_features).",
+                  NCA(init=1).fit, X, y)
+    assert_raise_message(ValueError,
+                         '`max_iter`= -1, must be >= 1.',
+                         NCA(max_iter=-1).fit, X, y)
 
-    fit_func = NCA(init=np.random.rand(5, 3)).fit
-    assert_raises(ValueError, fit_func, X, y)
-    assert_raises(ValueError, NCA(n_features_out=10).fit, X, y)
+    init=np.random.rand(5, 3)
+    assert_raise_message(ValueError,
+                         'The output dimensionality ({}) of the given linear '
+                         'transformation `init` cannot be greater than its '
+                         'input dimensionality ({}).'
+                         .format(init.shape[0], init.shape[1]),
+                         NCA(init=init).fit, X, y)
 
+    n_components = 10
+    assert_raise_message(ValueError,
+                         'The preferred embedding dimensionality '
+                         '`n_components` ({}) cannot be greater '
+                         'than the given data dimensionality ({})!'
+                         .format(n_components, X.shape[1]),
+                         NCA(n_components=n_components).fit, X, y)
 
 def test_transformation_dimensions():
     X = np.arange(12).reshape(4, 3)
@@ -144,23 +166,36 @@ def test_transformation_dimensions():
     NeighborhoodComponentsAnalysis(init=transformation).fit(X, y)
 
 
-def test_n_features_out():
+def test_n_components():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    transformation = np.array([[1, 2, 3], [4, 5, 6]])
+    init = np.random.rand(X.shape[1] - 1, 3)
 
-    # n_features_out = X.shape[1] != transformation.shape[0]
-    nca = NeighborhoodComponentsAnalysis(n_features_out=3, init=transformation)
-    assert_raises(ValueError, nca.fit, X, y)
+    # n_components = X.shape[1] != transformation.shape[0]
+    n_components = X.shape[1]
+    lmnn = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    assert_raise_message(ValueError,
+                         'The preferred embedding dimensionality '
+                         '`n_components` ({}) does not match '
+                         'the output dimensionality of the given '
+                         'linear transformation `init` ({})!'
+                         .format(n_components, init.shape[0]),
+                         lmnn.fit, X, y)
 
-    # n_features_out > X.shape[1]
-    nca = NeighborhoodComponentsAnalysis(n_features_out=5, init=transformation)
-    assert_raises(ValueError, nca.fit, X, y)
+    # n_components > X.shape[1]
+    n_components = X.shape[1] + 2
+    lmnn = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    assert_raise_message(ValueError,
+                         'The preferred embedding dimensionality '
+                         '`n_components` ({}) cannot be greater '
+                         'than the given data dimensionality ({})!'
+                         .format(n_components, X.shape[1]),
+                         lmnn.fit, X, y)
 
-    # n_features_out < X.shape[1]
-    nca = NeighborhoodComponentsAnalysis(n_features_out=2, init='identity')
-    nca.fit(X, y)
+    # n_components < X.shape[1]
+    lmnn = NeighborhoodComponentsAnalysis(n_components=2, init='identity')
+    lmnn.fit(X, y)
 
 
 def test_init_transformation():
@@ -185,25 +220,70 @@ def test_init_transformation():
 
     # init.shape[1] must match X.shape[1]
     init = np.random.rand(X.shape[1], X.shape[1] + 1)
-    nca = NeighborhoodComponentsAnalysis(init=init)
-    assert_raises(ValueError, nca.fit, X, y)
+    lmnn = NeighborhoodComponentsAnalysis(init=init)
+    assert_raise_message(ValueError,
+                         'The input dimensionality ({}) of the given '
+                         'linear transformation `init` must match the '
+                         'dimensionality of the given inputs `X` ({}).'
+                         .format(init.shape[1], X.shape[1]),
+                         lmnn.fit, X, y)
 
     # init.shape[0] must be <= init.shape[1]
     init = np.random.rand(X.shape[1] + 1, X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(init=init)
-    assert_raises(ValueError, nca.fit, X, y)
+    lmnn = NeighborhoodComponentsAnalysis(init=init)
+    assert_raise_message(ValueError,
+                         'The output dimensionality ({}) of the given '
+                         'linear transformation `init` cannot be '
+                         'greater than its input dimensionality ({}).'
+                         .format(init.shape[0], init.shape[1]),
+                         lmnn.fit, X, y)
 
-    # init.shape[0] must match n_features_out
+    # init.shape[0] must match n_components
     init = np.random.rand(X.shape[1], X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(n_features_out=X.shape[1] - 2,
-                                         init=init)
-    assert_raises(ValueError, nca.fit, X, y)
+    n_components = X.shape[1] - 2
+    lmnn = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    assert_raise_message(ValueError,
+                         'The preferred embedding dimensionality '
+                         '`n_components` ({}) does not match '
+                         'the output dimensionality of the given '
+                         'linear transformation `init` ({})!'
+                         .format(n_components, init.shape[0]),
+                         lmnn.fit, X, y)
 
 
 def test_verbose():
+    # assert there is proper output when verbose = 1
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
     nca = NeighborhoodComponentsAnalysis(verbose=1)
-    nca.fit(iris_data, iris_target)
-    # TODO: rather assert that some message is printed
+    try:
+        nca.fit(iris_data, iris_target)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # check output
+    assert("[NeighborhoodComponentsAnalysis]" in out)
+    assert("Finding principal components" in out)
+    assert ("Finding principal components" in out)
+    assert ("Training took" in out)
+
+    # assert by default there is no output (verbose=0)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
+    nca = NeighborhoodComponentsAnalysis()
+    try:
+        nca.fit(iris_data, iris_target)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # check output
+    assert(out == '')
 
 
 def test_singleton_class():
@@ -247,13 +327,13 @@ def test_one_class():
     y = iris_target[iris_target == 0]
 
     nca = NeighborhoodComponentsAnalysis(max_iter=30,
-                                         n_features_out=X.shape[1],
+                                         n_components=X.shape[1],
                                          init='identity')
     nca.fit(X, y)
     assert_array_equal(X, nca.transform(X))
 
 
-def test_callable():
+def test_callback():
     X = iris_data
     y = iris_target
 
@@ -266,11 +346,21 @@ def test_callable():
         rem_iter = max_iter - n_iter
         print('{} iterations remaining...'.format(rem_iter))
 
+    # assert that my_cb is called
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
     nca = NeighborhoodComponentsAnalysis(max_iter=max_iter,
                                          callback=my_cb, verbose=1)
-    nca.fit(X, y)
-    # TODO: rather assert that message is printed
+    try:
+        nca.fit(iris_data, iris_target)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
 
+    # check output
+    assert('{} iterations remaining...'.format(max_iter-1) in out)
 
 def test_store_opt_result():
     X = iris_data
@@ -281,3 +371,11 @@ def test_store_opt_result():
     nca.fit(X, y)
     transformation = nca.opt_result_.x
     assert_equal(transformation.size, X.shape[1]**2)
+
+def test_convergence_warning():
+
+    nca = NeighborhoodComponentsAnalysis(max_iter=2, verbose=1)
+    cls_name = nca.__class__.__name__
+    assert_warns_message(ConvergenceWarning,
+                         '[{}] NCA did not converge'.format(cls_name),
+                         nca.fit, iris_data, iris_target)

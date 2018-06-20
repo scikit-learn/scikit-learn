@@ -7,9 +7,14 @@ Neighborhood Component Analysis
 
 from __future__ import print_function
 
+from warnings import warn
+
 import numpy as np
 import sys
 import time
+
+from sklearn.exceptions import ConvergenceWarning
+
 try:  # scipy.misc.logsumexp is deprecated in scipy 1.0.0
     from scipy.special import logsumexp
 except ImportError:
@@ -30,8 +35,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_features_out : int, optional (default=None)
+    n_components : int, optional (default=None)
         Preferred dimensionality of the embedding.
+        If None it is inferred from ``init``.
 
     init : string or numpy array, optional (default='pca')
         Initialization of the linear transformation. Possible options are
@@ -39,23 +45,23 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         (n_features_a, n_features_b).
 
         pca:
-            ``n_features_out`` many principal components of the inputs passed
+            ``n_components`` many principal components of the inputs passed
             to :meth:`fit` will be used to initialize the transformation.
 
         identity:
-            If ``n_features_out`` is strictly smaller than the
+            If ``n_components`` is strictly smaller than the
             dimensionality of the inputs passed to :meth:`fit`, the identity
-            matrix will be truncated to the first ``n_features_out`` rows.
+            matrix will be truncated to the first ``n_components`` rows.
 
         random:
             The initial transformation will be a random array of shape
-            (n_features_out, n_features). Each value is sampled from the
+            (n_components, n_features). Each value is sampled from the
             standard normal distribution.
 
         numpy array:
             n_features_b must match the dimensionality of the inputs passed to
             :meth:`fit` and n_features_a must be less than or equal to that.
-            If ``n_features_out`` is not None, n_features_a must match it.
+            If ``n_components`` is not None, n_features_a must match it.
 
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
@@ -89,7 +95,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    transformation_ : array, shape (n_features_out, n_features)
+    components_ : array, shape (n_components, n_features)
         The linear transformation learned during fitting.
 
     n_iter_ : int
@@ -97,7 +103,26 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     opt_result_ : scipy.optimize.OptimizeResult (optional)
         A dictionary of information representing the optimization result.
-        This is stored only if ``store_opt_result`` was True.
+        This is stored only if ``store_opt_result`` is True. It contains the
+        following attributes:
+
+        x : ndarray
+            The solution of the optimization.
+        success : bool
+            Whether or not the optimizer exited successfully.
+        status : int
+            Termination status of the optimizer.
+        message : str
+            Description of the cause of the termination.
+        fun, jac : ndarray
+            Values of objective function and its Jacobian.
+        hess_inv : scipy.sparse.linalg.LinearOperator
+            the product of a vector with the approximate inverse of the
+            Hessian of the objective function..
+        nfev : int
+            Number of evaluations of the objective function..
+        nit : int
+            Number of iterations performed by the optimizer.
 
     Examples
     --------
@@ -140,12 +165,12 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_features_out=None, init='pca', max_iter=50,
+    def __init__(self, n_components=None, init='pca', max_iter=50,
                  tol=1e-5, callback=None, store_opt_result=False, verbose=0,
                  random_state=None):
 
         # Parameters
-        self.n_features_out = n_features_out
+        self.n_components = n_components
         self.init = init
         self.max_iter = max_iter
         self.tol = tol
@@ -205,13 +230,20 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         opt_result = minimize(**optimizer_params)
 
         # Reshape the solution found by the optimizer
-        self.transformation_ = opt_result.x.reshape(-1, X_valid.shape[1])
+        self.components_ = opt_result.x.reshape(-1, X_valid.shape[1])
 
         # Stop timer
         t_train = time.time() - t_train
         if self.verbose:
-            print('[{}] Training took {:8.2f}s.'.format(
-                self.__class__.__name__, t_train))
+            cls_name = self.__class__.__name__
+
+            # Warn the user if the algorithm did not converge
+            if not opt_result.success:
+                warn('[{}] NCA did not converge: {}'.format(
+                    cls_name, opt_result.message),
+                     ConvergenceWarning)
+
+            print('[{}] Training took {:8.2f}s.'.format(cls_name, t_train))
 
         # Optionally store information returned by the optimizer
         if self.store_opt_result:
@@ -229,7 +261,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_embedded: array, shape (n_samples, n_features_out)
+        X_embedded: array, shape (n_samples, n_components)
             The data samples transformed.
 
         Raises
@@ -238,10 +270,10 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             If :meth:`fit` has not been called before.
         """
 
-        check_is_fitted(self, ['transformation_'])
+        check_is_fitted(self, ['components_'])
         X = check_array(X)
 
-        return np.dot(X, self.transformation_.T)
+        return np.dot(X, self.components_.T)
 
     def _validate_params(self, X, y):
         """Validate parameters as soon as :meth:`fit` is called.
@@ -282,15 +314,15 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         y_valid = LabelEncoder().fit_transform(y_valid)
 
         # Check the preferred embedding dimensionality
-        if self.n_features_out is not None:
-            _check_scalar(self.n_features_out, 'n_features_out',
+        if self.n_components is not None:
+            _check_scalar(self.n_components, 'n_components',
                           integer_types, 1)
 
-            if self.n_features_out > X.shape[1]:
+            if self.n_components > X.shape[1]:
                 raise ValueError('The preferred embedding dimensionality '
-                                 '`n_features_out` ({}) cannot be greater '
+                                 '`n_components` ({}) cannot be greater '
                                  'than the given data dimensionality ({})!'
-                                 .format(self.n_features_out, X.shape[1]))
+                                 .format(self.n_components, X.shape[1]))
 
         _check_scalar(self.max_iter, 'max_iter', integer_types, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
@@ -322,23 +354,21 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                     'greater than its input dimensionality ({}).'
                     .format(init.shape[0], init.shape[1]))
 
-            if self.n_features_out is not None:
-                # Assert that self.n_features_out = init.shape[0]
-                if self.n_features_out != init.shape[0]:
-                    raise ValueError(
-                        'The preferred embedding dimensionality '
-                        '`n_features_out` ({}) does not match '
-                        'the output dimensionality of the given '
-                        'linear transformation `init` ({})!'
-                        .format(self.n_features_out,
-                                init.shape[0]))
-
+            if self.n_components is not None:
+                # Assert that self.n_components = init.shape[0]
+                if self.n_components != init.shape[0]:
+                    raise ValueError('The preferred embedding dimensionality '
+                                     '`n_components` ({}) does not match '
+                                     'the output dimensionality of the given '
+                                     'linear transformation `init` ({})!'
+                                     .format(self.n_components,
+                                             init.shape[0]))
         elif init in ['pca', 'identity', 'random']:
             pass
         else:
             raise ValueError(
                 "`init` must be 'pca', 'identity', 'random' or a numpy "
-                "array of shape (n_features_out, n_features).")
+                "array of shape (n_components, n_features).")
 
         return X_valid, y_valid, init
 
@@ -348,14 +378,14 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Data samples.
+            The training samples.
 
         init : string or numpy array of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
         Returns
         -------
-        transformation : array, shape (n_features_out, n_features)
+        transformation : array, shape (n_components, n_features)
             The initialized linear transformation.
 
         """
@@ -365,14 +395,14 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         if isinstance(init, np.ndarray):
             pass
         else:
-            n_features_out = self.n_features_out or X.shape[1]
+            n_components = self.n_components or X.shape[1]
             if init == 'identity':
-                transformation = np.eye(n_features_out, X.shape[1])
+                transformation = np.eye(n_components, X.shape[1])
             elif init == 'random':
-                transformation = self.random_state_.randn(n_features_out,
+                transformation = self.random_state_.randn(n_components,
                                                           X.shape[1])
             elif init == 'pca':
-                pca = PCA(n_components=n_features_out,
+                pca = PCA(n_components=n_components,
                           random_state=self.random_state_)
                 t_pca = time.time()
                 if self.verbose:
@@ -391,7 +421,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        transformation : array, shape(n_features_out, n_features)
+        transformation : array, shape(n_components, n_features)
             The solution computed by the optimizer in this iteration.
         """
         if self.callback is not None:
@@ -404,7 +434,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        transformation : array, shape (n_features_out, n_features)
+        transformation : array, shape (n_components, n_features)
             The linear transformation on which to compute loss and evaluate
             gradient
 
@@ -420,7 +450,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         loss : float
             The loss computed for the given transformation.
 
-        gradient : array, shape (n_features_out * n_features,)
+        gradient : array, shape (n_components * n_features,)
             The new (flattened) gradient of the loss.
         """
 
@@ -438,7 +468,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         t_funcall = time.time()
 
         transformation = transformation.reshape(-1, X.shape[1])
-        X_embedded = np.dot(X, transformation.T)  # (n_samples, n_features_out)
+        X_embedded = np.dot(X, transformation.T)  # (n_samples, n_components)
 
         # Compute softmax distances
         p_ij = pairwise_distances(X_embedded, squared=True)
@@ -455,7 +485,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         weighted_p_ij = masked_p_ij - p_ij * p
         gradient = 2 * (X_embedded.T.dot(weighted_p_ij + weighted_p_ij.T) -
                         X_embedded.T * np.sum(weighted_p_ij, axis=0)).dot(X)
-        # time complexity: O(n_features_out x n_samples x
+        # time complexity: O(n_components x n_samples x
         # min(n_samples, n_features))
 
         if self.verbose:
