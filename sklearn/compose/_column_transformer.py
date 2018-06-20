@@ -55,8 +55,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         name : string
             Like in Pipeline and FeatureUnion, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
-            search. The name 'remainder' can not be used if the ``remainder``
-            parameter is an estimator.
+            search.
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
@@ -80,8 +79,7 @@ boolean mask array
         non-specified columns are dropped.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support
-        `fit` and `transform`.
+        estimator must support `fit` and `transform`.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -685,8 +683,7 @@ def make_column_transformer(*transformers, **kwargs):
         non-specified columns are dropped.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support
-        `fit` and `transform`.
+        estimator must support `fit` and `transform`.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
