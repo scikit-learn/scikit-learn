@@ -449,8 +449,10 @@ def _generate_sparse_matrix(X_csr):
              'coo_64', 'csc_64', 'csr_64']
     """
 
-    for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo']:
-        yield sparse_format, X_csr.asformat(sparse_format, copy=True)
+    assert X_csr.format == 'csr'
+    yield 'csr', X_csr.copy()
+    for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csc', 'coo']:
+        yield sparse_format, X_csr.asformat(sparse_format)
 
     if LARGE_SPARSE_SUPPORTED:
         # Generate large indices matrix only if its supported by scipy
