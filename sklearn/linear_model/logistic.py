@@ -1216,7 +1216,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         if self.solver not in ['sag', 'saga']:
             X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                             order="C", accept_large_sparse=True)
+                             order="C")
         else:
             X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                              order="C")
