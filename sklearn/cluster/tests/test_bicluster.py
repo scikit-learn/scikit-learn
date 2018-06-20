@@ -1,29 +1,24 @@
 """Testing for Spectral Biclustering methods"""
 
 import numpy as np
+import pytest
 from scipy.sparse import csr_matrix, issparse
 
-from sklearn.model_selection import ParameterGrid
-
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import SkipTest
-
 from sklearn.base import BaseEstimator, BiclusterMixin
-
-from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import SpectralBiclustering
-from sklearn.cluster.bicluster import _scale_normalize
+from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import _bistochastic_normalize
 from sklearn.cluster.bicluster import _log_normalize
-
-from sklearn.metrics import consensus_score
-
+from sklearn.cluster.bicluster import _scale_normalize
 from sklearn.datasets import make_biclusters, make_checkerboard
+from sklearn.metrics import consensus_score
+from sklearn.model_selection import ParameterGrid
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 
 class MockBiclustering(BaseEstimator, BiclusterMixin):
@@ -207,10 +202,10 @@ def test_project_and_cluster():
         assert_array_equal(labels, [0, 0, 1, 1])
 
 
+@pytest.mark.skip('This test is failing on the buildbot, but '
+                  'cannot reproduce. Temporarily disabling it until it '
+                  'can be reproduced and fixed.')
 def test_perfect_checkerboard():
-    raise SkipTest("This test is failing on the buildbot, but cannot"
-                   " reproduce. Temporarily disabling it until it can be"
-                   " reproduced and  fixed.")
     model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
 
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0,

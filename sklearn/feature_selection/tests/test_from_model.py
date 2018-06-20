@@ -1,22 +1,20 @@
 import numpy as np
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
+from sklearn import datasets
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SelectFromModel
+from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
+from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.svm import LinearSVC
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import skip_if_32bit
 
-from sklearn import datasets
-from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
-from sklearn.svm import LinearSVC
-from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target

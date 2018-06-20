@@ -9,23 +9,21 @@ import sys
 import warnings
 
 import numpy as np
-
 from numpy.testing import assert_almost_equal, assert_array_equal
+from scipy.sparse import csr_matrix
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from scipy.sparse import csr_matrix
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
                                    assert_false, ignore_warnings)
-from sklearn.utils.testing import assert_raise_message
-
 
 np.seterr(all='warn')
 
@@ -331,8 +329,6 @@ def test_partial_fit_classification():
     # `partial_fit` should yield the same results as 'fit' for binary and
     # multi-class classification.
     for X, y in classification_datasets:
-        X = X
-        y = y
         mlp = MLPClassifier(solver='sgd', max_iter=100, random_state=1,
                             tol=0, alpha=1e-5, learning_rate_init=0.2)
 

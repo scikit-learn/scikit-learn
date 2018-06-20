@@ -1,56 +1,50 @@
 from types import GeneratorType
 
 import numpy as np
+import pytest
 from numpy import linalg
-
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
-import pytest
-
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.exceptions import DataConversionWarning
+from sklearn.externals.six import iteritems
+from sklearn.metrics.pairwise import PAIRED_DISTANCES
+from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
+from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
+from sklearn.metrics.pairwise import check_paired_arrays
+from sklearn.metrics.pairwise import check_pairwise_arrays
+from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
+from sklearn.metrics.pairwise import cosine_distances
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import laplacian_kernel
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.metrics.pairwise import paired_distances
+from sklearn.metrics.pairwise import paired_euclidean_distances
+from sklearn.metrics.pairwise import paired_manhattan_distances
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.metrics.pairwise import pairwise_distances_argmin_min
+from sklearn.metrics.pairwise import pairwise_distances_chunked
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.metrics.pairwise import polynomial_kernel
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import sigmoid_kernel
+from sklearn.preprocessing import normalize
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-
-from sklearn.externals.six import iteritems
-
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import manhattan_distances
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
-from sklearn.metrics.pairwise import polynomial_kernel
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics.pairwise import laplacian_kernel
-from sklearn.metrics.pairwise import sigmoid_kernel
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics.pairwise import cosine_distances
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import pairwise_distances_chunked
-from sklearn.metrics.pairwise import pairwise_distances_argmin_min
-from sklearn.metrics.pairwise import pairwise_distances_argmin
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRED_DISTANCES
-from sklearn.metrics.pairwise import check_pairwise_arrays
-from sklearn.metrics.pairwise import check_paired_arrays
-from sklearn.metrics.pairwise import paired_distances
-from sklearn.metrics.pairwise import paired_euclidean_distances
-from sklearn.metrics.pairwise import paired_manhattan_distances
-from sklearn.preprocessing import normalize
-from sklearn.exceptions import DataConversionWarning
-
-import pytest
+from sklearn.utils.testing import ignore_warnings
 
 
 def test_pairwise_distances():

@@ -1,34 +1,31 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import pickle
+
 import numpy as np
 import scipy.sparse as sp
 
 import sklearn
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.testing import ignore_warnings
-
+from sklearn import datasets
 from sklearn.base import BaseEstimator, clone, is_classifier
-from sklearn.svm import SVC
-from sklearn.pipeline import Pipeline
+from sklearn.base import TransformerMixin
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn import datasets
-from sklearn.utils import deprecated
-
-from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
-import pickle
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 
 #############################################################################
