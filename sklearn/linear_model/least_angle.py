@@ -847,6 +847,10 @@ class LassoLars(Lars):
         self.eps = eps
         self.fit_path = fit_path
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 ###############################################################################
 # Cross-validated estimator classes
@@ -1087,6 +1091,10 @@ class LarsCV(Lars):
                                      eps=eps, copy_X=copy_X, fit_path=True,
                                      positive=positive)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1322,6 +1330,10 @@ class LassoLarsCV(LarsCV):
         # XXX : we don't use super(LarsCV, self).__init__
         # to avoid setting n_nonzero_coefs
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class LassoLarsIC(LassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
@@ -1453,6 +1465,10 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
     def fit(self, X, y, copy_X=True):
         """Fit the model using X, y as training data.

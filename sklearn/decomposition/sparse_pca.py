@@ -98,6 +98,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -264,6 +268,10 @@ class MiniBatchSparsePCA(SparsePCA):
         self.callback = callback
         self.batch_size = batch_size
         self.shuffle = shuffle
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_iter=5)
 
     def fit(self, X, y=None):
         """Fit the model from data in X.

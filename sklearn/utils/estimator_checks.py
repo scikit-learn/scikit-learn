@@ -319,61 +319,6 @@ def _boston_subset(n_samples=200):
     return BOSTON
 
 
-def set_checking_parameters(estimator):
-    # set parameters to speed up some estimators and
-    # avoid deprecated behaviour
-    params = estimator.get_params()
-    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"
-            and not isinstance(estimator, BaseSGD)):
-        estimator.set_params(n_iter=5)
-    if "max_iter" in params:
-        if estimator.max_iter is not None:
-            estimator.set_params(max_iter=min(5, estimator.max_iter))
-        # LinearSVR, LinearSVC
-        if estimator.__class__.__name__ in ['LinearSVR', 'LinearSVC']:
-            estimator.set_params(max_iter=20)
-        # NMF
-        if estimator.__class__.__name__ == 'NMF':
-            estimator.set_params(max_iter=100)
-        # MLP
-        if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
-            estimator.set_params(max_iter=100)
-    if "n_resampling" in params:
-        # randomized lasso
-        estimator.set_params(n_resampling=5)
-    if "n_estimators" in params:
-        # especially gradient boosting with default 100
-        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
-    if "max_trials" in params:
-        # RANSAC
-        estimator.set_params(max_trials=10)
-    if "n_init" in params:
-        # K-Means
-        estimator.set_params(n_init=2)
-    if "decision_function_shape" in params:
-        # SVC
-        estimator.set_params(decision_function_shape='ovo')
-
-    if estimator.__class__.__name__ == "SelectFdr":
-        # be tolerant of noisy datasets (not actually speed)
-        estimator.set_params(alpha=.5)
-
-    if estimator.__class__.__name__ == "TheilSenRegressor":
-        estimator.max_subpopulation = 100
-
-    if isinstance(estimator, BaseRandomProjection):
-        # Due to the jl lemma and often very few samples, the number
-        # of components of the random matrix projection will be probably
-        # greater than the number of features.
-        # So we impose a smaller number (avoid "auto" mode)
-        estimator.set_params(n_components=2)
-
-    if isinstance(estimator, SelectKBest):
-        # SelectKBest has a default of k=10
-        # which is more feature than we have in most case.
-        estimator.set_params(k=1)
-
-
 class NotAnArray(object):
     " An object that is convertable to an array"
 

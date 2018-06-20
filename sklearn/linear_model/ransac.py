@@ -223,6 +223,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.random_state = random_state
         self.loss = loss
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_trials=5)
+
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 

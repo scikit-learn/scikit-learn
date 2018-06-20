@@ -595,6 +595,10 @@ class PLSRegression(_PLS):
             norm_y_weights=False, max_iter=max_iter, tol=tol,
             copy=copy)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class PLSCanonical(_PLS):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
@@ -740,6 +744,10 @@ class PLSCanonical(_PLS):
             deflation_mode="canonical", mode="A",
             norm_y_weights=True, algorithm=algorithm,
             max_iter=max_iter, tol=tol, copy=copy)
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
 
 class PLSSVD(BaseEstimator, TransformerMixin):

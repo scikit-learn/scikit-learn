@@ -328,6 +328,10 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         self.preference = preference
         self.affinity = affinity
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"

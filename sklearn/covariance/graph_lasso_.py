@@ -342,6 +342,10 @@ class GraphicalLasso(EmpiricalCovariance):
         self.max_iter = max_iter
         self.verbose = verbose
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def fit(self, X, y=None):
         """Fits the GraphicalLasso model to X.
 
@@ -573,6 +577,10 @@ class GraphicalLassoCV(GraphicalLasso):
         self.n_refinements = n_refinements
         self.cv = cv
         self.n_jobs = n_jobs
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
     @property
     @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
@@ -861,6 +869,10 @@ class GraphLasso(GraphicalLasso):
     graph_lasso, GraphLassoCV
     """
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
             "in version 0.20 and will be removed in 0.22.")
@@ -965,3 +977,7 @@ class GraphLassoCV(GraphicalLassoCV):
     values of alpha then come out as missing values, but the optimum may
     be close to these missing values.
     """
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)

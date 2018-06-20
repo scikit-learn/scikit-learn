@@ -1203,6 +1203,10 @@ class NMF(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.shuffle = shuffle
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=100)
+
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 

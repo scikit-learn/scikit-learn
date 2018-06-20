@@ -596,6 +596,10 @@ class GaussianMixture(BaseMixture):
         self.means_init = means_init
         self.precisions_init = precisions_init
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape

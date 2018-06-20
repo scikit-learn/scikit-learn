@@ -188,6 +188,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=20)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -371,6 +375,10 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.max_iter = max_iter
         self.dual = dual
         self.loss = loss
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=20)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -594,6 +602,10 @@ class SVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             random_state=random_state)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
@@ -755,6 +767,10 @@ class NuSVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             random_state=random_state)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5, decision_function_shape='ovo')
+
 
 class SVR(BaseLibSVM, RegressorMixin):
     """Epsilon-Support Vector Regression.
@@ -878,6 +894,10 @@ class SVR(BaseLibSVM, RegressorMixin):
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5, decision_function_shape='ovo')
+
 
 class NuSVR(BaseLibSVM, RegressorMixin):
     """Nu Support Vector Regression.
@@ -999,6 +1019,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class OneClassSVM(BaseLibSVM, OutlierMixin):
     """Unsupervised Outlier Detection.
@@ -1105,6 +1129,10 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
             kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """

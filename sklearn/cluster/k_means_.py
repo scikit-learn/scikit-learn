@@ -918,6 +918,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.n_jobs = n_jobs
         self.algorithm = algorithm
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5, n_init=2)
+
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
@@ -1423,6 +1427,10 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5, n_init=2)
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.

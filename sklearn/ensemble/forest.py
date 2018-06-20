@@ -1014,6 +1014,10 @@ class RandomForestClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_estimators=5)
+
 
 class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
@@ -1251,6 +1255,10 @@ class RandomForestRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_estimators=5)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1497,6 +1505,10 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_estimators=5)
+
 
 class ExtraTreesRegressor(ForestRegressor):
     """An extra-trees regressor.
@@ -1707,6 +1719,10 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_estimators=5)
+
 
 class RandomTreesEmbedding(BaseForest):
     """An ensemble of totally random trees.
@@ -1871,6 +1887,10 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_estimators=5)
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")

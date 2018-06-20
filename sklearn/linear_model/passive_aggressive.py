@@ -164,6 +164,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self.C = C
         self.loss = loss
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def partial_fit(self, X, y, classes=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -371,6 +375,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             n_iter=n_iter)
         self.C = C
         self.loss = loss
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
     def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.

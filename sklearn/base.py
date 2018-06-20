@@ -301,6 +301,20 @@ class BaseEstimator(object):
         except AttributeError:
             self.__dict__.update(state)
 
+    @classmethod
+    def _get_test_instances(cls):
+        """Generates instances of this estimator to run check_estimator on
+
+        To be overridden where parameters are required or specific settings are
+        helpful for testing.
+
+        Yields
+        ------
+        obj : instance of cls
+            Should yield at least one
+        """
+        yield cls()
+
 
 ###############################################################################
 class ClassifierMixin(object):

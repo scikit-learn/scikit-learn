@@ -365,6 +365,10 @@ class MDS(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5, n_init=2)
+
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"

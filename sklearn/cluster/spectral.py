@@ -424,6 +424,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.kernel_params = kernel_params
         self.n_jobs = n_jobs
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(n_init=2)
+
     def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.

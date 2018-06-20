@@ -477,6 +477,14 @@ class GaussianRandomProjection(BaseRandomProjection):
             dense_output=True,
             random_state=random_state)
 
+    @classmethod
+    def _get_test_instances(cls):
+        # Due to the jl lemma and often very few samples, the number
+        # of components of the random matrix projection will be probably
+        # greater than the number of features.
+        # So we impose a smaller number (avoid "auto" mode)
+        yield cls(n_components=2)
+
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix
 
@@ -601,6 +609,14 @@ class SparseRandomProjection(BaseRandomProjection):
             random_state=random_state)
 
         self.density = density
+
+    @classmethod
+    def _get_test_instances(cls):
+        # Due to the jl lemma and often very few samples, the number
+        # of components of the random matrix projection will be probably
+        # greater than the number of features.
+        # So we impose a smaller number (avoid "auto" mode)
+        yield cls(n_components=2)
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix

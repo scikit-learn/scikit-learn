@@ -666,6 +666,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
 
@@ -937,6 +941,10 @@ class Lasso(ElasticNet):
             positive=positive, random_state=random_state,
             selection=selection)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 ###############################################################################
 # Functions for CV with paths functions
@@ -1069,6 +1077,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1390,6 +1402,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection)
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
     """Elastic Net model with iterative fitting along a regularization path
@@ -1592,6 +1608,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
 
 ###############################################################################
@@ -1796,6 +1816,10 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class MultiTaskLasso(MultiTaskElasticNet):
     r"""Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
@@ -1914,6 +1938,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.l1_ratio = 1.0
         self.random_state = random_state
         self.selection = selection
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
@@ -2096,6 +2124,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     r"""Multi-task L1/L2 Lasso with built-in cross-validation.
@@ -2233,3 +2265,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)

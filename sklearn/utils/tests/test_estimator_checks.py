@@ -13,7 +13,6 @@ from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
-from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
@@ -276,8 +275,7 @@ def test_check_estimator_clones():
                       MiniBatchKMeans]:
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
-            est = Estimator()
-        set_checking_parameters(est)
+            est = next(Estimator._get_test_instances())
         set_random_state(est)
         # without fitting
         old_hash = joblib.hash(est)
@@ -286,8 +284,7 @@ def test_check_estimator_clones():
 
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
-            est = Estimator()
-        set_checking_parameters(est)
+            est = next(Estimator._get_test_instances())
         set_random_state(est)
         # with fitting
         est.fit(iris.data + 10, iris.target)

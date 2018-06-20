@@ -285,6 +285,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.n_topics = n_topics
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5)
+
     def _check_params(self):
         """Check model parameters."""
         if self.n_topics is not None:

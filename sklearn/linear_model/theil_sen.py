@@ -294,6 +294,10 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @classmethod
+    def _get_test_instances(cls):
+        yield cls(max_iter=5, max_subpopulation=100)
+
     def _check_subparams(self, n_samples, n_features):
         n_subsamples = self.n_subsamples
 
