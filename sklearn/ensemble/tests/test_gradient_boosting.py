@@ -12,7 +12,7 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, fetch_california_housing
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -453,28 +453,27 @@ def test_max_feature_regression():
 
 
 def test_feature_importance_regression():
-    # Test to make sure Gini importance is calculated correctly
-    # Make sure that results are summed, then normalized to avoid
-    # over-weighting features from later stages
-    boston = datasets.load_boston()
-    X, y = boston.data, boston.target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True,
-                                                        random_state=1)
+    """Test that Gini importance is calculated correctly
 
-    clf = GradientBoostingRegressor(n_estimators=500, min_samples_split=2,
-                                    max_depth=4, learning_rate=0.01, loss='ls',
-                                    random_state=1)
-    clf.fit(X_train, y_train)
+    This test is follows an example from [1] (pg. 373).
 
-    feature_importance = clf.feature_importances_
-    feature_importance = 100.0 * (feature_importance /
-                                  feature_importance.max())
-    sorted_idx = np.argsort(feature_importance)
+    [1]: Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements of
+    statistical learning. New York: Springer series in statistics.
+    """
+    california = fetch_california_housing()
+    X, y = california.data, california.target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    ordered_features = ['ZN', 'CHAS', 'RAD', 'INDUS', 'B', 'TAX', 'AGE',
-                        'CRIM', 'NOX', 'PTRATIO', 'DIS', 'RM', 'LSTAT']
+    # Gradient boosting
+    reg = GradientBoostingRegressor(loss='huber', learning_rate=0.1,
+                                    max_leaf_nodes=6, n_estimators=200,
+                                    random_state=0)
+    reg.fit(X_train, y_train)
+    sorted_idx = np.argsort(reg.feature_importances_)[::-1]
+    feature_names_sorted = [california.feature_names[s] for s in sorted_idx]
 
-    assert boston.feature_names[sorted_idx].tolist() == ordered_features
+    assert feature_names_sorted[:4] == ['MedInc', 'Longitude',
+                                        'AveOccup', 'Latitude']
 
 
 def test_max_feature_auto():
