@@ -381,8 +381,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
-        accept_sparse, accept_large_sparse will cause it to be accepted only
-        if its indices are stored with a 32-bit dtype.
+        accept_sparse, accept_large_sparse=False will cause it to be accepted
+        only if its indices are stored with a 32-bit dtype.
 
         .. versionadded:: 0.20
 
