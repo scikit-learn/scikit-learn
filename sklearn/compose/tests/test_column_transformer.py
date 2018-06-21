@@ -8,6 +8,10 @@ import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 
@@ -211,7 +215,7 @@ def test_column_transformer_dataframe():
             return self
 
         def transform(self, X, y=None):
-            assert isinstance(X, (pd.DataFrame, pd.Series))
+            assert_true(isinstance(X, (pd.DataFrame, pd.Series)))
             if isinstance(X, pd.Series):
                 X = X.to_frame()
             return X
@@ -245,14 +249,14 @@ def test_column_transformer_sparse_array():
                                ('passthrough', X_res_both)]:
             ct = ColumnTransformer([('trans', Trans(), col)],
                                    remainder=remainder)
-            assert sparse.issparse(ct.fit_transform(X_sparse))
+            assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
             assert_allclose_dense_sparse(ct.fit_transform(X_sparse), res)
             assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
                                          res)
 
     for col in [[0, 1], slice(0, 2)]:
         ct = ColumnTransformer([('trans', Trans(), col)])
-        assert sparse.issparse(ct.fit_transform(X_sparse))
+        assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
         assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
         assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
                                      X_res_both)
@@ -264,8 +268,8 @@ def test_column_transformer_sparse_stacking():
                                    ('trans2', SparseMatrixTrans(), 1)])
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
-    assert sparse.issparse(X_trans)
-    assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
+    assert_true(sparse.issparse(X_trans))
+    assert_equal(X_trans.shape, (X_trans.shape[0], X_trans.shape[0] + 1))
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
     assert len(col_trans.transformers_) == 2
     assert col_trans.transformers_[-1][0] != 'remainder'
@@ -350,9 +354,9 @@ def test_make_column_transformer():
     norm = Normalizer()
     ct = make_column_transformer(('first', scaler), (['second'], norm))
     names, transformers, columns = zip(*ct.transformers)
-    assert names == ("standardscaler", "normalizer")
-    assert transformers == (scaler, norm)
-    assert columns == ('first', ['second'])
+    assert_equal(names, ("standardscaler", "normalizer"))
+    assert_equal(transformers, (scaler, norm))
+    assert_equal(columns, ('first', ['second']))
 
 
 def test_make_column_transformer_kwargs():
@@ -360,10 +364,10 @@ def test_make_column_transformer_kwargs():
     norm = Normalizer()
     ct = make_column_transformer(('first', scaler), (['second'], norm),
                                  n_jobs=3, remainder='drop')
-    assert (ct.transformers == make_column_transformer(
+    assert_equal(ct.transformers, make_column_transformer(
         ('first', scaler), (['second'], norm)).transformers)
-    assert ct.n_jobs == 3
-    assert ct.remainder == 'drop'
+    assert_equal(ct.n_jobs, 3)
+    assert_equal(ct.remainder, 'drop')
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
@@ -399,10 +403,10 @@ def test_column_transformer_get_set_params():
            'transformers': ct.transformers,
            'transformer_weights': None}
 
-    assert ct.get_params() == exp
+    assert_dict_equal(ct.get_params(), exp)
 
     ct.set_params(trans1__with_mean=False)
-    assert not ct.get_params()['trans1__with_mean']
+    assert_false(ct.get_params()['trans1__with_mean'])
 
     ct.set_params(trans1='passthrough')
     exp = {'n_jobs': 1,
@@ -415,23 +419,23 @@ def test_column_transformer_get_set_params():
            'transformers': ct.transformers,
            'transformer_weights': None}
 
-    assert ct.get_params() == exp
+    assert_dict_equal(ct.get_params(), exp)
 
 
 def test_column_transformer_named_estimators():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
                             ('trans2', StandardScaler(with_std=False), [1])])
-    assert not hasattr(ct, 'transformers_')
+    assert_false(hasattr(ct, 'transformers_'))
     ct.fit(X_array)
-    assert hasattr(ct, 'transformers_')
-    assert isinstance(ct.named_transformers_['trans1'], StandardScaler)
-    assert isinstance(ct.named_transformers_.trans1, StandardScaler)
-    assert isinstance(ct.named_transformers_['trans2'], StandardScaler)
-    assert isinstance(ct.named_transformers_.trans2, StandardScaler)
-    assert not ct.named_transformers_.trans2.with_std
+    assert_true(hasattr(ct, 'transformers_'))
+    assert_true(isinstance(ct.named_transformers_['trans1'], StandardScaler))
+    assert_true(isinstance(ct.named_transformers_.trans1, StandardScaler))
+    assert_true(isinstance(ct.named_transformers_['trans2'], StandardScaler))
+    assert_true(isinstance(ct.named_transformers_.trans2, StandardScaler))
+    assert_false(ct.named_transformers_.trans2.with_std)
     # check it are fitted transformers
-    assert ct.named_transformers_.trans1.mean_ == 1.
+    assert_equal(ct.named_transformers_.trans1.mean_, 1.)
 
 
 def test_column_transformer_cloning():
@@ -439,13 +443,13 @@ def test_column_transformer_cloning():
 
     ct = ColumnTransformer([('trans', StandardScaler(), [0])])
     ct.fit(X_array)
-    assert not hasattr(ct.transformers[0][1], 'mean_')
-    assert hasattr(ct.transformers_[0][1], 'mean_')
+    assert_false(hasattr(ct.transformers[0][1], 'mean_'))
+    assert_true(hasattr(ct.transformers_[0][1], 'mean_'))
 
     ct = ColumnTransformer([('trans', StandardScaler(), [0])])
     ct.fit_transform(X_array)
-    assert not hasattr(ct.transformers[0][1], 'mean_')
-    assert hasattr(ct.transformers_[0][1], 'mean_')
+    assert_false(hasattr(ct.transformers[0][1], 'mean_'))
+    assert_true(hasattr(ct.transformers_[0][1], 'mean_'))
 
 
 def test_column_transformer_get_feature_names():
@@ -465,7 +469,7 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer(
         [('col' + str(i), DictVectorizer(), i) for i in range(2)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
+    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1__c'])
 
     # passthrough transformers not supported
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
@@ -484,7 +488,7 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
-    assert ct.get_feature_names() == ['col0__a', 'col0__b']
+    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b'])
 
 
 def test_column_transformer_special_strings():
