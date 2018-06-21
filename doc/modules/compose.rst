@@ -423,7 +423,7 @@ We can ignore the remaining rating columns by setting ``remainder='drop'``::
   ...      remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
+  ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
       transformers=...)
 
   >>> column_trans.get_feature_names()
@@ -470,7 +470,7 @@ transformation::
 
 The ``remainder`` parameter can be set to an estimator to transform the
 remaining rating columns. The transformed values are appended to the end of
-transformation::
+the transformation::
 
   >>> from sklearn.preprocessing import MinMaxScaler
   >>> column_trans = ColumnTransformer(

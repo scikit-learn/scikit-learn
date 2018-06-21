@@ -94,8 +94,8 @@ boolean mask array
     transformers_ : list
         The collection of fitted transformers as tuples of
         (name, fitted_transformer, column). `fitted_transformer` can be an
-        estimator or 'drop'. If there are remaining columns, the final
-        element is a tuple of the form:
+        estimator, 'drop', or 'passthrough'. If there are remaining columns,
+        the final element is a tuple of the form:
         ('remainder', transformer, remaining_columns) corresponding to the
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformers)+1``, otherwise
@@ -237,7 +237,10 @@ boolean mask array
                                 (t, type(t)))
 
     def _validate_remainder(self, X):
-        """Generate list of passthrough columns for 'remainder' case."""
+        """
+        Validates ``remainder`` and defines ``_remainder`` targeting
+        the remaining columns.
+        """
         is_transformer = ((hasattr(self.remainder, "fit")
                            or hasattr(self.remainder, "fit_transform"))
                           and hasattr(self.remainder, "transform"))
