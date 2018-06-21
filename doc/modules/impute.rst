@@ -16,6 +16,7 @@ values. However, this comes at the price of losing data which may be valuable
 i.e., to infer them from the known part of the data. See the :ref:`glossary`
 entry on imputation.
 
+
 Univariate vs. Multivariate Imputation
 ======================================
 
@@ -25,15 +26,17 @@ feature dimension using only non-missing values in that feature dimension
 algorithms use the entire set of available feature dimensions to estimate the
 missing values (e.g. :class:`impute.ChainedImputer`).
 
+
 .. _single_imputer:
 
 Univariate feature imputation
 =============================
 
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
-values, either using the mean, the median or the most frequent value of
-the row or column in which the missing values are located. This class
-also allows for different missing values encodings.
+values. Missing values can be imputed with a provided constant value, or using
+the statistics (mean, median or most frequent) of each column in which the
+missing values are located. This class also allows for different missing values
+encodings.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
@@ -41,9 +44,9 @@ that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.impute import SimpleImputer
-    >>> imp = SimpleImputer(missing_values='NaN', strategy='mean')
+    >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])       # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, missing_values='NaN', strategy='mean', verbose=0)
+    SimpleImputer(copy=True, fill_value=None, missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
@@ -56,7 +59,7 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
     >>> imp = SimpleImputer(missing_values=0, strategy='mean')
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, missing_values=0, strategy='mean', verbose=0)
+    SimpleImputer(copy=True, fill_value=None, missing_values=0, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))      # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
@@ -67,7 +70,25 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
+The :class:`SimpleImputer` class also supports categorical data represented as
+string values or pandas categoricals when using the ``'most_frequent'`` or
+``'constant'`` strategy::
+
+    >>> import pandas as pd
+    >>> df = pd.DataFrame([["a", "x"],
+    ...                    [np.nan, "y"],
+    ...                    ["a", np.nan],
+    ...                    ["b", "y"]], dtype="category")
+    ...
+    >>> imp = SimpleImputer(strategy="most_frequent")
+    >>> print(imp.fit_transform(df))      # doctest: +NORMALIZE_WHITESPACE
+    [['a' 'x']
+     ['a' 'y']
+     ['a' 'y']
+     ['b' 'y']]
+
 .. _chained_imputer:
+
 
 Multivariate feature imputation
 ===============================
@@ -99,6 +120,7 @@ rounds. Here is an example snippet::
 Both :class:`SimpleImputer` and :class:`ChainedImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+
 
 .. _multiple_imputation:
 

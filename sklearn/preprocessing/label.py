@@ -77,7 +77,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.CategoricalEncoder : encode categorical features
+    sklearn.preprocessing.OrdinalEncoder : encode categorical features
         using a one-hot or ordinal encoding scheme.
     """
 
@@ -251,7 +251,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     --------
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
-    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+    sklearn.preprocessing.OneHotEncoder : encode categorical features
         using a one-hot aka one-of-K scheme.
     """
 
@@ -682,7 +682,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+    sklearn.preprocessing.OneHotEncoder : encode categorical features
         using a one-hot aka one-of-K scheme.
     """
 

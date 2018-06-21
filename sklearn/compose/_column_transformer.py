@@ -290,22 +290,25 @@ boolean mask array
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
+        # transformers are fitted; excludes 'drop' cases
         transformers = iter(transformers)
         transformers_ = []
 
         for name, old, column in self.transformers:
             if old == 'drop':
-                trans = old
+                trans = 'drop'
             elif old == 'passthrough':
                 # FunctionTransformer is present in list of transformers,
                 # so get next transformer, but save original string
                 next(transformers)
-                trans = old
+                trans = 'passthrough'
             else:
                 trans = next(transformers)
 
             transformers_.append((name, trans, column))
 
+        # sanity check that transformers is exhausted
+        assert not list(transformers)
         self.transformers_ = transformers_
 
     def _validate_output(self, result):
@@ -633,19 +636,19 @@ def make_column_transformer(*transformers, **kwargs):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import StandardScaler, CategoricalEncoder
+    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
     ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], CategoricalEncoder()))
+    ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=1, remainder='passthrough',
              transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
-                           ('categoricalencoder',
-                            CategoricalEncoder(...),
+                           ('onehotencoder',
+                            OneHotEncoder(...),
                             ['categorical_column'])])
 
     """

@@ -456,9 +456,8 @@ refer to:
   for reading WAV files into a numpy array
 
 Categorical (or nominal) features stored as strings (common in pandas DataFrames) 
-will need converting to integers, and integer categorical variables may be best 
-exploited when encoded as one-hot variables 
-(:class:`sklearn.preprocessing.OneHotEncoder`) or similar. 
+will need converting to numerical features using :class:`sklearn.preprocessing.OneHotEncoder`
+or :class:`sklearn.preprocessing.OrdinalEncoder` or similar.
 See :ref:`preprocessing`.
 
 Note: if you manage your own numerical data it is recommended to use an 
