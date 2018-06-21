@@ -635,6 +635,20 @@ def test_column_transformer_remainder_transformer(key):
     assert len(ct.transformers_) == 2
 
 
+def test_column_transformer_no_remaining_remainder_transformer():
+    X_array = np.array([[0, 1, 2],
+                        [2, 4, 6],
+                        [8, 6, 4]]).T
+
+    ct = ColumnTransformer([('trans1', Trans(), [0, 1, 2])],
+                           remainder=DoubleTrans())
+
+    assert_array_equal(ct.fit_transform(X_array), X_array)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_array)
+    assert len(ct.transformers_) == 1
+    assert ct.transformers_[-1][0] != 'remainder'
+
+
 def test_column_transformer_drops_all_remainder_transformer():
     X_array = np.array([[0, 1, 2],
                         [2, 4, 6],
