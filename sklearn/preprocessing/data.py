@@ -1137,9 +1137,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Center and scale the data.
 
-        Can be called on sparse input, provided that ``RobustScaler`` has been
-        fitted to dense input and ``with_centering=False``.
-
         Parameters
         ----------
         X : {array-like, sparse matrix}
