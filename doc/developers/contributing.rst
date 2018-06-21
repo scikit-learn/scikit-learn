@@ -62,6 +62,26 @@ link to it from your website, or simply star to say "I use it":
    scikit-learn/scikit-learn on GitHub">Star</a>
    <script async defer src="https://buttons.github.io/buttons.js"></script>
 
+.. topic:: Contributing to related projects
+
+   Scikit-learn thrives in an ecosystem of several related projects, which also
+   may have relevant issues to work on, including smaller projects such as:
+
+   * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22help+wanted%22&type=Issues>`__
+   * `joblib <https://github.com/joblib/joblib/labels/help%20wanted>`__
+   * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/labels/help%20wanted>`__
+   * `numpydoc <https://github.com/numpy/numpydoc/labels/help%20wanted>`__
+
+   and larger projects:
+
+   * `numpy <https://github.com/numpy/numpy/labels/help%20wanted>`__
+   * `scipy <https://github.com/scipy/scipy/labels/help%20wanted>`__
+   * `matplotlib <https://github.com/matplotlib/matplotlib/labels/help%20wanted>`__
+   * and so on.
+
+   See also :ref:`related_projects`.
+
+
 Submitting a bug report or a feature request
 ============================================
 
