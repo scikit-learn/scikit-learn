@@ -40,8 +40,16 @@ distributed data sets:
   so one can trust our implementation by comparing to this case.
 
 
-.. [1] P. J. Rousseeuw. Least median of squares regression. Journal of
-   American Statistical Ass., 79:871, 1984.
+References
+----------
+.. [1] P. J. Rousseeuw. Least median of squares regression. Journal of American
+    Statistical Ass., 79:871, 1984.
+.. [2] Johanna Hardin, David M Rocke. The distribution of robust distances.
+    Journal of Computational and Graphical Statistics. December 1, 2005,
+    14(4): 928-946.
+.. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
+    estimation in signal processing: A tutorial-style treatment of
+    fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
 
 """
 print(__doc__)
