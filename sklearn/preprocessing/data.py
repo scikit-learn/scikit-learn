@@ -2903,8 +2903,7 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
 
 
 class Winsorizer(BaseEstimator, TransformerMixin):
-    """Transforms each feature by clipping from below at the pth quantile
-    and from above by the (1-p)th quantile.
+    """Clips each feature at the pth quantile from above and below.
 
     Parameters
     ----------
@@ -2927,22 +2926,22 @@ class Winsorizer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-	>>> import numpy as np
-	>>> from sklearn.preprocessing import Winsorizer
-	>>> winsorizer = Winsorizer(0.2)
-	>>> X = np.arange(22.).reshape(11,2)
-	>>> winsorizer.fit_transform(X)
-	array([[ 4.,  5.],
-	       [ 4.,  5.],
-	       [ 4.,  5.],
-	       [ 6.,  7.],
-	       [ 8.,  9.],
-	       [10., 11.],
-	       [12., 13.],
-	       [14., 15.],
-	       [16., 17.],
-	       [16., 17.],
-	       [16., 17.]])
+        >>> import numpy as np
+        >>> from sklearn.preprocessing import Winsorizer
+        >>> winsorizer = Winsorizer(0.2)
+        >>> X = np.arange(22.).reshape(11,2)
+        >>> winsorizer.fit_transform(X)
+        array([[ 4.,  5.],
+               [ 4.,  5.],
+               [ 4.,  5.],
+               [ 6.,  7.],
+               [ 8.,  9.],
+               [10., 11.],
+               [12., 13.],
+               [14., 15.],
+               [16., 17.],
+               [16., 17.],
+               [16., 17.]])
     """
 
     def __init__(self, quantile=0.05, copy=True):
