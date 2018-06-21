@@ -7,10 +7,32 @@
 Version 0.20 (under development)
 ================================
 
-As well as a plethora of new features and enhancements, this release is the
-first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
-glossary is a reference resource to help users and contributors become familiar
-with the terminology and conventions used in Scikit-learn.
+This release packs in a mountain of bug fixes, features and enhancements for
+the Scikit-learn library, and improvements to the documentation and examples.
+Thanks to our many contributors!
+
+Highlights
+----------
+
+We have tried to improve our support for common data-science use-cases
+including missing values, categorical variables, heterogeneous data, and
+features/targets with unusual distributions.
+
+Missing values in features, represented by NaNs, are now accepted in
+column-wise preprocessing such as scalers.  Each feature is fitted disregarding
+NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
+module provides estimators for learning despite missing data.
+
+:class:`~compose.ColumnTransformer` handles the case where different features
+or columns of a pandas.DataFrame need different preprocessing.
+String or pandas Categorical columns can now be encoded with
+:class:`~preprocessing.OneHotEncoder` or
+:class:`~preprocessing.OrdinalEncoder`.
+
+This release is also the first to be accompanied by a :ref:`glossary` developed
+by `Joel Nothman`_. The glossary is a reference resource to help users and
+contributors become familiar with the terminology and conventions used in
+Scikit-learn.
 
 Changed models
 --------------
@@ -254,8 +276,8 @@ Model evaluation and meta-estimators
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
-  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
-  <bellet>`.
+  return estimators fitted on each split.
+  :issue:`9686` by :user:`Aurélien Bellet <bellet>`.
 
 - New ``refit_time_`` attribute will be stored in
   :class:`model_selection.GridSearchCV` and
@@ -273,13 +295,15 @@ Decomposition and manifold learning
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
-  ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
+  ``{0, 1}`` or ``{-1, 1}``.
+  :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-- :func:`metrics.label_ranking_average_precision_score` now supports vector ``sample_weight``.
+- :func:`metrics.label_ranking_average_precision_score` now supports vector
+  ``sample_weight``.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
 
-- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
-  False and both inputs are sparse, will return a sparse matrix.
+- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`.
+  When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
 - :func:`metrics.cluster.silhouette_score` and
