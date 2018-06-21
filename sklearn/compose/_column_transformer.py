@@ -171,14 +171,7 @@ boolean mask array
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        params = dict()
-        params.update(self._get_params('_transformers', deep=deep))
-
-        if hasattr(self.remainder, 'get_params'):
-            for key, value in six.iteritems(
-                    self.remainder.get_params(deep=deep)):
-                params['remainder__%s' % key] = value
-        return params
+        return self._get_params('_transformers', deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
