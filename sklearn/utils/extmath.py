@@ -642,8 +642,7 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
-                              last_sample_count=0):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     last_mean and last_variance are statistics computed at the last step by the
