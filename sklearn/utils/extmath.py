@@ -647,8 +647,7 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
-                              last_sample_count=0):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     last_mean and last_variance are statistics computed at the last step by the
@@ -669,7 +668,7 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
 
     last_variance : array-like, shape: (n_features,)
 
-    last_sample_count : int
+    last_sample_count : array-like, shape (n_features,)
 
     Returns
     -------
@@ -678,7 +677,11 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     updated_variance : array, shape (n_features,)
         If None, only mean is computed
 
-    updated_sample_count : int
+    updated_sample_count : array, shape (n_features,)
+
+    Notes
+    -----
+    NaNs are ignored during the algorithm.
 
     References
     ----------
@@ -694,9 +697,9 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = X.sum(axis=0)
+    new_sum = np.nansum(X, axis=0)
 
-    new_sample_count = X.shape[0]
+    new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
     updated_mean = (last_sum + new_sum) / updated_sample_count
@@ -704,17 +707,18 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = X.var(axis=0) * new_sample_count
-        if last_sample_count == 0:  # Avoid division by 0
-            updated_unnormalized_variance = new_unnormalized_variance
-        else:
+        new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
+        last_unnormalized_variance = last_variance * last_sample_count
+
+        with np.errstate(divide='ignore'):
             last_over_new_count = last_sample_count / new_sample_count
-            last_unnormalized_variance = last_variance * last_sample_count
             updated_unnormalized_variance = (
-                last_unnormalized_variance +
-                new_unnormalized_variance +
+                last_unnormalized_variance + new_unnormalized_variance +
                 last_over_new_count / updated_sample_count *
                 (last_sum / last_over_new_count - new_sum) ** 2)
+
+        zeros = last_sample_count == 0
+        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
         updated_variance = updated_unnormalized_variance / updated_sample_count
 
     return updated_mean, updated_variance, updated_sample_count

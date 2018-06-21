@@ -126,6 +126,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     To avoid memory copy the caller should pass a CSC matrix.
 
+    NaNs are treated as missing values: disregarded to compute the statistics,
+    and maintained during the data transformation.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -138,7 +141,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
-                    dtype=FLOAT_DTYPES)
+                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -154,15 +157,15 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     else:
         X = np.asarray(X)
         if with_mean:
-            mean_ = np.mean(X, axis)
+            mean_ = np.nanmean(X, axis)
         if with_std:
-            scale_ = np.std(X, axis)
+            scale_ = np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
         if with_mean:
             Xr -= mean_
-            mean_1 = Xr.mean(axis=0)
+            mean_1 = np.nanmean(Xr, axis=0)
             # Verify that mean_1 is 'close to zero'. If X contains very
             # large values, mean_1 can also be very large, due to a lack of
             # precision of mean_. In this case, a pre-scaling of the
@@ -179,7 +182,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             scale_ = _handle_zeros_in_scale(scale_, copy=False)
             Xr /= scale_
             if with_mean:
-                mean_2 = Xr.mean(axis=0)
+                mean_2 = np.nanmean(Xr, axis=0)
                 # If mean_2 is not 'close to zero', it comes from the fact that
                 # scale_ is very small so that mean_2 = mean_1/scale_ > 0, even
                 # if mean_1 was close to zero. The problem is thus essentially
@@ -520,27 +523,31 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    scale_ : ndarray, shape (n_features,)
-        Per feature relative scaling of the data.
+    scale_ : ndarray or None, shape (n_features,)
+        Per feature relative scaling of the data. Equal to ``None`` when
+        ``with_std=False``.
 
         .. versionadded:: 0.17
            *scale_*
 
-    mean_ : array of floats with shape [n_features]
+    mean_ : ndarray or None, shape (n_features,)
         The mean value for each feature in the training set.
+        Equal to ``None`` when ``with_mean=False``.
 
-    var_ : array of floats with shape [n_features]
+    var_ : ndarray or None, shape (n_features,)
         The variance for each feature in the training set. Used to compute
-        `scale_`
+        `scale_`. Equal to ``None`` when ``with_std=False``.
 
-    n_samples_seen_ : int
-        The number of samples processed by the estimator. Will be reset on
-        new calls to fit, but increments across ``partial_fit`` calls.
+    n_samples_seen_ : int or array, shape (n_features,)
+        The number of samples processed by the estimator for each feature.
+        If there are not missing samples, the ``n_samples_seen`` will be an
+        integer, otherwise it will be an array.
+        Will be reset on new calls to fit, but increments across
+        ``partial_fit`` calls.
 
     Examples
     --------
     >>> from sklearn.preprocessing import StandardScaler
-    >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler()
     >>> print(scaler.fit(data))
@@ -564,6 +571,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -626,22 +636,41 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
+                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
+
+        # if n_samples_seen_ is an integer (i.e. no missing values), we need to
+        # transform it to a NumPy array of shape (n_features,) required by
+        # incr_mean_variance_axis and _incremental_variance_axis
+        if (hasattr(self, 'n_samples_seen_') and
+                isinstance(self.n_samples_seen_, (int, np.integer))):
+            self.n_samples_seen_ = np.repeat(self.n_samples_seen_,
+                                             X.shape[1]).astype(np.int64)
 
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
+
+            sparse_constructor = (sparse.csr_matrix
+                                  if X.format == 'csr' else sparse.csc_matrix)
+            counts_nan = sparse_constructor(
+                        (np.isnan(X.data), X.indices, X.indptr),
+                        shape=X.shape).sum(axis=0).A.ravel()
+
+            if not hasattr(self, 'n_samples_seen_'):
+                self.n_samples_seen_ = (X.shape[0] -
+                                        counts_nan).astype(np.int64)
+
             if self.with_std:
                 # First pass
-                if not hasattr(self, 'n_samples_seen_'):
+                if not hasattr(self, 'scale_'):
                     self.mean_, self.var_ = mean_variance_axis(X, axis=0)
-                    self.n_samples_seen_ = X.shape[0]
                 # Next passes
                 else:
                     self.mean_, self.var_, self.n_samples_seen_ = \
@@ -652,15 +681,15 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             else:
                 self.mean_ = None
                 self.var_ = None
-                if not hasattr(self, 'n_samples_seen_'):
-                    self.n_samples_seen_ = X.shape[0]
-                else:
-                    self.n_samples_seen_ += X.shape[0]
+                if hasattr(self, 'scale_'):
+                    self.n_samples_seen_ += X.shape[0] - counts_nan
         else:
-            # First pass
             if not hasattr(self, 'n_samples_seen_'):
+                self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int64)
+
+            # First pass
+            if not hasattr(self, 'scale_'):
                 self.mean_ = .0
-                self.n_samples_seen_ = 0
                 if self.with_std:
                     self.var_ = .0
                 else:
@@ -669,11 +698,17 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if not self.with_mean and not self.with_std:
                 self.mean_ = None
                 self.var_ = None
-                self.n_samples_seen_ += X.shape[0]
+                self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
                                               self.n_samples_seen_)
+
+        # for backward-compatibility, reduce n_samples_seen_ to an integer
+        # if the number of samples is the same for each feature (i.e. no
+        # missing values)
+        if np.ptp(self.n_samples_seen_) == 0:
+            self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
             self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
@@ -704,7 +739,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_mean:

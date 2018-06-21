@@ -230,6 +230,10 @@ Preprocessing
   :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- :class:`preprocessing.StandardScaler` and :func:`preprocessing.scale`
+  ignore and pass-through NaN values.
+  :issue:`11206` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
