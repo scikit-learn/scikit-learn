@@ -278,12 +278,6 @@ boolean mask array
             Names of the features produced by transform.
         """
         check_is_fitted(self, 'transformers_')
-        if self._remainder[2] is not None:
-            raise NotImplementedError(
-                "get_feature_names is not yet supported when having columns"
-                "that are passed through (you specify remainder='drop' to not "
-                "pass through the unspecified columns).")
-
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
             if trans == 'drop':
