@@ -777,3 +777,8 @@ def test_column_transformer_no_estimators():
     assert len(ct.transformers_) == 1
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][2] == [0, 1, 2]
+
+
+def test_column_transformer_no_estimators_set_params():
+    ct = ColumnTransformer([]).set_params(n_jobs=2)
+    assert ct.n_jobs == 2
