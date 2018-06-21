@@ -101,10 +101,6 @@ boolean mask array
         Keys are transformer names and values are the fitted transformer
         objects.
 
-    remainder_ : estimator or None
-        The fitted remainder transformer. This attribute is set when the
-        ``remainder`` parameter is an estimator.
-
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
@@ -201,19 +197,14 @@ boolean mask array
         """
         if fitted:
             transformers = self.transformers_
-            if hasattr(self, 'remainder_'):
-                transformers = chain(transformers, [self.remainder_])
         else:
-            transformers = self.transformers
-            if hasattr(self, '_remainder'):
-                transformers = chain(transformers, [self._remainder])
+            transformers = chain(self.transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, column in transformers:
-            if X is None:
-                sub = X
-            else:
-                sub = _get_column(X, column)
+            if column is None:
+                continue
+            sub = None if X is None else _get_column(X, column)
 
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
@@ -258,6 +249,7 @@ boolean mask array
 
         n_columns = X.shape[1]
 
+        passthrough = None  # self.remainder == 'drop'
         if self.remainder == 'passthrough' or is_transformer:
             cols = []
             for _, _, columns in self.transformers:
@@ -266,13 +258,9 @@ boolean mask array
             if not passthrough:
                 # empty list -> no need to select passthrough columns
                 passthrough = None
-        else:
-            passthrough = None
 
-        if passthrough is not None:
-            self._remainder = ('remainder_transformer', self.remainder,
-                               passthrough)
-        self._passthrough = passthrough
+        self._remainder = ('remainder_transformer', self.remainder,
+                           passthrough)
 
     @property
     def named_transformers_(self):
@@ -296,7 +284,8 @@ boolean mask array
             Names of the features produced by transform.
         """
         check_is_fitted(self, 'transformers_')
-        if self._passthrough is not None:
+        passthrough = self._remainder[2]
+        if passthrough is not None:
             raise NotImplementedError(
                 "get_feature_names is not yet supported when having columns"
                 "that are passed through (you specify remainder='drop' to not "
@@ -304,7 +293,7 @@ boolean mask array
 
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
-            if trans == 'drop':
+            if trans == 'drop' or name == 'remainder_transformer':
                 continue
             elif trans == 'passthrough':
                 raise NotImplementedError(
@@ -323,11 +312,12 @@ boolean mask array
         transformers = iter(transformers)
         transformers_ = []
 
-        transformer_iter = self.transformers
-        if hasattr(self, '_remainder'):
-            transformer_iter = chain(transformer_iter, [self._remainder])
+        transformer_iter = chain(self.transformers, [self._remainder])
 
         for name, old, column in transformer_iter:
+            if column is None:
+                continue
+
             if old == 'drop':
                 trans = 'drop'
             elif old == 'passthrough':
@@ -337,10 +327,6 @@ boolean mask array
                 trans = 'passthrough'
             else:
                 trans = next(transformers)
-
-            if name == "remainder_transformer":
-                self.remainder_ = (name, trans, column)
-                continue
             transformers_.append((name, trans, column))
 
         # sanity check that transformers is exhausted
