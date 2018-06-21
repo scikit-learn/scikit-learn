@@ -13,8 +13,19 @@ array are numerical, and that all have and hold meaning. A basic strategy to use
 incomplete datasets is to discard entire rows and/or columns containing missing
 values. However, this comes at the price of losing data which may be valuable
 (even though incomplete). A better strategy is to impute the missing values,
-i.e., to infer them from the known part of the data.
+i.e., to infer them from the known part of the data. See the :ref:`glossary`
+entry on imputation.
 
+Univariate vs. Multivariate Imputation
+======================================
+
+One type of imputation algorithm is univariate, which imputes values in the i-th
+feature dimension using only non-missing values in that feature dimension
+(e.g. :class:`impute.SimpleImputer`). By contrast, multivariate imputation
+algorithms use the entire set of available feature dimensions to estimate the
+missing values (e.g. :class:`impute.ChainedImputer`).
+
+.. _single_imputer:
 
 Univariate feature imputation
 =============================
@@ -56,7 +67,7 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
-.. _mice:
+.. _chained_imputer:
 
 Multivariate feature imputation
 ===============================
@@ -85,13 +96,27 @@ rounds. Here is an example snippet::
      [ 6.  4.]
      [13.  6.]]
 
-Note that MICE has traditionally been used in the statistics community to obtain
-multiple imputations, to which the entire subsequent analysis pipeline is applied.
-This allows one to estimate the variance that is inherent in having missing values
-in the first place. The :class:`ChainedImputer` class, however, generates a single
-(averaged) imputation for each missing value because this is the most common use
-case for machine learning applications. See the :ref:`glossary` entry on imputation.
-
 Both :class:`SimpleImputer` and :class:`ChainedImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+
+.. _multiple_imputation:
+
+Multiple vs. Single Imputation
+==============================
+
+In the statistics community, it is common practice to perform multiple imputations,
+generating, for example, 10 separate imputations for a single feature matrix.
+Each of these 10 imputations is then put through the subsequent analysis pipeline
+(e.g. feature engineering, clustering, regression, classification). The 10 final
+analysis results (e.g. held-out validation error) allow the data scientist to
+obtain understanding of the uncertainty inherent in the missing values. The above
+practice is called multiple imputation. As implemented, the :class:`ChainedImputer`
+class generates a single (averaged) imputation for each missing value because this
+is the most common use case for machine learning applications. However, it can also be used
+for multiple imputations by applying it repeatedly to the same dataset with different
+random seeds with the ``n_imputations`` parameter set to 1.
+
+Note that a call to the ``transform`` method of :class:`ChainedImputer` is not
+allowed to change the number of samples. Therefore multiple imputations cannot be
+achieved by a single call to ``transform``.
