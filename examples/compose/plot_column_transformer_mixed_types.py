@@ -32,7 +32,7 @@ import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, CategoricalEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 
@@ -61,7 +61,7 @@ numeric_transformer = Pipeline(steps=[
 categorical_features = ['embarked', 'sex', 'pclass']
 categorical_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', CategoricalEncoder('onehot-dense', handle_unknown='ignore'))])
+    ('onehot', OneHotEncoder(sparse=False, handle_unknown='ignore'))])
 
 preprocessor = ColumnTransformer(
     transformers=[
