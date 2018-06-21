@@ -28,7 +28,7 @@ def _check_params(X, metric, p, metric_params):
 def _query_include_self(X, include_self, mode):
     """Return the query based on include_self param"""
     if include_self == 'auto':
-        include_self = (mode == 'connectivity')
+        include_self = mode == 'connectivity'
 
     # it does not include each sample as its own neighbors
     if not include_self:
