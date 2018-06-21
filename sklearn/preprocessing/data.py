@@ -33,7 +33,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
-from .label import LabelEncoder
+from .label import _encode
 
 
 BOUNDS_THRESHOLD = 1e-7
@@ -3029,13 +3029,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
 
-        self._label_encoders_ = [LabelEncoder() for _ in range(n_features)]
+        self.categories_ = []
 
         for i in range(n_features):
-            le = self._label_encoders_[i]
             Xi = X[:, i]
             if self.categories == 'auto':
-                le.fit(Xi)
+                cats = _encode(Xi)
             else:
                 if self.handle_unknown == 'error':
                     valid_mask = np.in1d(Xi, self.categories[i])
@@ -3044,9 +3043,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                le.classes_ = np.array(self.categories[i])
-
-        self.categories_ = [le.classes_ for le in self._label_encoders_]
+                cats = np.array(self.categories[i])
+            self.categories_.append(cats)
 
         return self
 
@@ -3091,7 +3089,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     X_mask[:, i] = valid_mask
                     Xi = Xi.copy()
                     Xi[~valid_mask] = self.categories_[i][0]
-            X_int[:, i] = self._label_encoders_[i].transform(Xi)
+            _, encoded = _encode(Xi, self.categories_[i], encode=True)
+            X_int[:, i] = encoded
 
         if self.encoding == 'ordinal':
             return X_int.astype(self.dtype, copy=False)
