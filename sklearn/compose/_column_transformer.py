@@ -184,21 +184,18 @@ boolean mask array
         self._set_params('_transformers', **kwargs)
         return self
 
-    def _iter(self, X=None, fitted=False, replace_strings=False,
-              include_remainder=True):
+    def _iter(self, X=None, fitted=False, replace_strings=False):
         """Generate (name, trans, column, weight) tuples
         """
         if fitted:
             transformers = self.transformers_
         else:
             transformers = self.transformers
-            if include_remainder:
+            if self._remainder[2] is not None:
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, column in transformers:
-            if column is None and name == 'remainder':
-                continue
             sub = None if X is None else _get_column(X, column)
 
             if replace_strings:
@@ -214,7 +211,10 @@ boolean mask array
             yield (name, trans, sub, get_weight(name))
 
     def _validate_transformers(self):
-        names, transformers, _, _ = zip(*self._iter(include_remainder=False))
+        if not self.transformers:
+            return
+
+        names, transformers, _ = zip(*self.transformers)
 
         # validate names
         self._validate_names(names)
@@ -246,10 +246,9 @@ boolean mask array
         cols = []
         for _, _, columns in self.transformers:
             cols.extend(_get_column_indices(X, columns))
-        passthrough = sorted(list(set(range(n_columns)) - set(cols)))
-        passthrough = passthrough or None
+        remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
 
-        self._remainder = ('remainder', self.remainder, passthrough)
+        self._remainder = ('remainder', self.remainder, remaining_idx)
 
     @property
     def named_transformers_(self):
@@ -273,8 +272,7 @@ boolean mask array
             Names of the features produced by transform.
         """
         check_is_fitted(self, 'transformers_')
-        passthrough = self._remainder[2]
-        if passthrough is not None:
+        if self._remainder[2] is not None:
             raise NotImplementedError(
                 "get_feature_names is not yet supported when having columns"
                 "that are passed through (you specify remainder='drop' to not "
@@ -301,12 +299,11 @@ boolean mask array
         transformers = iter(transformers)
         transformers_ = []
 
-        transformer_iter = chain(self.transformers, [self._remainder])
+        transformer_iter = self.transformers
+        if self._remainder[2] is not None:
+            transformer_iter = chain(transformer_iter, [self._remainder])
 
         for name, old, column in transformer_iter:
-            if column is None and name == 'remainder':
-                continue
-
             if old == 'drop':
                 trans = 'drop'
             elif old == 'passthrough':
