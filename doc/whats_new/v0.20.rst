@@ -285,7 +285,6 @@ Classifiers and regressors
   
 - Fixed a bug in :func:`sklearn.linear_model.logistic` where the the 
   multi_class='multinomial' with binary output with warm_start = True
-  wasn't converging with warm_start = False. 
   :issue:`10836` by :user:`Aishwarya Srinivasan <aishgrt1>`.
 
 - Fixed a bug in :class:`linear_model.RidgeCV` where using integer ``alphas``
