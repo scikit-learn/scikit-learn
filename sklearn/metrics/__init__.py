@@ -46,12 +46,14 @@ from .cluster import silhouette_samples
 from .cluster import silhouette_score
 from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
+from .cluster import davies_bouldin_score
 
 from .pairwise import euclidean_distances
 from .pairwise import pairwise_distances
 from .pairwise import pairwise_distances_argmin
 from .pairwise import pairwise_distances_argmin_min
 from .pairwise import pairwise_kernels
+from .pairwise import pairwise_distances_chunked
 
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
@@ -81,6 +83,7 @@ __all__ = [
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
+    'davies_bouldin_score',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
@@ -108,6 +111,7 @@ __all__ = [
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
     'pairwise_distances_argmin_min',
+    'pairwise_distances_chunked',
     'pairwise_kernels',
     'precision_recall_curve',
     'precision_recall_fscore_support',

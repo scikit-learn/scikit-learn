@@ -15,8 +15,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from scipy import linalg
-from scipy.sparse import issparse, csr_matrix
+from scipy import linalg, sparse
 
 from . import check_random_state, deprecated
 from .fixes import np_version
@@ -60,9 +59,9 @@ def row_norms(X, squared=False):
 
     Performs no input validation.
     """
-    if issparse(X):
-        if not isinstance(X, csr_matrix):
-            X = csr_matrix(X)
+    if sparse.issparse(X):
+        if not isinstance(X, sparse.csr_matrix):
+            X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)
@@ -131,7 +130,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     dot_product : array or sparse matrix
         sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
     """
-    if issparse(a) or issparse(b):
+    if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
@@ -307,6 +306,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
       analysis
       A. Szlam et al. 2014
     """
+    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+        warnings.warn("Calculating SVD of a {} is expensive. "
+                      "csr_matrix is more efficient.".format(
+                          type(M).__name__),
+                      sparse.SparseEfficiencyWarning)
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -361,9 +366,9 @@ def logsumexp(arr, axis=0):
     >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
-    9.4586297444267107
+    9.458...
     >>> logsumexp(a)
-    9.4586297444267107
+    9.458...
     """
     return scipy_logsumexp(arr, axis)
 
@@ -398,14 +403,14 @@ def weighted_mode(a, w, axis=0):
     >>> x = [4, 1, 4, 2, 4, 2]
     >>> weights = [1, 1, 1, 1, 1, 1]
     >>> weighted_mode(x, weights)
-    (array([ 4.]), array([ 3.]))
+    (array([4.]), array([3.]))
 
     The value 4 appears three times: with uniform weights, the result is
     simply the mode of the distribution.
 
     >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
     >>> weighted_mode(x, weights)
-    (array([ 2.]), array([ 3.5]))
+    (array([2.]), array([3.5]))
 
     The value 2 has the highest score: it appears twice with weights of
     1.5 and 2: the sum of these is 3.
@@ -593,7 +598,7 @@ def softmax(X, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (M, N)
+    X : array-like of floats, shape (M, N)
         Argument to the logistic function
 
     copy : bool, optional
@@ -620,7 +625,7 @@ def safe_min(X):
     Adapated from http://stackoverflow.com/q/13426580
 
     """
-    if issparse(X):
+    if sparse.issparse(X):
         if len(X.data) == 0:
             return 0
         m = X.data.min()
@@ -633,7 +638,7 @@ def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`."""
     min_ = safe_min(X)
     if min_ < min_value:
-        if issparse(X):
+        if sparse.issparse(X):
             raise ValueError("Cannot make the data matrix"
                              " nonnegative because it is sparse."
                              " Adding a value to every entry would"
