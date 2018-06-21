@@ -103,6 +103,7 @@ def test_column_transformer():
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert len(ct.transformers_) == 2
 
     # test with transformer_weights
     transformer_weights = {'trans1': .1, 'trans2': 10}
@@ -113,11 +114,13 @@ def test_column_transformer():
                      transformer_weights['trans2'] * X_res_second1D]).T
     assert_array_equal(both.fit_transform(X_array), res)
     assert_array_equal(both.fit(X_array).transform(X_array), res)
+    assert len(both.transformers_) == 2
 
     both = ColumnTransformer([('trans', Trans(), [0, 1])],
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_array), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_array).transform(X_array), 0.1 * X_res_both)
+    assert len(both.transformers_) == 1
 
 
 def test_column_transformer_dataframe():
