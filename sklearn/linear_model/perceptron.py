@@ -71,7 +71,8 @@ class Perceptron(BaseSGDClassifier):
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
+        initialization, otherwise, just erase the previous solution. See
+        :term:`the Glossary <warm_start>`.
 
     n_iter : int, optional
         The number of passes over the training data (aka epochs).
@@ -96,8 +97,9 @@ class Perceptron(BaseSGDClassifier):
     Notes
     -----
 
-    `Perceptron` and `SGDClassifier` share the same underlying implementation.
-    In fact, `Perceptron()` is equivalent to `SGDClassifier(loss="perceptron",
+    ``Perceptron`` is a classification algorithm which shares the same
+    underlying implementation with ``SGDClassifier``. In fact,
+    ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
 
     See also
