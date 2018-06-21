@@ -721,3 +721,9 @@ def test_column_transformer_remainder_transformer_error_msg_1D():
     col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
     for func in [col_trans.fit, col_trans.fit_transform]:
         assert_raise_message(ValueError, "specific message", func, X_array)
+
+
+def test_column_transformer_no_estimators_set_params():
+    ct = ColumnTransformer([]).set_params(n_jobs=2)
+    assert ct.n_jobs == 2
+
