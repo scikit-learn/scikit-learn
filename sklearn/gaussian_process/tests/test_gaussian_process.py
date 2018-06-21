@@ -15,6 +15,7 @@ from sklearn.gaussian_process import correlation_models as correlation
 from sklearn.datasets import make_regression
 from sklearn.utils.testing import assert_greater, assert_true, assert_raises
 
+pytestmark = pytest.mark.filterwarnings('ignore', category=DeprecationWarning)
 
 f = lambda x: x * np.sin(x)
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T

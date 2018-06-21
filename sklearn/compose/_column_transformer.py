@@ -290,22 +290,25 @@ boolean mask array
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
+        # transformers are fitted; excludes 'drop' cases
         transformers = iter(transformers)
         transformers_ = []
 
         for name, old, column in self.transformers:
             if old == 'drop':
-                trans = old
+                trans = 'drop'
             elif old == 'passthrough':
                 # FunctionTransformer is present in list of transformers,
                 # so get next transformer, but save original string
                 next(transformers)
-                trans = old
+                trans = 'passthrough'
             else:
                 trans = next(transformers)
 
             transformers_.append((name, trans, column))
 
+        # sanity check that transformers is exhausted
+        assert not list(transformers)
         self.transformers_ = transformers_
 
     def _validate_output(self, result):
@@ -454,7 +457,17 @@ boolean mask array
 
 def _check_key_type(key, superclass):
     """
-    Check that scalar, list or slice is of certain type.
+    Check that scalar, list or slice is of a certain type.
+
+    This is only used in _get_column and _get_column_indices to check
+    if the `key` (column specification) is fully integer or fully string-like.
+
+    Parameters
+    ----------
+    key : scalar, list, slice, array-like
+        The column specification to check
+    superclass : int or six.string_types
+        The type for which to check the `key`
 
     """
     if isinstance(key, superclass):
@@ -465,7 +478,11 @@ def _check_key_type(key, superclass):
     if isinstance(key, list):
         return all(isinstance(x, superclass) for x in key)
     if hasattr(key, 'dtype'):
-        return key.dtype.kind == 'i'
+        if superclass is int:
+            return key.dtype.kind == 'i'
+        else:
+            # superclass = six.string_types
+            return key.dtype.kind in ('O', 'U', 'S')
     return False
 
 
@@ -494,7 +511,7 @@ def _get_column(X, key):
         column_names = False
     elif _check_key_type(key, six.string_types):
         column_names = True
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         column_names = False
         if hasattr(X, 'loc'):
@@ -561,7 +578,7 @@ def _get_column_indices(X, key):
 
         return [all_columns.index(col) for col in columns]
 
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         return list(np.arange(n_columns)[key])
     else:
@@ -595,6 +612,15 @@ def make_column_transformer(*transformers, **kwargs):
     ----------
     *transformers : tuples of column selections and transformers
 
+    remainder : {'passthrough', 'drop'}, default 'passthrough'
+        By default, all remaining columns that were not specified in
+        `transformers` will be automatically passed through (default of
+        ``'passthrough'``). This subset of columns is concatenated with the
+        output of the transformers.
+        By using ``remainder='drop'``, only the specified columns in
+        `transformers` are transformed and combined in the output, and the
+        non-specified columns are dropped.
+
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
@@ -610,25 +636,27 @@ def make_column_transformer(*transformers, **kwargs):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import StandardScaler, CategoricalEncoder
+    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
     ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], CategoricalEncoder()))
+    ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=1, remainder='passthrough',
              transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
-                           ('categoricalencoder',
-                            CategoricalEncoder(...),
+                           ('onehotencoder',
+                            OneHotEncoder(...),
                             ['categorical_column'])])
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)
+    remainder = kwargs.pop('remainder', 'passthrough')
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
-    return ColumnTransformer(transformer_list, n_jobs=n_jobs)
+    return ColumnTransformer(transformer_list, n_jobs=n_jobs,
+                             remainder=remainder)

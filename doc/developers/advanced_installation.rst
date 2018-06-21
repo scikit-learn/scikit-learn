@@ -140,7 +140,7 @@ From source package
 ~~~~~~~~~~~~~~~~~~~
 
 download the source package from
-`pypi <https://pypi.python.org/pypi/scikit-learn>`_, unpack the sources and
+`pypi <https://pypi.python.org/pypi/scikit-learn>`__, unpack the sources and
 cd into the source directory.
 
 This packages uses distutils, which is the default way of installing

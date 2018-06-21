@@ -165,8 +165,10 @@ General Concepts
         tree-based models such as random forests and gradient boosting
         models that often work better and faster with integer-coded
         categorical variables.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
         <category_encoders>`_ package for tools related to encoding
@@ -452,6 +454,7 @@ General Concepts
 
     label indicator matrix
     multilabel indicator matrix
+    multilabel indicator matrices
         The format used to represent multilabel data, where each row of a 2d
         array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
@@ -939,8 +942,9 @@ such as:
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
-        test data, returning a number. See :ref:`scoring_parameter`; see also
-        :term:`evaluation metric`.
+        test data, returning a number. Unlike :term:`evaluation metrics`,
+        a greater returned number must correspond with a *better* score.
+        See :ref:`scoring_parameter`.
 
 Further examples:
 
@@ -1066,6 +1070,13 @@ Target Types
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
+
+    multioutput
+    multi-output
+        A target where each sample has multiple classification/regression
+        labels. See :term:`multiclass multioutput` and :term:`continuous
+        multioutput`. We do not currently support modelling mixed
+        classification and regression targets.
 
 .. _glossary_methods:
 
