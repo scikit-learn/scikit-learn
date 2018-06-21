@@ -96,15 +96,66 @@ def _encode(values, uniques=None, encode=False):
     Returns
     -------
     uniques
-        If decode=False
+        If encode=False
     (uniques, encoded)
-        If decode=True
+        If encode=True
 
     """
     if values.dtype == object:
         return _encode_python(values, uniques, encode)
     else:
         return _encode_numpy(values, uniques, encode)
+
+
+def _encode_check_unknown(values, uniques, return_mask=False):
+    """
+    Helper function to check for unknowns in values to be encoded.
+
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+
+    Parameters
+    ----------
+    values : array
+        Values to check for unknowns.
+    uniques : array
+        Allowed uniques values.
+    return_mask : bool, default False
+        If True, return a mask of the same shape as `values` indicating
+        the valid values.
+
+    Returns
+    -------
+    diff : list
+        The unique values present in `values` and not in `uniques` (the
+        unknown values).If encode=False
+    valid_mask : boolean array
+        If return_mask=True
+
+    """
+    if values.dtype == object:
+        unique_values = set(values)
+        diff = list(unique_values - set(uniques))
+        if return_mask:
+            if diff:
+                uniques_set = set(uniques)
+                valid_mask = np.array([val in uniques_set for val in values])
+            else:
+                valid_mask = np.ones(len(values), dtype=bool)
+            return diff, valid_mask
+        else:
+            return diff
+    else:
+        unique_values = np.unique(values)
+        diff = list(np.setdiff1d(unique_values, uniques))
+        if return_mask:
+            if diff:
+                valid_mask = np.in1d(values, uniques)
+            else:
+                valid_mask = np.ones(len(values), dtype=bool)
+            return diff, valid_mask
+        else:
+            return diff
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):

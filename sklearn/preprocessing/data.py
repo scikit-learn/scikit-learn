@@ -33,7 +33,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
-from .label import _encode
+from .label import _encode, _encode_check_unknown
 
 
 BOUNDS_THRESHOLD = 1e-7
@@ -3036,14 +3036,13 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             if self.categories == 'auto':
                 cats = _encode(Xi)
             else:
+                cats = np.array(self.categories[i])
                 if self.handle_unknown == 'error':
-                    valid_mask = np.in1d(Xi, self.categories[i])
-                    if not np.all(valid_mask):
-                        diff = np.unique(Xi[~valid_mask])
+                    diff = _encode_check_unknown(Xi, cats)
+                    if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                cats = np.array(self.categories[i])
             self.categories_.append(cats)
 
         return self
@@ -3074,11 +3073,11 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
             Xi = X[:, i]
-            valid_mask = np.in1d(Xi, self.categories_[i])
+            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
+                                                     return_mask=True)
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
-                    diff = np.unique(X[~valid_mask, i])
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
