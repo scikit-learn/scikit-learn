@@ -288,7 +288,7 @@ boolean mask array
 
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
-            if trans == 'drop' or name == 'remainder_transformer':
+            if trans == 'drop':
                 continue
             elif trans == 'passthrough':
                 raise NotImplementedError(
