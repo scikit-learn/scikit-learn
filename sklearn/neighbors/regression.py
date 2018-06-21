@@ -78,8 +78,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors.
+        must be square during fit. X may be a sparse matrix, in which case only
+        "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -232,8 +232,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors.
+        must be square during fit. X may be a sparse matrix, in which case only
+        "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.

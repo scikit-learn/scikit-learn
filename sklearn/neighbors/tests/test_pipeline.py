@@ -1,5 +1,13 @@
+"""
+This is testing the equivalence between some estimators with internal nearest
+neighbors computations, and the corresponding pipeline versions with
+KNeighborsTransformer or RadiusNeighborsTransformer to precompute the
+neighbors.
+
+We might not need to merge this.
+"""
+
 import numpy as np
-import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.cluster.tests.common import generate_clustered_data
