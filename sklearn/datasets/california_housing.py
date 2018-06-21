@@ -67,8 +67,9 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         instead of trying to download the data from the source site.
 
 
-    return_X_y : boolean, default=False. If True, returns ``(data.data,
-    data.target)`` instead of a Bunch object.
+    return_X_y : boolean, default=False.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
 
         .. versionadded:: 0.20
 

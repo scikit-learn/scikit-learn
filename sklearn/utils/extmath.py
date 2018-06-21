@@ -161,7 +161,7 @@ def randomized_range_finder(A, size, n_iter,
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter`<=2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -258,7 +258,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter`<=2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
