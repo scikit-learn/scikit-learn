@@ -79,6 +79,7 @@ link to it from your website, or simply star to say "I use it":
    * `matplotlib <https://github.com/matplotlib/matplotlib/labels/help%20wanted>`__
    * and so on.
 
+   Helping these projects may help Scikit-learn too.
    See also :ref:`related_projects`.
 
 
