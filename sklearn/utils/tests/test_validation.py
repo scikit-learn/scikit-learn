@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
+from sklearn.utils import deprecated
 from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
@@ -562,6 +563,15 @@ def test_has_fit_parameter():
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
     assert_true(has_fit_parameter(SVR, "sample_weight"))
     assert_true(has_fit_parameter(SVR(), "sample_weight"))
+
+    class TestClassWithDeprecatedFitMethod:
+        @deprecated("Deprecated for the purpose of testing has_fit_parameter")
+        def fit(self, X, y, sample_weight=None):
+            pass
+
+    assert has_fit_parameter(TestClassWithDeprecatedFitMethod,
+                             "sample_weight"), \
+        "has_fit_parameter fails for class with deprecated fit method."
 
 
 def test_check_symmetric():

@@ -7,10 +7,32 @@
 Version 0.20 (under development)
 ================================
 
-As well as a plethora of new features and enhancements, this release is the
-first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
-glossary is a reference resource to help users and contributors become familiar
-with the terminology and conventions used in Scikit-learn.
+This release packs in a mountain of bug fixes, features and enhancements for
+the Scikit-learn library, and improvements to the documentation and examples.
+Thanks to our many contributors!
+
+Highlights
+----------
+
+We have tried to improve our support for common data-science use-cases
+including missing values, categorical variables, heterogeneous data, and
+features/targets with unusual distributions.
+
+Missing values in features, represented by NaNs, are now accepted in
+column-wise preprocessing such as scalers.  Each feature is fitted disregarding
+NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
+module provides estimators for learning despite missing data.
+
+:class:`~compose.ColumnTransformer` handles the case where different features
+or columns of a pandas.DataFrame need different preprocessing.
+String or pandas Categorical columns can now be encoded with
+:class:`~preprocessing.OneHotEncoder` or
+:class:`~preprocessing.OrdinalEncoder`.
+
+This release is also the first to be accompanied by a :ref:`glossary` developed
+by `Joel Nothman`_. The glossary is a reference resource to help users and
+contributors become familiar with the terminology and conventions used in
+Scikit-learn.
 
 Changed models
 --------------
@@ -70,14 +92,14 @@ Classifiers and regressors
 
 Preprocessing
 
-- Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
-  categorical features as a numeric array, either using a one-hot (or dummy)
-  encoding scheme or by converting to ordinal integers.  Compared to the
-  existing :class:`~preprocessing.OneHotEncoder`, this new class handles
+- Expanded :class:`preprocessing.OneHotEncoder` to allow to encode
+  categorical string features as a numeric array using a one-hot (or dummy)
+  encoding scheme, and added :class:`preprocessing.OrdinalEncoder` to
+  convert to ordinal integers.  Those two classes now handle
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
-  the maximum value in the features. :issue:`9151` by :user:`Vighnesh Birodkar
-  <vighneshbirodkar>` and `Joris Van den Bossche`_.
+  the maximum value in the features. :issue:`9151` and :issue:`10521` by
+  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
@@ -258,8 +280,15 @@ Model evaluation and meta-estimators
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
-  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
-  <bellet>`.
+  return estimators fitted on each split.
+  :issue:`9686` by :user:`Aurélien Bellet <bellet>`.
+
+- New ``refit_time_`` attribute will be stored in
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` if ``refit`` is set to ``True``.
+  This will allow measuring the complete time it takes to perform
+  hyperparameter optimization and refitting the best model on the whole
+  dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
 
 Decomposition and manifold learning
 
@@ -270,13 +299,15 @@ Decomposition and manifold learning
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
-  ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
+  ``{0, 1}`` or ``{-1, 1}``.
+  :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-- :func:`metrics.label_ranking_average_precision_score` now supports vector ``sample_weight``.
+- :func:`metrics.label_ranking_average_precision_score` now supports vector
+  ``sample_weight``.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
 
-- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
-  False and both inputs are sparse, will return a sparse matrix.
+- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`.
+  When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
 - :func:`metrics.cluster.silhouette_score` and
@@ -339,6 +370,11 @@ Classifiers and regressors
   parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
   returning incorrect probabilities in the case of binary outcomes.
   :issue:`9939` by :user:`Roger Westover <rwolst>`.
+
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+  ``score`` method always computes accuracy, not the metric given by
+  the ``scoring`` parameter.
+  :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
@@ -580,6 +616,17 @@ Linear, kernelized and related models
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
 
+Preprocessing
+
+- Deprecate ``n_values`` and ``categorical_features`` parameters and
+  ``active_features_``, ``feature_indices_`` and ``n_values_`` attributes
+  of :class:`preprocessing.OneHotEncoder`. The ``n_values`` parameter can be
+  replaced with the new ``categories`` parameter, and the attributes with the
+  new ``categories_`` attribute. Selecting the categorical features with
+  the ``categorical_features`` parameter is now better supported using the
+  :class:`compose.ColumnTransformer`.
+  :issue:`10521` by `Joris Van den Bossche`_.
+
 Decomposition, manifold learning and clustering
 
 - Deprecate ``precomputed`` parameter in function
@@ -620,6 +667,17 @@ Imputer
   with FunctionTransformer (e.g., ``FunctionTransformer(lambda X:
   SimpleImputer().fit_transform(X.T).T)``). :issue:`10829` by :user:`Guillaume
   Lemaitre <glemaitre>` and :user:`Gilberto Olimpio <gilbertoolimpio>`.
+
+- The :class:`impute.SimpleImputer` has a new strategy, ``'constant'``, to
+  complete missing values with a fixed one, given by the ``fill_value``
+  parameter. This strategy supports numeric and non-numeric data, and so does
+  the ``'most_frequent'`` strategy now. :issue:`11211` by :user:`Jeremie du
+  Boisberranger <jeremiedbb>`.
+
+- The NaN marker for the missing values has been changed between the
+  :class:`preprocessing.Imputer` and the :class:`impute.SimpleImputer`.
+  ``missing_values='NaN'`` should now be ``missing_values=np.nan``.
+  :issue:`11211` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 Outlier Detection models
 

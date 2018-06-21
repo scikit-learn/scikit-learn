@@ -15,8 +15,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from scipy import linalg
-from scipy.sparse import issparse, csr_matrix
+from scipy import linalg, sparse
 
 from . import check_random_state, deprecated
 from .fixes import np_version
@@ -60,9 +59,9 @@ def row_norms(X, squared=False):
 
     Performs no input validation.
     """
-    if issparse(X):
-        if not isinstance(X, csr_matrix):
-            X = csr_matrix(X)
+    if sparse.issparse(X):
+        if not isinstance(X, sparse.csr_matrix):
+            X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)
@@ -131,7 +130,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     dot_product : array or sparse matrix
         sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
     """
-    if issparse(a) or issparse(b):
+    if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
@@ -162,7 +161,7 @@ def randomized_range_finder(A, size, n_iter,
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter`<=2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -259,7 +258,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter`<=2 and switches to LU otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -307,6 +306,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
       analysis
       A. Szlam et al. 2014
     """
+    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+        warnings.warn("Calculating SVD of a {} is expensive. "
+                      "csr_matrix is more efficient.".format(
+                          type(M).__name__),
+                      sparse.SparseEfficiencyWarning)
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -620,7 +625,7 @@ def safe_min(X):
     Adapated from http://stackoverflow.com/q/13426580
 
     """
-    if issparse(X):
+    if sparse.issparse(X):
         if len(X.data) == 0:
             return 0
         m = X.data.min()
@@ -633,7 +638,7 @@ def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`."""
     min_ = safe_min(X)
     if min_ < min_value:
-        if issparse(X):
+        if sparse.issparse(X):
             raise ValueError("Cannot make the data matrix"
                              " nonnegative because it is sparse."
                              " Adding a value to every entry would"
@@ -642,8 +647,7 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
-                              last_sample_count=0):
+def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     last_mean and last_variance are statistics computed at the last step by the
@@ -704,22 +708,17 @@ def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
         updated_variance = None
     else:
         new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
-        last_over_new_count = last_sample_count / new_sample_count
         last_unnormalized_variance = last_variance * last_sample_count
 
-        updated_unnormalized_variance = np.zeros_like(
-            new_unnormalized_variance)
-        # avoid division by 0
-        non_zero_idx = last_sample_count > 0
-        updated_unnormalized_variance[~non_zero_idx] =\
-            new_unnormalized_variance[~non_zero_idx]
-        updated_unnormalized_variance[non_zero_idx] = \
-            (last_unnormalized_variance[non_zero_idx] +
-             new_unnormalized_variance[non_zero_idx] +
-             last_over_new_count[non_zero_idx] /
-             updated_sample_count[non_zero_idx] *
-             (last_sum[non_zero_idx] / last_over_new_count[non_zero_idx] -
-              new_sum[non_zero_idx]) ** 2)
+        with np.errstate(divide='ignore'):
+            last_over_new_count = last_sample_count / new_sample_count
+            updated_unnormalized_variance = (
+                last_unnormalized_variance + new_unnormalized_variance +
+                last_over_new_count / updated_sample_count *
+                (last_sum / last_over_new_count - new_sum) ** 2)
+
+        zeros = last_sample_count == 0
+        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
         updated_variance = updated_unnormalized_variance / updated_sample_count
 
     return updated_mean, updated_variance, updated_sample_count
