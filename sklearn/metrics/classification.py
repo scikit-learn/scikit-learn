@@ -223,12 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix*
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
-                *NOTE: Different conventions exist for confusion matrix axes.
-                Hence, Wikipedia's example gives true class along axis=0, while 
-                ``confusion_matrix`` gives true class along axis=1.
-
-            *NOTE: Different conventions exist for confusion matrix axes.
-            ``confusion_matrix`` gives true class along axis=1.
+           *NOTE: Different conventions exist for confusion matrix axes.
+           ``confusion_matrix`` gives true class along axis=1.
 
     Examples
     --------
