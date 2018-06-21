@@ -2592,13 +2592,13 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
 
 class CategoricalEncoder:
     """
-    CategoricalEncoder briefly existed in 0.19dev. Its functionality
+    CategoricalEncoder briefly existed in 0.20dev. Its functionality
     has been rolled into the OneHotEncoder and OrdinalEncoder.
     This stub will be removed in version 0.21.
     """
 
     def __init__(*args, **kwargs):
         raise RuntimeError(
-            "CategoricalEncoder briefly existed in 0.19dev. Its functionality "
+            "CategoricalEncoder briefly existed in 0.20dev. Its functionality "
             "has been rolled into the OneHotEncoder and OrdinalEncoder. "
             "This stub will be removed in version 0.21.")
