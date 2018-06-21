@@ -966,7 +966,8 @@ def test_robust_scaler_2d_arrays():
 
 
 @pytest.mark.parametrize("density", [0, 0.01, 0.05, 0.1, 0.2, 0.5, 1])
-@pytest.mark.parametrize("strictly_signed", ['positif', 'negatif', 'zeros'])
+@pytest.mark.parametrize("strictly_signed",
+                         ['positif', 'negatif', 'zeros', None])
 def test_robust_scaler_equivalence_dense_sparse(density, strictly_signed):
     # Check the equivalence of the fitting with dense and sparse matrices
     X_sparse = sparse.rand(1000, 5, density=density).tocsc()
@@ -974,7 +975,7 @@ def test_robust_scaler_equivalence_dense_sparse(density, strictly_signed):
         X_sparse.data += X_sparse.min()
     elif strictly_signed == 'negatif':
         X_sparse.data -= X_sparse.max()
-    else:
+    elif strictly_signed == 'zeros':
         X_sparse.data = np.zeros(X_sparse.data.shape, dtype=np.float64)
     X_dense = X_sparse.toarray()
 
