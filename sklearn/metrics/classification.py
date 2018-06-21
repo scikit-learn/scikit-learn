@@ -28,7 +28,6 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
 
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
@@ -340,36 +339,25 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     >>> y_true = [[1, 0, 1], [0, 1, 0]]
     >>> y_pred = [[1, 0, 0], [0, 1, 1]]
     >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
-    array([[[1, 0],
-            [1, 1]],
-
-           [[1, 1],
-            [0, 1]]])
+    array([[[1, 0], [1, 1]],
+           [[1, 1], [0, 1]]])
 
     Multiclass case:
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     >>> multilabel_confusion_matrix(y_true, y_pred,
     ...                             labels=["ant", "bird", "cat"])
-    array([[[3, 1],
-            [0, 2]],
-
-           [[5, 0],
-            [1, 0]],
-
-           [[2, 1],
-            [1, 2]]])
+    array([[[3, 1], [0, 2]],
+           [[5, 0], [1, 0]],
+           [[2, 1], [1, 2]]])
 
     Binary case:
     >>> y_true = [0, 1, 0, 1]
     >>> y_pred = [1, 1, 1, 0]
     >>> multilabel_confusion_matrix(y_true, y_pred,
     ...                             sample_weight=[1, 2, 3, 4])
-    array([[[1, 1],
-            [2, 0]],
-
-           [[0, 2],
-            [1, 1]]])
+    array([[[1, 1], [2, 0]],
+           [[0, 2], [1, 1]]])
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None,
                          accept_sparse=['csr', 'csc'])
@@ -1242,8 +1230,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
-                                    sample_weight=sample_weight,
-                                    labels=labels, samplewise=samplewise)
+                                      sample_weight=sample_weight,
+                                      labels=labels, samplewise=samplewise)
     tp_sum = MCM[:, 1, 1]
     pred_sum = MCM[:, 1, 1] + MCM[:, 0, 1]
     true_sum = MCM[:, 1, 1] + MCM[:, 1, 0]
