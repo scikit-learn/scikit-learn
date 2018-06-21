@@ -429,11 +429,6 @@ def test_one_hot_encoder_specified_categories():
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
     assert np.issubdtype(enc.categories_[0].dtype, np.str_)
 
-    # unsorted passed categories raises for now
-    enc = OneHotEncoder(categories=[['c', 'b', 'a']])
-    msg = re.escape('Unsorted categories are not yet supported')
-    assert_raises_regex(ValueError, msg, enc.fit_transform, X)
-
     # multiple columns
     X = np.array([['a', 'b'], [0, 2]], dtype=object).T
     enc = OneHotEncoder(categories=[['a', 'b', 'c'], [0, 1, 2]])
@@ -453,6 +448,24 @@ def test_one_hot_encoder_specified_categories():
     enc = OneHotEncoder(categories=[['a', 'b']], handle_unknown='ignore')
     exp = np.array([[1., 0.], [0., 1.], [0., 0.]])
     assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
+
+
+def test_one_hot_encoder_unsorted_categories():
+    X = np.array([['a', 'b']], dtype=object).T
+
+    enc = OneHotEncoder(categories=[['b', 'a', 'c']])
+    exp = np.array([[0., 1., 0.],
+                    [1., 0., 0.]])
+    assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+    assert enc.categories_[0].tolist() == ['b', 'a', 'c']
+    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
+
+    # unsorted passed categories still raise for numerical values
+    X = np.array([[1, 2]]).T
+    enc = OneHotEncoder(categories=[[2, 1, 3]])
+    msg = re.escape('Unsorted categories are not supported')
+    assert_raises_regex(ValueError, msg, enc.fit_transform, X)
 
 
 def test_one_hot_encoder_pandas():

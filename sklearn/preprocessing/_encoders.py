@@ -104,10 +104,11 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self._categories != 'auto':
-            for cats in self._categories:
-                if not np.all(np.sort(cats) == np.array(cats)):
-                    raise ValueError("Unsorted categories are not yet "
-                                     "supported")
+            if X.dtype != object:
+                for cats in self._categories:
+                    if not np.all(np.sort(cats) == np.array(cats)):
+                        raise ValueError("Unsorted categories are not "
+                                         "supported for numerical categories")
             if len(self._categories) != n_features:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
@@ -193,8 +194,8 @@ class OneHotEncoder(_BaseEncoder):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories must be sorted and should not mix
-          strings and numeric values.
+          column. The passed categories should not mix strings and numeric
+          values, and should be sorted in case of numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
 
@@ -711,8 +712,8 @@ class OrdinalEncoder(_BaseEncoder):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories must be sorted and should not mix
-          strings and numeric values.
+          column. The passed categories should not mix strings and numeric
+          values, and should be sorted in case of numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
 
