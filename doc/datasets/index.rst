@@ -10,7 +10,7 @@ The ``sklearn.datasets`` package embeds some small toy datasets
 as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
 This package also features helpers to fetch larger datasets commonly
-used by the machine learning community to benchmark algorithm on data
+used by the machine learning community to benchmark algorithms on data
 that comes from the 'real world'.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
@@ -43,7 +43,7 @@ The datasets also contain a full description in their ``DESCR`` attribute and
 some contain ``feature_names`` and ``target_names``. See the dataset 
 descriptions below for details.  
 
-**The dataset generation functions.** They can be used to generate controled 
+**The dataset generation functions.** They can be used to generate controlled 
 synthetic datasets, described in the :ref:`generated_datasets` section.
 
 These functions return a tuple ``(X, y)`` consisting of a ``n_samples`` *
@@ -60,10 +60,9 @@ Toy datasets
 ============
 
 scikit-learn comes with a few small standard datasets that do not require to 
-download any file from some external website. A description of each dataset is
-available below.
+download any file from some external website. 
 
-They can be loaded using the following functions :
+They can be loaded using the following functions:
 
 .. autosummary::
 
@@ -114,9 +113,9 @@ Real world datasets
 ===================
 
 scikit-learn provides tools to load larger datasets, downloading them if
-necessary. A description of each dataset is available below.
+necessary.
 
-They can be loaded using the following functions :
+They can be loaded using the following functions:
 
 .. autosummary::
 
@@ -131,7 +130,6 @@ They can be loaded using the following functions :
    fetch_covtype
    fetch_rcv1
    fetch_kddcup99
-
 
 .. toctree::
     :maxdepth: 2
@@ -276,8 +274,6 @@ Generators for decomposition
 
 Loading other datasets
 ======================
-
-This section gathers different tools to load other kinds of datasets.
 
 .. _sample_images:
 
