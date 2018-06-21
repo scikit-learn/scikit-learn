@@ -232,8 +232,10 @@ def test_column_transformer_dataframe():
     ct = ColumnTransformer([('trans', Trans(), 0)], remainder='drop')
     assert_array_equal(ct.fit_transform(X_df), X_res_first)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
+
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'drop'
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
@@ -544,6 +546,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'passthrough'
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # specify to drop remaining columns
@@ -553,6 +556,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'drop'
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # column order is not preserved (passed through added to end)
@@ -562,6 +566,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'passthrough'
     assert_array_equal(ct.transformers_[-1][2], [0])
 
     # passthrough when all actual transformers are skipped
@@ -571,6 +576,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_second)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'passthrough'
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # error on invalid arg
@@ -597,6 +603,9 @@ def test_column_transformer_remainder_numpy(key):
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
+    assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'passthrough'
+    assert_array_equal(ct.transformers_[-1][2], [1])
 
 
 @pytest.mark.parametrize(
@@ -618,6 +627,9 @@ def test_column_transformer_remainder_pandas(key):
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
     assert len(ct.transformers_) == 2
+    assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'passthrough'
+    assert_array_equal(ct.transformers_[-1][2], [1])
 
 
 @pytest.mark.parametrize("key", [[0], np.array([0]), slice(0, 1),
@@ -637,6 +649,9 @@ def test_column_transformer_remainder_transformer(key):
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
+    assert ct.transformers_[-1][0] == 'remainder'
+    assert isinstance(ct.transformers_[-1][1], DoubleTrans)
+    assert_array_equal(ct.transformers_[-1][2], [1, 2])
 
 
 def test_column_transformer_no_remaining_remainder_transformer():
@@ -668,6 +683,7 @@ def test_column_transformer_drops_all_remainder_transformer():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert isinstance(ct.transformers_[-1][1], DoubleTrans)
     assert_array_equal(ct.transformers_[-1][2], [1, 2])
 
 
@@ -690,6 +706,7 @@ def test_column_transformer_sparse_remainder_transformer():
     assert_array_equal(X_trans.toarray(), exp_array)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert isinstance(ct.transformers_[-1][1], SparseMatrixTrans)
     assert_array_equal(ct.transformers_[-1][2], [1, 2])
 
 
@@ -708,6 +725,7 @@ def test_column_transformer_drop_all_sparse_remainder_transformer():
     assert_array_equal(X_trans.toarray(), np.eye(3))
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
+    assert isinstance(ct.transformers_[-1][1], SparseMatrixTrans)
     assert_array_equal(ct.transformers_[-1][2], [1, 2])
 
 
@@ -745,21 +763,19 @@ def test_column_transformer_get_set_params_with_remainder():
     assert ct.get_params() == exp
 
 
-def test_column_transformer_remainder_transformer_error_msg_1D():
-    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+def test_column_transformer_no_estimators():
+    X_array = np.array([[0, 1, 2],
+                        [2, 4, 6],
+                        [8, 6, 4]]).astype('float').T
+    ct = ColumnTransformer([], remainder=StandardScaler())
 
-    col_trans = ColumnTransformer([('trans', StandardScaler(), 0)],
-                                  remainder=StandardScaler())
-    assert_raise_message(ValueError, "1D data passed to a transformer",
-                         col_trans.fit, X_array)
-    assert_raise_message(ValueError, "1D data passed to a transformer",
-                         col_trans.fit_transform, X_array)
-
-    col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
-    for func in [col_trans.fit, col_trans.fit_transform]:
-        assert_raise_message(ValueError, "specific message", func, X_array)
-
-
-def test_column_transformer_no_estimators_get_params():
-    params = ColumnTransformer([], remainder=StandardScaler()).get_params()
+    params = ct.get_params()
     assert params['remainder__with_mean']
+
+    X_trans = ct.fit_transform(X_array)
+    assert X_trans.shape == X_array.shape
+    assert len(ct.transformers_) == 1
+    assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][2] == [0, 1, 2]
+
+
