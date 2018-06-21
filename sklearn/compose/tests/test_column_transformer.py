@@ -162,7 +162,6 @@ def test_column_transformer_dataframe():
                                remainder='drop')
         assert_array_equal(ct.fit_transform(X_df), res)
         assert_array_equal(ct.fit(X_df).transform(X_df), res)
-        assert len(ct.transformers_) == 1
 
     ct = ColumnTransformer([('trans1', Trans(), ['first']),
                             ('trans2', Trans(), ['second'])])
@@ -225,7 +224,7 @@ def test_column_transformer_dataframe():
     ct = ColumnTransformer([('trans', Trans(), 0)], remainder='drop')
     assert_array_equal(ct.fit_transform(X_df), X_res_first)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
-    assert len(ct.transformers_) == 1
+    assert len(ct.transformers_) == 2
 
 
 def test_column_transformer_sparse_array():
@@ -538,7 +537,7 @@ def test_column_transformer_remainder():
                            remainder='drop')
     assert_array_equal(ct.fit_transform(X_array), X_res_first)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
-    assert len(ct.transformers_) == 1
+    assert len(ct.transformers_) == 2
 
     # column order is not preserved (passed through added to end)
     ct = ColumnTransformer([('trans1', Trans(), [1])],

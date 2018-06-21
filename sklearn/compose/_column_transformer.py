@@ -248,16 +248,11 @@ boolean mask array
                 self.remainder)
 
         n_columns = X.shape[1]
-
-        passthrough = None  # self.remainder == 'drop'
-        if self.remainder == 'passthrough' or is_transformer:
-            cols = []
-            for _, _, columns in self.transformers:
-                cols.extend(_get_column_indices(X, columns))
-            passthrough = sorted(list(set(range(n_columns)) - set(cols)))
-            if not passthrough:
-                # empty list -> no need to select passthrough columns
-                passthrough = None
+        cols = []
+        for _, _, columns in self.transformers:
+            cols.extend(_get_column_indices(X, columns))
+        passthrough = sorted(list(set(range(n_columns)) - set(cols)))
+        passthrough = passthrough or None
 
         self._remainder = ('remainder_transformer', self.remainder,
                            passthrough)
@@ -387,7 +382,6 @@ boolean mask array
         self._validate_transformers()
 
         transformers = self._fit_transform(X, y, _fit_one_transformer)
-
         self._update_fitted_transformers(transformers)
 
         return self
