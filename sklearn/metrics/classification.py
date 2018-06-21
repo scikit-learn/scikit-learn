@@ -376,8 +376,6 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     y_pred = check_array(y_pred, ensure_2d=False, dtype=None,
                          accept_sparse=['csr', 'csc'])
     check_consistent_length(y_true, y_pred, sample_weight)
-    if sample_weight is not None and samplewise:
-        raise ValueError('sample_weight should not be used with samplewise. ')
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
@@ -461,8 +459,14 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     fn = true_sum - tp_sum
     tp = tp_sum
 
-    if sample_weight is not None:
-        tn = sample_weight.sum() - tp - fp - fn
+    if sample_weight is not None and samplewise:
+        sample_weight = np.array(sample_weight)
+        tp = np.array(tp)
+        fp = np.array(fp)
+        fn = np.array(fn)
+        tn = sample_weight * y_true.shape[1] - tp - fp - fn
+    elif sample_weight is not None:
+        tn = sum(sample_weight) - tp - fp - fn
     elif samplewise:
         tn = y_true.shape[1] - tp - fp - fn
     else:
@@ -1200,9 +1204,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    (array([0. , 0. , 0.66...]),
-     array([0., 0., 1.]),
-     array([0. , 0. , 0.8]),
+    (array([0.        , 0.        , 0.66...]),
+     array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
 
     """

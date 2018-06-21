@@ -407,6 +407,14 @@ def test_multilabel_confusion_matrix_multilabel():
                             [[1, 1], [0, 0]],
                             [[0, 1], [1, 0]]])
 
+    # test support for sample_weight with sample_wise
+    cm = multilabel_confusion_matrix(y_true, y_pred,
+                                     sample_weight=sample_weight,
+                                     samplewise=True)
+    assert_array_equal(cm, [[[2, 0], [2, 2]],
+                            [[1, 1], [0, 1]],
+                            [[0, 3], [6, 0]]])
+
 
 def test_multilabel_confusion_matrix_errors():
     y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
@@ -416,11 +424,6 @@ def test_multilabel_confusion_matrix_errors():
     sample_weight = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     assert_raises(ValueError, multilabel_confusion_matrix,
                   y_true, y_pred, sample_weight=sample_weight)
-
-    # Using sample_weight and samplewise together
-    sample_weight = np.array([2, 1, 3])
-    assert_raises(ValueError, multilabel_confusion_matrix,
-                  y_true, y_pred, sample_weight=sample_weight, samplewise=True)
 
     # Using samplewise outside multilabel
     assert_raises(ValueError, multilabel_confusion_matrix,
