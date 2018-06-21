@@ -453,18 +453,17 @@ def test_max_feature_regression():
 
 
 def test_feature_importance_regression():
-    """Test that Gini importance is calculated correctly
+    """Test that Gini importance is calculated correctly.
 
-    This test is follows an example from [1] (pg. 373).
+    This test follows the example from [1]_ (pg. 373).
 
-    [1]: Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements of
-    statistical learning. New York: Springer series in statistics.
+    .. [1] Friedman, J., Hastie, T., & Tibshirani, R. (2001). The elements
+       of statistical learning. New York: Springer series in statistics.
     """
     california = fetch_california_housing()
     X, y = california.data, california.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    # Gradient boosting
     reg = GradientBoostingRegressor(loss='huber', learning_rate=0.1,
                                     max_leaf_nodes=6, n_estimators=100,
                                     random_state=0)
