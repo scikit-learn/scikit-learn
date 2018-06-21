@@ -1084,8 +1084,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     n_jobs : int, default: 1
         Number of CPU cores used when parallelizing over classes if
-        multi_class='ovr'". This parameter is ignored when the ``solver``is set
-        to 'liblinear' regardless of whether 'multi_class' is specified or
+        multi_class='ovr'". This parameter is ignored when the ``solver`` is
+        set to 'liblinear' regardless of whether 'multi_class' is specified or
         not. If given a value of -1, all cores are used.
 
     Attributes
