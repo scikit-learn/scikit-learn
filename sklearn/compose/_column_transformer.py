@@ -93,10 +93,13 @@ boolean mask array
     ----------
     transformers_ : list
         The collection of fitted transformers as tuples of
-        (name, fitted_transformer, column). If there are any remaining
-        columns, a tuple of the form:
+        (name, fitted_transformer, column). `fitted_transformer` can be an
+        estimator or 'drop'. If there are remaining columns, the final
+        element is a tuple of the form:
         ('remainder', transformer, remaining_columns) corresponding to the
-        ``remainder`` parameter will be added to ``transformers_``.
+        ``remainder`` parameter. If there are remaining columns, then
+        ``len(transformers_)==len(transformers)+1``, otherwise
+        ``len(transformers_)==len(transformers)``.
 
     named_transformers_ : Bunch object, a dictionary with attribute access
         Read-only attribute to access any transformer by given name.
