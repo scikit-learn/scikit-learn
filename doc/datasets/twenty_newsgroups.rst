@@ -1,7 +1,7 @@
 .. _20newsgroups:
 
 The 20 newsgroups text dataset
-==============================
+------------------------------
 
 The 20 newsgroups dataset comprises around 18000 newsgroups posts on
 20 topics split in two subsets: one for training (or development)
@@ -19,7 +19,7 @@ returns ready-to-use features, i.e., it is not necessary to use a feature
 extractor.
 
 Usage
------
+~~~~~
 
 The :func:`sklearn.datasets.fetch_20newsgroups` function is a data
 fetching / caching functions that downloads the data archive from
@@ -81,7 +81,7 @@ list of the categories to load to the
   array([0, 1, 1, 1, 0, 1, 1, 0, 0, 0])
 
 Converting text to vectors
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
@@ -115,7 +115,8 @@ ready-to-use tfidf features instead of file names.
 
 
 Filtering text for more realistic training
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 It is easy for a classifier to overfit on particular things that appear in the
 20 Newsgroups data, such as newsgroup headers. Many classifiers achieve very
 high F-scores, but their results would not generalize to other documents that

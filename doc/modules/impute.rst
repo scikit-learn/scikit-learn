@@ -20,9 +20,10 @@ Univariate feature imputation
 =============================
 
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
-values, either using the mean, the median or the most frequent value of
-the row or column in which the missing values are located. This class
-also allows for different missing values encodings.
+values. Missing values can be imputed with a provided constant value, or using
+the statistics (mean, median or most frequent) of each column in which the
+missing values are located. This class also allows for different missing values
+encodings.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
@@ -30,9 +31,9 @@ that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.impute import SimpleImputer
-    >>> imp = SimpleImputer(missing_values='NaN', strategy='mean')
+    >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])       # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, missing_values='NaN', strategy='mean', verbose=0)
+    SimpleImputer(copy=True, fill_value=None, missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
@@ -45,7 +46,7 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
     >>> imp = SimpleImputer(missing_values=0, strategy='mean')
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, missing_values=0, strategy='mean', verbose=0)
+    SimpleImputer(copy=True, fill_value=None, missing_values=0, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))      # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
@@ -55,6 +56,23 @@ The :class:`SimpleImputer` class also supports sparse matrices::
 Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
+
+The :class:`SimpleImputer` class also supports categorical data represented as
+string values or pandas categoricals when using the ``'most_frequent'`` or
+``'constant'`` strategy::
+
+    >>> import pandas as pd
+    >>> df = pd.DataFrame([["a", "x"],
+    ...                    [np.nan, "y"],
+    ...                    ["a", np.nan],
+    ...                    ["b", "y"]], dtype="category")
+    ...
+    >>> imp = SimpleImputer(strategy="most_frequent")
+    >>> print(imp.fit_transform(df))      # doctest: +NORMALIZE_WHITESPACE
+    [['a' 'x']
+     ['a' 'y']
+     ['a' 'y']
+     ['b' 'y']]
 
 .. _mice:
 
@@ -76,7 +94,7 @@ Here is an example snippet::
     >>> imp = MICEImputer(n_imputations=10, random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
     MICEImputer(imputation_order='ascending', initial_strategy='mean',
-          max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
+          max_value=None, min_value=None, missing_values=nan, n_burn_in=10,
           n_imputations=10, n_nearest_features=None, predictor=None,
           random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]

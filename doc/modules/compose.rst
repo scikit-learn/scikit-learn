@@ -364,7 +364,7 @@ and ignored by setting to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_compose_plot_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
 .. _column_transformer:

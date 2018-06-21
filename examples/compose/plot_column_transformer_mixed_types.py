@@ -27,14 +27,16 @@ together with a simple classification model.
 from __future__ import print_function
 
 import pandas as pd
+import numpy as np
 
-from sklearn.compose import make_column_transformer
-from sklearn.pipeline import make_pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, CategoricalEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 
+np.random.seed(0)
 
 # Read data from Titanic dataset.
 titanic_url = ('https://raw.githubusercontent.com/amueller/'
@@ -49,36 +51,37 @@ data = pd.read_csv(titanic_url)
 # - embarked: categories encoded as strings {'C', 'S', 'Q'}.
 # - sex: categories encoded as strings {'female', 'male'}.
 # - pclass: ordinal integers {1, 2, 3}.
-numeric_features = ['age', 'fare']
-categorical_features = ['embarked', 'sex', 'pclass']
-
-# Provisionally, use pd.fillna() to impute missing values for categorical
-# features; SimpleImputer will eventually support strategy="constant".
-data[categorical_features] = data[categorical_features].fillna(value='missing')
 
 # We create the preprocessing pipelines for both numeric and categorical data.
-numeric_transformer = make_pipeline(SimpleImputer(), StandardScaler())
-categorical_transformer = CategoricalEncoder('onehot-dense',
-                                             handle_unknown='ignore')
+numeric_features = ['age', 'fare']
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())])
 
-preprocessing_pl = make_column_transformer(
-    (numeric_features, numeric_transformer),
-    (categorical_features, categorical_transformer),
-    remainder='drop'
-)
+categorical_features = ['embarked', 'sex', 'pclass']
+categorical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+    ('onehot', OneHotEncoder(sparse=False, handle_unknown='ignore'))])
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features),
+        ('cat', categorical_transformer, categorical_features)],
+    remainder='drop')
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
-clf = make_pipeline(preprocessing_pl, LogisticRegression())
+clf = Pipeline(steps=[('preprocessor', preprocessor),
+                      ('classifier', LogisticRegression())])
 
 X = data.drop('survived', axis=1)
-y = data.survived.values
+y = data['survived']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
                                                     shuffle=True)
 
 clf.fit(X_train, y_train)
-print("model score: %f" % clf.score(X_test, y_test))
+print("model score: %.3f" % clf.score(X_test, y_test))
 
 
 ###############################################################################
@@ -93,12 +96,12 @@ print("model score: %f" % clf.score(X_test, y_test))
 
 
 param_grid = {
-    'columntransformer__pipeline__simpleimputer__strategy': ['mean', 'median'],
-    'logisticregression__C': [0.1, 1.0, 1.0],
+    'preprocessor__num__imputer__strategy': ['mean', 'median'],
+    'classifier__C': [0.1, 1.0, 10, 100],
 }
 
 grid_search = GridSearchCV(clf, param_grid, cv=10, iid=False)
 grid_search.fit(X_train, y_train)
 
-print(("best logistic regression from grid search: %f"
+print(("best logistic regression from grid search: %.3f"
        % grid_search.score(X_test, y_test)))
