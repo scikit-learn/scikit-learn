@@ -46,11 +46,10 @@ def _encode_numpy(values, uniques=None, encode=False):
             # unique sorts
             return np.unique(values)
     if encode:
-        uniques_values = np.unique(values)
-        if len(np.intersect1d(uniques_values, uniques)) < len(uniques_values):
-            diff = np.setdiff1d(uniques_values, uniques)
+        diff = _encode_check_unknown(values, uniques)
+        if diff:
             raise ValueError(
-                    "y contains previously unseen labels: %s" % str(diff))
+                "y contains previously unseen labels: %s" % str(diff))
         encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
