@@ -185,7 +185,7 @@ def _check_precomputed(X):
     return graph
 
 
-def _kneighbors_from_graph(graph, n_neighbors):
+def _kneighbors_from_graph(graph, n_neighbors, return_distance):
     """Decompose a nearest neighbors sparse graph into distances and indices
 
     Parameters
@@ -196,10 +196,13 @@ def _kneighbors_from_graph(graph, n_neighbors):
     n_neighbors : int
         Number of neighbors required for each sample.
 
+    return_distance : boolean
+        If False, distances will not be returned
+
     Returns
     -------
     neigh_dist : array, shape (n_samples, n_neighbors)
-        Distances to nearest neighbors.
+        Distances to nearest neighbors. Only present if return_distance=True.
 
     neigh_ind : array, shape (n_samples, n_neighbors)
         Indices of nearest neighbors.
@@ -231,10 +234,13 @@ def _kneighbors_from_graph(graph, n_neighbors):
         def extract(a):
             return a.take(idx, mode='clip').reshape(n_samples, n_neighbors)
 
-    return extract(graph.data), extract(graph.indices)
+    if return_distance:
+        return extract(graph.data), extract(graph.indices)
+    else:
+        return extract(graph.indices)
 
 
-def _radius_neighbors_from_graph(graph, radius):
+def _radius_neighbors_from_graph(graph, radius, return_distance):
     """Decompose a nearest neighbors sparse graph into distances and indices
 
     Parameters
@@ -245,10 +251,13 @@ def _radius_neighbors_from_graph(graph, radius):
     radius : float > 0
         Radius of neighborhoods.
 
+    return_distance : boolean
+        If False, distances will not be returned
+
     Returns
     -------
     neigh_dist : array, shape (n_samples,) of arrays
-        Distances to nearest neighbors.
+        Distances to nearest neighbors. Only present if return_distance=True.
 
     neigh_ind :array, shape (n_samples,) of arrays
         Indices of nearest neighbors.
@@ -259,14 +268,19 @@ def _radius_neighbors_from_graph(graph, radius):
         data, indices, indptr = graph.data, graph.indices, graph.indptr
     else:
         mask = graph.data <= radius
-        data = np.compress(mask, graph.data)
+        if return_distance:
+            data = np.compress(mask, graph.data)
         indices = np.compress(mask, graph.indices)
         indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
 
-    neigh_dist = np.array(np.split(data, indptr[1:-1]))
+    if return_distance:
+        neigh_dist = np.array(np.split(data, indptr[1:-1]))
     neigh_ind = np.array(np.split(indices, indptr[1:-1]))
 
-    return neigh_dist, neigh_ind
+    if return_distance:
+        return neigh_dist, neigh_ind
+    else:
+        return neigh_ind
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -578,13 +592,9 @@ class KNeighborsMixin(object):
         if self._fit_method == 'brute':
 
             if self.effective_metric_ == 'precomputed' and issparse(X):
-                neigh_dist, neigh_ind = _kneighbors_from_graph(
-                    X, n_neighbors=n_neighbors)
-
-                if return_distance:
-                    result = neigh_dist, neigh_ind
-                else:
-                    result = neigh_ind
+                results = _kneighbors_from_graph(
+                    X, n_neighbors=n_neighbors,
+                    return_distance=return_distance)
             else:
                 reduce_func = partial(self._kneighbors_reduce_func,
                                       n_neighbors=n_neighbors,
@@ -617,20 +627,20 @@ class KNeighborsMixin(object):
         if chunked_results is not None:
             if return_distance:
                 neigh_dist, neigh_ind = zip(*chunked_results)
-                result = np.vstack(neigh_dist), np.vstack(neigh_ind)
+                results = np.vstack(neigh_dist), np.vstack(neigh_ind)
             else:
-                result = np.vstack(chunked_results)
+                results = np.vstack(chunked_results)
 
         if not query_is_train:
-            return result
+            return results
         else:
             # If the query data is the same as the indexed data, we would like
             # to ignore the first nearest neighbor of every sample, i.e
             # the sample itself.
             if return_distance:
-                neigh_dist, neigh_ind = result
+                neigh_dist, neigh_ind = results
             else:
-                neigh_ind = result
+                neigh_ind = results
 
             n_samples, _ = X.shape
             sample_range = np.arange(n_samples)[:, None]
@@ -855,12 +865,8 @@ class RadiusNeighborsMixin(object):
         if self._fit_method == 'brute':
 
             if self.effective_metric_ == 'precomputed' and issparse(X):
-                neigh_dist, neigh_ind = _radius_neighbors_from_graph(
-                    X, radius=radius)
-                if return_distance:
-                    results = neigh_dist, neigh_ind
-                else:
-                    results = neigh_ind
+                results = _radius_neighbors_from_graph(
+                    X, radius=radius, return_distance=return_distance)
 
             else:
                 # for efficiency, use squared euclidean distances
@@ -874,12 +880,12 @@ class RadiusNeighborsMixin(object):
                                       radius=radius,
                                       return_distance=return_distance)
 
-                results = pairwise_distances_chunked(
+                chunked_results = pairwise_distances_chunked(
                     X, self._fit_X, reduce_func=reduce_func,
                     metric=self.effective_metric_, n_jobs=self.n_jobs,
                     **kwds)
                 if return_distance:
-                    neigh_dist_chunks, neigh_ind_chunks = zip(*results)
+                    neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
                     neigh_dist_list = sum(neigh_dist_chunks, [])
                     neigh_ind_list = sum(neigh_ind_chunks, [])
                     # See https://github.com/numpy/numpy/issues/5456
@@ -890,7 +896,7 @@ class RadiusNeighborsMixin(object):
                     neigh_ind[:] = neigh_ind_list
                     results = neigh_dist, neigh_ind
                 else:
-                    neigh_ind_list = sum(results, [])
+                    neigh_ind_list = sum(chunked_results, [])
                     results = np.empty(len(neigh_ind_list), dtype='object')
                     results[:] = neigh_ind_list
 
@@ -901,16 +907,16 @@ class RadiusNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = _get_n_jobs(self.n_jobs)
-            results = Parallel(n_jobs, backend='threading')(
+            chunked_results = Parallel(n_jobs, backend='threading')(
                 delayed(self._tree.query_radius, check_pickle=False)(
                     X[s], radius, return_distance, sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
-                neigh_ind, neigh_dist = tuple(zip(*results))
+                neigh_ind, neigh_dist = tuple(zip(*chunked_results))
                 results = np.hstack(neigh_dist), np.hstack(neigh_ind)
             else:
-                results = np.hstack(results)
+                results = np.hstack(chunked_results)
         else:
             raise ValueError("internal: _fit_method not recognized")
 
