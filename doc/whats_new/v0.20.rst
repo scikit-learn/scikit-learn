@@ -70,14 +70,14 @@ Classifiers and regressors
 
 Preprocessing
 
-- Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
-  categorical features as a numeric array, either using a one-hot (or dummy)
-  encoding scheme or by converting to ordinal integers.  Compared to the
-  existing :class:`~preprocessing.OneHotEncoder`, this new class handles
+- Expanded :class:`preprocessing.OneHotEncoder` to allow to encode
+  categorical string features as a numeric array using a one-hot (or dummy)
+  encoding scheme, and added :class:`preprocessing.OrdinalEncoder` to
+  convert to ordinal integers.  Those two classes now handle
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
-  the maximum value in the features. :issue:`9151` by :user:`Vighnesh Birodkar
-  <vighneshbirodkar>` and `Joris Van den Bossche`_.
+  the maximum value in the features. :issue:`9151` and :issue:`10521` by
+  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
@@ -583,6 +583,17 @@ Linear, kernelized and related models
 - Added convergence warning to :class:`svm.LinearSVC` and
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
+
+Preprocessing
+
+- Deprecate ``n_values`` and ``categorical_features`` parameters and
+  ``active_features_``, ``feature_indices_`` and ``n_values_`` attributes
+  of :class:`preprocessing.OneHotEncoder`. The ``n_values`` parameter can be
+  replaced with the new ``categories`` parameter, and the attributes with the
+  new ``categories_`` attribute. Selecting the categorical features with
+  the ``categorical_features`` parameter is now better supported using the
+  :class:`compose.ColumnTransformer`.
+  :issue:`10521` by `Joris Van den Bossche`_.
 
 Decomposition, manifold learning and clustering
 

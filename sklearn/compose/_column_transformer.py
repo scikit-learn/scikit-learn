@@ -636,19 +636,19 @@ def make_column_transformer(*transformers, **kwargs):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import StandardScaler, CategoricalEncoder
+    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
     ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], CategoricalEncoder()))
+    ...     (['categorical_column'], OneHotEncoder()))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=1, remainder='passthrough',
              transformer_weights=None,
              transformers=[('standardscaler',
                             StandardScaler(...),
                             ['numerical_column']),
-                           ('categoricalencoder',
-                            CategoricalEncoder(...),
+                           ('onehotencoder',
+                            OneHotEncoder(...),
                             ['categorical_column'])])
 
     """
