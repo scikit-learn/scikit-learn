@@ -78,7 +78,7 @@ if sp_version < (0, 14):
         with np.errstate(invalid='ignore'):
             return stats.boxcox(x, lmbda)
 else:
-    from scipy.special import boxcox
+    from scipy.special import boxcox  # noqa
 
 
 if sp_version < (0, 15):
