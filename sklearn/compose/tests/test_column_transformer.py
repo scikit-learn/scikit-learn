@@ -727,3 +727,8 @@ def test_column_transformer_no_estimators_set_params():
     ct = ColumnTransformer([]).set_params(n_jobs=2)
     assert ct.n_jobs == 2
 
+
+def test_column_transformer_no_estimators_get_params():
+    params = ColumnTransformer([], remainder=StandardScaler()).get_params()
+    assert params['remainder__with_mean']
+
