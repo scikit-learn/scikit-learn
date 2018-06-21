@@ -68,6 +68,13 @@ def setup_compose():
         raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
+def setup_impute():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping impute.rst, pandas not installed")
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
     is_index = fname.endswith('datasets/index.rst')
@@ -84,6 +91,8 @@ def pytest_runtest_setup(item):
         setup_working_with_text_data()
     elif fname.endswith('modules/compose.rst') or is_index:
         setup_compose()
+    elif fname.endswith('modules/impute.rst'):
+        setup_impute()
 
 
 def pytest_runtest_teardown(item):
