@@ -135,11 +135,10 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        return self._partial_fit(X,y)
+        return self._partial_fit(X)
 
     def partial_fit(self, X, y=None):
-        self._partial_fit(X, y)
-        return self.transform(X)
+        return self._partial_fit(X).self.transform(X)
 
     def _partial_fit(self, X, y=None):
         if getattr(self, "feature_names_", None) is None:
@@ -167,8 +166,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             feature_names.sort()
             vocab = dict((f, i) for i, f in enumerate(feature_names))
         
-        for k in range(len(feature_names),self.n_features):
-            vocab[str(k)] = None
+        if getattr(self, "n_features", None) is not None:
+            for k in range(len(feature_names), self.n_features):
+                vocab[str(k)] = None
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
@@ -221,6 +221,16 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         result_matrix = sp.csr_matrix((values, indices, indptr),
                                       shape=shape, dtype=dtype)
 
+        # Sort everything if asked
+        #[TODO] Check if this still works with new n_features parameter
+        if self.sort:
+            feature_names.sort()
+            map_index = np.empty(len(feature_names), dtype=np.int32)
+            for new_val, f in enumerate(feature_names):
+                map_index[new_val] = vocab[f]
+                vocab[f] = new_val
+            result_matrix = result_matrix[:, map_index]
+
         if self.sparse:
             result_matrix.sort_indices()
         else:
@@ -246,8 +256,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        self._partial_fit(X,y)
-        return self.transform(X)
+        #[TODO] Not working because of iterator being exchausted
+        return self._partial_fit(X)._transform(X)
 
     def inverse_transform(self, X, dict_type=dict):
         """Transform array or sparse matrix X back to feature mappings.
@@ -307,26 +317,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        if self.sparse:
-            return self._transform(X)
-
-        else:
-            dtype = self.dtype
-            vocab = self.vocabulary_
-            X = _tosequence(X)
-            Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
-
-            for i, x in enumerate(X):
-                for f, v in six.iteritems(x):
-                    if isinstance(v, six.string_types):
-                        f = "%s%s%s" % (f, self.separator, v)
-                        v = 1
-                    try:
-                        Xa[i, vocab[f]] = dtype(v)
-                    except KeyError:
-                        pass
-
-            return Xa
+        return self._transform(X)
 
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.
