@@ -205,6 +205,20 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
+
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
+
 
 Setting regularization parameter
 --------------------------------
@@ -358,7 +372,19 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
 
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
 
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 .. _multi_task_elastic_net:
 

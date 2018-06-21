@@ -10,10 +10,12 @@ from sklearn.base import clone
 
 from sklearn.preprocessing import maxabs_scale
 from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import scale
 from sklearn.preprocessing import quantile_transform
 
 from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import QuantileTransformer
 
 from sklearn.utils.testing import assert_array_equal
@@ -31,6 +33,8 @@ def _get_valid_samples_by_column(X, col):
     "est, func, support_sparse",
     [(MaxAbsScaler(), maxabs_scale, True),
      (MinMaxScaler(), minmax_scale, False),
+     (StandardScaler(), scale, False),
+     (StandardScaler(with_mean=False), scale, True),
      (QuantileTransformer(n_quantiles=10), quantile_transform, True)]
 )
 def test_missing_value_handling(est, func, support_sparse):
@@ -76,7 +80,7 @@ def test_missing_value_handling(est, func, support_sparse):
         with pytest.warns(None) as records:
             Xt_col = est.transform(X_test[:, [i]])
         assert len(records) == 0
-        assert_array_equal(Xt_col, Xt[:, [i]])
+        assert_allclose(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
             Xt_col_nonan = est.transform(

@@ -1932,7 +1932,8 @@ class RandomTreesEmbedding(BaseForest):
         super(RandomTreesEmbedding, self).fit(X, y,
                                               sample_weight=sample_weight)
 
-        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
+        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output,
+                                              categories='auto')
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):
