@@ -195,7 +195,7 @@ boolean mask array
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, column in transformers:
-            if column is None:
+            if column is None and name == 'remainder_transformer':
                 continue
             sub = None if X is None else _get_column(X, column)
 
@@ -303,7 +303,7 @@ boolean mask array
         transformer_iter = chain(self.transformers, [self._remainder])
 
         for name, old, column in transformer_iter:
-            if column is None:
+            if column is None and name == 'remainder_transformer':
                 continue
 
             if old == 'drop':
