@@ -731,4 +731,3 @@ def test_column_transformer_no_estimators_set_params():
 def test_column_transformer_no_estimators_get_params():
     params = ColumnTransformer([], remainder=StandardScaler()).get_params()
     assert params['remainder__with_mean']
-
