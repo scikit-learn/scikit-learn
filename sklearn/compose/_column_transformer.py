@@ -55,8 +55,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         name : string
             Like in Pipeline and FeatureUnion, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
-            search. The name 'remainder_transformer' can not be used if the
-            ``remainder`` parameter is an estimator.
+            search.
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
@@ -185,17 +184,20 @@ boolean mask array
         self._set_params('_transformers', **kwargs)
         return self
 
-    def _iter(self, X=None, fitted=False, replace_strings=False):
+    def _iter(self, X=None, fitted=False, replace_strings=False,
+              include_remainder=True):
         """Generate (name, trans, column, weight) tuples
         """
         if fitted:
             transformers = self.transformers_
         else:
-            transformers = chain(self.transformers, [self._remainder])
+            transformers = self.transformers
+            if include_remainder:
+                transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, column in transformers:
-            if column is None and name == 'remainder_transformer':
+            if column is None and name == 'remainder':
                 continue
             sub = None if X is None else _get_column(X, column)
 
@@ -212,7 +214,7 @@ boolean mask array
             yield (name, trans, sub, get_weight(name))
 
     def _validate_transformers(self):
-        names, transformers, _, _ = zip(*self._iter())
+        names, transformers, _, _ = zip(*self._iter(include_remainder=False))
 
         # validate names
         self._validate_names(names)
@@ -247,8 +249,7 @@ boolean mask array
         passthrough = sorted(list(set(range(n_columns)) - set(cols)))
         passthrough = passthrough or None
 
-        self._remainder = ('remainder_transformer', self.remainder,
-                           passthrough)
+        self._remainder = ('remainder', self.remainder, passthrough)
 
     @property
     def named_transformers_(self):
@@ -303,7 +304,7 @@ boolean mask array
         transformer_iter = chain(self.transformers, [self._remainder])
 
         for name, old, column in transformer_iter:
-            if column is None and name == 'remainder_transformer':
+            if column is None and name == 'remainder':
                 continue
 
             if old == 'drop':
