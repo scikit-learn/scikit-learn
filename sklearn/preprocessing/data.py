@@ -24,7 +24,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import nanpercentile
+from ..utils.fixes import boxcox, nanpercentile
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -836,6 +836,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -973,6 +976,9 @@ def maxabs_scale(X, axis=0, copy=True):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded to compute the statistics,
+    and maintained during the data transformation.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -2429,6 +2435,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded in fit, and maintained in
+    transform.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -2468,7 +2477,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         transformed = []
 
         for col in X.T:
-            col_trans, lmbda = stats.boxcox(col, lmbda=None)
+            # the computation of lambda is influenced by NaNs and we need to
+            # get rid of them to compute them.
+            _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
+            col_trans = boxcox(col, lmbda)
             self.lambdas_.append(lmbda)
             transformed.append(col_trans)
 
@@ -2493,7 +2505,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X = self._check_input(X, check_positive=True, check_shape=True)
 
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
+            X[:, i] = boxcox(X[:, i], lmbda)
 
         if self.standardize:
             X = self._scaler.transform(X)
@@ -2548,9 +2560,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         check_method : bool
             If True, check that the transformation method is valid.
         """
-        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy,
+                        force_all_finite='allow-nan')
 
-        if check_positive and self.method == 'box-cox' and np.any(X <= 0):
+        if check_positive and self.method == 'box-cox' and np.nanmin(X) <= 0:
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
 
@@ -2622,6 +2635,9 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
 
     Notes
     -----
+    NaNs are treated as missing values: disregarded to compute the statistics,
+    and maintained during the data transformation.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
