@@ -51,6 +51,7 @@ random sampling procedures.
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -429,6 +430,13 @@ Classifiers and regressors
 - Fixed condition triggering gap computation in :class:`linear_model.Lasso`
   and :class:`linear_model.ElasticNet` when working with sparse matrices.
   :issue:`10992` by `Alexandre Gramfort`_.
+
+- Fixed a bug in :class:`ensemble.gradient_boosting.GradientBoostingRegressor`
+  and :class:`ensemble.gradient_boosting.GradientBoostingClassifier` to have
+  feature importances summed and then normalized, rather than normalizing on a
+  per-tree basis. The previous behavior over-weighted the Gini importance of
+  features that appear in later stages. This issue only affected feature
+  importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
 
 Decomposition, manifold learning and clustering
 
