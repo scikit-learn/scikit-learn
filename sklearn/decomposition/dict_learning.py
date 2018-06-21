@@ -737,8 +737,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                 print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
                       % (ii, dt, dt / 60))
 
+        # Setting n_jobs = 1 to avoid creating workers at each iteration
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
-                                  alpha=alpha, n_jobs=n_jobs).T
+                                  alpha=alpha, n_jobs=1).T
 
         # Update the auxiliary variables
         if ii < batch_size - 1:
