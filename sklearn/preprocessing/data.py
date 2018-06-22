@@ -2737,6 +2737,106 @@ class Winsorizer(BaseEstimator, TransformerMixin):
         return X
 
 
+class CategoricalEncoder(BaseEstimator, TransformerMixin):
+    """Encode categorical features as a numeric array.
+
+    The input to this transformer should be an array-like of integers or
+    strings, denoting the values taken on by categorical (discrete) features.
+    The features can be encoded using a one-hot (aka one-of-K or dummy)
+    encoding scheme (``encoding='onehot'``, the default) or converted
+    to ordinal integers (``encoding='ordinal'``).
+
+    This encoding is needed for feeding categorical data to many scikit-learn
+    estimators, notably linear models and SVMs with the standard kernels.
+
+    Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+>>>>>>> 81e7181cab39ceacfb45cacc8274de1de78d6bac
+
+    Parameters
+    ----------
+    quantile : float
+        The quantile to clip to.
+
+    copy : boolean, optional, default=True
+        Set to False to perform inplace computation during transformation.
+
+    Attributes
+    ----------
+    quantile : float
+        The quantile to clip to.
+
+    data_lb_ : pandas Series, shape (n_features,)
+        Per-feature lower bound to clip to.
+
+    data_ub_ : pandas Series, shape (n_features,)
+        Per-feature upper bound to clip to.
+
+    Examples
+    --------
+        >>> import numpy as np
+        >>> from sklearn.preprocessing import Winsorizer
+        >>> winsorizer = Winsorizer(0.2)
+        >>> X = np.arange(22.).reshape(11,2)
+        >>> winsorizer.fit_transform(X)
+        array([[ 4.,  5.],
+               [ 4.,  5.],
+               [ 4.,  5.],
+               [ 6.,  7.],
+               [ 8.,  9.],
+               [10., 11.],
+               [12., 13.],
+               [14., 15.],
+               [16., 17.],
+               [16., 17.],
+               [16., 17.]])
+    """
+
+    def __init__(self, quantile=0.05, copy=True):
+        self.quantile = quantile
+        self.copy = copy
+
+    def _reset(self):
+        """Reset internal data-dependent state of the transformer, if
+        necessary. __init__ parameters are not touched.
+        """
+        if hasattr(self, 'data_lb_'):
+            del self.data_lb_
+            del self.data_ub_
+
+    def fit(self, X, y=None):
+        """Compute the pth and (1-p)th quantiles of each feature to be used
+        later for clipping.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data to determine clip upper and lower bounds.
+
+        y : Ignored
+        """
+
+        X = check_array(X, copy=self.copy, warn_on_dtype=True, estimator=self,
+                        dtype=FLOAT_DTYPES)
+        self._reset()
+        self.data_lb_ = np.percentile(X, 100 * self.quantile, axis=0)
+        self.data_ub_ = np.percentile(X, 100 * (1 - self.quantile), axis=0)
+        return self
+
+    def transform(self, X):
+        """Clips the feature DataFrame X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data to transform.
+        """
+
+        check_is_fitted(self, ['data_lb_', 'data_ub_'])
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
+        X = np.clip(X, self.data_lb_, self.data_ub_)
+        return X
+
+
 def power_transform(X, method='box-cox', standardize=True, copy=True):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
