@@ -60,6 +60,11 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             :meth:`fit` and n_features_a must be less than or equal to that.
             If ``n_components`` is not None, n_features_a must match it.
 
+    warm_start : bool, optional, (default=False)
+        If True and :meth:`fit` has been called before, the solution of the
+        previous call to :meth:`fit` is used as the initial linear
+        transformation (``n_components`` and ``init`` will be ignored).
+
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
 
@@ -162,13 +167,14 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, init='pca', max_iter=50,
-                 tol=1e-5, callback=None, store_opt_result=False, verbose=0,
-                 random_state=None):
+    def __init__(self, n_components=None, init='pca', warm_start=False,
+                 max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
+                 verbose=0, random_state=None):
 
         # Parameters
         self.n_components = n_components
         self.init = init
+        self.warm_start = warm_start
         self.max_iter = max_iter
         self.tol = tol
         self.callback = callback
@@ -321,6 +327,16 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                  'than the given data dimensionality ({})!'
                                  .format(self.n_components, X.shape[1]))
 
+        # If warm_start is enabled, check that the inputs are consistent
+        _check_scalar(self.warm_start, 'warm_start', bool)
+        if self.warm_start and hasattr(self, 'components_'):
+            if self.components_.shape[1] != X.shape[1]:
+                raise ValueError('The new inputs dimensionality ({}) does not '
+                                 'match the input dimensionality of the '
+                                 'previously learned transformation ({}).'
+                                 .format(X.shape[1],
+                                         self.components_.shape[1]))
+
         _check_scalar(self.max_iter, 'max_iter', integer_types, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
         _check_scalar(self.verbose, 'verbose', integer_types, 0)
@@ -388,6 +404,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         """
 
         transformation = init
+        if self.warm_start and hasattr(self, 'components_'):
+            transformation = self.components_
 
         if isinstance(init, np.ndarray):
             pass

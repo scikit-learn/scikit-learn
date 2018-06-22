@@ -5,7 +5,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six import StringIO
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises, assert_equal, \
-    assert_raise_message, assert_warns_message
+    assert_raise_message, assert_warns_message, assert_true
 from sklearn.datasets import load_iris, make_classification
 from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
@@ -115,6 +115,7 @@ def test_params_validation():
     assert_raises(TypeError, NCA(verbose='true').fit, X, y)
     assert_raises(TypeError, NCA(tol=1).fit, X, y)
     assert_raises(TypeError, NCA(n_components='invalid').fit, X, y)
+    assert_raises(TypeError, NCA(warm_start=1).fit, X, y)
 
     # ValueError
     assert_raise_message(ValueError,
@@ -248,6 +249,63 @@ def test_init_transformation():
                          'linear transformation `init` ({})!'
                          .format(n_components, init.shape[0]),
                          nca.fit, X, y)
+
+
+def test_warm_start_validation():
+    X, y = make_classification(n_samples=30, n_features=5, n_classes=4,
+                               n_redundant=0, n_informative=5, random_state=0)
+
+    nca = NeighborhoodComponentsAnalysis(warm_start=True, max_iter=5)
+    nca.fit(X, y)
+
+    X_less_features, y = \
+        make_classification(n_samples=30, n_features=4, n_classes=4,
+                            n_redundant=0, n_informative=4, random_state=0)
+    assert_raise_message(ValueError,
+                         'The new inputs dimensionality ({}) does not '
+                         'match the input dimensionality of the '
+                         'previously learned transformation ({}).'
+                         .format(X_less_features.shape[1],
+                                 nca.components_.shape[1]),
+                         nca.fit, X_less_features, y)
+
+
+def test_warm_start_effectiveness():
+    # A 1-iteration second fit on same data should give almost same result
+    # with warm starting, and quite different result without warm starting.
+
+    X, y = make_classification(n_samples=30, n_features=5,
+                               n_redundant=0, random_state=0)
+    n_iter = 10
+
+    nca_warm = NeighborhoodComponentsAnalysis(warm_start=True,
+                                              max_iter=n_iter, random_state=0)
+    nca_warm.fit(X, y)
+    transformation_warm = nca_warm.components_
+    nca_warm.max_iter = 1
+    nca_warm.fit(X, y)
+    transformation_warm_plus_one = nca_warm.components_
+
+    nca_cold = NeighborhoodComponentsAnalysis(warm_start=False,
+                                              max_iter=n_iter, random_state=0)
+    nca_cold.fit(X, y)
+    transformation_cold = nca_cold.components_
+    nca_cold.max_iter = 1
+    nca_cold.fit(X, y)
+    transformation_cold_plus_one = nca_cold.components_
+
+    diff_warm = np.sum(np.abs(transformation_warm_plus_one -
+                              transformation_warm))
+    diff_cold = np.sum(np.abs(transformation_cold_plus_one -
+                              transformation_cold))
+
+    assert_true(diff_warm < 2.0,
+                "Transformer changed significantly after one iteration even "
+                "though it was warm-started.")
+
+    assert_true(diff_cold > diff_warm,
+                "Cold-started transformer changed less significantly than "
+                "warm-started transformer after one iteration.")
 
 
 def test_verbose():
