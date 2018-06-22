@@ -613,6 +613,7 @@ The plot shows decision boundaries for Nearest Neighbor Classification and
 Neighborhood Components Analysis classification on the iris dataset, when
 training and scoring on only two features, for visualisation purpose.
 
+.. _nca_dim_reduction:
 
 Dimensionality reduction
 ------------------------
@@ -620,7 +621,7 @@ Dimensionality reduction
 NCA can be used to perform supervised dimensionality reduction. The input data
 are projected onto a linear subspace consisting of the directions which
 minimize the NCA objective. The desired dimensionality can be set using the
-parameter ``n_features_out``. For instance, the following figure shows a
+parameter ``n_components``. For instance, the following figure shows a
 comparison of dimensionality reduction with Principal Component Analysis
 (:class:`sklearn.decomposition.PCA`), Linear Discriminant Analysis
 (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
@@ -650,7 +651,7 @@ Mathematical formulation
 ------------------------
 
 The goal of NCA is to learn an optimal linear transformation matrix of size
-``(n_features_out, n_features)``, which maximises in average the probability
+``(n_components, n_features)``, which maximises in average the probability
 :math:`p_i` of sample :math:`i` being correctly classified, i.e.:
 
 .. math::
@@ -708,13 +709,13 @@ NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
 Time complexity depends on the number of iterations done by the optimisation
  algorithm. However, one can set the maximum number of iterations with the
  argument ``max_iter``. For each iteration, time complexity is
- ``O(n_features_out x n_samples x min(n_samples, n_features)``.
+ ``O(n_components x n_samples x min(n_samples, n_features)``.
 
 
 Transform
 ^^^^^^^^^
 Here the ``transform`` operation returns :math:`LX^T`, therefore its time
-complexity equals ``n_features_out * n_features * n_samples_test``. There is no
+complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
 
