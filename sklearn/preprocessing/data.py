@@ -2568,9 +2568,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy,
                         force_all_finite='allow-nan')
 
-        if check_positive and self.method == 'box-cox' and np.nanmin(X) <= 0:
-            raise ValueError("The Box-Cox transformation can only be applied "
-                             "to strictly positive data")
+        with np.warnings.catch_warnings():
+            np.warnings.filterwarnings(
+                'ignore', r'All-NaN (slice|axis) encountered')
+            if (check_positive and self.method == 'box-cox' and
+                    np.nanmin(X) <= 0):
+                raise ValueError("The Box-Cox transformation can only be "
+                                 "applied to strictly positive data")
 
         if check_shape and not X.shape[1] == len(self.lambdas_):
             raise ValueError("Input data has a different number of features "
