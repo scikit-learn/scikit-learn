@@ -1,3 +1,4 @@
+from __future__ import division
 import pytest
 
 import numpy as np
@@ -366,3 +367,22 @@ def test_sparse_coder_estimator():
                        transform_alpha=0.001).transform(X)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_coder_parallel_mmap():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/5956
+    # Test that SparseCoder does not error by passing reading only
+    # arrays to child processes
+
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 64
+    init_dict = rng.rand(n_components, n_features)
+    # Ensure that `data` is >2M. Joblib memory maps arrays
+    # if they are larger than 1MB. The 4 accounts for float32
+    # data type
+    n_samples = int(2e6) // (4 * n_features)
+    data = np.random.rand(n_samples, n_features).astype(np.float32)
+
+    sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
+    sc.fit_transform(data)
