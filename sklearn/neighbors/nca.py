@@ -11,6 +11,7 @@ from warnings import warn
 import numpy as np
 import sys
 import time
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 try:  # scipy.misc.logsumexp is deprecated in scipy 1.0.0
     from scipy.special import logsumexp
 except ImportError:
@@ -38,12 +39,19 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     init : string or numpy array, optional (default='pca')
         Initialization of the linear transformation. Possible options are
-        'pca', 'identity', 'random', and a numpy array of shape
+        'pca', 'lda', 'identity', 'random', and a numpy array of shape
         (n_features_a, n_features_b).
 
         pca:
             ``n_components`` many principal components of the inputs passed
             to :meth:`fit` will be used to initialize the transformation.
+            (See :class:`~sklearn.decomposition.PCA`)
+
+        lda:
+            ``n_components`` many most discriminative components of the inputs
+            passed to :meth:`fit` will be used to initialize the
+            transformation. (See
+            :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
 
         identity:
             If ``n_components`` is strictly smaller than the
@@ -214,7 +222,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         # (n_samples, n_samples)
 
         # Initialize the transformation
-        transformation = self._initialize(X_valid, init)
+        transformation = self._initialize(X_valid, y_valid, init)
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
@@ -376,22 +384,25 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                      'linear transformation `init` ({})!'
                                      .format(self.n_components,
                                              init.shape[0]))
-        elif init in ['pca', 'identity', 'random']:
+        elif init in ['pca', 'lda', 'identity', 'random']:
             pass
         else:
             raise ValueError(
-                "`init` must be 'pca', 'identity', 'random' or a numpy "
+                "`init` must be 'pca', 'lda', 'identity', 'random' or a numpy "
                 "array of shape (n_components, n_features).")
 
         return X_valid, y_valid, init
 
-    def _initialize(self, X, init):
+    def _initialize(self, X, y, init):
         """Initialize the transformation.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             The training samples.
+
+        y : array-like, shape (n_samples,)
+            The training labels.
 
         init : string or numpy array of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
@@ -416,19 +427,26 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             elif init == 'random':
                 transformation = self.random_state_.randn(n_components,
                                                           X.shape[1])
-            elif init == 'pca':
-                pca = PCA(n_components=n_components,
-                          random_state=self.random_state_)
-                t_pca = time.time()
+            elif init in {'pca', 'lda'}:
+                init_time = time.time()
+                if init == 'pca':
+                    pca = PCA(n_components=n_components,
+                              random_state=self.random_state_)
+                    if self.verbose:
+                        print('Finding principal components... ', end='')
+                        sys.stdout.flush()
+                    pca.fit(X)
+                    transformation = pca.components_
+                elif init == 'lda':
+                    lda = LinearDiscriminantAnalysis(n_components=n_components)
+                    if self.verbose:
+                        print('Finding most discriminative components... ',
+                              end='')
+                        sys.stdout.flush()
+                    lda.fit(X, y)
+                    transformation = lda.scalings_.T[:n_components]
                 if self.verbose:
-                    print('Finding principal components... ', end='')
-                    sys.stdout.flush()
-
-                pca.fit(X)
-                if self.verbose:
-                    print('done in {:5.2f}s'.format(time.time() - t_pca))
-
-                transformation = pca.components_
+                    print('done in {:5.2f}s'.format(time.time() - init_time))
         return transformation
 
     def _callback(self, transformation):

@@ -78,7 +78,7 @@ def test_finite_differences():
     mask = y[:, np.newaxis] == y[np.newaxis, :]  # (n_samples, n_samples)
     nca.n_iter_ = 0
 
-    point = nca._initialize(X, init)
+    point = nca._initialize(X, y, init)
     # compute the gradient at `point`
     _, gradient = nca._loss_grad_lbfgs(point, X, mask)
 
@@ -119,8 +119,9 @@ def test_params_validation():
 
     # ValueError
     assert_raise_message(ValueError,
-                         "`init` must be 'pca', 'identity', 'random' or a "
-                         "numpy array of shape (n_components, n_features).",
+                         "`init` must be 'pca', 'lda', 'identity', 'random' "
+                         "or a numpy array of shape "
+                         "(n_components, n_features).",
                          NCA(init=1).fit, X, y)
     assert_raise_message(ValueError,
                          '`max_iter`= -1, must be >= 1.',
@@ -213,6 +214,10 @@ def test_init_transformation():
     # Initialize with PCA
     nca_pca = NeighborhoodComponentsAnalysis(init='pca')
     nca_pca.fit(X, y)
+
+    # Initialize with LDA
+    nca_lda = NeighborhoodComponentsAnalysis(init='lda')
+    nca_lda.fit(X, y)
 
     init = np.random.rand(X.shape[1], X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
