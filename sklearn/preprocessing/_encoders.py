@@ -127,7 +127,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                le.classes_ = np.array(self._categories[i])
+                le.classes_ = np.array(self._categories[i], dtype=X.dtype)
 
         self.categories_ = [le.classes_ for le in self._label_encoders_]
 
