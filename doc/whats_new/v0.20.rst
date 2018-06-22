@@ -29,6 +29,11 @@ String or pandas Categorical columns can now be encoded with
 :class:`~preprocessing.OneHotEncoder` or
 :class:`~preprocessing.OrdinalEncoder`.
 
+:class:`~compose.TransformedTargetRegressor` helps when the regression target
+needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
+joins :class:`~preprocessing.QuantileTransformer` as a non-linear
+transformation.
+
 This release is also the first to be accompanied by a :ref:`glossary` developed
 by `Joel Nothman`_. The glossary is a reference resource to help users and
 contributors become familiar with the terminology and conventions used in
