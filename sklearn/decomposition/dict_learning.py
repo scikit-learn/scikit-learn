@@ -83,6 +83,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     positive: boolean
         Whether to enforce a positivity constraint on the sparse code.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     code : array of shape (n_components, n_features)
@@ -256,6 +258,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     positive : boolean, optional
         Whether to enforce positivity when finding the encoding.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     code : array of shape (n_samples, n_components)
@@ -357,6 +361,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     positive : boolean, optional
         Whether to enforce positivity when finding the dictionary.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -478,8 +484,12 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     positive_dict : bool
         Whether to enforce positivity when finding the dictionary.
 
+        .. versionadded:: 0.20
+
     positive_code : bool
         Whether to enforce positivity when finding the code.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -684,8 +694,12 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     positive_dict : bool
         Whether to enforce positivity when finding the dictionary.
 
+        .. versionadded:: 0.20
+
     positive_code : bool
         Whether to enforce positivity when finding the code.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -942,6 +956,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     positive_code : bool
         Whether to enforce positivity when finding the code.
 
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1080,8 +1096,12 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     positive_code : bool
         Whether to enforce positivity when finding the code.
 
+        .. versionadded:: 0.20
+
     positive_dict : bool
         Whether to enforce positivity when finding the dictionary
+
+        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -1256,8 +1276,12 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     positive_code : bool
         Whether to enforce positivity when finding the code.
 
+        .. versionadded:: 0.20
+
     positive_dict : bool
         Whether to enforce positivity when finding the dictionary.
+
+        .. versionadded:: 0.20
 
     Attributes
     ----------

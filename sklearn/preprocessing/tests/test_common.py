@@ -10,10 +10,12 @@ from sklearn.base import clone
 
 from sklearn.preprocessing import minmax_scale
 from sklearn.preprocessing import scale
+from sklearn.preprocessing import power_transform
 from sklearn.preprocessing import quantile_transform
 
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import QuantileTransformer
 
 from sklearn.utils.testing import assert_array_equal
@@ -28,19 +30,22 @@ def _get_valid_samples_by_column(X, col):
 
 
 @pytest.mark.parametrize(
-    "est, func, support_sparse",
-    [(MinMaxScaler(), minmax_scale, False),
-     (StandardScaler(), scale, False),
-     (StandardScaler(with_mean=False), scale, True),
-     (QuantileTransformer(n_quantiles=10), quantile_transform, True)]
+    "est, func, support_sparse, strictly_positive",
+    [(MinMaxScaler(), minmax_scale, False, False),
+     (StandardScaler(), scale, False, False),
+     (StandardScaler(with_mean=False), scale, True, False),
+     (PowerTransformer(), power_transform, False, True),
+     (QuantileTransformer(n_quantiles=10), quantile_transform, True, False)]
 )
-def test_missing_value_handling(est, func, support_sparse):
+def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
     n_missing = 50
     X[rng.randint(X.shape[0], size=n_missing),
       rng.randint(X.shape[1], size=n_missing)] = np.nan
+    if strictly_positive:
+        X += np.nanmin(X) + 0.1
     X_train, X_test = train_test_split(X, random_state=1)
     # sanity check
     assert not np.all(np.isnan(X_train), axis=0).any()
