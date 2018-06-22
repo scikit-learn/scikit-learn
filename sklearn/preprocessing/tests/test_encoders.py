@@ -430,18 +430,21 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
      [['a', 'b', 'c']], np.object_),
     (np.array([[1, 2]], dtype='int64').T,
      np.array([[1, 4]], dtype='int64').T,
-     [[1, 2, 3]], np.integer),
-    ], ids=['object', 'numeric'])
+     [[1, 2, 3]], np.int64),
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [np.array(['a', 'b', 'c'])], np.object_),
+    ], ids=['object', 'numeric', 'object-string-cat'])
 def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
     enc = OneHotEncoder(categories=cats)
     exp = np.array([[1., 0., 0.],
                     [0., 1., 0.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
-    assert enc.categories[0] == cats[0]
-    assert enc.categories_[0].tolist() == cats[0]
+    assert list(enc.categories[0]) == list(cats[0])
+    assert enc.categories_[0].tolist() == list(cats[0])
     # manually specified categories should have same dtype as
     # the data when coerced from lists
-    assert np.issubdtype(enc.categories_[0].dtype, cat_dtype)
+    assert enc.categories_[0].dtype == cat_dtype
 
     # when specifying categories manually, unknown categories should already
     # raise when fitting
