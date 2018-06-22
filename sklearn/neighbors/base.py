@@ -422,7 +422,7 @@ class KNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            result = Parallel(n_jobs, backend='threading')(
+            result = Parallel(n_jobs, prefer='threads')(
                 delayed(self._tree.query, check_pickle=False)(
                     X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
@@ -698,7 +698,7 @@ class RadiusNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = _get_n_jobs(self.n_jobs)
-            results = Parallel(n_jobs, backend='threading')(
+            results = Parallel(n_jobs, prefer='threads')(
                 delayed(self._tree.query_radius, check_pickle=False)(
                     X[s], radius, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
