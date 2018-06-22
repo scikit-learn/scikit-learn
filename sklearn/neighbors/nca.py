@@ -407,7 +407,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         if self.warm_start and hasattr(self, 'components_'):
             transformation = self.components_
 
-        if isinstance(init, np.ndarray):
+        elif isinstance(init, np.ndarray):
             pass
         else:
             n_components = self.n_components or X.shape[1]

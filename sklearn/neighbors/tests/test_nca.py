@@ -274,20 +274,16 @@ def test_warm_start_effectiveness():
     # A 1-iteration second fit on same data should give almost same result
     # with warm starting, and quite different result without warm starting.
 
-    X, y = make_classification(n_samples=30, n_features=5,
-                               n_redundant=0, random_state=0)
-    n_iter = 10
+    X, y = load_iris(return_X_y=True)
 
-    nca_warm = NeighborhoodComponentsAnalysis(warm_start=True,
-                                              max_iter=n_iter, random_state=0)
+    nca_warm = NeighborhoodComponentsAnalysis(warm_start=True, random_state=0)
     nca_warm.fit(X, y)
     transformation_warm = nca_warm.components_
     nca_warm.max_iter = 1
     nca_warm.fit(X, y)
     transformation_warm_plus_one = nca_warm.components_
 
-    nca_cold = NeighborhoodComponentsAnalysis(warm_start=False,
-                                              max_iter=n_iter, random_state=0)
+    nca_cold = NeighborhoodComponentsAnalysis(warm_start=False, random_state=0)
     nca_cold.fit(X, y)
     transformation_cold = nca_cold.components_
     nca_cold.max_iter = 1
@@ -299,7 +295,7 @@ def test_warm_start_effectiveness():
     diff_cold = np.sum(np.abs(transformation_cold_plus_one -
                               transformation_cold))
 
-    assert_true(diff_warm < 2.0,
+    assert_true(diff_warm < 3.0,
                 "Transformer changed significantly after one iteration even "
                 "though it was warm-started.")
 
