@@ -18,6 +18,7 @@ import _multiprocessing
 from time import time as _time
 
 from .context import assert_spawning
+from . import semaphore_tracker
 from multiprocessing import process
 from multiprocessing import util
 
@@ -31,11 +32,9 @@ try:
     if sys.version_info < (3, 4):
         from .semlock import SemLock as _SemLock
         from .semlock import sem_unlink
-        from . import semaphore_tracker
     else:
         from _multiprocessing import SemLock as _SemLock
         from _multiprocessing import sem_unlink
-        from multiprocessing import semaphore_tracker
 except (ImportError):
     raise ImportError("This platform lacks a functioning sem_open" +
                       " implementation, therefore, the required" +
@@ -122,8 +121,7 @@ class SemLock(object):
     @staticmethod
     def _make_name():
         # OSX does not support long names for semaphores
-        name = '/loky-%i-%s' % (os.getpid(), next(SemLock._rand))
-        return name
+        return '/loky-%i-%s' % (os.getpid(), next(SemLock._rand))
 
 
 #

@@ -10,7 +10,9 @@
 #    used with multiprocessing.set_start_method
 #  * Add some compat function for python2.7 and 3.3.
 #
+from __future__ import division
 
+import os
 import sys
 import warnings
 import multiprocessing as mp
@@ -67,10 +69,57 @@ else:
                              "methods are {}".format(method, METHODS))
 
 
+def cpu_count():
+    """Return the number of CPUs the current process can use.
+
+    The returned number of CPUs accounts for:
+     * the number of CPUs in the system, as given by
+       ``multiprocessing.cpu_count``
+     * the CPU affinity settings of the current process
+       (available with Python 3.4+ on some Unix systems)
+     * CFS scheduler CPU bandwidth limit
+       (available on Linux only)
+    and is given as the minimum of these three constraints.
+    It is also always larger or equal to 1.
+    """
+    import math
+
+    try:
+        cpu_count_mp = mp.cpu_count()
+    except NotImplementedError:
+        cpu_count_mp = 1
+
+    # Number of available CPUs given affinity settings
+    cpu_count_affinity = cpu_count_mp
+    if hasattr(os, 'sched_getaffinity'):
+        try:
+            cpu_count_affinity = len(os.sched_getaffinity(0))
+        except NotImplementedError:
+            pass
+
+    # CFS scheduler CPU bandwidth limit
+    # available in Linux since 2.6 kernel
+    cpu_count_cfs = cpu_count_mp
+    cfs_quota_fname = "/sys/fs/cgroup/cpu/cpu.cfs_quota_us"
+    cfs_period_fname = "/sys/fs/cgroup/cpu/cpu.cfs_period_us"
+    if os.path.exists(cfs_quota_fname) and os.path.exists(cfs_period_fname):
+        with open(cfs_quota_fname, 'r') as fh:
+            cfs_quota_us = int(fh.read())
+        with open(cfs_period_fname, 'r') as fh:
+            cfs_period_us = int(fh.read())
+
+        if cfs_quota_us > 0 and cfs_period_us > 0:
+            cpu_count_cfs = math.ceil(cfs_quota_us / cfs_period_us)
+            cpu_count_cfs = max(cpu_count_cfs, 1)
+
+    return min(cpu_count_mp, cpu_count_affinity, cpu_count_cfs)
+
+
 class LokyContext(BaseContext):
     """Context relying on the LokyProcess."""
     _name = 'loky'
     Process = LokyProcess
+    cpu_count = staticmethod(cpu_count)
 
     def Queue(self, maxsize=0, reducers=None):
         '''Returns a queue object'''
@@ -156,7 +205,7 @@ class LokyContext(BaseContext):
 class LokyInitMainContext(LokyContext):
     """Extra context with LokyProcess, which does load the main module
 
-    This context is used for compatibility in the case ``cloudpickle`` is not 
+    This context is used for compatibility in the case ``cloudpickle`` is not
     present on the running system. This permits to load functions defined in
     the ``main`` module, using proper safeguards. The declaration of the
     ``executor`` should be protected by ``if __name__ == "__main__":`` and the

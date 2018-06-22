@@ -32,12 +32,12 @@ if sys.version_info[:2] < (3, 4):
         Returns prefix of command line used for spawning a child process
         '''
         if getattr(sys, 'frozen', False):
-            return ([sys.executable, '--multiprocessing-fork'])
+            return ([sys.executable, '--multiprocessing-fork', pipe_handle])
         else:
             prog = 'from multiprocessing.forking import main; main()'
             opts = util._args_from_interpreter_flags()
-            return [_python_exe] + opts + ['-c', prog, '--multiprocessing-fork',
-                                           pipe_handle]
+            return [_python_exe] + opts + [
+                '-c', prog, '--multiprocessing-fork', pipe_handle]
 else:
     from multiprocessing.spawn import get_command_line
 
@@ -95,6 +95,12 @@ def get_preparation_data(name, init_main_module=True):
         orig_dir=process.ORIGINAL_DIR,
         dir=os.getcwd()
     )
+
+    if sys.platform != "win32":
+        # Pass the semaphore_tracker pid to avoid re-spawning it in every child
+        from . import semaphore_tracker
+        semaphore_tracker.ensure_running()
+        d['tracker_pid'] = semaphore_tracker._semaphore_tracker._pid
 
     # Figure out whether to initialise main in the subprocess as a module
     # or through direct execution (or to leave it alone entirely)
@@ -161,6 +167,10 @@ def prepare(data):
 
     if hasattr(mp, 'set_start_method'):
         mp.set_start_method('loky', force=True)
+
+    if 'tacker_pid' in data:
+        from . import semaphore_tracker
+        semaphore_tracker._semaphore_tracker._pid = data["tracker_pid"]
 
     if 'init_main_from_name' in data:
         _fixup_main_from_name(data['init_main_from_name'])

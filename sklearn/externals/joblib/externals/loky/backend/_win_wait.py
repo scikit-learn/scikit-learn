@@ -46,7 +46,7 @@ if sys.platform == 'win32' and sys.version_info[:2] < (3, 3):
             # We cannot use select as in windows it only support sockets
             ready = []
             for h in handles:
-                if type(h) == int:
+                if type(h) in [int, long]:
                     if WaitForSingleObject(h, 0) == WAIT_OBJECT_0:
                         ready += [h]
                 elif h.poll(0):

@@ -320,7 +320,7 @@ class Future(object):
         for callback in self._done_callbacks:
             try:
                 callback(self)
-            except Exception:
+            except BaseException:
                 LOGGER.exception('exception calling callback for %r', self)
 
     def __repr__(self):

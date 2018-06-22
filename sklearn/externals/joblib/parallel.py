@@ -12,23 +12,24 @@ import sys
 from math import sqrt
 import functools
 import time
+import inspect
 import threading
 import itertools
 from numbers import Integral
-from contextlib import contextmanager
 import warnings
 
 from ._multiprocessing_helpers import mp
 
 from .format_stack import format_outer_frames
 from .logger import Logger, short_format_time
-from .my_exceptions import TransportableException, _mk_exception
+from .my_exceptions import TransportableException
 from .disk import memstr_to_bytes
 from ._parallel_backends import (FallbackToBackend, MultiprocessingBackend,
                                  ThreadingBackend, SequentialBackend,
                                  LokyBackend)
 from ._compat import _basestring
 from .externals.cloudpickle import dumps, loads
+from .externals import loky
 
 # Make sure that those two classes are part of the public joblib.parallel API
 # so that 3rd party backend implementers can import them from here.
@@ -41,36 +42,105 @@ BACKENDS = {
     'sequential': SequentialBackend,
     'loky': LokyBackend,
 }
-
 # name of the backend used by default by Parallel outside of any context
 # managed by ``parallel_backend``.
 DEFAULT_BACKEND = 'loky'
 DEFAULT_N_JOBS = 1
+DEFAULT_THREAD_BACKEND = 'threading'
 
 # Thread local value that can be overridden by the ``parallel_backend`` context
 # manager
 _backend = threading.local()
 
+VALID_BACKEND_HINTS = ('processes', 'threads', None)
+VALID_BACKEND_CONSTRAINTS = ('sharedmem', None)
 
-def get_active_backend():
+
+def _register_dask():
+    """ Register Dask Backend if called with parallel_backend("dask") """
+    try:
+        import distributed.joblib  # noqa: #F401
+    except ImportError:
+        msg = ("To use the dask.distributed backend you must install both "
+               "the `dask` and distributed modules.\n\n"
+               "See http://dask.pydata.org/en/latest/install.html for more "
+               "information.")
+        raise ImportError(msg)
+
+
+EXTERNAL_BACKENDS = {
+    'dask': _register_dask,
+}
+
+
+def get_active_backend(prefer=None, require=None, verbose=0):
     """Return the active default backend"""
-    active_backend_and_jobs = getattr(_backend, 'backend_and_jobs', None)
-    if active_backend_and_jobs is not None:
-        return active_backend_and_jobs
+    if prefer not in VALID_BACKEND_HINTS:
+        raise ValueError("prefer=%r is not a valid backend hint, "
+                         "expected one of %r" % (prefer, VALID_BACKEND_HINTS))
+    if require not in VALID_BACKEND_CONSTRAINTS:
+        raise ValueError("require=%r is not a valid backend constraint, "
+                         "expected one of %r"
+                         % (require, VALID_BACKEND_CONSTRAINTS))
+
+    if prefer == 'processes' and require == 'sharedmem':
+        raise ValueError("prefer == 'processes' and require == 'sharedmem'"
+                         " are inconsistent settings")
+    backend_and_jobs = getattr(_backend, 'backend_and_jobs', None)
+    if backend_and_jobs is not None:
+        # Try to use the backend set by the user with the context manager.
+        backend, n_jobs = backend_and_jobs
+        supports_sharedmem = getattr(backend, 'supports_sharedmem', False)
+        if require == 'sharedmem' and not supports_sharedmem:
+            # This backend does not match the shared memory constraint:
+            # fallback to the default thead-based backend.
+            sharedmem_backend = BACKENDS[DEFAULT_THREAD_BACKEND]()
+            if verbose >= 10:
+                print("Using %s as joblib.Parallel backend instead of %s "
+                      "as the latter does not provide shared memory semantics."
+                      % (sharedmem_backend.__class__.__name__,
+                         backend.__class__.__name__))
+            return sharedmem_backend, DEFAULT_N_JOBS
+        else:
+            return backend_and_jobs
+
     # We are outside of the scope of any parallel_backend context manager,
-    # create the default backend instance now
-    active_backend = BACKENDS[DEFAULT_BACKEND]()
-    return active_backend, DEFAULT_N_JOBS
+    # create the default backend instance now.
+    backend = BACKENDS[DEFAULT_BACKEND]()
+    supports_sharedmem = getattr(backend, 'supports_sharedmem', False)
+    uses_threads = getattr(backend, 'uses_threads', False)
+    if ((require == 'sharedmem' and not supports_sharedmem) or
+            (prefer == 'threads' and not uses_threads)):
+        # Make sure the selected default backend match the soft hints and
+        # hard constraints:
+        backend = BACKENDS[DEFAULT_THREAD_BACKEND]()
+    return backend, DEFAULT_N_JOBS
 
 
-@contextmanager
-def parallel_backend(backend, n_jobs=-1, **backend_params):
+class parallel_backend(object):
     """Change the default backend used by Parallel inside a with block.
 
     If ``backend`` is a string it must match a previously registered
     implementation using the ``register_parallel_backend`` function.
 
-    Alternatively backend can be passed directly as an instance.
+    By default the following backends are available:
+
+    - 'loky': single-host, process-based parallelism (used by default),
+    - 'threading': single-host, thread-based parallelism,
+    - 'multiprocessing': legacy single-host, process-based parallelism.
+
+    'loky' is recommended to run functions that manipulate Python objects.
+    'threading' is a low-overhead alternative that is most efficient for
+    functions that release the Global Interpreter Lock: e.g. I/O-bound code or
+    CPU-bound code in a few calls to native code that explicitly releases the
+    GIL.
+
+    In addition, if the `dask` and `distributed` Python packages are installed,
+    it is possible to use the 'dask' backend for better scheduling of nested
+    parallel calls without over-subscription and potentially distribute
+    parallel calls over a networked cluster of several hosts.
+
+    Alternatively the backend can be passed directly as an instance.
 
     By default all available workers will be used (``n_jobs=-1``) unless the
     caller passes an explicit value for the ``n_jobs`` parameter.
@@ -92,19 +162,31 @@ def parallel_backend(backend, n_jobs=-1, **backend_params):
     .. versionadded:: 0.10
 
     """
-    if isinstance(backend, _basestring):
-        backend = BACKENDS[backend](**backend_params)
-    old_backend_and_jobs = getattr(_backend, 'backend_and_jobs', None)
-    try:
+    def __init__(self, backend, n_jobs=-1, **backend_params):
+        if isinstance(backend, _basestring):
+            if backend not in BACKENDS and backend in EXTERNAL_BACKENDS:
+                register = EXTERNAL_BACKENDS[backend]
+                register()
+
+            backend = BACKENDS[backend](**backend_params)
+
+        self.old_backend_and_jobs = getattr(_backend, 'backend_and_jobs', None)
+        self.new_backend_and_jobs = (backend, n_jobs)
+
         _backend.backend_and_jobs = (backend, n_jobs)
-        # return the backend instance to make it easier to write tests
-        yield backend, n_jobs
-    finally:
-        if old_backend_and_jobs is None:
+
+    def __enter__(self):
+        return self.new_backend_and_jobs
+
+    def __exit__(self, type, value, traceback):
+        self.unregister()
+
+    def unregister(self):
+        if self.old_backend_and_jobs is None:
             if getattr(_backend, 'backend_and_jobs', None) is not None:
                 del _backend.backend_and_jobs
         else:
-            _backend.backend_and_jobs = old_backend_and_jobs
+            _backend.backend_and_jobs = self.old_backend_and_jobs
 
 
 # Under Linux or OS X the default start method of multiprocessing
@@ -119,28 +201,65 @@ else:
     DEFAULT_MP_CONTEXT = None
 
 
+class CloudpickledObjectWrapper(object):
+    def __init__(self, obj):
+        self.pickled_obj = dumps(obj)
+
+    def __reduce__(self):
+        return loads, (self.pickled_obj,)
+
+
 class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
 
-    def __init__(self, iterator_slice):
+    def __init__(self, iterator_slice, backend, pickle_cache):
         self.items = list(iterator_slice)
         self._size = len(self.items)
+        self._backend = backend
+        self._pickle_cache = pickle_cache
 
     def __call__(self):
-        return [func(*args, **kwargs) for func, args, kwargs in self.items]
+        with parallel_backend(self._backend):
+            return [func(*args, **kwargs)
+                    for func, args, kwargs in self.items]
 
     def __len__(self):
         return self._size
 
+    @staticmethod
+    def _wrap_non_picklable_objects(obj, pickle_cache):
+        need_wrap = "__main__" in getattr(obj, "__module__", "")
+        if callable(obj):
+            # Need wrap if the object is a function defined in a local scope of
+            # another function.
+            func_code = getattr(obj, "__code__", "")
+            need_wrap |= getattr(func_code, "co_flags", 0) & inspect.CO_NESTED
+
+            # Need wrap if the obj is a lambda expression
+            func_name = getattr(obj, "__name__", "")
+            need_wrap |= "<lambda>" in func_name
+
+        if not need_wrap:
+            return obj
+
+        wrapped_obj = pickle_cache.get(obj)
+        if wrapped_obj is None:
+            wrapped_obj = CloudpickledObjectWrapper(obj)
+            pickle_cache[obj] = wrapped_obj
+        return wrapped_obj
+
     def __getstate__(self):
-        items = [(dumps(func), args, kwargs)
+        items = [(self._wrap_non_picklable_objects(func, self._pickle_cache),
+                  [self._wrap_non_picklable_objects(a, self._pickle_cache)
+                   for a in args],
+                  {k: self._wrap_non_picklable_objects(a, self._pickle_cache)
+                   for k, a in kwargs.items()}
+                  )
                  for func, args, kwargs in self.items]
-        return (items, self._size)
+        return (items, self._size, self._backend)
 
     def __setstate__(self, state):
-        items, self._size = state
-        self.items = [(loads(func), args, kwargs)
-                      for func, args, kwargs in items]
+        self.items, self._size, self._backend = state
 
 
 ###############################################################################
@@ -151,7 +270,7 @@ def cpu_count():
     if mp is None:
         return 1
 
-    return mp.cpu_count()
+    return loky.cpu_count()
 
 
 ###############################################################################
@@ -176,17 +295,11 @@ def _verbosity_filter(index, verbose):
 
 
 ###############################################################################
-def delayed(function, check_pickle=True):
-    """Decorator used to capture the arguments of a function.
-
-    Pass `check_pickle=False` when:
-
-    - performing a possibly repeated check is too costly and has been done
-      already once outside of the call to delayed.
-
-    - when used in conjunction `Parallel(backend='threading')`.
-
-    """
+def delayed(function, check_pickle=None):
+    """Decorator used to capture the arguments of a function."""
+    if check_pickle is not None:
+        warnings.warn('check_pickle is deprecated in joblib 0.12 and will be'
+                      ' removed in 0.13', DeprecationWarning)
     # Try to pickle the input function, to catch the problems early when
     # using with multiprocessing:
     if check_pickle:
@@ -256,7 +369,7 @@ def register_parallel_backend(name, factory, make_default=False):
 def effective_n_jobs(n_jobs=-1):
     """Determine the number of jobs that can actually run in parallel
 
-    n_jobs is the number of workers requested by the callers.
+    n_jobs is the is the number of workers requested by the callers.
     Passing n_jobs=-1 means requesting all available workers for instance
     matching the number of CPU cores on the worker host(s).
 
@@ -283,9 +396,11 @@ def effective_n_jobs(n_jobs=-1):
 class Parallel(Logger):
     ''' Helper class for readable parallel mapping.
 
+        Read more in the :ref:`User Guide <parallel>`.
+
         Parameters
         -----------
-        n_jobs: int, default: 1
+        n_jobs: int, default: None
             The maximum number of concurrently running jobs, such as the number
             of Python worker processes when backend="multiprocessing"
             or the size of the thread-pool when backend="threading".
@@ -293,14 +408,19 @@ class Parallel(Logger):
             is used at all, which is useful for debugging. For n_jobs below -1,
             (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all
             CPUs but one are used.
-        backend: str, ParallelBackendBase instance or None, \
-                default: 'multiprocessing'
+            None is a marker for 'unset' that will be interpreted as n_jobs=1
+            (sequential execution) unless the call is performed under a
+            parallel_backend context manager that sets another value for
+            n_jobs.
+        backend: str, ParallelBackendBase instance or None, default: 'loky'
             Specify the parallelization backend implementation.
             Supported backends are:
 
-            - "multiprocessing" used by default, can induce some
+            - "loky" used by default, can induce some
               communication and memory overhead when exchanging input and
               output data with the worker Python processes.
+            - "multiprocessing" previous process-based backend based on
+              `multiprocessing.Pool`. Less robust than `loky`.
             - "threading" is a very low-overhead backend but it suffers
               from the Python Global Interpreter Lock if the called function
               relies a lot on Python objects. "threading" is mostly useful
@@ -311,6 +431,22 @@ class Parallel(Logger):
             - finally, you can register backends by calling
               register_parallel_backend. This will allow you to implement
               a backend of your liking.
+
+            It is not recommended to hard-code the backend name in a call to
+            Parallel in a library. Instead it is recommended to set soft hints
+            (prefer) or hard constraints (require) so as to make it possible
+            for library users to change the backend from the outside using the
+            parallel_backend context manager.
+        prefer: str in {'processes', 'threads'} or None, default: None
+            Soft hint to choose the default backend if no specific backend
+            was selected with the parallel_backend context manager. The
+            default process-based backend is 'loky' and the default
+            thread-based backend is 'threading'.
+        require: 'sharedmem' or None, default None
+            Hard constraint to select the backend. If set to 'sharedmem',
+            the selected backend will be single-host and thread-based even
+            if the user asked for a non-thread based backend with
+            parallel_backend.
         verbose: int, optional
             The verbosity level: if non zero, progress messages are
             printed. Above 50, the output is sent to stdout.
@@ -322,12 +458,13 @@ class Parallel(Logger):
         pre_dispatch: {'all', integer, or expression, as in '3*n_jobs'}
             The number of batches (of tasks) to be pre-dispatched.
             Default is '2*n_jobs'. When batch_size="auto" this is reasonable
-            default and the multiprocessing workers should never starve.
+            default and the workers should never starve.
         batch_size: int or 'auto', default: 'auto'
             The number of atomic tasks to dispatch at once to each
-            worker. When individual evaluations are very fast, multiprocessing
-            can be slower than sequential computation because of the overhead.
-            Batching fast computations together can mitigate this.
+            worker. When individual evaluations are very fast, dispatching
+            calls to workers can be slower than sequential computation because
+            of the overhead. Batching fast computations together can mitigate
+            this.
             The ``'auto'`` strategy keeps track of the time it takes for a batch
             to complete, and dynamically adjusts the batch size to keep the time
             on the order of half a second, using a heuristic. The initial batch
@@ -350,13 +487,13 @@ class Parallel(Logger):
               overridden with TMP, TMPDIR or TEMP environment
               variables, typically /tmp under Unix operating systems.
 
-            Only active when backend="multiprocessing".
+            Only active when backend="loky" or "multiprocessing".
         max_nbytes int, str, or None, optional, 1M by default
             Threshold on the size of arrays passed to the workers that
             triggers automated memory mapping in temp_folder. Can be an int
             in Bytes, or a human-readable string, e.g., '1M' for 1 megabyte.
             Use None to disable memmapping of large arrays.
-            Only active when backend="multiprocessing".
+            Only active when backend="loky" or "multiprocessing".
         mmap_mode: {None, 'r+', 'r', 'w+', 'c'}
             Memmapping mode for numpy arrays passed to workers.
             See 'max_nbytes' parameter documentation for more details.
@@ -364,10 +501,10 @@ class Parallel(Logger):
         Notes
         -----
 
-        This object uses the multiprocessing module to compute in
-        parallel the application of a function to many different
-        arguments. The main functionality it brings in addition to
-        using the raw multiprocessing API are (see examples for details):
+        This object uses workers to compute in parallel the application of a
+        function to many different arguments. The main functionality it brings
+        in addition to using the raw multiprocessing or concurrent.futures API
+        are (see examples for details):
 
         * More readable code, in particular since it avoids
           constructing list of arguments.
@@ -416,12 +553,10 @@ class Parallel(Logger):
 
         >>> from time import sleep
         >>> from sklearn.externals.joblib import Parallel, delayed
-        >>> r = Parallel(n_jobs=2, verbose=5)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
-        [Parallel(n_jobs=2)]: Done   1 out of  10 | elapsed:    0.1s remaining:    0.9s
-        [Parallel(n_jobs=2)]: Done   3 out of  10 | elapsed:    0.2s remaining:    0.5s
-        [Parallel(n_jobs=2)]: Done   6 out of  10 | elapsed:    0.3s remaining:    0.2s
-        [Parallel(n_jobs=2)]: Done   9 out of  10 | elapsed:    0.5s remaining:    0.1s
-        [Parallel(n_jobs=2)]: Done  10 out of  10 | elapsed:    0.5s finished
+        >>> r = Parallel(n_jobs=2, verbose=10)(delayed(sleep)(.2) for _ in range(10)) #doctest: +SKIP
+        [Parallel(n_jobs=2)]: Done   1 tasks      | elapsed:    0.6s
+        [Parallel(n_jobs=2)]: Done   4 tasks      | elapsed:    0.8s
+        [Parallel(n_jobs=2)]: Done  10 out of  10 | elapsed:    1.4s finished
 
         Traceback example, note how the line of the error is indicated
         as well as the values of the parameter passed to the function that
@@ -456,8 +591,7 @@ class Parallel(Logger):
         Using pre_dispatch in a producer/consumer situation, where the
         data is generated on the fly. Note how the producer is first
         called 3 times before the parallel loop is initiated, and then
-        called to generate new data on the fly. In this case the total
-        number of iterations cannot be reported in the progress messages:
+        called to generate new data on the fly:
 
         >>> from math import sqrt
         >>> from sklearn.externals.joblib import Parallel, delayed
@@ -477,18 +611,24 @@ class Parallel(Logger):
         [Parallel(n_jobs=2)]: Done 3 jobs     | elapsed:  0.0s
         Produced 5
         [Parallel(n_jobs=2)]: Done 4 jobs     | elapsed:  0.0s
-        [Parallel(n_jobs=2)]: Done 5 out of 6 | elapsed:  0.0s remaining: 0.0s
+        [Parallel(n_jobs=2)]: Done 6 out of 6 | elapsed:  0.0s remaining: 0.0s
         [Parallel(n_jobs=2)]: Done 6 out of 6 | elapsed:  0.0s finished
 
     '''
-    def __init__(self, n_jobs=1, backend=None, verbose=0, timeout=None,
+    def __init__(self, n_jobs=None, backend=None, verbose=0, timeout=None,
                  pre_dispatch='2 * n_jobs', batch_size='auto',
-                 temp_folder=None, max_nbytes='1M', mmap_mode='r'):
-        active_backend, default_n_jobs = get_active_backend()
-        if backend is None and n_jobs == 1:
+                 temp_folder=None, max_nbytes='1M', mmap_mode='r',
+                 prefer=None, require=None):
+        active_backend, context_n_jobs = get_active_backend(
+            prefer=prefer, require=require, verbose=verbose)
+        if backend is None and n_jobs is None:
             # If we are under a parallel_backend context manager, look up
             # the default number of jobs and use that instead:
-            n_jobs = default_n_jobs
+            n_jobs = context_n_jobs
+        if n_jobs is None:
+            # No specific context override and no specific value request:
+            # default to 1.
+            n_jobs = 1
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.timeout = timeout
@@ -501,6 +641,8 @@ class Parallel(Logger):
             max_nbytes=max_nbytes,
             mmap_mode=mmap_mode,
             temp_folder=temp_folder,
+            prefer=prefer,
+            require=require,
             verbose=max(0, self.verbose - 50),
         )
         if DEFAULT_MP_CONTEXT is not None:
@@ -524,6 +666,11 @@ class Parallel(Logger):
                 raise ValueError("Invalid backend: %s, expected one of %r"
                                  % (backend, sorted(BACKENDS.keys())))
             backend = backend_factory()
+
+        if (require == 'sharedmem' and
+                not getattr(backend, 'supports_sharedmem', False)):
+            raise ValueError("Backend %s does not support shared memory"
+                             % backend)
 
         if (batch_size == 'auto' or isinstance(batch_size, Integral) and
                 batch_size > 0):
@@ -634,7 +781,9 @@ class Parallel(Logger):
             batch_size = self.batch_size
 
         with self._lock:
-            tasks = BatchedCalls(itertools.islice(iterator, batch_size))
+            tasks = BatchedCalls(itertools.islice(iterator, batch_size),
+                                 self._backend.get_nested_backend(),
+                                 self._pickle_cache)
             if len(tasks) == 0:
                 # No more tasks available in the iterator: tell caller to stop.
                 return False
@@ -737,24 +886,14 @@ class Parallel(Logger):
                     ensure_ready = self._managed_backend
                     backend.abort_everything(ensure_ready=ensure_ready)
 
-                if not isinstance(exception, TransportableException):
-                    raise
-                else:
+                if isinstance(exception, TransportableException):
                     # Capture exception to add information on the local
                     # stack in addition to the distant stack
                     this_report = format_outer_frames(context=10,
                                                       stack_start=1)
-                    report = """Multiprocessing exception:
-%s
----------------------------------------------------------------------------
-Sub-process traceback:
----------------------------------------------------------------------------
-%s""" % (this_report, exception.message)
-                    # Convert this to a JoblibException
-                    exception_type = _mk_exception(exception.etype)[0]
-                    exception = exception_type(report)
-
-                    raise exception
+                    raise exception.unwrap(this_report)
+                else:
+                    raise
 
     def __call__(self, iterable):
         if self._jobs:
@@ -767,7 +906,10 @@ Sub-process traceback:
             n_jobs = self._initialize_backend()
         else:
             n_jobs = self._effective_n_jobs()
-
+        self._print("Using backend %s with %d concurrent workers.",
+                    (self._backend.__class__.__name__, n_jobs))
+        if hasattr(self._backend, 'start_call'):
+            self._backend.start_call()
         iterator = iter(iterable)
         pre_dispatch = self.pre_dispatch
 
@@ -790,6 +932,11 @@ Sub-process traceback:
         self.n_dispatched_batches = 0
         self.n_dispatched_tasks = 0
         self.n_completed_tasks = 0
+        # Use a caching dict for callables that are pickled with cloudpickle to
+        # improve performances. This cache is used only in the case of
+        # functions that are defined in the __main__ module, functions that are
+        # defined locally (inside another function) and lambda expressions.
+        self._pickle_cache = dict()
         try:
             # Only set self._iterating to True if at least a batch
             # was dispatched. In particular this covers the edge
@@ -811,16 +958,20 @@ Sub-process traceback:
                 # consumption.
                 self._iterating = False
 
-            self.retrieve()
+            with self._backend.retrieval_context():
+                self.retrieve()
             # Make sure that we get a last message telling us we are done
             elapsed_time = time.time() - self._start_time
             self._print('Done %3i out of %3i | elapsed: %s finished',
                         (len(self._output), len(self._output),
                          short_format_time(elapsed_time)))
         finally:
+            if hasattr(self._backend, 'stop_call'):
+                self._backend.stop_call()
             if not self._managed_backend:
                 self._terminate_backend()
             self._jobs = list()
+            self._pickle_cache = None
         output = self._output
         self._output = None
         return output

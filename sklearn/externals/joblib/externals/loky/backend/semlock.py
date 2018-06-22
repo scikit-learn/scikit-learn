@@ -68,7 +68,7 @@ if sys.version_info[:2] < (3, 3):
 
 
 def sem_unlink(name):
-    if pthread.sem_unlink(name) < 0:
+    if pthread.sem_unlink(name.encode('ascii')) < 0:
         raiseFromErrno()
 
 
@@ -153,8 +153,8 @@ class SemLock(object):
         self.ident = 0
         self.kind = kind
         self.maxvalue = maxvalue
-        self.name = name.encode('ascii')
-        self.handle = _sem_open(self.name, value)
+        self.name = name
+        self.handle = _sem_open(self.name.encode('ascii'), value)
 
     def __del__(self):
         try:
@@ -265,7 +265,7 @@ class SemLock(object):
         self.kind = kind
         self.maxvalue = maxvalue
         self.name = name
-        self.handle = _sem_open(name)
+        self.handle = _sem_open(name.encode('ascii'))
         return self
 
 

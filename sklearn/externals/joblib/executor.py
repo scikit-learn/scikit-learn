@@ -17,8 +17,9 @@ from .externals.loky.reusable_executor import get_reusable_executor
 _backend_args = None
 
 
-def get_memmapping_executor(n_jobs, **backend_args):
-    """Factory for ReusableExecutor with automatix memmapping for large numpy
+def get_memmapping_executor(n_jobs, timeout=300, initializer=None, initargs=(),
+                            **backend_args):
+    """Factory for ReusableExecutor with automatic memmapping for large numpy
     arrays.
     """
     global _backend_args
@@ -30,7 +31,9 @@ def get_memmapping_executor(n_jobs, **backend_args):
         id_executor, **backend_args)
     _executor = get_reusable_executor(n_jobs, job_reducers=job_reducers,
                                       result_reducers=result_reducers,
-                                      reuse=reuse)
+                                      reuse=reuse, timeout=timeout,
+                                      initializer=initializer,
+                                      initargs=initargs)
     # If executor doesn't have a _temp_folder, it means it is a new executor
     # and the reducers have been used. Else, the previous reducers are used
     # and we should not change this attibute.

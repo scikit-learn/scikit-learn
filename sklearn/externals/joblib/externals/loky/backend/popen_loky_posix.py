@@ -17,10 +17,7 @@ if sys.version_info[:2] < (3, 3):
     ProcessLookupError = OSError
 
 if sys.platform != "win32":
-    if sys.version_info[:2] > (3, 3):
-        from multiprocessing import semaphore_tracker
-    else:
-        from . import semaphore_tracker
+    from . import semaphore_tracker
 
 
 __all__ = []
@@ -145,7 +142,7 @@ if sys.platform != "win32":
 
                 cmd_python = [sys.executable]
                 cmd_python += ['-m', self.__module__]
-                cmd_python += ['--name-process', str(process_obj.name)]
+                cmd_python += ['--process-name', str(process_obj.name)]
                 cmd_python += ['--pipe',
                                str(reduction._mk_inheritable(child_r))]
                 reduction._mk_inheritable(child_w)
@@ -183,7 +180,7 @@ if __name__ == '__main__':
                         help='File handle for the pipe')
     parser.add_argument('--semaphore', type=int, required=True,
                         help='File handle name for the semaphore tracker')
-    parser.add_argument('--name-process', type=str, default=None,
+    parser.add_argument('--process-name', type=str, default=None,
                         help='Identifier for debugging purpose')
 
     args = parser.parse_args()
@@ -205,7 +202,7 @@ if __name__ == '__main__':
         exitcode = process_obj._bootstrap()
     except Exception as e:
         print('\n\n' + '-' * 80)
-        print('Process failed with traceback: ')
+        print('{} failed with traceback: '.format(args.process_name))
         print('-' * 80)
         import traceback
         print(traceback.format_exc())
