@@ -21,6 +21,10 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
+from sklearn.externals.joblib import parallel_backend
+from sklearn.externals.joblib import register_parallel_backend
+from sklearn.externals.joblib.parallel import LokyBackend
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1228,3 +1232,31 @@ def test_min_impurity_decrease():
             # Simply check if the parameter is passed on correctly. Tree tests
             # will suffice for the actual working of this param
             assert_equal(tree.min_impurity_decrease, 0.1)
+
+
+class MyBackend(LokyBackend):
+    def __init__(self, *args, **kwargs):
+        self.count = 0
+        super(MyBackend, self).__init__(*args, **kwargs)
+
+    def start_call(self):
+        self.count += 1
+        return super(MyBackend, self).start_call()
+
+
+register_parallel_backend('testing', MyBackend)
+
+
+def test_backend_respected():
+    clf = RandomForestClassifier(n_jobs=-1)
+
+    with parallel_backend("testing") as (ba, _):
+        clf.fit(X, y)
+
+    assert ba.count > 0
+
+    # predict_proba requires shared memory. Ensure that's honored.
+    with parallel_backend("testing") as (ba, _):
+        clf.predict_proba(X)
+
+    assert ba.count == 0

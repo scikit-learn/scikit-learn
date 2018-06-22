@@ -489,7 +489,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         strategy is called OVA: One Versus All.
         """
         # Use joblib to fit OvA in parallel.
-        result = Parallel(n_jobs=self.n_jobs, backend="threading",
+        result = Parallel(n_jobs=self.n_jobs, prefer="threads",
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
