@@ -8,13 +8,9 @@ Neighborhood Component Analysis
 from __future__ import print_function
 
 from warnings import warn
-
 import numpy as np
 import sys
 import time
-
-from sklearn.exceptions import ConvergenceWarning
-
 try:  # scipy.misc.logsumexp is deprecated in scipy 1.0.0
     from scipy.special import logsumexp
 except ImportError:
@@ -28,6 +24,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
 from ..utils.validation import check_is_fitted, check_array, check_X_y
 from ..externals.six import integer_types
+from ..exceptions import ConvergenceWarning
 
 
 class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):

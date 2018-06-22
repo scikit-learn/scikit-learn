@@ -1,8 +1,6 @@
 import sys
-
 import numpy as np
 from numpy.testing import assert_array_equal
-
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six import StringIO
 from sklearn.utils import check_random_state
@@ -120,14 +118,14 @@ def test_params_validation():
 
     # ValueError
     assert_raise_message(ValueError,
-                  "`init` must be 'pca', 'identity', 'random' or a numpy "
-                  "array of shape (n_components, n_features).",
-                  NCA(init=1).fit, X, y)
+                         "`init` must be 'pca', 'identity', 'random' or a "
+                         "numpy array of shape (n_components, n_features).",
+                         NCA(init=1).fit, X, y)
     assert_raise_message(ValueError,
                          '`max_iter`= -1, must be >= 1.',
                          NCA(max_iter=-1).fit, X, y)
 
-    init=np.random.rand(5, 3)
+    init = np.random.rand(5, 3)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given linear '
                          'transformation `init` cannot be greater than its '
@@ -142,6 +140,7 @@ def test_params_validation():
                          'than the given data dimensionality ({})!'
                          .format(n_components, X.shape[1]),
                          NCA(n_components=n_components).fit, X, y)
+
 
 def test_transformation_dimensions():
     X = np.arange(12).reshape(4, 3)
@@ -174,28 +173,28 @@ def test_n_components():
 
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
-    lmnn = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
                          'The preferred embedding dimensionality '
                          '`n_components` ({}) does not match '
                          'the output dimensionality of the given '
                          'linear transformation `init` ({})!'
                          .format(n_components, init.shape[0]),
-                         lmnn.fit, X, y)
+                         nca.fit, X, y)
 
     # n_components > X.shape[1]
     n_components = X.shape[1] + 2
-    lmnn = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
                          'The preferred embedding dimensionality '
                          '`n_components` ({}) cannot be greater '
                          'than the given data dimensionality ({})!'
                          .format(n_components, X.shape[1]),
-                         lmnn.fit, X, y)
+                         nca.fit, X, y)
 
     # n_components < X.shape[1]
-    lmnn = NeighborhoodComponentsAnalysis(n_components=2, init='identity')
-    lmnn.fit(X, y)
+    nca = NeighborhoodComponentsAnalysis(n_components=2, init='identity')
+    nca.fit(X, y)
 
 
 def test_init_transformation():
@@ -220,35 +219,35 @@ def test_init_transformation():
 
     # init.shape[1] must match X.shape[1]
     init = np.random.rand(X.shape[1], X.shape[1] + 1)
-    lmnn = NeighborhoodComponentsAnalysis(init=init)
+    nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raise_message(ValueError,
                          'The input dimensionality ({}) of the given '
                          'linear transformation `init` must match the '
                          'dimensionality of the given inputs `X` ({}).'
                          .format(init.shape[1], X.shape[1]),
-                         lmnn.fit, X, y)
+                         nca.fit, X, y)
 
     # init.shape[0] must be <= init.shape[1]
     init = np.random.rand(X.shape[1] + 1, X.shape[1])
-    lmnn = NeighborhoodComponentsAnalysis(init=init)
+    nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given '
                          'linear transformation `init` cannot be '
                          'greater than its input dimensionality ({}).'
                          .format(init.shape[0], init.shape[1]),
-                         lmnn.fit, X, y)
+                         nca.fit, X, y)
 
     # init.shape[0] must match n_components
     init = np.random.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
-    lmnn = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
                          'The preferred embedding dimensionality '
                          '`n_components` ({}) does not match '
                          'the output dimensionality of the given '
                          'linear transformation `init` ({})!'
                          .format(n_components, init.shape[0]),
-                         lmnn.fit, X, y)
+                         nca.fit, X, y)
 
 
 def test_verbose():
@@ -362,6 +361,7 @@ def test_callback():
     # check output
     assert('{} iterations remaining...'.format(max_iter-1) in out)
 
+
 def test_store_opt_result():
     X = iris_data
     y = iris_target
@@ -371,6 +371,7 @@ def test_store_opt_result():
     nca.fit(X, y)
     transformation = nca.opt_result_.x
     assert_equal(transformation.size, X.shape[1]**2)
+
 
 def test_convergence_warning():
 
