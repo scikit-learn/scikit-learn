@@ -371,7 +371,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     """
     n_components = len(code)
-    n_samples = Y.shape[0]
+    n_features = Y.shape[0]
     random_state = check_random_state(random_state)
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
@@ -392,7 +392,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 sys.stdout.flush()
             elif verbose:
                 print("Adding new random atom")
-            dictionary[:, k] = random_state.randn(n_samples)
+            dictionary[:, k] = random_state.randn(n_features)
             if positive:
                 dictionary[:, k][dictionary[:, k] < 0] = 0.0
             # Setting corresponding coefs to 0
