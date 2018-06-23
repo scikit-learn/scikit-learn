@@ -359,7 +359,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
             [1, 1]],
     <BLANKLINE>
            [[1, 1],
-            [0, 1]]])
+            [0, 1]]], dtype=int32)
 
     Multiclass case:
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
