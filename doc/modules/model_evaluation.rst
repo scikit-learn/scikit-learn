@@ -1132,7 +1132,7 @@ and false positives is :math:`MCM_{i,0,1}`. Here is an example::
             [1, 1]],
     <BLANKLINE>
            [[1, 1],
-            [0, 1]]])
+            [0, 1]]], dtype=int32)
 
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
@@ -1152,7 +1152,7 @@ and false positives is :math:`MCM_{i,0,1}`. Here is an example::
     >>> multilabel_confusion_matrix(y_true, y_pred,
     ...                             sample_weight=[1, 2, 3, 4])
     array([[[2., 4.],
-            [4., 0]],
+            [4., 0.]],
     <BLANKLINE>
            [[0., 4.],
             [4., 2.]]])
