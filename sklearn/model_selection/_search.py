@@ -759,7 +759,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
+            # If self.refit is a callable, it will be passed results and would
+            # be expected to return a value for best_index_.
+            if callable(self.refit):
+                self.best_index_ = self.refit(results)
+            else:
+                self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
             self.best_params_ = candidate_params[self.best_index_]
             self.best_score_ = results["mean_test_%s" % refit_metric][
                 self.best_index_]
@@ -911,13 +916,17 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, or string, default=True
+    refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
         scorer is used to find the best parameters for refitting the estimator
         at the end.
+
+        Where there are considerations other than maximum model performance in
+        choosing a best estimator, ``refit`` can be set to a function which returns
+        thre selected ``best_index_`` given ``cv_results_``.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -1251,13 +1260,17 @@ class RandomizedSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, or string default=True
+    refit : boolean, string, or callable default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
+
+        Where there are considerations other than maximum model performance in
+        choosing a best estimator, ``refit`` can be set to a function which 
+        returns the selected ``best_index_`` given the ``cv_results``.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this

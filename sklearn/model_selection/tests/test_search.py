@@ -641,6 +641,28 @@ def test_refit():
     clf.fit(X, y)
 
 
+def test_refit_callable():
+    """
+    Test refit=callable, which adds flexibility in identifying the 
+    "best" estimator.
+    """
+    def score(cv_results):
+        """
+        Dummy customized score function for testing refit-callable.
+        Returns the first element in 'foo_param' candidates
+        """
+        return cv_results["param_foo_param"].argmax()
+
+    X = np.arange(100).reshape(10,10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = GridSearchCV(MockClassifier(), {'foo_param': [1, 2, 4, 3]},
+                       refit=score)
+    clf.fit(X, y)
+
+    assert_equal(clf.best_index_, 2)
+
+
 def test_gridsearch_nd():
     # Pass X as list in GridSearchCV
     X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
