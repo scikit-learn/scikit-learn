@@ -265,6 +265,15 @@ def test_dict_learning_online_initialization():
     assert_array_equal(dico.components_, V)
 
 
+def test_dict_learning_online_readonly_initialization():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)
+    V.setflags(write=False)
+    MiniBatchDictionaryLearning(n_components, n_iter=1, dict_init=V,
+                                random_state=0, shuffle=False).fit(X)
+
+
 def test_dict_learning_online_partial_fit():
     n_components = 12
     rng = np.random.RandomState(0)
