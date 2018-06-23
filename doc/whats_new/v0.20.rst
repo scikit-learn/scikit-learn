@@ -7,10 +7,37 @@
 Version 0.20 (under development)
 ================================
 
-As well as a plethora of new features and enhancements, this release is the
-first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
-glossary is a reference resource to help users and contributors become familiar
-with the terminology and conventions used in Scikit-learn.
+This release packs in a mountain of bug fixes, features and enhancements for
+the Scikit-learn library, and improvements to the documentation and examples.
+Thanks to our many contributors!
+
+Highlights
+----------
+
+We have tried to improve our support for common data-science use-cases
+including missing values, categorical variables, heterogeneous data, and
+features/targets with unusual distributions.
+
+Missing values in features, represented by NaNs, are now accepted in
+column-wise preprocessing such as scalers.  Each feature is fitted disregarding
+NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
+module provides estimators for learning despite missing data.
+
+:class:`~compose.ColumnTransformer` handles the case where different features
+or columns of a pandas.DataFrame need different preprocessing.
+String or pandas Categorical columns can now be encoded with
+:class:`~preprocessing.OneHotEncoder` or
+:class:`~preprocessing.OrdinalEncoder`.
+
+:class:`~compose.TransformedTargetRegressor` helps when the regression target
+needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
+joins :class:`~preprocessing.QuantileTransformer` as a non-linear
+transformation.
+
+This release is also the first to be accompanied by a :ref:`glossary` developed
+by `Joel Nothman`_. The glossary is a reference resource to help users and
+contributors become familiar with the terminology and conventions used in
+Scikit-learn.
 
 Changed models
 --------------
@@ -29,6 +56,7 @@ random sampling procedures.
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -70,14 +98,14 @@ Classifiers and regressors
 
 Preprocessing
 
-- Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
-  categorical features as a numeric array, either using a one-hot (or dummy)
-  encoding scheme or by converting to ordinal integers.  Compared to the
-  existing :class:`~preprocessing.OneHotEncoder`, this new class handles
+- Expanded :class:`preprocessing.OneHotEncoder` to allow to encode
+  categorical string features as a numeric array using a one-hot (or dummy)
+  encoding scheme, and added :class:`preprocessing.OrdinalEncoder` to
+  convert to ordinal integers.  Those two classes now handle
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
-  the maximum value in the features. :issue:`9151` by :user:`Vighnesh Birodkar
-  <vighneshbirodkar>` and `Joris Van den Bossche`_.
+  the maximum value in the features. :issue:`9151` and :issue:`10521` by
+  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
@@ -95,7 +123,7 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Added :class:`impute.MICEImputer`, which is a strategy for imputing missing
+- Added :class:`impute.ChainedImputer`, which is a strategy for imputing missing
   values by modeling each feature with missing values as a function of
   other features in a round-robin fashion. :issue:`8478` by
   :user:`Sergey Feldman <sergeyf>`.
@@ -118,6 +146,10 @@ Decomposition, manifold learning and clustering
 - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
   sample weights via new parameter ``sample_weight`` in ``fit`` function.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
+
+- :mod:`dict_learning` functions and models now support positivity constraints.
+  This applies to the dictionary and sparse code.
+  :issue:`6374` by :user:`John Kirkham <jakirkham>`.
 
 Metrics
 
@@ -230,6 +262,19 @@ Preprocessing
   :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- :class:`preprocessing.StandardScaler` and :func:`preprocessing.scale`
+  ignore and pass-through NaN values.
+  :issue:`11206` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- :class:`preprocessing.MaxAbsScaler` and :func:`preprocessing.maxabs_scale`
+  handles and ignores NaN values.
+  :issue:`11011` by `Lucija Gregov <LucihaGregov>` and
+  :user:`Guillaume Lemaitre <glemaitre>`
+
+- :class:`preprocessing.PowerTransformer` and
+  :func:`preprocessing.power_transform` ignore and pass-through NaN values.
+  :issue:`11306` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -250,8 +295,15 @@ Model evaluation and meta-estimators
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
 - Add `return_estimator` parameter in :func:`model_selection.cross_validate` to
-  return estimators fitted on each split. :issue:`9686` by :user:`Aurélien Bellet
-  <bellet>`.
+  return estimators fitted on each split.
+  :issue:`9686` by :user:`Aurélien Bellet <bellet>`.
+
+- New ``refit_time_`` attribute will be stored in
+  :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` if ``refit`` is set to ``True``.
+  This will allow measuring the complete time it takes to perform
+  hyperparameter optimization and refitting the best model on the whole
+  dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
 
 Decomposition and manifold learning
 
@@ -262,13 +314,15 @@ Decomposition and manifold learning
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
-  ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
+  ``{0, 1}`` or ``{-1, 1}``.
+  :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-- :func:`metrics.label_ranking_average_precision_score` now supports vector ``sample_weight``.
+- :func:`metrics.label_ranking_average_precision_score` now supports vector
+  ``sample_weight``.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
 
-- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`. When
-  False and both inputs are sparse, will return a sparse matrix.
+- Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`.
+  When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
 - :func:`metrics.cluster.silhouette_score` and
@@ -396,6 +450,13 @@ Classifiers and regressors
   ValueError.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
+- Fixed a bug in :class:`ensemble.gradient_boosting.GradientBoostingRegressor`
+  and :class:`ensemble.gradient_boosting.GradientBoostingClassifier` to have
+  feature importances summed and then normalized, rather than normalizing on a
+  per-tree basis. The previous behavior over-weighted the Gini importance of
+  features that appear in later stages. This issue only affected feature
+  importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -449,6 +510,11 @@ Decomposition, manifold learning and clustering
   missing an iteration. It affected :class:`mixture.GaussianMixture` and
   :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
   Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Fixed a bug in :class:`decomposition.SparseCoder` when running OMP sparse
+  coding in parallel using readonly memory mapped datastructures. :issue:`5956`
+  by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
+  :user:`Olivier Grisel <ogrisel>`.
 
 Metrics
 
@@ -582,6 +648,17 @@ Linear, kernelized and related models
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
 
+Preprocessing
+
+- Deprecate ``n_values`` and ``categorical_features`` parameters and
+  ``active_features_``, ``feature_indices_`` and ``n_values_`` attributes
+  of :class:`preprocessing.OneHotEncoder`. The ``n_values`` parameter can be
+  replaced with the new ``categories`` parameter, and the attributes with the
+  new ``categories_`` attribute. Selecting the categorical features with
+  the ``categorical_features`` parameter is now better supported using the
+  :class:`compose.ColumnTransformer`.
+  :issue:`10521` by `Joris Van den Bossche`_.
+
 Decomposition, manifold learning and clustering
 
 - Deprecate ``precomputed`` parameter in function
@@ -622,6 +699,17 @@ Imputer
   with FunctionTransformer (e.g., ``FunctionTransformer(lambda X:
   SimpleImputer().fit_transform(X.T).T)``). :issue:`10829` by :user:`Guillaume
   Lemaitre <glemaitre>` and :user:`Gilberto Olimpio <gilbertoolimpio>`.
+
+- The :class:`impute.SimpleImputer` has a new strategy, ``'constant'``, to
+  complete missing values with a fixed one, given by the ``fill_value``
+  parameter. This strategy supports numeric and non-numeric data, and so does
+  the ``'most_frequent'`` strategy now. :issue:`11211` by :user:`Jeremie du
+  Boisberranger <jeremiedbb>`.
+
+- The NaN marker for the missing values has been changed between the
+  :class:`preprocessing.Imputer` and the :class:`impute.SimpleImputer`.
+  ``missing_values='NaN'`` should now be ``missing_values=np.nan``.
+  :issue:`11211` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 Outlier Detection models
 
