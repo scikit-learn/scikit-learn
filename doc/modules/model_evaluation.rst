@@ -305,6 +305,7 @@ Some also work in the multilabel case:
    hamming_loss
    jaccard_similarity_score
    log_loss
+   multilabel_confusion_matrix
    precision_recall_fscore_support
    precision_score
    recall_score
@@ -1108,6 +1109,53 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
+
+.. _multilabel_confusion_matrix:
+
+Multi-label confusion matrix
+----------------
+
+The :func:`multilabel_confusion_matrix` function compute multi-label confusion
+matrix label-wisely (default) or sample-wisely (samplewise=True) to evaluate
+the accuracy of a classification.
+
+When calculating label-wise multi-label confusion matrix :math:`MCM`, the
+count of true negatives for class :math:`i` is :math:`MCM_{i,0,0}`, false
+negatives is :math:`MCM_{i,1,0}`, true positives is :math:`MCM_{i,1,1}`
+and false positives is :math:`MCM_{i,0,1}`. Here is an example::
+
+    >>> from sklearn.metrics import multilabel_confusion_matrix
+    >>> y_true = [[1, 0, 1], [0, 1, 0]]
+    >>> y_pred = [[1, 0, 0], [0, 1, 1]]
+    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    array([[[1, 0],
+            [1, 1]],
+    <BLANKLINE>
+           [[1, 1],
+            [0, 1]]])
+
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             labels=["ant", "bird", "cat"])
+    array([[[3, 1],
+            [0, 2]],
+    <BLANKLINE>
+           [[5, 0],
+            [1, 0]],
+    <BLANKLINE>
+           [[2, 1],
+            [1, 2]]])
+
+    >>> y_true = [0, 1, 0, 1]
+    >>> y_pred = [1, 1, 1, 0]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             sample_weight=[1, 2, 3, 4])
+    array([[[2., 4.],
+            [4., 0]],
+    <BLANKLINE>
+           [[0., 4.],
+            [4., 2.]]])
 
 .. _roc_metrics:
 
