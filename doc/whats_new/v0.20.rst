@@ -266,6 +266,11 @@ Preprocessing
   ignore and pass-through NaN values.
   :issue:`11206` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- :class:`preprocessing.MaxAbsScaler` and :func:`preprocessing.maxabs_scale`
+  handles and ignores NaN values.
+  :issue:`11011` by `Lucija Gregov <LucihaGregov>` and
+  :user:`Guillaume Lemaitre <glemaitre>`
+
 - :class:`preprocessing.PowerTransformer` and
   :func:`preprocessing.power_transform` ignore and pass-through NaN values.
   :issue:`11306` by :user:`Guillaume Lemaitre <glemaitre>`.

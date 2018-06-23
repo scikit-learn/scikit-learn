@@ -890,13 +890,14 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
-            mins, maxs = min_max_axis(X, axis=0)
+            mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = np.abs(X).max(axis=0)
+            max_abs = np.nanmax(np.abs(X), axis=0)
 
         # First pass
         if not hasattr(self, 'n_samples_seen_'):
@@ -920,7 +921,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
@@ -938,7 +940,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        estimator=self, dtype=FLOAT_DTYPES)
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
@@ -987,7 +990,8 @@ def maxabs_scale(X, axis=0, copy=True):
 
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
-                    ensure_2d=False, dtype=FLOAT_DTYPES)
+                    ensure_2d=False, dtype=FLOAT_DTYPES,
+                    force_all_finite='allow-nan')
     original_ndim = X.ndim
 
     if original_ndim == 1:
@@ -2110,7 +2114,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
             #  for inverse transform, match a uniform PDF
-            X_col = output_distribution.cdf(X_col)
+            with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
+                X_col = output_distribution.cdf(X_col)
         # find index for lower and higher bounds
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
@@ -2563,9 +2568,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy,
                         force_all_finite='allow-nan')
 
-        if check_positive and self.method == 'box-cox' and np.nanmin(X) <= 0:
-            raise ValueError("The Box-Cox transformation can only be applied "
-                             "to strictly positive data")
+        with np.warnings.catch_warnings():
+            np.warnings.filterwarnings(
+                'ignore', r'All-NaN (slice|axis) encountered')
+            if (check_positive and self.method == 'box-cox' and
+                    np.nanmin(X) <= 0):
+                raise ValueError("The Box-Cox transformation can only be "
+                                 "applied to strictly positive data")
 
         if check_shape and not X.shape[1] == len(self.lambdas_):
             raise ValueError("Input data has a different number of features "
