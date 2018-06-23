@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -307,10 +308,17 @@ def test_multilabel_binarizer_empty_sample():
 def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
-    assert_raises(KeyError, mlb.fit(y).transform, [[0]])
+    Y = np.array([[1, 0], [0, 1]])
+    w = 'unknown class(es) [0, 4] will be ignored'
+    matrix = assert_warns_message(UserWarning, w,
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    assert_array_equal(matrix, Y)
 
-    mlb = MultiLabelBinarizer(classes=[1, 2])
-    assert_raises(KeyError, mlb.fit_transform, [[0]])
+    Y = np.array([[1, 0, 0], [0, 1, 0]])
+    mlb = MultiLabelBinarizer(classes=[1, 2, 3])
+    matrix = assert_warns_message(UserWarning, w,
+                                  mlb.fit(y).transform, [[4, 1], [2, 0]])
+    assert_array_equal(matrix, Y)
 
 
 def test_multilabel_binarizer_given_classes():
@@ -474,7 +482,7 @@ def test_label_binarize_binary():
     neg_label = -1
     expected = np.array([[2, -1], [-1, 2], [2, -1]])[:, 1].reshape((-1, 1))
 
-    yield check_binarized_results, y, classes, pos_label, neg_label, expected
+    check_binarized_results(y, classes, pos_label, neg_label, expected)
 
     # Binary case where sparse_output = True will not result in a ValueError
     y = [0, 1, 0]
@@ -483,7 +491,7 @@ def test_label_binarize_binary():
     neg_label = 0
     expected = np.array([[3, 0], [0, 3], [3, 0]])[:, 1].reshape((-1, 1))
 
-    yield check_binarized_results, y, classes, pos_label, neg_label, expected
+    check_binarized_results(y, classes, pos_label, neg_label, expected)
 
 
 def test_label_binarize_multiclass():
@@ -493,7 +501,7 @@ def test_label_binarize_multiclass():
     neg_label = 0
     expected = 2 * np.eye(3)
 
-    yield check_binarized_results, y, classes, pos_label, neg_label, expected
+    check_binarized_results(y, classes, pos_label, neg_label, expected)
 
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,
                   pos_label=pos_label, sparse_output=True)
@@ -510,8 +518,8 @@ def test_label_binarize_multilabel():
                                       dok_matrix, lil_matrix]]
 
     for y in [y_ind] + y_sparse:
-        yield (check_binarized_results, y, classes, pos_label, neg_label,
-               expected)
+        check_binarized_results(y, classes, pos_label, neg_label,
+                                expected)
 
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,
                   pos_label=pos_label, sparse_output=True)

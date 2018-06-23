@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
+from sklearn.utils import deprecated
 from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
@@ -43,6 +44,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import TempMemmap
 
 
 def test_as_float_array():
@@ -285,6 +287,42 @@ def test_check_array():
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
 
+    # deprecation warning if string-like array with dtype="numeric"
+    X_str = [['a', 'b'], ['c', 'd']]
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, X_str, "numeric")
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, np.array(X_str, dtype='U'), "numeric")
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, np.array(X_str, dtype='S'), "numeric")
+
+    # deprecation warning if byte-like array with dtype="numeric"
+    X_bytes = [[b'a', b'b'], [b'c', b'd']]
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, X_bytes, "numeric")
+    assert_warns_message(
+        FutureWarning,
+        "arrays of strings will be interpreted as decimal numbers if "
+        "parameter 'dtype' is 'numeric'. It is recommended that you convert "
+        "the array to type np.float64 before passing it to check_array.",
+        check_array, np.array(X_bytes, dtype='V1'), "numeric")
+
 
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
@@ -526,6 +564,15 @@ def test_has_fit_parameter():
     assert_true(has_fit_parameter(SVR, "sample_weight"))
     assert_true(has_fit_parameter(SVR(), "sample_weight"))
 
+    class TestClassWithDeprecatedFitMethod:
+        @deprecated("Deprecated for the purpose of testing has_fit_parameter")
+        def fit(self, X, y, sample_weight=None):
+            pass
+
+    assert has_fit_parameter(TestClassWithDeprecatedFitMethod,
+                             "sample_weight"), \
+        "has_fit_parameter fails for class with deprecated fit method."
+
 
 def test_check_symmetric():
     arr_sym = np.array([[0, 1], [1, 2]])
@@ -563,7 +610,7 @@ def test_check_is_fitted():
     assert_raises(TypeError, check_is_fitted, "SVR", "support_")
 
     ard = ARDRegression()
-    svr = SVR()
+    svr = SVR(gamma='scale')
 
     try:
         assert_raises(NotFittedError, check_is_fitted, ard, "coef_")
@@ -595,9 +642,9 @@ def test_check_consistent_length():
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
     assert_raises_regex(ValueError, 'inconsistent numbers of samples',
                         check_consistent_length, [1, 2], [1])
-    assert_raises_regex(TypeError, 'got <\w+ \'int\'>',
+    assert_raises_regex(TypeError, r"got <\w+ 'int'>",
                         check_consistent_length, [1, 2], 1)
-    assert_raises_regex(TypeError, 'got <\w+ \'object\'>',
+    assert_raises_regex(TypeError, r"got <\w+ 'object'>",
                         check_consistent_length, [1, 2], object())
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
@@ -654,3 +701,12 @@ def test_check_memory():
                         " have the same interface as "
                         "sklearn.externals.joblib.Memory. Got memory='{}' "
                         "instead.".format(dummy), check_memory, dummy)
+
+
+@pytest.mark.parametrize('copy', [True, False])
+def test_check_array_memmap(copy):
+    X = np.ones((4, 4))
+    with TempMemmap(X, mmap_mode='r') as X_memmap:
+        X_checked = check_array(X_memmap, copy=copy)
+        assert np.may_share_memory(X_memmap, X_checked) == (not copy)
+        assert X_checked.flags['WRITEABLE'] == copy

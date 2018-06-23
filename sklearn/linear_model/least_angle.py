@@ -169,13 +169,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
-    # We are initializing this to "zeros" and not empty, because
-    # it is passed to scipy linalg functions and thus if it has NaNs,
-    # even if they are in the upper part that it not used, we
-    # get errors raised.
-    # Once we support only scipy > 0.12 we can use check_finite=False and
-    # go back to "empty"
-    L = np.zeros((max_features, max_features), dtype=X.dtype)
+    L = np.empty((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
     solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 

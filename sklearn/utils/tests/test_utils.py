@@ -1,6 +1,7 @@
 from itertools import chain, product
 import warnings
 
+import pytest
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
@@ -9,7 +10,8 @@ from scipy.sparse.csgraph import laplacian
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
                                    SkipTest, assert_raises_regex,
-                                   assert_greater_equal, ignore_warnings)
+                                   assert_greater_equal, ignore_warnings,
+                                   assert_warns_message, assert_no_warnings)
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
@@ -18,9 +20,12 @@ from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
+from sklearn.utils import get_chunk_n_rows
+from sklearn.utils import is_scalar_nan
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
+from sklearn import config_context
 
 
 def test_make_rng():
@@ -274,3 +279,54 @@ def test_gen_even_slices():
     slices = gen_even_slices(10, -1)
     assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
                         " >=1", next, slices)
+
+
+@pytest.mark.parametrize(
+    ('row_bytes', 'max_n_rows', 'working_memory', 'expected', 'warning'),
+    [(1024, None, 1, 1024, None),
+     (1024, None, 0.99999999, 1023, None),
+     (1023, None, 1, 1025, None),
+     (1025, None, 1, 1023, None),
+     (1024, None, 2, 2048, None),
+     (1024, 7, 1, 7, None),
+     (1024 * 1024, None, 1, 1, None),
+     (1024 * 1024 + 1, None, 1, 1,
+      'Could not adhere to working_memory config. '
+      'Currently 1MiB, 2MiB required.'),
+     ])
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
+                          expected, warning):
+    if warning is not None:
+        def check_warning(*args, **kw):
+            return assert_warns_message(UserWarning, warning, *args, **kw)
+    else:
+        check_warning = assert_no_warnings
+
+    actual = check_warning(get_chunk_n_rows,
+                           row_bytes=row_bytes,
+                           max_n_rows=max_n_rows,
+                           working_memory=working_memory)
+
+    assert actual == expected
+    assert type(actual) is type(expected)
+    with config_context(working_memory=working_memory):
+        actual = check_warning(get_chunk_n_rows,
+                               row_bytes=row_bytes,
+                               max_n_rows=max_n_rows)
+        assert actual == expected
+        assert type(actual) is type(expected)
+
+
+@pytest.mark.parametrize("value, result", [(float("nan"), True),
+                                           (np.nan, True),
+                                           (np.float("nan"), True),
+                                           (np.float32("nan"), True),
+                                           (np.float64("nan"), True),
+                                           (0, False),
+                                           (0., False),
+                                           (None, False),
+                                           ("", False),
+                                           ("nan", False),
+                                           ([np.nan], False)])
+def test_is_scalar_nan(value, result):
+    assert is_scalar_nan(value) is result
