@@ -486,7 +486,7 @@ def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     if LARGE_SPARSE_SUPPORTED:
         msg = ("Only sparse matrices with 32-bit integer indices "
                "are accepted. Got int64 indices.")
-        assert_raise_message(TypeError, msg,
+        assert_raise_message(ValueError, msg,
                              check_array, X_64bit,
                              accept_sparse=True,
                              accept_large_sparse=False)
@@ -498,7 +498,7 @@ def test_check_array_large_indices_non_supported_scipy_version(X_64bit):
         msg = ("Scipy version %s does not support large"
                " indices, please upgrade your scipy"
                " to 0.14.0 or above" % scipy_version)
-        assert_raise_message(TypeError, msg, check_array,
+        assert_raise_message(ValueError, msg, check_array,
                              X_64bit, accept_sparse='csc')
 
 

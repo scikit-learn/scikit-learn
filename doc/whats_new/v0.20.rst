@@ -392,7 +392,8 @@ Classifiers and regressors
   :issue:`10992` by `Alexandre Gramfort`_.
 
 - Fixed a bug where liblinear and libsvm-based estimators would segfault if
-  passed a scipy.sparse matrix with 64-bit indices. They now raise a TypeError.
+  passed a scipy.sparse matrix with 64-bit indices. They now raise a
+  ValueError.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
 Decomposition, manifold learning and clustering

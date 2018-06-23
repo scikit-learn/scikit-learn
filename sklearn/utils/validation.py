@@ -585,7 +585,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
 
 def _check_large_sparse(X, accept_large_sparse=False):
-    """Raise a TypeError if X has 64bit indices and accept_large_sparse=False
+    """Raise a ValueError if X has 64bit indices and accept_large_sparse=False
     """
     if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
         supported_indices = ["int32"]
@@ -599,12 +599,12 @@ def _check_large_sparse(X, accept_large_sparse=False):
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
                 if not LARGE_SPARSE_SUPPORTED:
-                    raise TypeError("Scipy version %s does not support large"
-                                    " indices, please upgrade your scipy"
-                                    " to 0.14.0 or above" % scipy_version)
-                raise TypeError("Only sparse matrices with 32-bit integer"
-                                " indices are accepted. Got %s indices."
-                                % indices_datatype)
+                    raise ValueError("Scipy version %s does not support large"
+                                     " indices, please upgrade your scipy"
+                                     " to 0.14.0 or above" % scipy_version)
+                raise ValueError("Only sparse matrices with 32-bit integer"
+                                 " indices are accepted. Got %s indices."
+                                 % indices_datatype)
 
 
 def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
