@@ -648,8 +648,8 @@ def test_refit_callable():
     """
     def score(cv_results):
         """
-        Dummy customized score function for testing refit-callable.
-        Returns the first element in 'foo_param' candidates
+        Dummy customized score function for testing refit=callable.
+        Returns the index of largest element in 'foo_param' candidates
         """
         return cv_results["param_foo_param"].argmax()
 
