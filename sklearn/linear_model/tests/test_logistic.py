@@ -1197,12 +1197,11 @@ def test_dtype_match():
 
 def test_warm_start_converge_LR():
     # Test to see that the logistic regression converges on warm start,
-    # with multi_class='multinomial'
+    # with multi_class='multinomial'. Non-regressive test for #10836
 
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = [1] * 100 + [-1] * 100
-    y = np.array(y)
+    y = np.array([1] * 100 + [-1] * 100)
     lr_no_ws = LogisticRegression(multi_class='multinomial',
                                   solver='sag', warm_start=False)
     lr_ws = LogisticRegression(multi_class='multinomial',
