@@ -23,10 +23,8 @@ from sklearn.utils.testing import assert_warns
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 # Data is just 6 separable points in the plane

@@ -12,10 +12,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

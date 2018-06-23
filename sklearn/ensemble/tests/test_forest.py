@@ -19,8 +19,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 
-import pytest
-
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -46,8 +44,6 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
-
-pytestmark = pytest.mark.filterwarnings('ignore', category=DeprecationWarning)
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

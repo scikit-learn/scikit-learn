@@ -18,10 +18,8 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 iris = datasets.load_iris()

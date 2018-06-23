@@ -27,10 +27,8 @@ from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 from scipy.sparse import csc_matrix, csr_matrix

@@ -22,10 +22,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

@@ -24,10 +24,8 @@ from sklearn.utils.testing import assert_warns
 from sklearn.exceptions import NotFittedError
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import StringIO
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

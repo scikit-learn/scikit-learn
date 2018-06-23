@@ -6,10 +6,8 @@ import numpy as np
 
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture import BayesianGaussianMixture
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

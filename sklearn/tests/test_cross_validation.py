@@ -50,7 +50,6 @@ from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 class MockClassifier(object):

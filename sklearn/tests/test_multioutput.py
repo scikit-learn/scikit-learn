@@ -33,10 +33,8 @@ from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

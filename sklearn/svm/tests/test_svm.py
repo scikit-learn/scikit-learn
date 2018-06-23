@@ -28,7 +28,6 @@ from sklearn.externals import six
 import pytest
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 # toy sample

@@ -72,7 +72,6 @@ from sklearn.linear_model import Ridge, SGDClassifier
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

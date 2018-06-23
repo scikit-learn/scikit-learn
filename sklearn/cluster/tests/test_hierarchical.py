@@ -36,10 +36,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

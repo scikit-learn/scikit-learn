@@ -25,10 +25,8 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import LSHForest
 from sklearn.neighbors import NearestNeighbors
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

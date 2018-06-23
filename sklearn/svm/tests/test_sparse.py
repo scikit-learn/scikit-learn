@@ -14,7 +14,6 @@ from sklearn.utils.testing import (assert_raises, assert_true, assert_false,
 import pytest
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 # test sample 1

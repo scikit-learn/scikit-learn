@@ -30,7 +30,6 @@ from sklearn.linear_model.logistic import (
 )
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 X = [[-1, 0], [0, 1], [1, 1]]

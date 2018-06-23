@@ -45,7 +45,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import Ridge
 
-from sklearn.exceptions import FitFailedWarning, ConvergenceWarning
+from sklearn.exceptions import FitFailedWarning
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -57,7 +57,6 @@ from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 

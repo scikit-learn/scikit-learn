@@ -19,10 +19,8 @@ from sklearn.utils.testing import assert_warns_message, assert_raises
 
 from sklearn.datasets import load_iris
 import pytest
-from sklearn.exceptions import ConvergenceWarning
 
 pytestmark = pytest.mark.filterwarnings('ignore', category=(
-    DeprecationWarning, ConvergenceWarning,
     UserWarning, FutureWarning))
 
 
