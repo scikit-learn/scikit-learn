@@ -381,7 +381,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     >>> multilabel_confusion_matrix(y_true, y_pred,
     ...                             sample_weight=[1, 2, 3, 4])
     array([[[2., 4.],
-            [4., 0]],
+            [4., 0.]],
     <BLANKLINE>
            [[0., 4.],
             [4., 2.]]])
