@@ -283,7 +283,7 @@ Classifiers and regressors
   where the coefficient had wrong shape when ``fit_intercept=False``.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
   
-- Fixed a bug in :func:`sklearn.linear_model.logistic` where the 
+- Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the 
   multi_class='multinomial' with binary output with warm_start = True
   :issue:`10836` by :user:`Aishwarya Srinivasan <aishgrt1>`.
 
