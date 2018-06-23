@@ -506,6 +506,11 @@ Decomposition, manifold learning and clustering
   :class:`mixture.BayesianGaussianMixture`. :issue:`10740` by :user:`Erich
   Schubert <kno10>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Fixed a bug in :class:`decomposition.SparseCoder` when running OMP sparse
+  coding in parallel using readonly memory mapped datastructures. :issue:`5956`
+  by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
 Metrics
 
 - Fixed a bug in :func:`metrics.precision_recall_fscore_support`
