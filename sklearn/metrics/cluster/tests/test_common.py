@@ -101,10 +101,7 @@ def test_non_symmetry(metric_name, y1, y2):
     assert metric(y1, y2) != pytest.approx(metric(y2, y1))
 
 
-@pytest.mark.parametrize(
-    "metric_name",
-    [name for name in NORMALIZED_METRICS]
-)
+@pytest.mark.parametrize("metric_name", NORMALIZED_METRICS)
 def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
@@ -126,7 +123,7 @@ def test_normalized_output(metric_name):
 # that is when 0 and 1 exchanged.
 @pytest.mark.parametrize(
     "metric_name",
-    [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
+    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 def test_permute_labels(metric_name):
     y_label = np.array([0, 0, 0, 1, 1, 0, 1])
@@ -147,7 +144,7 @@ def test_permute_labels(metric_name):
 # For all clustering metrics Input parameters can be both
 @pytest.mark.parametrize(
     "metric_name",
-    [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
+    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 # in the form of arrays lists, positive, negetive or string
 def test_format_invariance(metric_name):

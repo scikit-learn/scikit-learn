@@ -1460,7 +1460,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report : string / dict
         Text summary of the precision, recall, F1 score for each class.
         Dictionary returned if output_dict is True. Dictionary has the
-        following structure:
+        following structure::
+
             {'label 1': {'precision':0.5,
                          'recall':1.0,
                          'f1-score':0.67,

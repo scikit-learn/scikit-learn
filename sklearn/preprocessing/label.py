@@ -16,7 +16,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import sparse_min_max
+from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -77,7 +77,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.CategoricalEncoder : encode categorical features
+    sklearn.preprocessing.OrdinalEncoder : encode categorical features
         using a one-hot or ordinal encoding scheme.
     """
 
@@ -251,7 +251,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     --------
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
-    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+    sklearn.preprocessing.OneHotEncoder : encode categorical features
         using a one-hot aka one-of-K scheme.
     """
 
@@ -567,7 +567,7 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        row_max = sparse_min_max(y, 1)[1]
+        row_max = min_max_axis(y, 1)[1]
         row_nnz = np.diff(y.indptr)
 
         y_data_repeated_max = np.repeat(row_max, row_nnz)
@@ -682,7 +682,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+    sklearn.preprocessing.OneHotEncoder : encode categorical features
         using a one-hot aka one-of-K scheme.
     """
 

@@ -653,7 +653,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
-   impute.MICEImputer
+   impute.ChainedImputer
 
 .. _kernel_approximation_ref:
 
@@ -1248,7 +1248,7 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.CategoricalEncoder
+   preprocessing.OrdinalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
