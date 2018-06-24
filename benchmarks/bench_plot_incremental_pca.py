@@ -111,8 +111,10 @@ def variable_batch_size_comparison(data):
         all_times = defaultdict(list)
         all_errors = defaultdict(list)
         pca = PCA(n_components=n_components)
-        rpca = PCA(n_components=n_components, svd_solver='randomized', random_state=1999)
-        results_dict = {k: benchmark(est, data) for k, est in [('pca', pca)]}
+        rpca = PCA(n_components=n_components, svd_solver='randomized',
+                   random_state=1999)
+        results_dict = {k: benchmark(est, data) for k, est in [('pca', pca),
+                                                               ('rpca', rpca)]}
 
         # Create flat baselines to compare the variation over batch size
         all_times['pca'].extend([results_dict['pca']['time']] *
