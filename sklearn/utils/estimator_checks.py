@@ -138,9 +138,7 @@ def _yield_classifier_checks(name, classifier):
 
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
-    if name != "GaussianProcessRegressor":
-        # test if NotFittedError is raised
-        yield check_estimators_unfitted
+    yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -186,7 +184,9 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    yield check_estimators_unfitted
+    if name != "GaussianProcessRegressor":
+        # test if NotFittedError is raised
+        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
