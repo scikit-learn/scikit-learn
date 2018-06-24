@@ -452,17 +452,19 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         "random"
             A random order for each round.
 
-    n_imputations : int, optional (default=100)
-        Number of chained imputation rounds to perform, the results of which
-        will be used in the final average.
-
     n_burn_in : int, optional (default=10)
         Number of initial imputation rounds to perform the results of which
         will not be returned.
 
     predictor : estimator object, default=BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
-        It must support ``return_std`` in its ``predict`` method.
+        It must support ``return_std`` in its ``predict`` method if
+        ``sample_after_predict`` option is set to ``True`` below.
+
+    sample_after_predict : boolean, default=False
+        Whether to sample from the predictive posterior of the fitted
+        predictor for each Imputation. Set to ``True`` if using
+        ``ChainedImputer`` to have the same functionality as MICE.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -533,9 +535,9 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
     def __init__(self,
                  missing_values=np.nan,
                  imputation_order='ascending',
-                 n_imputations=100,
                  n_burn_in=10,
                  predictor=None,
+                 sample_after_predict=False,
                  n_nearest_features=None,
                  initial_strategy="mean",
                  min_value=None,
@@ -545,9 +547,9 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
         self.missing_values = missing_values
         self.imputation_order = imputation_order
-        self.n_imputations = n_imputations
         self.n_burn_in = n_burn_in
         self.predictor = predictor
+        self.sample_after_predict = sample_after_predict
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.min_value = min_value
@@ -624,12 +626,15 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # get posterior samples
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
-        mus, sigmas = predictor.predict(X_test, return_std=True)
-        good_sigmas = sigmas > 0
-        imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
-        imputed_values[~good_sigmas] = mus[~good_sigmas]
-        imputed_values[good_sigmas] = self.random_state_.normal(
-            loc=mus[good_sigmas], scale=sigmas[good_sigmas])
+        if self.sample_after_predict:
+            mus, sigmas = predictor.predict(X_test, return_std=True)
+            good_sigmas = sigmas > 0
+            imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
+            imputed_values[~good_sigmas] = mus[~good_sigmas]
+            imputed_values[good_sigmas] = self.random_state_.normal(
+                loc=mus[good_sigmas], scale=sigmas[good_sigmas])
+        else:
+            imputed_values = predictor.predict(X_test)
 
         # clip the values
         imputed_values = np.clip(imputed_values,
@@ -836,10 +841,10 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # edge case: in case the user specifies 0 for n_imputations,
-        # then there is no need to do burn in and the result should be
-        # just the initial imputation (before clipping)
-        if self.n_imputations < 1:
+        # edge case: in case the user specifies 0 for n_burn_in,
+        # then there is no need to do chained imputation and the result should
+        # be just the initial imputation (before clipping)
+        if self.n_burn_in < 1:
             return X_filled
 
         X_filled = np.clip(X_filled, self._min_value, self._max_value)
@@ -853,15 +858,13 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         abs_corr_mat = self._get_abs_corr_mat(X_filled)
 
         # impute data
-        n_rounds = self.n_burn_in + self.n_imputations
         n_samples, n_features = X_filled.shape
-        Xt = np.zeros((n_samples, n_features), dtype=X.dtype)
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[ChainedImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        for i_rnd in range(n_rounds):
+        for i_rnd in range(self.n_burn_in):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -877,14 +880,12 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                                                    predictor)
                 self.imputation_sequence_.append(predictor_triplet)
 
-            if i_rnd >= self.n_burn_in:
-                Xt += X_filled
             if self.verbose > 0:
                 print('[ChainedImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
-                      % (i_rnd + 1, n_rounds, time() - start_t))
+                      % (i_rnd + 1, self.n_burn_in, time() - start_t))
 
-        Xt /= self.n_imputations
+        Xt = X_filled
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 
@@ -908,19 +909,16 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # edge case: in case the user specifies 0 for n_imputations,
-        # then there is no need to do burn in and the result should be
-        # just the initial imputation (before clipping)
-        if self.n_imputations < 1:
+        # edge case: in case the user specifies 0 for n_burn_in,
+        # then there is no need to do chained imputation and the result should
+        # be just the initial imputation (before clipping)
+        if self.n_burn_in < 1:
             return X_filled
 
         X_filled = np.clip(X_filled, self._min_value, self._max_value)
 
-        n_rounds = self.n_burn_in + self.n_imputations
-        n_imputations = len(self.imputation_sequence_)
-        imputations_per_round = n_imputations // n_rounds
+        imps_per_round = len(self.imputation_sequence_) // self.n_burn_in
         i_rnd = 0
-        Xt = np.zeros(X.shape, dtype=X.dtype)
         if self.verbose > 0:
             print("[ChainedImputer] Completing matrix with shape %s"
                   % (X.shape,))
@@ -934,16 +932,14 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                 predictor=predictor_triplet.predictor,
                 fit_mode=False
             )
-            if not (it + 1) % imputations_per_round:
-                if i_rnd >= self.n_burn_in:
-                    Xt += X_filled
+            if not (it + 1) % imps_per_round:
                 if self.verbose > 1:
                     print('[ChainedImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (i_rnd + 1, n_rounds, time() - start_t))
+                          % (i_rnd + 1, self.n_burn_in, time() - start_t))
                 i_rnd += 1
 
-        Xt /= self.n_imputations
+        Xt = X_filled
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 
