@@ -264,6 +264,23 @@ METRICS_WITH_POS_LABEL = [
     "macro_precision_score", "macro_recall_score",
 ]
 
+# Metrics with a "pos_label" argument where the second argument is labels
+POSITIVE_SCORE_MEANS_POSITIVE_CLASS = [
+    "brier_score_loss",
+
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+
+    # pos_label support deprecated; to be removed in 0.18:
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score", "weighted_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
+
+    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
+    "macro_precision_score", "macro_recall_score",
+]
+
 # Metrics with a "labels" argument
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
@@ -1125,9 +1142,8 @@ def test_all_true_pos_label():
     examples = np.array([0, 1, 1, 0, 1, 1])
     all_ones = np.array([1, 1, 1])
 
-    for name in METRICS_WITH_POS_LABEL:
-        if not name == 'roc_curve':
-            metric = ALL_METRICS[name]
-            perfect_score = metric(examples, examples, pos_label=1)
-            assert_almost_equal(
-                perfect_score, metric(all_ones, all_ones, pos_label=1))
+    for name in POSITIVE_SCORE_MEANS_POSITIVE_CLASS:
+        metric = ALL_METRICS[name]
+        perfect_score = metric(examples, examples, pos_label=1)
+        assert_almost_equal(
+            perfect_score, metric(all_ones, all_ones, pos_label=1))
