@@ -76,8 +76,8 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -301,8 +301,8 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -647,8 +647,8 @@ class StratifiedKFold(_BaseKFold):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -734,8 +734,8 @@ class TimeSeriesSplit(_BaseKFold):
         groups : array-like, with shape (n_samples,), optional
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1006,8 +1006,8 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1182,8 +1182,8 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1603,8 +1603,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1763,8 +1763,8 @@ class PredefinedSplit(BaseCrossValidator):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1847,8 +1847,8 @@ class _CVIterableWrapper(BaseCrossValidator):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 

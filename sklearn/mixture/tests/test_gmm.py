@@ -8,6 +8,8 @@ import unittest
 import copy
 import sys
 
+import pytest
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
@@ -160,7 +162,6 @@ def test_GMM_attributes():
     assert_raises(ValueError, g._set_covars, [])
     assert_raises(ValueError, g._set_covars,
                   np.zeros((n_components - 2, n_features)))
-
     assert_raises(ValueError, mixture.GMM, n_components=20,
                   covariance_type='badcovariance_type')
 
@@ -496,10 +497,11 @@ def check_positive_definite_covars(covariance_type):
             assert_greater(np.linalg.det(c), 0)
 
 
-def test_positive_definite_covars():
+@pytest.mark.parametrize('covariance_type',
+                         ["full", "tied", "diag", "spherical"])
+def test_positive_definite_covars(covariance_type):
     # Check positive definiteness for all covariance types
-    for covariance_type in ["full", "tied", "diag", "spherical"]:
-        yield check_positive_definite_covars, covariance_type
+    check_positive_definite_covars(covariance_type)
 
 
 # This function tests the deprecated old GMM class

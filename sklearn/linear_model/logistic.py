@@ -29,7 +29,8 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import NotFittedError, ConvergenceWarning
+from ..exceptions import (NotFittedError, ConvergenceWarning,
+                          ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
@@ -675,7 +676,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     'shape (%d, %d) or (%d, %d)' % (
                         coef.shape[0], coef.shape[1], classes.size,
                         n_features, classes.size, n_features + 1))
-            w0[:, :coef.shape[1]] = coef
+
+            if n_classes == 1:
+                w0[0, :coef.shape[1]] = -coef
+                w0[1, :coef.shape[1]] = coef
+            else:
+                w0[:, :coef.shape[1]] = coef
+
 
     if multi_class == 'multinomial':
         # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
@@ -1083,8 +1090,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     n_jobs : int, default: 1
         Number of CPU cores used when parallelizing over classes if
-        multi_class='ovr'". This parameter is ignored when the ``solver``is set
-        to 'liblinear' regardless of whether 'multi_class' is specified or
+        multi_class='ovr'". This parameter is ignored when the ``solver`` is
+        set to 'liblinear' regardless of whether 'multi_class' is specified or
         not. If given a value of -1, all cores are used.
 
     Attributes
@@ -1789,3 +1796,37 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         return self
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the score using the `scoring` option on the given
+        test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples,)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score of self.predict(X) wrt. y.
+
+        """
+
+        if self.scoring is not None:
+            warnings.warn("The long-standing behavior to use the "
+                          "accuracy score has changed. The scoring "
+                          "parameter is now used. "
+                          "This warning will disappear in version 0.22.",
+                          ChangedBehaviorWarning)
+        scoring = self.scoring or 'accuracy'
+        if isinstance(scoring, six.string_types):
+            scoring = get_scorer(scoring)
+
+        return scoring(self, X, y, sample_weight=sample_weight)

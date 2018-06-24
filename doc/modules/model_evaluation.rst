@@ -565,7 +565,7 @@ false negatives and true positives as follows::
     for an example of using a confusion matrix to classify
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of using a confusion matrix to classify text
     documents.
 
@@ -598,7 +598,7 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of classification report usage for text
     documents.
 
@@ -749,7 +749,7 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
