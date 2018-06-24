@@ -151,7 +151,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
         sample_weight : array-like, shape (n_samples,) optional
