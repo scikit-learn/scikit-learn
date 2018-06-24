@@ -106,6 +106,9 @@ def test_iforest_error():
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          IsolationForest(max_samples=1000).fit, X)
+    # note that assert_no_warnings does not apply since it enables a
+    # PendingDeprecationWarning triggered by scipy.sparse's use of
+    # np.matrix. See issue #11251.
     with pytest.warns(None) as record:
         IsolationForest(max_samples='auto').fit(X)
     user_warnings = [each for each in record
