@@ -1249,13 +1249,14 @@ def test_warm_start_converge_LR():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = np.array([1] * 100 + [-1] * 100)
     lr_no_ws = LogisticRegression(multi_class='multinomial',
-                                  solver='sag', warm_start=False)
+                                  solver='sag', warm_start=False,
+                                  random_state=0)
     lr_ws = LogisticRegression(multi_class='multinomial',
-                               solver='sag', warm_start=True)
+                               solver='sag', warm_start=True,
+                               random_state=0)
 
     lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
-    lr_ws_loss = [log_loss(y, lr_ws.fit(X, y).predict_proba(X)) 
-                 for _ in range(5)]
-
     for i in range(5):
-        assert_allclose(lr_no_ws_loss, lr_ws_loss[i], rtol=1e-5)
+        lr_ws.fit(X, y)
+    lr_ws_loss = log_loss(y, lr_ws.predict_proba(X))
+    assert_allclose(lr_no_ws_loss, lr_ws_loss, rtol=1e-5)
