@@ -54,6 +54,13 @@ Overview of clustering methods
      - General-purpose, even cluster size, flat geometry, not too many clusters
      - Distances between points
 
+   * - :ref:`K-Medoids <k_medoids>`
+     - number of clusters
+     - Moderate ``n_samples``, medium ``n_clusters``
+     - General-purpose, uneven cluster size, flat geometry, 
+       not too many clusters
+     - Any pairwise distance
+
    * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference
      - Not scalable with n_samples
@@ -283,6 +290,64 @@ small, as shown in the example and cited reference.
    <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
+
+.. _k_medoids:
+
+K-Medoids
+=========
+
+:class:`KMedoids` is related to the :class:`KMeans` algorithm. While
+:class:`KMeans` tries to minimize the within cluster sum-of-squares,
+:class:`KMedoids` tries to minimize the sum of distances between each point and
+the medoid of its cluster. The medoid is a data point (unlike the centroid)
+which has least total distance to the other members of its cluster. The use of
+a data point to represent each cluster's center allows the use of any distance
+metric for clustering.
+
+:class:`KMedoids` can be more robust to noise and outliers than :class:`KMeans`
+as it will choose one of the cluster members as the medoid while
+:class:`KMeans` will move the center of the cluster towards the outlier which
+might in turn move other points away from the cluster centre.
+
+Please note that K-Medoids is different from the K-Medians algorithm as it
+always chooses a point from the dataset as the cluster centre. K-Medians might
+choose a point which is not in the original dataset. For example, given the
+vectors (0,1), (1,0) and (2,2), the Manhattan-distance median is (1,1),
+which does not exist in the original data, and thus cannot be a medoid.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits
+   with various distance metrics.
+
+
+**Algorithm description:**
+There are several algorithms to compute K-Medoids, though :class:`KMedoids`
+currently only supports Partitioning Around Medoids (PAM). The PAM algorithm
+uses a greedy search, which may fail to find the global optimum. It consists of
+two alternating steps commonly called the
+Assignment and Update steps (BUILD and SWAP in Kaufmann and Rousseeuw, 1987).
+
+PAM works as follows:
+
+* Initialize: Select ``n_clusters`` from the dataset as the medoids using either
+  a heuristic or random approach (configurable using the ``init`` parameter).
+* Assignment step: assign each element from the dataset to the closest medoid.
+* Update step: Identify the new medoid of each cluster.
+* Repeat the assignment and update step while the medoids keep changing or
+  maximum number of iterations ``max_iter`` is reached.
+
+The complexity of K-Medoids is :math:`O(N^2 K T)` where :math:`N` is the number
+of samples, :math:`T` is the number of iterations and :math:`K` is the number of
+clusters. This makes it more suitable for smaller datasets in comparison to
+:class:`KMeans` which is :math:`O(N K T)`.
+
+.. topic:: References:
+
+ * "Clustering by Means of Medoids'"
+   Kaufman, L. and Rousseeuw, P.J.,
+   Statistical Data Analysis Based on the L1–Norm and Related Methods, edited
+   by Y. Dodge, North-Holland, 405–416. 1987
 
 .. _affinity_propagation:
 
