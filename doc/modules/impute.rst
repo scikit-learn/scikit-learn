@@ -93,15 +93,17 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
 Multivariate feature imputation
 ===============================
 
-A more sophisticated approach is to use the :class:`ChainedImputer` class, which
-implements the imputation technique from MICE (Multivariate Imputation by
-Chained Equations). MICE models each feature with missing values as a function of
-other features, and uses that estimate for imputation. It does so in a round-robin
-fashion: at each step, a feature column is designated as output `y` and the other
-feature columns are treated as inputs `X`. A regressor is fit on `(X, y)` for known `y`.
-Then, the regressor is used to predict the unknown values of `y`. This is repeated
-for each feature in a chained fashion, and then is done for a number of imputation
-rounds. Here is an example snippet::
+A more sophisticated approach is to use the :class:`ChainedImputer` class, models
+each feature with missing values as a function of other features, and uses that
+estimate for imputation. It does so in an iterated round-robin fashion: at each step,
+a feature column is designated as output `y` and the other feature columns are treated
+as inputs `X`. A regressor is fit on `(X, y)` for known `y`. Then, the regressor is
+used to predict the unknown values of `y`. This is repeated for each feature in a
+chained fashion, and then is done for a number of imputation rounds. The results
+of the final imputation round are returned. Our implementation was inspired by the
+R MICE package (Multivariate Imputation by Chained Equations), but differs from
+it in setting single imputation to default instead of multiple imputation. This
+is discussed further below. Here is an example snippet::
 
     >>> import numpy as np
     >>> from sklearn.impute import ChainedImputer
@@ -135,9 +137,12 @@ analysis results (e.g. held-out validation error) allow the data scientist to
 obtain understanding of the uncertainty inherent in the missing values. The above
 practice is called multiple imputation. As implemented, the :class:`ChainedImputer`
 class generates a single (averaged) imputation for each missing value because this
-is the most common use case for machine learning applications. However, it can also be used
-for multiple imputations by applying it repeatedly to the same dataset with different
-random seeds with the ``n_imputations`` parameter set to 1.
+is the most common use case for machine learning applications. However, it can also
+be used for multiple imputations by applying it repeatedly to the same dataset with
+different random seeds.
+
+It is still an open problem as to how useful single versus multiple imputation is in
+the context of prediction and classification.
 
 Note that a call to the ``transform`` method of :class:`ChainedImputer` is not
 allowed to change the number of samples. Therefore multiple imputations cannot be

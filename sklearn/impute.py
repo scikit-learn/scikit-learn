@@ -426,11 +426,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 class ChainedImputer(BaseEstimator, TransformerMixin):
     """Chained imputer transformer to impute missing values.
 
-    Basic implementation of chained imputer from MICE (Multivariate
-    Imputations by Chained Equations) package from R. This version assumes all
-    of the features are Gaussian.
+    Basic implementation of chained mutual regressions to find replacement
+    values in multivariate missing data. This version assumes all features
+    are Gaussian.
 
-    Read more in the :ref:`User Guide <mice>`.
+    Read more in the :ref:`User Guide <chained_imputer>`.
 
     Parameters
     ----------
@@ -454,17 +454,20 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
     n_iter : int, optional (default=10)
         Number of imputation rounds to perform before returning the final
-        imputations.
+        imputations computed during the final round. A round is a single
+        imputation of each feature with missing values.
 
     predictor : estimator object, default=BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
         It must support ``return_std`` in its ``predict`` method if
-        ``sample_after_predict`` option is set to ``True`` below.
+        ``predict_posterior`` option is set to ``True`` below.
 
-    sample_after_predict : boolean, default=False
-        Whether to sample from the predictive posterior of the fitted
-        predictor for each Imputation. Set to ``True`` if using
-        ``ChainedImputer`` to have the same functionality as MICE.
+    predict_posterior : boolean, default=False
+        Whether to sample from the (Gaussian) predictive posterior of the
+        fitted predictor for each imputation. Predictor must support
+        ``return_std`` in its ``predict`` method if set to ``True``. Set to
+        ``True`` if using ``ChainedImputer`` to have the same functionality as
+        MICE.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -500,7 +503,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    initial_imputer_ : :class:`sklearn.impute.SimpleImputer`'
+    initial_imputer_ : object of type :class:`sklearn.impute.SimpleImputer`
         Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
@@ -512,6 +515,12 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    This implementation was inspired by the R MICE package (Multivariate
+    Imputation by Chained Equations), but differs from it in setting single
+    imputation to default instead of multiple imputation. However, multiple
+    imputation is supported with multiple instances of the imputer with
+    different random seeds run in parallel.
+
     The R version of MICE does not have inductive functionality, i.e. first
     fitting on ``X_train`` and then transforming any ``X_test`` without
     additional fitting. We do this by storing each feature's predictor during
@@ -530,6 +539,11 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         Multivariate Imputation by Chained Equations in R". Journal of
         Statistical Software 45: 1-67.
         <https://www.jstatsoft.org/article/view/v045i03>`_
+
+    .. [2] `S. F. Buck, (1960). "A Method of Estimation of Missing Values in
+        Multivariate Data Suitable for use with an Electronic Computer".
+        Journal of the Royal Statistical Society 22(2): 302-306.
+        <https://www.jstor.org/stable/2984099>`_
     """
 
     def __init__(self,
@@ -537,7 +551,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                  imputation_order='ascending',
                  n_iter=10,
                  predictor=None,
-                 sample_after_predict=False,
+                 predict_posterior=False,
                  n_nearest_features=None,
                  initial_strategy="mean",
                  min_value=None,
@@ -549,7 +563,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         self.imputation_order = imputation_order
         self.n_iter = n_iter
         self.predictor = predictor
-        self.sample_after_predict = sample_after_predict
+        self.predict_posterior = predict_posterior
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.min_value = min_value
@@ -626,7 +640,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # get posterior samples
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
-        if self.sample_after_predict:
+        if self.predict_posterior:
             mus, sigmas = predictor.predict(X_test, return_std=True)
             good_sigmas = sigmas > 0
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)

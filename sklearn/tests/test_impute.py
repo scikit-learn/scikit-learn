@@ -618,7 +618,7 @@ def test_chained_imputer_transform_stochasticity():
 
     imputer = ChainedImputer(missing_values=0,
                              n_iter=1,
-                             sample_after_predict=True,
+                             predict_posterior=True,
                              random_state=rng)
     imputer.fit(X)
 
