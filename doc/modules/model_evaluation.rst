@@ -526,7 +526,7 @@ The :func:`confusion_matrix` function evaluates
 classification accuracy by computing the confusion matrix
 with each row corresponding to the true class
 <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
-(Wikipedia may use different convention for axes.) 
+(Wikipedia and other references may use different convention for axes.) 
 
 
 By definition, entry :math:`i, j` in a confusion matrix is

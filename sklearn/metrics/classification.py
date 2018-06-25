@@ -221,9 +221,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     References
     ----------
-    .. [1] `Wikipedia entry for the Confusion matrix*
+    .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
-           (Wikipedia may use a different convention for axes)
+           (Wikipedia and other references may use a different convention 
+           for axes)
 
     Examples
     --------
