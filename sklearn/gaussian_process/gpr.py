@@ -16,6 +16,7 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
 from sklearn.utils.deprecation import deprecated
+from sklearn.exceptions import ConvergenceWarning
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
@@ -63,7 +64,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must have the signature::
 
             def optimizer(obj_func, initial_theta, bounds):
-                # * 'obj_func' is the objective function to be maximized, which
+                # * 'obj_func' is the objective function to be minimized, which
                 #   takes the hyperparameters theta as parameter and an
                 #   optional flag eval_gradient, which determines if the
                 #   gradient is returned additionally to the function value
@@ -461,7 +462,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
             if convergence_dict["warnflag"] != 0:
                 warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict)
+                              " state: %s" % convergence_dict,
+                              ConvergenceWarning)
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)

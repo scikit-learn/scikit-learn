@@ -140,7 +140,7 @@ From source package
 ~~~~~~~~~~~~~~~~~~~
 
 download the source package from
-`pypi <https://pypi.python.org/pypi/scikit-learn>`_, unpack the sources and
+`pypi <https://pypi.python.org/pypi/scikit-learn>`__, unpack the sources and
 cd into the source directory.
 
 This packages uses distutils, which is the default way of installing
@@ -177,7 +177,7 @@ latest stable release::
 If there are no binary packages matching your python, version you might
 to try to install scikit-learn and its dependencies from `christoph gohlke
 unofficial windows installers
-<http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
+<https://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
 or from a :ref:`python distribution <install_by_distribution>` instead.
 
 

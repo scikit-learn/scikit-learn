@@ -26,21 +26,24 @@ LOADERS = {
 def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
 
-    name_or_id : the integer id or the string name metadata of the MLComp
-                 dataset to load
+    name_or_id : int or str
+        The integer id or the string name metadata of the MLComp
+        dataset to load
 
-    set_ : select the portion to load: 'train', 'test' or 'raw'
+    set\_ : str, default='raw'
+        Select the portion to load: 'train', 'test' or 'raw'
 
-    mlcomp_root : the filesystem path to the root folder where MLComp datasets
-                  are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
-                  environment variable is looked up instead.
+    mlcomp_root : str, optional
+        The filesystem path to the root folder where MLComp datasets
+        are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
+        environment variable is looked up instead.
 
     **kwargs : domain specific kwargs to be passed to the dataset loader.
-
-    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------

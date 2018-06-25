@@ -190,7 +190,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         self._check_params(X, y)
         if self.prefit:
@@ -223,7 +222,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
         if self.prefit:
             raise NotFittedError(
