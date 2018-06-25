@@ -496,8 +496,7 @@ def test_chained_imputer_rank_one():
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
-    imputer = ChainedImputer(n_imputations=5,
-                             n_burn_in=5,
+    imputer = ChainedImputer(n_iter=5,
                              verbose=True,
                              random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
@@ -516,8 +515,7 @@ def test_chained_imputer_imputation_order(imputation_order):
     X[:, 0] = 1  # this column should not be discarded by ChainedImputer
 
     imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
+                             n_iter=1,
                              n_nearest_features=5,
                              min_value=0,
                              max_value=1,
@@ -550,8 +548,7 @@ def test_chained_imputer_predictors(predictor):
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
     imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
+                             n_iter=1,
                              predictor=predictor,
                              random_state=rng)
     imputer.fit_transform(X)
@@ -574,8 +571,7 @@ def test_chained_imputer_clip():
                              random_state=rng).toarray()
 
     imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
+                             n_iter=1,
                              min_value=0.1,
                              max_value=0.2,
                              random_state=rng)
@@ -601,8 +597,7 @@ def test_chained_imputer_missing_at_transform(strategy):
     X_test[0, 0] = 0  # definitely missing value in 0th column
 
     imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
+                             n_iter=1,
                              initial_strategy=strategy,
                              random_state=rng).fit(X_train)
     initial_imputer = SimpleImputer(missing_values=0,
@@ -622,8 +617,8 @@ def test_chained_imputer_transform_stochasticity():
                              random_state=rng).toarray()
 
     imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
+                             n_iter=1,
+                             sample_after_predict=True,
                              random_state=rng)
     imputer.fit(X)
 
@@ -638,8 +633,8 @@ def test_chained_imputer_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
     X[:, 0] = np.nan
-    m1 = ChainedImputer(n_imputations=10, random_state=rng)
-    m2 = ChainedImputer(n_imputations=10, random_state=rng)
+    m1 = ChainedImputer(n_iter=10, random_state=rng)
+    m2 = ChainedImputer(n_iter=10, random_state=rng)
     pred1 = m1.fit(X).transform(X)
     pred2 = m2.fit_transform(X)
     # should exclude the first column entirely
@@ -670,12 +665,11 @@ def test_chained_imputer_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = ChainedImputer(n_imputations=10,
-                             n_burn_in=10,
+    imputer = ChainedImputer(n_iter=10,
                              verbose=True,
                              random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
-    assert_allclose(X_test_filled, X_test_est, rtol=1e-5, atol=0.1)
+    assert_allclose(X_test_filled, X_test_est, atol=0.1)
 
 
 def test_chained_imputer_additive_matrix():
@@ -699,9 +693,8 @@ def test_chained_imputer_additive_matrix():
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = ChainedImputer(n_imputations=25,
-                             n_burn_in=10,
+    imputer = ChainedImputer(n_iter=10,
                              verbose=True,
                              random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
-    assert_allclose(X_test_filled, X_test_est, atol=0.01)
+    assert_allclose(X_test_filled, X_test_est, atol=0.1)

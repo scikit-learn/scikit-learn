@@ -452,9 +452,9 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         "random"
             A random order for each round.
 
-    n_burn_in : int, optional (default=10)
-        Number of initial imputation rounds to perform the results of which
-        will not be returned.
+    n_iter : int, optional (default=10)
+        Number of imputation rounds to perform before returning the final
+        imputations.
 
     predictor : estimator object, default=BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
@@ -535,7 +535,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
     def __init__(self,
                  missing_values=np.nan,
                  imputation_order='ascending',
-                 n_burn_in=10,
+                 n_iter=10,
                  predictor=None,
                  sample_after_predict=False,
                  n_nearest_features=None,
@@ -547,7 +547,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
         self.missing_values = missing_values
         self.imputation_order = imputation_order
-        self.n_burn_in = n_burn_in
+        self.n_iter = n_iter
         self.predictor = predictor
         self.sample_after_predict = sample_after_predict
         self.n_nearest_features = n_nearest_features
@@ -844,7 +844,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # edge case: in case the user specifies 0 for n_burn_in,
         # then there is no need to do chained imputation and the result should
         # be just the initial imputation (before clipping)
-        if self.n_burn_in < 1:
+        if self.n_iter < 1:
             return X_filled
 
         X_filled = np.clip(X_filled, self._min_value, self._max_value)
@@ -864,7 +864,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
             print("[ChainedImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        for i_rnd in range(self.n_burn_in):
+        for i_rnd in range(self.n_iter):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -883,7 +883,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
             if self.verbose > 0:
                 print('[ChainedImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
-                      % (i_rnd + 1, self.n_burn_in, time() - start_t))
+                      % (i_rnd + 1, self.n_iter, time() - start_t))
 
         Xt = X_filled
         Xt[~mask_missing_values] = X[~mask_missing_values]
@@ -912,12 +912,12 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # edge case: in case the user specifies 0 for n_burn_in,
         # then there is no need to do chained imputation and the result should
         # be just the initial imputation (before clipping)
-        if self.n_burn_in < 1:
+        if self.n_iter < 1:
             return X_filled
 
         X_filled = np.clip(X_filled, self._min_value, self._max_value)
 
-        imps_per_round = len(self.imputation_sequence_) // self.n_burn_in
+        imputations_per_round = len(self.imputation_sequence_) // self.n_iter
         i_rnd = 0
         if self.verbose > 0:
             print("[ChainedImputer] Completing matrix with shape %s"
@@ -932,11 +932,11 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                 predictor=predictor_triplet.predictor,
                 fit_mode=False
             )
-            if not (it + 1) % imps_per_round:
+            if not (it + 1) % imputations_per_round:
                 if self.verbose > 1:
                     print('[ChainedImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (i_rnd + 1, self.n_burn_in, time() - start_t))
+                          % (i_rnd + 1, self.n_iter, time() - start_t))
                 i_rnd += 1
 
         Xt = X_filled
