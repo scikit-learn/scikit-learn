@@ -595,7 +595,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     # Preprocessing.
     if check_input:
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64,
+                        accept_large_sparse=solver != 'liblinear')
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
@@ -1220,8 +1221,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = np.float64
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                         order="C")
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
+                         accept_large_sparse=self.solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
@@ -1621,7 +1622,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                              "positive; got (tol=%r)" % self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C")
+                         order="C",
+                         accept_large_sparse=self.solver != 'liblinear')
         check_classification_targets(y)
 
         class_weight = self.class_weight

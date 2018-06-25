@@ -449,6 +449,11 @@ Classifiers and regressors
   and :class:`linear_model.ElasticNet` when working with sparse matrices.
   :issue:`10992` by `Alexandre Gramfort`_.
 
+- Fixed a bug where liblinear and libsvm-based estimators would segfault if
+  passed a scipy.sparse matrix with 64-bit indices. They now raise a
+  ValueError.
+  :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
+
 - Fixed a bug in :class:`ensemble.gradient_boosting.GradientBoostingRegressor`
   and :class:`ensemble.gradient_boosting.GradientBoostingClassifier` to have
   feature importances summed and then normalized, rather than normalizing on a
@@ -756,6 +761,11 @@ Misc
 
 - Invalid input for :class:`model_selection.ParameterGrid` now raises TypeError.
   :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
+
+- :func:`utils.check_array` and :func:`utils.check_X_y` now have
+  ``accept_large_sparse`` to control whether scipy.sparse matrices with 64-bit
+  indices should be rejected.
+  :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
 Changes to estimator checks
 ---------------------------
