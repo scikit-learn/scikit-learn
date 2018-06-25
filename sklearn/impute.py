@@ -500,15 +500,15 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    initial_imputer_ : object of class :class:`sklearn.preprocessing.Imputer`'
-        The imputer used to initialize the missing values.
+    initial_imputer_ : :class:`sklearn.impute.SimpleImputer`'
+        Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
         Each tuple has ``(feat_idx, neighbor_feat_idx, predictor)``, where
         ``feat_idx`` is the current feature to be imputed,
         ``neighbor_feat_idx`` is the array of other features used to impute the
         current feature, and ``predictor`` is the trained predictor used for
-        the imputation.
+        the imputation. Length is ``n_features_with_missing * n_iter``.
 
     Notes
     -----
