@@ -1,6 +1,8 @@
+import pytest
 import sys
 import numpy as np
 from numpy.testing import assert_array_equal
+from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six import StringIO
 from sklearn.utils import check_random_state
@@ -119,8 +121,8 @@ def test_params_validation():
 
     # ValueError
     assert_raise_message(ValueError,
-                         "`init` must be 'pca', 'lda', 'identity', 'random' "
-                         "or a numpy array of shape "
+                         "`init` must be 'auto', 'pca', 'lda', 'identity', "
+                         "'random' or a numpy array of shape "
                          "(n_components, n_features).",
                          NCA(init=1).fit, X, y)
     assert_raise_message(ValueError,
@@ -211,6 +213,10 @@ def test_init_transformation():
     nca_random = NeighborhoodComponentsAnalysis(init='random')
     nca_random.fit(X, y)
 
+    # Initialize with auto
+    nca_auto = NeighborhoodComponentsAnalysis(init='auto')
+    nca_auto.fit(X, y)
+
     # Initialize with PCA
     nca_pca = NeighborhoodComponentsAnalysis(init='pca')
     nca_pca.fit(X, y)
@@ -254,6 +260,43 @@ def test_init_transformation():
                          'linear transformation `init` ({})!'
                          .format(n_components, init.shape[0]),
                          nca.fit, X, y)
+
+
+@pytest.mark.parametrize('n_samples', [17, 19, 23, 29])
+@pytest.mark.parametrize('n_features', [17, 19, 23, 29])
+@pytest.mark.parametrize('n_classes', [17, 19, 23])
+@pytest.mark.parametrize('n_components', [17, 19, 23, 29])
+def test_auto_init(n_samples, n_features, n_classes, n_components):
+    # Test that auto choose the init as expected with every configuration
+    # of order of n_samples, n_features, n_classes and n_components.
+    RNG = check_random_state(0)
+    nca_base = NeighborhoodComponentsAnalysis(init='auto',
+                                              n_components=n_components,
+                                              max_iter=1, random_state=RNG)
+    if n_classes >= n_samples:
+        pass
+        # n_classes > n_samples is impossible, and n_classes == n_samples
+        # throws an error from lda but is an absurd case
+    else:
+        X = RNG.randn(n_samples, n_features)
+        y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
+        if n_components > n_features:
+            pass
+        else:
+            nca = clone(nca_base)
+            nca.fit(X, y)
+            if n_components <= n_classes:
+                nca_lda = clone(nca_base).set_params(init='lda')
+                nca_lda.fit(X, y)
+                assert_array_equal(nca.components_, nca_lda.components_)
+            elif n_components < min(n_features, n_samples):
+                nca_pca = clone(nca_base).set_params(init='pca')
+                nca_pca.fit(X, y)
+                assert_array_equal(nca.components_, nca_pca.components_)
+            else:
+                nca_id = clone(nca_base).set_params(init='identity')
+                nca_id.fit(X, y)
+                assert_array_equal(nca.components_, nca_id.components_)
 
 
 def test_warm_start_validation():

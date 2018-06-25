@@ -69,6 +69,7 @@ relate_point(X, i, ax)
 ax.set_title("Original points")
 ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
+ax.axis('equal')
 
 # Learn an embedding with NeighborhoodComponentsAnalysis
 nca = NeighborhoodComponentsAnalysis(max_iter=30, random_state=random_state)
@@ -93,4 +94,5 @@ for i in range(len(X)):
 ax2.set_title("NCA embedding")
 ax2.axes.get_xaxis().set_visible(False)
 ax2.axes.get_yaxis().set_visible(False)
+ax2.axis('equal')
 plt.show()

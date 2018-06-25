@@ -37,10 +37,19 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         Preferred dimensionality of the embedding.
         If None it is inferred from ``init``.
 
-    init : string or numpy array, optional (default='pca')
+    init : string or numpy array, optional (default='auto')
         Initialization of the linear transformation. Possible options are
-        'pca', 'lda', 'identity', 'random', and a numpy array of shape
+        'auto', 'pca', 'lda', 'identity', 'random', and a numpy array of shape
         (n_features_a, n_features_b).
+
+        'auto':
+            Depending on ``n_components``, the most reasonable initialization
+            will be chosen among the following ones. First, we try to use
+            'lda', as it uses labels information: if ``n_components <=
+            n_classes``, ``init='lda'``. If we can't, we then try 'pca', as it
+            projects data in meaningful directions (those of higher variance):
+            if ``n_components < min(n_features, n_samples)``, ``init = 'pca'``.
+            Otherwise, we just use 'identity'.
 
         pca:
             ``n_components`` many principal components of the inputs passed
@@ -48,9 +57,10 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             (See :class:`~sklearn.decomposition.PCA`)
 
         lda:
-            ``n_components`` many most discriminative components of the inputs
-            passed to :meth:`fit` will be used to initialize the
-            transformation. (See
+            ``min(n_components, n_classes)`` many most discriminative
+            components of the inputs passed to :meth:`fit` will be used to
+            initialize the transformation. (If ``n_components > n_classes``,
+            the rest of the components will be zero.) (See
             :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
 
         identity:
@@ -175,7 +185,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, init='pca', warm_start=False,
+    def __init__(self, n_components=None, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
                  verbose=0, random_state=None):
 
@@ -384,12 +394,12 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                      'linear transformation `init` ({})!'
                                      .format(self.n_components,
                                              init.shape[0]))
-        elif init in ['pca', 'lda', 'identity', 'random']:
+        elif init in ['auto', 'pca', 'lda', 'identity', 'random']:
             pass
         else:
             raise ValueError(
-                "`init` must be 'pca', 'lda', 'identity', 'random' or a numpy "
-                "array of shape (n_components, n_features).")
+                "`init` must be 'auto', 'pca', 'lda', 'identity', 'random' "
+                "or a numpy array of shape (n_components, n_features).")
 
         return X_valid, y_valid, init
 
@@ -421,7 +431,16 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         elif isinstance(init, np.ndarray):
             pass
         else:
-            n_components = self.n_components or X.shape[1]
+            n_samples, n_features = X.shape
+            n_components = self.n_components or n_features
+            if init == 'auto':
+                n_classes = len(np.unique(y))
+                if n_components <= n_classes:
+                    init = 'lda'
+                elif n_components < min(n_features, n_samples):
+                    init = 'pca'
+                else:
+                    init = 'identity'
             if init == 'identity':
                 transformation = np.eye(n_components, X.shape[1])
             elif init == 'random':
