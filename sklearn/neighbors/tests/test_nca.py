@@ -352,12 +352,22 @@ def test_warm_start_effectiveness():
                 "warm-started transformer after one iteration.")
 
 
-def test_verbose():
-    # assert there is proper output when verbose = 1
+@pytest.mark.parametrize('init_name', ['pca', 'lda', 'identity', 'random',
+                                       'precomputed'])
+def test_verbose(init_name):
+    # assert there is proper output when verbose = 1, for every initialization
+    # except auto because auto will call one of the others
+    msgs = {'pca': "Finding principal components",
+            'lda': "Finding most discriminative components",
+            'identity': '', 'random': '', 'precomputed': ''}
+    if init_name == 'precomputed':
+        init = rng.randn(iris_data.shape[1], iris_data.shape[1])
+    else:
+        init = init_name
     old_stdout = sys.stdout
     sys.stdout = StringIO()
 
-    nca = NeighborhoodComponentsAnalysis(verbose=1)
+    nca = NeighborhoodComponentsAnalysis(verbose=1, init=init)
     try:
         nca.fit(iris_data, iris_target)
     finally:
@@ -367,8 +377,7 @@ def test_verbose():
 
     # check output
     assert("[NeighborhoodComponentsAnalysis]" in out)
-    assert("Finding principal components" in out)
-    assert ("Finding principal components" in out)
+    assert(msgs[init_name] in out)
     assert ("Training took" in out)
 
     # assert by default there is no output (verbose=0)
