@@ -667,13 +667,15 @@ def test_refit_callable():
         fit_time = {v: k for k, v in
                     enumerate(cv_results['mean_fit_time'])}
         fit_time_rank = sorted(fit_time)
+        best_index = 0
         for i in fit_time_rank:
             if fit_time[i] in candidates:
-                # Return the index of a model that has the least
+                # Find the index of a model that has the least
                 # 'mean_fit_time' while has a test score within
                 # 1 standard deviation of the best 'mean_test_score'
-                return fit_time[i]
-        return cv_results['mean_test_score'].argmax()
+                best_index = fit_time[i]
+                break;
+        return best_index
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
@@ -710,13 +712,15 @@ def test_refit_callable_multi_metric():
         fit_time = {v: k for k, v in
                     enumerate(cv_results['mean_fit_time'])}
         fit_time_rank = sorted(fit_time)
+        best_index = 0
         for i in fit_time_rank:
             if fit_time[i] in candidates:
-                # Return the index of a model that has the least
+                # Find the index of a model that has the least
                 # 'mean_fit_time' while has a test precision within
                 # 1 standard deviation of the best 'mean_test_prec'
-                return fit_time[i]
-        return cv_results['mean_test_prec'].argmax()
+                best_index = fit_time[i]
+                break
+        return best_index
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
@@ -731,9 +735,9 @@ def test_refit_callable_invalid_name():
     Test that an invalid refit callable name raises apppropriate
     error message
     """
-    def refit_f1():
-        # Dummy refit function for testing invalid callable name
-        return 0
+    # Dummy refit function for testing invalid callable name
+    def refit_f1(): return 0
+
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     clf = LinearSVC()
