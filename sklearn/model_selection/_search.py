@@ -621,14 +621,30 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
                     self.refit not in scorers):
-                raise ValueError("For multi-metric scoring, the parameter "
-                                 "refit must be set to a scorer key "
-                                 "to refit an estimator with the best "
-                                 "parameter setting on the whole data and "
-                                 "make the best_* attributes "
-                                 "available for that metric. If this is not "
-                                 "needed, refit should be set to False "
-                                 "explicitly. %r was passed." % self.refit)
+                if callable(self.refit):
+                    scorer_key = self.refit.__name__.split('_')[-1]
+                    if scorer_key not in scorers:
+                        raise ValueError("For multi-metric scoring, the "
+                                         "name of refit callable function must "
+                                         "end with a scorer "
+                                         "key('_<scorer_name>') to refit an "
+                                         "estimator with the best parameter "
+                                         "setting on the whole data and make "
+                                         "the best_* attributes available for "
+                                         "that metric. If this is not needed, "
+                                         "refit should be set to False "
+                                         "explicitly. %r was passed"
+                                         % self.refit)
+                    refit_metric = scorer_key
+                else:
+                    raise ValueError("For multi-metric scoring, the parameter "
+                                     "refit must be set to a scorer key "
+                                     "to refit an estimator with the best "
+                                     "parameter setting on the whole data and "
+                                     "make the best_* attributes "
+                                     "available for that metric. If this is not "
+                                     "needed, refit should be set to False "
+                                     "explicitly. %r was passed." % self.refit)
             else:
                 refit_metric = self.refit
         else:
@@ -935,7 +951,8 @@ class GridSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_parameters_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer.
+        scorer. If a callable is passed to parameter refit, the function's name
+        must end with scorer key('_<scorer_name>').
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
@@ -1279,7 +1296,8 @@ class RandomizedSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_parameters_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer.
+        scorer. If a callable is passed to parameter refit, the function's name
+        must end with scorer key('_<scorer_name>').
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
