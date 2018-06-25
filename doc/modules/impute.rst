@@ -136,13 +136,17 @@ Each of these 10 imputations is then put through the subsequent analysis pipelin
 (e.g. feature engineering, clustering, regression, classification). The 10 final
 analysis results (e.g. held-out validation error) allow the data scientist to
 obtain understanding of the uncertainty inherent in the missing values. The above
-practice is called multiple imputation. As implemented, the :class:`ChainedImputer`
-class generates a single (averaged) imputation for each missing value because this
-is the most common use case for machine learning applications. However, it can also
-be used for multiple imputations by applying it repeatedly to the same dataset with
-different random seeds.
+practice is called multiple imputation.
 
-It is still an open problem as to how useful single versus multiple imputation is in
+As implemented, the :class:`ChainedImputer` class generates a single imputation
+for each missing value because this is the most common use case for machine learning
+applications. However, it can also be used for multiple imputations by applying it
+repeatedly to the same dataset with different random seeds.
+
+See Chapter 4 of "Statistical Analysis with Missing Data" by Little and Rubin for
+more discussion on multiple vs. single imputations.
+
+It is still an open problem as to how useful single vs. multiple imputation is in
 the context of prediction and classification.
 
 Note that a call to the ``transform`` method of :class:`ChainedImputer` is not
