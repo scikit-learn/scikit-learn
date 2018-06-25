@@ -1,7 +1,7 @@
 import pytest
 import sys
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six import StringIO
@@ -269,16 +269,15 @@ def test_init_transformation():
 def test_auto_init(n_samples, n_features, n_classes, n_components):
     # Test that auto choose the init as expected with every configuration
     # of order of n_samples, n_features, n_classes and n_components.
-    RNG = check_random_state(0)
     nca_base = NeighborhoodComponentsAnalysis(init='auto',
                                               n_components=n_components,
-                                              max_iter=1, random_state=RNG)
+                                              max_iter=1, random_state=rng)
     if n_classes >= n_samples:
         pass
         # n_classes > n_samples is impossible, and n_classes == n_samples
         # throws an error from lda but is an absurd case
     else:
-        X = RNG.randn(n_samples, n_features)
+        X = rng.randn(n_samples, n_features)
         y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
         if n_components > n_features:
             pass
@@ -286,17 +285,13 @@ def test_auto_init(n_samples, n_features, n_classes, n_components):
             nca = clone(nca_base)
             nca.fit(X, y)
             if n_components <= n_classes:
-                nca_lda = clone(nca_base).set_params(init='lda')
-                nca_lda.fit(X, y)
-                assert_array_equal(nca.components_, nca_lda.components_)
+                nca_other = clone(nca_base).set_params(init='lda')
             elif n_components < min(n_features, n_samples):
-                nca_pca = clone(nca_base).set_params(init='pca')
-                nca_pca.fit(X, y)
-                assert_array_equal(nca.components_, nca_pca.components_)
+                nca_other = clone(nca_base).set_params(init='pca')
             else:
-                nca_id = clone(nca_base).set_params(init='identity')
-                nca_id.fit(X, y)
-                assert_array_equal(nca.components_, nca_id.components_)
+                nca_other = clone(nca_base).set_params(init='identity')
+            nca_other.fit(X, y)
+            assert_array_almost_equal(nca.components_, nca_other.components_)
 
 
 def test_warm_start_validation():
