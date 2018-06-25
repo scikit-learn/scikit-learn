@@ -515,7 +515,7 @@ def test_chained_imputer_imputation_order(imputation_order):
     X[:, 0] = 1  # this column should not be discarded by ChainedImputer
 
     imputer = ChainedImputer(missing_values=0,
-                             n_iter=1,
+                             n_iter=2,
                              n_nearest_features=5,
                              min_value=0,
                              max_value=1,
