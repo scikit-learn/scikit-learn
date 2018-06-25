@@ -1196,7 +1196,8 @@ def test_validation_curve():
             MockEstimatorWithParameter(), X, y, param_name="param",
             param_range=param_range, cv=2
         )
-    if len(w) > 1:
+    # Expected single FutureWarning for deprecation of n_splits=3
+    if len(w) != 1:
         raise RuntimeError("Unexpected warning: %r" % w[0].message)
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
