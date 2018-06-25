@@ -93,17 +93,18 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
 Multivariate feature imputation
 ===============================
 
-A more sophisticated approach is to use the :class:`ChainedImputer` class, models
-each feature with missing values as a function of other features, and uses that
-estimate for imputation. It does so in an iterated round-robin fashion: at each step,
-a feature column is designated as output `y` and the other feature columns are treated
-as inputs `X`. A regressor is fit on `(X, y)` for known `y`. Then, the regressor is
-used to predict the unknown values of `y`. This is repeated for each feature in a
-chained fashion, and then is done for a number of imputation rounds. The results
-of the final imputation round are returned. Our implementation was inspired by the
-R MICE package (Multivariate Imputation by Chained Equations), but differs from
-it in setting single imputation to default instead of multiple imputation. This
-is discussed further below. Here is an example snippet::
+A more sophisticated approach is to use the :class:`ChainedImputer` class,
+which models each feature with missing values as a function of other features,
+and uses that estimate for imputation. It does so in an iterated round-robin
+fashion: at each step, a feature column is designated as output `y` and the
+other feature columns are treated as inputs `X`. A regressor is fit on `(X, y)`
+for known `y`. Then, the regressor is used to predict the missing values of `y`.
+This is repeated for each feature in a chained fashion, and then is done for a
+number of imputation rounds. The results of the final imputation round are
+returned. Our implementation was inspired by the R MICE package (Multivariate
+Imputation by Chained Equations), but differs from it in setting single imputation
+to default instead of multiple imputation. This is discussed further below.
+Here is an example snippet::
 
     >>> import numpy as np
     >>> from sklearn.impute import ChainedImputer
@@ -111,8 +112,8 @@ is discussed further below. Here is an example snippet::
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
     ChainedImputer(imputation_order='ascending', initial_strategy='mean',
             max_value=None, min_value=None, missing_values=nan, n_iter=10,
-            n_nearest_features=None, predictor=None, random_state=0,
-            sample_after_predict=False, verbose=False)
+            n_nearest_features=None, predict_posterior=False, predictor=None,
+            random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> print(np.round(imp.transform(X_test)))
     [[ 1.  2.]
