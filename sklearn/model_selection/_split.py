@@ -1863,7 +1863,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=3, y=None, classifier=False):
+def check_cv(cv=None, y=None, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
