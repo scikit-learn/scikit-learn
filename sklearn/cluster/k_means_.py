@@ -861,7 +861,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     n_iter_ : int
         Number of iterations run.
-        
+
     Examples
     --------
 
