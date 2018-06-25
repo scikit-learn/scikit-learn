@@ -643,28 +643,28 @@ def test_refit():
 
 def test_refit_callable():
     """
-    Test refit=callable, which adds flexibility in identifying the 
+    Test refit=callable, which adds flexibility in identifying the
     "best" estimator.
     """
     def refit_prec(cv_results):
         """
         Balance model complexity with cross-validated score.
-        Return the index of a model that has the least `mean_fit_time`, 
-        but has test score within 1 standard deviation of the best 
+        Return the index of a model that has the least `mean_fit_time`,
+        but has test score within 1 standard deviation of the best
         `mean_test_score`.
         """
         std_test_score = np.std(cv_results['mean_test_score'])
         best_test_score = max(cv_results['mean_test_score'])
         test_score_upper = np.minimum(best_test_score + std_test_score, 1)
         test_score_lower = np.maximum(best_test_score - std_test_score, 0)
-        test_scores = {k : v for k, v in 
+        test_scores = {k: v for k, v in
                        enumerate(cv_results['mean_test_score'])}
         # Select models which have test scores within 1 standard deviation
         # of the best 'mean_test_score'
-        candidates = dict(filter(lambda i : (i[1] >= test_score_lower
-                                 and i[1] <= test_score_upper), 
+        candidates = dict(filter(lambda i: (i[1] >= test_score_lower
+                                 and i[1] <= test_score_upper),
                                  test_scores.items()))
-        fit_time = {v : k for k, v in
+        fit_time = {v: k for k, v in
                     enumerate(cv_results['mean_fit_time'])}
         fit_time_rank = sorted(fit_time)
         for i in fit_time_rank:
@@ -675,13 +675,13 @@ def test_refit_callable():
                 return fit_time[i]
         return cv_results['mean_test_score'].argmax()
 
-
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                                 scoring="precision", refit=refit_prec)
+                       scoring="precision", refit=refit_prec)
     clf.fit(X, y)
     assert_equal(clf.best_index_, 1)
+
 
 def test_refit_callable_multi_metric():
     """
@@ -690,33 +690,33 @@ def test_refit_callable_multi_metric():
     end with a scorer key(`_<scorer_name>`).
     """
     def refit_prec(cv_results):
-         """
-         Balance model complexity with cross-validated score.
-         Return the index of a model that has the least `mean_fit_time`,
-         but has test precision within 1 standard deviation of the best
-         `mean_test_prec`.
-         """
-         std_test_prec = np.std(cv_results['mean_test_prec'])
-         best_test_prec = max(cv_results['mean_test_prec'])
-         test_prec_upper = np.minimum(best_test_prec + std_test_prec, 1)
-         test_prec_lower = np.maximum(best_test_prec - std_test_prec, 0)
-         test_precs = {k : v for k, v in
-                        enumerate(cv_results['mean_test_prec'])}
-         # Select models which have test precisions within 1 standard deviation
-         # of the best 'mean_test_prec'
-         candidates = dict(filter(lambda i : (i[1] >= test_prec_lower
-                                  and i[1] <= test_prec_upper),
-                                  test_precs.items()))
-         fit_time = {v : k for k, v in
-                     enumerate(cv_results['mean_fit_time'])}
-         fit_time_rank = sorted(fit_time)
-         for i in fit_time_rank:
-             if fit_time[i] in candidates:
-                 # Return the index of a model that has the least
-                 # 'mean_fit_time' while has a test precision within
-                 # 1 standard deviation of the best 'mean_test_prec'
-                 return fit_time[i]
-         return cv_results['mean_test_prec'].argmax()
+        """
+        Balance model complexity with cross-validated score.
+        Return the index of a model that has the least `mean_fit_time`,
+        but has test precision within 1 standard deviation of the best
+        `mean_test_prec`.
+        """
+        std_test_prec = np.std(cv_results['mean_test_prec'])
+        best_test_prec = max(cv_results['mean_test_prec'])
+        test_prec_upper = np.minimum(best_test_prec + std_test_prec, 1)
+        test_prec_lower = np.maximum(best_test_prec - std_test_prec, 0)
+        test_precs = {k: v for k, v in
+                      enumerate(cv_results['mean_test_prec'])}
+        # Select models which have test precisions within 1 standard deviation
+        # of the best 'mean_test_prec'
+        candidates = dict(filter(lambda i: (i[1] >= test_prec_lower
+                                 and i[1] <= test_prec_upper),
+                                 test_precs.items()))
+        fit_time = {v: k for k, v in
+                    enumerate(cv_results['mean_fit_time'])}
+        fit_time_rank = sorted(fit_time)
+        for i in fit_time_rank:
+            if fit_time[i] in candidates:
+                # Return the index of a model that has the least
+                # 'mean_fit_time' while has a test precision within
+                # 1 standard deviation of the best 'mean_test_prec'
+                return fit_time[i]
+        return cv_results['mean_test_prec'].argmax()
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
@@ -736,7 +736,6 @@ def test_refit_callable_invalid_name():
         return 0
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
-    scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
     clf = LinearSVC()
     assert_raise_message(ValueError, "For multi-metric scoring, the "
                          "name of refit callable function must end "
