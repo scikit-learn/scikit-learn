@@ -674,7 +674,7 @@ def test_refit_callable():
                 # 'mean_fit_time' while has a test score within
                 # 1 standard deviation of the best 'mean_test_score'
                 best_index = fit_time[i]
-                break;
+                break
         return best_index
 
     X, y = make_classification(n_samples=100, n_features=4,
