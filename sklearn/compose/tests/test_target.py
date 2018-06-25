@@ -274,7 +274,6 @@ def test_transform_target_regressor_allow_nan():
 
     X, y = datasets.load_linnerud(return_X_y=True)
 
-    # put some NaN in y
     y[5, 1] = np.NaN
 
     class DummyInvertibleImputer(SimpleImputer):
