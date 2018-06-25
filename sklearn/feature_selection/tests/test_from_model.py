@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 
 from sklearn.utils.testing import assert_true
@@ -8,9 +9,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
-from sklearn.utils.testing import assert_raises_regexp
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
@@ -42,24 +43,31 @@ def test_input_estimator_unchanged():
     assert_true(transformer.estimator is est)
 
 
-def check_invalid_max_features(est, X, y):
-    max_features = X.shape[1]
-    for invalid_max_n_feature in [-1, max_features + 1, 'gobbledigook', 'all']:
-        transformer = SelectFromModel(estimator=est,
-                                      max_features=invalid_max_n_feature,
-                                      threshold=-np.inf)
-        assert_raises_regexp(ValueError, "max_features should be >=0",
-                             transformer.fit, X, y)
+@pytest.mark.parametrize(
+    "max_features, err_type, err_msg",
+    [(-1, ValueError, "'max_features' should be 0 and"),
+     (data.shape[1] + 1, ValueError, "'max_features' should be 0 and"),
+     ('gobbledigook', TypeError, "should be an integer"),
+     ('all', TypeError, "should be an integer")]
+)
+def check_invalid_max_features(max_features, err_type, err_msg):
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+
+    transformer = SelectFromModel(estimator=clf,
+                                  max_features=max_features,
+                                  threshold=-np.inf)
+    with pytest.raises(err_type, err_msg):
+        transformer.fit(data, y)
 
 
-def check_valid_max_features(est, X, y):
-    max_features = X.shape[1]
-    for valid_max_n_feature in [0, max_features, 5]:
-        transformer = SelectFromModel(estimator=est,
-                                      max_features=valid_max_n_feature,
-                                      threshold=-np.inf)
-        X_new = transformer.fit_transform(X, y)
-        assert_equal(X_new.shape[1], valid_max_n_feature)
+@pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
+def check_max_features(max_features):
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    transformer = SelectFromModel(estimator=clf,
+                                  max_features=max_features,
+                                  threshold=-np.inf)
+    X_trans = transformer.fit_transform(X, y)
+    assert X_trans.shape[1] == max_features
 
 
 class FixedImportanceEstimator(BaseEstimator):
@@ -78,9 +86,6 @@ def test_max_features():
     max_features = X.shape[1]
     est = RandomForestClassifier(n_estimators=50, random_state=0)
 
-    check_valid_max_features(est, X, y)
-    check_invalid_max_features(est, X, y)
-
     transformer1 = SelectFromModel(estimator=est,
                                    threshold=-np.inf)
     transformer2 = SelectFromModel(estimator=est,
@@ -88,7 +93,7 @@ def test_max_features():
                                    threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)
     X_new2 = transformer2.fit_transform(X, y)
-    assert_array_equal(X_new1, X_new2)
+    assert_allclose(X_new1, X_new2)
 
     # Test max_features against actual model.
     transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025,
@@ -105,10 +110,10 @@ def test_max_features():
         X_new2 = transformer2.fit_transform(X, y)
         scores2 = np.abs(transformer2.estimator_.coef_)
         candidate_indices2 = np.argsort(-scores2, kind='mergesort')
-        assert_array_equal(X[:, candidate_indices1[:n_features]],
-                           X[:, candidate_indices2[:n_features]])
-    assert_array_equal(transformer1.estimator_.coef_,
-                       transformer2.estimator_.coef_)
+        assert_allclose(X[:, candidate_indices1[:n_features]],
+                        X[:, candidate_indices2[:n_features]])
+    assert_allclose(transformer1.estimator_.coef_,
+                    transformer2.estimator_.coef_)
 
 
 def test_max_features_tiebreak():
@@ -127,7 +132,7 @@ def test_max_features_tiebreak():
         X_new = transformer.fit_transform(X, y)
         selected_feature_indices = np.where(transformer._get_support_mask())[0]
         assert_array_equal(selected_feature_indices, np.arange(n_features))
-        assert_equal(X_new.shape[1], n_features)
+        assert X_new.shape[1] == n_features
 
 
 def test_threshold_and_max_features():
@@ -146,10 +151,10 @@ def test_threshold_and_max_features():
     transformer3 = SelectFromModel(estimator=est, max_features=3,
                                    threshold=0.04)
     X_new3 = transformer3.fit_transform(X, y)
-    assert_equal(X_new3.shape[1], min(X_new1.shape[1], X_new2.shape[1]))
-    selected_indices = \
-        transformer3.transform(np.arange(X.shape[1])[np.newaxis, :])
-    assert_array_equal(X_new3, X[:, selected_indices[0]])
+    assert X_new3.shape[1] == min(X_new1.shape[1], X_new2.shape[1])
+    selected_indices = transformer3.transform(
+        np.arange(X.shape[1])[np.newaxis, :])
+    assert_allclose(X_new3, X[:, selected_indices[0]])
 
 
 @skip_if_32bit

@@ -109,10 +109,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
-    max_features : int, between 0 and number of features, optional.
-        Select at most this many features that score above the threshold.
-        To disable the threshold, and only select based on max_features,
-        set threshold = -np.inf.
+    max_features : int or None, optional
+        The maximum number of features selected scoring above ``threshold``.
+        To disable ``threshold`` and only select based on ``max_features``,
+        set ``threshold=-np.inf``.
 
     norm_order : non-zero int, inf, -inf, default 1
         Order of the norm used to filter the vectors of coefficients below
@@ -137,20 +137,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.max_features = max_features
         self.norm_order = norm_order
 
-    def _check_params(self, X, y):
-        X, y = check_X_y(X, y)
-
-        if self.max_features is None:
-            return
-
-        if isinstance(self.max_features, numbers.Integral):
-            if 0 <= self.max_features <= X.shape[1]:
-                return
-
-        raise ValueError(
-            "max_features should be >=0 and <= n_features;"
-            " got %r." % self.max_features)
-
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
         if self.prefit:
@@ -163,13 +149,13 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
                              ' estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
-        mask = np.zeros_like(scores, dtype=bool)
         if self.max_features is not None:
+            mask = np.zeros_like(scores, dtype=bool)
             candidate_indices = \
                 np.argsort(-scores, kind='mergesort')[:self.max_features]
             mask[candidate_indices] = True
         else:
-            mask = np.logical_not(mask)
+            mask = np.ones_like(scores, dtype=bool)
         mask[scores < threshold] = False
         return mask
 
@@ -191,7 +177,16 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        self._check_params(X, y)
+        if self.max_features is not None:
+            if not isinstance(self.max_features, numbers.Integral):
+                raise TypeError("'max_features' should be an integer between"
+                                " 0 and {} features. Got {!r} instead."
+                                .format(X.shape[1], self.max_features))
+            elif self.max_features < 0 and self.max_features > X.shape[1]:
+                raise ValueError("'max_features' should be 0 and {} features."
+                                 "Got {} instead."
+                                 .format(X.shape[1], self.max_features))
+
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
