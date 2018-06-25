@@ -644,7 +644,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                      "make the best_* attributes "
                                      "available for that metric. If this is "
                                      "not needed, refit should be set to "
-                                     "False explicitly. %r was passed." 
+                                     "False explicitly. %r was passed."
                                      % self.refit)
             else:
                 refit_metric = self.refit
@@ -781,7 +781,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
             else:
-                self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
+                self.best_index_ = results["rank_test_%s" 
+                                           % refit_metric].argmin()
             self.best_params_ = candidate_params[self.best_index_]
             self.best_score_ = results["mean_test_%s" % refit_metric][
                 self.best_index_]

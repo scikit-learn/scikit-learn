@@ -741,8 +741,8 @@ def test_refit_callable_invalid_name():
                          "name of refit callable function must end "
                          "with a scorer key",
                          GridSearchCV(clf, {}, refit=refit_f1,
-                         scoring={'acc': 'accuracy',
-                                  'prec': 'precision'}).fit,
+                                      scoring={'acc': 'accuracy',
+                                               'prec': 'precision'}).fit,
                          X, y)
 
 
