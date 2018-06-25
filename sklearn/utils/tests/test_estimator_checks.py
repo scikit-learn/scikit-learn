@@ -9,12 +9,14 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils import deprecated
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
+from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
@@ -174,6 +176,19 @@ class SparseTransformer(BaseEstimator):
         if X.shape[1] != self.X_shape_[1]:
             raise ValueError('Bad number of features')
         return sp.csr_matrix(X)
+
+
+def test_check_fit_score_takes_y_works_on_deprecated_fit():
+    # Tests that check_fit_score_takes_y works on a class with
+    # a deprecated fit method
+
+    class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
+        @deprecated("Deprecated for the purpose of testing "
+                    "check_fit_score_takes_y")
+        def fit(self, X, y):
+            return self
+
+    check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
 def test_check_estimator():

@@ -36,10 +36,11 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
+from sklearn.utils import is_scalar_nan
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-from sklearn.base import (clone, TransformerMixin, ClusterMixin,
+from sklearn.base import (clone, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor,
                           is_outlier_detector)
 
@@ -67,7 +68,7 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
-                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+                'ExtraTreeRegressor', 'ExtraTreesRegressor',
                 'GaussianProcessRegressor', 'TransformedTargetRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
@@ -76,8 +77,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
-             'MinMaxScaler', 'QuantileTransformer']
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer',
+             'MaxAbsScaler', 'MinMaxScaler', 'StandardScaler',
+             'PowerTransformer', 'QuantileTransformer']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -104,10 +106,8 @@ def _yield_non_meta_checks(name, estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if name not in ['GaussianProcess']:
-        # FIXME!
-        # in particular GaussianProcess!
-        yield check_estimators_overwrite_params
+    yield check_estimators_overwrite_params
+
     if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
 
@@ -138,7 +138,6 @@ def _yield_classifier_checks(name, classifier):
 
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
-    # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
@@ -186,7 +185,7 @@ def _yield_regressor_checks(name, regressor):
         # check that the regressor handles int input
         yield check_regressors_int
     if name != "GaussianProcessRegressor":
-        # Test if NotFittedError is raised
+        # test if NotFittedError is raised
         yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
@@ -258,9 +257,7 @@ def _yield_all_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
-    if name != 'GaussianProcess':  # FIXME
-        # XXX GaussianProcess deprecated in 0.20
-        yield check_fit2d_1sample
+    yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
@@ -301,10 +298,10 @@ def check_estimator(Estimator):
     for check in _yield_all_checks(name, estimator):
         try:
             check(name, estimator)
-        except SkipTest as message:
+        except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
-            warnings.warn(message, SkipTestWarning)
+            warnings.warn(str(exception), SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
@@ -327,7 +324,6 @@ def set_checking_parameters(estimator):
             and not isinstance(estimator, BaseSGD)):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
@@ -1608,6 +1604,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 def choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
+
 def check_classifiers_classes(name, classifier_orig):
     X_multiclass, y_multiclass = make_blobs(n_samples=30, random_state=0,
                                             cluster_std=0.1)
@@ -2003,11 +2000,13 @@ def check_parameters_default_constructible(name, Estimator):
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
+
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
         params = estimator.get_params()
+
         if name in META_ESTIMATORS:
             # they can need a non-default argument
             init_params = init_params[1:]
@@ -2033,7 +2032,11 @@ def check_parameters_default_constructible(name, Estimator):
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                assert_equal(param_value, init_param.default, init_param.name)
+                if is_scalar_nan(param_value):
+                    # Allows to set default parameters to np.nan
+                    assert param_value is init_param.default, init_param.name
+                else:
+                    assert param_value == init_param.default, init_param.name
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):

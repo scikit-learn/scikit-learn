@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_less
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.decomposition import RandomizedPCA
 from sklearn.decomposition.pca import _assess_dimension_
 from sklearn.decomposition.pca import _infer_dimension_
 
@@ -685,25 +684,6 @@ def test_svd_solver_auto():
     pca_test.fit(X)
     assert_array_almost_equal(pca.components_, pca_test.components_)
 
-
-def test_deprecation_randomized_pca():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-
-    depr_message = ("Class RandomizedPCA is deprecated; RandomizedPCA was "
-                    "deprecated in 0.18 and will be "
-                    "removed in 0.20. Use PCA(svd_solver='randomized') "
-                    "instead. The new implementation DOES NOT store "
-                    "whiten ``components_``. Apply transform to get them.")
-
-    def fit_deprecated(X):
-        global Y
-        rpca = RandomizedPCA(random_state=0)
-        Y = rpca.fit_transform(X)
-
-    assert_warns_message(DeprecationWarning, depr_message, fit_deprecated, X)
-    Y_pca = PCA(svd_solver='randomized', random_state=0).fit_transform(X)
-    assert_array_almost_equal(Y, Y_pca)
 
 
 @pytest.mark.parametrize('svd_solver', solver_list)

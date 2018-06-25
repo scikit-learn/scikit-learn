@@ -218,7 +218,7 @@ matrix format as defined in `scipy.sparse.csr_matrix
 
 .. topic:: Examples:
 
- - :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+ - :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 Complexity
 ==========
