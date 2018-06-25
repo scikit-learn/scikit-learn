@@ -667,15 +667,12 @@ def test_refit_callable():
         fit_time = {v: k for k, v in
                     enumerate(cv_results['mean_fit_time'])}
         fit_time_rank = sorted(fit_time)
-        best_index = 0
         for i in fit_time_rank:
             if fit_time[i] in candidates:
                 # Find the index of a model that has the least
                 # 'mean_fit_time' while has a test score within
                 # 1 standard deviation of the best 'mean_test_score'
-                best_index = fit_time[i]
-                break
-        return best_index
+                return fit_time[i]
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
@@ -712,15 +709,13 @@ def test_refit_callable_multi_metric():
         fit_time = {v: k for k, v in
                     enumerate(cv_results['mean_fit_time'])}
         fit_time_rank = sorted(fit_time)
-        best_index = 0
         for i in fit_time_rank:
             if fit_time[i] in candidates:
                 # Find the index of a model that has the least
                 # 'mean_fit_time' while has a test precision within
                 # 1 standard deviation of the best 'mean_test_prec'
-                best_index = fit_time[i]
-                break
-        return best_index
+                return fit_time[i]
+
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
