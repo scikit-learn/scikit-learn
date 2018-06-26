@@ -66,7 +66,7 @@ def check_max_features(max_features):
     transformer = SelectFromModel(estimator=clf,
                                   max_features=max_features,
                                   threshold=-np.inf)
-    X_trans = transformer.fit_transform(X, y)
+    X_trans = transformer.fit_transform(data, y)
     assert X_trans.shape[1] == max_features
 
 
