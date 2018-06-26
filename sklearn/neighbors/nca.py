@@ -16,7 +16,6 @@ try:  # scipy.misc.logsumexp is deprecated in scipy 1.0.0
 except ImportError:
     from scipy.misc import logsumexp
 from scipy.optimize import minimize
-from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..metrics import pairwise_distances
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
@@ -457,6 +456,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                     pca.fit(X)
                     transformation = pca.components_
                 elif init == 'lda':
+                    from ..discriminant_analysis import \
+                        LinearDiscriminantAnalysis
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
                         print('Finding most discriminative components... ',
