@@ -862,16 +862,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # edge case: in case the user specifies 0 for n_burn_in,
+        # edge case: in case the user specifies 0 for n_iter,
         # then there is no need to do further imputation and the result should
         # be just the initial imputation (before clipping)
         if self.n_iter < 1:
             return X_filled
-
-        # clip only the initial filledin values
-        X_filled[mask_missing_values] = np.clip(X_filled[mask_missing_values],
-                                                self._min_value,
-                                                self._max_value)
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
@@ -933,16 +928,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # edge case: in case the user specifies 0 for n_burn_in,
+        # edge case: in case the user specifies 0 for n_iter,
         # then there is no need to do further imputation and the result should
         # be just the initial imputation (before clipping)
         if self.n_iter < 1:
             return X_filled
-
-        # clip only the initial filledin values
-        X_filled[mask_missing_values] = np.clip(X_filled[mask_missing_values],
-                                                self._min_value,
-                                                self._max_value)
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter
         i_rnd = 0
