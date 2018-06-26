@@ -473,7 +473,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
-        the each feature column. Nearness between features is measured using
+        each feature column. Nearness between features is measured using
         the absolute correlation coefficient between each feature pair (after
         initial imputation). To ensure coverage of features throughout the
         imputation process, the neighbor features are not necessarily nearest,
