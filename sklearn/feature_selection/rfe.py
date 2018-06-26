@@ -9,6 +9,7 @@
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
@@ -16,7 +17,7 @@ from ..base import clone
 from ..base import is_classifier
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
-from ..model_selection._validation import _safe_split, _score
+from ..model_selection._validation import _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
@@ -96,8 +97,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True,  True,  True,
-            False, False, False, False, False], dtype=bool)
+    array([ True,  True,  True,  True,  True, False, False, False, False,
+           False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
@@ -365,8 +366,8 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True,  True,  True,
-            False, False, False, False, False], dtype=bool)
+    array([ True,  True,  True,  True,  True, False, False, False, False,
+           False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
@@ -449,8 +450,10 @@ class RFECV(RFE, MetaEstimatorMixin):
             for train, test in cv.split(X, y, groups))
 
         scores = np.sum(scores, axis=0)
+        scores_rev = scores[::-1]
+        argmax_idx = len(scores) - np.argmax(scores_rev) - 1
         n_features_to_select = max(
-            n_features - (np.argmax(scores) * step),
+            n_features - (argmax_idx * step),
             n_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set

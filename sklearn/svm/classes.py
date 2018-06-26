@@ -123,9 +123,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
          multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
          verbose=0)
     >>> print(clf.coef_)
-    [[ 0.08551385  0.39414796  0.49847831  0.37513797]]
+    [[0.08551385 0.39414796 0.49847831 0.37513797]]
     >>> print(clf.intercept_)
-    [ 0.28418066]
+    [0.28418066]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -226,7 +226,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C")
+                         dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -333,7 +334,7 @@ class LinearSVR(LinearModel, RegressorMixin):
          intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
          random_state=0, tol=0.0001, verbose=0)
     >>> print(regr.coef_)
-    [ 16.35750999  26.91499923  42.30652207  60.47843124]
+    [16.35750999 26.91499923 42.30652207 60.47843124]
     >>> print(regr.intercept_)
     [-4.29756543]
     >>> print(regr.predict([[0, 0, 0, 0]]))
@@ -412,7 +413,8 @@ class LinearSVR(LinearModel, RegressorMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C")
+                         dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -504,7 +506,8 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2).
+        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
+        ('ovo') is always used as multi-class strategy.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -1088,8 +1091,8 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - offset_.
-        The offset is the opposite of intercept_ and is provided for
+        We have the relation: decision_function = score_samples - `offset_`.
+        The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
     """

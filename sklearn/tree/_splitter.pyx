@@ -1253,7 +1253,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitly that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
@@ -1489,7 +1489,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
                                          # inititialized
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitly that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative

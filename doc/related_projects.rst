@@ -45,10 +45,10 @@ enhance the functionality of scikit-learn's estimators.
   scikit-learn estimator.
 
 - `scikit-optimize <https://scikit-optimize.github.io/>`_
-   A library to minimize (very) expensive and noisy black-box functions. It
-   implements several methods for sequential model-based optimization, and
-   includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
-   cross-validated parameter search using any of these strategies.
+  A library to minimize (very) expensive and noisy black-box functions. It
+  implements several methods for sequential model-based optimization, and
+  includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
+  cross-validated parameter search using any of these strategies.
 
 **Experimentation frameworks**
 
@@ -183,6 +183,9 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic
   regression on multidimensional features.
+  
+- `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence 
+  learning using sliding window segmentation.
 
 **Decomposition and clustering**
 
