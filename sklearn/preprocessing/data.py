@@ -1137,7 +1137,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
             quantiles = np.transpose(quantiles)
 
-            self.scale_ = (quantiles[1] - quantiles[0])
+            self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         else:
             self.scale_ = None
