@@ -270,7 +270,8 @@ def test_transform_target_regressor_ensure_y_array():
 
 
 def test_transform_target_regressor_allow_nan():
-    # check if the TransformedTargetRegressor allows missing value in the target array
+    # check if the TransformedTargetRegressor allows missing value in
+    # the target array
 
     X, y = datasets.load_linnerud(return_X_y=True)
 
