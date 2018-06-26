@@ -24,7 +24,7 @@ One type of imputation algorithm is univariate, which imputes values in the i-th
 feature dimension using only non-missing values in that feature dimension
 (e.g. :class:`impute.SimpleImputer`). By contrast, multivariate imputation
 algorithms use the entire set of available feature dimensions to estimate the
-missing values (e.g. :class:`impute.ChainedImputer`).
+missing values (e.g. :class:`impute.IterativeImputer`).
 
 
 .. _single_imputer:
@@ -87,19 +87,19 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
-.. _chained_imputer:
+.. _iterative_imputer:
 
 
 Multivariate feature imputation
 ===============================
 
-A more sophisticated approach is to use the :class:`ChainedImputer` class,
+A more sophisticated approach is to use the :class:`IterativeImputer` class,
 which models each feature with missing values as a function of other features,
 and uses that estimate for imputation. It does so in an iterated round-robin
 fashion: at each step, a feature column is designated as output `y` and the
 other feature columns are treated as inputs `X`. A regressor is fit on `(X, y)`
 for known `y`. Then, the regressor is used to predict the missing values of `y`.
-This is repeated for each feature in a chained fashion, and then is done for a
+This is repeated for each feature in an iterative fashion, and then is done for a
 number of imputation rounds. The results of the final imputation round are
 returned. Our implementation was inspired by the R MICE package (Multivariate
 Imputation by Chained Equations), but differs from it in setting single imputation
@@ -107,10 +107,10 @@ to default instead of multiple imputation. This is discussed further below.
 Here is an example snippet::
 
     >>> import numpy as np
-    >>> from sklearn.impute import ChainedImputer
-    >>> imp = ChainedImputer(random_state=0)
+    >>> from sklearn.impute import IterativeImputer
+    >>> imp = IterativeImputer(random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
-    ChainedImputer(imputation_order='ascending', initial_strategy='mean',
+    IterativeImputer(imputation_order='ascending', initial_strategy='mean',
             max_value=None, min_value=None, missing_values=nan, n_iter=10,
             n_nearest_features=None, predict_posterior=False, predictor=None,
             random_state=0, verbose=False)
@@ -120,7 +120,7 @@ Here is an example snippet::
      [ 6.  4.]
      [13.  6.]]
 
-Both :class:`SimpleImputer` and :class:`ChainedImputer` can be used in a Pipeline
+Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
@@ -138,7 +138,7 @@ analysis results (e.g. held-out validation error) allow the data scientist to
 obtain understanding of the uncertainty inherent in the missing values. The above
 practice is called multiple imputation.
 
-As implemented, the :class:`ChainedImputer` class generates a single imputation
+As implemented, the :class:`IterativeImputer` class generates a single imputation
 for each missing value because this is the most common use case for machine learning
 applications. However, it can also be used for multiple imputations by applying it
 repeatedly to the same dataset with different random seeds.
@@ -149,6 +149,6 @@ more discussion on multiple vs. single imputations.
 It is still an open problem as to how useful single vs. multiple imputation is in
 the context of prediction and classification.
 
-Note that a call to the ``transform`` method of :class:`ChainedImputer` is not
+Note that a call to the ``transform`` method of :class:`IterativeImputer` is not
 allowed to change the number of samples. Therefore multiple imputations cannot be
 achieved by a single call to ``transform``.

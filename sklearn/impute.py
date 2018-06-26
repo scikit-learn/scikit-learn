@@ -36,7 +36,7 @@ ImputerTriplet = namedtuple('ImputerTriplet', ['feat_idx',
 
 __all__ = [
     'SimpleImputer',
-    'ChainedImputer',
+    'IterativeImputer',
 ]
 
 
@@ -423,14 +423,14 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         return X
 
 
-class ChainedImputer(BaseEstimator, TransformerMixin):
-    """Chained imputer transformer to impute missing values.
+class IterativeImputer(BaseEstimator, TransformerMixin):
+    """Iterative imputer transformer to impute missing values.
 
-    Basic implementation of chained mutual regressions to find replacement
+    Basic implementation of iterative mutual regressions to find replacement
     values in multivariate missing data. This version assumes all features
     are Gaussian.
 
-    Read more in the :ref:`User Guide <chained_imputer>`.
+    Read more in the :ref:`User Guide <iterative_imputer>`.
 
     Parameters
     ----------
@@ -457,17 +457,19 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values.
 
-    predictor : estimator object, default=BayesianRidge()
+    predictor : estimator object, default=BayesianRidge() or RidgeCV()
         The predictor to use at each step of the round-robin imputation.
         It must support ``return_std`` in its ``predict`` method if
-        ``predict_posterior`` option is set to ``True`` below.
+        ``sample_posterior`` option is set to ``True`` below. If
+        ``sample_posterior=True`` the default predictor will be
+        ``BayesianRidge()`` and ``RidgeCV`` otherwise.
 
-    predict_posterior : boolean, default=False
+    sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
         fitted predictor for each imputation. Predictor must support
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
-        ``True`` if using ``ChainedImputer`` to have the same functionality as
-        MICE.
+        ``True`` if using ``IterativeImputer`` to have the same functionality
+        as MICE.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -551,7 +553,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                  imputation_order='ascending',
                  n_iter=10,
                  predictor=None,
-                 predict_posterior=False,
+                 sample_posterior=False,
                  n_nearest_features=None,
                  initial_strategy="mean",
                  min_value=None,
@@ -563,7 +565,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         self.imputation_order = imputation_order
         self.n_iter = n_iter
         self.predictor = predictor
-        self.predict_posterior = predict_posterior
+        self.sample_posterior = sample_posterior
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.min_value = min_value
@@ -640,7 +642,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # get posterior samples
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
-        if self.predict_posterior:
+        if self.sample_posterior:
             mus, sigmas = predictor.predict(X_test, return_std=True)
             good_sigmas = sigmas > 0
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
@@ -844,8 +846,13 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                                      check_random_state(self.random_state))
 
         if self.predictor is None:
-            from .linear_model import BayesianRidge
-            self._predictor = BayesianRidge()
+            if self.sample_posterior:
+                from .linear_model import BayesianRidge
+                self._predictor = BayesianRidge()
+            else:
+                from .linear_model import RidgeCV
+                # including a very small alpha to approximate OLS
+                self._predictor = RidgeCV(alphas=np.array([1e-5, 0.1,  1, 10]))
         else:
             self._predictor = clone(self.predictor)
 
@@ -856,12 +863,15 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
         # edge case: in case the user specifies 0 for n_burn_in,
-        # then there is no need to do chained imputation and the result should
+        # then there is no need to do further imputation and the result should
         # be just the initial imputation (before clipping)
         if self.n_iter < 1:
             return X_filled
 
-        X_filled = np.clip(X_filled, self._min_value, self._max_value)
+        # clip only the initial filledin values
+        X_filled[mask_missing_values] = np.clip(X_filled[mask_missing_values],
+                                                self._min_value,
+                                                self._max_value)
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
@@ -875,7 +885,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X_filled.shape
         self.imputation_sequence_ = []
         if self.verbose > 0:
-            print("[ChainedImputer] Completing matrix with shape %s"
+            print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
         for i_rnd in range(self.n_iter):
@@ -895,7 +905,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                 self.imputation_sequence_.append(predictor_triplet)
 
             if self.verbose > 0:
-                print('[ChainedImputer] Ending imputation round '
+                print('[IterativeImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
                       % (i_rnd + 1, self.n_iter, time() - start_t))
 
@@ -924,17 +934,20 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
         # edge case: in case the user specifies 0 for n_burn_in,
-        # then there is no need to do chained imputation and the result should
+        # then there is no need to do further imputation and the result should
         # be just the initial imputation (before clipping)
         if self.n_iter < 1:
             return X_filled
 
-        X_filled = np.clip(X_filled, self._min_value, self._max_value)
+        # clip only the initial filledin values
+        X_filled[mask_missing_values] = np.clip(X_filled[mask_missing_values],
+                                                self._min_value,
+                                                self._max_value)
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter
         i_rnd = 0
         if self.verbose > 0:
-            print("[ChainedImputer] Completing matrix with shape %s"
+            print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
         for it, predictor_triplet in enumerate(self.imputation_sequence_):
@@ -948,7 +961,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
             )
             if not (it + 1) % imputations_per_round:
                 if self.verbose > 1:
-                    print('[ChainedImputer] Ending imputation round '
+                    print('[IterativeImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
                           % (i_rnd + 1, self.n_iter, time() - start_t))
                 i_rnd += 1

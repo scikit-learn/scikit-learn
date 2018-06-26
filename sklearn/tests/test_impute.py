@@ -13,9 +13,9 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_false
 
-from sklearn.impute import SimpleImputer, ChainedImputer
+from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import BayesianRidge, ARDRegression
+from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -72,8 +72,8 @@ def test_imputation_shape():
         X_imputed = imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
-        chained_imputer = ChainedImputer(initial_strategy=strategy)
-        X_imputed = chained_imputer.fit_transform(X)
+        iterative_imputer = IterativeImputer(initial_strategy=strategy)
+        X_imputed = iterative_imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
 
@@ -486,42 +486,25 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
-def test_chained_imputer_rank_one():
-    rng = np.random.RandomState(0)
-    d = 100
-    A = rng.rand(d, 1)
-    B = rng.rand(1, d)
-    X = np.dot(A, B)
-    nan_mask = rng.rand(d, d) < 0.5
-    X_missing = X.copy()
-    X_missing[nan_mask] = np.nan
-
-    imputer = ChainedImputer(n_iter=5,
-                             verbose=True,
-                             random_state=rng)
-    X_filled = imputer.fit_transform(X_missing)
-    assert_allclose(X_filled, X, atol=0.001)
-
-
 @pytest.mark.parametrize(
     "imputation_order",
     ['random', 'roman', 'ascending', 'descending', 'arabic']
 )
-def test_chained_imputer_imputation_order(imputation_order):
+def test_iterative_imputer_imputation_order(imputation_order):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
-    X[:, 0] = 1  # this column should not be discarded by ChainedImputer
+    X[:, 0] = 1  # this column should not be discarded by IterativeImputer
 
-    imputer = ChainedImputer(missing_values=0,
-                             n_iter=2,
-                             n_nearest_features=5,
-                             min_value=0,
-                             max_value=1,
-                             verbose=False,
-                             imputation_order=imputation_order,
-                             random_state=rng)
+    imputer = IterativeImputer(missing_values=0,
+                               n_iter=2,
+                               n_nearest_features=5,
+                               min_value=0,
+                               max_value=1,
+                               verbose=False,
+                               imputation_order=imputation_order,
+                               random_state=rng)
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
     if imputation_order == 'roman':
@@ -538,19 +521,19 @@ def test_chained_imputer_imputation_order(imputation_order):
 
 @pytest.mark.parametrize(
     "predictor",
-    [DummyRegressor(), BayesianRidge(), ARDRegression()]
+    [DummyRegressor(), BayesianRidge(), ARDRegression(), RidgeCV()]
 )
-def test_chained_imputer_predictors(predictor):
+def test_iterative_imputer_predictors(predictor):
     rng = np.random.RandomState(0)
 
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
-    imputer = ChainedImputer(missing_values=0,
-                             n_iter=1,
-                             predictor=predictor,
-                             random_state=rng)
+    imputer = IterativeImputer(missing_values=0,
+                               n_iter=1,
+                               predictor=predictor,
+                               random_state=rng)
     imputer.fit_transform(X)
 
     # check that types are correct for predictors
@@ -563,18 +546,18 @@ def test_chained_imputer_predictors(predictor):
     assert len(set(hashes)) == len(hashes)
 
 
-def test_chained_imputer_clip():
+def test_iterative_imputer_clip():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
-    imputer = ChainedImputer(missing_values=0,
-                             n_iter=1,
-                             min_value=0.1,
-                             max_value=0.2,
-                             random_state=rng)
+    imputer = IterativeImputer(missing_values=0,
+                               n_iter=1,
+                               min_value=0.1,
+                               max_value=0.2,
+                               random_state=rng)
 
     Xt = imputer.fit_transform(X)
     assert_allclose(np.min(Xt[X == 0]), 0.1)
@@ -586,7 +569,7 @@ def test_chained_imputer_clip():
     "strategy",
     ["mean", "median", "most_frequent"]
 )
-def test_chained_imputer_missing_at_transform(strategy):
+def test_iterative_imputer_missing_at_transform(strategy):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
@@ -596,10 +579,10 @@ def test_chained_imputer_missing_at_transform(strategy):
     X_train[:, 0] = 1  # definitely no missing values in 0th column
     X_test[0, 0] = 0  # definitely missing value in 0th column
 
-    imputer = ChainedImputer(missing_values=0,
-                             n_iter=1,
-                             initial_strategy=strategy,
-                             random_state=rng).fit(X_train)
+    imputer = IterativeImputer(missing_values=0,
+                               n_iter=1,
+                               initial_strategy=strategy,
+                               random_state=rng).fit(X_train)
     initial_imputer = SimpleImputer(missing_values=0,
                                     strategy=strategy).fit(X_train)
 
@@ -609,17 +592,17 @@ def test_chained_imputer_missing_at_transform(strategy):
                   initial_imputer.transform(X_test)[:, 0])
 
 
-def test_chained_imputer_transform_stochasticity():
+def test_iterative_imputer_transform_stochasticity():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
-    imputer = ChainedImputer(missing_values=0,
-                             n_iter=1,
-                             predict_posterior=True,
-                             random_state=rng)
+    imputer = IterativeImputer(missing_values=0,
+                               n_iter=1,
+                               sample_posterior=True,
+                               random_state=rng)
     imputer.fit(X)
 
     X_fitted_1 = imputer.transform(X)
@@ -629,12 +612,12 @@ def test_chained_imputer_transform_stochasticity():
     assert np.mean(X_fitted_1) != pytest.approx(np.mean(X_fitted_2))
 
 
-def test_chained_imputer_no_missing():
+def test_iterative_imputer_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
     X[:, 0] = np.nan
-    m1 = ChainedImputer(n_iter=10, random_state=rng)
-    m2 = ChainedImputer(n_iter=10, random_state=rng)
+    m1 = IterativeImputer(n_iter=10, random_state=rng)
+    m2 = IterativeImputer(n_iter=10, random_state=rng)
     pred1 = m1.fit(X).transform(X)
     pred2 = m2.fit_transform(X)
     # should exclude the first column entirely
@@ -643,11 +626,28 @@ def test_chained_imputer_no_missing():
     assert_allclose(pred1, pred2)
 
 
+def test_iterative_imputer_rank_one():
+    rng = np.random.RandomState(0)
+    d = 100
+    A = rng.rand(d, 1)
+    B = rng.rand(1, d)
+    X = np.dot(A, B)
+    nan_mask = rng.rand(d, d) < 0.5
+    X_missing = X.copy()
+    X_missing[nan_mask] = np.nan
+
+    imputer = IterativeImputer(n_iter=5,
+                               verbose=True,
+                               random_state=rng)
+    X_filled = imputer.fit_transform(X_missing)
+    assert_allclose(X_filled, X, atol=0.01)
+
+
 @pytest.mark.parametrize(
     "rank",
     [3, 5]
 )
-def test_chained_imputer_transform_recovery(rank):
+def test_iterative_imputer_transform_recovery(rank):
     rng = np.random.RandomState(0)
     n = 100
     d = 100
@@ -665,14 +665,14 @@ def test_chained_imputer_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = ChainedImputer(n_iter=10,
-                             verbose=True,
-                             random_state=rng).fit(X_train)
+    imputer = IterativeImputer(n_iter=10,
+                               verbose=True,
+                               random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.1)
 
 
-def test_chained_imputer_additive_matrix():
+def test_iterative_imputer_additive_matrix():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
@@ -693,8 +693,8 @@ def test_chained_imputer_additive_matrix():
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = ChainedImputer(n_iter=10,
-                             verbose=True,
-                             random_state=rng).fit(X_train)
+    imputer = IterativeImputer(n_iter=10,
+                               verbose=True,
+                               random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.1)
