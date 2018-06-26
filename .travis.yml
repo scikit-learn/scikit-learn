@@ -3,11 +3,11 @@ sudo: false
 
 language: python
 
-# cache:
-#   apt: true
-#   directories:
-#   - $HOME/.cache/pip
-#   - $HOME/.ccache
+cache:
+  apt: true
+  directories:
+  - $HOME/.cache/pip
+  - $HOME/.ccache
 
 dist: trusty
 
