@@ -65,7 +65,6 @@ from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils import deprecated
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
