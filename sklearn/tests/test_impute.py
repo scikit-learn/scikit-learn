@@ -593,16 +593,18 @@ def test_iterative_imputer_missing_at_transform(strategy):
 
 
 def test_iterative_imputer_transform_stochasticity():
-    rng = np.random.RandomState(0)
+    rng1 = np.random.RandomState(0)
+    rng2 = np.random.RandomState(1)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng).toarray()
+                             random_state=rng1).toarray()
 
+    # when sample_posterior=True, two transforms shouldn't be equal
     imputer = IterativeImputer(missing_values=0,
                                n_iter=1,
                                sample_posterior=True,
-                               random_state=rng)
+                               random_state=rng1)
     imputer.fit(X)
 
     X_fitted_1 = imputer.transform(X)
@@ -610,6 +612,32 @@ def test_iterative_imputer_transform_stochasticity():
 
     # sufficient to assert that the means are not the same
     assert np.mean(X_fitted_1) != pytest.approx(np.mean(X_fitted_2))
+
+    # when sample_posterior=False, and n_nearest_features=None
+    # and imputation_order is not random
+    # the two transforms should be identical even if rng are different
+    imputer1 = IterativeImputer(missing_values=0,
+                                n_iter=1,
+                                sample_posterior=False,
+                                n_nearest_features=None,
+                                imputation_order='ascending',
+                                random_state=rng1)
+
+    imputer2 = IterativeImputer(missing_values=0,
+                                n_iter=1,
+                                sample_posterior=False,
+                                n_nearest_features=None,
+                                imputation_order='ascending',
+                                random_state=rng2)
+    imputer1.fit(X)
+    imputer2.fit(X)
+
+    X_fitted_1a = imputer1.transform(X)
+    X_fitted_1b = imputer1.transform(X)
+    X_fitted_2 = imputer2.transform(X)
+
+    assert np.all(X_fitted_1a == X_fitted_1b)
+    assert np.all(X_fitted_1a == X_fitted_2)
 
 
 def test_iterative_imputer_no_missing():
@@ -637,7 +665,7 @@ def test_iterative_imputer_rank_one():
     X_missing[nan_mask] = np.nan
 
     imputer = IterativeImputer(n_iter=5,
-                               verbose=True,
+                               verbose=1,
                                random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
     assert_allclose(X_filled, X, atol=0.01)
@@ -666,7 +694,7 @@ def test_iterative_imputer_transform_recovery(rank):
     X_test = X_missing[n:]
 
     imputer = IterativeImputer(n_iter=10,
-                               verbose=True,
+                               verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.1)
@@ -694,7 +722,7 @@ def test_iterative_imputer_additive_matrix():
     X_test = X_missing[n:]
 
     imputer = IterativeImputer(n_iter=10,
-                               verbose=True,
+                               verbose=2,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.1)

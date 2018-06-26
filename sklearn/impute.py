@@ -469,14 +469,17 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         fitted predictor for each imputation. Predictor must support
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
         ``True`` if using ``IterativeImputer`` to have the same functionality
-        as MICE.
+        as MICE (Multivariate Imputation by Chained Equations).
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
         the each feature column. Nearness between features is measured using
         the absolute correlation coefficient between each feature pair (after
-        initial imputation). Can provide significant speed-up when the number
-        of features is huge. If ``None``, all features will be used.
+        initial imputation). To ensure coverage of features throughout the
+        imputation process, the neighbor features are not necessarily nearest,
+        but are drawn with probability proportional to correlation for each
+        imputed target feature. Can provide significant speed-up when the
+        number of features is huge. If ``None``, all features will be used.
 
     initial_strategy : str, optional (default="mean")
         Which strategy to use to initialize the missing values. Same as the
@@ -523,11 +526,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     imputation is supported with multiple instances of the imputer with
     different random seeds run in parallel.
 
-    The R version of MICE does not have inductive functionality, i.e. first
-    fitting on ``X_train`` and then transforming any ``X_test`` without
-    additional fitting. We do this by storing each feature's predictor during
-    the round-robin ``fit`` phase, and predicting without refitting (in order)
-    during the ``transform`` phase.
+    To support imputation in inductive mode we store each feature's predictor
+    during the ``fit`` phase, and predict without refitting (in order) during
+    the ``transform`` phase.
 
     Features which contain all missing values at ``fit`` are discarded upon
     ``transform``.
@@ -603,7 +604,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         predictor : object
             The predictor to use at this step of the round-robin imputation.
-            It must support ``return_std`` in its ``predict`` method.
+            If ``sample_posterior`` is True, the predictor must support
+            ``return_std`` in its ``predict`` method.
             If None, it will be cloned from self._predictor.
 
         fit_mode : boolean, default=True
@@ -856,17 +858,20 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         else:
             self._predictor = clone(self.predictor)
 
+        if hasattr(self._predictor, 'random_state'):
+            self._predictor.random_state = self.random_state_
+
         self._min_value = np.nan if self.min_value is None else self.min_value
         self._max_value = np.nan if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
-        X, X_filled, mask_missing_values = self._initial_imputation(X)
+        X, Xt, mask_missing_values = self._initial_imputation(X)
 
         # edge case: in case the user specifies 0 for n_iter,
         # then there is no need to do further imputation and the result should
         # be just the initial imputation (before clipping)
         if self.n_iter < 1:
-            return X_filled
+            return Xt
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
@@ -874,10 +879,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         # see: https://goo.gl/KyCNwj and subsequent comments
         ordered_idx = self._get_ordered_idx(mask_missing_values)
 
-        abs_corr_mat = self._get_abs_corr_mat(X_filled)
+        abs_corr_mat = self._get_abs_corr_mat(Xt)
 
         # impute data
-        n_samples, n_features = X_filled.shape
+        n_samples, n_features = Xt.shape
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
@@ -891,8 +896,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
                                                                 feat_idx,
                                                                 abs_corr_mat)
-                X_filled, predictor = self._impute_one_feature(
-                    X_filled, mask_missing_values, feat_idx, neighbor_feat_idx,
+                Xt, predictor = self._impute_one_feature(
+                    Xt, mask_missing_values, feat_idx, neighbor_feat_idx,
                     predictor=None, fit_mode=True)
                 predictor_triplet = ImputerTriplet(feat_idx,
                                                    neighbor_feat_idx,
@@ -904,7 +909,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                       '%d/%d, elapsed time %0.2f'
                       % (i_rnd + 1, self.n_iter, time() - start_t))
 
-        Xt = X_filled
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 
@@ -926,13 +930,13 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'initial_imputer_')
 
-        X, X_filled, mask_missing_values = self._initial_imputation(X)
+        X, Xt, mask_missing_values = self._initial_imputation(X)
 
         # edge case: in case the user specifies 0 for n_iter,
         # then there is no need to do further imputation and the result should
         # be just the initial imputation (before clipping)
         if self.n_iter < 1:
-            return X_filled
+            return Xt
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter
         i_rnd = 0
@@ -941,8 +945,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                   % (X.shape,))
         start_t = time()
         for it, predictor_triplet in enumerate(self.imputation_sequence_):
-            X_filled, _ = self._impute_one_feature(
-                X_filled,
+            Xt, _ = self._impute_one_feature(
+                Xt,
                 mask_missing_values,
                 predictor_triplet.feat_idx,
                 predictor_triplet.neighbor_feat_idx,
@@ -956,7 +960,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                           % (i_rnd + 1, self.n_iter, time() - start_t))
                 i_rnd += 1
 
-        Xt = X_filled
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 

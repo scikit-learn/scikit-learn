@@ -99,16 +99,15 @@ and uses that estimate for imputation. It does so in an iterated round-robin
 fashion: at each step, a feature column is designated as output `y` and the
 other feature columns are treated as inputs `X`. A regressor is fit on `(X, y)`
 for known `y`. Then, the regressor is used to predict the missing values of `y`.
-This is repeated for each feature in an iterative fashion, and then is done for a
-number of imputation rounds. The results of the final imputation round are
+This is done for each feature in an iterative fashion, and then is repeated for
+`n_iter` imputation rounds. The results of the final imputation round are
 returned. Our implementation was inspired by the R MICE package (Multivariate
-Imputation by Chained Equations), but differs from it in setting single imputation
-to default instead of multiple imputation. This is discussed further below.
-Here is an example snippet::
+Imputation by Chained Equations) [1], but differs from it in setting single
+imputation to default instead of multiple imputation. This is discussed further below.
 
     >>> import numpy as np
     >>> from sklearn.impute import IterativeImputer
-    >>> imp = IterativeImputer(random_state=0)
+    >>> imp = IterativeImputer(n_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
     IterativeImputer(imputation_order='ascending', initial_strategy='mean',
              max_value=None, min_value=None, missing_values=nan, n_iter=10,
@@ -131,9 +130,9 @@ Multiple vs. Single Imputation
 ==============================
 
 In the statistics community, it is common practice to perform multiple imputations,
-generating, for example, 10 separate imputations for a single feature matrix.
-Each of these 10 imputations is then put through the subsequent analysis pipeline
-(e.g. feature engineering, clustering, regression, classification). The 10 final
+generating, for example, `m` separate imputations for a single feature matrix.
+Each of these `m` imputations is then put through the subsequent analysis pipeline
+(e.g. feature engineering, clustering, regression, classification). The `m` final
 analysis results (e.g. held-out validation error) allow the data scientist to
 obtain understanding of the uncertainty inherent in the missing values. The above
 practice is called multiple imputation.
@@ -144,8 +143,8 @@ applications. However, it can also be used for multiple imputations by applying 
 repeatedly to the same dataset with different random seeds when
 ``sample_posterior=True``.
 
-See Chapter 4 of "Statistical Analysis with Missing Data" by Little and Rubin for
-more discussion on multiple vs. single imputations.
+See Chapter 4 of "Statistical Analysis with Missing Data" [2] for more discussion
+on multiple vs. single imputations.
 
 It is still an open problem as to how useful single vs. multiple imputation is in
 the context of prediction and classification when the user is not interested in
@@ -154,3 +153,13 @@ measuring uncertainty due to missing values.
 Note that a call to the ``transform`` method of :class:`IterativeImputer` is not
 allowed to change the number of samples. Therefore multiple imputations cannot be
 achieved by a single call to ``transform``.
+
+.. _references:
+
+References
+==========
+[1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate Imputation
+    by Chained Equations in R". Journal of Statistical Software 45: 1-67.
+
+[2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis with Missing
+    Data". John Wiley & Sons, Inc., New York, NY, USA.
