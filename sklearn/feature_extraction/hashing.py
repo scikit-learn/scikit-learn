@@ -81,8 +81,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     See also
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.
-    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
-        encoded as columns of integers.
+    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",

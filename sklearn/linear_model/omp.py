@@ -191,7 +191,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     """
     Gram = Gram.copy('F') if copy_Gram else np.asfortranarray(Gram)
 
-    if copy_Xy:
+    if copy_Xy or not Xy.flags.writeable:
         Xy = Xy.copy()
 
     min_float = np.finfo(Gram.dtype).eps
@@ -491,6 +491,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Xy = Xy[:, np.newaxis]
         if tol is not None:
             norms_squared = [norms_squared]
+    if copy_Xy or not Xy.flags.writeable:
+        # Make the copy once instead of many times in _gram_omp itself.
+        Xy = Xy.copy()
 
     if n_nonzero_coefs is None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
@@ -515,7 +518,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         out = _gram_omp(
             Gram, Xy[:, k], n_nonzero_coefs,
             norms_squared[k] if tol is not None else None, tol,
-            copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+            copy_Gram=copy_Gram, copy_Xy=False,
             return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out

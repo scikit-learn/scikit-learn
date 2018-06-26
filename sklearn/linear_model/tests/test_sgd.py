@@ -1174,16 +1174,16 @@ def test_numerical_stability_large_gradient():
     assert_true(np.isfinite(model.coef_).all())
 
 
-def test_large_regularization():
+@pytest.mark.parametrize('penalty', ['l2', 'l1', 'elasticnet'])
+def test_large_regularization(penalty):
     # Non regression tests for numerical stability issues caused by large
     # regularization parameters
-    for penalty in ['l2', 'l1', 'elasticnet']:
-        model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
-                              penalty=penalty, shuffle=False,
-                              tol=None, max_iter=6)
-        with np.errstate(all='raise'):
-            model.fit(iris.data, iris.target)
-        assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
+    model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
+                          penalty=penalty, shuffle=False,
+                          tol=None, max_iter=6)
+    with np.errstate(all='raise'):
+        model.fit(iris.data, iris.target)
+    assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
 
 
 def test_tol_parameter():

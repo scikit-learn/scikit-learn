@@ -271,7 +271,7 @@ small, as shown in the example and cited reference.
  * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
