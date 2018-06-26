@@ -660,7 +660,7 @@ def test_refit_callable():
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
                        scoring="precision", refit=refit_callable)
     clf.fit(X, y)
- 
+
     assert_equal(clf.best_index_, 0)
     # Ensure `best_score_` is disabled when using `refit=callable`
     assert_false(hasattr(clf, 'best_score_'))
