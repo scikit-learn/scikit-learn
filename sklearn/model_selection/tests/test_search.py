@@ -12,6 +12,7 @@ import re
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_equal
@@ -25,6 +26,7 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -126,7 +128,20 @@ def assert_grid_iter_equals_getitem(grid):
     assert_equal(list(grid), [grid[i] for i in range(len(grid))])
 
 
+@pytest.mark.parametrize(
+    "input, error_type, error_message",
+    [(0, TypeError, 'Parameter grid is not a dict or a list (0)'),
+     ([{'foo': [0]}, 0], TypeError, 'Parameter grid is not a dict (0)'),
+     ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
+      "(key='foo', value=0)")]
+)
+def test_validate_parameter_grid_input(input, error_type, error_message):
+    with pytest.raises(error_type, message=error_message):
+        ParameterGrid(input)
+
+
 def test_parameter_grid():
+
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
@@ -402,7 +417,6 @@ def test_classes__property():
 
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
-    # Non-regression test: grid_scores_ wouldn't be set by GridSearchCV.
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1]})
     grid_search.fit(X, y)
@@ -785,30 +799,6 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
                     for key in param_keys + score_keys))
 
 
-def check_cv_results_grid_scores_consistency(search):
-    # TODO Remove test in 0.20
-    if search.multimetric_:
-        assert_raise_message(AttributeError, "not available for multi-metric",
-                             getattr, search, 'grid_scores_')
-    else:
-        cv_results = search.cv_results_
-        res_scores = np.vstack(list([cv_results["split%d_test_score" % i]
-                                     for i in range(search.n_splits_)])).T
-        res_means = cv_results["mean_test_score"]
-        res_params = cv_results["params"]
-        n_cand = len(res_params)
-        grid_scores = assert_warns(DeprecationWarning, getattr,
-                                   search, 'grid_scores_')
-        assert_equal(len(grid_scores), n_cand)
-        # Check consistency of the structure of grid_scores
-        for i in range(n_cand):
-            assert_equal(grid_scores[i].parameters, res_params[i])
-            assert_array_equal(grid_scores[i].cv_validation_scores,
-                               res_scores[i, :])
-            assert_array_equal(grid_scores[i].mean_validation_score,
-                               res_means[i])
-
-
 def test_grid_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4,
                                random_state=42)
@@ -859,7 +849,6 @@ def test_grid_search_cv_results():
                          cv_results['param_degree'].mask[i])
                         for i in range(n_candidates)
                         if cv_results['param_kernel'][i] == 'rbf'))
-        check_cv_results_grid_scores_consistency(search)
 
 
 def test_random_search_cv_results():
@@ -894,7 +883,6 @@ def test_random_search_cv_results():
         # For random_search, all the param array vals should be unmasked
         assert_false(any(cv_results['param_C'].mask) or
                      any(cv_results['param_gamma'].mask))
-        check_cv_results_grid_scores_consistency(search)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1159,6 +1147,10 @@ def test_search_cv_timing():
             assert_true(search.cv_results_[key][0] == 0.0)
             assert_true(np.all(search.cv_results_[key] < 1))
 
+        assert_true(hasattr(search, "refit_time_"))
+        assert_true(isinstance(search.refit_time_, float))
+        assert_greater_equal(search.refit_time_, 0)
+
 
 def test_grid_search_correct_score_results():
     # test that correct scores are used
@@ -1300,7 +1292,7 @@ def test_grid_search_allows_nans():
     X[2, :] = np.nan
     y = [0, 0, 1, 1, 1]
     p = Pipeline([
-        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)

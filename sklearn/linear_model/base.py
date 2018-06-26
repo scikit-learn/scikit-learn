@@ -26,7 +26,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import check_array, check_X_y, deprecated, as_float_array
+from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
@@ -65,80 +65,6 @@ def make_dataset(X, y, sample_weight, random_state=None):
         intercept_decay = 1.0
 
     return dataset, intercept_decay
-
-
-@deprecated("sparse_center_data was deprecated in version 0.18 and will be "
-            "removed in 0.20. Use utilities in preprocessing.data instead")
-def sparse_center_data(X, y, fit_intercept, normalize=False):
-    """
-    Compute information needed to center data to have mean zero along
-    axis 0. Be aware that X will not be centered since it would break
-    the sparsity, but will be normalized if asked so.
-    """
-    if fit_intercept:
-        # we might require not to change the csr matrix sometimes
-        # store a copy if normalize is True.
-        # Change dtype to float64 since mean_variance_axis accepts
-        # it that way.
-        if sp.isspmatrix(X) and X.getformat() == 'csr':
-            X = sp.csr_matrix(X, copy=normalize, dtype=np.float64)
-        else:
-            X = sp.csc_matrix(X, copy=normalize, dtype=np.float64)
-
-        X_offset, X_var = mean_variance_axis(X, axis=0)
-        if normalize:
-            # transform variance to std in-place
-            X_var *= X.shape[0]
-            X_std = np.sqrt(X_var, X_var)
-            del X_var
-            X_std[X_std == 0] = 1
-            inplace_column_scale(X, 1. / X_std)
-        else:
-            X_std = np.ones(X.shape[1])
-        y_offset = y.mean(axis=0)
-        y = y - y_offset
-    else:
-        X_offset = np.zeros(X.shape[1])
-        X_std = np.ones(X.shape[1])
-        y_offset = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
-
-    return X, y, X_offset, y_offset, X_std
-
-
-@deprecated("center_data was deprecated in version 0.18 and will be removed "
-            "in 0.20. Use utilities in preprocessing.data instead")
-def center_data(X, y, fit_intercept, normalize=False, copy=True,
-                sample_weight=None):
-    """
-    Centers data to have mean zero along axis 0. This is here because
-    nearly all linear models will want their data to be centered.
-    If sample_weight is not None, then the weighted mean of X and y
-    is zero, and not the mean itself
-    """
-    X = as_float_array(X, copy)
-    if fit_intercept:
-        if isinstance(sample_weight, numbers.Number):
-            sample_weight = None
-        if sp.issparse(X):
-            X_offset = np.zeros(X.shape[1])
-            X_std = np.ones(X.shape[1])
-        else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
-            X -= X_offset
-            # XXX: currently scaled to variance=n_samples
-            if normalize:
-                X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                X_std[X_std == 0] = 1
-                X /= X_std
-            else:
-                X_std = np.ones(X.shape[1])
-        y_offset = np.average(y, axis=0, weights=sample_weight)
-        y = y - y_offset
-    else:
-        X_offset = np.zeros(X.shape[1])
-        X_std = np.ones(X.shape[1])
-        y_offset = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
-    return X, y, X_offset, y_offset, X_std
 
 
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,

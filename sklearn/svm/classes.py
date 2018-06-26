@@ -226,7 +226,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C")
+                         dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -412,7 +413,8 @@ class LinearSVR(LinearModel, RegressorMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C")
+                         dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -504,7 +506,8 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2).
+        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
+        ('ovo') is always used as multi-class strategy.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -1088,8 +1091,8 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - offset_.
-        The offset is the opposite of intercept_ and is provided for
+        We have the relation: decision_function = score_samples - `offset_`.
+        The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
     """
