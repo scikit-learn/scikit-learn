@@ -9,6 +9,7 @@ from itertools import product
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from scipy import __version__ as scipy_version
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
 from sklearn.utils.testing import assert_raises
@@ -36,7 +37,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
-    check_memory
+    check_memory,
+    LARGE_SPARSE_SUPPORTED
 )
 import sklearn
 
@@ -463,6 +465,42 @@ def test_check_array_accept_sparse_no_exception():
     check_array(X_csr, accept_sparse='csr')
     check_array(X_csr, accept_sparse=['csr'])
     check_array(X_csr, accept_sparse=('csr',))
+
+
+@pytest.fixture(params=['csr', 'csc', 'coo', 'bsr'])
+def X_64bit(request):
+    X = sp.rand(20, 10, format=request.param)
+    for attr in ['indices', 'indptr', 'row', 'col']:
+        if hasattr(X, attr):
+            setattr(X, attr, getattr(X, attr).astype('int64'))
+    yield X
+
+
+def test_check_array_accept_large_sparse_no_exception(X_64bit):
+    # When large sparse are allowed
+    if LARGE_SPARSE_SUPPORTED:
+        check_array(X_64bit, accept_large_sparse=True, accept_sparse=True)
+
+
+def test_check_array_accept_large_sparse_raise_exception(X_64bit):
+    # When large sparse are not allowed
+    if LARGE_SPARSE_SUPPORTED:
+        msg = ("Only sparse matrices with 32-bit integer indices "
+               "are accepted. Got int64 indices.")
+        assert_raise_message(ValueError, msg,
+                             check_array, X_64bit,
+                             accept_sparse=True,
+                             accept_large_sparse=False)
+
+
+def test_check_array_large_indices_non_supported_scipy_version(X_64bit):
+    # Large indices should not be allowed for scipy<0.14.0
+    if not LARGE_SPARSE_SUPPORTED:
+        msg = ("Scipy version %s does not support large"
+               " indices, please upgrade your scipy"
+               " to 0.14.0 or above" % scipy_version)
+        assert_raise_message(ValueError, msg, check_array,
+                             X_64bit, accept_sparse='csc')
 
 
 def test_check_array_min_samples_and_features_messages():

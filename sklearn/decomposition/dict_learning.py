@@ -763,6 +763,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
                              copy=False)
+    dictionary = np.require(dictionary, requirements='W')
+
     X_train = check_array(X_train, order='C', dtype=np.float64, copy=False)
 
     batches = gen_batches(n_samples, batch_size)
