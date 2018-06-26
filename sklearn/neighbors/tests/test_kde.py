@@ -132,6 +132,8 @@ def test_kde_badargs():
     kde = KernelDensity()
     assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
                   sample_weight=np.random.random((200, 10)))
+    assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
+                  sample_weight=-np.random.random(200))
 
 
 def test_kde_pipeline_gridsearch():
