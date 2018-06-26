@@ -142,6 +142,11 @@ Classifiers and regressors
   only require X to be an object with finite length or shape.
   :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
+- Add `sample_weight` parameter to the fit method of
+  :class:`neighbors.KernelDensity` to enables weighting in kernel density
+  estimation.
+  :issue:`4394` by :user:`Samuel O. Ronsin <samronsin>`.
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
