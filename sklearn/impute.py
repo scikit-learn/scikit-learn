@@ -459,8 +459,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     predictor : estimator object, default=BayesianRidge() or RidgeCV()
         The predictor to use at each step of the round-robin imputation.
-        It must support ``return_std`` in its ``predict`` method if
-        ``sample_posterior`` option is set to ``True`` below. If
+        If ``sample_posterior`` is True, the predictor must support
+        ``return_std`` in its ``predict`` method. Also, if
         ``sample_posterior=True`` the default predictor will be
         ``BayesianRidge()`` and ``RidgeCV`` otherwise.
 
