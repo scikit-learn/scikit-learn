@@ -371,7 +371,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
+                         accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
@@ -419,7 +420,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
@@ -949,7 +951,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64,
+                         accept_large_sparse=False)
         y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
