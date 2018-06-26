@@ -620,28 +620,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.refit is not False and (
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorers):
-                if callable(self.refit):
-                    scorer_key = self.refit.__name__.split('_')[-1]
-                    if scorer_key not in scorers:
-                        raise ValueError("For multi-metric scoring, the "
-                                         "name of refit callable function "
-                                         "must end with a scorer "
-                                         "key('_<scorer_name>') to refit an "
-                                         "estimator with the best parameter "
-                                         "setting on the whole data and make "
-                                         "the best_* attributes available for "
-                                         "that metric. If this is not needed, "
-                                         "refit should be set to False "
-                                         "explicitly. %r was passed"
-                                         % self.refit)
-                    refit_metric = scorer_key
-                else:
+                    self.refit not in scorers) and (not callable(self.refit)):
                     raise ValueError("For multi-metric scoring, the parameter "
-                                     "refit must be set to a scorer key "
-                                     "to refit an estimator with the best "
-                                     "parameter setting on the whole data and "
-                                     "make the best_* attributes "
+                                     "refit must be set to a scorer key or a "
+                                     "callable to refit an estimator with the "
+                                     "best parameter setting on the whole "
+                                     "data and make the best_* attributes "
                                      "available for that metric. If this is "
                                      "not needed, refit should be set to "
                                      "False explicitly. %r was passed."
@@ -783,9 +767,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 self.best_index_ = results["rank_test_%s"
                                            % refit_metric].argmin()
+                self.best_score_ = results["mean_test_%s" % refit_metric][
+                                           self.best_index_]
             self.best_params_ = candidate_params[self.best_index_]
-            self.best_score_ = results["mean_test_%s" % refit_metric][
-                self.best_index_]
 
         if self.refit:
             self.best_estimator_ = clone(base_estimator).set_params(
@@ -942,9 +926,9 @@ class GridSearchCV(BaseSearchCV):
         scorer is used to find the best parameters for refitting the estimator
         at the end.
 
-        Where there are considerations other than maximum model performance in
+        Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which returns
-        thre selected ``best_index_`` given ``cv_results_``.
+        the selected ``best_index_`` given ``cv_results_``.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -953,8 +937,7 @@ class GridSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_parameters_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. If a callable is passed to parameter refit, the function's name
-        must end with scorer key('_<scorer_name>').
+        scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
@@ -1287,7 +1270,7 @@ class RandomizedSearchCV(BaseSearchCV):
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
-        Where there are considerations other than maximum model performance in
+        Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which 
         returns the selected ``best_index_`` given the ``cv_results``.
 
@@ -1298,8 +1281,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_parameters_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. If a callable is passed to parameter refit, the function's name
-        must end with scorer key('_<scorer_name>').
+        scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.

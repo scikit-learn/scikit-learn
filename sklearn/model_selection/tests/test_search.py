@@ -646,103 +646,49 @@ def test_refit_callable():
     Test refit=callable, which adds flexibility in identifying the
     "best" estimator.
     """
-    def refit_prec(cv_results):
+    def refit_callable(cv_results):
         """
-        Balance model complexity with cross-validated score.
-        Return the index of a model that has the least `mean_fit_time`,
-        but has test score within 1 standard deviation of the best
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
         `mean_test_score`.
         """
-        std_test_score = np.std(cv_results['mean_test_score'])
-        best_test_score = max(cv_results['mean_test_score'])
-        test_score_upper = np.minimum(best_test_score + std_test_score, 1)
-        test_score_lower = np.maximum(best_test_score - std_test_score, 0)
-        test_scores = {k: v for k, v in
-                       enumerate(cv_results['mean_test_score'])}
-        # Select models which have test scores within 1 standard deviation
-        # of the best 'mean_test_score'
-        candidates = dict(filter(lambda i: (i[1] >= test_score_lower
-                                 and i[1] <= test_score_upper),
-                                 test_scores.items()))
-        fit_time = {v: k for k, v in
-                    enumerate(cv_results['mean_fit_time'])}
-        fit_time_rank = sorted(fit_time)
-        for i in fit_time_rank:
-            if fit_time[i] in candidates:
-                # Find the index of a model that has the least
-                # 'mean_fit_time' while has a test score within
-                # 1 standard deviation of the best 'mean_test_score'
-                return fit_time[i]
+        assert_true('mean_test_score' in cv_results)
+        return cv_results['mean_test_score'].argmin()
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                       scoring="precision", refit=refit_prec)
+                       scoring="precision", refit=refit_callable)
     clf.fit(X, y)
-    assert_equal(clf.best_index_, 1)
+    
+    assert_equal(clf.best_index_, 0)
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert_false(hasattr(clf, 'best_score_'))
 
 
 def test_refit_callable_multi_metric():
     """
-    Test refit=callable when using multi-metric scoring
-    For multi-metric evaluation, the name of refit callable function must
-    end with a scorer key(`_<scorer_name>`).
+    Test refit=callable in multiple metric evaluation setting
     """
-    def refit_prec(cv_results):
+    def refit_callable(cv_results):
         """
-        Balance model complexity with cross-validated score.
-        Return the index of a model that has the least `mean_fit_time`,
-        but has test precision within 1 standard deviation of the best
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
         `mean_test_prec`.
         """
-        std_test_prec = np.std(cv_results['mean_test_prec'])
-        best_test_prec = max(cv_results['mean_test_prec'])
-        test_prec_upper = np.minimum(best_test_prec + std_test_prec, 1)
-        test_prec_lower = np.maximum(best_test_prec - std_test_prec, 0)
-        test_precs = {k: v for k, v in
-                      enumerate(cv_results['mean_test_prec'])}
-        # Select models which have test precisions within 1 standard deviation
-        # of the best 'mean_test_prec'
-        candidates = dict(filter(lambda i: (i[1] >= test_prec_lower
-                                 and i[1] <= test_prec_upper),
-                                 test_precs.items()))
-        fit_time = {v: k for k, v in
-                    enumerate(cv_results['mean_fit_time'])}
-        fit_time_rank = sorted(fit_time)
-        for i in fit_time_rank:
-            if fit_time[i] in candidates:
-                # Find the index of a model that has the least
-                # 'mean_fit_time' while has a test precision within
-                # 1 standard deviation of the best 'mean_test_prec'
-                return fit_time[i]
+        assert_true('mean_test_prec' in cv_results)
+        return cv_results['mean_test_prec'].argmin()
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                       scoring=scoring, refit=refit_prec)
+                       scoring=scoring, refit=refit_callable)
     clf.fit(X, y)
-    assert_equal(clf.best_index_, 1)
 
-
-def test_refit_callable_invalid_name():
-    """
-    Test that an invalid refit callable name raises apppropriate
-    error message
-    """
-    # Dummy refit function for testing invalid callable name
-    def refit_f1(): return 0
-
-    X, y = make_classification(n_samples=100, n_features=4,
-                               random_state=42)
-    clf = LinearSVC()
-    assert_raise_message(ValueError, "For multi-metric scoring, the "
-                         "name of refit callable function must end "
-                         "with a scorer key",
-                         GridSearchCV(clf, {}, refit=refit_f1,
-                                      scoring={'acc': 'accuracy',
-                                               'prec': 'precision'}).fit,
-                         X, y)
+    assert_equal(clf.best_index_, 0)
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert_false(hasattr(clf, 'best_score_'))
 
 
 def test_gridsearch_nd():
