@@ -110,7 +110,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
         The opposite LOF of the training samples. The higher, the more normal.
-        Inliers tend to have a LOF score close to 1 (negative_outlier_factor_
+        Inliers tend to have a LOF score close to 1 (`negative_outlier_factor_`
         close to -1), while outliers tend to have a larger LOF score.
 
         The local outlier factor (LOF) of a sample captures its
@@ -123,8 +123,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     offset_ : float
         Offset used to obtain binary labels from the raw scores.
-        Observations having a negative_outlier_factor smaller than offset_ are
-        detected as abnormal.
+        Observations having a negative_outlier_factor smaller than `offset_`
+        are detected as abnormal.
         The offset is set to -1.5 (inliers score around -1), except when a
         contamination parameter different than "auto" is provided. In that
         case, the offset is defined in such a way we obtain the expected
