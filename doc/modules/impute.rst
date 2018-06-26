@@ -117,8 +117,8 @@ Here is an example snippet::
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> print(np.round(imp.transform(X_test)))
     [[ 1.  2.]
-     [ 6.  4.]
-     [13.  6.]]
+     [ 6.  3.]
+     [24.  6.]]
 
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
