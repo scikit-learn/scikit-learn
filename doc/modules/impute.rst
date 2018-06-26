@@ -141,13 +141,15 @@ practice is called multiple imputation.
 As implemented, the :class:`IterativeImputer` class generates a single imputation
 for each missing value because this is the most common use case for machine learning
 applications. However, it can also be used for multiple imputations by applying it
-repeatedly to the same dataset with different random seeds.
+repeatedly to the same dataset with different random seeds when
+``sample_posterior=True``.
 
 See Chapter 4 of "Statistical Analysis with Missing Data" by Little and Rubin for
 more discussion on multiple vs. single imputations.
 
 It is still an open problem as to how useful single vs. multiple imputation is in
-the context of prediction and classification.
+the context of prediction and classification when the user is not interested in
+measuring uncertainty due to missing values.
 
 Note that a call to the ``transform`` method of :class:`IterativeImputer` is not
 allowed to change the number of samples. Therefore multiple imputations cannot be
