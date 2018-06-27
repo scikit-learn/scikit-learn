@@ -122,4 +122,3 @@ print("The n_components selected is %d" % N_FEATURES_OPTIONS[best_index_])
 print("The corresponding accuracy score is %.2f" %
       grid.cv_results_['mean_test_score'][best_index_])
 plt.show()
-
