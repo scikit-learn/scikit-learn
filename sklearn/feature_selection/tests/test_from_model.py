@@ -56,7 +56,7 @@ def test_invalid_max_features(max_features, err_type, err_msg):
     transformer = SelectFromModel(estimator=clf,
                                   max_features=max_features,
                                   threshold=-np.inf)
-    with pytest.raises(err_type, err_msg):
+    with pytest.raises(err_type, match=err_msg):
         transformer.fit(data, y)
 
 

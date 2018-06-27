@@ -182,7 +182,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
                 raise TypeError("'max_features' should be an integer between"
                                 " 0 and {} features. Got {!r} instead."
                                 .format(X.shape[1], self.max_features))
-            elif self.max_features < 0 and self.max_features > X.shape[1]:
+            elif self.max_features < 0 or self.max_features > X.shape[1]:
                 raise ValueError("'max_features' should be 0 and {} features."
                                  "Got {} instead."
                                  .format(X.shape[1], self.max_features))
