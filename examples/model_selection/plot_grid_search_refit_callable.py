@@ -39,10 +39,10 @@ def score_bounds(cv_results):
         upper/lower bounds within 1 standard deviation of the
         best `mean_test_score`.
     """
-    best_test_score = max(cv_result['mean_test_score'])
-    max_score_index = cv_result['mean_test_score'].argmax()
+    best_test_score = max(cv_results['mean_test_score'])
+    max_score_index = cv_results['mean_test_score'].argmax()
     # Use the std of `best_test_score` across all cv splits
-    std_test_score = cv_result['std_test_score'][max_score_index]
+    std_test_score = cv_results['std_test_score'][max_score_index]
     score_upper = np.minimum(best_test_score + std_test_score, 1)
     score_lower = np.maximum(best_test_score - std_test_score, 0)
     return score_upper, score_lower
