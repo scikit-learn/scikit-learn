@@ -695,7 +695,7 @@ def make_column_transformer(*transformers, **kwargs):
                             ['numerical_column']),
                            ('onehotencoder',
                             OneHotEncoder(...),
-                            ['categorical_column'])])
+                            ['categorical_column'])], verbose=False)
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)
