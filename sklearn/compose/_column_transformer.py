@@ -7,6 +7,7 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
+from functools import partial
 
 import numpy as np
 from scipy import sparse
@@ -15,7 +16,7 @@ from ..base import clone, TransformerMixin
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..pipeline import (
-    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
+    _fit_transform_one, _transform_one, _name_estimators)
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
@@ -344,8 +345,9 @@ boolean mask array
         """
         try:
             return Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(clone(trans) if not fitted else trans,
-                              X_sel, y, weight)
+                delayed(func)(
+                    transformer=clone(trans) if not fitted else trans,
+                    X=X_sel, y=y, weight=weight)
                 for _, trans, X_sel, weight in self._iter(
                     X=X, fitted=fitted, replace_strings=True))
         except ValueError as e:
@@ -375,7 +377,16 @@ boolean mask array
         self._validate_remainder(X)
         self._validate_transformers()
 
-        transformers = self._fit_transform(X, y, _fit_one_transformer)
+        fit_one_transformer = partial(
+            _fit_transform_one,
+            is_transform=False,
+            clsname="ColumnTransformer",
+            message=None
+        )
+
+        # fit_one_transformer returns (None, transformer) tuples
+        transformer_tuples = self._fit_transform(X, y, fit_one_transformer)
+        transformers = [t[1] for t in transformer_tuples]
         self._update_fitted_transformers(transformers)
 
         return self
@@ -404,7 +415,13 @@ boolean mask array
         self._validate_remainder(X)
         self._validate_transformers()
 
-        result = self._fit_transform(X, y, _fit_transform_one)
+        fit_transform_one = partial(
+            _fit_transform_one,
+            is_transform=True,
+            clsname="ColumnTransformer",
+            message=None)
+
+        result = self._fit_transform(X, y, fit_transform_one)
 
         if not result:
             # All transformers are None
