@@ -90,6 +90,9 @@ boolean mask array
         transformer is multiplied by these weights. Keys are transformer names,
         values the weights.
 
+    verbose : boolean, optional
+        Verbosity mode.
+
     Attributes
     ----------
     transformers_ : list
@@ -141,11 +144,12 @@ boolean mask array
     """
 
     def __init__(self, transformers, remainder='passthrough', n_jobs=1,
-                 transformer_weights=None):
+                 transformer_weights=None, verbose=False):
         self.transformers = transformers
         self.remainder = remainder
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
+        self.verbose = verbose
 
     @property
     def _transformers(self):
@@ -335,6 +339,11 @@ boolean mask array
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Fitting %s' % (idx, total, name)
+
     def _fit_transform(self, X, y, func, fitted=False):
         """
         Private function to fit and/or transform on demand.
@@ -343,13 +352,19 @@ boolean mask array
         on the passed function.
         ``fitted=True`` ensures the fitted transformers are used.
         """
+        transformers = list(self._iter(
+            X=X, fitted=fitted, replace_strings=True))
         try:
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
-                    X=X_sel, y=y, weight=weight)
-                for _, trans, X_sel, weight in self._iter(
-                    X=X, fitted=fitted, replace_strings=True))
+                    X=X_sel,
+                    y=y,
+                    weight=weight,
+                    message=self._log_message(
+                        name, idx, len(transformers)))
+                for idx, (name, trans, X_sel,
+                          weight) in enumerate(transformers, 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
@@ -380,8 +395,7 @@ boolean mask array
         fit_one_transformer = partial(
             _fit_transform_one,
             is_transform=False,
-            clsname="ColumnTransformer",
-            message=None
+            clsname='ColumnTransformer'
         )
 
         # fit_one_transformer returns (None, transformer) tuples
@@ -418,8 +432,7 @@ boolean mask array
         fit_transform_one = partial(
             _fit_transform_one,
             is_transform=True,
-            clsname="ColumnTransformer",
-            message=None)
+            clsname='ColumnTransformer')
 
         result = self._fit_transform(X, y, fit_transform_one)
 
@@ -453,7 +466,16 @@ boolean mask array
         """
         check_is_fitted(self, 'transformers_')
 
-        Xs = self._fit_transform(X, None, _transform_one, fitted=True)
+        try:
+            Xs = Parallel(n_jobs=self.n_jobs)(
+                delayed(_transform_one)(trans, X_sel, None, weight)
+                for _, trans, X_sel, weight in self._iter(
+                    X=X, fitted=True, replace_strings=True))
+        except ValueError as e:
+            if "Expected 2D array, got 1D array instead" in str(e):
+                raise ValueError(_ERR_MSG_1DCOLUMN)
+            else:
+                raise
         self._validate_output(Xs)
 
         if not Xs:
