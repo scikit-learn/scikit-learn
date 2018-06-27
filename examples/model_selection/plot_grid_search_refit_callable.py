@@ -3,13 +3,13 @@
 Balance model complexity and cross-validated score using refit=callable
 =======================================================================
 
-A simple example demonstrates the usage of `refit=callable` interface in 
+A simple example demonstrates the usage of `refit=callable` interface in
 `sklearn.model_selection.GridSearchCV`. It shows this interface adds certain
-amount of flexibility in identifying the "best" estimator. The function 
+amount of flexibility in identifying the "best" estimator. The function
 passed to paramter `refit` incorporate of which metric(s) to optimise. This
 interface can also be used in multiple metrics evaluation.
 
-This example balances model complexity and cross-validated score by 
+This example balances model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy
 score while minimising the number of PCA components.
 
@@ -70,7 +70,7 @@ def refit_callable(cv_results):
     componet_score_lst = list(zip(n_components, test_scores))
     # Eliminate (n_comp, test_score) pairs that do not fall into
     # range "best_score +/- std"
-    candidates = [x for x in componet_score_lst 
+    candidates = [x for x in componet_score_lst
                   if test_score_upper >= x[1] >= test_score_lower]
     res = min(candidates, key=lambda x: x[0])
     # Find best_index_ given fewest PCA components and decent score
@@ -80,8 +80,8 @@ def refit_callable(cv_results):
 
 
 pipe = Pipeline([
-	('reduce_dim', PCA(random_state=42)),
-	('classify', LinearSVC(random_state=42)),
+        ('reduce_dim', PCA(random_state=42)),
+        ('classify', LinearSVC(random_state=42)),
 ])
 
 N_FEATURES_OPTIONS = [2, 4, 6, 8]
@@ -123,3 +123,4 @@ print("The n_components selected is %d" % N_FEATURES_OPTIONS[best_index_])
 print("The corresponding accuracy score is %.2f" % 
       grid.cv_results_['mean_test_score'][best_index_])
 plt.show()
+
