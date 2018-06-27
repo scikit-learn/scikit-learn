@@ -59,24 +59,24 @@ class Perceptron(BaseSGDClassifier):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    early_stopping : bool, default False
-        Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set aside
+    early_stopping : bool, default=False
+        Whether to use early stopping to terminate training when validation.
+        score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default 1
+    n_iter_no_change : int, default=1
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if early_stopping is True.
 
         .. versionadded:: 0.20
 

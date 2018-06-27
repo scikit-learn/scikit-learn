@@ -294,7 +294,7 @@ class CommonTest(object):
         clf2 = self.factory(learning_rate="constant", eta0=0.01, tol=1e-3,
                             max_iter=100)
         clf2.fit(iris.data, iris.target)
-        assert_greater(clf1.n_iter_, clf2.n_iter_)
+        assert clf1.n_iter_ > clf2.n_iter_
 
     def test_validation_set_not_used_for_training(self):
         X, Y = iris.data, iris.target
@@ -319,6 +319,7 @@ class CommonTest(object):
 
         assert_array_equal(clf1.coef_, clf2.coef_)
 
+    @ignore_warnings(ConvergenceWarning)
     def test_n_iter_no_change(self):
         # test that n_iter_ increases monotonically with n_iter_no_change
         for early_stopping in [True, False]:
@@ -332,7 +333,8 @@ class CommonTest(object):
     def test_not_enough_sample_for_early_stopping(self):
         # test an error is raised if the training or validation set is empty
         clf = self.factory(early_stopping=True, validation_fraction=0.99)
-        assert_raises(ValueError, clf.fit, X3, Y3)
+        with pytest.raises(ValueError):
+            clf.fit(X3, Y3)
 
 
 ###############################################################################

@@ -249,17 +249,29 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                order="C")
 
     def _make_validation_split(self, X, y, sample_weight):
-        """Split the dataset between training set and validation set
+        """Split the dataset between training set and validation set.
+
+        Parameters
+        ----------
+        X : {array, sparse matrix}, shape (n_samples, n_features)
+            Training data.
+
+        y : array, shape (n_samples, )
+            Target values.
+
+        sample_weight : array, shape (n_samples, )
+            Weights applied to individual samples.
 
         Returns
         -------
-        validation_mask : array, shape(n_samples, )
-            Equal to 1 on the validation set, 0 on the training set
+        validation_mask : array, shape (n_samples, )
+            Equal to 1 on the validation set, 0 on the training set.
         """
         n_samples = X.shape[0]
+        validation_mask = np.zeros(n_samples, dtype=np.uint8)
         if not self.early_stopping:
             # use the full set for training, with an empty validation set
-            return np.zeros(n_samples, dtype=np.int16)
+            return validation_mask
 
         tmp = train_test_split(X, y, np.arange(n_samples), sample_weight,
                                test_size=self.validation_fraction,
@@ -278,7 +290,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self._X_val = X_val
         self._y_val = y_val
         self._sample_weight_val = sample_weight_val
-        validation_mask = np.zeros(n_samples, dtype=np.int16)
         validation_mask[idx_val] = 1
         return validation_mask
 
@@ -793,24 +804,24 @@ class SGDClassifier(BaseSGDClassifier):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    early_stopping : bool, default False
-        Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set aside
+    early_stopping : bool, default=False
+        Whether to use early stopping to terminate training when validation.
+        score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default 1
+    n_iter_no_change : int, default=1
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if early_stopping is True.
 
         .. versionadded:: 0.20
 
@@ -1401,24 +1412,24 @@ class SGDRegressor(BaseSGDRegressor):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    early_stopping : bool, default False
-        Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set aside
+    early_stopping : bool, default=False
+        Whether to use early stopping to terminate training when validation.
+        score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate training when
         validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default 1
+    n_iter_no_change : int, default=1
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if early_stopping is True.
 
         .. versionadded:: 0.20
 

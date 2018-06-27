@@ -339,7 +339,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double alpha, double C,
               double l1_ratio,
               SequentialDataset dataset,
-              np.ndarray[short, ndim=1, mode='c'] validation_mask,
+              np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
               bint early_stopping, estimator,
               int n_iter_no_change,
               int max_iter, double tol, int fit_intercept,
@@ -370,19 +370,19 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    validation_mask : ndarray[short, ndim=1]
-        Equal to True on the validation set
+    validation_mask : ndarray[unsigned char, ndim=1]
+        Equal to True on the validation set.
     early_stopping : boolean
-        Whether to use a stopping criterion based on the validation set
+        Whether to use a stopping criterion based on the validation set.
     estimator : BaseSGD
-        A concrete object inheriting ``BaseSGD``
+        A concrete object inheriting from ``BaseSGD``.
         Used only if early_stopping is True.
     n_iter_no_change : int
-        Number of iteration with no improvement to wait before stopping
+        Number of iteration with no improvement to wait before stopping.
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
-        The tolerance for the stopping criterion
+        The tolerance for the stopping criterion.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -457,7 +457,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double alpha, double C,
                 double l1_ratio,
                 SequentialDataset dataset,
-                np.ndarray[short, ndim=1, mode='c'] validation_mask,
+                np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
                 bint early_stopping, estimator,
                 int n_iter_no_change,
                 int max_iter, double tol, int fit_intercept,
@@ -493,15 +493,15 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    validation_mask : ndarray[short, ndim=1]
-        Equal to True on the validation set
+    validation_mask : ndarray[unsigned char, ndim=1]
+        Equal to True on the validation set.
     early_stopping : boolean
-        Whether to use a stopping criterion based on the validation set
+        Whether to use a stopping criterion based on the validation set.
     estimator : BaseSGD
-        A concrete object inheriting ``BaseSGD``
+        A concrete object inheriting from ``BaseSGD``.
         Used only if early_stopping is True.
     n_iter_no_change : int
-        Number of iteration with no improvement to wait before stopping
+        Number of iteration with no improvement to wait before stopping.
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
@@ -583,7 +583,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               np.ndarray[short, ndim=1, mode='c'] validation_mask,
+               np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
                bint early_stopping, estimator,
                int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
@@ -630,7 +630,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double max_weight = 0.0
 
     cdef long long sample_index
-    cdef short [:] validation_mask_view = validation_mask
+    cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -762,12 +762,16 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     score = estimator._validation_score(weights, intercept)
                 if tol > -INFINITY and score < previous_score + tol:
                     no_improvement_count += 1
+                else:
+                    no_improvement_count = 0
                 previous_score = score
             # or evaluate the loss on the training set
             else:
                 if (tol > -INFINITY and
                         sumloss > previous_loss - tol * n_samples):
                     no_improvement_count += 1
+                else:
+                    no_improvement_count = 0
                 previous_loss = sumloss
 
             # if there is no improvement several times in a row

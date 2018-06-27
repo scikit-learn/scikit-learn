@@ -108,7 +108,7 @@ cdef class SequentialDataset:
         Returns
         -------
         current_index : int
-            Index of current sample
+            Index of current sample.
         """
         cdef int current_index = self._get_random_index()
         self._sample(x_data_ptr, x_ind_ptr, nnz, y, sample_weight,
