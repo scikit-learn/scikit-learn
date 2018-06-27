@@ -6,14 +6,14 @@ Balance model complexity and cross-validated score using refit=callable
 A simple example demonstrates the usage of `refit=callable` interface in
 `sklearn.model_selection.GridSearchCV`. It shows this interface adds certain
 amount of flexibility in identifying the "best" estimator. The function
-passed to paramter `refit` incorporate of which metric(s) to optimise. This
+passed to paramter `refit` incorporates of which metric(s) to optimise. This
 interface can also be used in multiple metrics evaluation.
 
 This example balances model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy
 score while minimising the number of PCA components.
 
-The figure shows the trade of between cross-validated score and number of
+The figure shows the trade-off between cross-validated score and number of
 PCA components. The balanced case is when n_components=6 and accuracy=0.77,
 which falls into the range within 1 standard deviation of the best accuracy
 score.
@@ -100,7 +100,6 @@ n_components = grid.cv_results_['param_reduce_dim__n_components']
 test_scores = grid.cv_results_['mean_test_score']
 
 plt.figure()
-COLORS = 'bgr'
 plt.bar(n_components, test_scores, width=1.3, color='bgrc')
 
 upper, lower = score_bounds(grid.cv_results_['mean_test_score'])
