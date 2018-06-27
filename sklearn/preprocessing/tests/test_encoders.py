@@ -404,36 +404,67 @@ def test_one_hot_encoder_inverse():
         assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
-def test_one_hot_encoder_categories():
-    X = [['abc', 1, 55], ['def', 2, 55]]
-
+@pytest.mark.parametrize("X, cat_exp, cat_dtype", [
+    ([['abc', 55], ['def', 55]], [['abc', 'def'], [55]], np.object_),
+    (np.array([[1, 2], [3, 2]]), [[1, 3], [2]], np.integer),
+    (np.array([['A', 'cat'], ['B', 'cat']], dtype=object),
+     [['A', 'B'], ['cat']], np.object_),
+    (np.array([['A', 'cat'], ['B', 'cat']]),
+     [['A', 'B'], ['cat']], np.str_)
+    ], ids=['mixed', 'numeric', 'object', 'string'])
+def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
     # order of categories should not depend on order of samples
     for Xi in [X, X[::-1]]:
-        enc = OneHotEncoder()
+        enc = OneHotEncoder(categories='auto')
         enc.fit(Xi)
         # assert enc.categories == 'auto'
         assert isinstance(enc.categories_, list)
-        cat_exp = [['abc', 'def'], [1, 2], [55]]
         for res, exp in zip(enc.categories_, cat_exp):
             assert res.tolist() == exp
+            assert np.issubdtype(res.dtype, cat_dtype)
 
 
-def test_one_hot_encoder_specified_categories():
-    X = np.array([['a', 'b']], dtype=object).T
-
-    enc = OneHotEncoder(categories=[['a', 'b', 'c']])
+@pytest.mark.parametrize("X, X2, cats, cat_dtype", [
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [['a', 'b', 'c']], np.object_),
+    (np.array([[1, 2]], dtype='int64').T,
+     np.array([[1, 4]], dtype='int64').T,
+     [[1, 2, 3]], np.int64),
+    (np.array([['a', 'b']], dtype=object).T,
+     np.array([['a', 'd']], dtype=object).T,
+     [np.array(['a', 'b', 'c'])], np.object_),
+    ], ids=['object', 'numeric', 'object-string-cat'])
+def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
+    enc = OneHotEncoder(categories=cats)
     exp = np.array([[1., 0., 0.],
                     [0., 1., 0.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
-    assert enc.categories[0] == ['a', 'b', 'c']
-    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
+    assert list(enc.categories[0]) == list(cats[0])
+    assert enc.categories_[0].tolist() == list(cats[0])
+    # manually specified categories should have same dtype as
+    # the data when coerced from lists
+    assert enc.categories_[0].dtype == cat_dtype
+
+    # when specifying categories manually, unknown categories should already
+    # raise when fitting
+    enc = OneHotEncoder(categories=cats)
+    assert_raises(ValueError, enc.fit, X2)
+    enc = OneHotEncoder(categories=cats, handle_unknown='ignore')
+    exp = np.array([[1., 0., 0.], [0., 0., 0.]])
+    assert_array_equal(enc.fit(X2).transform(X2).toarray(), exp)
+
+
+def test_one_hot_encoder_unsorted_categories():
+    X = np.array([['a', 'b']], dtype=object).T
 
     # unsorted passed categories raises for now
     enc = OneHotEncoder(categories=[['c', 'b', 'a']])
     msg = re.escape('Unsorted categories are not yet supported')
     assert_raises_regex(ValueError, msg, enc.fit_transform, X)
 
+
+def test_one_hot_encoder_specified_categories_mixed_columns():
     # multiple columns
     X = np.array([['a', 'b'], [0, 2]], dtype=object).T
     enc = OneHotEncoder(categories=[['a', 'b', 'c'], [0, 1, 2]])
@@ -441,18 +472,10 @@ def test_one_hot_encoder_specified_categories():
                     [0., 1., 0., 0., 0., 1.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
+    assert np.issubdtype(enc.categories_[0].dtype, np.object_)
     assert enc.categories_[1].tolist() == [0, 1, 2]
-    assert np.issubdtype(enc.categories_[1].dtype, np.integer)
-
-    # when specifying categories manually, unknown categories should already
-    # raise when fitting
-    X = np.array([['a', 'b', 'c']]).T
-    enc = OneHotEncoder(categories=[['a', 'b']])
-    assert_raises(ValueError, enc.fit, X)
-    enc = OneHotEncoder(categories=[['a', 'b']], handle_unknown='ignore')
-    exp = np.array([[1., 0.], [0., 1.], [0., 0.]])
-    assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
+    # integer categories but from object dtype data
+    assert np.issubdtype(enc.categories_[1].dtype, np.object_)
 
 
 def test_one_hot_encoder_pandas():
