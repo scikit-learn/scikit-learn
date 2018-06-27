@@ -235,7 +235,7 @@ n = np.arange(n_situations)
 n_labels = ['Full Data', 'Chained Imputer', 'Mice Imputer', 'Mice Imputer with y']
 colors = ['r', 'orange', 'b', 'purple']
 width = 0.3
-plt.figure(figsize=(24, 16))
+plt.figure(figsize=(12, 16))
 
 plt1 = plt.subplot(211)
 for j in n:
@@ -274,6 +274,23 @@ def get_results_full_data(X_train, X_test, y_train, y_test):
     mse_full = mse(y_test, y_predict)
 
     return mse_full
+
+def get_results_single_imputation(X_train, X_test, y_train, y_test):
+
+    imputer = ChainedImputer(n_burn_in=99, n_imputations=1, random_state=0)
+    X_train_imputed = imputer.fit_transform(X_train)
+    X_test_imputed = imputer.transform(X_test)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train_imputed)
+    X_test_scaled = scaler.transform(X_test_imputed)
+
+    estimator = LinearRegression()
+    estimator.fit(X_train_scaled, y_train)
+    y_predict = estimator.predict(X_test_scaled)
+    mse_single = mse(y_test, y_predict)
+
+    return mse_single
 
 # Perform pipeline for i in m
 # Approach 1: pool the mse values of the m datasets
@@ -358,32 +375,35 @@ def perform_simulation(dataset, X_incomplete, nsim = 10):
         y_test = y[test_indices]
 
         mse_full = get_results_full_data(X_full_train, X_full_test, y_train, y_test)
+        mse_single = get_results_single_imputation(X_incomplete_train, X_incomplete_test, y_train, y_test)
         mse_approach1 = get_results_multiple_imputation_approach1(X_incomplete_train, X_incomplete_test, y_train, y_test)
         mse_approach2 = get_results_multiple_imputation_approach2(X_incomplete_train, X_incomplete_test, y_train, y_test)
 
-        outcome.append((mse_full, mse_approach1, mse_approach2))
+        outcome.append((mse_full, mse_single, mse_approach1, mse_approach2))
 
     return np.mean(outcome, axis = 0), np.std(outcome, axis = 0)
 
 # Execute
-print("Executing Example 1 MCAR Missingness")
+print("Executing Example 2 MCAR Missingness")
 Boston_X_incomplete_MCAR = ampute(X_scaled, mech = "MCAR")
 mse_means, mse_std = perform_simulation(load_boston(), Boston_X_incomplete_MCAR, nsim=10)
 
 # Plot results
-n_situations = 3
+n_situations = 4
 n = np.arange(n_situations)
-n_labels = ['Full Data', 'Average MSE', 'Average Predictions']
-colors = ['r', 'green', 'yellow']
-width = 0.3
-plt.figure(figsize=(6, 6))
+n_labels = ['Full Data', 'Single Imputation', 'MI Average MSE', 'MI Average Predictions']
+colors = ['r', 'orange', 'green', 'yellow']
 
-plt1 = plt.subplot(111)
+plt.figure(figsize=(12, 6))
+ax1 = plt.subplot(111)
 for j in n:
-    plt1.bar(j, mse_means[j], yerr = mse_std[j],
-             width = width, color = colors[j])
+    ax1.barh(j, mse_means[j], xerr=mse_std[j],
+             color=colors[j], alpha=0.6, align='center')
 
-plt1.set_title("MCAR Missingness")
-plt1.set_ylabel("Mean Squared Error")
-plt.legend(n_labels)
+ax1.set_title('MCAR Missingness')
+ax1.set_yticks(n)
+ax1.set_xlabel('Mean Squared Error')
+ax1.invert_yaxis()
+ax1.set_yticklabels(n_labels)
+
 plt.show()
