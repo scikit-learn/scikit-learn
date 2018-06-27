@@ -74,7 +74,7 @@ def refit_callable(cv_results):
                   if test_score_upper >= x[1] >= test_score_lower]
     res = min(candidates, key=lambda x: x[0])
     # Find best_index_ given fewest PCA components and decent score
-    best_index = [x for x, y in enumerate(componet_score_lst) 
+    best_index = [x for x, y in enumerate(componet_score_lst)
                   if y[0] == res[0] and y[1] == res[1]][0]
     return best_index
 
@@ -120,7 +120,7 @@ best_index_ = grid.best_index_
 
 print("The best_index_ is %d" % best_index_)
 print("The n_components selected is %d" % N_FEATURES_OPTIONS[best_index_])
-print("The corresponding accuracy score is %.2f" % 
+print("The corresponding accuracy score is %.2f" %
       grid.cv_results_['mean_test_score'][best_index_])
 plt.show()
 
