@@ -614,8 +614,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double score = 0.0
-    cdef double previous_loss = INFINITY
-    cdef double previous_score = -INFINITY
+    cdef double best_loss = INFINITY
+    cdef double best_score = -INFINITY
     cdef double y = 0.0
     cdef double sample_weight
     cdef double class_weight = 1.0
@@ -760,19 +760,20 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if early_stopping:
                 with gil:
                     score = estimator._validation_score(weights, intercept)
-                if tol > -INFINITY and score < previous_score + tol:
+                if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
-                previous_score = score
+                if score > best_score:
+                    best_score = score
             # or evaluate the loss on the training set
             else:
-                if (tol > -INFINITY and
-                        sumloss > previous_loss - tol * n_samples):
+                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
-                previous_loss = sumloss
+                if sumloss < best_loss:
+                    best_loss = sumloss
 
             # if there is no improvement several times in a row
             if no_improvement_count >= n_iter_no_change:

@@ -42,6 +42,7 @@ from __future__ import print_function
 import time
 import sys
 
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -72,6 +73,7 @@ def load_mnist(n_samples=None, class_0=0, class_1=8):
 def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
     """Fit the estimator on the train set and score it on both sets"""
     estimator.set_params(max_iter=max_iter)
+    estimator.set_params(random_state=0)
 
     start = time.time()
     estimator.fit(X_train, y_train)
@@ -87,14 +89,13 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 # Define the estimators to compare
 estimator_dict = {
     'No stopping criterion':
-    linear_model.SGDClassifier(tol=None, random_state=0),
+    linear_model.SGDClassifier(tol=None),
     'Training loss':
-    linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=5,
-                               tol=0.01, random_state=0),
+    linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=3,
+                               tol=0.01),
     'Validation score':
-    linear_model.SGDClassifier(early_stopping=True, n_iter_no_change=5,
-                               tol=0.01, random_state=0,
-                               validation_fraction=0.2)
+    linear_model.SGDClassifier(early_stopping=True, n_iter_no_change=3,
+                               tol=0.0001, validation_fraction=0.2)
 }
 
 # Load the dataset
@@ -102,33 +103,28 @@ X, y = load_mnist(n_samples=10000)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
                                                     random_state=0)
 
-max_iter = 50
 results = []
 for estimator_name, estimator in estimator_dict.items():
     print(estimator_name + ': ', end='')
-    for this_max_iter in range(1, max_iter):
+    for max_iter in range(1, 50):
         print('.', end='')
         sys.stdout.flush()
 
         fit_time, n_iter, train_score, test_score = fit_and_score(
-            estimator, this_max_iter, X_train, X_test, y_train, y_test)
+            estimator, max_iter, X_train, X_test, y_train, y_test)
 
-        results.append((estimator_name, this_max_iter, fit_time, n_iter,
+        results.append((estimator_name, max_iter, fit_time, n_iter,
                         train_score, test_score))
     print('')
 
-results = np.array(results).T
-results_dict = {
-    'Stopping criterion': results[0],
-    'max_iter': results[1],
-    'Fit time (sec)': results[2],
-    'n_iter_': results[3],
-    'Train score': results[4],
-    'Test score': results[5],
-}
+# Transform the results in a pandas dataframe for easy plotting
+columns = [
+    'Stopping criterion', 'max_iter', 'Fit time (sec)', 'n_iter_',
+    'Train score', 'Test score'
+]
+results_df = pd.DataFrame(results, columns=columns)
 
 # Define what to plot (index, values), i.e. (x_axis, y_axis),
-# for all cases listed in columns.
 columns = 'Stopping criterion'
 plot_list = [
     ('max_iter', 'Train score'),
@@ -144,12 +140,11 @@ fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols,
 axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
 
 for ax, (index, values) in zip(axes.ravel(), plot_list):
-    for this_column in np.unique(results_dict[columns]):
-        mask = results_dict[columns] == this_column
-        ax.plot(results_dict[index][mask], results_dict[values][mask],
-                label=this_column)
-    ax.set(title=values, xlabel=index)
-    ax.legend(title='Stopping criterion')
+    table = results_df.pivot_table(index=index, columns=columns, values=values)
+    if index == 'Fit time (sec)':
+        table = table.interpolate()
+    table.plot(ax=ax)
+    ax.set_title(values)
 
 fig.tight_layout()
 plt.show()
