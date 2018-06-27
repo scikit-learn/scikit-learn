@@ -50,7 +50,7 @@ def test_input_estimator_unchanged():
      ('gobbledigook', TypeError, "should be an integer"),
      ('all', TypeError, "should be an integer")]
 )
-def test_invalid_max_features(max_features, err_type, err_msg):
+def test_max_features_error(max_features, err_type, err_msg):
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
 
     transformer = SelectFromModel(estimator=clf,
@@ -61,7 +61,7 @@ def test_invalid_max_features(max_features, err_type, err_msg):
 
 
 @pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
-def test_max_features(max_features):
+def test_max_features_dim(max_features):
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
     transformer = SelectFromModel(estimator=clf,
                                   max_features=max_features,
