@@ -1131,7 +1131,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 else:
                     column_data = X[:, feature_idx]
 
-                quantiles.append(nanpercentile(column_data, self.quantile_range))
+                quantiles.append(nanpercentile(column_data,
+                                               self.quantile_range))
 
             quantiles = np.transpose(quantiles)
 
