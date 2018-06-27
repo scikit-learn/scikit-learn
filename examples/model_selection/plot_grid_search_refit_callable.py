@@ -45,8 +45,8 @@ def lower_bound(cv_results):
     """
     best_score_idx = np.argmax(cv_results['mean_test_score'])
 
-    return (cv_results['mean_test_score'][best_score_index]
-            - cv_results['std_test_score'][best_score_index])
+    return (cv_results['mean_test_score'][best_score_idx]
+            - cv_results['std_test_score'][best_score_idx])
 
 
 def refit_callable(cv_results):
