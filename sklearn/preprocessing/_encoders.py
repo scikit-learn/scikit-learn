@@ -6,7 +6,6 @@ from __future__ import division
 
 import numbers
 import warnings
-import sys
 
 import numpy as np
 from scipy import sparse
@@ -699,7 +698,7 @@ class OneHotEncoder(_BaseEncoder):
         return X_tr
 
     def get_feature_names(self, input_features=None):
-        """Return feature names for output features
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -712,10 +711,6 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : list of string, length n_output_features
 
         """
-        is_python3 = sys.version_info.major == 3
-        if is_python3:
-            unicode = str
-
         cats = self.categories_
         feature_names = []
         if input_features is None:
@@ -725,7 +720,10 @@ class OneHotEncoder(_BaseEncoder):
                              " length equal to number of features")
 
         def to_unicode(text):
-            return text if isinstance(text, unicode) else text.encode('utf8')
+            if isinstance(text, six.text_type):
+                return text
+            else:
+                return text.encode('utf8')
 
         for i in range(len(cats)):
             feature_names.extend(to_unicode(

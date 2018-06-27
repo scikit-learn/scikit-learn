@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 
 import re
@@ -482,13 +483,16 @@ def test_one_hot_encoder_feature_names():
                         'x4_10', 'x4_30'], feature_names)
 
     feature_names2 = enc.get_feature_names(['one', 'two',
-                                            'three', 'four', 'five'])
+                                            'three', 'four', u'fîve'])
 
     assert_array_equal(['one_Female', 'one_Male',
                         'two_1', 'two_41', 'two_51', 'two_91',
                         'three_boy', 'three_girl',
                         'four_1', 'four_2', 'four_12', 'four_21',
-                        'five_3', 'five_10', 'five_30'], feature_names2)
+                        u'fîve_3', u'fîve_10', u'fîve_30'], feature_names2)
+
+    with pytest.raises(ValueError, match="input_features should have length"):
+        enc.get_feature_names(['one', 'two'])
 
 
 def test_ordinal_encoder():
