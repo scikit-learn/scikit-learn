@@ -652,18 +652,31 @@ def test_refit_callable():
         Return the index of a model that has the least
         `mean_test_score`.
         """
-        assert_true('mean_test_score' in cv_results)
+        # Fit a dummy clf with `refit=True` to get a list of keys in
+        # clf.cv_results_.
+        X, y = make_classification(n_samples=100, n_features=4,
+                                   random_state=42)
+        clf = GridSearchCV(LinearSVC(random_state=42), {'C':[0.01, 0.1, 1]},
+                           scoring='precision', refit=True)
+        clf.fit(X, y)
+        # Ensure that `best_index_ != 0` for this dummy clf
+        assert clf.best_index_ != 0
+
+        # Assert every key matches those in `cv_results`
+        for key in clf.cv_results_.keys():
+            assert key in cv_results
+
         return cv_results['mean_test_score'].argmin()
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                       scoring="precision", refit=refit_callable)
+                       scoring='precision', refit=refit_callable)
     clf.fit(X, y)
 
-    assert_equal(clf.best_index_, 0)
+    assert clf.best_index_ == 0
     # Ensure `best_score_` is disabled when using `refit=callable`
-    assert_false(hasattr(clf, 'best_score_'))
+    assert not hasattr(clf, 'best_score_')
 
 
 def test_refit_callable_multi_metric():
@@ -676,7 +689,7 @@ def test_refit_callable_multi_metric():
         Return the index of a model that has the least
         `mean_test_prec`.
         """
-        assert_true('mean_test_prec' in cv_results)
+        assert 'mean_test_prec' in cv_results
         return cv_results['mean_test_prec'].argmin()
 
     X, y = make_classification(n_samples=100, n_features=4,
@@ -686,9 +699,9 @@ def test_refit_callable_multi_metric():
                        scoring=scoring, refit=refit_callable)
     clf.fit(X, y)
 
-    assert_equal(clf.best_index_, 0)
+    assert clf.best_index_ == 0
     # Ensure `best_score_` is disabled when using `refit=callable`
-    assert_false(hasattr(clf, 'best_score_'))
+    assert not hasattr(clf, 'best_score_')
 
 
 def test_gridsearch_nd():

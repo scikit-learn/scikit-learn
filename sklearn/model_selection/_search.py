@@ -918,7 +918,7 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, string, or callable default=True
+    refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
@@ -1262,7 +1262,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, string, or callable default=True
+    refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 

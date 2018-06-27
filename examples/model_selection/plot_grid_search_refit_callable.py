@@ -9,7 +9,7 @@ score while minimising the number of PCA components. This is a rule of thumb
 for insignificant difference.
 
 The figure shows the trade-off between cross-validated score and number of
-PCA components. The balanced case is when n_components=6 and accuracy=0.77,
+PCA components. The balanced case is when n_components=6 and accuracy=0.80,
 which falls into the range within 1 standard deviation of the best accuracy
 score.
 """
@@ -27,52 +27,49 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 
-def score_bounds(cv_results):
+def lower_bound(cv_results):
     """
-    Calculate the upper/lower bounds within 1 standard deviation
+    Calculate the lower bound within 1 standard deviation
     of the best `mean_test_scores`.
 
-    Args:
-        cv_results: see attribute cv_results_ of `GridSearchCV`
+    Parameters
+    ----------
+    cv_results : dict of numpy(masked) ndarrays
+        See attribute cv_results_ of `GridSearchCV`
 
-    Return:
-        upper/lower bounds within 1 standard deviation of the
+    Returns
+    -------
+    float
+        Lower bound within 1 standard deviation of the
         best `mean_test_score`.
     """
-    best_test_score = max(cv_results['mean_test_score'])
-    max_score_index = cv_results['mean_test_score'].argmax()
-    # Use the std of `best_test_score` across all cv splits
-    std_test_score = cv_results['std_test_score'][max_score_index]
-    score_upper = np.minimum(best_test_score + std_test_score, 1)
-    score_lower = np.maximum(best_test_score - std_test_score, 0)
-    return score_upper, score_lower
+    best_score_idx = np.argmax(cv_results['mean_test_score'])
+
+    return (cv_results['mean_test_score'][best_score_index]
+            - cv_results['std_test_score'][best_score_index])
 
 
 def refit_callable(cv_results):
     """
     Balance model complexity with cross-validated score.
 
-    Args:
-        cv_results: see attribute cv_results_ of `GridSearchCV`.
+    Parameters
+    ----------
+    cv_results : dict of numpy(masked) ndarrays
+        See attribute cv_results_ of `GridSearchCV`.
 
-    Return:
+    Return
+    ------
+    int
         Index of a model that has the fewest PCA components
         while has test score within 1 standard deviation of the best
         `mean_test_score`.
     """
-    test_score_upper, test_score_lower = score_bounds(cv_results)
-    n_components = cv_results['param_reduce_dim__n_components']
-    test_scores = cv_results['mean_test_score']
-    componet_score_lst = list(zip(n_components, test_scores))
-    # Eliminate (n_comp, test_score) pairs that do not fall into
-    # range "best_score +/- std"
-    candidates = [x for x in componet_score_lst
-                  if test_score_upper >= x[1] >= test_score_lower]
-    res = min(candidates, key=lambda x: x[0])
-    # Find best_index_ given fewest PCA components and decent score
-    best_index = [x for x, y in enumerate(componet_score_lst)
-                  if y[0] == res[0] and y[1] == res[1]][0]
-    return best_index
+    threshold = lower_bound(cv_results)
+    candidate_idx = np.flatnonzero(cv_results['mean_test_score'] >= threshold)
+    best_idx = candidate_idx[cv_results['param_reduce_dim__n_components']
+                             [candidate_idx].argmin()]
+    return best_idx
 
 
 pipe = Pipeline([
@@ -98,23 +95,22 @@ test_scores = grid.cv_results_['mean_test_score']
 plt.figure()
 plt.bar(n_components, test_scores, width=1.3, color='bgrc')
 
-upper, lower = score_bounds(grid.cv_results_)
-plt.axhline(upper, linestyle='--', color='.5', label='+/- 1 std')
+lower = lower_bound(grid.cv_results_)
 plt.axhline(np.max(test_scores), linestyle='--', color='y',
             label='Best score')
-plt.axhline(lower, linestyle='--', color='.5')
+plt.axhline(lower, linestyle='--', color='.5', label='Best score - 1 std')
 
 plt.title("Balance model complexity and cross-validated score")
 plt.xlabel('Reduced number of features')
 plt.ylabel('Digit classification accuracy')
 plt.xticks(N_FEATURES_OPTIONS)
-plt.ylim((0, 1.2))
+plt.ylim((0, 1.0))
 plt.legend(loc='upper left')
 
 best_index_ = grid.best_index_
 
 print("The best_index_ is %d" % best_index_)
 print("The n_components selected is %d" % N_FEATURES_OPTIONS[best_index_])
-print("The corresponding accuracy score is %.2f" %
-      grid.cv_results_['mean_test_score'][best_index_])
+print("The corresponding accuracy score is %.2f"
+      % grid.cv_results_['mean_test_score'][best_index_])
 plt.show()
