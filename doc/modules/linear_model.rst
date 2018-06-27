@@ -47,7 +47,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> reg.coef_
-    array([ 0.5,  0.5])
+    array([0.5, 0.5])
 
 However, coefficient estimates for Ordinary Least Squares rely on the
 independence of the model terms. When terms are correlated and the
@@ -106,7 +106,7 @@ its ``coef_`` member::
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> reg.coef_
-    array([ 0.34545455,  0.34545455])
+    array([0.34545455, 0.34545455])
     >>> reg.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
@@ -114,7 +114,7 @@ its ``coef_`` member::
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
-   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -188,7 +188,7 @@ for another implementation::
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> reg.predict([[1, 1]])
-    array([ 0.8])
+    array([0.8])
 
 Also useful for lower-level tasks is the function :func:`lasso_path` that
 computes the coefficients along the full path of possible values.
@@ -204,6 +204,20 @@ computes the coefficients along the full path of possible values.
       As the Lasso regression yields sparse models, it can
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
+
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
+
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 
 Setting regularization parameter
@@ -358,7 +372,19 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
 
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
 
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 .. _multi_task_elastic_net:
 
@@ -453,7 +479,7 @@ function of the norm of its coefficients.
         fit_path=True, max_iter=500, normalize=True, positive=False,
         precompute='auto', verbose=False)
    >>> reg.coef_    # doctest: +ELLIPSIS
-   array([ 0.717157...,  0.        ])
+   array([0.717157..., 0.        ])
 
 .. topic:: Examples:
 
@@ -619,13 +645,13 @@ Bayesian Ridge Regression is used for regression::
 After being fitted, the model can then be used to predict new values::
 
     >>> reg.predict ([[1, 0.]])
-    array([ 0.50000013])
+    array([0.50000013])
 
 
 The weights :math:`w` of the model can be access::
 
     >>> reg.coef_
-    array([ 0.49999993,  0.49999993])
+    array([0.49999993, 0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
 ones found by :ref:`ordinary_least_squares`. However, Bayesian Ridge Regression
@@ -819,7 +845,7 @@ Stochastic Gradient Descent - SGD
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-The ``partial_fit`` method allows only/out-of-core learning.
+The ``partial_fit`` method allows online/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
@@ -837,8 +863,8 @@ while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 Perceptron
 ==========
 
-The :class:`Perceptron` is another simple algorithm suitable for large scale
-learning. By default:
+The :class:`Perceptron` is another simple classification algorithm suitable for
+large scale learning. By default:
 
     - It does not require a learning rate.
 
@@ -1211,9 +1237,9 @@ of a given degree.  It can be used as follows::
            [4, 5]])
     >>> poly = PolynomialFeatures(degree=2)
     >>> poly.fit_transform(X)
-    array([[  1.,   0.,   1.,   0.,   0.,   1.],
-           [  1.,   2.,   3.,   4.,   6.,   9.],
-           [  1.,   4.,   5.,  16.,  20.,  25.]])
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
 
 The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
 :math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within

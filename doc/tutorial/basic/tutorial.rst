@@ -21,7 +21,7 @@ more than a single number and, for instance, a multi-dimensional entry
 (aka `multivariate <https://en.wikipedia.org/wiki/Multivariate_random_variable>`_
 data), it is said to have several attributes or **features**.
 
-We can separate learning problems in a few large categories:
+Learning problems fall into a few categories:
 
  * `supervised learning <https://en.wikipedia.org/wiki/Supervised_learning>`_,
    in which the data comes with additional attributes that we want to predict
@@ -33,8 +33,8 @@ We can separate learning problems in a few large categories:
       <https://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
       samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
-      of unlabeled data. An example of classification problem would
-      be the handwritten digit recognition example, in which the aim is
+      of unlabeled data. An example of a classification problem would
+      be handwritten digit recognition, in which the aim is
       to assign each input vector to one of a finite number of discrete
       categories.  Another way to think of classification is as a discrete
       (as opposed to continuous) form of supervised learning where one has a
@@ -62,11 +62,12 @@ We can separate learning problems in a few large categories:
 .. topic:: Training set and testing set
 
     Machine learning is about learning some properties of a data set
-    and applying them to new data. This is why a common practice in
-    machine learning to evaluate an algorithm is to split the data
-    at hand into two sets, one that we call the **training set** on which
-    we learn data properties and one that we call the **testing set**
-    on which we test these properties.
+    and then testing those properties against another data set. A common
+    practice in machine learning is to evaluate an algorithm by splitting a data
+    set into two. We call one of those sets the **training set**, on which we
+    learn some properties; we call the other set the **testing set**, on which
+    we test the learned properties.
+
 
 .. _loading_example_dataset:
 
@@ -77,7 +78,7 @@ Loading an example dataset
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 datasets for classification and the `boston house prices dataset
-<http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.
+<https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
 load the ``iris`` and ``digits`` datasets.  Our notational convention is that
@@ -100,13 +101,13 @@ For instance, in the case of the digits dataset, ``digits.data`` gives
 access to the features that can be used to classify the digits samples::
 
   >>> print(digits.data)  # doctest: +NORMALIZE_WHITESPACE
-  [[  0.   0.   5. ...,   0.   0.   0.]
-   [  0.   0.   0. ...,  10.   0.   0.]
-   [  0.   0.   0. ...,  16.   9.   0.]
-   ...,
-   [  0.   0.   1. ...,   6.   0.   0.]
-   [  0.   0.   2. ...,  12.   0.   0.]
-   [  0.   0.  10. ...,  12.   1.   0.]]
+  [[ 0.   0.   5. ...   0.   0.   0.]
+   [ 0.   0.   0. ...  10.   0.   0.]
+   [ 0.   0.   0. ...  16.   9.   0.]
+   ...
+   [ 0.   0.   1. ...   6.   0.   0.]
+   [ 0.   0.   2. ...  12.   0.   0.]
+   [ 0.   0.  10. ...  12.   1.   0.]]
 
 and ``digits.target`` gives the ground truth for the digit dataset, that
 is the number corresponding to each digit image that we are trying to
@@ -122,7 +123,7 @@ learn::
     digits, each original sample is an image of shape ``(8, 8)`` and can be
     accessed using::
 
-      >>> digits.images[0]
+      >>> digits.images[0]  # doctest: +NORMALIZE_WHITESPACE
       array([[  0.,   0.,   5.,  13.,   9.,   1.,   0.,   0.],
              [  0.,   0.,  13.,  15.,  10.,  15.,   5.,   0.],
              [  0.,   3.,  15.,   2.,   0.,  11.,   8.,   0.],
@@ -153,30 +154,30 @@ the classes to which unseen samples belong.
 In scikit-learn, an estimator for classification is a Python object that
 implements the methods ``fit(X, y)`` and ``predict(T)``.
 
-An example of an estimator is the class ``sklearn.svm.SVC`` that
+An example of an estimator is the class ``sklearn.svm.SVC``, which
 implements `support vector classification
 <https://en.wikipedia.org/wiki/Support_vector_machine>`_. The
-constructor of an estimator takes as arguments the parameters of the
-model, but for the time being, we will consider the estimator as a black
-box::
+estimator's constructor takes as arguments the model's parameters.
+
+For now, we will consider the estimator as a black box::
 
   >>> from sklearn import svm
   >>> clf = svm.SVC(gamma=0.001, C=100.)
 
 .. topic:: Choosing the parameters of the model
 
-  In this example we set the value of ``gamma`` manually. It is possible
-  to automatically find good values for the parameters by using tools
+  In this example, we set the value of ``gamma`` manually.
+  To find good values for these parameters, we can use tools
   such as :ref:`grid search <grid_search>` and :ref:`cross validation
   <cross_validation>`.
 
-We call our estimator instance ``clf``, as it is a classifier. It now must
-be fitted to the model, that is, it must *learn* from the model. This is
-done by passing our training set to the ``fit`` method. As a training
-set, let us use all the images of our dataset apart from the last
-one. We select this training set with the ``[:-1]`` Python syntax,
-which produces a new array that contains all but
-the last entry of ``digits.data``::
+The ``clf`` (for classifier) estimator instance is first
+fitted to the model; that is, it must *learn* from the model. This is
+done by passing our training set to the ``fit`` method. For the training
+set, we'll use all the images from our dataset, except for the last
+image, which we'll reserve for our predicting. We select the training set with
+the ``[:-1]`` Python syntax, which produces a new array that contains all but
+the last item from ``digits.data``::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
@@ -184,21 +185,22 @@ the last entry of ``digits.data``::
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
 
-Now you can predict new values, in particular, we can ask to the
-classifier what is the digit of our last image in the ``digits`` dataset,
-which we have not used to train the classifier::
+Now you can *predict* new values. In this case, you'll predict using the last
+image from ``digits.data``. By predicting, you'll determine the image from the 
+training set that best matches the last image.
+
 
   >>> clf.predict(digits.data[-1:])
   array([8])
 
-The corresponding image is the following:
+The corresponding image is:
 
 .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
     :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
 
-As you can see, it is a challenging task: the images are of poor
+As you can see, it is a challenging task: after all, the images are of poor
 resolution. Do you agree with the classifier?
 
 A complete example of this classification problem is available as an
@@ -210,16 +212,16 @@ Model persistence
 -----------------
 
 It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
+persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
-  >>> clf = svm.SVC()
+  >>> clf = svm.SVC(gamma='scale')
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+    decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
 
@@ -232,17 +234,17 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   0
 
 In the specific case of scikit-learn, it may be more interesting to use
-joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
-which is more efficient on big data, but can only pickle to the disk
+joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
+which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
   >>> from sklearn.externals import joblib
-  >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
+  >>> joblib.dump(clf, 'filename.joblib') # doctest: +SKIP
 
-Later you can load back the pickled model (possibly in another Python process)
+Later, you can reload the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = joblib.load('filename.pkl') # doctest:+SKIP
+  >>> clf = joblib.load('filename.joblib') # doctest:+SKIP
 
 .. note::
 
@@ -259,8 +261,7 @@ Conventions
 -----------
 
 scikit-learn estimators follow certain rules to make their behavior more
-predictive.
-
+predictive.  These are described in more detail in the :ref:`glossary`.
 
 Type casting
 ~~~~~~~~~~~~
@@ -284,16 +285,16 @@ Unless otherwise specified, input will be cast to ``float64``::
 In this example, ``X`` is ``float32``, which is cast to ``float64`` by
 ``fit_transform(X)``.
 
-Regression targets are cast to ``float64``, classification targets are
+Regression targets are cast to ``float64`` and classification targets are
 maintained::
 
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
     >>> iris = datasets.load_iris()
-    >>> clf = SVC()
+    >>> clf = SVC(gamma='scale')
     >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 
@@ -302,7 +303,7 @@ maintained::
 
     >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 
@@ -331,19 +332,19 @@ more than once will overwrite what was learned by any previous ``fit()``::
   >>> clf = SVC()
   >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
+    decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
+    kernel='linear', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
+  >>> clf.predict(X_test)
+  array([1, 0, 1, 1, 0])
+
+  >>> clf.set_params(kernel='rbf', gamma='scale').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])
-
-  >>> clf.set_params(kernel='rbf').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
-  >>> clf.predict(X_test)
-  array([0, 0, 0, 1, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` after the
 estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
@@ -363,7 +364,8 @@ the target data fit upon::
     >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
     >>> y = [0, 0, 1, 1, 2]
 
-    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
+    >>> classif = OneVsRestClassifier(estimator=SVC(gamma='scale',
+    ...                                             random_state=0))
     >>> classif.fit(X, y).predict(X)
     array([0, 0, 1, 1, 2])
 

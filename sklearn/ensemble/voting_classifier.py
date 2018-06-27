@@ -282,13 +282,16 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'` and `flatten_transform=True`:
-          array-like = (n_classifiers, n_samples * n_classes)
-          otherwise array-like = (n_classifiers, n_samples, n_classes)
-            Class probabilities calculated by each classifier.
-        If `voting='hard'`:
-          array-like = [n_samples, n_classifiers]
-            Class labels predicted by each classifier.
+        probabilities_or_labels
+            If `voting='soft'` and `flatten_transform=True`:
+                returns array-like of shape (n_classifiers, n_samples *
+                n_classes), being class probabilities calculated by each
+                classifier.
+            If `voting='soft' and `flatten_transform=False`:
+                array-like of shape (n_classifiers, n_samples, n_classes)
+            If `voting='hard'`:
+                array-like of shape (n_samples, n_classifiers), being
+                class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
 
@@ -296,7 +299,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             probas = self._collect_probas(X)
             if self.flatten_transform is None:
                 warnings.warn("'flatten_transform' default value will be "
-                              "changed to True in 0.21."
+                              "changed to True in 0.21. "
                               "To silence this warning you may"
                               " explicitly set flatten_transform=False.",
                               DeprecationWarning)
@@ -316,7 +319,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        params: keyword arguments
+        params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
             In addition, to setting the parameters of the ``VotingClassifier``,
             the individual classifiers of the ``VotingClassifier`` can also be

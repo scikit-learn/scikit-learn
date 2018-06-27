@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -293,7 +295,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
-    """Cohen's kappa: a statistic that measures inter-annotator agreement.
+    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
@@ -463,10 +465,10 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
-    measure of the quality of binary (two-class) classifications. It takes into
-    account true and false positives and negatives and is generally regarded as
-    a balanced measure which can be used even if the classes are of very
-    different sizes. The MCC is in essence a correlation coefficient value
+    measure of the quality of binary and multiclass classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are of
+    very different sizes. The MCC is in essence a correlation coefficient value
     between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
     an average random prediction and -1 an inverse prediction.  The statistic
     is also known as the phi coefficient. [source: Wikipedia]
@@ -499,7 +501,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     ----------
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
-       <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
+       <https://doi.org/10.1093/bioinformatics/16.5.412>`_
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
@@ -708,7 +710,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.8,  0. ,  0. ])
+    array([0.8, 0. , 0. ])
 
 
     """
@@ -819,7 +821,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
-    array([ 0.71...,  0.        ,  0.        ])
+    array([0.71..., 0.        , 0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1009,12 +1011,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
+
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    (array([ 0. ,  0. ,  0.66...]),
-     array([ 0.,  0.,  1.]),
-     array([ 0. ,  0. ,  0.8]),
+    (array([0.        , 0.        , 0.66...]),
+     array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
 
     """
@@ -1072,6 +1074,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
+        if n_labels is not None:
             y_true = y_true[:, labels[:n_labels]]
             y_pred = y_pred[:, labels[:n_labels]]
 
@@ -1254,7 +1257,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.22...
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
-    array([ 0.66...,  0.        ,  0.        ])
+    array([0.66..., 0.        , 0.        ])
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1351,7 +1354,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
-    array([ 1.,  0.,  0.])
+    array([1., 0., 0.])
 
 
     """
@@ -1426,7 +1429,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, output_dict=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1451,10 +1454,23 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
+    output_dict: bool (default = False)
+        If True, return output as dict
+
     Returns
     -------
-    report : string
+    report : string / dict
         Text summary of the precision, recall, F1 score for each class.
+        Dictionary returned if output_dict is True. Dictionary has the
+        following structure::
+
+            {'label 1': {'precision':0.5,
+                         'recall':1.0,
+                         'f1-score':0.67,
+                         'support':1},
+             'label 2': { ... },
+              ...
+            }
 
         The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
@@ -1521,24 +1537,36 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
     rows = zip(target_names, p, r, f1, s)
+
+    avg_total = [np.average(p, weights=s),
+                 np.average(r, weights=s),
+                 np.average(f1, weights=s),
+                 np.sum(s)]
+
+    if output_dict:
+        report_dict = {label[0]: label[1:] for label in rows}
+
+        for label, scores in report_dict.items():
+            report_dict[label] = dict(zip(headers, scores))
+
+        report_dict['avg / total'] = dict(zip(headers, avg_total))
+
+        return report_dict
+
     for row in rows:
         report += row_fmt.format(*row, width=width, digits=digits)
 
     report += u'\n'
 
-    # compute averages
+    # append averages
     report += row_fmt.format(last_line_heading,
-                             np.average(p, weights=s),
-                             np.average(r, weights=s),
-                             np.average(f1, weights=s),
-                             np.sum(s),
+                             *avg_total,
                              width=width, digits=digits)
 
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1563,13 +1591,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1618,10 +1639,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1918,9 +1935,7 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
-
     The smaller the Brier score, the better, hence the naming with "loss".
-
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned
     to the possible outcomes for item i, and (2) the actual outcome.
@@ -1929,15 +1944,14 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1).
-
+    of only 0 and 1). The Brier loss is composed of refinement loss and
+    calibration loss.
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
     Brier score assumes that all possible outcomes are equivalently
     "distant" from one another). Which label is considered to be the positive
     label is controlled via the parameter pos_label, which defaults to 1.
-
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
