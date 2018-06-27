@@ -295,19 +295,22 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                                 labels=None, samplewise=False):
-    """Compute multi-label confusion matrix label-wisely (default) or
-    sample-wisely (samplewise=True) to evaluate the accuracy of a
-    classification, and output confusion matrices for each label or sample
+    """Compute a confusion matrix for each class or sample
+
+    Compute multilabel confusion matrix class-wise (default) or
+    sample-wise (samplewise=True) to evaluate the accuracy of a
+    classification, and output confusion matrices for each class or sample
 
     In multilabel confusion matrix :math:`MCM`, the count of true negatives
     is :math:`MCM_{:,0,0}`, false negatives is :math:`MCM_{:,1,0}`,
     true positives is :math:`MCM_{:,1,1}` and false positives is
     :math:`MCM_{:,0,1}`.
 
-    Multiclass and multilabel-indicator tasks will be treated as if
-    binarized under a one-vs-rest transformation. Returned confusion
-    matrices will be in the order of sorted unique labels in the union
-    of (y_true, y_pred).
+    Multiclass data will be treated as if binarized under a one-vs-rest
+    transformation. Returned confusion matrices will be in the order of
+    sorted unique labels in the union of (y_true, y_pred).
+
+    Read more in the :ref:`User Guide <multilabel_confusion_matrix>`.
 
     Parameters
     ----------
@@ -333,9 +336,11 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     -------
     multi_confusion : array, shape (n_outputs, 2, 2)
         A 2x2 confusion matrix corresponding to each output in the input.
-        When calculating label-wise multi_confusion (default), then
+        When calculating class-wise multi_confusion (default), then
         n_outputs = n_labels; when calculating sample-wise multi_confusion
-        (samplewise=True), n_outputs = n_samples.
+        (samplewise=True), n_outputs = n_samples. If ``labels`` is defined,
+        the results will be returned in the order specified in ``labels``,
+        otherwise the results will be returned in sorted order by default.
 
     See also
     --------
@@ -343,23 +348,28 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
     Notes
     -----
-    The multilabel_confusion_matrix calculates label-wise or sample-wise
-    multilabel confusion matrices, labels are binarized under a one-vs-rest
-    way; while confusion_matrix calculates one confusion matrix for confusion
-    between every two labels.
+    The multilabel_confusion_matrix calculates class-wise or sample-wise
+    multilabel confusion matrices, and in multiclass tasks, labels are
+    binarized under a one-vs-rest way; while confusion_matrix calculates
+    one confusion matrix for confusion between every two classes.
 
     Examples
     --------
     Multilabel-indicator case:
     >>> from sklearn.metrics import multilabel_confusion_matrix
-    >>> y_true = [[1, 0, 1], [0, 1, 0]]
-    >>> y_pred = [[1, 0, 0], [0, 1, 1]]
-    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    >>> y_true = [[1, 0, 1],
+    ...           [0, 1, 0]]
+    >>> y_pred = [[1, 0, 0],
+    ...           [0, 1, 1]]
+    >>> multilabel_confusion_matrix(y_true, y_pred)
     array([[[1, 0],
-            [1, 1]],
+            [0, 1]],
     <BLANKLINE>
-           [[1, 1],
-            [0, 1]]], dtype=int32)
+           [[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[0, 1],
+            [1, 0]]])
 
     Multiclass case:
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]

@@ -1115,24 +1115,39 @@ function:
 Multi-label confusion matrix
 ----------------
 
-The :func:`multilabel_confusion_matrix` function compute multi-label confusion
-matrix label-wisely (default) or sample-wisely (samplewise=True) to evaluate
-the accuracy of a classification.
+The :func:`multilabel_confusion_matrix` function computes multilabel confusion
+matrix class-wisely (default) or sample-wisely (samplewise=True) to evaluate
+the accuracy of a classification. multilabel_confusion_matrix also treats
+multiclass data as if it were multilabel, as this is a transformation commonly
+applied to evaluate multiclass problems with binary classification metrics
+(such as precision, recall, etc.).
 
-When calculating label-wise multi-label confusion matrix :math:`MCM`, the
+When calculating class-wise multilabel confusion matrix :math:`MCM`, the
 count of true negatives for class :math:`i` is :math:`MCM_{i,0,0}`, false
 negatives is :math:`MCM_{i,1,0}`, true positives is :math:`MCM_{i,1,1}`
-and false positives is :math:`MCM_{i,0,1}`. Here is an example::
+and false positives is :math:`MCM_{i,0,1}`.
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function in a multilabel_indicator
+problem::
 
     >>> from sklearn.metrics import multilabel_confusion_matrix
-    >>> y_true = [[1, 0, 1], [0, 1, 0]]
-    >>> y_pred = [[1, 0, 0], [0, 1, 1]]
-    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    >>> y_true = [[1, 0, 1],
+    ...           [0, 1, 0]]
+    >>> y_pred = [[1, 0, 0],
+    ...           [0, 1, 1]]
+    >>> multilabel_confusion_matrix(y_true, y_pred)
     array([[[1, 0],
-            [1, 1]],
+            [0, 1]],
     <BLANKLINE>
-           [[1, 1],
-            [0, 1]]], dtype=int32)
+           [[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[0, 1],
+            [1, 0]]])
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function in a multiclass problem::
 
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
@@ -1146,6 +1161,9 @@ and false positives is :math:`MCM_{i,0,1}`. Here is an example::
     <BLANKLINE>
            [[2, 1],
             [1, 2]]])
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function in a binary class problem::
 
     >>> y_true = [0, 1, 0, 1]
     >>> y_pred = [1, 1, 1, 0]
