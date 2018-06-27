@@ -51,6 +51,7 @@ def test_deprecation_of_n_components_in_linkage_tree():
     assert_equal(n_leaves, n_leaves_t)
     assert_equal(parent, parent_t)
 
+
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
@@ -511,7 +512,8 @@ def test_connectivity_callable():
     connectivity = kneighbors_graph(X, 3, include_self=False)
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
     aglc2 = AgglomerativeClustering(
-        connectivity=partial(kneighbors_graph, n_neighbors=3, include_self=False))
+        connectivity=partial(kneighbors_graph, n_neighbors=3,
+                             include_self=False))
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)

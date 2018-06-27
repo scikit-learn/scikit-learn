@@ -24,6 +24,7 @@ from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import message_with_time, log_elapsed
 from sklearn.utils import get_chunk_n_rows
+from sklearn.utils import is_scalar_nan
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
@@ -372,3 +373,18 @@ def test_log_elapsed(message, expected, capsys):
     with log_elapsed('ABC', message):
         time.sleep(0.1)
     assert capsys.readouterr()[0] == expected
+
+
+@pytest.mark.parametrize("value, result", [(float("nan"), True),
+                                           (np.nan, True),
+                                           (np.float("nan"), True),
+                                           (np.float32("nan"), True),
+                                           (np.float64("nan"), True),
+                                           (0, False),
+                                           (0., False),
+                                           (None, False),
+                                           ("", False),
+                                           ("nan", False),
+                                           ([np.nan], False)])
+def test_is_scalar_nan(value, result):
+    assert is_scalar_nan(value) is result

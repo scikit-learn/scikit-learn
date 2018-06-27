@@ -72,6 +72,11 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
+    See also
+    --------
+    sklearn.pipeline.make_pipeline : convenience function for simplified
+        pipeline construction.
+
     Examples
     --------
     >>> from sklearn import svm
@@ -577,6 +582,11 @@ def make_pipeline(*steps, **kwargs):
         Verbosity mode.  When enabled, the time elapsed while fitting each
         transformer will be printed as it is completed.
 
+    See also
+    --------
+    sklearn.pipeline.Pipeline : Class for creating a pipeline of
+        transforms with a final estimator.
+
     Examples
     --------
     >>> from sklearn.naive_bayes import GaussianNB
@@ -602,7 +612,7 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, weight, X):
+def _transform_one(transformer, X, y, weight, **fit_params):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -656,6 +666,21 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     verbose : boolean, optional
         Verbosity mode.
 
+    See also
+    --------
+    sklearn.pipeline.make_union : convenience function for simplified
+        feature union construction.
+
+    Examples
+    --------
+    >>> from sklearn.pipeline import FeatureUnion
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
+    ...                       ("svd", TruncatedSVD(n_components=2))])
+    >>> X = [[0., 1., 3], [2., 2., 5]]
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[ 1.5       ,  3.0...,  0.8...],
+           [-1.5       ,  5.7..., -0.4...]])
     """
 
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None,
@@ -711,7 +736,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 (t, type(t)))
 
     def _iter(self):
-        """Generate (name, est, weight) tuples excluding None transformers
+        """
+        Generate (name, trans, weight) tuples excluding None transformers
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
@@ -818,7 +844,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, X)
+            delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
@@ -857,6 +883,11 @@ def make_union(*transformers, **kwargs):
     Returns
     -------
     f : FeatureUnion
+
+    See also
+    --------
+    sklearn.pipeline.FeatureUnion : Class for concatenating the results
+        of multiple transformer objects.
 
     Examples
     --------
