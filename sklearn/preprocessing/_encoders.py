@@ -6,6 +6,7 @@ from __future__ import division
 
 import numbers
 import warnings
+import sys
 
 import numpy as np
 from scipy import sparse
