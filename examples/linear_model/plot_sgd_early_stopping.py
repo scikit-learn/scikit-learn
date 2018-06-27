@@ -124,8 +124,8 @@ columns = [
 ]
 results_df = pd.DataFrame(results, columns=columns)
 
-# Define what to plot (index, values), i.e. (x_axis, y_axis),
-columns = 'Stopping criterion'
+# Define what to plot (x_axis, y_axis)
+lines = 'Stopping criterion'
 plot_list = [
     ('max_iter', 'Train score'),
     ('max_iter', 'Test score'),
@@ -139,12 +139,11 @@ fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols,
                                                             4 * nrows))
 axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
 
-for ax, (index, values) in zip(axes.ravel(), plot_list):
-    table = results_df.pivot_table(index=index, columns=columns, values=values)
-    if index == 'Fit time (sec)':
-        table = table.interpolate()
-    table.plot(ax=ax)
-    ax.set_title(values)
+for ax, (x_axis, y_axis) in zip(axes.ravel(), plot_list):
+    for criterion, group_df in results_df.groupby(lines):
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax)
+    ax.set_title(y_axis)
+    ax.legend(title=lines)
 
 fig.tight_layout()
 plt.show()
