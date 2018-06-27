@@ -1002,3 +1002,165 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
         self.fit_transform(X)
         return self
+
+
+class SamplingImputer(BaseEstimator, TransformerMixin):
+    """Imputation transformer for completing missing values.
+
+    Read more in the :ref:`User Guide <impute>`.
+
+    Parameters
+    ----------
+    missing_values : number, string, np.nan (default) or None
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed.
+
+    verbose : integer, optional (default=0)
+        Controls the verbosity of the imputer.
+
+    copy : boolean, optional (default=True)
+        If True, a copy of X will be created. If False, imputation will
+        be done in-place whenever possible. Note that, in the following cases,
+        a new copy will always be made, even if `copy=False`:
+
+        - If X is not an array of floating values;
+        - If X is sparse and `missing_values=0`;
+        - If X is encoded as a CSR matrix.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by ``np.random``.
+
+    Attributes
+    ----------
+    generators_ : array of shape (n_features,)
+        The number generator to impute missing values with values drawn
+        uniformly at random from the non-missing values of each feature.
+
+    Notes
+    -----
+    Columns which only contained missing values at `fit` are discarded upon
+    `transform`.
+
+    """
+    def __init__(self, missing_values=np.nan,
+                 verbose=0, copy=True, random_state=None):
+        self.missing_values = missing_values
+        self.verbose = verbose
+        self.copy = copy
+        self.random_state = random_state
+
+    def _validate_input(self, X):
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+
+        return check_array(X, accept_sparse='csc', dtype=None,
+                           force_all_finite=force_all_finite, copy=self.copy)
+
+    def fit(self, X, y=None):
+        """Fit the imputer on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        self : SamplingImputer
+        """
+        self.random_state_ = getattr(self, "random_state_",
+                                     check_random_state(self.random_state))
+
+        X = self._validate_input(X)
+
+        if sparse.issparse(X):
+            self.generators_ = self._sparse_fit(X,
+                                                self.missing_values,
+                                                self.random_state_)
+        else:
+            self.generators_ = self._dense_fit(X,
+                                               self.missing_values,
+                                               self.random_state_)
+
+        return self
+
+    def _sparse_fit(self, X, missing_values, random_state):
+        """Fit the transformer on sparse data."""
+        todo = True
+
+    def _dense_fit(self, X, missing_values, random_state):
+        """Fit the transformer on dense data."""
+        mask = _get_mask(X, missing_values)
+        mask = np.logical_not(mask)
+
+        X = X.transpose()
+        mask = mask.transpose()
+
+        generators = np.empty(X.shape[0], dtype=object)
+
+        for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
+            row = row[row_mask]
+            if row.size > 0:
+                uniques, counts = np.unique(row, return_counts=True)
+                probas = counts / counts.sum()
+                g = lambda k: random_state.choice(uniques, k, p=probas)
+                generators[i] = g
+            else:
+                generators[i] = None
+
+        return generators
+
+    def transform(self, X):
+        """Impute all missing values in X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            The input data to complete.
+        """
+        check_is_fitted(self, 'generators_')
+
+        X = self._validate_input(X)
+
+        generators = self.generators_
+
+        if X.shape[1] != generators.shape[0]:
+            raise ValueError("X has %d features per sample, expected %d"
+                             % (X.shape[1], self.statistics_.shape[0]))
+
+        # Delete the invalid columns
+        invalid_mask = _get_mask(generators, None)
+        valid_mask = np.logical_not(invalid_mask)
+        valid_generators = generators[valid_mask]
+        valid_generators_indexes = np.flatnonzero(valid_mask)
+
+        if invalid_mask.any():
+            missing = np.arange(X.shape[1])[invalid_mask]
+            if self.verbose:
+                warnings.warn("Deleting features without "
+                              "observed values: %s" % missing)
+            X = X[:, valid_generators_indexes]
+
+        # Do actual imputation
+        if sparse.issparse(X) and self.missing_values != 0:
+            todo = True
+
+        else:
+            if sparse.issparse(X):
+                X = X.toarray()
+
+            mask = _get_mask(X, self.missing_values)
+            n_missing = np.sum(mask, axis=0)
+            for i in range(n_missing.shape[0]):
+                values = generators[i](n_missing[i])
+                coordinates = np.nonzero(mask[:, i])
+                X[coordinates, i] = values
+
+        return X
