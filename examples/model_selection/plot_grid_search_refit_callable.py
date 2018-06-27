@@ -1,17 +1,12 @@
 """
-=======================================================================
-Balance model complexity and cross-validated score using refit=callable
-=======================================================================
-
-A simple example demonstrates the usage of `refit=callable` interface in
-`sklearn.model_selection.GridSearchCV`. It shows this interface adds certain
-amount of flexibility in identifying the "best" estimator. The function
-passed to paramter `refit` incorporates of which metric(s) to optimise. This
-interface can also be used in multiple metrics evaluation.
+==================================================
+Balance model complexity and cross-validated score
+==================================================
 
 This example balances model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy
-score while minimising the number of PCA components.
+score while minimising the number of PCA components. This is a rule of thumb
+for insignificant difference.
 
 The figure shows the trade-off between cross-validated score and number of
 PCA components. The balanced case is when n_components=6 and accuracy=0.77,
@@ -32,20 +27,22 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 
-def score_bounds(scores):
+def score_bounds(cv_results):
     """
     Calculate the upper/lower bounds within 1 standard deviation
     of the best `mean_test_scores`.
 
     Args:
-        scores: 'mean_test_score' here
+        cv_results: see attribute cv_results_ of `GridSearchCV`
 
     Return:
         upper/lower bounds within 1 standard deviation of the
-        best `mean_test_scores`.
+        best `mean_test_score`.
     """
-    std_test_score = np.std(scores)
-    best_test_score = max(scores)
+    best_test_score = max(cv_result['mean_test_score'])
+    max_score_index = cv_result['mean_test_score'].argmax()
+    # Use the std of `best_test_score` across all cv splits
+    std_test_score = cv_result['std_test_score'][max_score_index]
     score_upper = np.minimum(best_test_score + std_test_score, 1)
     score_lower = np.maximum(best_test_score - std_test_score, 0)
     return score_upper, score_lower
@@ -63,8 +60,7 @@ def refit_callable(cv_results):
         while has test score within 1 standard deviation of the best
         `mean_test_score`.
     """
-    test_score_upper, test_score_lower = score_bounds(cv_results[
-                                                      'mean_test_score'])
+    test_score_upper, test_score_lower = score_bounds(cv_results)
     n_components = cv_results['param_reduce_dim__n_components']
     test_scores = cv_results['mean_test_score']
     componet_score_lst = list(zip(n_components, test_scores))
@@ -91,7 +87,7 @@ param_grid = [
     }
 ]
 
-grid = GridSearchCV(pipe, cv=3, n_jobs=1, param_grid=param_grid,
+grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
                     scoring='accuracy', refit=refit_callable)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
@@ -102,7 +98,7 @@ test_scores = grid.cv_results_['mean_test_score']
 plt.figure()
 plt.bar(n_components, test_scores, width=1.3, color='bgrc')
 
-upper, lower = score_bounds(grid.cv_results_['mean_test_score'])
+upper, lower = score_bounds(grid.cv_results_)
 plt.axhline(upper, linestyle='--', color='.5', label='+/- 1 std')
 plt.axhline(np.max(test_scores), linestyle='--', color='y',
             label='Best score')
