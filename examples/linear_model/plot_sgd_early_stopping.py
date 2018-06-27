@@ -89,10 +89,10 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 # Define the estimators to compare
 estimator_dict = {
     'No stopping criterion':
-    linear_model.SGDClassifier(tol=None),
+    linear_model.SGDClassifier(tol=None, n_iter_no_change=3),
     'Training loss':
     linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=3,
-                               tol=0.01),
+                               tol=0.1),
     'Validation score':
     linear_model.SGDClassifier(early_stopping=True, n_iter_no_change=3,
                                tol=0.0001, validation_fraction=0.2)
