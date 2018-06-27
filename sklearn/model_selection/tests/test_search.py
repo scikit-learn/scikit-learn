@@ -656,7 +656,7 @@ def test_refit_callable():
         # clf.cv_results_.
         X, y = make_classification(n_samples=100, n_features=4,
                                    random_state=42)
-        clf = GridSearchCV(LinearSVC(random_state=42), {'C':[0.01, 0.1, 1]},
+        clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
                            scoring='precision', refit=True)
         clf.fit(X, y)
         # Ensure that `best_index_ != 0` for this dummy clf
