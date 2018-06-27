@@ -194,8 +194,8 @@ def test_label_encoder(values, classes, unknown):
     ret = le.fit_transform(values)
     assert_array_equal(ret, [1, 0, 2, 0, 2])
 
-    msg = "unseen labels"
-    assert_raise_message(ValueError, msg, le.transform, unknown)
+    with pytest.raises(ValueError, match="unseen labels"):
+        le.transform(unknown)
 
 
 def test_label_encoder_negative_ints():

@@ -88,16 +88,16 @@ def _encode(values, uniques=None, encode=False):
     uniques : array, optional
         If passed, uniques are not determined from passed values (this
         can be because the user specified categories, or because they
-        already have been determined in fit)
+        already have been determined in fit).
     encode : bool, default False
-        If True, also encode the values into integer codes based on `uniques`
+        If True, also encode the values into integer codes based on `uniques`.
 
     Returns
     -------
     uniques
-        If encode=False
+        If ``encode=False``.
     (uniques, encoded)
-        If encode=True
+        If ``encode=True``.
 
     """
     if values.dtype == object:
@@ -127,17 +127,16 @@ def _encode_check_unknown(values, uniques, return_mask=False):
     -------
     diff : list
         The unique values present in `values` and not in `uniques` (the
-        unknown values).If encode=False
+        unknown values).
     valid_mask : boolean array
-        If return_mask=True
+        Additionally returned if ``return_mask=True``.
 
     """
     if values.dtype == object:
-        unique_values = set(values)
-        diff = list(unique_values - set(uniques))
+        uniques_set = set(uniques)
+        diff = list(set(values) - uniques_set)
         if return_mask:
             if diff:
-                uniques_set = set(uniques)
                 valid_mask = np.array([val in uniques_set for val in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)

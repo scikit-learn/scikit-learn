@@ -339,10 +339,10 @@ def test_one_hot_encoder_set_params():
 
 
 def check_categorical_onehot(X):
-    enc = OneHotEncoder()
+    enc = OneHotEncoder(categories='auto')
     Xtr1 = enc.fit_transform(X)
 
-    enc = OneHotEncoder(sparse=False)
+    enc = OneHotEncoder(categories='auto', sparse=False)
     Xtr2 = enc.fit_transform(X)
 
     assert_allclose(Xtr1.toarray(), Xtr2)
@@ -352,21 +352,19 @@ def check_categorical_onehot(X):
 
 
 @pytest.mark.parametrize("X", [
-    [['abc', 1, 55], ['def', 2, 55]],
+    [['def', 1, 55], ['abc', 2, 55]],
     np.array([[10, 1, 55], [5, 2, 55]]),
     np.array([['b', 'A', 'cat'], ['a', 'B', 'cat']], dtype=object)
     ], ids=['mixed', 'numeric', 'object'])
 def test_one_hot_encoder(X):
-    X = [['abc', 1, 55], ['def', 2, 55]]
-
     Xtr = check_categorical_onehot(np.array(X)[:, [0]])
-    assert_allclose(Xtr, [[1, 0], [0, 1]])
+    assert_allclose(Xtr, [[0, 1], [1, 0]])
 
     Xtr = check_categorical_onehot(np.array(X)[:, [0, 1]])
-    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
+    assert_allclose(Xtr, [[0, 1, 1, 0], [1, 0, 0, 1]])
 
-    Xtr = OneHotEncoder().fit_transform(X)
-    assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
+    Xtr = OneHotEncoder(categories='auto').fit_transform(X)
+    assert_allclose(Xtr.toarray(), [[0, 1, 1, 0,  1], [1, 0, 0, 1, 1]])
 
 
 def test_one_hot_encoder_inverse():
@@ -446,7 +444,8 @@ def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
     # when specifying categories manually, unknown categories should already
     # raise when fitting
     enc = OneHotEncoder(categories=cats)
-    assert_raises(ValueError, enc.fit, X2)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.fit(X2)
     enc = OneHotEncoder(categories=cats, handle_unknown='ignore')
     exp = np.array([[1., 0., 0.], [0., 0., 0.]])
     assert_array_equal(enc.fit(X2).transform(X2).toarray(), exp)
@@ -479,8 +478,9 @@ def test_one_hot_encoder_unsorted_categories():
     # unsorted passed categories still raise for numerical values
     X = np.array([[1, 2]]).T
     enc = OneHotEncoder(categories=[[2, 1, 3]])
-    msg = re.escape('Unsorted categories are not supported')
-    assert_raises_regex(ValueError, msg, enc.fit_transform, X)
+    msg = 'Unsorted categories are not supported'
+    with pytest.raises(ValueError, match=msg):
+        enc.fit_transform(X)
 
 
 def test_one_hot_encoder_pandas():
