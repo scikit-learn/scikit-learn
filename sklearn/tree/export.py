@@ -578,6 +578,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # update sizes of all bboxes
         renderer = ax.figure.canvas.get_renderer()
+        print(renderer) # fixme worst debugging ever
         for ann in anns:
             ann.update_bbox_position_size(renderer)
 
