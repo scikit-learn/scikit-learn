@@ -568,14 +568,15 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
 
-    if warn_on_dtype and dtypes_orig is not None and {array.dtype} != \
-            set(dtypes_orig):
+    if (warn_on_dtype and dtypes_orig is not None and {array.dtype} !=
+            set(dtypes_orig)):
         # if there was at the beginning some other types than the final one
         # (for instance in a DataFrame that can contain several dtypes) then
         # some data must have been converted
         msg = ("Data with input dtype %s were all converted to %s%s."
-               % (', '.join(map(str, set(dtypes_orig))), array.dtype, context))
-        warnings.warn(msg, DataConversionWarning, stacklevel=2)
+               % (', '.join(map(str, sorted(set(dtypes_orig)))), array.dtype,
+                  context))
+        warnings.warn(msg, DataConversionWarning, stacklevel=3)
 
     return array
 
