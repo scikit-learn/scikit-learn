@@ -34,6 +34,14 @@ See :ref:`new_contributors` to get started.
 
 |
 
+
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
+
+
+=======
 Ways to contribute
 ==================
 
@@ -143,54 +151,6 @@ feedback:
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
 
-
-.. _git_repo:
-
-Retrieving the latest code
-==========================
-
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
-
-You can check out the latest sources with the command::
-
-    git clone git://github.com/scikit-learn/scikit-learn.git
-
-or if you have write privileges::
-
-    git clone git@github.com:scikit-learn/scikit-learn.git
-
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. It is thus preferred that
-you add the scikit-learn directory to your ``PYTHONPATH`` and build the
-extension in place::
-
-    python setup.py build_ext --inplace
-
-
-Another option is to install the package in editable mode if you change your
-code a lot and do not want to have to reinstall every time. This basically
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
-
-    pip install --editable .
-
-.. note::
-
-    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
-
-.. note::
-
-    If you decide to do an editable install you have to rerun::
-
-        python setup.py build_ext --inplace
-
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
-
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
 
 
 Contributing code
