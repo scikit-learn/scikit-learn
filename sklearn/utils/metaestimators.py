@@ -45,10 +45,9 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         names = []
         if items:
             names, _ = zip(*items)
-        if names:
-            for name in list(six.iterkeys(params)):
-                if '__' not in name and name in names:
-                    self._replace_estimator(attr, name, params.pop(name))
+        for name in list(six.iterkeys(params)):
+            if '__' not in name and name in names:
+                self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
         super(_BaseComposition, self).set_params(**params)
         return self
