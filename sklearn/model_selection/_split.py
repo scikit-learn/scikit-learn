@@ -76,19 +76,13 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
@@ -307,19 +301,13 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -401,6 +389,10 @@ class KFold(_BaseKFold):
     The first ``n_samples % n_splits`` folds have size
     ``n_samples // n_splits + 1``, other folds have size
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
+
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting ``random_state``
+    to an integer.
 
     See also
     --------
@@ -655,8 +647,8 @@ class StratifiedKFold(_BaseKFold):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -742,19 +734,13 @@ class TimeSeriesSplit(_BaseKFold):
         groups : array-like, with shape (n_samples,), optional
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -1020,8 +1006,8 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1102,10 +1088,15 @@ class RepeatedKFold(_RepeatedSplits):
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [0 3] TEST: [1 2]
 
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting ``random_state``
+    to an integer.
 
     See also
     --------
-    RepeatedStratifiedKFold: Repeates Stratified K-Fold n times.
+    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
         super(RepeatedKFold, self).__init__(
@@ -1149,6 +1140,11 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [0 2] TEST: [1 3]
 
+    Notes
+    -----
+    Randomized CV splitters may return different results for each call of
+    split. You can make the results identical by setting ``random_state``
+    to an integer.
 
     See also
     --------
@@ -1186,8 +1182,8 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1607,8 +1603,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1767,8 +1763,8 @@ class PredefinedSplit(BaseCrossValidator):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1851,8 +1847,8 @@ class _CVIterableWrapper(BaseCrossValidator):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1933,7 +1929,7 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int, None, optional
+    test_size : float, int or None, optional (default=0.25)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
@@ -1942,7 +1938,7 @@ def train_test_split(*arrays, **options):
         if ``train_size`` is unspecified, otherwise it will complement
         the specified ``train_size``.
 
-    train_size : float, int, or None, default None
+    train_size : float, int, or None, (default=None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
@@ -1958,7 +1954,7 @@ def train_test_split(*arrays, **options):
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like or None (default is None)
+    stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
@@ -2061,6 +2057,7 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test
 train_test_split.__test__ = False
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

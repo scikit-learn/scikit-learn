@@ -192,6 +192,9 @@ random sampling procedures.
 - :class:`semi_supervised.LabelSpreading` (bug fix)
 - :class:`semi_supervised.LabelPropagation` (bug fix)
 - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+- :class:`model_selection.StratifiedKFold` with ``shuffle=True``
+  (this change, due to :issue:`7823` was not mentioned in the release notes at
+  the time)
 
 Details are listed in the changelog below.
 
@@ -804,8 +807,8 @@ Trees and ensembles
 - All tree based estimators now accept a ``min_impurity_decrease``
   parameter in lieu of the ``min_impurity_split``, which is now deprecated.
   The ``min_impurity_decrease`` helps stop splitting the nodes in which
-  the weighted impurity decrease from splitting is no longer alteast
-  ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
+  the weighted impurity decrease from splitting is no longer at least
+  ``min_impurity_decrease``. :issue:`8449` by `Raghav RV`_.
 
 Linear, kernelized and related models
 

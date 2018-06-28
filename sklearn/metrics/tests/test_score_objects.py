@@ -6,6 +6,8 @@ import numbers
 
 import numpy as np
 
+import pytest
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -491,31 +493,12 @@ def check_scorer_memmap(scorer_name):
     assert isinstance(score, numbers.Number), scorer_name
 
 
-def test_scorer_memmap_input():
+@pytest.mark.parametrize('name', SCORERS)
+def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
-    for name in SCORERS.keys():
-        yield check_scorer_memmap, name
-
-
-def test_deprecated_names():
-    X, y = make_blobs(random_state=0, centers=2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(random_state=0)
-    clf.fit(X_train, y_train)
-
-    for name in ('mean_absolute_error', 'mean_squared_error',
-                 'median_absolute_error', 'log_loss'):
-        warning_msg = "Scoring method %s was renamed to" % name
-        for scorer in (get_scorer(name), SCORERS[name]):
-            assert_warns_message(DeprecationWarning,
-                                 warning_msg,
-                                 scorer, clf, X, y)
-
-        assert_warns_message(DeprecationWarning,
-                             warning_msg,
-                             cross_val_score, clf, X, y, scoring=name)
+    check_scorer_memmap(name)
 
 
 def test_scoring_is_not_metric():

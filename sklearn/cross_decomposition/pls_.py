@@ -16,6 +16,7 @@ from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..exceptions import ConvergenceWarning
 from ..externals import six
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
@@ -74,7 +75,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
-            warnings.warn('Maximum number of iterations reached')
+            warnings.warn('Maximum number of iterations reached',
+                          ConvergenceWarning)
             break
         x_weights_old = x_weights
         ite += 1

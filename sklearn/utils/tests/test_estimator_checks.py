@@ -2,19 +2,20 @@ import unittest
 import sys
 
 import numpy as np
-
 import scipy.sparse as sp
 
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils import deprecated
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
+from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
@@ -24,7 +25,8 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.validation import (check_X_y, check_array,
+                                      LARGE_SPARSE_SUPPORTED)
 
 
 class CorrectNotFittedError(ValueError):
@@ -134,6 +136,16 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class BadTransformerWithoutMixin(BaseEstimator):
+    def fit(self, X, y=None):
+        X = check_array(X)
+        return self
+
+    def transform(self, X):
+        X = check_array(X)
+        return X
+
+
 class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
         # Convert data
@@ -149,6 +161,54 @@ class NotInvariantPredict(BaseEstimator):
         if X.shape[0] > 1:
             return np.ones(X.shape[0])
         return np.zeros(X.shape[0])
+
+
+class LargeSparseNotSupportedClassifier(BaseEstimator):
+    def fit(self, X, y):
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc", "coo"),
+                         accept_large_sparse=True,
+                         multi_output=True,
+                         y_numeric=True)
+        if sp.issparse(X):
+            if X.getformat() == "coo":
+                if X.row.dtype == "int64" or X.col.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+            elif X.getformat() in ["csc", "csr"]:
+                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+
+        return self
+
+
+class SparseTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_shape_ = check_array(X).shape
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X):
+        X = check_array(X)
+        if X.shape[1] != self.X_shape_[1]:
+            raise ValueError('Bad number of features')
+        return sp.csr_matrix(X)
+
+
+def test_check_fit_score_takes_y_works_on_deprecated_fit():
+    # Tests that check_fit_score_takes_y works on a class with
+    # a deprecated fit method
+
+    class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
+        @deprecated("Deprecated for the purpose of testing "
+                    "check_fit_score_takes_y")
+        def fit(self, X, y):
+            return self
+
+    check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
 def test_check_estimator():
@@ -195,7 +255,7 @@ def test_check_estimator():
                         check_estimator, ChangesWrongAttribute)
     check_estimator(ChangesUnderscoreAttribute)
     # check that `fit` doesn't add any public attribute
-    msg = ('Estimator adds public attribute\(s\) during the fit method.'
+    msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
@@ -225,11 +285,28 @@ def test_check_estimator():
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
 
+    # Large indices test on bad estimator
+    msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
+           r'support \S{3}_64 matrix, and is not failing gracefully.*')
+    # only supported by scipy version more than 0.14.0
+    if LARGE_SPARSE_SUPPORTED:
+        assert_raises_regex(AssertionError, msg, check_estimator,
+                            LargeSparseNotSupportedClassifier)
+
+    # non-regression test for estimators transforming to sparse data
+    check_estimator(SparseTransformer())
+
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+
+def test_check_estimator_transformer_no_mixin():
+    # check that TransformerMixin is not required for transformer tests to run
+    assert_raises_regex(AttributeError, '.*fit_transform.*',
+                        check_estimator, BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():
@@ -286,7 +363,7 @@ def test_check_no_attributes_set_in_init():
     assert_raises_regex(AssertionError,
                         "Estimator estimator_name should not set any"
                         " attribute apart from parameters during init."
-                        " Found attributes \[\'you_should_not_set_this_\'\].",
+                        r" Found attributes \['you_should_not_set_this_'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet())
@@ -294,7 +371,7 @@ def test_check_no_attributes_set_in_init():
                         "Estimator estimator_name should store all "
                         "parameters as an attribute during init. "
                         "Did not find attributes "
-                        "\[\'you_should_set_this_\'\].",
+                        r"\['you_should_set_this_'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet())

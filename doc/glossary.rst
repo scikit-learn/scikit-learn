@@ -165,8 +165,10 @@ General Concepts
         tree-based models such as random forests and gradient boosting
         models that often work better and faster with integer-coded
         categorical variables.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
         <category_encoders>`_ package for tools related to encoding
@@ -433,6 +435,13 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
     indexable
         An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
         sequence (usually a list).
@@ -452,6 +461,7 @@ General Concepts
 
     label indicator matrix
     multilabel indicator matrix
+    multilabel indicator matrices
         The format used to represent multilabel data, where each row of a 2d
         array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
@@ -480,10 +490,10 @@ General Concepts
 
     missing values
         Most Scikit-learn estimators do not work with missing values. When they
-        do (e.g. in :class:`preprocessing.Imputer`), NaN is the preferred
+        do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
-        specifying another ``missing_values`` value when imputation or
+        specifying another ``missing_values`` value when :term:`imputation` or
         learning can be performed in integer space.  :term:`Unlabeled data`
         is a special case of missing values in the :term:`target`.
 
@@ -939,8 +949,9 @@ such as:
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
-        test data, returning a number. See :ref:`scoring_parameter`; see also
-        :term:`evaluation metric`.
+        test data, returning a number. Unlike :term:`evaluation metrics`,
+        a greater returned number must correspond with a *better* score.
+        See :ref:`scoring_parameter`.
 
 Further examples:
 
@@ -990,7 +1001,7 @@ Target Types
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
 
-        Continous multioutput targets are represented as multiple
+        Continuous multioutput targets are represented as multiple
         :term:`continuous` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
@@ -1066,6 +1077,13 @@ Target Types
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
+
+    multioutput
+    multi-output
+        A target where each sample has multiple classification/regression
+        labels. See :term:`multiclass multioutput` and :term:`continuous
+        multioutput`. We do not currently support modelling mixed
+        classification and regression targets.
 
 .. _glossary_methods:
 
@@ -1547,9 +1565,15 @@ functions or non-estimator constructors.
         their number.
 
         :term:`partial_fit` also retains the model between calls, but differs:
-        with ``warm_start`` the parameters change and the data is constant
-        across calls to ``fit``; with ``partial_fit``, the mini-batch of data
-        changes and model parameters stay fixed.
+        with ``warm_start`` the parameters change and the data is
+        (more-or-less) constant across calls to ``fit``; with ``partial_fit``,
+        the mini-batch of data changes and model parameters stay fixed.
+
+        There are cases where you want to use ``warm_start`` to fit on
+        different, but closely related data. For example, one may initially fit
+        to a subset of the data, then fine-tune the parameter search on the
+        full dataset. For classification, all data in a sequence of
+        ``warm_start`` calls to ``fit`` must include samples from each class.
 
 .. _glossary_attributes:
 

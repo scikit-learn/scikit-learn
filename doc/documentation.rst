@@ -1,3 +1,5 @@
+:orphan:
+
 .. raw:: html
 
   <div class="container-index">
