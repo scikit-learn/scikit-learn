@@ -56,7 +56,7 @@ matrix:
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
     -  python: 3.6
-       env: DISTRIB="scipy-dev-wheels"
+       env: DISTRIB="scipy-dev"
        if: type = cron OR commit_message ~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
