@@ -139,6 +139,11 @@ Model evaluation
 
 Decomposition, manifold learning and clustering
 
+- Added :class:`neighbors.NeighborhoodComponentsAnalysis`, which implements the
+  Neighborhood Components Analysis metric learning algorithm described in
+  Goldberger et al. (2005). :issue:`10058` by :user:`William de Vazelhes
+  <wdevazelhes>` and :user:`John Chiotellis <johny-c>`.
+
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
