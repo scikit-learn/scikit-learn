@@ -31,7 +31,7 @@ of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation. Mathematically it
 solves a problem of the form:
 
-.. math:: \underset{w}{min\,} {|| X w - y||_2}^2
+.. math:: \underset{w}{\min\,} {|| X w - y||_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -83,7 +83,7 @@ of squares,
 
 .. math::
 
-   \underset{w}{min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \underset{w}{\min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
@@ -114,7 +114,7 @@ its ``coef_`` member::
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
-   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -170,7 +170,7 @@ weights (see
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \underset{w}{\min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha ||w||_1` added, where
@@ -204,6 +204,20 @@ computes the coefficients along the full path of possible values.
       As the Lasso regression yields sparse models, it can
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
+
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
+
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 
 Setting regularization parameter
@@ -305,7 +319,7 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
+.. math::  \underset{w}{\min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
 
 where :math:`Fro` indicates the Frobenius norm:
 
@@ -341,7 +355,7 @@ The objective function to minimize is in this case
 
 .. math::
 
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
+    \underset{w}{\min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
@@ -358,7 +372,19 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
 
+The following two references explain the iterations
+used in the coordinate descent solver of scikit-learn, as well as
+the duality gap computation used for convergence control.
 
+.. topic:: References
+
+    * "Regularization Path For Generalized linear Models by Coordinate Descent",
+      Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+    * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
+      S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
+      in IEEE Journal of Selected Topics in Signal Processing, 2007
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
 
 .. _multi_task_elastic_net:
 
@@ -376,7 +402,7 @@ The objective function to minimize is:
 
 .. math::
 
-    \underset{W}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
+    \underset{W}{\min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
     \frac{\alpha(1-\rho)}{2} ||W||_{Fro}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
@@ -708,12 +734,12 @@ regularization.
 As an optimization problem, binary class L2 penalized logistic regression
 minimizes the following cost function:
 
-.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math:: \underset{w, c}{\min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following
 optimization problem
 
-.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+.. math:: \underset{w, c}{\min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
 
 Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
 :math:`{-1, 1}` at trial :math:`i`.
@@ -1111,7 +1137,7 @@ The loss function that :class:`HuberRegressor` minimizes is given by
 
 .. math::
 
-  \underset{w, \sigma}{min\,} {\sum_{i=1}^n\left(\sigma + H_m\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
+  \underset{w, \sigma}{\min\,} {\sum_{i=1}^n\left(\sigma + H_m\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
 where
 

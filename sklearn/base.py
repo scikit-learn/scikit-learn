@@ -67,57 +67,10 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
-        if param1 is param2:
-            # this should always happen
-            continue
-        if isinstance(param1, np.ndarray):
-            # For most ndarrays, we do not test for complete equality
-            if not isinstance(param2, type(param1)):
-                equality_test = False
-            elif (param1.ndim > 0
-                    and param1.shape[0] > 0
-                    and isinstance(param2, np.ndarray)
-                    and param2.ndim > 0
-                    and param2.shape[0] > 0):
-                equality_test = (
-                    param1.shape == param2.shape
-                    and param1.dtype == param2.dtype
-                    and (_first_and_last_element(param1) ==
-                         _first_and_last_element(param2))
-                )
-            else:
-                equality_test = np.all(param1 == param2)
-        elif sparse.issparse(param1):
-            # For sparse matrices equality doesn't work
-            if not sparse.issparse(param2):
-                equality_test = False
-            elif param1.size == 0 or param2.size == 0:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and param1.size == 0
-                    and param2.size == 0
-                )
-            else:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and (_first_and_last_element(param1) ==
-                         _first_and_last_element(param2))
-                    and param1.nnz == param2.nnz
-                    and param1.shape == param2.shape
-                )
-        else:
-            # fall back on standard equality
-            equality_test = param1 == param2
-        if equality_test:
-            warnings.warn("Estimator %s modifies parameters in __init__."
-                          " This behavior is deprecated as of 0.18 and "
-                          "support for this behavior will be removed in 0.20."
-                          % type(estimator).__name__, DeprecationWarning)
-        else:
+        if param1 is not param2:
             raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'does not seem to set parameter %s' %
+                               'either does not set or modifies parameter %s' %
                                (estimator, name))
-
     return new_object
 
 
