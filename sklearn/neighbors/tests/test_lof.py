@@ -159,12 +159,12 @@ def test_novelty_errors():
     # predict, decision_function and score_samples raise ValueError
     for method in ['predict', 'decision_function', 'score_samples']:
         msg = ('{} is not available when novelty=False'.format(method))
-        assert_raises_regex(ValueError, msg, getattr(clf, method), X)
+        assert_raises_regex(AttributeError, msg, getattr, clf, method)
 
     # check errors for novelty=True
     clf = neighbors.LocalOutlierFactor(novelty=True)
     msg = 'fit_predict is not available when novelty=True'
-    assert_raises_regex(ValueError, msg, clf.fit_predict, X)
+    assert_raises_regex(AttributeError, msg, getattr, clf, 'fit_predict')
 
 
 def test_novelty_training_scores():
