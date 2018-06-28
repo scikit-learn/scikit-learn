@@ -3,25 +3,26 @@
 Imputing missing values using multiple imputation
 =================================================
 
-By default, the ChainedImputer performs single imputation: a method where every
-missing value is replaced with one imputed value. The strength of the method is
-that it allows for finding unbiased statistical estimates due to its chained
-character. However, the disadvantage is that every imputed value is treated as
-if the value was observed, leading to an imputed dataset that does not reflect
-the uncertainty that occurs due to the presence of missing values. This makes
-it hard to find valid statistical inferences because the variance (and standard
-error) of statistical estimates become too small.
+By default, the IterativeImputer performs single imputation: a method where
+every missing value is replaced with one imputed value. The chained character
+of the method and the possiblity to draw imputation values from the posterior
+distribution of a Bayesian imputation model allows for the finding of unbiased
+statistical estimates. However, the disadvantage is that every imputed value is
+treated as if the value was observed, leading to an imputed dataset that does
+not reflect the uncertainty that occurs due to the presence of missing values.
+This makes it hard to find valid statistical inferences because the variance
+(and standard error) of statistical estimates become too small.
 
-An alternative is using the ChainedImputer to perform multiple imputation: a
+An alternative is using the IterativeImputer to perform multiple imputation: a
 method where every missing value is imputed multiple times. The procedure
 results in multiple datasets where the observed data is similar in every
 dataset, but the imputed data is different. All desired steps after imputation
 are performed on every dataset, including the analysis. Then, Rubin's pooling
 rules are used to combine the estimates into one final result.
 
-In this example we will show how to use the ChainedImputer to perform multiple
-imputation, what the effect is on the standard error of beta coefficients and
-how to set up a prediction model using multiple imputation.
+In this example we will show how to use the ITerativeImputer to perform
+multiple imputation, what the effect is on the standard error of beta
+coefficients and how to set up a prediction model using multiple imputation.
 """
 
 import math
@@ -33,11 +34,12 @@ from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.impute import SimpleImputer, ChainedImputer
+from sklearn.impute import ChainedImputer
 from sklearn.metrics import mean_squared_error as mse
 
 rng = np.random.RandomState(0)
 
+# Start by defining a basic amputation function
 def ampute(X, missing_rate = 0.75, mech = "MCAR"):
     n_samples = X.shape[0]
     n_features = X.shape[1]
@@ -68,6 +70,9 @@ def ampute(X, missing_rate = 0.75, mech = "MCAR"):
 
     return X_incomplete
 
+# Make a function that calculates the variance of the beta estimates. This is
+# necessary because the linear regression model from sklearn does not provide
+# these values.
 def calculate_variance_of_beta_estimates(y_true, y_pred, X):
     residuals = np.sum((y_true - y_pred)**2)
     sigma_hat_squared = (1 / (len(y_true) - 2)) * residuals
@@ -100,8 +105,8 @@ def get_results_full_dataset(X, y):
     return full_coefs, full_vars, full_errorbar
 
 def get_results_chained_imputation(X_incomplete, y):
-    # Impute incomplete data with ChainedImputer
-    # Setting n_burn_in at 99 and using only the last imputation
+    # Impute incomplete data with IterativeImputer using single imputation
+    # We set n_burn_in at 99 and use only the last imputation
     imputer = ChainedImputer(n_burn_in=99, n_imputations=1)
     imputer.fit(X_incomplete)
     X_imputed = imputer.transform(X_incomplete)
@@ -122,9 +127,9 @@ def get_results_chained_imputation(X_incomplete, y):
     return chained_coefs, chained_vars, chained_errorbar
 
 def get_results_mice_imputation(X_incomplete, y):
-    # Impute incomplete data using the ChainedImputer as a MICEImputer
-    # Setting n_burn_in at 99 and using only last imputation and loop this
-    # procedure m times.
+    # Impute incomplete data using the IterativeImputer to perform multiple
+    # imputation. We set n_burn_in at 99 and use only last imputation and
+    # loop this procedure m times.
     m = 5
     multiple_imputations = []
     for i in range(m):
@@ -161,12 +166,13 @@ def get_results_mice_imputation(X_incomplete, y):
 
     return Qbar, T, mice_errorbar
 
-# The original MICE procedure includes all variables inluding the output
-# variable in the imputation process. The idea is that the imputation model
-# should at least contain the analysis model to result in unbiased estimates.
-# In this function, we will also include y in the imputation process.
+# The original multiple imputation procedure as developed under the name
+# MICE includes all variables in the imputation process; including the output
+# variable. The reason to do this is that the imputation model should at least
+# contain the analysis model to result in unbiased estimates. In this function,
+# we will also include y in the imputation process.
 def get_results_mice_imputation_includingy(X_incomplete, y):
-    # Impute incomplete data using the ChainedImputer as a MICEImputer
+    # Impute incomplete data using the IterativeImputer as a MICEImputer
     # Now using the output variable in the imputation loop
     m = 5
     multiple_imputations = []
@@ -213,8 +219,7 @@ def get_results_mice_imputation_includingy(X_incomplete, y):
 # We use the Boston dataset and analyze the outcomes of the beta coefficients
 # and their standard errors. We standardize the data before running the
 # procedure to be able to compare the coefficients. We run the procedure for
-# MCAR missingness only. This can easily be changed to MNAR by setting the
-# `mech` argument.
+# MCAR missingness only.
 #
 # Loading the data
 dataset = load_boston()
@@ -280,7 +285,7 @@ plt.show()
 
 ###############################################################################
 
-# In this example, we show how to apply MICE imputation in a train/test
+# In this example, we show how to apply multiple imputation in a train/test
 # situation. There are two approaches to get the end result of the prediction
 # model. In approach 1 you calculate the evaluation metric for every i in m and
 # later average these values. In approach 2 you average the predictions of
@@ -322,8 +327,8 @@ def get_results_single_imputation(X_train, X_test, y_train, y_test):
 
     return mse_single
 
-# Now use the IterativeImputer as a MICE Imputer by looping over i in m.
-# Approach 1: pool the mse values of the m datasets.
+# Now use the IterativeImputer to perform multiple imputation by looping over
+# i in m. Approach 1: pool the mse values of the m datasets.
 def get_results_multiple_imputation_approach1(X_train, X_test,
                                               y_train, y_test):
     m = 5
@@ -355,8 +360,8 @@ def get_results_multiple_imputation_approach1(X_train, X_test,
 
     return mse_approach1
 
-# Approach 2: average the predictions of the m datasets and then calculate the
-# error metric.
+# Approach 2: We average the predictions of the m datasets and then calculate
+# the error metric.
 def get_results_multiple_imputation_approach2(X_train, X_test,
                                               y_train, y_test):
     m = 5
@@ -397,7 +402,7 @@ def perform_simulation(dataset, X_incomplete, nsim = 10):
     for j in np.arange(nsim):
         # First, split the data in train and test dataset.
         train_indices, test_indices = train_test_split(
-                np.arange(X_full.shape[0]))
+                np.arange(X_full.shape[0]), random_state=j)
         X_incomplete_train = X_incomplete[train_indices]
         X_full_train = X_full[train_indices]
         X_incomplete_test = X_incomplete[test_indices]
@@ -436,7 +441,8 @@ mse_means, mse_std = perform_simulation(load_boston(),
 # Plot results
 n_situations = 4
 n = np.arange(n_situations)
-n_labels = ['Full Data', 'Single Imputation', 'MI Average MSE', 'MI Average Predictions']
+n_labels = ['Full Data', 'Single Imputation',
+            'MI Average MSE', 'MI Average Predictions']
 colors = ['r', 'orange', 'green', 'yellow']
 
 plt.figure(figsize=(24, 12))
