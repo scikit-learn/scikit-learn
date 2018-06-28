@@ -8,17 +8,19 @@ Advanced installation instructions
 There are different ways to get scikit-learn installed:
 
   * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for most users. It will provide a stable version and pre-build packages are available for most platforms.
+    is the best approach for most users. It will provide a stable version
+    and pre-build packages are available for most platforms.
 
   * Install the version of scikit-learn provided by your
     :ref:`operating system or Python distribution <install_by_distribution>`.
     This is a quick option for those who have operating systems
-    that distribute scikit-learn. It might not provide the latest release version.
+    that distribute scikit-learn. It might not provide the latest release
+    version.
 
   * :ref:`Building the package from source
     <install_bleeding_edge>`. This is best for users who want the
     latest-and-greatest features and aren't afraid of running
-    brand-new code. This document describes how to build from source 
+    brand-new code. This document describes how to build from source.
 
 .. note::
 
@@ -56,19 +58,16 @@ You can check out the latest sources with the command::
 
     git clone git://github.com/scikit-learn/scikit-learn.git
 
-or if you have write privileges::
+If you want to build a stable version, you can ``git checkout <VERSION>``
+to get the code for that particular version, or download an zip archive of
+the version from github.
 
-    git clone git@github.com:scikit-learn/scikit-learn.git
-
-If you want to build a stable version, you can ``git checkout <VERSION>`` to get the code for that particular version, or download an zip archive of the version from github.
-
-Building from source
---------------------
-If you have all the build requirements installed (see below for details), you can build and install the package in the following way.
+If you have all the build requirements installed (see below for details), you
+can build and install the package in the following way.
 
 If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. Therefore it's recommended that you install in editable,
-which allows you to edit the code in-place. This basically
+package each time you update the sources. Therefore it's recommended that you
+install in editable, which allows you to edit the code in-place. This
 builds the extension in place and creates a link to the development directory
 (see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
@@ -76,13 +75,15 @@ builds the extension in place and creates a link to the development directory
 
 .. note::
 
-    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+    This is fundamentally similar to using the command ``python setup.py develop``
+    (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+    It is however preferred to use pip.
 
 .. note::
 
     If you decide to do an editable install you have to rerun::
 
-        python setup.py build_ext --inplace
+        pip install --editable .
 
     every time the source code of a compiled extension is
     changed (for instance when switching branches or pulling changes from upstream).
@@ -268,8 +269,9 @@ Testing scikit-learn once installed
 -----------------------------------
 
 Testing requires having the `pytest
-<https://docs.pytest.org>`_ library. After
-installation, the package can be tested by executing *from outside* the
+<https://docs.pytest.org>`_ library. Some tests also require having
+`pandas <https://pandas.pydata.org/>` installed.
+After installation, the package can be tested by executing *from outside* the
 source directory::
 
     $ pytest sklearn
@@ -279,7 +281,7 @@ eventually should finish with a message similar to::
 
     =========== 8304 passed, 26 skipped, 4659 warnings in 557.76 seconds ===========
 
-Otherwise, please consider posting an issue into the `bug tracker
+Otherwise, please consider posting an issue into the `GitHub issue tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists` including the traceback of the individual failures
 and errors. Please include your operating system, your version of NumPy, SciPy

@@ -6,6 +6,7 @@ Third party distributions of scikit-learn
 
 Some third-party distributions are now providing versions of
 scikit-learn integrated with their package-management systems.
+The most popular ones are listed on the :ref:`install` page.
 
 These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install

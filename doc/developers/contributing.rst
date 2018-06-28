@@ -37,7 +37,7 @@ See :ref:`new_contributors` to get started.
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
 
