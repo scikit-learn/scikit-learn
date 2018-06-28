@@ -163,7 +163,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.plot_tree(clf) # doctest: +ELLIPSIS
+    >>> tree.plot_tree(clf) # doctest: +SKIP
     [Text(251.5,345.217,'X[3] <= 0.8...
 
     """
