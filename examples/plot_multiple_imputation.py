@@ -39,8 +39,9 @@ from sklearn.metrics import mean_squared_error as mse
 
 rng = np.random.RandomState(0)
 
+
 # Start by defining a basic amputation function
-def ampute(X, missing_rate = 0.75, mech = "MCAR"):
+def ampute(X, missing_rate=0.75, mech="MCAR"):
     n_samples = X.shape[0]
     n_features = X.shape[1]
     X_incomplete = X.copy()
@@ -70,6 +71,7 @@ def ampute(X, missing_rate = 0.75, mech = "MCAR"):
 
     return X_incomplete
 
+
 # Make a function that calculates the variance of the beta estimates. This is
 # necessary because the linear regression model from sklearn does not provide
 # these values.
@@ -89,6 +91,7 @@ def calculate_variance_of_beta_estimates(y_true, y_pred, X):
 
 ###############################################################################
 
+
 def get_results_full_dataset(X, y):
     # Perform linear regression on full data as a way of comparison
     estimator = LinearRegression()
@@ -103,6 +106,7 @@ def get_results_full_dataset(X, y):
     full_errorbar = 1.96 * np.sqrt(full_vars)
 
     return full_coefs, full_vars, full_errorbar
+
 
 def get_results_chained_imputation(X_incomplete, y):
     # Impute incomplete data with IterativeImputer using single imputation
@@ -126,6 +130,7 @@ def get_results_chained_imputation(X_incomplete, y):
 
     return chained_coefs, chained_vars, chained_errorbar
 
+
 def get_results_mice_imputation(X_incomplete, y):
     # Impute incomplete data using the IterativeImputer to perform multiple
     # imputation. We set n_burn_in at 99 and use only last imputation and
@@ -133,7 +138,7 @@ def get_results_mice_imputation(X_incomplete, y):
     m = 5
     multiple_imputations = []
     for i in range(m):
-        imputer = ChainedImputer(n_burn_in=99, n_imputations=1,random_state=i)
+        imputer = ChainedImputer(n_burn_in=99, n_imputations=1, random_state=i)
         imputer.fit(X_incomplete)
         X_imputed = imputer.transform(X_incomplete)
         multiple_imputations.append(X_imputed)
@@ -158,13 +163,14 @@ def get_results_mice_imputation(X_incomplete, y):
     # datasets. The variance of these estimates is a combination of the
     # variance of each of the m estimates (Ubar) and the variance between the m
     # estimates (B). The standard error is the sqrt of the variance.
-    Qbar = np.mean(m_coefs, axis = 0)
-    Ubar = np.mean(m_vars, axis = 0)
-    B = (1 / (m-1)) * np.mean((Qbar - m_coefs) ** 2, axis = 0)
+    Qbar = np.mean(m_coefs, axis=0)
+    Ubar = np.mean(m_vars, axis=0)
+    B = (1 / (m-1)) * np.mean((Qbar - m_coefs) ** 2, axis=0)
     T = Ubar + B + (B/m)
     mice_errorbar = 1.96 * np.sqrt(T)
 
     return Qbar, T, mice_errorbar
+
 
 # The original multiple imputation procedure as developed under the name
 # MICE includes all variables in the imputation process; including the output
@@ -207,13 +213,14 @@ def get_results_mice_imputation_includingy(X_incomplete, y):
     # datasets. The variance of these estimates is a combination of the
     # variance of each of the m estimates (Ubar) and the variance between the m
     # estimates (B). The standard error is the sqrt of the variance.
-    Qbar = np.mean(m_coefs, axis = 0)
-    Ubar = np.mean(m_vars, axis = 0)
-    B = (1 / (m-1)) * np.mean((Qbar - m_coefs) ** 2, axis = 0)
+    Qbar = np.mean(m_coefs, axis=0)
+    Ubar = np.mean(m_vars, axis=0)
+    B = (1 / (m-1)) * np.mean((Qbar - m_coefs) ** 2, axis=0)
     T = Ubar + B + (B/m)
     mice_errorbar = 1.96 * np.sqrt(T)
 
     return Qbar, T, mice_errorbar
+
 
 # Now lets run all these imputation procedures.
 # We use the Boston dataset and analyze the outcomes of the beta coefficients
@@ -234,7 +241,7 @@ y_scaled = stats.zscore(y)
 print("Executing Example 1 MCAR Missingness")
 
 # First, make the data incomplete with a MCAR mechanism.
-Boston_X_incomplete_MCAR = ampute(X_scaled, mech = "MCAR")
+Boston_X_incomplete_MCAR = ampute(X_scaled, mech="MCAR")
 
 # Second, run all the imputation procedures as described above.
 full_coefs, full_vars, full_errorbar = get_results_full_dataset(
@@ -264,13 +271,13 @@ plt.figure(figsize=(24, 32))
 plt1 = plt.subplot(211)
 for j in n:
     plt1.bar(np.arange(len(coefs[j])) + (3*j*(width/n_situations)),
-             coefs[j], width = width, color = colors[j])
+             coefs[j], width=width, color=colors[j])
 plt.legend(n_labels)
 
 plt2 = plt.subplot(212)
 for j in n:
     plt2.bar(np.arange(len(errorbars[j])) + (3*j*(width/n_situations)),
-             errorbars[j], width = width, color = colors[j])
+             errorbars[j], width=width, color=colors[j])
 
 plt1.set_title("MCAR Missingness")
 plt1.set_ylabel("Beta Coefficients")
@@ -284,6 +291,7 @@ plt.show()
 # EXAMPLE 2. SHOW MULTIPLE IMPUTATION IN A PREDICTION CONTEXT.
 
 ###############################################################################
+
 
 # In this example, we show how to apply multiple imputation in a train/test
 # situation. There are two approaches to get the end result of the prediction
@@ -307,6 +315,7 @@ def get_results_full_data(X_train, X_test, y_train, y_test):
 
     return mse_full
 
+
 # Use the ChainedImputer as a single imputation procedure.
 def get_results_single_imputation(X_train, X_test, y_train, y_test):
     # Apply imputation
@@ -326,6 +335,7 @@ def get_results_single_imputation(X_train, X_test, y_train, y_test):
     mse_single = mse(y_test, y_predict)
 
     return mse_single
+
 
 # Now use the IterativeImputer to perform multiple imputation by looping over
 # i in m. Approach 1: pool the mse values of the m datasets.
@@ -359,6 +369,7 @@ def get_results_multiple_imputation_approach1(X_train, X_test,
     mse_approach1 = np.mean(multiple_mses, axis=0)
 
     return mse_approach1
+
 
 # Approach 2: We average the predictions of the m datasets and then calculate
 # the error metric.
@@ -394,7 +405,8 @@ def get_results_multiple_imputation_approach2(X_train, X_test,
 
     return mse_approach2
 
-def perform_simulation(dataset, X_incomplete, nsim = 10):
+
+def perform_simulation(dataset, X_incomplete, nsim=10):
     X_full, y = dataset.data, dataset.target
     outcome = []
 
@@ -425,13 +437,14 @@ def perform_simulation(dataset, X_incomplete, nsim = 10):
         outcome.append((mse_full, mse_single, mse_approach1, mse_approach2))
 
     # Return the mean and standard deviation of the nsim outcome values
-    return np.mean(outcome, axis = 0), np.std(outcome, axis = 0)
+    return np.mean(outcome, axis=0), np.std(outcome, axis=0)
+
 
 # Execute the simulation
 print("Executing Example 2 MCAR Missingness")
 
 # Generate missing values with a MCAR mechanism
-Boston_X_incomplete_MCAR = ampute(X_scaled, mech = "MCAR")
+Boston_X_incomplete_MCAR = ampute(X_scaled, mech="MCAR")
 
 # Perform the simulation
 mse_means, mse_std = perform_simulation(load_boston(),
