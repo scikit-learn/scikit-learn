@@ -159,12 +159,12 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
-    >>> clf = tree.DecisionTreeClassifier()
+    >>> clf = tree.DecisionTreeClassifier(random_state=0)
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    .. plot::
-    >>> tree.plot_tree(clf)
+    >>> tree.plot_tree(clf) # doctest: +ELLIPSIS
+    [Text(251.5,345.217,'X[3] <= 0.8...
 
     """
     exporter = _MPLTreeExporter(
@@ -728,8 +728,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.export_graphviz(clf)
-
+    >>> tree.export_graphviz(clf) # doctest: +ELLIPSIS
+    'digraph Tree {...
     """
 
     check_is_fitted(decision_tree, 'tree_')
