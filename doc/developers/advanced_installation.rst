@@ -46,6 +46,8 @@ Running tests requires
 
 - pytest
 
+Some tests also require `pandas <https://pandas.pydata.org>`_.
+
 .. _git_repo:
 
 Retrieving the latest code
