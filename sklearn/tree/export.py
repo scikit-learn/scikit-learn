@@ -146,6 +146,10 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     fontsize : int, optional (default=None)
         Size of text font. If None, determined automatically to fit figure.
         
+    Returns
+    -------
+    annotations : list of artists
+        List containing the artists for the annotation boxes making up the tree.
 
     Examples
     --------
@@ -156,7 +160,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.plot_tree(clf)                # doctest: +SKIP
+    .. plot::
+    >>> tree.plot_tree(clf)
 
     """
     exporter = _MPLTreeExporter(
@@ -166,7 +171,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         proportion=proportion, rotate=rotate, rounded=rounded,
         special_characters=special_characters, precision=precision,
         fontsize=fontsize)
-    exporter.export(decision_tree, ax=ax)
+    return exporter.export(decision_tree, ax=ax)
 
 
 class _BaseTreeExporter(object):
@@ -191,11 +196,7 @@ class _BaseTreeExporter(object):
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
-        hex_codes = [str(i) for i in range(10)]
-        hex_codes.extend(['a', 'b', 'c', 'd', 'e', 'f'])
-        color = [hex_codes[c // 16] + hex_codes[c % 16] for c in color]
-
-        return '#' + ''.join(color)
+        return '#%2x%2x%2x' % tuple(color)
 
     def get_fill_color(self, tree, node_id):
         # Fetch appropriate color for node
@@ -535,7 +536,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
         name = self.node_to_str(et, node_id, criterion='entropy')
-        if (et.children_left[node_id] != et.children_right[node_id]
+        if (et.children_left[node_id] != _tree.LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
             children = [self._make_tree(et.children_left[node_id], et,
                                         depth=depth + 1),
@@ -552,20 +553,21 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
-        dt = buchheim(my_tree)
+        draw_tree = buchheim(my_tree)
 
         # important to make sure we're still
         # inside the axis after drawing the box
         # this makes sense because the width of a box
         # is about the same as the distance between boxes
-        max_x, max_y = dt.max_extents() + 1
+        max_x, max_y = draw_tree.max_extents() + 1
         ax_width = ax.get_window_extent().width
         ax_height = ax.get_window_extent().height
 
         scale_x = ax_width / max_x
         scale_y = ax_height / max_y
 
-        self.recurse(dt, decision_tree.tree_, ax, scale_x, scale_y, ax_height)
+        self.recurse(draw_tree, decision_tree.tree_, ax,
+                     scale_x, scale_y, ax_height)
 
         anns = [ann for ann in ax.get_children()
                 if isinstance(ann, Annotation)]
@@ -588,6 +590,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
                                                 scale_y / max_height)
             for ann in anns:
                 ann.set_fontsize(size)
+        return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
         kwargs = dict(bbox=self.bbox_args, ha='center', va='center',

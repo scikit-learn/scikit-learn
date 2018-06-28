@@ -12,7 +12,7 @@ For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from
 the training samples.
 
-We also show the tree structure of a model build on all of the features.
+We also show the tree structure of a model built on all of the features.
 """
 print(__doc__)
 

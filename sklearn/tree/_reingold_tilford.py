@@ -56,7 +56,7 @@ class DrawTree(object):
 
 
 def buchheim(tree):
-    dt = firstwalk(DrawTree(tree))
+    dt = first_walk(DrawTree(tree))
     min = second_walk(dt)
     if min < 0:
         third_walk(dt, -min)
@@ -69,7 +69,7 @@ def third_walk(tree, n):
         third_walk(c, n)
 
 
-def firstwalk(v, distance=1.):
+def first_walk(v, distance=1.):
     if len(v.children) == 0:
         if v.lmost_sibling:
             v.x = v.lbrother().x + distance
@@ -78,7 +78,7 @@ def firstwalk(v, distance=1.):
     else:
         default_ancestor = v.children[0]
         for w in v.children:
-            firstwalk(w)
+            first_walk(w)
             default_ancestor = apportion(w, default_ancestor, distance)
         # print("finished v =", v.tree, "children")
         execute_shifts(v)
@@ -178,9 +178,8 @@ def second_walk(v, m=0, depth=0, min=None):
 
 
 class Tree(object):
-    def __init__(self, node="", node_id=-1, *children):
-        self.node = node
-        self.width = len(node)
+    def __init__(self, label="", node_id=-1, *children):
+        self.label = label
         self.node_id = node_id
         if children:
             self.children = children
