@@ -85,6 +85,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     Read more in the :ref:`User Guide <tree>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
@@ -536,7 +538,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
         name = self.node_to_str(et, node_id, criterion='entropy')
-        if (et.children_left[node_id] != _tree.LEAF
+        if (et.children_left[node_id] != _tree.TREE_LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
             children = [self._make_tree(et.children_left[node_id], et,
                                         depth=depth + 1),
@@ -608,12 +610,12 @@ class _MPLTreeExporter(_BaseTreeExporter):
                                                            node.tree.node_id)
             if node.parent is None:
                 # root
-                ax.annotate(node.tree.node, xy, **kwargs)
+                ax.annotate(node.tree.label, xy, **kwargs)
             else:
                 xy_parent = ((node.parent.x + .5) * scale_x,
                              height - (node.parent.y + .5) * scale_y)
                 kwargs["arrowprops"] = self.arrow_args
-                ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
+                ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, scale_x, scale_y, height,
                              depth=depth + 1)
