@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import numpy as np
 
@@ -110,10 +112,12 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
             X_train_sp = sparse_constructor(X_train)
             X_test_sp = sparse_constructor(X_test)
             with pytest.warns(None) as records:
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
             assert len(records) == 0
             assert_allclose(Xt_sp.A, Xt_dense)
             with pytest.warns(None) as records:
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
                 Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
             assert len(records) == 0
             assert_allclose(Xt_inv_sp.A, Xt_inv_dense)

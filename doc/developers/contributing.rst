@@ -400,6 +400,7 @@ and Cython optimizations.
      ====================== ===================
      Commit Message Marker  Action Taken by CI
      ---------------------- -------------------
+     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
      [ci skip]              CI is skipped completely
      [doc skip]             Docs are not built
      [doc quick]            Docs built, but excludes example gallery plots
