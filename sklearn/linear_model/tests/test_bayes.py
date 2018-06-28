@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
@@ -108,6 +109,21 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     for clf in [BayesianRidge(), ARDRegression()]:
         _, y_std = clf.fit(X, y).predict(X, return_std=True)
         assert_array_less(y_std, expected_upper_boundary)
+
+
+def test_update_of_sigma_in_ard():
+    # Checks that `sigma_` is updated correctly after the last iteration
+    # of the ARDRegression algorithm. See issue #10128.
+    X = np.array([[1, 0],
+                  [0, 0]])
+    y = np.array([0, 0])
+    clf = ARDRegression(n_iter=1)
+    clf.fit(X, y)
+    # With the inputs above, ARDRegression prunes one of the two coefficients
+    # in the first iteration. Hence, the expected shape of `sigma_` is (1, 1).
+    assert_equal(clf.sigma_.shape, (1, 1))
+    # Ensure that no error is thrown at prediction stage
+    clf.predict(X, return_std=True)
 
 
 def test_toy_ard_object():

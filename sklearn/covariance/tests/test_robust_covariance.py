@@ -8,15 +8,11 @@ import itertools
 
 import numpy as np
 
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
-from sklearn.covariance import empirical_covariance, MinCovDet, \
-    EllipticEnvelope
+from sklearn.covariance import empirical_covariance, MinCovDet
 from sklearn.covariance import fast_mcd
 
 X = datasets.load_iris().data
@@ -137,22 +133,3 @@ def test_mcd_support_covariance_is_zero():
            'increase support_fraction')
     for X in [X_1, X_2]:
         assert_raise_message(ValueError, msg, MinCovDet().fit, X)
-
-
-def test_outlier_detection():
-    rnd = np.random.RandomState(0)
-    X = rnd.randn(100, 10)
-    clf = EllipticEnvelope(contamination=0.1)
-    assert_raises(NotFittedError, clf.predict, X)
-    assert_raises(NotFittedError, clf.decision_function, X)
-    clf.fit(X)
-    y_pred = clf.predict(X)
-    decision = clf.decision_function(X, raw_values=True)
-    decision_transformed = clf.decision_function(X, raw_values=False)
-
-    assert_array_almost_equal(
-        decision, clf.mahalanobis(X))
-    assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
-    assert_almost_equal(clf.score(X, np.ones(100)),
-                        (100 - y_pred[y_pred == -1].size) / 100.)
-    assert(sum(y_pred == -1) == sum(decision_transformed < 0))

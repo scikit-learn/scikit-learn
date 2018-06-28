@@ -390,5 +390,5 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         else:
             warnings.warn("This model does not have any cluster centers "
                           "because affinity propagation did not converge. "
-                          "Labeling every sample as '-1'.")
+                          "Labeling every sample as '-1'.", ConvergenceWarning)
             return np.array([-1] * X.shape[0])

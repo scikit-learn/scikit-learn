@@ -1,3 +1,4 @@
+import pytest
 from sklearn.utils.testing import assert_array_equal, ignore_warnings
 
 from sklearn.utils.stats import rankdata
@@ -13,12 +14,10 @@ _cases = (
 )
 
 
-@ignore_warnings  # Test deprecated backport to be removed in 0.21
-def test_cases():
+@pytest.mark.parametrize("values, method, expected", _cases)
+def test_cases_rankdata(values, method, expected):
 
-    def check_case(values, method, expected):
+    # Test deprecated backport to be removed in 0.21
+    with ignore_warnings():
         r = rankdata(values, method=method)
         assert_array_equal(r, expected)
-
-    for values, method, expected in _cases:
-        yield check_case, values, method, expected
