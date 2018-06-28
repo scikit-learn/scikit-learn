@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
 import warnings
 
+import pytest
+from scipy import sparse
+
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -28,14 +31,13 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises)
+                                   SkipTest, assert_raises,
+                                   assert_allclose_dense_sparse)
 
 from collections import defaultdict, Mapping
 from functools import partial
 import pickle
 from io import StringIO
-
-import pytest
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -115,42 +117,42 @@ def test_to_ascii():
     assert_equal(strip_accents_ascii(a), expected)
 
 
-def test_word_analyzer_unigrams():
-    for Vectorizer in (CountVectorizer, HashingVectorizer):
-        wa = Vectorizer(strip_accents='ascii').build_analyzer()
-        text = ("J'ai mang\xe9 du kangourou  ce midi, "
-                "c'\xe9tait pas tr\xeas bon.")
-        expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
-                    'etait', 'pas', 'tres', 'bon']
-        assert_equal(wa(text), expected)
+@pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
+def test_word_analyzer_unigrams(Vectorizer):
+    wa = Vectorizer(strip_accents='ascii').build_analyzer()
+    text = ("J'ai mang\xe9 du kangourou  ce midi, "
+            "c'\xe9tait pas tr\xeas bon.")
+    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
+                'etait', 'pas', 'tres', 'bon']
+    assert_equal(wa(text), expected)
 
-        text = "This is a test, really.\n\n I met Harry yesterday."
-        expected = ['this', 'is', 'test', 'really', 'met', 'harry',
-                    'yesterday']
-        assert_equal(wa(text), expected)
+    text = "This is a test, really.\n\n I met Harry yesterday."
+    expected = ['this', 'is', 'test', 'really', 'met', 'harry',
+                'yesterday']
+    assert_equal(wa(text), expected)
 
-        wa = Vectorizer(input='file').build_analyzer()
-        text = StringIO("This is a test with a file-like object!")
-        expected = ['this', 'is', 'test', 'with', 'file', 'like',
-                    'object']
-        assert_equal(wa(text), expected)
+    wa = Vectorizer(input='file').build_analyzer()
+    text = StringIO("This is a test with a file-like object!")
+    expected = ['this', 'is', 'test', 'with', 'file', 'like',
+                'object']
+    assert_equal(wa(text), expected)
 
-        # with custom preprocessor
-        wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-        text = ("J'ai mang\xe9 du kangourou  ce midi, "
-                " c'\xe9tait pas tr\xeas bon.")
-        expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
-                    'ETAIT', 'PAS', 'TRES', 'BON']
-        assert_equal(wa(text), expected)
+    # with custom preprocessor
+    wa = Vectorizer(preprocessor=uppercase).build_analyzer()
+    text = ("J'ai mang\xe9 du kangourou  ce midi, "
+            " c'\xe9tait pas tr\xeas bon.")
+    expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
+                'ETAIT', 'PAS', 'TRES', 'BON']
+    assert_equal(wa(text), expected)
 
-        # with custom tokenizer
-        wa = Vectorizer(tokenizer=split_tokenize,
-                        strip_accents='ascii').build_analyzer()
-        text = ("J'ai mang\xe9 du kangourou  ce midi, "
-                "c'\xe9tait pas tr\xeas bon.")
-        expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
-                    "c'etait", 'pas', 'tres', 'bon.']
-        assert_equal(wa(text), expected)
+    # with custom tokenizer
+    wa = Vectorizer(tokenizer=split_tokenize,
+                    strip_accents='ascii').build_analyzer()
+    text = ("J'ai mang\xe9 du kangourou  ce midi, "
+            "c'\xe9tait pas tr\xeas bon.")
+    expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
+                "c'etait", 'pas', 'tres', 'bon.']
+    assert_equal(wa(text), expected)
 
 
 def test_word_analyzer_unigrams_and_bigrams():
@@ -574,22 +576,17 @@ def test_feature_names():
         assert_equal(idx, cv.vocabulary_.get(name))
 
 
-def test_vectorizer_max_features():
-    vec_factories = (
-        CountVectorizer,
-        TfidfVectorizer,
-    )
-
+@pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
+def test_vectorizer_max_features(Vectorizer):
     expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
     expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
                                u'sparkling', u'water', u'the'])
 
-    for vec_factory in vec_factories:
-        # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=4)
-        vectorizer.fit(ALL_FOOD_DOCS)
-        assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
-        assert_equal(vectorizer.stop_words_, expected_stop_words)
+    # test bounded number of extracted features
+    vectorizer = Vectorizer(max_df=0.6, max_features=4)
+    vectorizer.fit(ALL_FOOD_DOCS)
+    assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
+    assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
 def test_count_vectorizer_max_features():
@@ -713,23 +710,24 @@ def test_hashed_binary_occurrences():
     assert_equal(X.dtype, np.float64)
 
 
-def test_vectorizer_inverse_transform():
+@pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
+def test_vectorizer_inverse_transform(Vectorizer):
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
-        transformed_data = vectorizer.fit_transform(data)
-        inversed_data = vectorizer.inverse_transform(transformed_data)
-        analyze = vectorizer.build_analyzer()
-        for doc, inversed_terms in zip(data, inversed_data):
-            terms = np.sort(np.unique(analyze(doc)))
-            inversed_terms = np.sort(np.unique(inversed_terms))
-            assert_array_equal(terms, inversed_terms)
+    vectorizer = Vectorizer()
+    transformed_data = vectorizer.fit_transform(data)
+    inversed_data = vectorizer.inverse_transform(transformed_data)
+    analyze = vectorizer.build_analyzer()
+    for doc, inversed_terms in zip(data, inversed_data):
+        terms = np.sort(np.unique(analyze(doc)))
+        inversed_terms = np.sort(np.unique(inversed_terms))
+        assert_array_equal(terms, inversed_terms)
 
-        # Test that inverse_transform also works with numpy arrays
-        transformed_data = transformed_data.toarray()
-        inversed_data2 = vectorizer.inverse_transform(transformed_data)
-        for terms, terms2 in zip(inversed_data, inversed_data2):
-            assert_array_equal(np.sort(terms), np.sort(terms2))
+    # Test that inverse_transform also works with numpy arrays
+    transformed_data = transformed_data.toarray()
+    inversed_data2 = vectorizer.inverse_transform(transformed_data)
+    for terms, terms2 in zip(inversed_data, inversed_data2):
+        assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
 def test_count_vectorizer_pipeline_grid_selection():
@@ -1030,16 +1028,52 @@ def test_vectorizer_vocab_clone():
     assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
 
 
-def test_vectorizer_string_object_as_input():
+@pytest.mark.parametrize('Vectorizer',
+                         (CountVectorizer, TfidfVectorizer, HashingVectorizer))
+def test_vectorizer_string_object_as_input(Vectorizer):
     message = ("Iterable over raw text documents expected, "
                "string object received.")
-    for vec in [CountVectorizer(), TfidfVectorizer(), HashingVectorizer()]:
-        assert_raise_message(
+    vec = Vectorizer()
+    assert_raise_message(
             ValueError, message, vec.fit_transform, "hello world!")
-        assert_raise_message(
-            ValueError, message, vec.fit, "hello world!")
-        assert_raise_message(
-            ValueError, message, vec.transform, "hello world!")
+    assert_raise_message(ValueError, message, vec.fit, "hello world!")
+    assert_raise_message(ValueError, message, vec.transform, "hello world!")
+
+
+@pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
+def test_tfidf_transformer_type(X_dtype):
+    X = sparse.rand(10, 20000, dtype=X_dtype, random_state=42)
+    X_trans = TfidfTransformer().fit_transform(X)
+    assert X_trans.dtype == X.dtype
+
+
+def test_tfidf_transformer_sparse():
+    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X_csc = sparse.csc_matrix(X)
+    X_csr = sparse.csr_matrix(X)
+
+    X_trans_csc = TfidfTransformer().fit_transform(X_csc)
+    X_trans_csr = TfidfTransformer().fit_transform(X_csr)
+    assert_allclose_dense_sparse(X_trans_csc, X_trans_csr)
+    assert X_trans_csc.format == X_trans_csr.format
+
+
+@pytest.mark.parametrize(
+    "vectorizer_dtype, output_dtype, expected_warning, msg_warning",
+    [(np.int32, np.float64, UserWarning, "'dtype' should be used."),
+     (np.int64, np.float64, UserWarning, "'dtype' should be used."),
+     (np.float32, np.float32, None, None),
+     (np.float64, np.float64, None, None)]
+)
+def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
+                               expected_warning, msg_warning):
+    X = np.array(["numpy", "scipy", "sklearn"])
+    vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
+    with pytest.warns(expected_warning, match=msg_warning) as record:
+            X_idf = vectorizer.fit_transform(X)
+    if expected_warning is None:
+        assert len(record) == 0
+    assert X_idf.dtype == output_dtype
 
 
 @pytest.mark.parametrize("vec", [

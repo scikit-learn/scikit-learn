@@ -4,6 +4,8 @@ import sys
 import numpy as np
 from scipy import sparse as sp
 
+import pytest
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -274,30 +276,31 @@ def test_k_means_n_init():
     assert_raises_regex(ValueError, "n_init", KMeans(n_init=-1).fit, X)
 
 
-def test_k_means_explicit_init_shape():
+@pytest.mark.parametrize('Class', [KMeans, MiniBatchKMeans])
+def test_k_means_explicit_init_shape(Class):
     # test for sensible errors when giving explicit init
     # with wrong number of features or clusters
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(40, 3))
-    for Class in [KMeans, MiniBatchKMeans]:
-        # mismatch of number of features
-        km = Class(n_init=1, init=X[:, :2], n_clusters=len(X))
-        msg = "does not match the number of features of the data"
-        assert_raises_regex(ValueError, msg, km.fit, X)
-        # for callable init
-        km = Class(n_init=1,
-                   init=lambda X_, k, random_state: X_[:, :2],
-                   n_clusters=len(X))
-        assert_raises_regex(ValueError, msg, km.fit, X)
-        # mismatch of number of clusters
-        msg = "does not match the number of clusters"
-        km = Class(n_init=1, init=X[:2, :], n_clusters=3)
-        assert_raises_regex(ValueError, msg, km.fit, X)
-        # for callable init
-        km = Class(n_init=1,
-                   init=lambda X_, k, random_state: X_[:2, :],
-                   n_clusters=3)
-        assert_raises_regex(ValueError, msg, km.fit, X)
+
+    # mismatch of number of features
+    km = Class(n_init=1, init=X[:, :2], n_clusters=len(X))
+    msg = "does not match the number of features of the data"
+    assert_raises_regex(ValueError, msg, km.fit, X)
+    # for callable init
+    km = Class(n_init=1,
+               init=lambda X_, k, random_state: X_[:, :2],
+               n_clusters=len(X))
+    assert_raises_regex(ValueError, msg, km.fit, X)
+    # mismatch of number of clusters
+    msg = "does not match the number of clusters"
+    km = Class(n_init=1, init=X[:2, :], n_clusters=3)
+    assert_raises_regex(ValueError, msg, km.fit, X)
+    # for callable init
+    km = Class(n_init=1,
+               init=lambda X_, k, random_state: X_[:2, :],
+               n_clusters=3)
+    assert_raises_regex(ValueError, msg, km.fit, X)
 
 
 def test_k_means_fortran_aligned_data():
@@ -786,46 +789,46 @@ def test_max_iter_error():
                          km.fit, X)
 
 
-def test_float_precision():
-    km = KMeans(n_init=1, random_state=30)
-    mb_km = MiniBatchKMeans(n_init=1, random_state=30)
+@pytest.mark.parametrize('Estimator', [KMeans, MiniBatchKMeans])
+@pytest.mark.parametrize('is_sparse', [False, True])
+def test_float_precision(Estimator, is_sparse):
+
+    estimator = Estimator(n_init=1, random_state=30)
 
     inertia = {}
     X_new = {}
     centers = {}
 
-    for estimator in [km, mb_km]:
-        for is_sparse in [False, True]:
-            for dtype in [np.float64, np.float32]:
-                if is_sparse:
-                    X_test = sp.csr_matrix(X_csr, dtype=dtype)
-                else:
-                    X_test = X.astype(dtype)
-                estimator.fit(X_test)
-                # dtype of cluster centers has to be the dtype of the input
-                # data
-                assert_equal(estimator.cluster_centers_.dtype, dtype)
-                inertia[dtype] = estimator.inertia_
-                X_new[dtype] = estimator.transform(X_test)
-                centers[dtype] = estimator.cluster_centers_
-                # ensure the extracted row is a 2d array
-                assert_equal(estimator.predict(X_test[:1]),
-                             estimator.labels_[0])
-                if hasattr(estimator, 'partial_fit'):
-                    estimator.partial_fit(X_test[0:3])
-                    # dtype of cluster centers has to stay the same after
-                    # partial_fit
-                    assert_equal(estimator.cluster_centers_.dtype, dtype)
+    for dtype in [np.float64, np.float32]:
+        if is_sparse:
+            X_test = sp.csr_matrix(X_csr, dtype=dtype)
+        else:
+            X_test = X.astype(dtype)
+        estimator.fit(X_test)
+        # dtype of cluster centers has to be the dtype of the input
+        # data
+        assert_equal(estimator.cluster_centers_.dtype, dtype)
+        inertia[dtype] = estimator.inertia_
+        X_new[dtype] = estimator.transform(X_test)
+        centers[dtype] = estimator.cluster_centers_
+        # ensure the extracted row is a 2d array
+        assert_equal(estimator.predict(X_test[:1]),
+                     estimator.labels_[0])
+        if hasattr(estimator, 'partial_fit'):
+            estimator.partial_fit(X_test[0:3])
+            # dtype of cluster centers has to stay the same after
+            # partial_fit
+            assert_equal(estimator.cluster_centers_.dtype, dtype)
 
-            # compare arrays with low precision since the difference between
-            # 32 and 64 bit sometimes makes a difference up to the 4th decimal
-            # place
-            assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
-                                      decimal=4)
-            assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
-                                      decimal=4)
-            assert_array_almost_equal(centers[np.float32], centers[np.float64],
-                                      decimal=4)
+    # compare arrays with low precision since the difference between
+    # 32 and 64 bit sometimes makes a difference up to the 4th decimal
+    # place
+    assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
+                              decimal=4)
+    assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
+                              decimal=4)
+    assert_array_almost_equal(centers[np.float32], centers[np.float64],
+                              decimal=4)
 
 
 def test_k_means_init_centers():
