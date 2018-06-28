@@ -143,7 +143,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         impurity, threshold and value attributes of each node.
 
     ax : matplotlib axis, optional (default=None)
-        Axes to plot to. If None, use current axis.
+        Axes to plot to. If None, use current axis. Any previous content
+        is cleared.
 
     fontsize : int, optional (default=None)
         Size of text font. If None, determined automatically to fit figure.
@@ -553,6 +554,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         from matplotlib.text import Annotation
         if ax is None:
             ax = plt.gca()
+        ax.clear()
         ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
         draw_tree = buchheim(my_tree)
