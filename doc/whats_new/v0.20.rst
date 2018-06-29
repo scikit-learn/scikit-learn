@@ -143,7 +143,8 @@ Misc
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 - An environment variable to use the site joblib instead of the vendored
-  one was added (:ref:`environment_variable`) by `Gael Varoquaux`_
+  one was added (:ref:`environment_variable`).
+  :issue:`11166`by `Gael Varoquaux`_
 
 Enhancements
 ............
