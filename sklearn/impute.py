@@ -118,7 +118,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
 
-    fill_value : string or numerical value, optional
+    fill_value : string or numerical value, optional (default=None)
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
         If left to the default, fill_value will be 0 when imputing numerical

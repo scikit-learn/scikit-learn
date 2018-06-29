@@ -34,6 +34,15 @@ needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
 joins :class:`~preprocessing.QuantileTransformer` as a non-linear
 transformation.
 
+Beyond this, we have added :term:`sample_weight` support to several estimators
+(including :class:`~cluster.KMeans`, :class:`~linear_model.BayesianRidge` and
+:class:`~neighbors.KernelDensity`) and improved stopping criteria in others
+(including :class:`~neural_network.MLPRegressor`,
+:class:`~ensemble.GradientBoostingRegressor` and
+:class:`~linear_model.SGDRegressor`).
+
+.. FIXME: remove SGDRegressor if #9043 is not merged for release
+
 This release is also the first to be accompanied by a :ref:`glossary` developed
 by `Joel Nothman`_. The glossary is a reference resource to help users and
 contributors become familiar with the terminology and conventions used in
