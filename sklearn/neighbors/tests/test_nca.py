@@ -2,6 +2,7 @@ import pytest
 import sys
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+from scipy.optimize import check_grad
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six import StringIO
@@ -41,69 +42,25 @@ def test_simple_example():
 
 
 def test_finite_differences():
-    r"""Test gradient of loss function
+    """Test gradient of loss function
 
-    Test if the gradient is correct by computing the relative difference
-    between the projected gradient PG:
-
-    .. math::
-
-        PG = \mathbf d^{\top} \cdot \nabla
-        \mathcal L(\mathbf x)
-
-    and the finite differences FD:
-
-    .. math::
-
-        FD = \frac{\mathcal L(\mathbf x + \epsilon \mathbf d) -
-        \mathcal L(\mathbf x - \epsilon \mathbf d)}{2 \epsilon}
-
-
-    where :math:`d` is a random direction (random vector of shape `n_features`,
-    and norm 1), :math:`\epsilon` is a very small number, :math:`\mathcal L` is
-    the loss function and :math:`\nabla \mathcal L` is its gradient. This
-    relative difference should be zero:
-
-    .. math ::
-
-        \frac{|PG -FD|}{|PG|} = 0
-
-
+    Assert that the gradient is almost equal to its finite differences
+    approximation.
     """
-    # Initialize `transformation`, `X` and `y` and `NCA`
-    X = iris_data
-    y = iris_target
-    point = rng.randn(rng.randint(1, X.shape[1] + 1), X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(init=point)
-
-    X, y, init = nca._validate_params(X, y)
-    mask = y[:, np.newaxis] == y[np.newaxis, :]  # (n_samples, n_samples)
+    # Initialize the transformation `M`, as well as `X` and `y` and `NCA`
+    X, y = make_classification()
+    M = rng.randn(rng.randint(1, X.shape[1] + 1), X.shape[1])
+    nca = NeighborhoodComponentsAnalysis()
     nca.n_iter_ = 0
+    mask = y[:, np.newaxis] == y[np.newaxis, :]
 
-    point = nca._initialize(X, y, init)
-    # compute the gradient at `point`
-    _, gradient = nca._loss_grad_lbfgs(point, X, mask)
+    def fun(M): return nca._loss_grad_lbfgs(M, X, mask)[0]
 
-    # create a random direction of norm 1
-    random_direction = rng.randn(*point.shape)
-    random_direction /= np.linalg.norm(random_direction)
-
-    # computes projected gradient
-    projected_gradient = random_direction.ravel().dot(
-                                      gradient.ravel())
-
-    # compute finite differences
-    eps = 1e-5
-    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction, X,
-                                         mask)
-    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction, X,
-                                        mask)
-    finite_differences = 1 / (2 * eps) * (right_loss - left_loss)
+    def grad(M): return nca._loss_grad_lbfgs(M, X, mask)[1]
 
     # compute relative error
-    relative_error = np.abs(finite_differences - projected_gradient) / \
-        np.abs(projected_gradient)
-    np.testing.assert_almost_equal(relative_error, 0.)
+    rel_diff = check_grad(fun, grad, M.ravel()) / np.linalg.norm(grad(M))
+    np.testing.assert_almost_equal(rel_diff, 0., decimal=6)
 
 
 def test_params_validation():
