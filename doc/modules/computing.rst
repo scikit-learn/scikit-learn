@@ -18,7 +18,7 @@ Scaling with instances using out-of-core learning
 Out-of-core (or "external memory") learning is a technique used to learn from
 data that cannot fit in a computer's main memory (RAM).
 
-Here is sketch of a system designed to achieve this goal:
+Here is a sketch of a system designed to achieve this goal:
 
   1. a way to stream instances
   2. a way to extract features from instances
