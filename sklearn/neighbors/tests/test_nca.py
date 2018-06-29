@@ -60,7 +60,7 @@ def test_finite_differences():
 
     # compute relative error
     rel_diff = check_grad(fun, grad, M.ravel()) / np.linalg.norm(grad(M))
-    np.testing.assert_almost_equal(rel_diff, 0., decimal=6)
+    np.testing.assert_almost_equal(rel_diff, 0., decimal=5)
 
 
 def test_params_validation():
