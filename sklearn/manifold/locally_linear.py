@@ -69,9 +69,9 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
 
     Parameters
     ----------
-    X : {array-like, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -193,9 +193,9 @@ def locally_linear_embedding(
 
     Parameters
     ----------
-    X : {array-like, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
