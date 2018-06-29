@@ -25,12 +25,15 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     The computation during ``fit`` is::
 
         regressor.fit(X, func(y))
+
     or::
 
         regressor.fit(X, transformer.transform(y))
+
     The computation during ``predict`` is::
 
         inverse_func(regressor.predict(X))
+
     or::
 
         transformer.inverse_transform(regressor.predict(X))
@@ -97,8 +100,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as ``y``.
 
-    See :ref:`examples/preprocessing/plot_transformed_target.py
-    <sphx_glr_auto_examples_preprocessing_plot_transformed_target.py>`.
+    See :ref:`examples/compose/plot_transformed_target.py
+    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     """
     def __init__(self, regressor=None, transformer=None,

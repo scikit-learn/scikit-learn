@@ -126,7 +126,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
-    r"""Compute Lasso path with coordinate descent
+    """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
 
@@ -140,7 +140,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -269,7 +269,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    r"""Compute elastic net path with coordinate descent
+    """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -287,7 +287,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1600,7 +1600,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskElasticNet(Lasso):
-    r"""Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1610,7 +1610,7 @@ class MultiTaskElasticNet(Lasso):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1677,7 +1677,7 @@ class MultiTaskElasticNet(Lasso):
         Independent term in decision function.
 
     coef_ : array, shape (n_tasks, n_features)
-        Parameter vector (W in the cost function formula). If a 1D y is \
+        Parameter vector (W in the cost function formula). If a 1D y is
         passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
@@ -1803,7 +1803,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    r"""Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for Lasso is::
 
@@ -1811,7 +1811,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1922,7 +1922,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    r"""Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1932,7 +1932,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -2107,7 +2107,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    r"""Multi-task L1/L2 Lasso with built-in cross-validation.
+    """Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskLasso is::
 
@@ -2115,7 +2115,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 

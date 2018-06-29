@@ -2,7 +2,6 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
-from itertools import product
 import warnings
 from scipy.sparse import csr_matrix
 
@@ -177,19 +176,19 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-def test_roc_curve():
+@pytest.mark.parametrize('drop', [True, False])
+def test_roc_curve(drop):
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
     expected_auc = _auc(y_true, probas_pred)
 
-    for drop in [True, False]:
-        fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
-                                         drop_intermediate=drop)
-        roc_auc = auc(fpr, tpr)
-        assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-        assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-        assert_equal(fpr.shape, tpr.shape)
-        assert_equal(fpr.shape, thresholds.shape)
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+                                     drop_intermediate=drop)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
+    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
@@ -923,18 +922,29 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
     assert_almost_equal(score_lrap, score_my_lrap)
 
 
-def test_label_ranking_avp():
-    for fn in [label_ranking_average_precision_score, _my_lrap]:
-        yield check_lrap_toy, fn
-        yield check_lrap_without_tie_and_increasing_score, fn
-        yield check_lrap_only_ties, fn
-        yield check_zero_or_all_relevant_labels, fn
-        yield check_lrap_error_raised, label_ranking_average_precision_score
+@pytest.mark.parametrize(
+        'check',
+        (check_lrap_toy,
+         check_lrap_without_tie_and_increasing_score,
+         check_lrap_only_ties,
+         check_zero_or_all_relevant_labels))
+@pytest.mark.parametrize(
+        'func',
+        (label_ranking_average_precision_score, _my_lrap))
+def test_label_ranking_avp(check, func):
+    check(func)
 
-    for n_samples, n_classes, random_state in product((1, 2, 8, 20),
-                                                      (2, 5, 10),
-                                                      range(1)):
-        yield (check_alternative_lrap_implementation,
+
+def test_lrap_error_raised():
+    check_lrap_error_raised(label_ranking_average_precision_score)
+
+
+@pytest.mark.parametrize('n_samples', (1, 2, 8, 20))
+@pytest.mark.parametrize('n_classes', (2, 5, 10))
+@pytest.mark.parametrize('random_state', range(1))
+def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
+
+    check_alternative_lrap_implementation(
                label_ranking_average_precision_score,
                n_classes, n_samples, random_state)
 

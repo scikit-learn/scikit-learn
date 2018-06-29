@@ -21,6 +21,7 @@ from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -141,18 +142,22 @@ def _rename_partial(val):
 )
 def test_non_meta_estimators(name, Estimator, check):
     # Common tests for non-meta estimators
-    estimator = Estimator()
-    set_checking_parameters(estimator)
-    check(name, estimator)
+    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        estimator = Estimator()
+        set_checking_parameters(estimator)
+        check(name, estimator)
 
 
 @pytest.mark.parametrize("name, Estimator",
                          _tested_non_meta_estimators())
 def test_no_attributes_set_in_init(name, Estimator):
     # input validation etc for non-meta estimators
-    estimator = Estimator()
-    # check this on class
-    check_no_attributes_set_in_init(name, estimator)
+    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        estimator = Estimator()
+        # check this on class
+        check_no_attributes_set_in_init(name, estimator)
 
 
 def test_configure():

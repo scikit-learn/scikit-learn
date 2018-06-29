@@ -523,8 +523,11 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the `confusion matrix
+classification accuracy by computing the confusion matrix
+with each row corresponding to the true class
 <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
+(Wikipedia and other references may use different convention for axes.)
+
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -565,7 +568,7 @@ false negatives and true positives as follows::
     for an example of using a confusion matrix to classify
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of using a confusion matrix to classify text
     documents.
 
@@ -598,7 +601,7 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of classification report usage for text
     documents.
 
@@ -749,7 +752,7 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage to classify  text
     documents.
 

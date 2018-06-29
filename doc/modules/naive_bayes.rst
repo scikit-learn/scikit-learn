@@ -8,17 +8,18 @@ Naive Bayes
 
 
 Naive Bayes methods are a set of supervised learning algorithms
-based on applying Bayes' theorem with the "naive" assumption of independence
-between every pair of features. Given a class variable :math:`y` and a
-dependent feature vector :math:`x_1` through :math:`x_n`,
-Bayes' theorem states the following relationship:
+based on applying Bayes' theorem with the "naive" assumption of
+conditional independence between every pair of features given the
+value of the class variable. Bayes' theorem states the following
+relationship, given class variable :math:`y` and dependent feature
+vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
    P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Using the naive independence assumption that
+Using the naive conditional independence assumption that
 
 .. math::
 

@@ -37,6 +37,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import create_memmap_backed_data
+from sklearn.utils import is_scalar_nan
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import Ridge
 
@@ -61,7 +62,8 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
-from sklearn.utils.validation import has_fit_parameter, _num_samples
+from sklearn.utils.validation import (has_fit_parameter, _num_samples,
+                                      LARGE_SPARSE_SUPPORTED)
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -94,8 +96,9 @@ def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
                                   err_msg=err_msg)
 
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MICEImputer',
-             'MinMaxScaler', 'QuantileTransformer']
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer',
+             'MaxAbsScaler', 'MinMaxScaler', 'StandardScaler',
+             'PowerTransformer', 'QuantileTransformer']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -151,7 +154,6 @@ def _yield_classifier_checks(name, classifier):
     if tags["input_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
-    # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
@@ -280,9 +282,7 @@ def _yield_all_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
-    if name != 'GaussianProcess':  # FIXME
-        # XXX GaussianProcess deprecated in 0.20
-        yield check_fit2d_1sample
+    yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
@@ -323,10 +323,10 @@ def check_estimator(Estimator):
     for check in _yield_all_checks(name, estimator):
         try:
             check(name, estimator)
-        except SkipTest as message:
+        except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
-            warnings.warn(message, SkipTestWarning)
+            warnings.warn(str(exception), SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
@@ -349,7 +349,6 @@ def set_checking_parameters(estimator):
     if ("n_iter" in params and name != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
@@ -467,6 +466,40 @@ def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
     return X
 
 
+def _generate_sparse_matrix(X_csr):
+    """Generate sparse matrices with {32,64}bit indices of diverse format
+
+        Parameters
+        ----------
+        X_csr: CSR Matrix
+            Input matrix in CSR format
+
+        Returns
+        -------
+        out: iter(Matrices)
+            In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
+             'coo_64', 'csc_64', 'csr_64']
+    """
+
+    assert X_csr.format == 'csr'
+    yield 'csr', X_csr.copy()
+    for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csc', 'coo']:
+        yield sparse_format, X_csr.asformat(sparse_format)
+
+    if LARGE_SPARSE_SUPPORTED:
+        # Generate large indices matrix only if its supported by scipy
+        X_coo = X_csr.asformat('coo')
+        X_coo.row = X_coo.row.astype('int64')
+        X_coo.col = X_coo.col.astype('int64')
+        yield "coo_64", X_coo
+
+        for sparse_format in ['csc', 'csr']:
+            X = X_csr.asformat(sparse_format)
+            X.indices = X.indices.astype('int64')
+            X.indptr = X.indptr.astype('int64')
+            yield sparse_format + "_64", X
+
+
 def check_estimator_sparse_data(name, estimator_orig):
 
     rng = np.random.RandomState(0)
@@ -479,8 +512,7 @@ def check_estimator_sparse_data(name, estimator_orig):
     with ignore_warnings(category=DeprecationWarning):
         estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
-        X = X_csr.asformat(sparse_format)
+    for matrix_format, X in _generate_sparse_matrix(X_csr):
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             estimator = clone(estimator_orig)
@@ -501,12 +533,18 @@ def check_estimator_sparse_data(name, estimator_orig):
                 assert_equal(probs.shape, (X.shape[0], 4))
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
-                print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data: error message state explicitly that "
-                      "sparse input is not supported if this is not the case."
-                      % name)
-                raise
-        except Exception:
+                if "64" in matrix_format:
+                    msg = ("Estimator %s doesn't seem to support %s matrix, "
+                           "and is not failing gracefully, e.g. by using "
+                           "check_array(X, accept_large_sparse=False)")
+                    raise AssertionError(msg % (name, matrix_format))
+                else:
+                    print("Estimator %s doesn't seem to fail gracefully on "
+                          "sparse data: error message state explicitly that "
+                          "sparse input is not supported if this is not"
+                          " the case." % name)
+                    raise
+        except Exception as e:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
@@ -2101,6 +2139,7 @@ def check_parameters_default_constructible(name, Estimator):
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
+
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
@@ -2134,7 +2173,11 @@ def check_parameters_default_constructible(name, Estimator):
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                assert_equal(param_value, init_param.default, init_param.name)
+                if is_scalar_nan(param_value):
+                    # Allows to set default parameters to np.nan
+                    assert param_value is init_param.default, init_param.name
+                else:
+                    assert param_value == init_param.default, init_param.name
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):
