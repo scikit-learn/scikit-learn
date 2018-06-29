@@ -2,7 +2,6 @@ import unittest
 import sys
 
 import numpy as np
-
 import scipy.sparse as sp
 
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -26,7 +25,8 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.validation import (check_X_y, check_array,
+                                      LARGE_SPARSE_SUPPORTED)
 
 
 class CorrectNotFittedError(ValueError):
@@ -163,6 +163,26 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class LargeSparseNotSupportedClassifier(BaseEstimator):
+    def fit(self, X, y):
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc", "coo"),
+                         accept_large_sparse=True,
+                         multi_output=True,
+                         y_numeric=True)
+        if sp.issparse(X):
+            if X.getformat() == "coo":
+                if X.row.dtype == "int64" or X.col.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+            elif X.getformat() in ["csc", "csr"]:
+                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+
+        return self
+
+
 class SparseTransformer(BaseEstimator):
     def fit(self, X, y=None):
         self.X_shape_ = check_array(X).shape
@@ -264,6 +284,14 @@ def test_check_estimator():
     finally:
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
+
+    # Large indices test on bad estimator
+    msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
+           r'support \S{3}_64 matrix, and is not failing gracefully.*')
+    # only supported by scipy version more than 0.14.0
+    if LARGE_SPARSE_SUPPORTED:
+        assert_raises_regex(AssertionError, msg, check_estimator,
+                            LargeSparseNotSupportedClassifier)
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())

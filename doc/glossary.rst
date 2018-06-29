@@ -435,6 +435,13 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
     indexable
         An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
         sequence (usually a list).
@@ -486,7 +493,7 @@ General Concepts
         do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
-        specifying another ``missing_values`` value when imputation or
+        specifying another ``missing_values`` value when :term:`imputation` or
         learning can be performed in integer space.  :term:`Unlabeled data`
         is a special case of missing values in the :term:`target`.
 

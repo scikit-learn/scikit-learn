@@ -1210,36 +1210,10 @@ def test_check_cv():
     cv = check_cv(3, y_multioutput, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 
-    # Check if the old style classes are wrapped to have a split method
-    X = np.ones(9)
-    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
-    cv1 = check_cv(3, y_multiclass, classifier=True)
-
-    with warnings.catch_warnings(record=True):
-        from sklearn.cross_validation import StratifiedKFold as OldSKF
-
-    cv2 = check_cv(OldSKF(y_multiclass, n_folds=3))
-    np.testing.assert_equal(list(cv1.split(X, y_multiclass)),
-                            list(cv2.split()))
-
     assert_raises(ValueError, check_cv, cv="lolo")
 
 
 def test_cv_iterable_wrapper():
-    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
-
-    with warnings.catch_warnings(record=True):
-        from sklearn.cross_validation import StratifiedKFold as OldSKF
-
-    cv = OldSKF(y_multiclass, n_folds=3)
-    wrapped_old_skf = _CVIterableWrapper(cv)
-
-    # Check if split works correctly
-    np.testing.assert_equal(list(cv), list(wrapped_old_skf.split()))
-
-    # Check if get_n_splits works correctly
-    assert_equal(len(cv), wrapped_old_skf.get_n_splits())
-
     kf_iter = KFold(n_splits=5).split(X, y)
     kf_iter_wrapped = check_cv(kf_iter)
     # Since the wrapped iterable is enlisted and stored,

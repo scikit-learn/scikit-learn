@@ -120,7 +120,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             if self._categories == 'auto':
                 cats = _encode(Xi)
             else:
-                cats = np.array(self._categories[i])
+                cats = np.array(self._categories[i], dtype=X.dtype)
                 if self.handle_unknown == 'error':
                     diff = _encode_check_unknown(Xi, cats)
                     if diff:

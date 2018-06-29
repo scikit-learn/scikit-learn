@@ -78,7 +78,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     source testvenv/bin/activate
     pip install pytest pytest-cov cython==$CYTHON_VERSION
 
-elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
+elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
     # This venv points to the python interpreter of the travis build
     # matrix.
