@@ -47,12 +47,13 @@ variance, the standard errors of all regression coefficients are larger with
 multiple imputation than with single imputation. This allows for valid
 statistical inference making.
 
-In example 2 we show how to set up a prediction model using multiple imputation.
-We compare two approaches. In one approach, we make predictions for each of the
-m datasets and combine the m evaluation error metrics into one overall value.
-In the other approach, we combine the predictions and calculate one evaluation
-error metric over the averaged predictions. A short simulation study shows that
-the second approach results in the smallest Mean Squared Error.
+In example 2 we show how to set up a prediction model using multiple
+imputation. We compare two approaches. In one approach, we make predictions for
+each of the m datasets and combine the m evaluation error metrics into one
+overall value. In the other approach, we combine the predictions and calculate
+one evaluation error metric over the averaged predictions. A short simulation
+study shows that the second approach results in the smallest Mean Squared
+Error.
 """
 
 import numpy as np
