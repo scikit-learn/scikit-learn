@@ -1036,9 +1036,12 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    generators_ : array of shape (n_features,)
-        The number generator to impute missing values with values drawn
-        uniformly at random from the non-missing values of each feature.
+    uniques_ : array of shape (n_features,)
+        For each feature i, uniques_[i] contains all the non-missing values
+        in that feature without repetitions.
+
+    probas_ : array of shape (n_features,)
+        The probabilities associated with all the values in uniques_.
 
     Notes
     -----
@@ -1081,13 +1084,13 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         X = self._validate_input(X)
 
         if sparse.issparse(X):
-            self.generators_ = self._sparse_fit(X,
-                                                self.missing_values,
-                                                self.random_state_)
+            self.uniques_, self.probas_ = self._sparse_fit(X,
+                                                           self.missing_values,
+                                                           self.random_state_)
         else:
-            self.generators_ = self._dense_fit(X,
-                                               self.missing_values,
-                                               self.random_state_)
+            self.uniques_, self.probas_ = self._dense_fit(X,
+                                                          self.missing_values,
+                                                          self.random_state_)
 
         return self
 
@@ -1100,22 +1103,22 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         mask = _get_mask(X, missing_values)
         mask = np.logical_not(mask)
 
-        X = X.transpose()
-        mask = mask.transpose()
+        uniques = np.empty(X.shape[1], dtype=object)
+        probas = np.empty(X.shape[1], dtype=object)
 
-        generators = np.empty(X.shape[0], dtype=object)
-
-        for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
-            row = row[row_mask]
+        for i in range(X.shape[1]):
+            row = X[mask[:, i], i]
             if row.size > 0:
-                uniques, counts = np.unique(row, return_counts=True)
-                probas = counts / counts.sum()
-                g = lambda k: random_state.choice(uniques, k, p=probas)
-                generators[i] = g
+                uniques[i], counts = np.unique(row, return_counts=True)
+                if uniques[i].size == row.size:
+                    probas[i] = None
+                else:
+                    probas[i] = counts / counts.sum()
             else:
-                generators[i] = None
+                uniques[i] = None
+                probas[i] = None
 
-        return generators
+        return uniques, probas
 
     def transform(self, X):
         """Impute all missing values in X.
@@ -1125,28 +1128,33 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        check_is_fitted(self, 'generators_')
+        check_is_fitted(self, ("uniques_", "probas_"))
 
         X = self._validate_input(X)
 
-        generators = self.generators_
+        uniques = self.uniques_
+        probas = self.probas_
 
-        if X.shape[1] != generators.shape[0]:
+        if X.shape[1] != uniques.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
-                             % (X.shape[1], self.statistics_.shape[0]))
+                             % (X.shape[1], self.uniques_.shape[0]))
 
         # Delete the invalid columns
-        invalid_mask = _get_mask(generators, None)
+        def is_none(x):
+            return x is None
+
+        invalid_mask = np.vectorize(is_none)(uniques)
         valid_mask = np.logical_not(invalid_mask)
-        valid_generators = generators[valid_mask]
-        valid_generators_indexes = np.flatnonzero(valid_mask)
+        valid_uniques = uniques[valid_mask]
+        valid_probas = probas[valid_mask]
+        valid_indexes = np.flatnonzero(valid_mask)
 
         if invalid_mask.any():
             missing = np.arange(X.shape[1])[invalid_mask]
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
-            X = X[:, valid_generators_indexes]
+            X = X[:, valid_indexes]
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
@@ -1159,7 +1167,9 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             for i in range(n_missing.shape[0]):
-                values = generators[i](n_missing[i])
+                values = self.random_state_.choice(valid_uniques[i],
+                                                   n_missing[i],
+                                                   p=valid_probas[i])
                 coordinates = np.nonzero(mask[:, i])
                 X[coordinates, i] = values
 

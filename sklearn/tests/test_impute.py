@@ -14,7 +14,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
-from sklearn.impute import SimpleImputer, MICEImputer
+from sklearn.impute import SimpleImputer, MICEImputer, SamplingImputer
+from sklearn.impute import _get_mask
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.pipeline import Pipeline
@@ -706,3 +707,29 @@ def test_mice_additive_matrix():
                           random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.01)
+
+
+def test_sampling_1D():
+    # check that: - filled values are drawn only within non-missing values
+    #             - different random_states give different imputations
+    #             - values are drawn uniformly at random
+    X = np.random.rand(20).reshape(-1, 1)
+    X[::2] = np.nan
+
+    uniques = np.unique(X)
+    uniques = uniques[~_get_mask(uniques, np.nan)]
+
+    imputer = SamplingImputer()
+    Xts = []
+    for i in range(100):
+        Xt = imputer.set_params(random_state=i).fit_transform(X)
+        assert_array_equal(uniques, np.unique(Xt))
+        Xts.append(Xt)
+
+    tests = np.full(100, True)
+    for i in range(100):
+        tests[i] = np.allclose(Xts[i], Xts[i-1])
+    assert not np.all(tests)
+
+    assert np.mean(np.concatenate(Xts)) == pytest.approx(np.nanmean(X),
+                                                         rel=1e-2)
