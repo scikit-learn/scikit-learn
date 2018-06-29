@@ -179,7 +179,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
         np.pad(thresholds,
                pad_width=(0, pad_threshholds),
                mode='constant',
-               constant_values=np.nan)
+               constant_values=[np.nan])
     ])
 
 
