@@ -973,9 +973,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : integer or np.NaN, optional (default=np.NaN)
+    missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be represented as ones.
+        `missing_values` will be imputed.
 
     features : str, optional
         Whether the imputer mask should represent all or a subset of
@@ -1027,7 +1027,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, missing_values="NaN", features="missing-only",
+    def __init__(self, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
         self.missing_values = missing_values
         self.features = features
