@@ -355,7 +355,7 @@ instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices
 of a single numeric dtype. These do not explicitly represent categorical

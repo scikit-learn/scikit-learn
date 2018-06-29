@@ -70,6 +70,17 @@ except TypeError:
         return out
 
 
+# boxcox ignore NaN in scipy.special.boxcox after 0.14
+if sp_version < (0, 14):
+    from scipy import stats
+
+    def boxcox(x, lmbda):
+        with np.errstate(invalid='ignore'):
+            return stats.boxcox(x, lmbda)
+else:
+    from scipy.special import boxcox  # noqa
+
+
 if sp_version < (0, 15):
     # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr

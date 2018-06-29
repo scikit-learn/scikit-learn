@@ -8,10 +8,11 @@ value using the basic ``SimpleImputer``.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
-Another option is the MICE imputer. This uses round-robin linear regression,
-treating every variable as an output in turn. The version implemented assumes
-Gaussian (output) variables. If your features are obviously non-Normal,
-consider transforming them to look more Normal so as to improve performance.
+Another option is the ``ChainedImputer``. This uses round-robin linear
+regression, treating every variable as an output in turn. The version
+implemented assumes Gaussian (output) variables. If your features are obviously
+non-Normal, consider transforming them to look more Normal so as to improve
+performance.
 """
 
 import numpy as np
@@ -21,7 +22,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer, MICEImputer
+from sklearn.impute import SimpleImputer, ChainedImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -66,18 +67,18 @@ def get_results(dataset):
     mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
                                          scoring='neg_mean_squared_error')
 
-    # Estimate the score after imputation (MICE strategy) of the missing values
-    estimator = Pipeline([("imputer", MICEImputer(missing_values=0,
-                                                  random_state=0)),
+    # Estimate the score after chained imputation of the missing values
+    estimator = Pipeline([("imputer", ChainedImputer(missing_values=0,
+                                                     random_state=0)),
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
-    mice_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error')
+    chained_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                            scoring='neg_mean_squared_error')
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
             (mean_impute_scores.mean(), mean_impute_scores.std()),
-            (mice_impute_scores.mean(), mice_impute_scores.std()))
+            (chained_impute_scores.mean(), chained_impute_scores.std()))
 
 
 results_diabetes = np.array(get_results(load_diabetes()))
@@ -94,7 +95,7 @@ xval = np.arange(n_bars)
 x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
-            'MICE Imputation']
+            'Chained Imputation']
 colors = ['r', 'g', 'b', 'orange']
 
 # plot diabetes results

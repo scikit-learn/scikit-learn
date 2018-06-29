@@ -595,7 +595,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     # Preprocessing.
     if check_input:
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64,
+                        accept_large_sparse=solver != 'liblinear')
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
@@ -676,7 +677,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     'shape (%d, %d) or (%d, %d)' % (
                         coef.shape[0], coef.shape[1], classes.size,
                         n_features, classes.size, n_features + 1))
-            w0[:, :coef.shape[1]] = coef
+
+            if n_classes == 1:
+                w0[0, :coef.shape[1]] = -coef
+                w0[1, :coef.shape[1]] = coef
+            else:
+                w0[:, :coef.shape[1]] = coef
+
 
     if multi_class == 'multinomial':
         # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
@@ -1084,8 +1091,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     n_jobs : int, default: 1
         Number of CPU cores used when parallelizing over classes if
-        multi_class='ovr'". This parameter is ignored when the ``solver``is set
-        to 'liblinear' regardless of whether 'multi_class' is specified or
+        multi_class='ovr'". This parameter is ignored when the ``solver`` is
+        set to 'liblinear' regardless of whether 'multi_class' is specified or
         not. If given a value of -1, all cores are used.
 
     Attributes
@@ -1214,8 +1221,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = np.float64
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                         order="C")
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
+                         accept_large_sparse=self.solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
@@ -1615,7 +1622,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                              "positive; got (tol=%r)" % self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C")
+                         order="C",
+                         accept_large_sparse=self.solver != 'liblinear')
         check_classification_targets(y)
 
         class_weight = self.class_weight
