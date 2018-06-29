@@ -578,22 +578,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # update sizes of all bboxes
         renderer = ax.figure.canvas.get_renderer()
-        print("renderer")
-        print(renderer) # fixme worst debugging ever
-        import warnings
+
         for ann in anns:
-            print(ann)
-            warnings.warn(ann)
             ann.update_bbox_position_size(renderer)
 
         if self.fontsize is None:
             # get figure to data transform
             # adjust fontsize to avoid overlap
             # get max box width and height
-            warnings.warn("dohh")
-            warnings.warn(renderer)
             extents = [ann.get_bbox_patch().get_window_extent()
-                           for ann in anns]
+                       for ann in anns]
             max_width = max([extent.width for extent in extents])
             max_height = max([extent.height for extent in extents])
             # width should be around scale_x in axis coordinates
