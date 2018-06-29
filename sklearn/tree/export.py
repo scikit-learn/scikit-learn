@@ -10,6 +10,7 @@ This module defines export functions for decision trees.
 #          Trevor Stephens <trev.stephens@gmail.com>
 #          Li Li <aiki.nogard@gmail.com>
 # License: BSD 3 clause
+import warnings
 
 from numbers import Integral
 
@@ -586,15 +587,21 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # get figure to data transform
             # adjust fontsize to avoid overlap
             # get max box width and height
-            extents = [ann.get_bbox_patch().get_window_extent()
-                       for ann in anns]
-            max_width = max([extent.width for extent in extents])
-            max_height = max([extent.height for extent in extents])
-            # width should be around scale_x in axis coordinates
-            size = anns[0].get_fontsize() * min(scale_x / max_width,
-                                                scale_y / max_height)
-            for ann in anns:
-                ann.set_fontsize(size)
+            try:
+                extents = [ann.get_bbox_patch().get_window_extent()
+                        for ann in anns]
+                max_width = max([extent.width for extent in extents])
+                max_height = max([extent.height for extent in extents])
+                # width should be around scale_x in axis coordinates
+                size = anns[0].get_fontsize() * min(scale_x / max_width,
+                                                    scale_y / max_height)
+                for ann in anns:
+                    ann.set_fontsize(size)
+            except AttributeError:
+                # matplotlib < 1.5
+                warnings.warn("Automatic scaling of tree plots requires "
+                              "matplotlib 1.5 or higher. Please specify fontsize.")
+
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
