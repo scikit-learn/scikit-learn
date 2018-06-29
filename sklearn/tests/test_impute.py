@@ -711,8 +711,9 @@ def test_chained_imputer_additive_matrix():
                          [SimpleImputer, ChainedImputer])
 @pytest.mark.parametrize(
     "missing_values, X_missing_value, err_msg",
-    [("NaN", np.nan, "contains"),
-     ("-1", -1, "not compatible")])
+    [("NaN", np.nan, "Input contains NaN"),
+     ("-1", -1, "The data type of 'missing_values' and 'X' are not compatible")
+    ])
 def test_inconsistent_dtype_X_missing_values(imputer_constructor,
                                              missing_values, X_missing_value,
                                              err_msg):
