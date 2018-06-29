@@ -1115,8 +1115,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite='allow-nan')
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
@@ -1151,8 +1157,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "features_")
 
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite='allow-nan')
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
                              "than during fitting.")
