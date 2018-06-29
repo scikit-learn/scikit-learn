@@ -457,7 +457,8 @@ General Concepts
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
-        :term:`memory mapping`.
+        :term:`memory mapping`. See :ref:`parallelism` for more
+        information.
 
     label indicator matrix
     multilabel indicator matrix
