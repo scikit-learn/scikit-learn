@@ -506,16 +506,26 @@ def test_one_hot_encoder_feature_names():
                         'x4_10', 'x4_30'], feature_names)
 
     feature_names2 = enc.get_feature_names(['one', 'two',
-                                            'three', 'four', u'fîve'])
+                                            'three', 'four', 'five'])
 
     assert_array_equal(['one_Female', 'one_Male',
                         'two_1', 'two_41', 'two_51', 'two_91',
                         'three_boy', 'three_girl',
                         'four_1', 'four_2', 'four_12', 'four_21',
-                        u'fîve_3', u'fîve_10', u'fîve_30'], feature_names2)
+                        'five_3', 'five_10', 'five_30'], feature_names2)
 
     with pytest.raises(ValueError, match="input_features should have length"):
         enc.get_feature_names(['one', 'two'])
+
+
+def test_one_hot_encoder_feature_names_unicode():
+    enc = OneHotEncoder()
+    X = np.array([[u'c❤t1', u'dat2']], dtype=object).T
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+    assert_array_equal([u'x0_c❤t1', u'x0_dat2'], feature_names)
+    feature_names = enc.get_feature_names(input_features=[u'n👍me'])
+    assert_array_equal([u'n👍me_c❤t1', u'n👍me_dat2'], feature_names)
 
 
 def test_ordinal_encoder():

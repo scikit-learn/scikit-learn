@@ -711,23 +711,21 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : list of string, length n_output_features
 
         """
+        check_is_fitted(self, 'categories_')
         cats = self.categories_
-        feature_names = []
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
         elif(len(input_features) != len(self.categories_)):
-            raise ValueError("input_features should have"
-                             " length equal to number of features")
+            raise ValueError(
+                "input_features should have length equal to number of "
+                "features ({}), got {}".format(len(self.categories_),
+                                               len(input_features)))
 
-        def to_unicode(text):
-            if isinstance(text, six.text_type):
-                return text
-            else:
-                return text.encode('utf8')
-
+        feature_names = []
         for i in range(len(cats)):
-            feature_names.extend(to_unicode(
-                input_features[i] + '_' + str(t)) for t in cats[i])
+            names = [
+                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+            feature_names.extend(names)
 
         return feature_names
 
