@@ -153,7 +153,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     Returns
     -------
     annotations : list of artists
-        List containing the artists for the annotation boxes making up the tree.
+        List containing the artists for the annotation boxes making up the
+        tree.
 
     Examples
     --------
