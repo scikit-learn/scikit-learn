@@ -497,8 +497,9 @@ def test_iterative_imputer_imputation_order(imputation_order):
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     X[:, 0] = 1  # this column should not be discarded by IterativeImputer
 
+    n_iter = 2
     imputer = IterativeImputer(missing_values=0,
-                               n_iter=2,
+                               n_iter=n_iter,
                                n_nearest_features=5,
                                min_value=0,
                                max_value=1,
@@ -507,6 +508,9 @@ def test_iterative_imputer_imputation_order(imputation_order):
                                random_state=rng)
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
+
+    assert len(ordered_idx) // n_iter == imputer.n_features_with_missing_
+
     if imputation_order == 'roman':
         assert np.all(ordered_idx[:d-1] == np.arange(1, d))
     elif imputation_order == 'arabic':
@@ -516,7 +520,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
         ordered_idx_round_2 = ordered_idx[d-1:]
         assert ordered_idx_round_1 != ordered_idx_round_2
     elif 'ending' in imputation_order:
-        assert len(ordered_idx) == 2 * (d - 1)
+        assert len(ordered_idx) == n_iter * (d - 1)
 
 
 @pytest.mark.parametrize(

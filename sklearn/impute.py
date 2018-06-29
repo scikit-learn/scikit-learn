@@ -141,6 +141,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
 
+    See also
+    --------
+    IterativeImputer: Multivariate imputation of missing values.
+
     Notes
     -----
     Columns which only contained missing values at `fit` are discarded upon
@@ -424,11 +428,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
 
 class IterativeImputer(BaseEstimator, TransformerMixin):
-    """Iterative imputer transformer to impute missing values.
+    """Multivariate imputer that estimates each features from all the others.
 
-    Basic implementation of iterative mutual regressions to find replacement
-    values in multivariate missing data. This version assumes all features
-    are Gaussian.
+    A strategy for imputing missing values by modeling each feature with
+    missing values as a function of other features in a round-robin fashion.
 
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
@@ -457,7 +460,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values.
 
-    predictor : estimator object, default=BayesianRidge() or RidgeCV()
+    predictor : estimator object, default=RidgeCV() or BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
         If ``sample_posterior`` is True, the predictor must support
         ``return_std`` in its ``predict`` method. Also, if
@@ -468,8 +471,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Whether to sample from the (Gaussian) predictive posterior of the
         fitted predictor for each imputation. Predictor must support
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
-        ``True`` if using ``IterativeImputer`` to have the same functionality
-        as MICE (Multivariate Imputation by Chained Equations).
+        ``True`` if using ``IterativeImputer`` for multiple imputations.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -516,15 +518,22 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         ``feat_idx`` is the current feature to be imputed,
         ``neighbor_feat_idx`` is the array of other features used to impute the
         current feature, and ``predictor`` is the trained predictor used for
-        the imputation. Length is ``n_features_with_missing * n_iter``.
+        the imputation. Length is ``self.n_features_with_missing_ * n_iter``.
+
+    n_features_with_missing_ : int
+        Number of features with missing values.
+
+    See also
+    --------
+    SimpleImputer: Univariate imputation of missing values.
 
     Notes
     -----
     This implementation was inspired by the R MICE package (Multivariate
-    Imputation by Chained Equations), but differs from it in setting single
-    imputation to default instead of multiple imputation. However, multiple
-    imputation is supported with multiple instances of the imputer with
-    different random seeds run in parallel.
+    Imputation by Chained Equations), but differs from it by returning a single
+    imputation instead of multiple imputations. However, multiple imputation is
+    supported with multiple instances of the imputer with different random
+    seeds run in parallel.
 
     To support imputation in inductive mode we store each feature's predictor
     during the ``fit`` phase, and predict without refitting (in order) during
@@ -878,6 +887,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         # and a better way would be good.
         # see: https://goo.gl/KyCNwj and subsequent comments
         ordered_idx = self._get_ordered_idx(mask_missing_values)
+        self.n_features_with_missing_ = len(ordered_idx)
 
         abs_corr_mat = self._get_abs_corr_mat(Xt)
 

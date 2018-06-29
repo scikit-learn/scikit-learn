@@ -101,9 +101,7 @@ other feature columns are treated as inputs `X`. A regressor is fit on `(X, y)`
 for known `y`. Then, the regressor is used to predict the missing values of `y`.
 This is done for each feature in an iterative fashion, and then is repeated for
 `n_iter` imputation rounds. The results of the final imputation round are
-returned. Our implementation was inspired by the R MICE package (Multivariate
-Imputation by Chained Equations) [1], but differs from it in setting single
-imputation to default instead of multiple imputation. This is discussed further below.
+returned.
 
     >>> import numpy as np
     >>> from sklearn.impute import IterativeImputer
@@ -133,14 +131,16 @@ In the statistics community, it is common practice to perform multiple imputatio
 generating, for example, `m` separate imputations for a single feature matrix.
 Each of these `m` imputations is then put through the subsequent analysis pipeline
 (e.g. feature engineering, clustering, regression, classification). The `m` final
-analysis results (e.g. held-out validation error) allow the data scientist to
-obtain understanding of the uncertainty inherent in the missing values. The above
-practice is called multiple imputation.
+analysis results (e.g. held-out validation errors) allow the data scientist to
+to obtain understanding of how analytic results may differ as a consequence
+of the inherent uncertainty caused by the missing values. The above practice
+is called multiple imputation.
 
-As implemented, the :class:`IterativeImputer` class generates a single imputation
-for each missing value because this is the most common use case for machine learning
-applications. However, it can also be used for multiple imputations by applying it
-repeatedly to the same dataset with different random seeds when
+Our implementation of :class:`IterativeImputer` was inspired by the R MICE
+package (Multivariate Imputation by Chained Equations) [1], but differs from
+it in setting single imputation to default instead of multiple imputation.
+However, :class:`IterativeImputer` can also be used for multiple imputations
+by applying it repeatedly to the same dataset with different random seeds when
 ``sample_posterior=True``.
 
 See Chapter 4 of "Statistical Analysis with Missing Data" [2] for more discussion
