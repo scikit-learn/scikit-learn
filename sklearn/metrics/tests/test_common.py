@@ -166,8 +166,8 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     dimensional np.array of dtype('float64') (it will be of dtype('object)
     instead). This again is needed for assert_array_equal to work correctly.
 
-    As a workaround we pad the threshold to match dimension of precision and
-    recall.
+    As a workaround we pad the threshold array with NaN values to match
+    the dimension of precision and recall arrays respectively.
     """
     precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
 
@@ -176,7 +176,10 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     return np.array([
         precision,
         recall,
-        np.pad(thresholds, (0, pad_threshholds), mode='constant')
+        np.pad(thresholds,
+               pad_width=(0, pad_threshholds),
+               mode='constant',
+               constant_values=((np.nan, np.nan),))
     ])
 
 
