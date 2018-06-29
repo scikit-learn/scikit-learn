@@ -456,8 +456,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                     pca.fit(X)
                     transformation = pca.components_
                 elif init == 'lda':
-                    from ..discriminant_analysis import \
-                        LinearDiscriminantAnalysis
+                    from ..discriminant_analysis import (
+                        LinearDiscriminantAnalysis)
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
                         print('Finding most discriminative components... ',

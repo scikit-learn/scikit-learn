@@ -7,8 +7,9 @@ from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six import StringIO
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises, assert_equal, \
-    assert_raise_message, assert_warns_message, assert_true
+from sklearn.utils.testing import (assert_raises, assert_equal,
+                                   assert_raise_message, assert_warns_message,
+                                   assert_true)
 from sklearn.datasets import load_iris, make_classification
 from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
@@ -258,9 +259,9 @@ def test_warm_start_validation():
     nca = NeighborhoodComponentsAnalysis(warm_start=True, max_iter=5)
     nca.fit(X, y)
 
-    X_less_features, y = \
-        make_classification(n_samples=30, n_features=4, n_classes=4,
-                            n_redundant=0, n_informative=4, random_state=0)
+    X_less_features, y = make_classification(n_samples=30, n_features=4,
+                                             n_classes=4, n_redundant=0,
+                                             n_informative=4, random_state=0)
     assert_raise_message(ValueError,
                          'The new inputs dimensionality ({}) does not '
                          'match the input dimensionality of the '
