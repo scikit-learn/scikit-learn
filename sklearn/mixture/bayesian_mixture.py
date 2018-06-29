@@ -1,10 +1,13 @@
 """Bayesian Gaussian Mixture Model."""
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+#         Joshua Engelman <j.aaron.engelman@gmail.com>
 # License: BSD 3 clause
 
 import math
+
 import numpy as np
+
 from scipy.special import betaln, digamma, gammaln
 
 from .base import BaseMixture, _check_shape
@@ -14,7 +17,7 @@ from .gaussian_mixture import _compute_log_det_cholesky
 from .gaussian_mixture import _compute_precision_cholesky
 from .gaussian_mixture import _estimate_gaussian_parameters
 from .gaussian_mixture import _estimate_log_gaussian_prob
-from ..utils import check_array
+from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
 
 
@@ -62,6 +65,31 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
                                   np.arange(n_features)[:, np.newaxis])), 0))
 
 
+def _check_X(X, n_components=None, n_features=None):
+    """Check the input data X.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+
+    n_components : int
+
+    Returns
+    -------
+    X : array, shape (n_samples, n_features)
+    """
+    X = check_array(X, dtype=[np.float64, np.float32])
+    if n_components is not None and X.shape[0] < n_components:
+        raise ValueError('Expected n_samples >= n_components '
+                         'but got n_components = %d, n_samples = %d'
+                         % (n_components, X.shape[0]))
+    if n_features is not None and X.shape[1] != n_features:
+        raise ValueError("Expected the input data X have %d features, "
+                         "but got %d features"
+                         % (n_features, X.shape[1]))
+    return X
+
+
 class BayesianGaussianMixture(BaseMixture):
     """Variational Bayesian estimation of a Gaussian mixture.
 
@@ -77,6 +105,7 @@ class BayesianGaussianMixture(BaseMixture):
     The number of components actually used almost always depends on the data.
 
     .. versionadded:: 0.18
+    *BayesianGaussianMixture*.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -163,11 +192,8 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features)             if 'diag',
                 float                    if 'spherical'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state: RandomState or an int seed, defaults to None.
+        A random number generator instance.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -183,6 +209,13 @@ class BayesianGaussianMixture(BaseMixture):
 
     verbose_interval : int, default to 10.
         Number of iteration done before the next print.
+
+    batch_size : int (optional), default to 0.
+        Sets number of batches for minibatch fitting.
+        If it is 0, then the model is fit to the whole dataset.
+
+    n_jobs : int, default to 1.
+        Sets number of threads available for minibatch fitting.
 
     Attributes
     ----------
@@ -304,6 +337,11 @@ class BayesianGaussianMixture(BaseMixture):
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
        <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
+
+    .. [4] `Lin, Dahua. (2013). "Online Learning of Nonparametric Mixture
+        Models via Sequential Variational Approximation"`. In Advances in
+        Neural Information Processing Systems 2013.
+        <https://papers.nips.cc/paper/4968-online-learning-of-nonparametric-mixture-models-via-sequential-variational-approximation.pdf>_
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
@@ -335,6 +373,13 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         X : array-like, shape (n_samples, n_features)
         """
+        self._check_prior_types()
+        self._check_weights_parameters()
+        self._check_means_parameters(X)
+        self._check_precision_parameters(X)
+        self._check_covariance_prior_parameter(X)
+
+    def _check_prior_types(self):
         if self.covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError("Invalid value for 'covariance_type': %s "
                              "'covariance_type' should be in "
@@ -349,13 +394,9 @@ class BayesianGaussianMixture(BaseMixture):
                 "['dirichlet_process', 'dirichlet_distribution']"
                 % self.weight_concentration_prior_type)
 
-        self._check_weights_parameters()
-        self._check_means_parameters(X)
-        self._check_precision_parameters(X)
-        self._checkcovariance_prior_parameter(X)
-
     def _check_weights_parameters(self):
         """Check the parameter of the Dirichlet distribution."""
+
         if self.weight_concentration_prior is None:
             self.weight_concentration_prior_ = 1. / self.n_components
         elif self.weight_concentration_prior > 0.:
@@ -380,8 +421,8 @@ class BayesianGaussianMixture(BaseMixture):
         elif self.mean_precision_prior > 0.:
             self.mean_precision_prior_ = self.mean_precision_prior
         else:
-            raise ValueError("The parameter 'mean_precision_prior' should be "
-                             "greater than 0., but got %.3f."
+            raise ValueError("The parameter 'mean_precision_prior' should "
+                             "be greater than 0., but got %.3f."
                              % self.mean_precision_prior)
 
         if self.mean_prior is None:
@@ -408,9 +449,10 @@ class BayesianGaussianMixture(BaseMixture):
         else:
             raise ValueError("The parameter 'degrees_of_freedom_prior' "
                              "should be greater than %d, but got %.3f."
-                             % (n_features - 1, self.degrees_of_freedom_prior))
+                             % (n_features - 1,
+                                self.degrees_of_freedom_prior))
 
-    def _checkcovariance_prior_parameter(self, X):
+    def _check_covariance_prior_parameter(self, X):
         """Check the `covariance_prior_`.
 
         Parameters
@@ -546,7 +588,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         self.covariances_ = np.empty((self.n_components, n_features,
                                       n_features))
-
         for k in range(self.n_components):
             diff = xk[k] - self.mean_prior_
             self.covariances_[k] = (self.covariance_prior_ + nk[k] * sk[k] +
@@ -783,3 +824,73 @@ class BayesianGaussianMixture(BaseMixture):
                                       self.precisions_cholesky_.T)
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
+
+    def partial_fit(self, X, y=None):
+        """Estimate model parameters with the EM algorithm using the posteriors
+        of previous fits as priors.
+
+        The method fit the model `n_init` times and set the parameters with
+        which the model has the largest likelihood or lower bound. Within each
+        trial, the method iterates between E-step and M-step for `max_iter`
+        times until the change of likelihood or lower bound is less than
+        `tol`, otherwise, a `ConvergenceWarning` is raised.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            List of n_features-dimensional data points. Each row
+            corresponds to a single data point.
+
+        lr : float, default = 1
+
+        Returns
+        -------
+        self
+        """
+        X = _check_X(X, self.n_components)
+        if not hasattr(self, 'converged_'):
+            self._check_parameters(X)
+
+        do_init = not(self.warm_start and hasattr(self, 'converged_'))
+        n_init = self.n_init if do_init else 1
+
+        max_lower_bound = -np.infty
+        self.converged_ = False
+
+        random_state = check_random_state(self.random_state)
+
+        n_samples, _ = X.shape
+
+        for init in range(n_init):
+            self._print_verbose_msg_init_beg(init)
+
+            if do_init:
+                self._initialize_parameters(X, random_state)
+                self.lower_bound_ = -np.infty
+
+            for n_iter in range(self.max_iter):
+                prev_lower_bound = self.lower_bound_
+
+                log_prob_norm, log_resp = self._e_step(X)
+                self._m_step(X, log_resp)
+                self.lower_bound_ = self._compute_lower_bound(
+                    log_resp, log_prob_norm)
+
+                change = self.lower_bound_ - prev_lower_bound
+                self._print_verbose_msg_iter_end(n_iter, change)
+
+                if abs(change) < self.tol:
+                    self.converged_ = True
+                    break
+
+            self._print_verbose_msg_init_end(self.lower_bound_)
+
+            if self.lower_bound_ > max_lower_bound:
+                max_lower_bound = self.lower_bound_
+                best_params = self._get_parameters()
+                best_n_iter = n_iter
+
+        self._set_parameters(best_params)
+        self.n_iter_ = best_n_iter
+
+        return self

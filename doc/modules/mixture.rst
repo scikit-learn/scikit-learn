@@ -227,6 +227,16 @@ from the two resulting mixtures.
    :align: center
    :scale: 65%
 
+In the following example, we fit a large dataset using the `partial_fit` method.
+As we can see, it converges to approximately the same posterior in significantly
+less time than fitting on the full set, regardless of the number of initial clusters.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_partial_fit_001.png
+   :target: ../auto_examples/mixture/plot_partial_fit.html
+   :align: center
+   :scale: 65%
+
+
 
 
 .. topic:: Examples:
@@ -234,6 +244,9 @@ from the two resulting mixtures.
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
       plotting the confidence ellipsoids for both :class:`GaussianMixture`
       and :class:`BayesianGaussianMixture`.
+
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_partial_fit.py` shows using
+      the `partial_fit` method to fit a large dataset using :class:`BayesianGaussianMixture`
 
     * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
       :class:`GaussianMixture` and :class:`BayesianGaussianMixture` to fit a
@@ -245,6 +258,9 @@ from the two resulting mixtures.
       ``weight_concentration_prior_type`` for different values of the parameter
       ``weight_concentration_prior``.
 
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_partial_fit.py` for an
+      example of fitting the :class:`BayesianGaussianMixture` with batches using
+      `partial_fit`
 
 Pros and cons of variational inference with :class:`BayesianGaussianMixture`
 ----------------------------------------------------------------------------
@@ -272,6 +288,9 @@ Pros
    variational solutions have less pathological special cases than
    expectation-maximization solutions.
 
+:Online inference: using the ``partial_fit()`` method, variational Bayesian
+     mixture models streaming data or large datasets split into minibatches.
+
 
 Cons
 .....
@@ -285,7 +304,7 @@ Cons
 :Bias: there are many implicit biases in the inference algorithms (and also in
    the Dirichlet process if used), and whenever there is a mismatch between
    these biases and the data it might be possible to fit better models using a
-   finite mixture.
+   finite mixture.  In particular, variational methods are known to underestimate variance.
 
 
 .. _dirichlet_process:
