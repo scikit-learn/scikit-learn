@@ -297,7 +297,7 @@ class OneHotEncoder(_BaseEncoder):
     array([['Male', 1],
            [None, 2]], dtype=object)
     >>> enc.get_feature_names()
-    ['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3']
+    array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
 
     See also
     --------
@@ -708,7 +708,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        output_feature_names : list of string, length n_output_features
+        output_feature_names : array of string, length n_output_features
 
         """
         check_is_fitted(self, 'categories_')
@@ -727,7 +727,7 @@ class OneHotEncoder(_BaseEncoder):
                 input_features[i] + '_' + six.text_type(t) for t in cats[i]]
             feature_names.extend(names)
 
-        return feature_names
+        return np.array(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):

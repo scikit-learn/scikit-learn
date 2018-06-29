@@ -497,6 +497,7 @@ def test_one_hot_encoder_feature_names():
 
     enc.fit(X)
     feature_names = enc.get_feature_names()
+    assert isinstance(feature_names, np.ndarray)
 
     assert_array_equal(['x0_Female', 'x0_Male',
                         'x1_1', 'x1_41', 'x1_51', 'x1_91',
