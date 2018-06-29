@@ -17,15 +17,44 @@ An alternative is using the IterativeImputer to perform multiple imputation: a
 method where every missing value is imputed multiple times. The procedure
 results in multiple datasets where the observed data is similar in every
 dataset, but the imputed data is different. All desired steps after imputation
-are performed on every dataset, including the analysis. Then, Rubin's pooling
-rules are used to combine the estimates into one final result.
+are performed on every dataset, such as standardization and other feature
+engineering steps. The estimation model is also fitted on each of the datasets.
 
-In this example we will show how to use the ITerativeImputer to perform
-multiple imputation, what the effect is on the standard error of beta
-coefficients and how to set up a prediction model using multiple imputation.
+One final model is obtained by combining the estimates of each model with
+Rubin's pooling rules. These rules assume that the parameters of interest are
+normally distributed which is the case with, for example, estimates of the mean
+and regression coefficients. Other parameters, such as correlation
+coefficients need transformation to suit the assumption of normality.
+If it is not possible to approximate a normal distribution, it is better to use
+robust summary measures such as medians or ranges instead of using Rubin’s
+pooling rules. This applies to an estimate like explained variance.
+
+In sum, Rubin’s pooling rules are as follows. The overall point estimate after
+multiple imputation (denoted by Qbar) is the average of all the m point
+estimates. The variance of the overall point estimate is a combination of
+so-called within imputation variance (Ubar) and between imputation
+variance (B). Ubar is the average of the m variances of the m point estimates.
+Both Qbar and Ubar are corrected with a factor 1 / m to account for sampling
+variance. The between imputation variance (B) is the sum of the squared
+difference between Qbar and the m point estimates, corrected with a factor
+1 / (m – 1). Then, the total variance (T) of the MI overall point estimate is
+Ubar + B + B/m.
+
+In this document we will show how to use the IterativeImputer to perform
+multiple imputation. In example 1 we show the effect of Rubin’s pooling
+rules on the variance of regression estimates. Due to the between imputation
+variance, the standard errors of all regression coefficients are larger with
+multiple imputation than with single imputation. This allows for valid
+statistical inference making.
+
+In example 2 we show how to set up a prediction model using multiple imputation.
+We compare two approaches. In one approach, we make predictions for each of the
+m datasets and combine the m evaluation error metrics into one overall value.
+In the other approach, we combine the predictions and calculate one evaluation
+error metric over the averaged predictions. A short simulation study shows that
+the second approach results in the smallest Mean Squared Error.
 """
 
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -59,8 +88,7 @@ def ampute(X, missing_rate=0.75, mech="MCAR"):
     if mech == "MNAR":
         for i in np.arange(n_features):
             data_values = -np.mean(X[:, i]) + X[:, i]
-            weights = list(map(lambda x: math.exp(x) / (1 + math.exp(x)),
-                               data_values))
+            weights = 1 / (1 + np.exp(-data_values))
             probs = np.array(weights) / np.sum(np.array(weights))
             dropped_indices = np.array(np.random.choice(np.arange(n_samples),
                                                         size=int(missing_rate
@@ -83,6 +111,31 @@ def calculate_variance_of_beta_estimates(y_true, y_pred, X):
     vars = np.diag(covariance_matrix)
 
     return vars
+
+
+# Apply Rubin's pooling rules as follows.
+# The value of every estimate is the mean of the estimates in each of the m
+# datasets (Qbar). The variance of these estimates is a combination of the
+# variance of each of the m estimates (Ubar) and the variance between the m
+# estimates (B).
+#
+# Make a function that calculates Qbar from m estimates
+def calculate_Qbar(m_estimates):
+    m = len(m_estimates)
+    Qbar = 1/m * np.sum(m_estimates, axis=0)
+
+    return Qbar
+
+
+# Make a function that calculates T from m estimates and their variances
+def calculate_T(m_estimates, m_variances, Qbar):
+    m = len(m_estimates)
+    Ubar = 1/m * np.sum(m_variances, axis=0)
+    B = 1/(m - 1) * np.sum((Qbar - m_estimates) ** 2, axis=0)
+    T = Ubar + B + (B/m)
+
+    return T
+
 
 ###############################################################################
 
@@ -156,17 +209,8 @@ def get_results_mice_imputation(X_incomplete, y):
                 y, y_predict, multiple_imputations[i]))
 
     # Calculate the end estimates by applying Rubin's rules.
-    # Rubin's rules can be slightly different for different types of estimates
-    # In case of linear regression, these are the rules:
-    #
-    # The value of every estimate is the mean of the estimates in each of the m
-    # datasets. The variance of these estimates is a combination of the
-    # variance of each of the m estimates (Ubar) and the variance between the m
-    # estimates (B). The standard error is the sqrt of the variance.
-    Qbar = np.mean(m_coefs, axis=0)
-    Ubar = np.mean(m_vars, axis=0)
-    B = (1 / (m-1)) * np.mean((Qbar - m_coefs) ** 2, axis=0)
-    T = Ubar + B + (B/m)
+    Qbar = calculate_Qbar(m_coefs)
+    T = calculate_T(m_coefs, m_vars, Qbar)
     mice_errorbar = 1.96 * np.sqrt(T)
 
     return Qbar, T, mice_errorbar
@@ -206,17 +250,8 @@ def get_results_mice_imputation_includingy(X_incomplete, y):
                 y, y_predict, multiple_imputations[i]))
 
     # Calculate the end estimates by applying Rubin's rules.
-    # Rubin's rules can be slightly different for different types of estimates
-    # In case of linear regression, these are the rules:
-    #
-    # The value of every estimate is the mean of the estimates in each of the m
-    # datasets. The variance of these estimates is a combination of the
-    # variance of each of the m estimates (Ubar) and the variance between the m
-    # estimates (B). The standard error is the sqrt of the variance.
-    Qbar = np.mean(m_coefs, axis=0)
-    Ubar = np.mean(m_vars, axis=0)
-    B = (1 / (m-1)) * np.mean((Qbar - m_coefs) ** 2, axis=0)
-    T = Ubar + B + (B/m)
+    Qbar = calculate_Qbar(m_coefs)
+    T = calculate_T(m_coefs, m_vars, Qbar)
     mice_errorbar = 1.96 * np.sqrt(T)
 
     return Qbar, T, mice_errorbar
@@ -238,7 +273,7 @@ X_scaled = scaler.fit_transform(X_full)
 y_scaled = stats.zscore(y)
 
 # Start the procedure
-print("Executing Example 1 MCAR Missingness")
+print("Executing Example 1 MCAR Missingness...")
 
 # First, make the data incomplete with a MCAR mechanism.
 Boston_X_incomplete_MCAR = ampute(X_scaled, mech="MCAR")
@@ -434,14 +469,15 @@ def perform_simulation(dataset, X_incomplete, nsim=10):
                 X_incomplete_train, X_incomplete_test, y_train, y_test)
 
         # Save the outcome of every simulation round
-        outcome.append((mse_full, mse_single, mse_approach1, mse_approach2))
+        outcome.append((mse_full, mse_single, mse_approach1,
+                        mse_approach2))
 
     # Return the mean and standard deviation of the nsim outcome values
     return np.mean(outcome, axis=0), np.std(outcome, axis=0)
 
 
 # Execute the simulation
-print("Executing Example 2 MCAR Missingness")
+print("Executing Example 2 MCAR Missingness...")
 
 # Generate missing values with a MCAR mechanism
 Boston_X_incomplete_MCAR = ampute(X_scaled, mech="MCAR")
@@ -449,7 +485,7 @@ Boston_X_incomplete_MCAR = ampute(X_scaled, mech="MCAR")
 # Perform the simulation
 mse_means, mse_std = perform_simulation(load_boston(),
                                         Boston_X_incomplete_MCAR,
-                                        nsim=10)
+                                        nsim=2)
 
 # Plot results
 n_situations = 4
