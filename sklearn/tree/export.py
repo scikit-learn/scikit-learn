@@ -149,7 +149,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     fontsize : int, optional (default=None)
         Size of text font. If None, determined automatically to fit figure.
-        
+
     Returns
     -------
     annotations : list of artists
