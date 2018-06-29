@@ -589,7 +589,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # get max box width and height
             try:
                 extents = [ann.get_bbox_patch().get_window_extent()
-                        for ann in anns]
+                           for ann in anns]
                 max_width = max([extent.width for extent in extents])
                 max_height = max([extent.height for extent in extents])
                 # width should be around scale_x in axis coordinates
@@ -600,7 +600,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
             except AttributeError:
                 # matplotlib < 1.5
                 warnings.warn("Automatic scaling of tree plots requires "
-                              "matplotlib 1.5 or higher. Please specify fontsize.")
+                              "matplotlib 1.5 or higher. Please specify "
+                              "fontsize.")
 
         return anns
 
