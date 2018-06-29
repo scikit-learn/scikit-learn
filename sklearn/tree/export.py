@@ -533,6 +533,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.bbox_args = dict(fc='w')
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
+        else:
+            # matplotlib <1.5 requires explicit boxstyle
+            self.bbox_args['boxstyle'] = "square"
 
         self.arrow_args = dict(arrowstyle="<-")
 
