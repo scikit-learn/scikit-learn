@@ -5,7 +5,7 @@
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..neighbors import NearestNeighbors
 from ..utils import check_array
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
@@ -22,7 +22,17 @@ class Isomap(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_neighbors : integer
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point (if mode='k').
+
+    radius : float
+        Radius to consider for each point (if mode='radius').
+
+    mode : string ['k'|'radius']
+        Neighborhood function.
+
+        'k' : k nearest neighbors.
+
+        'radius' : neighbors into radius range.
 
     n_components : integer
         number of coordinates for the manifold
@@ -87,10 +97,12 @@ class Isomap(BaseEstimator, TransformerMixin):
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
-    def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
-                 tol=0, max_iter=None, path_method='auto',
+    def __init__(self, n_neighbors=5, radius=1., mode='k', n_components=2,
+                 eigen_solver='auto', tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=1):
         self.n_neighbors = n_neighbors
+        self.radius = radius
+        self.mode = mode
         self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -102,22 +114,30 @@ class Isomap(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
         X = check_array(X)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                      radius=self.radius,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
+
+        # Get the neighbor graph of distances
+        if self.mode == 'k':
+            kng = self.nbrs_.kneighbors_graph(mode='distance')
+        elif self.mode == 'radius':
+            kng = self.nbrs_.radius_neighbors_graph(mode='distance')
+
+        # Build the full geodesic distance matrix from graph of distances kng
+        self.dist_matrix_ = graph_shortest_path(kng,
+                                                method=self.path_method,
+                                                directed=False)
+
+        # Do classic MDS on geodesic distance matrix
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               mode='distance', n_jobs=self.n_jobs)
-
-        self.dist_matrix_ = graph_shortest_path(kng,
-                                                method=self.path_method,
-                                                directed=False)
         G = self.dist_matrix_ ** 2
         G *= -0.5
 
@@ -189,11 +209,11 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         This is implemented by linking the points X into the graph of geodesic
         distances of the training data. First the `n_neighbors` nearest
-        neighbors of X are found in the training data, and from these the
-        shortest geodesic distances from each point in X to each point in
-        the training data are computed in order to construct the kernel.
-        The embedding of X is the projection of this kernel onto the
-        embedding vectors of the training set.
+        neighbors of X (or nearest neighbors within `radius`) are found in the
+        training data, and from these the shortest geodesic distances from each
+        point in X to each point in the training data are computed in order to
+        construct the kernel. The embedding of X is the projection of this
+        kernel onto the embedding vectors of the training set.
 
         Parameters
         ----------
@@ -204,7 +224,11 @@ class Isomap(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = check_array(X)
-        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        if self.mode == 'k':
+            distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        elif self.mode == 'radius':
+            distances, indices = self.nbrs_.radius_neighbors(
+                                                       X, return_distance=True)
 
         # Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.

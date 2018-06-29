@@ -89,17 +89,18 @@ def test_transform():
     # Create S-curve dataset
     X, y = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
 
-    # Compute isomap embedding
-    iso = manifold.Isomap(n_components, 2)
-    X_iso = iso.fit_transform(X)
+    for isomap_mode in ['k', 'radius']:
+        # Compute isomap embedding
+        iso = manifold.Isomap(mode=isomap_mode, n_components=n_components)
+        X_iso = iso.fit_transform(X)
 
-    # Re-embed a noisy version of the points
-    rng = np.random.RandomState(0)
-    noise = noise_scale * rng.randn(*X.shape)
-    X_iso2 = iso.transform(X + noise)
+        # Re-embed a noisy version of the points
+        rng = np.random.RandomState(0)
+        noise = noise_scale * rng.randn(*X.shape)
+        X_iso2 = iso.transform(X + noise)
 
-    # Make sure the rms error on re-embedding is comparable to noise_scale
-    assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
+        # Make sure the rms error on re-embedding is comparable to noise_scale
+        assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
 
 
 def test_pipeline():
@@ -122,3 +123,30 @@ def test_isomap_clone_bug():
         model.fit(np.random.rand(50, 2))
         assert_equal(model.nbrs_.n_neighbors,
                      n_neighbors)
+
+
+def test_isomap_simple_grid_radius():
+    # Similar to test_isomap_simple_grid, tests the radius mode
+    # Isomap should preserve distances when all neighbors are used
+    N_per_side = 5
+    radius = N_per_side**2 + 0.1  # radius containing all neighbors
+
+    # grid of equidistant points in 2D, n_components = n_dim
+    X = np.array(list(product(range(N_per_side), repeat=2)))
+
+    # distances from each point to all others
+    G = neighbors.radius_neighbors_graph(X, radius,
+                                         mode='distance').toarray()
+
+    for eigen_solver in eigen_solvers:
+        for path_method in path_methods:
+            clf = manifold.Isomap(radius=radius, mode='radius',
+                                  n_components=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)
+
+            G_iso = neighbors.radius_neighbors_graph(clf.embedding_,
+                                                     radius,
+                                                     mode='distance').toarray()
+            assert_array_almost_equal(G, G_iso)
