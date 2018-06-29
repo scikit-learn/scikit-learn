@@ -1030,7 +1030,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     >>> indicator = MissingIndicator()
     >>> indicator.fit(X1)
     MissingIndicator(error_on_new=True, features='missing-only',
-             missing_values='NaN', sparse='auto')
+             missing_values=nan, sparse='auto')
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr
     array([[False,  True],
