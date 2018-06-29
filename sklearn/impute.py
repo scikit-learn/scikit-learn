@@ -45,10 +45,10 @@ def _check_inputs_dtype(X, missing_values):
     missing_values."""
     if (X.dtype.kind in ("f", "i", "u") and
             not isinstance(missing_values, numbers.Real)):
-        raise TypeError("The data type of 'missing_values' and 'X' are "
-                        "not compatible. 'missing_values' data type is "
-                        "{} and 'X' is {}."
-                        .format(type(missing_values), X.dtype))
+        raise ValueError("The data type of 'missing_values' and 'X' are "
+                         "not compatible. 'missing_values' data type is "
+                         "{} and 'X' is {}."
+                         .format(type(missing_values), X.dtype))
 
 
 def _get_mask(X, value_to_mask):
