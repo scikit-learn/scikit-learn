@@ -705,3 +705,23 @@ def test_chained_imputer_additive_matrix():
                              random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.01)
+
+
+@pytest.mark.parametrize("imputer_constructor",
+                         [SimpleImputer, ChainedImputer])
+@pytest.mark.parametrize(
+    "missing_values, X_missing_value, err_type, err_msg",
+    [("NaN", np.nan, ValueError, "contains"),
+     ("-1", -1, TypeError, "not compatible")])
+def test_inconsistent_dtype_X_missing_values(imputer_constructor,
+                                             missing_values, X_missing_value,
+                                             err_type, err_msg):
+    # regression test for issue #11390. Comparison between incoherent dtype
+    # for X and missing_values was not raising a proper error.
+    X = np.random.randn(1000, 10)
+    X[0, 0] = X_missing_value
+
+    imputer = imputer_constructor(missing_values=missing_values)
+
+    with pytest.raises(err_type, match=err_msg):
+        imputer.fit_transform(X)
