@@ -724,9 +724,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 min_samples_leaf=None, warm_start=False, presort='auto',
-                 validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4):
+                 min_samples_leaf='deprecated', warm_start=False,
+                 presort='auto', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -1532,7 +1532,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=None, min_weight_fraction_leaf=0.,
+                 min_samples_leaf='deprecated', min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
@@ -1985,7 +1985,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=None, min_weight_fraction_leaf=0.,
+                 min_samples_leaf='deprecated', min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,

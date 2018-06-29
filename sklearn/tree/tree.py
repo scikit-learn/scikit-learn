@@ -91,7 +91,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                  random_state,
                  min_impurity_decrease,
                  min_impurity_split,
-                 min_samples_leaf=None,
+                 min_samples_leaf='deprecated',
                  class_weight=None,
                  presort=False):
         self.criterion = criterion
@@ -173,7 +173,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
-        if self.min_samples_leaf is not None:
+        if self.min_samples_leaf != 'deprecated':
             warnings.warn("'min_samples_leaf' is deprecated in 0.20 and "
                           "will be fixed to a value of 1 in 0.22.",
                           DeprecationWarning)
@@ -737,7 +737,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  splitter="best",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf=None,
+                 min_samples_leaf='deprecated',
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
@@ -1079,7 +1079,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  splitter="best",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf=None,
+                 min_samples_leaf='deprecated',
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
@@ -1303,7 +1303,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  splitter="random",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf=None,
+                 min_samples_leaf='deprecated',
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
@@ -1470,7 +1470,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  splitter="random",
                  max_depth=None,
                  min_samples_split=2,
-                 min_samples_leaf=None,
+                 min_samples_leaf='deprecated',
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
