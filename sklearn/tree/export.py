@@ -605,7 +605,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
-        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
+        # need to copy bbox args because matplotib <1.5 modifies them
+        kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
                       zorder=100 - 10 * depth, xycoords='axes pixels')
 
         if self.fontsize is not None:
