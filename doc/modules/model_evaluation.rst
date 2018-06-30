@@ -1134,11 +1134,12 @@ Here is an example demonstrating the use of the
 :func:`multilabel_confusion_matrix` function in a multilabel_indicator
 problem::
 
+    >>> import numpy as np
     >>> from sklearn.metrics import multilabel_confusion_matrix
-    >>> y_true = [[1, 0, 1],
-    ...           [0, 1, 0]]
-    >>> y_pred = [[1, 0, 0],
-    ...           [0, 1, 1]]
+    >>> y_true = np.array([[1, 0, 1],
+    ...                    [0, 1, 0]])
+    >>> y_pred = np.array([[1, 0, 0],
+    ...                    [0, 1, 1]])
     >>> multilabel_confusion_matrix(y_true, y_pred)
     array([[[1, 0],
             [0, 1]],

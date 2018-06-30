@@ -358,11 +358,12 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     Examples
     --------
     Multilabel-indicator case:
+    >>> import numpy as np
     >>> from sklearn.metrics import multilabel_confusion_matrix
-    >>> y_true = [[1, 0, 1],
-    ...           [0, 1, 0]]
-    >>> y_pred = [[1, 0, 0],
-    ...           [0, 1, 1]]
+    >>> y_true = np.array([[1, 0, 1],
+    ...                    [0, 1, 0]])
+    >>> y_pred = np.array([[1, 0, 0],
+    ...                    [0, 1, 1]])
     >>> multilabel_confusion_matrix(y_true, y_pred)
     array([[[1, 0],
             [0, 1]],
@@ -388,13 +389,9 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
             [1, 2]]])
 
     """
-    y_true = check_array(y_true, ensure_2d=False, dtype=None,
-                         accept_sparse=['csr', 'csc'])
-    y_pred = check_array(y_pred, ensure_2d=False, dtype=None,
-                         accept_sparse=['csr', 'csc'])
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
