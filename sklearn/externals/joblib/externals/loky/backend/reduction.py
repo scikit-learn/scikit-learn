@@ -30,6 +30,7 @@ from pickle import HIGHEST_PROTOCOL
 from . import LOKY_PICKLER
 
 Pickler = None
+LOKY_PICKLER='cloudpickle'
 try:
     if LOKY_PICKLER is None or LOKY_PICKLER == "":
         from pickle import Pickler
