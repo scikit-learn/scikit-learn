@@ -100,7 +100,7 @@ plt.axhline(lower, linestyle='--', color='.5', label='Best score - 1 std')
 plt.title("Balance model complexity and cross-validated score")
 plt.xlabel('Reduced number of features')
 plt.ylabel('Digit classification accuracy')
-plt.xticks(n_components)
+plt.xticks(n_components.tolist())
 plt.ylim((0, 1.0))
 plt.legend(loc='upper left')
 
