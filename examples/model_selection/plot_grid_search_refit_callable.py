@@ -5,8 +5,7 @@ Balance model complexity and cross-validated score
 
 This example balances model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy
-score while minimising the number of PCA components. This is a rule of thumb
-for insignificant difference.
+score while minimising the number of PCA components.
 
 The figure shows the trade-off between cross-validated score and number of
 PCA components. The balanced case is when n_components=6 and accuracy=0.80,
@@ -78,11 +77,9 @@ pipe = Pipeline([
 ])
 
 N_FEATURES_OPTIONS = [2, 4, 6, 8]
-param_grid = [
-    {
-        'reduce_dim__n_components': N_FEATURES_OPTIONS
-    }
-]
+param_grid = {
+    'reduce_dim__n_components': N_FEATURES_OPTIONS
+}
 
 grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
                     scoring='accuracy', refit=refit_callable)
@@ -103,14 +100,14 @@ plt.axhline(lower, linestyle='--', color='.5', label='Best score - 1 std')
 plt.title("Balance model complexity and cross-validated score")
 plt.xlabel('Reduced number of features')
 plt.ylabel('Digit classification accuracy')
-plt.xticks(N_FEATURES_OPTIONS)
+plt.xticks(n_components)
 plt.ylim((0, 1.0))
 plt.legend(loc='upper left')
 
 best_index_ = grid.best_index_
 
 print("The best_index_ is %d" % best_index_)
-print("The n_components selected is %d" % N_FEATURES_OPTIONS[best_index_])
+print("The n_components selected is %d" % n_components[best_index_])
 print("The corresponding accuracy score is %.2f"
       % grid.cv_results_['mean_test_score'][best_index_])
 plt.show()
