@@ -565,7 +565,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Added float values for fractions.
         .. deprecated:: 0.20
            The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22.
+           will be fixed to a value of 1 in version 0.22. It was not effective
+           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -936,7 +937,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Added float values for fractions.
         .. deprecated:: 0.20
            The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22.
+           will be fixed to a value of 1 in version 0.22. It was not effective
+           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1197,7 +1199,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Added float values for fractions.
         .. deprecated:: 0.20
            The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22.
+           will be fixed to a value of 1 in version 0.22. It was not effective
+           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -1384,7 +1387,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Added float values for fractions.
         .. deprecated:: 0.20
            The parameter ``min_samples_leaf`` is deprecated in version 0.20 and
-           will be fixed to a value of 1 in version 0.22.
+           will be fixed to a value of 1 in version 0.22. It was not effective
+           for regularization and empirically, 1 is the best value.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all

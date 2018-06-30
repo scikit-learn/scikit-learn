@@ -190,6 +190,22 @@ Classifiers and regressors
   efficient when ``algorithm='brute'``. :issue:`11136` by `Joel Nothman`_
   and :user:`Aman Dalmia <dalmia>`.
 
+- The parameter `min_samples_leaf` was deprecated in
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`,
+  :class:`ensemble.GradientBoostingRegressor`,
+  :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`,
+  :class:`tree.ExtraTreeRegressor`,
+  and will be fixed to a value of 1 in version 0.22. It was not effective
+  for regularization and empirically, 1 is the best value.
+  :issue:`10773` by :user:`Bob Chen <lasagnaman>`.
+
+
 Cluster
 
 - :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
@@ -544,6 +560,23 @@ Datasets
 
 API changes summary
 -------------------
+
+Classifiers and regressors
+
+- The parameter `min_samples_leaf` was deprecated in
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`,
+  :class:`ensemble.GradientBoostingRegressor`,
+  :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`,
+  :class:`tree.ExtraTreeRegressor`,
+  and will be fixed to a value of 1 in version 0.22. It was not effective
+  for regularization and empirically, 1 is the best value.
+  :issue:`10773` by :user:`Bob Chen <lasagnaman>`.
 
 Linear, kernelized and related models
 
