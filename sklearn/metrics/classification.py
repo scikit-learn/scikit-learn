@@ -447,7 +447,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
         # All labels are index integers for multilabel.
         # Select labels:
-        if not np.all(labels == present_labels):
+        if not np.array_equal(labels, present_labels):
             if np.max(labels) > np.max(present_labels):
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d > %d' %
