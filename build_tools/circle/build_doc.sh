@@ -92,7 +92,7 @@ else
     make_args=html
 fi
 
-make_args="-T $make_args"  # show full traceback on exception
+make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation
