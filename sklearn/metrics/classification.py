@@ -299,9 +299,9 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
                                 labels=None, samplewise=False):
     """Compute a confusion matrix for each class or sample
 
-    Compute multilabel confusion matrix class-wise (default) or
-    sample-wise (samplewise=True) to evaluate the accuracy of a
-    classification, and output confusion matrices for each class or sample
+    Compute class-wise (default) or sample-wise (samplewise=True) multilabel
+    confusion matrix to evaluate the accuracy of a classification, and output
+    confusion matrices for each class or sample.
 
     In multilabel confusion matrix :math:`MCM`, the count of true negatives
     is :math:`MCM_{:,0,0}`, false negatives is :math:`MCM_{:,1,0}`,

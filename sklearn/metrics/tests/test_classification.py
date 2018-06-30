@@ -384,6 +384,14 @@ def test_multilabel_confusion_matrix_multiclass():
                                 [[30, 25], [2, 18]],
                                 [[38, 6], [28, 3]]])
 
+        # compute confusion matrix with super set of present labels
+        labels = ['0', '2', '1', '3'] if string_type else [0, 2, 1, 3]
+        cm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[30, 25], [2, 18]],
+                                [[38, 6], [28, 3]],
+                                [[75, 0], [0, 0]]])
+
     test(y_true, y_pred)
     test(list(str(y) for y in y_true),
          list(str(y) for y in y_pred),
