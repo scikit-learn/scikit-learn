@@ -667,50 +667,6 @@ def test_zero_precision_recall():
         np.seterr(**old_error_settings)
 
 
-def test_confusion_matrix_multiclass():
-    # Test confusion matrix - multi-class case
-    y_true, y_pred, _ = make_prediction(binary=False)
-
-    def test(y_true, y_pred, string_type=False):
-        # compute confusion matrix with default labels introspection
-        cm = confusion_matrix(y_true, y_pred)
-        assert_array_equal(cm, [[19, 4, 1],
-                                [4, 3, 24],
-                                [0, 2, 18]])
-
-        # compute confusion matrix with explicit label ordering
-        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
-        cm = confusion_matrix(y_true,
-                              y_pred,
-                              labels=labels)
-        assert_array_equal(cm, [[19, 1, 4],
-                                [0, 18, 2],
-                                [4, 24, 3]])
-
-    test(y_true, y_pred)
-    test(list(str(y) for y in y_true),
-         list(str(y) for y in y_pred),
-         string_type=True)
-
-
-def test_confusion_matrix_sample_weight():
-    """Test confusion matrix - case with sample_weight"""
-    y_true, y_pred, _ = make_prediction(binary=False)
-
-    weights = [.1] * 25 + [.2] * 25 + [.3] * 25
-
-    cm = confusion_matrix(y_true, y_pred, sample_weight=weights)
-
-    true_cm = (.1 * confusion_matrix(y_true[:25], y_pred[:25]) +
-               .2 * confusion_matrix(y_true[25:50], y_pred[25:50]) +
-               .3 * confusion_matrix(y_true[50:], y_pred[50:]))
-
-    assert_array_almost_equal(cm, true_cm)
-    assert_raises(
-        ValueError, confusion_matrix, y_true, y_pred,
-        sample_weight=weights[:-1])
-
-
 def test_confusion_matrix_multiclass_subset_labels():
     # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)
