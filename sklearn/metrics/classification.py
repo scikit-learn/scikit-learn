@@ -385,17 +385,6 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
            [[2, 1],
             [1, 2]]])
 
-    Binary case:
-    >>> y_true = [0, 1, 0, 1]
-    >>> y_pred = [1, 1, 1, 0]
-    >>> multilabel_confusion_matrix(y_true, y_pred,
-    ...                             sample_weight=[1, 2, 3, 4])
-    array([[[2., 4.],
-            [4., 0.]],
-    <BLANKLINE>
-           [[0., 4.],
-            [4., 2.]]])
-
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None,
                          accept_sparse=['csr', 'csc'])

@@ -1113,10 +1113,10 @@ function:
 .. _multilabel_confusion_matrix:
 
 Multi-label confusion matrix
-----------------
+----------------------------
 
-The :func:`multilabel_confusion_matrix` function computes multilabel confusion
-matrix class-wisely (default) or sample-wisely (samplewise=True) to evaluate
+The :func:`multilabel_confusion_matrix` function computes class-wise (default)
+or sample-wise (samplewise=True) multilabel confusion matrix to evaluate
 the accuracy of a classification. multilabel_confusion_matrix also treats
 multiclass data as if it were multilabel, as this is a transformation commonly
 applied to evaluate multiclass problems with binary classification metrics
@@ -1162,18 +1162,48 @@ Here is an example demonstrating the use of the
            [[2, 1],
             [1, 2]]])
 
-Here is an example demonstrating the use of the
-:func:`multilabel_confusion_matrix` function in a binary class problem::
+Here are some examples demonstrating the use of the
+:func:`multilabel_confusion_matrix` function to calculate Sensitivity,
+Specificity, Fall out and Miss rate for each class in a multilabel_indicator
+problem.
 
-    >>> y_true = [0, 1, 0, 1]
-    >>> y_pred = [1, 1, 1, 0]
-    >>> multilabel_confusion_matrix(y_true, y_pred,
-    ...                             sample_weight=[1, 2, 3, 4])
-    array([[[2., 4.],
-            [4., 0.]],
-    <BLANKLINE>
-           [[0., 4.],
-            [4., 2.]]])
+Calculating
+`Sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(also called the true positive rate or the recall) for each class::
+
+    >>> y_true = [[0, 0, 1],
+                  [0, 1, 0],
+                  [1, 1, 0]]
+    >>> y_pred = [[0, 1, 0],
+                  [0, 0, 1],
+                  [1, 1, 0]]
+    >>> MCM = multilabel_confusion_matrix(y_true, y_pred)
+    >>> TN = MCM[:, 0, 0]
+    >>> TP = MCM[:, 1, 1]
+    >>> FN = MCM[:, 1, 0]
+    >>> FP = MCM[:, 0, 1]
+    >>> TP / (TP + FN)
+    array([ 1. ,  0.5,  0. ])
+
+Calculating
+`Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(also called the true negative rate) for each class::
+
+    >>> TN / (TN + FP)
+    array([ 1. ,  0. ,  0.5])
+
+Calculating `Fall out <https://en.wikipedia.org/wiki/False_positive_rate>`_
+(also called the false positive rate) for each class::
+
+    >>> FP / (FP + TN)
+    array([ 0. ,  1. ,  0.5])
+
+Calculating `Miss rate
+<https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`_
+(also called the false negative rate) for each class::
+
+    >>> FN / (FN + TP)
+    array([ 0. ,  0.5,  1. ])
 
 .. _roc_metrics:
 
