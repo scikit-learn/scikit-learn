@@ -34,7 +34,7 @@ try:
     if LOKY_PICKLER is None or LOKY_PICKLER == "":
         from pickle import Pickler
     elif LOKY_PICKLER == "cloudpickle":
-        from ...cloudpickle import CloudPickler as Pickler
+        from cloudpickle import CloudPickler as Pickler
     elif LOKY_PICKLER == "dill":
         from dill import Pickler
     elif LOKY_PICKLER != "pickle":
