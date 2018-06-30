@@ -113,6 +113,8 @@ CLASSIFICATION_METRICS = {
     ),
 
     "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "unnormalized_multilabel_confusion_matrix_sample":
+        partial(multilabel_confusion_matrix, samplewise=True),
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -248,6 +250,7 @@ METRIC_UNDEFINED_BINARY = {
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "macro_average_precision_score",
+    "unnormalized_multilabel_confusion_matrix_sample",
     "samples_average_precision_score",
 
     "label_ranking_loss",
@@ -334,6 +337,7 @@ METRICS_WITH_LABELS = {
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
     "unnormalized_multilabel_confusion_matrix",
+    "unnormalized_multilabel_confusion_matrix_sample",
 
     "cohen_kappa_score",
 }

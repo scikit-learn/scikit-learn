@@ -421,18 +421,12 @@ def test_multilabel_confusion_matrix_multilabel():
                             [[2, 0], [3, 1]],
                             [[0, 4], [2, 0]]])
 
-    # test support for samplewise
-    cm = multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
-    assert_array_equal(cm, [[[1, 0], [1, 1]],
-                            [[1, 1], [0, 1]],
-                            [[0, 1], [2, 0]]])
-
     # test support for labels
     cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0])
     assert_array_equal(cm, [[[0, 2], [1, 0]],
                             [[1, 0], [1, 1]]])
 
-    # test support for labels with sample_wise
+    # test support for labels with samplewise
     cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0],
                                      samplewise=True)
     assert_array_equal(cm, [[[0, 0], [1, 1]],

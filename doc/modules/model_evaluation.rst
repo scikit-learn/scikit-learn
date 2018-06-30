@@ -1175,12 +1175,12 @@ Calculating
 `Sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
 (also called the true positive rate or the recall) for each class::
 
-    >>> y_true = [[0, 0, 1],
-                  [0, 1, 0],
-                  [1, 1, 0]]
-    >>> y_pred = [[0, 1, 0],
-                  [0, 0, 1],
-                  [1, 1, 0]]
+    >>> y_true = np.array([[0, 0, 1],
+                           [0, 1, 0],
+                           [1, 1, 0]])
+    >>> y_pred = np.array([[0, 1, 0],
+                           [0, 0, 1],
+                           [1, 1, 0]])
     >>> MCM = multilabel_confusion_matrix(y_true, y_pred)
     >>> TN = MCM[:, 0, 0]
     >>> TP = MCM[:, 1, 1]
