@@ -12,6 +12,7 @@ at which the fixe is no longer needed.
 
 import os
 import errno
+import sys
 
 import numpy as np
 import scipy.sparse as sp
@@ -39,6 +40,7 @@ euler_gamma = getattr(np, 'euler_gamma',
 
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
+PY3_OR_LATER = sys.version_info[0] >= 3
 
 
 # Remove when minimum required NumPy >= 1.10
@@ -68,6 +70,17 @@ except TypeError:
         if out_orig is None and np.isscalar(x1):
             out = np.asscalar(out)
         return out
+
+
+# boxcox ignore NaN in scipy.special.boxcox after 0.14
+if sp_version < (0, 14):
+    from scipy import stats
+
+    def boxcox(x, lmbda):
+        with np.errstate(invalid='ignore'):
+            return stats.boxcox(x, lmbda)
+else:
+    from scipy.special import boxcox  # noqa
 
 
 if sp_version < (0, 15):
