@@ -28,7 +28,7 @@ from ._parallel_backends import (FallbackToBackend, MultiprocessingBackend,
                                  ThreadingBackend, SequentialBackend,
                                  LokyBackend)
 from ._compat import _basestring
-from .externals.cloudpickle import dumps, loads
+from cloudpickle import dumps, loads
 from .externals import loky
 
 # Make sure that those two classes are part of the public joblib.parallel API
