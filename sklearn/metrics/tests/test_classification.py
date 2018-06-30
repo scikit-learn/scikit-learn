@@ -414,12 +414,11 @@ def test_multilabel_confusion_matrix_multilabel():
             cm = multilabel_confusion_matrix(y_true_tmp, y_pred_tmp)
             assert_array_equal(cm, real_cm)
 
-    # test support for sample_weight
-    cm = multilabel_confusion_matrix(y_true, y_pred,
-                                     sample_weight=sample_weight)
-    assert_array_equal(cm, [[[1, 0], [3, 2]],
-                            [[2, 0], [3, 1]],
-                            [[0, 4], [2, 0]]])
+    # test support for samplewise
+    cm = multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    assert_array_equal(cm, [[[1, 0], [1, 1]],
+                            [[1, 1], [0, 1]],
+                            [[0, 1], [2, 0]]])
 
     # test support for labels
     cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0])
