@@ -916,11 +916,11 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimator = obj.fit(data, targets)
+      predictor = obj.fit(data, targets)
 
     or::
 
-      estimator = obj.fit(data)
+      predictor = obj.fit(data)
 
 :Predictor:
 
