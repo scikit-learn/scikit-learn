@@ -352,7 +352,7 @@ def test_map_cluster_labels():
     y_pred_translated = map_cluster_labels(y_true, y_pred)
     assert_equal(y_pred_translated, expected)
 
-    # handcrafted example - more clusters than classes
+    # handcrafted example - more classes than clusters
     y_true = ['a', 'd', 'e', 'b', 'b', 'b']
     y_pred = [0, 0, -1, -1, 2, 2]
 
