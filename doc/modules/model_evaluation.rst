@@ -1131,8 +1131,8 @@ negatives is :math:`MCM_{i,1,0}`, true positives is :math:`MCM_{i,1,1}`
 and false positives is :math:`MCM_{i,0,1}`.
 
 Here is an example demonstrating the use of the
-:func:`multilabel_confusion_matrix` function in a multilabel_indicator
-problem::
+:func:`multilabel_confusion_matrix` function with
+:term:`multilabel indicator matrix` input::
 
     >>> import numpy as np
     >>> from sklearn.metrics import multilabel_confusion_matrix
@@ -1151,7 +1151,8 @@ problem::
             [1, 0]]])
 
 Here is an example demonstrating the use of the
-:func:`multilabel_confusion_matrix` function in a multiclass problem::
+:func:`multilabel_confusion_matrix` function with
+:term:`multiclass array` input::
 
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
@@ -1167,13 +1168,13 @@ Here is an example demonstrating the use of the
             [1, 2]]])
 
 Here are some examples demonstrating the use of the
-:func:`multilabel_confusion_matrix` function to calculate Sensitivity,
-Specificity, Fall out and Miss rate for each class in a multilabel_indicator
-problem.
+:func:`multilabel_confusion_matrix` function to calculate Recall
+(or Sensitivity), Specificity, Fall out and Miss rate for each class in a
+problem with :term:`multilabel indicator matrix` input.
 
 Calculating
-`Sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(also called the true positive rate or the recall) for each class::
+`Recall <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true positive rate or the Sensitivity) for each class::
 
     >>> y_true = np.array([[0, 0, 1],
     ...                    [0, 1, 0],
@@ -1190,20 +1191,20 @@ Calculating
     array([1. , 0.5, 0. ])
 
 Calculating
-`Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+`Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
 (also called the true negative rate) for each class::
 
     >>> TN / (TN + FP)
-    array([1. , 0. , 0.5 ])
+    array([1. , 0. , 0.5])
 
-Calculating `Fall out <https://en.wikipedia.org/wiki/False_positive_rate>`_
+Calculating `Fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
 (also called the false positive rate) for each class::
 
     >>> FP / (FP + TN)
-    array([0. , 1. , 0.5 ])
+    array([0. , 1. , 0.5])
 
 Calculating `Miss rate
-<https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`_
+<https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`__
 (also called the false negative rate) for each class::
 
     >>> FN / (FN + TP)
