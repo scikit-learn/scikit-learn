@@ -903,7 +903,8 @@ def map_cluster_labels(labels_true, labels_pred):
     --------
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.metrics.cluster import map_cluster_labels
-    >>> labels_true = ["class1", "class2", "class3", "class1", "class1", "class3"]
+    >>> labels_true = ["class1", "class2", "class3", "class1", "class1",
+    >>>                "class3"]
     >>> labels_pred = [0, 0, 2, 2, 0, 2]
     >>> y_pred_translated = map_cluster_labels(labels_true, labels_pred)
     >>> y_pred_translated
@@ -920,9 +921,11 @@ def map_cluster_labels(labels_true, labels_pred):
     n_clusters = len(clusters)
 
     if n_clusters > n_classes:
-        classes += ['DEFAULT_LABEL_'+str(i) for i in range(n_clusters-n_classes)]
+        classes += ['DEFAULT_LABEL_'+str(i) for i in
+                    range(n_clusters-n_classes)]
     elif n_classes > n_clusters:
-        clusters += ['DEFAULT_CLUSTER_'+str(i) for i in range(n_classes-n_clusters)]
+        clusters += ['DEFAULT_CLUSTER_'+str(i) for i in
+                     range(n_classes-n_clusters)]
 
     C = contingency_matrix(labels_true, labels_pred)
     true_idx, pred_idx = linear_assignment(-C).T
