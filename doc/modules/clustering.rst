@@ -1736,7 +1736,7 @@ Drawbacks
 
 .. _map_cluster_labels:
 
-Class-cluster Match
+Map cluster labels
 -------------------
 
 Class-cluster match
