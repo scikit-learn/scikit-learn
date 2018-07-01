@@ -25,7 +25,7 @@ from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
 from ...utils.multiclass import unique_labels
 from ...utils.fixes import comb
-from ...utils import linear_assignment
+from ...utils.linear_assignment_ import linear_assignment
 
 
 def comb2(n):
