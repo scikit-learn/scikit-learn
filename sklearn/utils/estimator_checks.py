@@ -219,7 +219,7 @@ def _yield_all_checks(name, estimator):
     if is_regressor(estimator):
         for check in _yield_regressor_checks(name, estimator):
             yield check
-    if isinstance(estimator, TransformerMixin):
+    if hasattr(estimator, 'transform'):
         for check in _yield_transformer_checks(name, estimator):
             yield check
     if isinstance(estimator, ClusterMixin):

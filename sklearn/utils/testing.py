@@ -862,23 +862,16 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
 
     param_names = []
     for name, type_definition, param_doc in doc['Parameters']:
-        if (type_definition.strip() == "" or
-                type_definition.strip().startswith(':')):
-
-            param_name = name.lstrip()
-
-            # If there was no space between name and the colon
-            # "verbose:" -> len(["verbose", ""][0]) -> 7
-            # If "verbose:"[7] == ":", then there was no space
-            if (':' not in param_name or
-                    param_name[len(param_name.split(':')[0].strip())] == ':'):
+        if not type_definition.strip():
+            if ':' in name and name[:name.index(':')][-1:].strip():
                 incorrect += [func_name +
                               ' There was no space between the param name and '
-                              'colon ("%s")' % name]
-            else:
-                incorrect += [func_name + ' Incorrect type definition for '
-                              'param: "%s" (type definition was "%s")'
-                              % (name.split(':')[0], type_definition)]
+                              'colon (%r)' % name]
+            elif name.rstrip().endswith(':'):
+                incorrect += [func_name +
+                              ' Parameter %r has an empty type spec. '
+                              'Remove the colon' % (name.lstrip())]
+
         if '*' not in name:
             param_names.append(name.split(':')[0].strip('` '))
 

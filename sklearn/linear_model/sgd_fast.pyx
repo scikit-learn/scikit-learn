@@ -156,7 +156,7 @@ cdef class Hinge(Classification):
     cdef double loss(self, double p, double y) nogil:
         cdef double z = p * y
         if z <= self.threshold:
-            return (self.threshold - z)
+            return self.threshold - z
         return 0.0
 
     cdef double _dloss(self, double p, double y) nogil:
@@ -396,6 +396,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    intercept_decay : double
+        The decay ratio of intercept, used in updating intercept.
 
     Returns
     -------
