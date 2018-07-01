@@ -2,7 +2,7 @@
 .. _rcv1:
 
 RCV1 dataset
-============
+------------
 
 Reuters Corpus Volume I (RCV1) is an archive of over 800,000 manually categorized newswire stories made available by Reuters, Ltd. for research purposes. The dataset is extensively described in [1]_.
 

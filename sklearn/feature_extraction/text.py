@@ -11,7 +11,7 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, division
 
 import array
 from collections import Mapping, defaultdict
@@ -19,6 +19,7 @@ import numbers
 from operator import itemgetter
 import re
 import unicodedata
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -29,7 +30,7 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
@@ -306,6 +307,15 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
+    def _validate_params(self):
+        """Check validity of ngram_range parameter"""
+        min_n, max_m = self.ngram_range
+        if min_n > max_m:
+            raise ValueError(
+                "Invalid value for ngram_range=%s "
+                "lower boundary larger than the upper boundary."
+                % str(self.ngram_range))
+
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -371,11 +381,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -493,6 +507,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -516,6 +532,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
+
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
@@ -523,6 +541,26 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
         return X
+
+    def fit_transform(self, X, y=None):
+        """Transform a sequence of documents to a document-term matrix.
+
+        Parameters
+        ----------
+        X : iterable over raw text documents, length = n_samples
+            Samples. Each sample must be a text document (either bytes or
+            unicode strings, file name or file object depending on the
+            constructor argument) which will be tokenized and hashed.
+        y : any
+            Ignored. This parameter exists only for compatibility with
+            sklearn.pipeline.Pipeline.
+
+        Returns
+        -------
+        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+            Document-term matrix.
+        """
+        return self.fit(X, y).transform(X)
 
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
@@ -536,7 +574,7 @@ def _document_frequency(X):
     if sp.isspmatrix_csr(X):
         return np.bincount(X.indices, minlength=X.shape[1])
     else:
-        return np.diff(sp.csc_matrix(X, copy=False).indptr)
+        return np.diff(X.indptr)
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
@@ -575,11 +613,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -874,6 +916,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._validate_params()
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -971,6 +1014,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+
         self._check_vocabulary()
 
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
@@ -1040,6 +1086,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    Attributes
+    ----------
+    idf_ : array, shape (n_features)
+        The inverse document frequency (IDF) vector; only defined
+        if  ``use_idf`` is True.
+
     References
     ----------
 
@@ -1066,11 +1118,14 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
+        X = check_array(X, accept_sparse=('csr', 'csc'))
         if not sp.issparse(X):
-            X = sp.csc_matrix(X)
+            X = sp.csr_matrix(X)
+        dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
+
         if self.use_idf:
             n_samples, n_features = X.shape
-            df = _document_frequency(X)
+            df = _document_frequency(X).astype(dtype)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1078,9 +1133,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
-                                        n=n_features, format='csr')
+            idf = np.log(n_samples / df) + 1
+            self._idf_diag = sp.diags(idf, offsets=0,
+                                      shape=(n_features, n_features),
+                                      format='csr',
+                                      dtype=dtype)
 
         return self
 
@@ -1100,12 +1157,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.floating):
-            # preserve float family dtype
-            X = sp.csr_matrix(X, copy=copy)
-        else:
-            # convert counts or binary occurrences to floats
-            X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X, dtype=np.float64)
 
         n_samples, n_features = X.shape
 
@@ -1134,6 +1188,13 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
+
+    @idf_.setter
+    def idf_(self, value):
+        value = np.asarray(value, dtype=np.float64)
+        n_features = value.shape[0]
+        self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
+                                    n=n_features, format='csr')
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1167,11 +1228,15 @@ class TfidfVectorizer(CountVectorizer):
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None}
-        Remove accents during the preprocessing step.
+        Remove accents and perform other character normalization
+        during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
+
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
 
     analyzer : string, {'word', 'char'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -1269,9 +1334,9 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
-    idf_ : array, shape = [n_features], or None
-        The learned idf vector (global term weights)
-        when ``use_idf`` is set to True, None otherwise.
+    idf_ : array, shape (n_features)
+        The inverse document frequency (IDF) vector; only defined
+        if  ``use_idf`` is True.
 
     stop_words_ : set
         Terms that were ignored because they either:
@@ -1305,7 +1370,7 @@ class TfidfVectorizer(CountVectorizer):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
-                 dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
+                 dtype=np.float64, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
@@ -1360,6 +1425,23 @@ class TfidfVectorizer(CountVectorizer):
     def idf_(self):
         return self._tfidf.idf_
 
+    @idf_.setter
+    def idf_(self, value):
+        self._validate_vocabulary()
+        if hasattr(self, 'vocabulary_'):
+            if len(self.vocabulary_) != len(value):
+                raise ValueError("idf length = %d must be equal "
+                                 "to vocabulary size = %d" %
+                                 (len(value), len(self.vocabulary)))
+        self._tfidf.idf_ = value
+
+    def _check_params(self):
+        if self.dtype not in FLOAT_DTYPES:
+            warnings.warn("Only {} 'dtype' should be used. {} 'dtype' will "
+                          "be converted to np.float64."
+                          .format(FLOAT_DTYPES, self.dtype),
+                          UserWarning)
+
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
 
@@ -1372,6 +1454,7 @@ class TfidfVectorizer(CountVectorizer):
         -------
         self : TfidfVectorizer
         """
+        self._check_params()
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -1392,6 +1475,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
+        self._check_params()
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so

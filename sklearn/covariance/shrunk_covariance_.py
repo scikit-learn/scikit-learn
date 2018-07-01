@@ -45,10 +45,9 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Notes
     -----
-    The regularized (shrunk) covariance is given by
+    The regularized (shrunk) covariance is given by:
 
-    (1 - shrinkage)*cov
-      + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -98,10 +97,9 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Notes
     -----
-    The regularized covariance is given by
+    The regularized covariance is given by:
 
-    (1 - shrinkage)*cov
-      + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -176,8 +174,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     -----
     The regularized (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
-      + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -276,8 +273,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     -----
     The regularized (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
-      + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -350,10 +346,9 @@ class LedoitWolf(EmpiricalCovariance):
 
     Notes
     -----
-    The regularised covariance is::
+    The regularised covariance is:
 
-        (1 - shrinkage)*cov
-                + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
     and shrinkage is given by the Ledoit and Wolf formula (see References)
@@ -433,8 +428,7 @@ def oas(X, assume_centered=False):
     -----
     The regularised (shrunk) covariance is:
 
-    (1 - shrinkage)*cov
-      + shrinkage * mu * np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
 
@@ -513,10 +507,9 @@ class OAS(EmpiricalCovariance):
 
     Notes
     -----
-    The regularised covariance is::
+    The regularised covariance is:
 
-        (1 - shrinkage)*cov
-                + shrinkage*mu*np.identity(n_features)
+    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
     and shrinkage is given by the OAS formula (see References)
