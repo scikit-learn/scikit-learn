@@ -922,7 +922,7 @@ def map_cluster_labels(labels_true, labels_pred):
     if n_clusters > n_classes:
         classes += ['DEFAULT_LABEL_'+str(i) for i in range(n_clusters-n_classes)]
     elif n_classes > n_clusters:
-        clusters += ['DEF_CLUSTER'+str(i) for i in range(n_classes-n_clusters)]
+        clusters += ['DEF_CLUSTER_'+str(i) for i in range(n_classes-n_clusters)]
 
     C = contingency_matrix(labels_true, labels_pred)
     true_idx, pred_idx = linear_assignment(-C).T
