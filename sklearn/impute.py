@@ -255,7 +255,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _sparse_fit(self, X, strategy, missing_values, fill_value):
+    def _sparse_fit(self, X, strategy, missing_values, fill_value, random_state):
         """Fit the transformer on sparse data."""
         # Count the zeros
         if missing_values == 0:
@@ -1070,6 +1070,12 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         return check_array(X, accept_sparse='csc', dtype=None,
                            force_all_finite=force_all_finite, copy=self.copy)
 
+    def _vect_is_not_none(self, a):
+        def is_not_none(x):
+            return x is not None
+
+        return np.vectorize(is_not_none)(a)
+
     def fit(self, X, y=None):
         """Fit the imputer on X.
 
@@ -1083,39 +1089,63 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         -------
         self : SamplingImputer
         """
-        self.random_state_ = getattr(self, "random_state_",
-                                     check_random_state(self.random_state))
+        self._random_state_ = getattr(self, "random_state_",
+                                      check_random_state(self.random_state))
 
         X = self._validate_input(X)
 
         if sparse.issparse(X):
             self.uniques_, self.probas_ = self._sparse_fit(X,
-                                                           self.missing_values,
-                                                           self.random_state_)
+                                                           self.missing_values)
         else:
             self.uniques_, self.probas_ = self._dense_fit(X,
-                                                          self.missing_values,
-                                                          self.random_state_)
+                                                          self.missing_values)
 
         return self
 
-    def _sparse_fit(self, X, missing_values, random_state):
+    def _sparse_fit(self, X, missing_values):
         """Fit the transformer on sparse data."""
-        todo = True
-
-    def _dense_fit(self, X, missing_values, random_state):
-        """Fit the transformer on dense data."""
-        mask = _get_mask(X, missing_values)
-        mask = np.logical_not(mask)
+        mask_data = _get_mask(X.data, missing_values)
+        n_zeros = X.shape[0] - np.diff(X.indptr)
 
         uniques = np.empty(X.shape[1], dtype=object)
         probas = np.empty(X.shape[1], dtype=object)
 
         for i in range(X.shape[1]):
-            row = X[mask[:, i], i]
-            if row.size > 0:
-                uniques[i], counts = np.unique(row, return_counts=True)
-                if uniques[i].size == row.size:
+            column = X.data[X.indptr[i]:X.indptr[i+1]]
+            mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+            column = column[~mask_column]
+
+            values, counts = np.unique(column, return_counts=True)
+
+            if missing_values != 0 and n_zeros[i] > 0:
+                values = np.append(values, 0)
+                counts = np.append(counts, n_zeros[i])
+
+            if values.size > 0:
+                uniques[i] = values
+                if values.size == X.shape[0]:
+                    probas[i] = None
+                else:
+                    probas[i] = counts / counts.sum()
+            else:
+                uniques[i] = None
+                probas[i] = None
+
+        return uniques, probas
+
+    def _dense_fit(self, X, missing_values):
+        """Fit the transformer on dense data."""
+        mask = _get_mask(X, missing_values)
+
+        uniques = np.empty(X.shape[1], dtype=object)
+        probas = np.empty(X.shape[1], dtype=object)
+
+        for i in range(X.shape[1]):
+            column = X[mask[:, i], i]
+            if column.size > 0:
+                uniques[i], counts = np.unique(column, return_counts=True)
+                if uniques[i].size == column.size:
                     probas[i] = None
                 else:
                     probas[i] = counts / counts.sum()
@@ -1145,25 +1175,30 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
                              % (X.shape[1], self.uniques_.shape[0]))
 
         # Delete the invalid columns
-        def is_none(x):
-            return x is None
-
-        invalid_mask = np.vectorize(is_none)(uniques)
-        valid_mask = np.logical_not(invalid_mask)
+        valid_mask = self._vect_is_not_none(uniques)
         valid_uniques = uniques[valid_mask]
         valid_probas = probas[valid_mask]
         valid_indexes = np.flatnonzero(valid_mask)
 
-        if invalid_mask.any():
-            missing = np.arange(X.shape[1])[invalid_mask]
+        if not valid_mask.all():
+            missing = np.arange(X.shape[1])[~valid_mask]
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
             X = X[:, valid_indexes]
 
         # Do actual imputation
+
         if sparse.issparse(X) and self.missing_values != 0:
-            todo = True
+            mask_data = _get_mask(X.data, self.missing_values)
+            for i in range(X.shape[1]):
+                column = X.data[X.indptr[i]:X.indptr[i+1]]
+                mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+                n_missing = mask_column.sum()
+                values = self._random_state_.choice(valid_uniques[i],
+                                                    n_missing,
+                                                    p=valid_probas[i])
+                column[mask_column] = values
 
         else:
             if sparse.issparse(X):
@@ -1172,10 +1207,9 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             for i in range(n_missing.shape[0]):
-                values = self.random_state_.choice(valid_uniques[i],
-                                                   n_missing[i],
-                                                   p=valid_probas[i])
-                coordinates = np.nonzero(mask[:, i])
-                X[coordinates, i] = values
+                values = self._random_state_.choice(valid_uniques[i],
+                                                    n_missing[i],
+                                                    p=valid_probas[i])
+                X[mask[:, i], i] = values
 
         return X
