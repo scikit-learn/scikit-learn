@@ -879,11 +879,10 @@ def entropy(labels):
 def map_cluster_labels(labels_true, labels_pred):
     """Translate prediction labels to maximize the accuracy.
 
-    Translate the prediction labels of a clustering output to enable calc
-    of external metrics (eg. accuracy, f1_score, ...). Translation is done by
-    maximization of the confusion matrix :math:`C` main diagonal sum
-    :math:`\sum{i=0}^{K}C_{i, i}`. Notice the number of cluster has to be equal
-    or smaller than the number of true classes.
+    Translate the prediction labels of a clustering output to those in the
+    ground truth to enable calc of external metrics (eg. accuracy, f1_score, ...).
+    Translation is done by maximization of the confusion matrix :math:`C` main
+    diagonal sum :math:`\sum{i=0}^{K}C_{i, i}`.
 
     Parameters
     ----------
