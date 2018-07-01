@@ -79,7 +79,7 @@ to select tests based on their name. For instance,::
 
 will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 
-When a unit tests fail, the following tricks can make debugging easier:
+When a unit test fails, the following tricks can make debugging easier:
 
   1. The command line argument ``pytest -l`` instructs pytest to print the local
      variables when a failure occurs.
