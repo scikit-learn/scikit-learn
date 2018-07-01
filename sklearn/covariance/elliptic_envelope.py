@@ -8,9 +8,10 @@ import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
 from ..metrics import accuracy_score
+from ..base import OutlierMixin
 
 
-class EllipticEnvelope(MinCovDet):
+class EllipticEnvelope(MinCovDet, OutlierMixin):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.
@@ -63,7 +64,7 @@ class EllipticEnvelope(MinCovDet):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - offset_.
+        We have the relation: ``decision_function = score_samples - offset_``.
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
@@ -80,8 +81,9 @@ class EllipticEnvelope(MinCovDet):
 
     References
     ----------
-    ..  [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
-        covariance determinant estimator" Technometrics 41(3), 212 (1999)
+    .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
+       minimum covariance determinant estimator" Technometrics 41(3), 212
+       (1999)
 
     """
     def __init__(self, store_precision=True, assume_centered=False,
@@ -160,7 +162,6 @@ class EllipticEnvelope(MinCovDet):
             Opposite of the Mahalanobis distances.
         """
         check_is_fitted(self, 'offset_')
-        X = check_array(X)
         return -self.mahalanobis(X)
 
     def predict(self, X):

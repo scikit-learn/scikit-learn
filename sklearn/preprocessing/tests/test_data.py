@@ -7,6 +7,7 @@ from __future__ import division
 
 import warnings
 import re
+import itertools
 
 import numpy as np
 import numpy.linalg as la
@@ -32,18 +33,15 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import skip_if_32bit
-from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing.data import _transform_selected
 from sklearn.preprocessing.data import _handle_zeros_in_scale
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
 from sklearn.preprocessing.data import Normalizer
 from sklearn.preprocessing.data import normalize
-from sklearn.preprocessing.data import OneHotEncoder
-from sklearn.preprocessing.data import CategoricalEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
@@ -60,6 +58,7 @@ from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
+from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
@@ -701,6 +700,85 @@ def test_scaler_without_centering():
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
+@pytest.mark.parametrize("with_mean", [True, False])
+@pytest.mark.parametrize("with_std", [True, False])
+@pytest.mark.parametrize("array_constructor",
+                         [np.asarray, sparse.csc_matrix, sparse.csr_matrix])
+def test_scaler_n_samples_seen_with_nan(with_mean, with_std,
+                                        array_constructor):
+    X = np.array([[0, 1, 3],
+                  [np.nan, 6, 10],
+                  [5, 4, np.nan],
+                  [8, 0, np.nan]],
+                 dtype=np.float64)
+    X = array_constructor(X)
+
+    if sparse.issparse(X) and with_mean:
+        pytest.skip("'with_mean=True' cannot be used with sparse matrix.")
+
+    transformer = StandardScaler(with_mean=with_mean, with_std=with_std)
+    transformer.fit(X)
+
+    assert_array_equal(transformer.n_samples_seen_, np.array([3, 4, 2]))
+
+
+def _check_identity_scalers_attributes(scaler_1, scaler_2):
+    assert scaler_1.mean_ is scaler_2.mean_ is None
+    assert scaler_1.var_ is scaler_2.var_ is None
+    assert scaler_1.scale_ is scaler_2.scale_ is None
+    assert scaler_1.n_samples_seen_ == scaler_2.n_samples_seen_
+
+
+def test_scaler_return_identity():
+    # test that the scaler return identity when with_mean and with_std are
+    # False
+    X_dense = np.array([[0, 1, 3],
+                        [5, 6, 0],
+                        [8, 0, 10]],
+                       dtype=np.float64)
+    X_csr = sparse.csr_matrix(X_dense)
+    X_csc = X_csr.tocsc()
+
+    transformer_dense = StandardScaler(with_mean=False, with_std=False)
+    X_trans_dense = transformer_dense.fit_transform(X_dense)
+
+    transformer_csr = clone(transformer_dense)
+    X_trans_csr = transformer_csr.fit_transform(X_csr)
+
+    transformer_csc = clone(transformer_dense)
+    X_trans_csc = transformer_csc.fit_transform(X_csc)
+
+    assert_allclose_dense_sparse(X_trans_csr, X_csr)
+    assert_allclose_dense_sparse(X_trans_csc, X_csc)
+    assert_allclose(X_trans_dense, X_dense)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_identity_scalers_attributes(trans_1, trans_2)
+
+    transformer_dense.partial_fit(X_dense)
+    transformer_csr.partial_fit(X_csr)
+    transformer_csc.partial_fit(X_csc)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_identity_scalers_attributes(trans_1, trans_2)
+
+    transformer_dense.fit(X_dense)
+    transformer_csr.fit(X_csr)
+    transformer_csc.fit(X_csc)
+
+    for trans_1, trans_2 in itertools.combinations([transformer_dense,
+                                                    transformer_csr,
+                                                    transformer_csc],
+                                                   2):
+        _check_identity_scalers_attributes(trans_1, trans_2)
+
+
 def test_scaler_int():
     # test that scaler converts integer input to floating
     # for both sparse and dense matrices
@@ -822,14 +900,9 @@ def test_scale_sparse_with_mean_raise_exception():
 
 def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
-    X = [[np.nan, 5, 6, 7, 8]]
-    assert_raises_regex(ValueError,
-                        "Input contains NaN, infinity or a value too large",
-                        scale, X)
-
     X = [[np.inf, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
-                        "Input contains NaN, infinity or a value too large",
+                        "Input contains infinity or a value too large",
                         scale, X)
 
 
@@ -1094,9 +1167,7 @@ def test_quantile_transform_subsampling():
 
     # sparse support
 
-    # TODO: rng should be seeded once we drop support for older versions of
-    # scipy (< 0.13) that don't support seeding.
-    X = sparse.rand(n_samples, 1, density=.99, format='csc')
+    X = sparse.rand(n_samples, 1, density=.99, format='csc', random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
@@ -1210,6 +1281,20 @@ def test_quantile_transform_and_inverse():
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
+
+
+def test_quantile_transform_nan():
+    X = np.array([[np.nan, 0,  0, 1],
+                  [np.nan, np.nan, 0, 0.5],
+                  [np.nan, 1, 1, 0]])
+
+    transformer = QuantileTransformer(n_quantiles=10, random_state=42)
+    transformer.fit_transform(X)
+
+    # check that the quantile of the first column is all NaN
+    assert np.isnan(transformer.quantiles_[:, 0]).all()
+    # all other column should not contain NaN
+    assert not np.isnan(transformer.quantiles_[:, 1:]).any()
 
 
 def test_robust_scaler_invalid_range():
@@ -1775,7 +1860,8 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
+                        SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
     assert_true(pipeline._pairwise)
@@ -1821,416 +1907,6 @@ def test_add_dummy_feature_csr():
     X = add_dummy_feature(X)
     assert_true(sparse.isspmatrix_csr(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
-
-
-def test_one_hot_encoder_sparse():
-    # Test OneHotEncoder's fit and transform.
-    X = [[3, 2, 1], [0, 1, 1]]
-    enc = OneHotEncoder()
-    # discover max values automatically
-    X_trans = enc.fit_transform(X).toarray()
-    assert_equal(X_trans.shape, (2, 5))
-    assert_array_equal(enc.active_features_,
-                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
-    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
-
-    # check outcome
-    assert_array_equal(X_trans,
-                       [[0., 1., 0., 1., 1.],
-                        [1., 0., 1., 0., 1.]])
-
-    # max value given as 3
-    enc = OneHotEncoder(n_values=4)
-    X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (2, 4 * 3))
-    assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
-
-    # max value given per feature
-    enc = OneHotEncoder(n_values=[3, 2, 2])
-    X = [[1, 0, 1], [0, 1, 1]]
-    X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (2, 3 + 2 + 2))
-    assert_array_equal(enc.n_values_, [3, 2, 2])
-    # check that testing with larger feature works:
-    X = np.array([[2, 0, 1], [0, 1, 1]])
-    enc.transform(X)
-
-    # test that an error is raised when out of bounds:
-    X_too_large = [[0, 2, 1], [0, 1, 1]]
-    assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = r"unknown categorical feature present \[2\] during transform."
-    assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
-    assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
-
-    # test that error is raised when wrong number of features
-    assert_raises(ValueError, enc.transform, X[:, :-1])
-    # test that error is raised when wrong number of features in fit
-    # with prespecified n_values
-    assert_raises(ValueError, enc.fit, X[:, :-1])
-    # test exception on wrong init param
-    assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
-
-    enc = OneHotEncoder()
-    # test negative input to fit
-    assert_raises(ValueError, enc.fit, [[0], [-1]])
-
-    # test negative input to transform
-    enc.fit([[0], [1]])
-    assert_raises(ValueError, enc.transform, [[0], [-1]])
-
-
-def test_one_hot_encoder_dense():
-    # check for sparse=False
-    X = [[3, 2, 1], [0, 1, 1]]
-    enc = OneHotEncoder(sparse=False)
-    # discover max values automatically
-    X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (2, 5))
-    assert_array_equal(enc.active_features_,
-                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
-    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
-
-    # check outcome
-    assert_array_equal(X_trans,
-                       np.array([[0., 1., 0., 1., 1.],
-                                 [1., 0., 1., 0., 1.]]))
-
-
-def _check_transform_selected(X, X_expected, sel):
-    for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, sel)
-        assert_array_equal(toarray(Xtr), X_expected)
-
-
-def test_transform_selected():
-    X = [[3, 2, 1], [0, 1, 1]]
-
-    X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0])
-    _check_transform_selected(X, X_expected, [True, False, False])
-
-    X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0, 1, 2])
-    _check_transform_selected(X, X_expected, [True, True, True])
-    _check_transform_selected(X, X_expected, "all")
-
-    _check_transform_selected(X, X, [])
-    _check_transform_selected(X, X, [False, False, False])
-
-
-def test_transform_selected_copy_arg():
-    # transformer that alters X
-    def _mutating_transformer(X):
-        X[0, 0] = X[0, 0] + 1
-        return X
-
-    original_X = np.asarray([[1, 2], [3, 4]])
-    expected_Xtr = [[2, 2], [3, 4]]
-
-    X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
-                              selected='all')
-
-    assert_array_equal(toarray(X), toarray(original_X))
-    assert_array_equal(toarray(Xtr), expected_Xtr)
-
-
-def _run_one_hot(X, X2, cat):
-    enc = OneHotEncoder(categorical_features=cat)
-    Xtr = enc.fit_transform(X)
-    X2tr = enc.transform(X2)
-    return Xtr, X2tr
-
-
-def _check_one_hot(X, X2, cat, n_features):
-    ind = np.where(cat)[0]
-    # With mask
-    A, B = _run_one_hot(X, X2, cat)
-    # With indices
-    C, D = _run_one_hot(X, X2, ind)
-    # Check shape
-    assert_equal(A.shape, (2, n_features))
-    assert_equal(B.shape, (1, n_features))
-    assert_equal(C.shape, (2, n_features))
-    assert_equal(D.shape, (1, n_features))
-    # Check that mask and indices give the same results
-    assert_array_equal(toarray(A), toarray(C))
-    assert_array_equal(toarray(B), toarray(D))
-
-
-def test_one_hot_encoder_categorical_features():
-    X = np.array([[3, 2, 1], [0, 1, 1]])
-    X2 = np.array([[1, 1, 1]])
-
-    cat = [True, False, False]
-    _check_one_hot(X, X2, cat, 4)
-
-    # Edge case: all non-categorical
-    cat = [False, False, False]
-    _check_one_hot(X, X2, cat, 3)
-
-    # Edge case: all categorical
-    cat = [True, True, True]
-    _check_one_hot(X, X2, cat, 5)
-
-
-def test_one_hot_encoder_unknown_transform():
-    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-    y = np.array([[4, 1, 1]])
-
-    # Test that one hot encoder raises error for unknown features
-    # present during transform.
-    oh = OneHotEncoder(handle_unknown='error')
-    oh.fit(X)
-    assert_raises(ValueError, oh.transform, y)
-
-    # Test the ignore option, ignores unknown features.
-    oh = OneHotEncoder(handle_unknown='ignore')
-    oh.fit(X)
-    assert_array_equal(
-        oh.transform(y).toarray(),
-        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
-
-    # Raise error if handle_unknown is neither ignore or error.
-    oh = OneHotEncoder(handle_unknown='42')
-    oh.fit(X)
-    assert_raises(ValueError, oh.transform, y)
-
-
-def check_categorical_onehot(X):
-    enc = CategoricalEncoder(encoding='onehot')
-    Xtr1 = enc.fit_transform(X)
-
-    enc = CategoricalEncoder(encoding='onehot-dense')
-    Xtr2 = enc.fit_transform(X)
-
-    assert_allclose(Xtr1.toarray(), Xtr2)
-
-    assert sparse.isspmatrix_csr(Xtr1)
-    return Xtr1.toarray()
-
-
-def test_categorical_encoder_onehot():
-    X = [['abc', 1, 55], ['def', 2, 55]]
-
-    Xtr = check_categorical_onehot(np.array(X)[:, [0]])
-    assert_allclose(Xtr, [[1, 0], [0, 1]])
-
-    Xtr = check_categorical_onehot(np.array(X)[:, [0, 1]])
-    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
-
-    Xtr = CategoricalEncoder().fit_transform(X)
-    assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
-
-
-def test_categorical_encoder_onehot_inverse():
-    for encoding in ['onehot', 'onehot-dense']:
-        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
-        enc = CategoricalEncoder(encoding=encoding)
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X, dtype=object)
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
-
-        X = [[2, 55], [1, 55], [3, 55]]
-        enc = CategoricalEncoder(encoding=encoding)
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X)
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
-
-        # with unknown categories
-        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
-        enc = CategoricalEncoder(encoding=encoding, handle_unknown='ignore',
-                                 categories=[['abc', 'def'], [1, 2],
-                                             [54, 55, 56]])
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X, dtype=object)
-        exp[2, 1] = None
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
-
-        # with an otherwise numerical output, still object if unknown
-        X = [[2, 55], [1, 55], [3, 55]]
-        enc = CategoricalEncoder(encoding=encoding,
-                                 categories=[[1, 2], [54, 56]],
-                                 handle_unknown='ignore')
-        X_tr = enc.fit_transform(X)
-        exp = np.array(X, dtype=object)
-        exp[2, 0] = None
-        exp[:, 1] = None
-        assert_array_equal(enc.inverse_transform(X_tr), exp)
-
-        # incorrect shape raises
-        X_tr = np.array([[0, 1, 1], [1, 0, 1]])
-        msg = re.escape('Shape of the passed X data is not correct')
-        assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
-
-
-def test_categorical_encoder_handle_unknown():
-    X = np.array([[1, 2, 3], [4, 5, 6]])
-    X2 = np.array([[7, 5, 3]])
-
-    # Test that encoder raises error for unknown features during transform.
-    enc = CategoricalEncoder()
-    enc.fit(X)
-    msg = re.escape('unknown categories [7] in column 0')
-    assert_raises_regex(ValueError, msg, enc.transform, X2)
-
-    # With 'ignore' you get all 0's in result
-    enc = CategoricalEncoder(handle_unknown='ignore')
-    enc.fit(X)
-    X2_passed = X2.copy()
-    Xtr = enc.transform(X2_passed)
-    assert_allclose(Xtr.toarray(), [[0, 0, 0, 1, 1, 0]])
-    # ensure transformed data was not modified in place
-    assert_allclose(X2, X2_passed)
-
-    # Invalid option
-    enc = CategoricalEncoder(handle_unknown='invalid')
-    assert_raises(ValueError, enc.fit, X)
-
-
-def test_categorical_encoder_categories():
-    X = [['abc', 1, 55], ['def', 2, 55]]
-
-    # order of categories should not depend on order of samples
-    for Xi in [X, X[::-1]]:
-        enc = CategoricalEncoder()
-        enc.fit(Xi)
-        assert enc.categories == 'auto'
-        assert isinstance(enc.categories_, list)
-        cat_exp = [['abc', 'def'], [1, 2], [55]]
-        for res, exp in zip(enc.categories_, cat_exp):
-            assert res.tolist() == exp
-
-
-def test_categorical_encoder_specified_categories():
-    X = np.array([['a', 'b']], dtype=object).T
-
-    enc = CategoricalEncoder(categories=[['a', 'b', 'c']])
-    exp = np.array([[1., 0., 0.],
-                    [0., 1., 0.]])
-    assert_array_equal(enc.fit_transform(X).toarray(), exp)
-    assert enc.categories[0] == ['a', 'b', 'c']
-    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
-
-    # unsorted passed categories raises for now
-    enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
-    msg = re.escape('Unsorted categories are not yet supported')
-    assert_raises_regex(ValueError, msg, enc.fit_transform, X)
-
-    # multiple columns
-    X = np.array([['a', 'b'], [0, 2]], dtype=object).T
-    enc = CategoricalEncoder(categories=[['a', 'b', 'c'], [0, 1, 2]])
-    exp = np.array([[1., 0., 0., 1., 0., 0.],
-                    [0., 1., 0., 0., 0., 1.]])
-    assert_array_equal(enc.fit_transform(X).toarray(), exp)
-    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
-    assert enc.categories_[1].tolist() == [0, 1, 2]
-    assert np.issubdtype(enc.categories_[1].dtype, np.integer)
-
-    # when specifying categories manually, unknown categories should already
-    # raise when fitting
-    X = np.array([['a', 'b', 'c']]).T
-    enc = CategoricalEncoder(categories=[['a', 'b']])
-    assert_raises(ValueError, enc.fit, X)
-    enc = CategoricalEncoder(categories=[['a', 'b']], handle_unknown='ignore')
-    exp = np.array([[1., 0.], [0., 1.], [0., 0.]])
-    assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
-
-
-def test_categorical_encoder_pandas():
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("pandas is not installed")
-
-    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2]})
-
-    Xtr = check_categorical_onehot(X_df)
-    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
-
-
-def test_categorical_encoder_ordinal():
-    X = [['abc', 2, 55], ['def', 1, 55]]
-
-    enc = CategoricalEncoder(encoding='other')
-    assert_raises(ValueError, enc.fit, X)
-
-    enc = CategoricalEncoder(encoding='ordinal', handle_unknown='ignore')
-    assert_raises(ValueError, enc.fit, X)
-
-    enc = CategoricalEncoder(encoding='ordinal')
-    exp = np.array([[0, 1, 0],
-                    [1, 0, 0]], dtype='int64')
-    assert_array_equal(enc.fit_transform(X), exp.astype('float64'))
-    enc = CategoricalEncoder(encoding='ordinal', dtype='int64')
-    assert_array_equal(enc.fit_transform(X), exp)
-
-
-def test_categorical_encoder_ordinal_inverse():
-    X = [['abc', 2, 55], ['def', 1, 55]]
-    enc = CategoricalEncoder(encoding='ordinal')
-    X_tr = enc.fit_transform(X)
-    exp = np.array(X, dtype=object)
-    assert_array_equal(enc.inverse_transform(X_tr), exp)
-
-    # incorrect shape raises
-    X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
-    msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
-
-
-def test_categorical_encoder_dtypes():
-    # check that dtypes are preserved when determining categories
-    enc = CategoricalEncoder()
-    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
-
-    for X in [np.array([[1, 2], [3, 4]], dtype='int64'),
-              np.array([[1, 2], [3, 4]], dtype='float64'),
-              np.array([['a', 'b'], ['c', 'd']]),  # string dtype
-              np.array([[1, 'a'], [3, 'b']], dtype='object')]:
-        enc.fit(X)
-        assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
-        assert_array_equal(enc.transform(X).toarray(), exp)
-
-    X = [[1, 2], [3, 4]]
-    enc.fit(X)
-    assert all([np.issubdtype(enc.categories_[i].dtype, np.integer)
-                for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-    X = [[1, 'a'], [3, 'b']]
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-
-def test_categorical_encoder_dtypes_pandas():
-    # check dtype (similar to test_categorical_encoder_dtypes for dataframes)
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("pandas is not installed")
-
-    enc = CategoricalEncoder()
-    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
-
-    X = pd.DataFrame({'A': [1, 2], 'B': [3, 4]}, dtype='int64')
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'int64' for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-    X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b']})
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-
-def test_categorical_encoder_warning():
-    enc = CategoricalEncoder()
-    X = [['Male', 1], ['Female', 3]]
-    np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
 def test_fit_cold_start():

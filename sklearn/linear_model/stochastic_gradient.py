@@ -371,7 +371,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
+                         accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
@@ -419,7 +420,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
@@ -724,6 +726,7 @@ class SGDClassifier(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
@@ -801,8 +804,6 @@ class SGDClassifier(BaseSGDClassifier):
             average=average, n_iter=n_iter)
 
     def _check_proba(self):
-        check_is_fitted(self, "t_")
-
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
@@ -847,6 +848,8 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
+        check_is_fitted(self, "t_")
+
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -948,7 +951,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64,
+                         accept_large_sparse=False)
         y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
@@ -1281,6 +1285,7 @@ class SGDRegressor(BaseSGDRegressor):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
         Repeatedly calling fit or partial_fit when warm_start is True can
         result in a different solution than when calling fit a single time
