@@ -902,10 +902,10 @@ def class_cluster_match(y_true, y_pred):
     Examples
     --------
     >>> from sklearn.metrics import confusion_matrix
-    >>> from sklearn.metrics.cluster import class_cluster_match
+    >>> from sklearn.metrics.cluster import map_cluster_labels
     >>> y_true = ["class1", "class2", "class3", "class1", "class1", "class3"]
     >>> y_pred = [0, 0, 2, 2, 0, 2]
-    >>> y_pred_translated = class_cluster_match(y_true, y_pred)
+    >>> y_pred_translated = map_cluster_labels(y_true, y_pred)
     >>> y_pred_translated
     ['class1', 'class1', 'class3', 'class3', 'class1', 'class3']
     >>> confusion_matrix(y_true, y_pred_translated)
