@@ -1187,27 +1187,27 @@ Calculating
     >>> FN = MCM[:, 1, 0]
     >>> FP = MCM[:, 0, 1]
     >>> TP / (TP + FN)
-    array([ 1. ,  0.5,  0. ])
+    array([1. , 0.5, 0. ])
 
 Calculating
 `Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
 (also called the true negative rate) for each class::
 
     >>> TN / (TN + FP)
-    array([ 1. ,  0. ,  0.5])
+    array([1. , 0. , 0.5 ])
 
 Calculating `Fall out <https://en.wikipedia.org/wiki/False_positive_rate>`_
 (also called the false positive rate) for each class::
 
     >>> FP / (FP + TN)
-    array([ 0. ,  1. ,  0.5])
+    array([0. , 1. , 0.5 ])
 
 Calculating `Miss rate
 <https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`_
 (also called the false negative rate) for each class::
 
     >>> FN / (FN + TP)
-    array([ 0. ,  0.5,  1. ])
+    array([0. , 0.5, 1. ])
 
 .. _roc_metrics:
 
