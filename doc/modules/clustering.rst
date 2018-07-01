@@ -1739,7 +1739,7 @@ Drawbacks
 Map cluster labels
 -------------------
 
-Class-cluster match
+Map cluster labels
 (:func:`sklearn.metrics.cluster.map_cluster_labels`) provides a
 friendly way for the user to calculate classical classification
 metrics, such as :func:`sklearn.metrics.accuracy_score` and 
