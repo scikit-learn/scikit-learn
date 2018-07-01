@@ -1647,13 +1647,13 @@ Drawbacks
  * `Wikipedia entry for contingency matrix
    <https://en.wikipedia.org/wiki/Contingency_table>`_
 
-.. _class_cluster_match:
+.. _map_cluster_labels:
 
 Class-cluster Match
 -------------------
 
 Class-cluster match
-(:func:`sklearn.metrics.cluster.class_cluster_matching`) provides a
+(:func:`sklearn.metrics.cluster.map_cluster_labels`) provides a
 friendly way for the user to calculate classical classification
 metrics, such as :func:`sklearn.metrics.accuracy_score` and 
 :func:`sklearn.metrics.f1_score`. 

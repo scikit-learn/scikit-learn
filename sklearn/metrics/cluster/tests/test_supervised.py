@@ -12,7 +12,7 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster import class_cluster_match
+from sklearn.metrics.cluster import map_cluster_labels
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
@@ -277,7 +277,7 @@ def test_fowlkes_mallows_score_properties():
     assert_almost_equal(score_both, expected)
 
 
-def test_class_cluster_match():
+def test_map_cluster_labels():
     # handcrafted example - same number of clusters and classes
     y_true = ['a'] * 1 + ['b'] * 2 + ['c'] * 20 + ['d'] * 6 + ['e'] * \
         13 + ['f'] * 2 + ['g'] * 3 + ['h'] * 3 + ['i'] * 2 + ['j'] * 1
@@ -339,7 +339,7 @@ def test_class_cluster_match():
         'e',
         'j']
 
-    y_pred_translated = class_cluster_match(y_true, y_pred)
+    y_pred_translated = map_cluster_labels(y_true, y_pred)
     assert_equal(y_pred_translated, expected)
 
     # handcrafted example - more clusters than classes
@@ -348,7 +348,7 @@ def test_class_cluster_match():
 
     expected = ['DEF_CLASS1', 'a', 'DEF_CLASS0', 'DEF_CLASS0', 'b', 'b']
 
-    y_pred_translated = class_cluster_match(y_true, y_pred)
+    y_pred_translated = map_cluster_labels(y_true, y_pred)
     assert_equal(y_pred_translated, expected)
 
     # handcrafted example - more clusters than classes
@@ -357,5 +357,5 @@ def test_class_cluster_match():
 
     expected = ['a', 'a', 'e', 'e', 'b', 'b']
 
-    y_pred_translated = class_cluster_match(y_true, y_pred)
+    y_pred_translated = map_cluster_labels(y_true, y_pred)
     assert_equal(y_pred_translated, expected)

@@ -17,7 +17,7 @@ from .supervised import mutual_info_score
 from .supervised import v_measure_score
 from .supervised import fowlkes_mallows_score
 from .supervised import entropy
-from .supervised import class_cluster_match
+from .supervised import map_cluster_labels
 from .unsupervised import silhouette_samples
 from .unsupervised import silhouette_score
 from .unsupervised import calinski_harabaz_score
@@ -27,6 +27,6 @@ __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
            "adjusted_rand_score", "completeness_score", "contingency_matrix",
            "expected_mutual_information", "homogeneity_completeness_v_measure",
            "homogeneity_score", "mutual_info_score", "v_measure_score",
-           "fowlkes_mallows_score", "entropy", "class_cluster_match",
+           "fowlkes_mallows_score", "entropy", "map_cluster_labels",
            "silhouette_samples", "silhouette_score",
-           "calinski_harabaz_score", "consensus_score", "class_cluster_match"]
+           "calinski_harabaz_score", "consensus_score", "map_cluster_labels"]

@@ -875,7 +875,7 @@ def entropy(labels):
     return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
 
 
-def class_cluster_match(y_true, y_pred):
+def map_cluster_labels(y_true, y_pred):
     """Translate prediction labels to maximize the accuracy.
 
     Translate the prediction labels of a clustering output to enable calc
