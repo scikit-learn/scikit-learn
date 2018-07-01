@@ -354,7 +354,7 @@ def test_map_cluster_labels():
 
     # handcrafted example - more clusters than classes
     y_true = ['a', 'd', 'e', 'b', 'b', 'b']
-    y_pred = [0, 0, 1, 1, 2, 2]
+    y_pred = [0, 0, -1, -1, 2, 2]
 
     expected = ['a', 'a', 'e', 'e', 'b', 'b']
 
