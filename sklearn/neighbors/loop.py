@@ -132,13 +132,12 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     def __init__(self, n_neighbors=20, norm_factor=0.95, algorithm='auto', leaf_size=30,
                  metric='euclidean', p=2, metric_params=None, n_jobs=1):
-
         super(LocalOutlierProbability, self).__init__(n_neighbors=n_neighbors,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          metric=metric, p=p,
-                          metric_params=metric_params,
-                          n_jobs=n_jobs)
+                                                      algorithm=algorithm,
+                                                      leaf_size=leaf_size,
+                                                      metric=metric, p=p,
+                                                      metric_params=metric_params,
+                                                      n_jobs=n_jobs)
 
         self.norm_factor = norm_factor
 

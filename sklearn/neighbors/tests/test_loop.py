@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_warns_message, assert_raises
 
 from sklearn.datasets import load_iris
 
-
 # load the iris dataset
 # and randomly permute it
 rng = check_random_state(0)
@@ -105,7 +104,7 @@ def test_loop_precomputed(random_state=42):
 
     # As a dense distance matrix (n_samples by n_samples)
     loop_D = neighbors.LocalOutlierProbability(n_neighbors=3, algorithm='brute',
-                                         metric='precomputed')
+                                               metric='precomputed')
     loop_D.fit(DXX)
     pred_D_X = loop_D._predict()
     pred_D_Y = loop_D._predict(DYX)
@@ -129,7 +128,7 @@ def test_n_neighbors_attribute():
 def test_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = neighbors.LocalOutlierProbability(n_neighbors=2,
-                                        norm_factor=0.9).fit(X_train)
+                                             norm_factor=0.9).fit(X_train)
     clf2 = neighbors.LocalOutlierProbability(n_neighbors=2).fit(X_train)
     assert_array_equal(clf1._score_samples([[2., 2.]], mode='loop'),
                        clf1._decision_function([[2., 2.]]))
@@ -144,5 +143,3 @@ def test_norm_factor():
     X = [[1, 1], [1, 0]]
     clf = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=1.2)
     assert_raises(ValueError, clf.fit, X)
-
-

@@ -86,7 +86,7 @@ no_pred = ["Local Outlier Factor", "Local Outlier Probability"]
 for i_dataset, X in enumerate(datasets):
     # Add outliers
     X = np.concatenate([X, rng.uniform(low=-6, high=6,
-                       size=(n_outliers, 2))], axis=0)
+                                       size=(n_outliers, 2))], axis=0)
 
     for name, algorithm in anomaly_algorithms:
         t0 = time.time()
