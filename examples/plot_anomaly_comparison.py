@@ -37,7 +37,7 @@ from sklearn import svm
 from sklearn.datasets import make_moons, make_blobs
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor, LocalOutlierProbability
+from sklearn.neighbors import LocalOutlierFactor
 
 print(__doc__)
 

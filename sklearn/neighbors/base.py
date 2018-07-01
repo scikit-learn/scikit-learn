@@ -41,7 +41,6 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                              'sokalsneath', 'sqeuclidean',
                              'yule', 'wminkowski']))
 
-
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
@@ -214,7 +213,6 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                               "using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute'] \
                     and not callable(self.effective_metric_):
-
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
             self._fit_X = X.copy()
@@ -234,7 +232,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 elif (callable(self.effective_metric_) or
-                        self.effective_metric_ in VALID_METRICS['ball_tree']):
+                      self.effective_metric_ in VALID_METRICS['ball_tree']):
                     self._fit_method = 'ball_tree'
                 else:
                     self._fit_method = 'brute'
@@ -888,16 +886,15 @@ class UnsupervisedMixin(object):
 
 
 class LocalOutlierMixin(object):
-
     """Mixin for Local Outlier Factor (LOF) and Local Outlier Probability (LoOP) approaches."""
 
     def _distance_neighbors(self):
         n_samples = self._fit_X.shape[0]
         if self.n_neighbors > n_samples:
             warnings.warn("n_neighbors (%s) is greater than the "
-                 "total number of samples (%s). n_neighbors "
-                 "will be set to (n_samples - 1) for estimation."
-                 % (self.n_neighbors, n_samples))
+                          "total number of samples (%s). n_neighbors "
+                          "will be set to (n_samples - 1) for estimation."
+                          % (self.n_neighbors, n_samples))
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
         self._distances_fit_X_, self._neighbors_indices_fit_X_ = (
@@ -947,11 +944,11 @@ class LocalOutlierMixin(object):
         if mode == 'loop':
             self._prob_set_distances_fit_X_tiled_ = np.tile(self._distances_fit_X_, (self.n_neighbors_, 1)).T
             dist_k = self._prob_set_distances_fit_X_tiled_[neighbors_indices,
-                                            self.n_neighbors_ - 1]
+                                                           self.n_neighbors_ - 1]
             distances_X = np.tile(distances_X, (self.n_neighbors_, 1)).T
         else:
             dist_k = self._distances_fit_X_[neighbors_indices,
-                                        self.n_neighbors_ - 1]
+                                            self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
         #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
