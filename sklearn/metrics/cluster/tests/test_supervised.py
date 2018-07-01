@@ -280,65 +280,10 @@ def test_fowlkes_mallows_score_properties():
 
 def test_map_cluster_labels():
     # handcrafted example - same number of clusters and classes
-    y_true = ['a'] * 1 + ['b'] * 2 + ['c'] * 20 + ['d'] * 6 + ['e'] * \
-        13 + ['f'] * 2 + ['g'] * 3 + ['h'] * 3 + ['i'] * 2 + ['j'] * 1
-    y_pred = [6] * 1 + [2] * 2 + [0] * 6 + [2] * 10 + [8] * 4 + [1] *\
-        4 + [5] * 2 + [0] * 4 + [3] * 5 + [6] * 2 + [9] * 2 + [7] *\
-        2 + [0] * 2 + [8] * 1 + [4] * 3 + [3] * 2 + [8] * 1
-    expected = [
-        'a',
-        'c',
-        'c',
-        'g',
-        'g',
-        'g',
-        'g',
-        'g',
-        'g',
-        'c',
-        'c',
-        'c',
-        'c',
-        'c',
-        'c',
-        'c',
-        'c',
-        'c',
-        'c',
-        'j',
-        'j',
-        'j',
-        'j',
-        'd',
-        'd',
-        'd',
-        'd',
-        'i',
-        'i',
-        'g',
-        'g',
-        'g',
-        'g',
-        'e',
-        'e',
-        'e',
-        'e',
-        'e',
-        'a',
-        'a',
-        'b',
-        'b',
-        'f',
-        'f',
-        'g',
-        'g',
-        'j',
-        'h',
-        'h',
-        'h',
-        'e',
-        'e',
-        'j']
+    y_true = ['a', 'b', 'b', 'c', 'c', 'a']
+    y_pred = [1, 0, 0, 1, 2, 1]
+
+    expected = ['a', 'b', 'b', 'a', 'c', 'a']
 
     y_pred_translated = map_cluster_labels(y_true, y_pred)
     assert_equal(y_pred_translated, expected)
