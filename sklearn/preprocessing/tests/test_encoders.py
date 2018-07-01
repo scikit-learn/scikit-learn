@@ -468,7 +468,7 @@ def test_one_hot_encoder_unsorted_categories():
     assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories_[0].tolist() == ['b', 'a', 'c']
-    assert np.issubdtype(enc.categories_[0].dtype, np.str_)
+    assert np.issubdtype(enc.categories_[0].dtype, np.object_)
 
     # unsorted passed categories still raise for numerical values
     X = np.array([[1, 2]]).T
