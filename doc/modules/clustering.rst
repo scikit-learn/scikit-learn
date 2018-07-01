@@ -1784,7 +1784,7 @@ Here is an example::
    >>> y_true = ['a', 'a', 'a', 'b', 'b', 'b']
    >>> y_pred = [3, 0, 1, 1, 2, 2]
    >>> map_cluster_labels(y_true, y_pred)
-   ['DEF_CLASS1', 'a', 'DEF_CLASS0', 'DEF_CLASS0', 'b', 'b']
+   ['DEFAULT_LABEL_1', 'a', 'DEFAULT_LABEL_0', 'DEFAULT_LABEL_0', 'b', 'b']
 
   The above example shows what happens with your clustering method identifies
   more clusters than true classes. *Such results must be treated carefully*,

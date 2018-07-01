@@ -347,7 +347,7 @@ def test_map_cluster_labels():
     y_true = ['a', 'a', 'a', 'b', 'b', 'b']
     y_pred = [4, 0, 1, 1, 2, 2]
 
-    expected = ['DEF_CLASS1', 'a', 'DEF_CLASS0', 'DEF_CLASS0', 'b', 'b']
+    expected = ['DEFAULT_LABEL_1', 'a', 'DEFAULT_LABEL_0', 'DEFAULT_LABEL_0', 'b', 'b']
 
     y_pred_translated = map_cluster_labels(y_true, y_pred)
     assert_equal(y_pred_translated, expected)

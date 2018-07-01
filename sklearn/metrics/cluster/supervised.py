@@ -921,7 +921,7 @@ def map_cluster_labels(y_true, y_pred):
     n_clusters = len(clusters)
 
     if n_clusters > n_classes:
-        classes += ['DEF_CLASS'+str(i) for i in range(n_clusters-n_classes)]
+        classes += ['DEFAULT_LABEL_'+str(i) for i in range(n_clusters-n_classes)]
     elif n_classes > n_clusters:
         clusters += ['DEF_CLUSTER'+str(i) for i in range(n_classes-n_clusters)]
 
