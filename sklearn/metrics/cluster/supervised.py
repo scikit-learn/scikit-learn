@@ -876,26 +876,26 @@ def entropy(labels):
     return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
 
 
-def map_cluster_labels(y_true, y_pred):
+def map_cluster_labels(labels_true, labels_pred):
     """Translate prediction labels to maximize the accuracy.
 
     Translate the prediction labels of a clustering output to enable calc
     of external metrics (eg. accuracy, f1_score, ...). Translation is done by
     maximization of the confusion matrix :math:`C` main diagonal sum
     :math:`\sum{i=0}^{K}C_{i, i}`. Notice the number of cluster has to be equal
-     or smaller than the number of true classes.
+    or smaller than the number of true classes.
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    labels_true : array, shape = [n_samples]
         Ground truth (correct) target values.
-    y_pred : array, shape = [n_samples]
-        Estimated targets as returned by a clustering algorithm.
+    labels_pred : array, shape = [n_samples]
+        Estimated clusters as returned by a clustering algorithm.
 
     Returns
     -------
     trans : array, shape = [n_classes, n_classes]
-        Mapping of y_pred clusters, such that :math:`trans\subseteq y_true`
+        Mapping of labels_pred clusters, such that :math:`trans\subseteq labels_true`
 
     References
     ----------
@@ -904,20 +904,20 @@ def map_cluster_labels(y_true, y_pred):
     --------
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.metrics.cluster import map_cluster_labels
-    >>> y_true = ["class1", "class2", "class3", "class1", "class1", "class3"]
-    >>> y_pred = [0, 0, 2, 2, 0, 2]
-    >>> y_pred_translated = map_cluster_labels(y_true, y_pred)
+    >>> labels_true = ["class1", "class2", "class3", "class1", "class1", "class3"]
+    >>> labels_pred = [0, 0, 2, 2, 0, 2]
+    >>> y_pred_translated = map_cluster_labels(labels_true, labels_pred)
     >>> y_pred_translated
     ['class1', 'class1', 'class3', 'class3', 'class1', 'class3']
-    >>> confusion_matrix(y_true, y_pred_translated)
+    >>> confusion_matrix(labels_true, y_pred_translated)
     array([[2, 0, 1],
            [1, 0, 0],
            [0, 0, 2]])
     """
 
-    classes = unique_labels(y_true).tolist()
+    classes = unique_labels(labels_true).tolist()
     n_classes = len(classes)
-    clusters = unique_labels(y_pred).tolist()
+    clusters = unique_labels(labels_pred).tolist()
     n_clusters = len(clusters)
 
     if n_clusters > n_classes:
@@ -925,7 +925,7 @@ def map_cluster_labels(y_true, y_pred):
     elif n_classes > n_clusters:
         clusters += ['DEF_CLUSTER'+str(i) for i in range(n_classes-n_clusters)]
 
-    C = contingency_matrix(y_true, y_pred)
+    C = contingency_matrix(labels_true, labels_pred)
     true_idx, pred_idx = linear_assignment(-C).T
 
     true_idx = true_idx.tolist()
@@ -936,6 +936,6 @@ def map_cluster_labels(y_true, y_pred):
     pred_idx = [clusters[idx] for idx in pred_idx]
     pred_idx = pred_idx + sorted(set(clusters) - set(pred_idx))
 
-    return_list = [true_idx[pred_idx.index(y)] for y in y_pred]
+    return_list = [true_idx[pred_idx.index(y)] for y in labels_pred]
 
     return return_list
