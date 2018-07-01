@@ -706,17 +706,17 @@ def test_overrided_gram_matrix():
                          clf.fit, X, y)
 
 
-def test_lasso_non_float_y():
+@pytest.mark.parametrize('model', [ElasticNet, Lasso])
+def test_lasso_non_float_y(model):
     X = [[0, 0], [1, 1], [-1, -1]]
     y = [0, 1, 2]
     y_float = [0.0, 1.0, 2.0]
 
-    for model in [ElasticNet, Lasso]:
-        clf = model(fit_intercept=False)
-        clf.fit(X, y)
-        clf_float = model(fit_intercept=False)
-        clf_float.fit(X, y_float)
-        assert_array_equal(clf.coef_, clf_float.coef_)
+    clf = model(fit_intercept=False)
+    clf.fit(X, y)
+    clf_float = model(fit_intercept=False)
+    clf_float.fit(X, y_float)
+    assert_array_equal(clf.coef_, clf_float.coef_)
 
 
 def test_enet_float_precision():
