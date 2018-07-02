@@ -272,9 +272,10 @@ class LinearSVR(LinearModel, RegressorMixin):
         Penalty parameter C of the error term. The penalty is a squared
         l2 penalty. The bigger this parameter, the less regularization is used.
 
-    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive' (default='epsilon_insensitive')
-        Specifies the loss function. 'l1' is the epsilon-insensitive loss
-        (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
+    loss : string, optional (default='epsilon_insensitive')
+        Specifies the loss function. The epsilon-insensitive loss
+        (standard SVR) is the L1 loss, while the squared epsilon-insensitive
+        loss ( 'squared_epsilon_insensitive') is the L2 loss.
 
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
