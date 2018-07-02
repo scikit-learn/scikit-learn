@@ -9,6 +9,7 @@ from sklearn.utils.testing import (assert_warns_message,
 
 
 def test_fetch_openml():
+    print('openml test running')
     # check_skip_travis()
     # fetch with version
     iris_1 = fetch_openml("iris", version=1)

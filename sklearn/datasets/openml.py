@@ -2,6 +2,7 @@ import json
 import numbers
 import sys
 import os
+import pandas as pd
 from os.path import join, exists
 from warnings import warn
 
@@ -13,10 +14,10 @@ except ImportError:
     from urllib.request import urlopen
 
 
-from scipy.io.arff import loadarff
 import numpy as np
 
 from .base import get_data_home
+from ..externals._liacarff.arff import loads
 from ..externals.joblib import Memory
 from ..externals.six import StringIO
 from ..externals.six.moves.urllib.error import HTTPError
@@ -25,6 +26,20 @@ from ..utils import Bunch
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
 _DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
+
+
+def _openml_fileid_url(file_id):
+    return "https://www.openml.org/data/v1/download/{}/".format(file_id)
+
+
+def _liacarff_to_dataframe(liacarff):
+    expected_keys = {'data', 'attributes', 'description', 'relation'}
+    if liacarff.keys() != expected_keys:
+        raise ValueError('liacarff object does not contain correct keys.')
+    data_ = np.array(liacarff['data'])
+    arff_dict = {col_name: pd.Series(data_[:, idx], dtype=np.float64 if col_type=='NUMERIC' else object)
+                 for idx, (col_name, col_type) in enumerate(liacarff['attributes'])}
+    return pd.DataFrame(arff_dict)
 
 
 def _get_data_info_by_name(name, version):
@@ -100,20 +115,12 @@ def _download_data(url):
     response = urlopen(url)
     if sys.version_info[0] == 2:
         # Python2.7 numpy can't handle unicode?
-        arff = loadarff(StringIO(response.read()))
+        arff = loads(response.read())
     else:
-        arff = loadarff(StringIO(response.read().decode('utf-8')))
+        arff = loads(response.read().decode('utf-8'))
 
     response.close()
     return arff
-
-
-def _download_data_csv(file_id):
-    response = urlopen("https://openml.org/data/v1/get_csv/{}".format(file_id))
-    data = np.genfromtxt(response, names=True, dtype=None, delimiter=',',
-                         missing_values='?')
-    response.close()
-    return data
 
 
 def fetch_openml(name_or_id=None, version='active', data_home=None,
@@ -167,7 +174,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     _get_data_info_by_name_ = mem(_get_data_info_by_name)
     _get_data_description_by_id_ = mem(_get_data_description_by_id)
     _get_data_features_ = mem(_get_data_features)
-    _download_data_csv_ = mem(_download_data_csv)
+    _download_data_ = mem(_download_data)
 
     if not exists(data_home):
         os.makedirs(data_home)
@@ -207,8 +214,10 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         if (feature['name'] != target_column and feature['is_ignore'] ==
                 'false' and feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
+    data_arff_url_ = _openml_fileid_url(data_description['file_id'])
 
-    data = _download_data_csv_(data_description['file_id'])
+    data = _liacarff_to_dataframe(_download_data_(data_arff_url_))
+    print(data)
     if target_column is not None:
         y = data[target_column]
     else:
