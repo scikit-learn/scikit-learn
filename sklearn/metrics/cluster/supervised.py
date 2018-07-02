@@ -905,7 +905,7 @@ def map_cluster_labels(labels_true, labels_pred):
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.metrics.cluster import map_cluster_labels
     >>> labels_true = ["class1", "class2", "class3", "class1", "class1",
-    >>>                "class3"]
+    ...                "class3"]
     >>> labels_pred = [0, 0, 2, 2, 0, 2]
     >>> y_pred_translated = map_cluster_labels(labels_true, labels_pred)
     >>> y_pred_translated
