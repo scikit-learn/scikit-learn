@@ -32,7 +32,7 @@ described in the :ref:`real_world_datasets` section.
 
 Both loaders and fetchers functions return a dictionary-like object holding 
 at least two items: an array of shape ``n_samples`` * ``n_features`` with 
-key ``data``(except for 20newsgroups) and a numpy array of 
+key ``data`` (except for 20newsgroups) and a numpy array of 
 length ``n_samples``, containing the target values, with key ``target``.
 
 It's also possible for almost all of these function to constrain the output
