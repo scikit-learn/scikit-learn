@@ -102,7 +102,8 @@ for i, offset in enumerate(clusters_separation):
             clf.fit(X)
             y_pred = clf.predict(X)
             scores_pred = clf.decision_function(X)
-        threshold = stats.scoreatpercentile(scores_pred, 100. * outliers_fraction)
+        threshold = \
+            stats.scoreatpercentile(scores_pred, 100. * outliers_fraction)
         n_errors = (y_pred != ground_truth).sum()
         # plot the levels lines and the points
         if clf_name == "Local Outlier Factor":
