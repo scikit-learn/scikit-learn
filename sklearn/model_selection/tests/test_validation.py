@@ -12,7 +12,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.exceptions import FitFailedWarning
 
-from sklearn.tests.test_grid_search import FailingClassifier
+from sklearn.model_selection.tests.test_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false

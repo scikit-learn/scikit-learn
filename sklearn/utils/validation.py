@@ -13,6 +13,9 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from scipy import __version__ as scipy_version
+from distutils.version import LooseVersion
+
 from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
@@ -29,6 +32,9 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
+
+# checking whether large sparse are supported by scipy or not
+LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
 
 
 def _assert_all_finite(X, allow_nan=False):
@@ -248,7 +254,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
-                          force_all_finite):
+                          force_all_finite, accept_large_sparse):
     """Convert a sparse matrix to a given format.
 
     Checks the sparse format of spmatrix and converts if necessary.
@@ -297,6 +303,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if isinstance(accept_sparse, six.string_types):
         accept_sparse = [accept_sparse]
 
+    # Indices dtype validation
+    _check_large_sparse(spmatrix, accept_large_sparse)
+
     if accept_sparse is False:
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
@@ -342,10 +351,11 @@ def _ensure_no_complex_data(array):
                          "{}\n".format(array))
 
 
-def check_array(array, accept_sparse=False, dtype="numeric", order=None,
-                copy=False, force_all_finite=True, ensure_2d=True,
-                allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None):
+def check_array(array, accept_sparse=False, accept_large_sparse=True,
+                dtype="numeric", order=None, copy=False, force_all_finite=True,
+                ensure_2d=True, allow_nd=False, ensure_min_samples=1,
+                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -368,6 +378,13 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
            Passing 'None' to parameter ``accept_sparse`` in methods is
            deprecated in version 0.19 "and will be removed in 0.21. Use
            ``accept_sparse=False`` instead.
+
+    accept_large_sparse : bool (default=True)
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse=False will cause it to be accepted
+        only if its indices are stored with a 32-bit dtype.
+
+        .. versionadded:: 0.20
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -449,6 +466,12 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
+    # check if the object contains several dtypes (typically a pandas
+    # DataFrame), and store them. If not, store None.
+    dtypes_orig = None
+    if hasattr(array, "dtypes") and hasattr(array, "__array__"):
+        dtypes_orig = np.array(array.dtypes)
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -480,8 +503,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
-        array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
-                                      force_all_finite)
+        array = _ensure_sparse_format(array, accept_sparse=accept_sparse,
+                                      dtype=dtype, copy=copy,
+                                      force_all_finite=force_all_finite,
+                                      accept_large_sparse=accept_large_sparse)
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
         # to an error. This is needed because specifying a non complex
@@ -562,13 +587,46 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
 
+    if (warn_on_dtype and dtypes_orig is not None and
+            {array.dtype} != set(dtypes_orig)):
+        # if there was at the beginning some other types than the final one
+        # (for instance in a DataFrame that can contain several dtypes) then
+        # some data must have been converted
+        msg = ("Data with input dtype %s were all converted to %s%s."
+               % (', '.join(map(str, sorted(set(dtypes_orig)))), array.dtype,
+                  context))
+        warnings.warn(msg, DataConversionWarning, stacklevel=3)
+
     return array
 
 
-def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
-              copy=False, force_all_finite=True, ensure_2d=True,
-              allow_nd=False, multi_output=False, ensure_min_samples=1,
-              ensure_min_features=1, y_numeric=False,
+def _check_large_sparse(X, accept_large_sparse=False):
+    """Raise a ValueError if X has 64bit indices and accept_large_sparse=False
+    """
+    if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
+        supported_indices = ["int32"]
+        if X.getformat() == "coo":
+            index_keys = ['col', 'row']
+        elif X.getformat() in ["csr", "csc", "bsr"]:
+            index_keys = ['indices', 'indptr']
+        else:
+            return
+        for key in index_keys:
+            indices_datatype = getattr(X, key).dtype
+            if (indices_datatype not in supported_indices):
+                if not LARGE_SPARSE_SUPPORTED:
+                    raise ValueError("Scipy version %s does not support large"
+                                     " indices, please upgrade your scipy"
+                                     " to 0.14.0 or above" % scipy_version)
+                raise ValueError("Only sparse matrices with 32-bit integer"
+                                 " indices are accepted. Got %s indices."
+                                 % indices_datatype)
+
+
+def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
+              dtype="numeric", order=None, copy=False, force_all_finite=True,
+              ensure_2d=True, allow_nd=False, multi_output=False,
+              ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
               warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
 
@@ -597,6 +655,13 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
            Passing 'None' to parameter ``accept_sparse`` in methods is
            deprecated in version 0.19 "and will be removed in 0.21. Use
            ``accept_sparse=False`` instead.
+
+    accept_large_sparse : bool (default=True)
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
+
+        .. versionadded:: 0.20
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -666,9 +731,15 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
     y_converted : object
         The converted and validated y.
     """
-    X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
-                    ensure_2d, allow_nd, ensure_min_samples,
-                    ensure_min_features, warn_on_dtype, estimator)
+    X = check_array(X, accept_sparse=accept_sparse,
+                    accept_large_sparse=accept_large_sparse,
+                    dtype=dtype, order=order, copy=copy,
+                    force_all_finite=force_all_finite,
+                    ensure_2d=ensure_2d, allow_nd=allow_nd,
+                    ensure_min_samples=ensure_min_samples,
+                    ensure_min_features=ensure_min_features,
+                    warn_on_dtype=warn_on_dtype,
+                    estimator=estimator)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
                         dtype=None)

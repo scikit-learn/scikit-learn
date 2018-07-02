@@ -11,10 +11,9 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
-from sklearn.impute import SimpleImputer, MICEImputer
+from sklearn.impute import SimpleImputer, ChainedImputer
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.pipeline import Pipeline
@@ -73,8 +72,8 @@ def test_imputation_shape():
         X_imputed = imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
-        mice_imputer = MICEImputer(initial_strategy=strategy)
-        X_imputed = mice_imputer.fit_transform(X)
+        chained_imputer = ChainedImputer(initial_strategy=strategy)
+        X_imputed = chained_imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
 
@@ -487,7 +486,7 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
-def test_mice_rank_one():
+def test_chained_imputer_rank_one():
     rng = np.random.RandomState(0)
     d = 100
     A = rng.rand(d, 1)
@@ -497,10 +496,10 @@ def test_mice_rank_one():
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
-    imputer = MICEImputer(n_imputations=5,
-                          n_burn_in=5,
-                          verbose=True,
-                          random_state=rng)
+    imputer = ChainedImputer(n_imputations=5,
+                             n_burn_in=5,
+                             verbose=True,
+                             random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
     assert_allclose(X_filled, X, atol=0.001)
 
@@ -509,22 +508,22 @@ def test_mice_rank_one():
     "imputation_order",
     ['random', 'roman', 'ascending', 'descending', 'arabic']
 )
-def test_mice_imputation_order(imputation_order):
+def test_chained_imputer_imputation_order(imputation_order):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
-    X[:, 0] = 1  # this column should not be discarded by MICEImputer
+    X[:, 0] = 1  # this column should not be discarded by ChainedImputer
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          n_nearest_features=5,
-                          min_value=0,
-                          max_value=1,
-                          verbose=False,
-                          imputation_order=imputation_order,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             n_nearest_features=5,
+                             min_value=0,
+                             max_value=1,
+                             verbose=False,
+                             imputation_order=imputation_order,
+                             random_state=rng)
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
     if imputation_order == 'roman':
@@ -543,18 +542,18 @@ def test_mice_imputation_order(imputation_order):
     "predictor",
     [DummyRegressor(), BayesianRidge(), ARDRegression()]
 )
-def test_mice_predictors(predictor):
+def test_chained_imputer_predictors(predictor):
     rng = np.random.RandomState(0)
 
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          predictor=predictor,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             predictor=predictor,
+                             random_state=rng)
     imputer.fit_transform(X)
 
     # check that types are correct for predictors
@@ -567,19 +566,19 @@ def test_mice_predictors(predictor):
     assert len(set(hashes)) == len(hashes)
 
 
-def test_mice_clip():
+def test_chained_imputer_clip():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          min_value=0.1,
-                          max_value=0.2,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             min_value=0.1,
+                             max_value=0.2,
+                             random_state=rng)
 
     Xt = imputer.fit_transform(X)
     assert_allclose(np.min(Xt[X == 0]), 0.1)
@@ -591,7 +590,7 @@ def test_mice_clip():
     "strategy",
     ["mean", "median", "most_frequent"]
 )
-def test_mice_missing_at_transform(strategy):
+def test_chained_imputer_missing_at_transform(strategy):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
@@ -601,31 +600,31 @@ def test_mice_missing_at_transform(strategy):
     X_train[:, 0] = 1  # definitely no missing values in 0th column
     X_test[0, 0] = 0  # definitely missing value in 0th column
 
-    mice = MICEImputer(missing_values=0,
-                       n_imputations=1,
-                       n_burn_in=1,
-                       initial_strategy=strategy,
-                       random_state=rng).fit(X_train)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             initial_strategy=strategy,
+                             random_state=rng).fit(X_train)
     initial_imputer = SimpleImputer(missing_values=0,
                                     strategy=strategy).fit(X_train)
 
-    # if there were no missing values at time of fit, then mice will
+    # if there were no missing values at time of fit, then imputer will
     # only use the initial imputer for that feature at transform
-    assert np.all(mice.transform(X_test)[:, 0] ==
+    assert np.all(imputer.transform(X_test)[:, 0] ==
                   initial_imputer.transform(X_test)[:, 0])
 
 
-def test_mice_transform_stochasticity():
+def test_chained_imputer_transform_stochasticity():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             random_state=rng)
     imputer.fit(X)
 
     X_fitted_1 = imputer.transform(X)
@@ -635,12 +634,12 @@ def test_mice_transform_stochasticity():
     assert np.mean(X_fitted_1) != pytest.approx(np.mean(X_fitted_2))
 
 
-def test_mice_no_missing():
+def test_chained_imputer_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
     X[:, 0] = np.nan
-    m1 = MICEImputer(n_imputations=10, random_state=rng)
-    m2 = MICEImputer(n_imputations=10, random_state=rng)
+    m1 = ChainedImputer(n_imputations=10, random_state=rng)
+    m2 = ChainedImputer(n_imputations=10, random_state=rng)
     pred1 = m1.fit(X).transform(X)
     pred2 = m2.fit_transform(X)
     # should exclude the first column entirely
@@ -653,7 +652,7 @@ def test_mice_no_missing():
     "rank",
     [3, 5]
 )
-def test_mice_transform_recovery(rank):
+def test_chained_imputer_transform_recovery(rank):
     rng = np.random.RandomState(0)
     n = 100
     d = 100
@@ -671,15 +670,15 @@ def test_mice_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = MICEImputer(n_imputations=10,
-                          n_burn_in=10,
-                          verbose=True,
-                          random_state=rng).fit(X_train)
+    imputer = ChainedImputer(n_imputations=10,
+                             n_burn_in=10,
+                             verbose=True,
+                             random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, rtol=1e-5, atol=0.1)
 
 
-def test_mice_additive_matrix():
+def test_chained_imputer_additive_matrix():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
@@ -700,9 +699,9 @@ def test_mice_additive_matrix():
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = MICEImputer(n_imputations=25,
-                          n_burn_in=10,
-                          verbose=True,
-                          random_state=rng).fit(X_train)
+    imputer = ChainedImputer(n_imputations=25,
+                             n_burn_in=10,
+                             verbose=True,
+                             random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.01)

@@ -23,7 +23,7 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
         pass
 
     def _get_params(self, attr, deep=True):
-        out = super(_BaseComposition, self).get_params(deep=False)
+        out = super(_BaseComposition, self).get_params(deep=deep)
         if not deep:
             return out
         estimators = getattr(self, attr)

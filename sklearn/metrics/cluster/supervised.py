@@ -528,7 +528,7 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    r"""Mutual Information between two clusterings.
+    """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`|U_i|` is the number of the samples
@@ -538,8 +538,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     .. math::
 
-        MI(U,V)=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \\frac{|U_i\cap V_j|}{N}
-        \log\\frac{N|U_i \cap V_j|}{|U_i||V_j|}
+        MI(U,V)=\\sum_{i=1}^{|U|} \\sum_{j=1}^{|V|} \\frac{|U_i\\cap V_j|}{N}
+        \\log\\frac{N|U_i \\cap V_j|}{|U_i||V_j|}
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -560,7 +560,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    contingency : {None, array, sparse matrix},
+    contingency : {None, array, sparse matrix}, \
                   shape = [n_classes_true, n_classes_pred]
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
