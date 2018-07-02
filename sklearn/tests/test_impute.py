@@ -77,6 +77,10 @@ def test_imputation_shape():
         X_imputed = chained_imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
+    sampling_imputer = SamplingImputer()
+    X_imputed = sampling_imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
+
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
 def test_imputation_error_invalid_strategy(strategy):
@@ -743,15 +747,18 @@ def test_sampling_1D():
                           (1.0, float, 0),
                           (1.0, None, np.nan)])
 def test_sampling_deterministic(X_value, dtype, missing_value):
+    # test SamplingImputer on know output
+    # test deletion warning
     X = np.full((10, 10), X_value, dtype=dtype)
     X[:, 0] = missing_value
     X[::2, ::2] = missing_value
 
     X_true = np.full((10, 9), X_value, dtype=dtype)
 
-    imputer = SamplingImputer(missing_values=missing_value)
+    imputer = SamplingImputer(missing_values=missing_value, verbose=True)
 
-    X_trans = imputer.fit_transform(X)
+    with pytest.warns(UserWarning, match="Deleting"):
+        X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_true, X_trans)
 
@@ -766,9 +773,10 @@ def test_sampling_error_invalid_type(dtype):
         [np.nan, "c", "d", "h"],
     ], dtype=dtype)
 
+    imputer = SamplingImputer()
     err_msg = "SamplingImputer does not support data"
+
     with pytest.raises(ValueError, match=err_msg):
-        imputer = SamplingImputer()
         imputer.fit(X)
 
     X_fit = np.array([
@@ -778,9 +786,7 @@ def test_sampling_error_invalid_type(dtype):
         [np.nan, "c", "d", "h"],
     ], dtype=object)
 
-    imputer = SamplingImputer()
     imputer.fit(X_fit)
 
-    err_msg = "SamplingImputer does not support data"
     with pytest.raises(ValueError, match=err_msg):
         imputer.transform(X)
