@@ -25,7 +25,6 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 IGNORED_MODULES = (
-    'cluster',
     'datasets',
     'decomposition',
     'feature_extraction',
@@ -37,15 +36,8 @@ IGNORED_MODULES = (
     'ensemble',
     'feature_selection',
     'kernel_approximation',
-    'model_selection',
-    'multioutput',
-    'setup',
     'utils',
     'neighbors',
-    # Deprecated modules
-    'cross_validation',
-    'grid_search',
-    'learning_curve',
 )
 
 
