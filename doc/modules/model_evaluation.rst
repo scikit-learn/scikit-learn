@@ -1152,7 +1152,7 @@ Here is an example demonstrating the use of the
 
 Here is an example demonstrating the use of the
 :func:`multilabel_confusion_matrix` function with
-:term:`multiclass array` input::
+:term:`multiclass` input::
 
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
@@ -1168,13 +1168,13 @@ Here is an example demonstrating the use of the
             [1, 2]]])
 
 Here are some examples demonstrating the use of the
-:func:`multilabel_confusion_matrix` function to calculate Recall
-(or Sensitivity), Specificity, Fall out and Miss rate for each class in a
-problem with :term:`multilabel indicator matrix` input.
+:func:`multilabel_confusion_matrix` function to calculate recall
+(or sensitivity), specificity, fall out and miss rate for each class in a
+problem with multilabel indicator matrix input.
 
 Calculating
-`Recall <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
-(also called the true positive rate or the Sensitivity) for each class::
+`recall <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true positive rate or the sensitivity) for each class::
 
     >>> y_true = np.array([[0, 0, 1],
     ...                    [0, 1, 0],
@@ -1191,19 +1191,19 @@ Calculating
     array([1. , 0.5, 0. ])
 
 Calculating
-`Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+`specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
 (also called the true negative rate) for each class::
 
     >>> TN / (TN + FP)
     array([1. , 0. , 0.5])
 
-Calculating `Fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
+Calculating `fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
 (also called the false positive rate) for each class::
 
     >>> FP / (FP + TN)
     array([0. , 1. , 0.5])
 
-Calculating `Miss rate
+Calculating `miss rate
 <https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`__
 (also called the false negative rate) for each class::
 
