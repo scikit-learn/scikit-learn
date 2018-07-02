@@ -111,6 +111,10 @@ Classifiers and regressors
   wrapping pipelines that perform their own imputation.
   :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
+
 Preprocessing
 
 - Expanded :class:`preprocessing.OneHotEncoder` to allow to encode
@@ -187,6 +191,12 @@ Misc
 - An environment variable to use the site joblib instead of the vendored
   one was added (:ref:`environment_variable`).
   :issue:`11166`by `Gael Varoquaux`_
+
+Datasets
+
+- Added :func:`dataset.fetch_openml` to fetch any dataset from `OpenML <http://openml.org>`.
+  OpenML is a free, open data sharing platform and will replace mldata, which
+  is no longer maintained. :issue:`9908` by `Andreas Müller`_
 
 Enhancements
 ............
