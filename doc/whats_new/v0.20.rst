@@ -546,8 +546,9 @@ Decomposition, manifold learning and clustering
   :user:`Olivier Grisel <ogrisel>`.
 
 - Fixed a bug in :func:`cluster.k_means_elkan` where the returned `iteration`
-  was missing an iteration. It affected :class:`cluster.KMeans`. :issue:`11353`
-  by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+  was 1 less than the correct value. Also added the missing `n_iter_` attribute
+  in the docstring of :class:`cluster.KMeans`. :issue:`11353` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 Metrics
 
