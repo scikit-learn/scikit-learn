@@ -880,9 +880,9 @@ def map_cluster_labels(labels_true, labels_pred):
     """Translate prediction labels to maximize the accuracy.
 
     Translate the prediction labels of a clustering output to those in the
-    ground truth to enable calc of external metrics (eg. accuracy, f1_score, ...).
-    Translation is done by maximization of the confusion matrix :math:`C` main
-    diagonal sum :math:`\sum{i=0}^{K}C_{i, i}`.
+    ground truth to enable calc of external metrics (eg. accuracy, f1_score,
+    ...). Translation is done by maximization of the confusion matrix :math:`C`
+    main diagonal sum :math:`\sum{i=0}^{K}C_{i, i}`.
 
     Parameters
     ----------
@@ -894,7 +894,8 @@ def map_cluster_labels(labels_true, labels_pred):
     Returns
     -------
     trans : array, shape = [n_classes, n_classes]
-        Mapping of labels_pred clusters, such that :math:`trans\subseteq labels_true`
+        Mapping of labels_pred clusters, such that :math:`trans\subseteq
+        labels_true`
 
     References
     ----------
