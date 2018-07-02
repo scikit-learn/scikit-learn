@@ -327,7 +327,7 @@ Decomposition and manifold learning
   `Tom Dupre la Tour`_.
 
 - Support sparse input in :meth:`manifold.Isomap.fit`. :issue:`8554` by
-  :user:`lmcinnes`.
+  :user:`Leland McInnes <lmcinnes>`.
 
 Metrics
 
