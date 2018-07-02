@@ -57,7 +57,7 @@ matrix:
     # interpreter provided by travis.
     -  python: 3.6
        env: DISTRIB="scipy-dev"
-       if: type = cron OR commit_message ~ /\[scipy-dev\]/
+       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
