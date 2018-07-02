@@ -195,7 +195,8 @@ class OneHotEncoder(_BaseEncoder):
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
-          values, and should be sorted in case of numeric values.
+          values within a single feature, and should be sorted in case of
+          numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
 

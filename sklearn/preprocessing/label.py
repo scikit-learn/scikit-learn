@@ -38,6 +38,7 @@ __all__ = [
 
 
 def _encode_numpy(values, uniques=None, encode=False):
+    # only used in _encode below, see docstring there for details
     if uniques is None:
         if encode:
             uniques, encoded = np.unique(values, return_inverse=True)
@@ -48,8 +49,8 @@ def _encode_numpy(values, uniques=None, encode=False):
     if encode:
         diff = _encode_check_unknown(values, uniques)
         if diff:
-            raise ValueError(
-                "y contains previously unseen labels: %s" % str(diff))
+            raise ValueError("y contains previously unseen labels: %s"
+                             % str(diff))
         encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
@@ -57,6 +58,7 @@ def _encode_numpy(values, uniques=None, encode=False):
 
 
 def _encode_python(values, uniques=None, encode=False):
+    # only used in _encode below, see docstring there for details
     if uniques is None:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -65,21 +67,22 @@ def _encode_python(values, uniques=None, encode=False):
         try:
             encoded = np.array([table[v] for v in values])
         except KeyError as e:
-            raise ValueError(
-                    "y contains previously unseen labels: %s" % str(e))
+            raise ValueError("y contains previously unseen labels: %s"
+                             % str(e))
         return uniques, encoded
     else:
         return uniques
 
 
 def _encode(values, uniques=None, encode=False):
-    """
-    Helper function to factorize (find uniques) and encode values.
+    """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
     The numpy method has the limitation that the `uniques` need to
-    be sorted.
+    be sorted. Importantly, this is not checked but assumed to already be
+    the case. The calling method needs to ensure this for all non-object
+    values.
 
     Parameters
     ----------
@@ -95,7 +98,8 @@ def _encode(values, uniques=None, encode=False):
     Returns
     -------
     uniques
-        If ``encode=False``.
+        If ``encode=False``. The unique values are sorted if the `uniques`
+        parameter was None (and thus inferred from the data).
     (uniques, encoded)
         If ``encode=True``.
 
@@ -145,7 +149,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
     else:
         unique_values = np.unique(values)
-        diff = list(np.setdiff1d(unique_values, uniques))
+        diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
         if return_mask:
             if diff:
                 valid_mask = np.in1d(values, uniques)
