@@ -1067,8 +1067,18 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         else:
             force_all_finite = "allow-nan"
 
-        return check_array(X, accept_sparse='csc', dtype=None,
-                           force_all_finite=force_all_finite, copy=self.copy)
+        X = check_array(X, accept_sparse='csc', dtype=None,
+                        force_all_finite=force_all_finite, copy=self.copy)
+
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            raise ValueError("SamplingImputer does not support data with dtype"
+                             " {0}. Please provide either a numeric array ( "
+                             "with a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
+
+        return X
 
     def _vect_is_not_none(self, a):
         def is_not_none(x):
@@ -1142,7 +1152,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         probas = np.empty(X.shape[1], dtype=object)
 
         for i in range(X.shape[1]):
-            column = X[mask[:, i], i]
+            column = X[~mask[:, i], i]
             if column.size > 0:
                 uniques[i], counts = np.unique(column, return_counts=True)
                 if uniques[i].size == column.size:

@@ -732,3 +732,55 @@ def test_sampling_1D():
 
     assert np.mean(np.concatenate(Xts)) == pytest.approx(np.nanmean(X),
                                                          rel=1e-2)
+
+
+@pytest.mark.parametrize("X_value, dtype, missing_value",
+                         [(1, int, -1),
+                          (1, None, -1),
+                          ("a", object, "NaN"),
+                          ("a", object, np.nan),
+                          ("a", object, None),
+                          (1.0, float, 0),
+                          (1.0, None, np.nan)])
+def test_sampling_deterministic(X_value, dtype, missing_value):
+    X = np.full((10, 10), X_value, dtype=dtype)
+    X[:, 0] = missing_value
+    X[::2, ::2] = missing_value
+
+    X_true = np.full((10, 9), X_value, dtype=dtype)
+
+    imputer = SamplingImputer(missing_values=missing_value)
+
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_true, X_trans)
+
+
+@pytest.mark.parametrize("dtype", [str, np.dtype('U'), np.dtype('S')])
+def test_sampling_error_invalid_type(dtype):
+    # Assert error are raised on invalid types
+    X = np.array([
+        [np.nan, np.nan, "a", "f"],
+        [np.nan, "c", np.nan, "d"],
+        [np.nan, "b", "d", np.nan],
+        [np.nan, "c", "d", "h"],
+    ], dtype=dtype)
+
+    err_msg = "SamplingImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer = SamplingImputer()
+        imputer.fit(X)
+
+    X_fit = np.array([
+        [np.nan, np.nan, "a", "f"],
+        [np.nan, "c", np.nan, "d"],
+        [np.nan, "b", "d", np.nan],
+        [np.nan, "c", "d", "h"],
+    ], dtype=object)
+
+    imputer = SamplingImputer()
+    imputer.fit(X_fit)
+
+    err_msg = "SamplingImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.transform(X)
