@@ -336,6 +336,9 @@ Decomposition and manifold learning
   :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
   `Tom Dupre la Tour`_.
 
+- Support sparse input in :meth:`manifold.Isomap.fit`. :issue:`8554` by
+  :user:`Leland McInnes <lmcinnes>`.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
