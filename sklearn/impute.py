@@ -143,7 +143,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    IterativeImputer: Multivariate imputation of missing values.
+    IterativeImputer : Multivariate imputation of missing values.
 
     Notes
     -----
@@ -428,7 +428,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
 
 class IterativeImputer(BaseEstimator, TransformerMixin):
-    """Multivariate imputer that estimates each features from all the others.
+    """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
     missing values as a function of other features in a round-robin fashion.
@@ -456,9 +456,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             A random order for each round.
 
     n_iter : int, optional (default=10)
-        Number of imputation rounds to perform before returning the final
-        imputations computed during the final round. A round is a single
-        imputation of each feature with missing values.
+        Number of imputation rounds to perform before returning the imputations
+        computed during the final round. A round is a single imputation of each
+        feature with missing values.
 
     predictor : estimator object, default=RidgeCV() or BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
@@ -502,11 +502,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         or 2.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by ``np.random``.
+        The seed of the pseudo random number generator to use. Randomizes
+        selection of predictor features if n_nearest_features is not None, the
+        ``imputation_order`` if ``random``, and the sampling from posterior if
+        ``sample_posterior`` is True. Use an integer for determinism.
+        See :term:`the Glossary <random_state>`.
 
     Attributes
     ----------
@@ -525,7 +525,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    SimpleImputer: Univariate imputation of missing values.
+    SimpleImputer : Univariate imputation of missing values.
 
     Notes
     -----

@@ -131,7 +131,7 @@ In the statistics community, it is common practice to perform multiple imputatio
 generating, for example, `m` separate imputations for a single feature matrix.
 Each of these `m` imputations is then put through the subsequent analysis pipeline
 (e.g. feature engineering, clustering, regression, classification). The `m` final
-analysis results (e.g. held-out validation errors) allow the data scientist to
+analysis results (e.g. held-out validation errors) allow the data scientist
 to obtain understanding of how analytic results may differ as a consequence
 of the inherent uncertainty caused by the missing values. The above practice
 is called multiple imputation.
@@ -154,7 +154,6 @@ Note that a call to the ``transform`` method of :class:`IterativeImputer` is not
 allowed to change the number of samples. Therefore multiple imputations cannot be
 achieved by a single call to ``transform``.
 
-.. _references:
 
 References
 ==========
