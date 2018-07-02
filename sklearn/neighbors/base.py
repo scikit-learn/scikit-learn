@@ -886,7 +886,8 @@ class UnsupervisedMixin(object):
 
 
 class LocalOutlierMixin(object):
-    """Mixin for Local Outlier Factor (LOF) and Local Outlier Probability (LoOP) approaches."""
+    """Mixin for Local Outlier Factor (LOF) and Local Outlier Probability
+    (LoOP) approaches."""
 
     def _distance_neighbors(self):
         n_samples = self._fit_X.shape[0]
@@ -912,7 +913,11 @@ class LocalOutlierMixin(object):
             standard_distances_X = self._standard_distances(ssd)
             distances_X = self._prob_distances(standard_distances_X)
 
-        X_lrd = LocalOutlierMixin._local_reachability_density(self, distances_X, neighbors_indices_X, mode=mode)
+        X_lrd = LocalOutlierMixin._local_reachability_density(
+            self,
+            distances_X,
+            neighbors_indices_X,
+            mode=mode)
 
         lrd_ratios_array = (self._lrd[neighbors_indices_X] /
                             X_lrd[:, np.newaxis])
@@ -920,7 +925,8 @@ class LocalOutlierMixin(object):
         # as bigger is better:
         return -np.mean(lrd_ratios_array, axis=1)
 
-    def _local_reachability_density(self, distances_X, neighbors_indices, mode='lof'):
+    def _local_reachability_density(self, distances_X, neighbors_indices,
+                                    mode='lof'):
         """The local reachability density (LRD)
 
         The LRD of a sample is the inverse of the average reachability
@@ -942,9 +948,11 @@ class LocalOutlierMixin(object):
             The local reachability density of each sample.
         """
         if mode == 'loop':
-            self._prob_set_distances_fit_X_tiled_ = np.tile(self._distances_fit_X_, (self.n_neighbors_, 1)).T
-            dist_k = self._prob_set_distances_fit_X_tiled_[neighbors_indices,
-                                                           self.n_neighbors_ - 1]
+            self._prob_set_distances_fit_X_tiled_ = np.tile(
+                self._distances_fit_X_, (self.n_neighbors_, 1)).T
+            dist_k = \
+                self._prob_set_distances_fit_X_tiled_[neighbors_indices,
+                                                      self.n_neighbors_ - 1]
             distances_X = np.tile(distances_X, (self.n_neighbors_, 1)).T
         else:
             dist_k = self._distances_fit_X_[neighbors_indices,
@@ -979,19 +987,29 @@ class LocalOutlierMixin(object):
         if mode == 'loop':
             ssd = self._ssd(self._distances_fit_X_)
             self._standard_distances_fit_X_ = self._standard_distances(ssd)
-            self._distances_fit_X_ = self._prob_distances(self._standard_distances_fit_X_)
-            self._distances_ev_fit_X_ = self._prob_distances_ev(self._distances_fit_X_)
-            prob_local_outlier_factors = self._prob_local_outlier_factors(self._distances_fit_X_,
-                                                                          self._distances_ev_fit_X_)
-            self._prob_local_outlier_factors_ev_fit_X_ = self._prob_local_outlier_factors_ev(prob_local_outlier_factors)
-            norm_prob_local_outlier_factors = self._norm_prob_local_outlier_factors(
-                self._prob_local_outlier_factors_ev_fit_X_)
-            self.negative_local_outlier_probability_ = self._neg_local_outlier_probability(prob_local_outlier_factors,
-                                                                                           norm_prob_local_outlier_factors)
+            self._distances_fit_X_ = self._prob_distances(
+                self._standard_distances_fit_X_)
+            self._distances_ev_fit_X_ = self._prob_distances_ev(
+                self._distances_fit_X_)
+            prob_local_outlier_factors = self._prob_local_outlier_factors(
+                self._distances_fit_X_,
+                self._distances_ev_fit_X_)
+            self._prob_local_outlier_factors_ev_fit_X_ = \
+                self._prob_local_outlier_factors_ev(
+                    prob_local_outlier_factors)
+            norm_prob_local_outlier_factors = \
+                self._norm_prob_local_outlier_factors(
+                    self._prob_local_outlier_factors_ev_fit_X_)
+            self.negative_local_outlier_probability_ = \
+                self._neg_local_outlier_probability(
+                    prob_local_outlier_factors,
+                    norm_prob_local_outlier_factors)
 
-        self._lrd = LocalOutlierMixin._local_reachability_density(self,
-                                                                  self._distances_fit_X_,
-                                                                  self._neighbors_indices_fit_X_, mode=mode)
+        self._lrd = LocalOutlierMixin. \
+            _local_reachability_density(self,
+                                        self._distances_fit_X_,
+                                        self._neighbors_indices_fit_X_,
+                                        mode=mode)
 
         # Compute score over training samples to define threshold_:
         lrd_ratios_array = (self._lrd[self._neighbors_indices_fit_X_] /

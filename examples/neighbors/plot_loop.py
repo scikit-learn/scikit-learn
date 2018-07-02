@@ -17,7 +17,8 @@ smaller than the maximum number of close by objects that can potentially be
 local outliers.
 
 In practice, this information is generally not available, but taking
-n_neighbors=20 appears to work well as a starting point for further exploration.
+n_neighbors=20 appears to work well as a starting point for further
+exploration.
 """
 print(__doc__)
 

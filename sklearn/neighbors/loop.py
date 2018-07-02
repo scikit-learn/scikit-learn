@@ -15,7 +15,9 @@ from ..utils.validation import check_is_fitted
 __all__ = ["LocalOutlierProbability"]
 
 
-class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin, OutlierMixin, LocalOutlierMixin):
+class LocalOutlierProbability(NeighborsBase, KNeighborsMixin,
+                              UnsupervisedMixin, OutlierMixin,
+                              LocalOutlierMixin):
     """Unsupervised Outlier Detection using Local Outlier Probabilities (LoOP)
 
     The outlier score of each sample is called the Local Outlier Probability.
@@ -93,11 +95,12 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Additional keyword arguments for the metric function.
 
     norm_factor : float in (0, 1.0], optional (default=0.95)
-        A normalization factor that gives control over the density approximation.
-        The norm_factor does not affect the ranking of outliers. norm_factor is
-        defined according to the triple sigma rule. The default value of 0.997
-        corresponds to a threshold of 3 standard deviations from the mean
-        (0.95 for 2 standard deviations, 0.68 for 1 standard deviation).
+        A normalization factor that gives control over the density
+        approximation. The norm_factor does not affect the ranking of outliers.
+        norm_factor is defined according to the triple sigma rule. The default
+        value of 0.997 corresponds to a threshold of 3 standard deviations
+        from the mean (0.95 for 2 standard deviations, 0.68 for 1 standard
+        deviation).
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -108,8 +111,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     ----------
     negative_local_outlier_probability_ : numpy array, shape (n_samples,)
         The negative LoOP of the training samples. The higher, the more normal.
-        Outliers tend to have a LoOP score close to -1, while normal values tend
-        to have a LoOP score at or close to 0.
+        Outliers tend to have a LoOP score close to -1, while normal values
+        tend to have a LoOP score at or close to 0.
 
         The local outlier probability (LoOP) of a sample captures its
         supposed 'degree of abnormality'.
@@ -126,32 +129,35 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     .. [2] Kriegel H.-P., Kroeger P., Schubert E., Zimek A. LoOP: Local Outlier
            Probabilities. 18th ACM conference on Information and knowledge
            management, CIKM (2009).
-    .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised Anomaly
-           Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016).
+    .. [3] Goldstein M., Uchida S. A Comparative Evaluation of Unsupervised
+           Anomaly Detection Algorithms for Multivariate Data.
+           PLoS ONE 11(4): e0152173 (2016).
     """
 
-    def __init__(self, n_neighbors=20, norm_factor=0.95, algorithm='auto', leaf_size=30,
+    def __init__(self, n_neighbors=20, norm_factor=0.95, algorithm='auto',
+                 leaf_size=30,
                  metric='euclidean', p=2, metric_params=None, n_jobs=1):
-        super(LocalOutlierProbability, self).__init__(n_neighbors=n_neighbors,
-                                                      algorithm=algorithm,
-                                                      leaf_size=leaf_size,
-                                                      metric=metric, p=p,
-                                                      metric_params=metric_params,
-                                                      n_jobs=n_jobs)
+        super(LocalOutlierProbability, self) \
+            .__init__(n_neighbors=n_neighbors,
+                      algorithm=algorithm,
+                      leaf_size=leaf_size,
+                      metric=metric, p=p,
+                      metric_params=metric_params,
+                      n_jobs=n_jobs)
 
         self.norm_factor = norm_factor
 
     def fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels
-        (1 inlier, -1 outlier) on the training set according to the probabilistic
-        set distance and the norm_factor parameter.
+        (1 inlier, -1 outlier) on the training set according to the
+        probabilistic set distance and the norm_factor parameter.
 
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features), default=None
-            The query sample or samples to compute the Local Outlier Probability
-            w.r.t. to the training samples.
+            The query sample or samples to compute the Local Outlier
+            Probability w.r.t. to the training samples.
 
         Returns
         -------
@@ -195,17 +201,19 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features), default=None
-            The query sample or samples to compute the Local Outlier Probability
-            w.r.t. to the training samples. If None, makes prediction on the
-            training data without considering them as their own neighbors.
+            The query sample or samples to compute the Local Outlier
+            Probability w.r.t. to the training samples. If None, makes
+            prediction on the training data without considering them as
+            their own neighbors.
 
         Returns
         -------
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        check_is_fitted(self, ["threshold_", "negative_local_outlier_probability_",
-                               "n_neighbors_", "_distances_fit_X_"])
+        check_is_fitted(self,
+                        ["threshold_", "negative_local_outlier_probability_",
+                         "n_neighbors_", "_distances_fit_X_"])
 
         is_inlier = LocalOutlierMixin._score_samples(self, X, mode='loop')
 
@@ -214,9 +222,9 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     @staticmethod
     def _ssd(distances_X):
         """
-        Calculates the sum of square distance of X. As this method is used in the
-        calculation of the local probability of each sample, this method is kept
-        private.
+        Calculates the sum of square distance of X. As this method is used in
+        the calculation of the local probability of each sample, this method
+        is kept private.
 
         Parameters
         ----------
@@ -236,8 +244,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _standard_distances(self, ssd_X):
         """
         Calculates the standard distance of each sample in the input data. As
-        this method is used in the calculation of the local probability of each sample,
-        this method is kept private.
+        this method is used in the calculation of the local probability of each
+        sample, this method is kept private.
 
         Parameters
         ----------
@@ -256,8 +264,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _prob_distances(self, standard_distances_X):
         """
         Calculates the probabilistic distance of each sample in the input data.
-        As this method is used in the calculation of the local probability of each sample,
-        this method is kept private.
+        As this method is used in the calculation of the local probability of
+        each sample, this method is kept private.
 
         Parameters
         ----------
@@ -274,14 +282,15 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         return prob_distances
 
     @staticmethod
-    def _prob_distances_ev(probabilistic_set_distances_X):
+    def _prob_distances_ev(prob_set_distances_X):
         """
-        Calculates the expected value of the probabilistic distance. As this method is used in the
-        calculation of the local probability of each sample, this method is kept private.
+        Calculates the expected value of the probabilistic distance. As this
+        method is used in the calculation of the local probability of each
+        sample, this method is kept private.
 
         Parameters
         ----------
-        probabilistic_distances_X : array-like, shape (n_samples,)
+        prob_set_distances_X : array-like, shape (n_samples,)
             The probabilistic set distances of X.
 
         Returns
@@ -291,24 +300,26 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             of repeated values.
         """
         prob_set_distance_ev_array = np.array(
-            [np.mean(probabilistic_set_distances_X[~np.isinf(probabilistic_set_distances_X)])] *
-            probabilistic_set_distances_X.shape[0])
+            [np.mean(prob_set_distances_X[
+                         ~np.isinf(prob_set_distances_X)])] *
+            prob_set_distances_X.shape[0])
 
         return prob_set_distance_ev_array
 
     @staticmethod
-    def _prob_local_outlier_factors(probabilistic_set_distances_X, probabilistic_set_distances_ev_X):
+    def _prob_local_outlier_factors(prob_set_distances_X,
+                                    prob_set_distances_ev_X):
         """
-        Calculates the probabilistic local outlier factor of each sample. As this method is used in the
-        calculation of the local probability of each sample, this method is kept
-        private.
+        Calculates the probabilistic local outlier factor of each sample. As
+        this method is used in the calculation of the local probability of
+        each sample, this method is kept private.
 
         Parameters
         ----------
-        probabilistic_distances_X : array-like, shape (n_samples,)
+        prob_set_distances_X : array-like, shape (n_samples,)
             The probabilistic distances of X.
 
-        probabilistic_distances_ev_X : array-like, shape (n_samples,)
+        prob_set_distances_ev_X : array-like, shape (n_samples,)
             The expected value of the probabilistic distances of X.
 
         Returns
@@ -316,70 +327,80 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         prob_local_outlier_factors : array, shape (n_samples,)
             The probabilistic local outlier factor of each sample.
         """
-        prob_local_outlier_factors = (probabilistic_set_distances_X / probabilistic_set_distances_ev_X) - 1.
+        prob_local_outlier_factors \
+            = (prob_set_distances_X / prob_set_distances_ev_X) - 1.
 
         return prob_local_outlier_factors
 
     @staticmethod
-    def _prob_local_outlier_factors_ev(probabilistic_local_outlier_factors_X):
+    def _prob_local_outlier_factors_ev(prob_local_outlier_factors_X):
         """
-        Calculates the expected value of the probabilistic local outlier factor.
-        As this method is used in the calculation of the local probability of each sample,
-        this method is kept private.
+        Calculates the expected value of the probabilistic local outlier
+        factor. As this method is used in the calculation of the local
+        probability of each sample, this method is kept private.
 
         Parameters
         ----------
-        probabilistic_local_outlier_factors_X : array-like, shape (n_samples,)
+        prob_local_outlier_factors_X : array-like, shape (n_samples,)
             The probabilistic local outlier factor of each sample.
 
         Returns
         -------
         prob_local_outlier_factors_ev : array, shape (n_samples,)
-            The expected value of the probabilistic local outlier factor of X as an array
-            of repeated values.
+            The expected value of the probabilistic local outlier factor of X
+            as an array of repeated values.
         """
         prob_local_outlier_factors_ev = np.array([np.sum(
-            np.power(probabilistic_local_outlier_factors_X[~np.isinf(probabilistic_local_outlier_factors_X)], 2) /
-            probabilistic_local_outlier_factors_X.shape[0])] * probabilistic_local_outlier_factors_X.shape[0])
+            np.power(prob_local_outlier_factors_X[
+                         ~np.isinf(prob_local_outlier_factors_X)],
+                     2) /
+            prob_local_outlier_factors_X.shape[0])] *
+                                         prob_local_outlier_factors_X.shape[
+                                             0])
 
         return prob_local_outlier_factors_ev
 
-    def _norm_prob_local_outlier_factors(self, prob_local_outlier_factors_ev_X):
+    def _norm_prob_local_outlier_factors(self,
+                                         prob_local_outlier_factors_ev_X):
         """
-        Calculates the normalized probabilistic local outlier factor. As this method is used in the
-        calculation of the local probability of each sample, this method is kept
-        private.
+        Calculates the normalized probabilistic local outlier factor. As this
+        method is used in the calculation of the local probability of each
+        sample, this method is kept private.
 
         Parameters
         ----------
         prob_local_outlier_factors_ev_X : array-like, shape (n_samples,)
-            The expected value of the probabilistic local outlier factor of X as an
-            array of repeated values.
+            The expected value of the probabilistic local outlier factor of X
+            as an array of repeated values.
 
         Returns
         -------
         norm_prob_local_outlier_factors : array, shape (n_samples,)
             The normalized probabilistic local outlier factor of each sample.
         """
-        norm_prob_local_outlier_factors = self.norm_factor * np.sqrt(prob_local_outlier_factors_ev_X)
+        norm_prob_local_outlier_factors = self.norm_factor * np.sqrt(
+            prob_local_outlier_factors_ev_X)
 
         return norm_prob_local_outlier_factors
 
     @staticmethod
-    def _neg_local_outlier_probability(probabilistic_local_outlier_factors_X,
-                                       normalized_probabilistic_local_outlier_factors):
+    def _neg_local_outlier_probability(
+            probabilistic_local_outlier_factors_X,
+            normalized_probabilistic_local_outlier_factors):
         """
-        Calculates the negative local outlier probability of each sample. As this method is used in the
-        calculation of the local probability of each sample, this method is kept
-        private.
+        Calculates the negative local outlier probability of each sample. As
+        this method is used in the calculation of the local probability of each
+        sample, this method is kept private.
 
         Parameters
         ----------
         probabilistic_local_outlier_factors_X : array-like, shape (n_samples,)
             The probabilistic local outlier factor of each sample in X.
 
-        normalized_probabilistic_local_outlier_factors : array-like, shape (n_samples,)
-            The normalized probabilistic local outlier factor of each sample in X.
+        normalized_probabilistic_local_outlier_factors :
+        array-like, shape (n_samples,)
+            The normalized probabilistic local outlier factor of each sample
+            in X.
 
         Returns
         -------
@@ -389,7 +410,10 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         """
         erf_vec = np.vectorize(erf)
         negative_local_outlier_probability = -1. * np.maximum(0., erf_vec(
-            probabilistic_local_outlier_factors_X / (normalized_probabilistic_local_outlier_factors * np.sqrt(2.))))
+            probabilistic_local_outlier_factors_X / (
+                    normalized_probabilistic_local_outlier_factors *
+                    np.sqrt(
+                        2.))))
 
         return negative_local_outlier_probability
 
@@ -407,16 +431,17 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The query sample or samples to compute the Local Outlier Probability
-            w.r.t. the training samples.
+            The query sample or samples to compute the Local Outlier
+            Probability w.r.t. the training samples.
 
         Returns
         -------
         lrd_ratio : array, shape (n_samples,)
-            The opposite of the local reachability density of each input samples.
-            The lower, the more abnormal.
+            The opposite of the local reachability density of each input
+            samples. The lower, the more abnormal.
         """
         check_is_fitted(self,
-                        ["norm_factor", "n_neighbors", "_distances_fit_X_", "negative_local_outlier_probability_"])
+                        ["norm_factor", "n_neighbors", "_distances_fit_X_",
+                         "negative_local_outlier_probability_"])
 
         return LocalOutlierMixin._decision_function(self, X, mode='loop')

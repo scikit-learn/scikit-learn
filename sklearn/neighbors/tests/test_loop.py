@@ -42,7 +42,8 @@ def test_loop():
     assert_greater(np.min(score[-2:]), np.max(score[:-2]))
 
     # Assert predict() works:
-    clf = neighbors.LocalOutlierProbability(n_neighbors=5, norm_factor=0.8).fit(X)
+    clf = neighbors.LocalOutlierProbability(n_neighbors=5,
+                                            norm_factor=0.8).fit(X)
     assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
 
 
@@ -70,7 +71,8 @@ def test_loop_performance():
 def test_loop_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
-    clf1 = neighbors.LocalOutlierProbability(n_neighbors=2, norm_factor=0.95).fit(X_train)
+    clf1 = neighbors.LocalOutlierProbability(n_neighbors=2,
+                                             norm_factor=0.95).fit(X_train)
     clf2 = neighbors.LocalOutlierProbability(n_neighbors=2).fit(X_train)
     # define test values and labels
     s_0 = 0.
@@ -78,14 +80,20 @@ def test_loop_values():
     s_0_label = 1
     s_1_label = -1
     # check predict()
-    assert_array_almost_equal(-clf1.negative_local_outlier_probability_, [s_0, s_1, s_1])
-    assert_array_almost_equal(-clf2.negative_local_outlier_probability_, [s_0, s_1, s_1])
+    assert_array_almost_equal(-clf1.negative_local_outlier_probability_,
+                              [s_0, s_1, s_1])
+    assert_array_almost_equal(-clf2.negative_local_outlier_probability_,
+                              [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf1._score_samples([[2., 2.]], mode='loop'), [s_0_label])
-    assert_array_almost_equal(-clf2._score_samples([[2., 2.]], mode='loop'), [s_0_label])
+    assert_array_almost_equal(-clf1._score_samples([[2., 2.]], mode='loop'),
+                              [s_0_label])
+    assert_array_almost_equal(-clf2._score_samples([[2., 2.]], mode='loop'),
+                              [s_0_label])
     # check predict(one sample already in train)
-    assert_array_almost_equal(-clf1._score_samples([[1., 1.]], mode='loop'), [s_1_label])
-    assert_array_almost_equal(-clf2._score_samples([[1., 1.]], mode='loop'), [s_1_label])
+    assert_array_almost_equal(-clf1._score_samples([[1., 1.]], mode='loop'),
+                              [s_1_label])
+    assert_array_almost_equal(-clf2._score_samples([[1., 1.]], mode='loop'),
+                              [s_1_label])
 
 
 def test_loop_precomputed(random_state=42):
@@ -103,7 +111,8 @@ def test_loop_precomputed(random_state=42):
     pred_X_Y = loop_X._predict(Y)
 
     # As a dense distance matrix (n_samples by n_samples)
-    loop_D = neighbors.LocalOutlierProbability(n_neighbors=3, algorithm='brute',
+    loop_D = neighbors.LocalOutlierProbability(n_neighbors=3,
+                                               algorithm='brute',
                                                metric='precomputed')
     loop_D.fit(DXX)
     pred_D_X = loop_D._predict()
