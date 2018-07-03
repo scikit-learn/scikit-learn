@@ -239,7 +239,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _sparse_fit(self, X, strategy, missing_values, fill_value, random_state):
+    def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
         # Count the zeros
         if missing_values == 0:
