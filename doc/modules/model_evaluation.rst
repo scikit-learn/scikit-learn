@@ -523,8 +523,11 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the `confusion matrix
+classification accuracy by computing the confusion matrix
+with each row corresponding to the true class
 <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
+(Wikipedia and other references may use different convention for axes.)
+
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but

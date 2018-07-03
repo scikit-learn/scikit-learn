@@ -40,19 +40,18 @@ TSNE with internal NearestNeighbors: 64.984 sec
 # License: BSD 3 clause
 from __future__ import print_function
 import time
+import sys
 
 try:
     import annoy
 except ImportError:
     print("The package 'annoy' is required to run this example.")
-    import sys
     sys.exit()
 
 try:
     import nmslib
 except ImportError:
     print("The package 'nmslib' is required to run this example.")
-    import sys
     sys.exit()
 
 import numpy as np

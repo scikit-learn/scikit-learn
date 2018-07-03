@@ -246,7 +246,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||V||_1 \\
-                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
 
@@ -432,7 +432,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||U||_1 \\
-                \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -450,6 +450,32 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
+
+It is also possible to constrain the dictionary and/or code to be positive to
+match constraints that may be present in the data. Below are the faces with
+different positivity constraints applied. Red indicates negative values, blue
+indicates positive values, and white represents zeros.
+
+
+.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_014.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. centered:: |dict_img_pos1| |dict_img_pos2|
+.. centered:: |dict_img_pos3| |dict_img_pos4|
+
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of a raccoon face looks like.

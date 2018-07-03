@@ -226,7 +226,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C")
+                         dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -259,25 +260,22 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term. The penalty is a squared
-        l2 penalty. The bigger this parameter, the less regularization is used.
-
-    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive' (default='epsilon_insensitive')
-        Specifies the loss function. 'l1' is the epsilon-insensitive loss
-        (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
-
     epsilon : float, optional (default=0.1)
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set ``epsilon=0``.
 
-    dual : bool, (default=True)
-        Select the algorithm to either solve the dual or primal
-        optimization problem. Prefer dual=False when n_samples > n_features.
-
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
+
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term. The penalty is a squared
+        l2 penalty. The bigger this parameter, the less regularization is used.
+
+    loss : string, optional (default='epsilon_insensitive')
+        Specifies the loss function. The epsilon-insensitive loss
+        (standard SVR) is the L1 loss, while the squared epsilon-insensitive
+        loss ('squared_epsilon_insensitive') is the L2 loss.
 
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
@@ -294,6 +292,10 @@ class LinearSVR(LinearModel, RegressorMixin):
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
+
+    dual : bool, (default=True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem. Prefer dual=False when n_samples > n_features.
 
     verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
@@ -412,7 +414,8 @@ class LinearSVR(LinearModel, RegressorMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C")
+                         dtype=np.float64, order="C",
+                         accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -471,12 +474,12 @@ class SVC(BaseSVC):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
+    shrinking : boolean, optional (default=True)
+        Whether to use the shrinking heuristic.
+
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, and will slow down that method.
-
-    shrinking : boolean, optional (default=True)
-        Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -637,12 +640,12 @@ class NuSVC(BaseSVC):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
+    shrinking : boolean, optional (default=True)
+        Whether to use the shrinking heuristic.
+
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, and will slow down that method.
-
-    shrinking : boolean, optional (default=True)
-        Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -767,15 +770,6 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
-
-    epsilon : float, optional (default=0.1)
-         Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
-         within which no penalty is associated in the training loss function
-         with points predicted within a distance epsilon from the actual
-         value.
-
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
@@ -801,11 +795,20 @@ class SVR(BaseLibSVM, RegressorMixin):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking : boolean, optional (default=True)
-        Whether to use the shrinking heuristic.
-
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
+
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
+
+    epsilon : float, optional (default=0.1)
+         Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
+         within which no penalty is associated in the training loss function
+         with points predicted within a distance epsilon from the actual
+         value.
+
+    shrinking : boolean, optional (default=True)
+        Whether to use the shrinking heuristic.
 
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
@@ -892,13 +895,13 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
-
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
         default 0.5 will be taken.
+
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
@@ -1018,12 +1021,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
-    nu : float, optional
-        An upper bound on the fraction of training
-        errors and a lower bound of the fraction of support
-        vectors. Should be in the interval (0, 1]. By default 0.5
-        will be taken.
-
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
@@ -1044,6 +1041,12 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     tol : float, optional
         Tolerance for stopping criterion.
+
+    nu : float, optional
+        An upper bound on the fraction of training
+        errors and a lower bound of the fraction of support
+        vectors. Should be in the interval (0, 1]. By default 0.5
+        will be taken.
 
     shrinking : boolean, optional
         Whether to use the shrinking heuristic.
@@ -1089,8 +1092,8 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - offset_.
-        The offset is the opposite of intercept_ and is provided for
+        We have the relation: decision_function = score_samples - `offset_`.
+        The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
     """

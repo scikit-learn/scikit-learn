@@ -500,7 +500,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
@@ -876,7 +876,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------

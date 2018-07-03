@@ -383,6 +383,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     alphas : list of positive floats
         The list of regularization parameters, decreasing order.
 
+    cov_init : 2D array (n_features, n_features), optional
+        The initial guess for the covariance.
+
     X_test : 2D array, shape (n_test_samples, n_features), optional
         Optional test matrix to measure generalisation error.
 
