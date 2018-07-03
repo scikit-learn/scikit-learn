@@ -1,27 +1,71 @@
 """Test the openml loader.
-
-Skipped on travis.
 """
+import numpy as np
 
 from sklearn.datasets import fetch_openml
+from sklearn.datasets.openml import _get_data_features
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 
 
-def test_fetch_openml():
-    print('openml test running')
-    # check_skip_travis()
+def fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features):
     # fetch with version
-    iris_1 = fetch_openml("iris", version=1)
-    assert iris_1.details['id'] == '61'
+    data_by_name_id = fetch_openml(data_name, version=data_version)
+    assert int(data_by_name_id.details['id']) == data_id
+
     # fetch without version
-    iris_1 = fetch_openml("iris")
-    assert iris_1.details['id'] == '61'
+    data_by_name = fetch_openml(data_name)
+    assert int(data_by_name.details['id']) == data_id
+
     # fetch with dataset id
-    iris_by_id = fetch_openml(61)
-    assert iris_by_id.details['name'] == "iris"
-    assert iris_by_id.data.shape == (150, 4)
-    assert iris_by_id.target.shape == (150,)
+    data_by_id = fetch_openml(data_id)
+    assert data_by_id.details['name'] == data_name
+    assert data_by_id.data.shape == (expected_observations, expected_features)
+    assert data_by_id.target.shape == (expected_observations, )
+
+    # check numeric features:
+    feature_name_type = {feature['name']: feature['data_type'] for feature in _get_data_features(data_id)}
+    for idx, feature_name in enumerate(data_by_id.feature_names):
+        if feature_name_type[feature_name] == 'numeric':
+            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype, np.number)
+
+    if 'default_target_attribute' in data_by_id.details:
+        target = data_by_id.details['default_target_attribute']
+        if feature_name_type[target] == 'numeric':
+            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype, np.number)
+
+
+def test_fetch_openml_iris():
+    # classification dataset with numeric only columns
+    data_id = 61
+    data_name = 'iris'
+    data_version = 1
+    expected_observations = 150
+    expected_features = 4
+    fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+
+
+def test_fetch_openml_anneal():
+    # classification dataset with numeric and categorical columns
+    data_id = 2
+    data_name = 'anneal'
+    data_version = 1
+    expected_observations = 898
+    expected_features = 38
+    fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+
+
+def test_fetch_openml_cpu():
+    # regression dataset with numeric and categorical columns
+    data_id = 561
+    data_name = 'cpu'
+    data_version = 1
+    expected_observations = 209
+    expected_features = 7
+    fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+
+
+def test_fetch_openml_inactive():
     # fetch inactive dataset by id
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
