@@ -177,6 +177,11 @@ Metrics
   to return classification statistics as dictionary.
   :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
 
+- Added :func:`metrics.multilabel_confusion_matrix`, which enables the
+  calculation of recall, specificity, fall out and miss rate,
+  and makes :func:`metrics.precision_recall_fscore_support` cleaner.
+  :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>`.
+
 Misc
 
 - A new configuration parameter, ``working_memory`` was added to control memory
