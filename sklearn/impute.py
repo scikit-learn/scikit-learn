@@ -114,8 +114,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
           value along each column. Can be used with strings or numeric data.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
-        - If "sample", then replace missing values with values sampled
-          uniformly at random from the non-missing values on each column.
 
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
@@ -138,13 +136,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If X is sparse and `missing_values=0`;
         - If X is encoded as a CSR matrix.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by ``np.random``.
-
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -157,23 +148,21 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True, random_state=None):
+                 fill_value=None, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
-        self.random_state = random_state
 
     def _validate_input(self, X):
-        allowed_strategies = ["mean", "median",
-                              "most_frequent", "constant", "sample"]
+        allowed_strategies = ["mean", "median", "most_frequent", "constant"]
         if self.strategy not in allowed_strategies:
             raise ValueError("Can only use these strategies: {0} "
                              " got strategy={1}".format(allowed_strategies,
                                                         self.strategy))
 
-        if self.strategy in ("most_frequent", "constant", "samples"):
+        if self.strategy in ("most_frequent", "constant"):
             dtype = None
         else:
             dtype = FLOAT_DTYPES
@@ -217,9 +206,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         -------
         self : SimpleImputer
         """
-        self.random_state_ = getattr(self, "random_state_",
-                                     check_random_state(self.random_state))
-
         X = self._validate_input(X)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -244,14 +230,12 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             self.statistics_ = self._sparse_fit(X,
                                                 self.strategy,
                                                 self.missing_values,
-                                                fill_value,
-                                                self.random_state_)
+                                                fill_value)
         else:
             self.statistics_ = self._dense_fit(X,
                                                self.strategy,
                                                self.missing_values,
-                                               fill_value,
-                                               self.random_state_)
+                                               fill_value)
 
         return self
 
@@ -332,8 +316,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             elif strategy == "constant":
                 return np.full(X.shape[1], fill_value)
 
-    def _dense_fit(self, X, strategy, missing_values,
-                   fill_value, random_state):
+    def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
@@ -382,26 +365,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         # Constant
         elif strategy == "constant":
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
-    
-        # Sample
-        elif strategy == "sample":
-            X = X.transpose()
-            mask = mask.transpose()
-
-            generators = np.empty(X.shape[0], dtype=object)
-
-            for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
-                row_mask = np.logical_not(row_mask).astype(np.bool)
-                row = row[row_mask]
-                if row.size > 0:
-                    uniques, counts = np.unique(row, return_counts=True)
-                    probas = counts / counts.sum()
-                    g = lambda k: random_state.choice(uniques, k, p=probas)
-                    generators[i] = g
-                else:
-                    generators[i] = np.nan
-
-            return generators
 
     def transform(self, X):
         """Impute all missing values in X.
@@ -452,15 +415,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
-            if self.strategy == "sample":
-                for i in range(n_missing.shape[0]):
-                    values = valid_statistics[i](n_missing[i])
-                    coordinates = np.nonzero(mask[:, i])
-                    X[coordinates, i] = values
-            else:
-                values = np.repeat(valid_statistics, n_missing)
-                coordinates = np.where(mask.transpose())[::-1]
-                X[coordinates] = values
+            values = np.repeat(valid_statistics, n_missing)
+            coordinates = np.where(mask.transpose())[::-1]
+
+            X[coordinates] = values
 
         return X
 
