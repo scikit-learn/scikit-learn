@@ -6,6 +6,7 @@ Multi-dimensional Scaling (MDS)
 # License: BSD
 
 import numpy as np
+from numpy import linalg as la
 
 import warnings
 
@@ -330,6 +331,13 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
+    method : string, optional, default: 'smacof'
+        By default, the smacof algorithm is used and the model can not
+        transform new data points. With method='inductive' the model is built
+        using eigen decomposition, allowing for the transform method to be
+        used with new data.
+
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_components, n_samples)
@@ -351,10 +359,15 @@ class MDS(BaseEstimator):
     "Multidimensional scaling by optimizing goodness of fit to a nonmetric
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
+    "Out-of-sample extensions for lle, isomap, mds, eigenmaps, and spectral
+    clustering." Bengio, Y. et al. Advances in neural information processing
+    systems 16 (2004): 177-184.
+
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
-                 random_state=None, dissimilarity="euclidean"):
+                 random_state=None, dissimilarity="euclidean",
+                 method="smacof"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -364,14 +377,14 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.method = method
 
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
 
     def fit(self, X, y=None, init=None):
-        """
-        Computes the position of the points in the embedding space
+        """Fit the model on X
 
         Parameters
         ----------
@@ -386,26 +399,103 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
-        self.fit_transform(X, init=init)
+        if self.method == 'inductive':
+            self.X_train_ = X
+            if self.dissimilarity == 'precomputed':
+                D = X
+            elif self.dissimilarity == 'euclidean':
+                D = euclidean_distances(X)
+                self.D_XX_ = euclidean_distances(self.X_train_, self.X_train_)
+            else:
+                raise ValueError("Proximity must be 'precomputed' or"
+                                 "'euclidean'."
+                                 " Got %s instead" % str(self.dissimilarity))
+
+            # Normalising similarities
+            n = len(D)
+            D_sq = np.square(D)
+            P = np.eye(n) - 1 / n * np.ones((n, n))
+            K = -0.5 * np.dot(np.dot(P, D_sq), P)
+
+            # Sorting e-vectors and e-values according to e-val
+            e_vals, e_vecs = la.eigh(K)
+            ind_sort = np.argsort(e_vals)[::-1]
+            self.e_vecs_ = e_vecs[:, ind_sort]
+            self.e_vals_ = e_vals[ind_sort]
+        else:
+            self.fit_transform(X, init=init)
         return self
 
     def fit_transform(self, X, y=None, init=None):
-        """
-        Fit the data from X, and returns the embedded coordinates
+        """Fit the data from X, and returns the embedded coordinates
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
-            be the dissimilarity matrix.
-
-        y: Ignored
+        X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
+                if dissimilarity='precomputed'
 
         init : ndarray, shape (n_samples,), optional, default: None
-            Starting configuration of the embedding to initialize the SMACOF
-            algorithm. By default, the algorithm is initialized with a randomly
-            chosen array.
+            Should only be used with the non-inductive MDS (SMACOF).
+            If None, randomly chooses the initial configuration
+            if ndarray, initialize the SMACOF algorithm with this array.
         """
+        if self.method == 'inductive':
+            if init is not None:
+                raise ValueError("Init is only for the non-inductive MDS.")
+            ret = self._fit_transform_ext(X)
+        else:
+            ret = self._fit_transform(X, init)
+        return ret
+
+    def transform(self, X):
+        """Apply the transformation on X
+
+        If dissimilarity is Euclidean, apply the transformation on X.
+        If dissimilarity is precomputed, X is the similarity matrix to be used
+        between new (out-of-sample) points with old ones.
+        The new points (X if Euclidean, or with X similarity matrix if
+        precomputed) are projected in the same space as the training set.
+
+        Parameters
+        ----------
+        X : array, shape [n_samples, n_features], or \
+                [n_samples, n_train_samples] if dissimilarity='precomputed'
+            New data, where n_samples is the number of samples
+            and n_features is the number of features for "euclidean"
+            dissimilarity. Else, similarity matrix (e.g. Euclidean distances
+            between new and training points).
+
+            NB: similarity matrix has to be centered, use the
+            make_euclidean_similarities function to create it.
+
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+
+        """
+
+        if not self.method == 'inductive':
+            raise ValueError("Method only available if inductive is True.")
+        if self.dissimilarity == 'precomputed':
+            D_new = X
+        elif self.dissimilarity == 'euclidean':
+            if not hasattr(self, 'X_train_') \
+               or not hasattr(self, 'D_XX_') \
+               or self.X_train_ is None \
+               or self.D_XX_ is None:
+                raise ValueError("Inductive MDS with Euclidean Similarities "
+                                 "must be fit first. use ``MDS.fit()``")
+            else:
+                D_aX = euclidean_distances(X, self.X_train_)
+                D_new = self.center_similarities(D_aX, self.D_XX_)
+        else:
+            raise ValueError("Dissimilarity not set properly: 'precomputed' "
+                             "and 'euclidean' allowed.")
+        X_new = self._mds_project(D_new, k=self.n_components)
+        return X_new
+
+    def _fit_transform(self, X, init=None):
         X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
@@ -429,3 +519,48 @@ class MDS(BaseEstimator):
             return_n_iter=True)
 
         return self.embedding_
+
+    def _fit_transform_ext(self, X):
+        self.fit(X)
+        return self.transform(X)
+
+    def center_similarities(self, D_aX, D_XX):
+        """Centers similarities D_aX around D_XX
+
+        Parameters
+        ----------
+        D_aX : array, shape=[n_new_samples, n_train_samples]
+            Dissimilarity matrix of new and training data.
+        D_XX : array, shape=[n_train_samples, n_train_samples]
+            Dissimilarity matrix of training data.
+
+        Returns
+        -------
+        new_similarities : array-like, shape=[n_new_samples, n_train_samples]
+        """
+        D_aX = np.square(D_aX)
+        D_XX = np.square(D_XX)
+        N = len(D_XX)
+        M = len(D_aX)
+        I_NN = np.ones((N, N))
+        I_MN = np.ones((M, N))
+        Exp_XX = np.sum(D_XX) / N ** 2
+
+        new_similarities = -0.5 * (D_aX - (np.dot(D_aX, I_NN) +
+                                           np.dot(I_MN, D_XX)
+                                           ) / N + Exp_XX)
+        return new_similarities
+
+    def _mds_project(self, new_similarities, k):
+
+        e_projections = np.zeros((len(new_similarities), k))
+
+        for i in range(len(new_similarities)):
+            for j in range(k):
+                e_projections[i, j] = ((np.dot(self.e_vecs_[:, j],
+                                               new_similarities[i]) /
+                                        np.sqrt(self.e_vals_[j])))
+        e_projections = np.dot(new_similarities,
+                               np.dot(self.e_vecs_[:, :k],
+                                      np.diag(1/np.sqrt(self.e_vals_[:k]))))
+        return e_projections
