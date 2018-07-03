@@ -201,6 +201,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         `tol`, otherwise, a `ConvergenceWarning` is raised. After fitting, it
         predicts the most probable label for the input data points.
 
+        .. versionadded:: 0.20
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
