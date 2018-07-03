@@ -712,7 +712,7 @@ def test_chained_imputer_additive_matrix():
     assert_allclose(X_test_filled, X_test_est, atol=0.01)
 
 
-def test_sampling_1D():
+def test_sampling_preserved_statistics():
     # check that: - filled values are drawn only within non-missing values
     #             - different random_states give different imputations
     #             - values are drawn uniformly at random
@@ -736,6 +736,9 @@ def test_sampling_1D():
 
     assert np.mean(np.concatenate(Xts)) == pytest.approx(np.nanmean(X),
                                                          rel=1e-2)
+
+    assert np.std(np.concatenate(Xts)) == pytest.approx(np.nanstd(X),
+                                                        rel=1e-2)
 
 
 @pytest.mark.parametrize("X_value, dtype, missing_value",
