@@ -705,6 +705,11 @@ Decomposition, manifold learning and clustering
   pairwise distances or squared distances. :issue:`9775` by
   :user:`William de Vazelhes <wdevazelhes>`.
 
+- Added function :func:`fit_predict` to :class:`mixture.GaussianMixture` and
+  :class:`mixture.GaussianMixture`, which is essentially equivalent to calling
+  :func:`fit` and :func:`predict`. :issue:`10336` by
+  :user:`Shu Haoran <haoranShu>` and :user:`Andrew Peng <Andrew-peng>`.
+
 Metrics
 
 - Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
