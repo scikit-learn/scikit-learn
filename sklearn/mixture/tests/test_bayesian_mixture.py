@@ -451,10 +451,11 @@ def test_bayesian_mixture_predict_predict_proba():
         for covar_type in COVARIANCE_TYPE:
             X = rand_data.X[covar_type]
             Y = rand_data.Y
-            bgmm = BayesianGaussianMixture(n_components=rand_data.n_components,
-                                           random_state=rng,
-                                           weight_concentration_prior_type=prior_type,
-                                           covariance_type=covar_type)
+            bgmm = BayesianGaussianMixture(
+                n_components=rand_data.n_components,
+                random_state=rng,
+                weight_concentration_prior_type=prior_type,
+                covariance_type=covar_type)
 
             # Check a warning message arrive if we don't do fit
             assert_raise_message(NotFittedError,
