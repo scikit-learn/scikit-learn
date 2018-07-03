@@ -1116,7 +1116,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
     def _sparse_fit(self, X, missing_values):
         """Fit the transformer on sparse data."""
         mask_data = _get_mask(X.data, missing_values)
-        n_zeros = X.shape[0] - np.diff(X.indptr)
+        n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
         uniques = np.empty(X.shape[1], dtype=object)
         probas = np.empty(X.shape[1], dtype=object)
@@ -1128,9 +1128,12 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
             values, counts = np.unique(column, return_counts=True)
 
-            if missing_values != 0 and n_zeros[i] > 0:
-                values = np.append(values, 0)
-                counts = np.append(counts, n_zeros[i])
+            if n_implicit_zeros[i] > 0:
+                if 0 in values:
+                    counts[values == 0] += n_implicit_zeros[i]
+                else:
+                    values = np.append(values, 0)
+                    counts = np.append(counts, n_implicit_zeros[i])
 
             if values.size > 0:
                 uniques[i] = values
@@ -1198,8 +1201,12 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             X = X[:, valid_indexes]
 
         # Do actual imputation
+        if sparse.issparse(X):
+            if self.missing_values == 0:
+                warnings.warn("Imputation will only be performed on explicit "
+                              "zeros. To impute on all zeros, please provide a"
+                              " dense array.")
 
-        if sparse.issparse(X) and self.missing_values != 0:
             mask_data = _get_mask(X.data, self.missing_values)
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i]:X.indptr[i+1]]
@@ -1211,9 +1218,6 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
                 column[mask_column] = values
 
         else:
-            if sparse.issparse(X):
-                X = X.toarray()
-
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             for i in range(n_missing.shape[0]):
