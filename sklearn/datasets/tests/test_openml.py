@@ -27,6 +27,8 @@ def fetch_dataset_from_openml(data_id, data_name, data_version, expected_observa
     feature_name_type = {feature['name']: feature['data_type'] for feature in _get_data_features(data_id)}
     for idx, feature_name in enumerate(data_by_id.feature_names):
         if feature_name_type[feature_name] == 'numeric':
+            # casting trick according to Jaime at
+            # stackoverflow.com/questions/19486283/how-do-i-quickly-check-if-all-elements-of-numpy-array-are-floats
             assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype, np.number)
 
     if 'default_target_attribute' in data_by_id.details:
