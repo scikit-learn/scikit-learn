@@ -357,7 +357,9 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
     Examples
     --------
+
     Multilabel-indicator case:
+
     >>> import numpy as np
     >>> from sklearn.metrics import multilabel_confusion_matrix
     >>> y_true = np.array([[1, 0, 1],
@@ -375,6 +377,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
             [1, 0]]])
 
     Multiclass case:
+
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     >>> multilabel_confusion_matrix(y_true, y_pred,
