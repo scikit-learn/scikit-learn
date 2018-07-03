@@ -34,7 +34,6 @@ IGNORED_MODULES = (
     'manifold',
     'metrics',
     'discriminant_analysis',
-    'ensemble',
     'feature_selection',
     'kernel_approximation',
     'model_selection',
