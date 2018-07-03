@@ -373,11 +373,12 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     n_components = len(code)
     n_features = Y.shape[0]
     random_state = check_random_state(random_state)
+    # Get BLAS functions
+    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
     R += Y
     R = np.asfortranarray(R)
-    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
     for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
