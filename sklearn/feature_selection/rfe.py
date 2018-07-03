@@ -262,16 +262,61 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
+        """Compute the decision function of ``X``.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        score : array, shape = [n_samples, n_classes] or [n_samples]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification produce an array of shape
+            [n_samples].
+        """
         check_is_fitted(self, 'estimator_')
         return self.estimator_.decision_function(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
+        """Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_proba(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : array of shape [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_log_proba(self.transform(X))
 

@@ -82,16 +82,53 @@ class ProjectionToHashMixin(object):
         return out.reshape(projected.shape[0], -1)
 
     def fit_transform(self, X, y=None):
+        """
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+        """
+
         self.fit(X)
         return self.transform(X)
 
     def transform(self, X):
+        """
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+        """
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 
 class GaussianRandomProjectionHash(ProjectionToHashMixin,
                                    GaussianRandomProjection):
-    """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
+    """Use GaussianRandomProjection to produce a cosine LSH fingerprint
+
+    Parameters
+    ----------
+
+    n_components : int or 'auto', optional (default = 32)
+        Dimensionality of the target projection space.
+
+        n_components can be automatically adjusted according to the
+        number of samples in the dataset and the bound given by the
+        Johnson-Lindenstrauss lemma. In that case the quality of the
+        embedding is controlled by the ``eps`` parameter.
+
+        It should be noted that Johnson-Lindenstrauss lemma can yield
+        very conservative estimated of the required number of components
+        as it makes no assumption on the structure of the dataset.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+    """
     def __init__(self,
                  n_components=32,
                  random_state=None):

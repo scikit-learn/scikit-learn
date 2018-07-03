@@ -35,13 +35,10 @@ IGNORED_MODULES = (
     'metrics',
     'discriminant_analysis',
     'ensemble',
-    'feature_selection',
-    'kernel_approximation',
     'model_selection',
     'multioutput',
     'setup',
     'utils',
-    'neighbors',
     # Deprecated modules
     'cross_validation',
     'grid_search',
