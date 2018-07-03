@@ -50,6 +50,22 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     This also returns the ``intercept_decay`` which is different
     for sparse datasets.
+
+    Parameters
+    ----------
+    X : numpy array or sparse matrix of shape [n_samples,n_features]
+        Training data
+
+    y : numpy array of shape [n_samples, ]
+        Target values.
+
+    sample_weight : numpy array of shape [n_samples, ]
+        The weight of each sample
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
     """
 
     rng = check_random_state(random_state)

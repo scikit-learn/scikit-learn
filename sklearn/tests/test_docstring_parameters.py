@@ -29,8 +29,6 @@ IGNORED_MODULES = (
     'datasets',
     'decomposition',
     'feature_extraction',
-    'gaussian_process',
-    'linear_model',
     'manifold',
     'metrics',
     'discriminant_analysis',
