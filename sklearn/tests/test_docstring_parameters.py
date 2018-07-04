@@ -27,8 +27,6 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 IGNORED_MODULES = (
     'cluster',
     'datasets',
-    'decomposition',
-    'feature_extraction',
     'gaussian_process',
     'linear_model',
     'ensemble',
