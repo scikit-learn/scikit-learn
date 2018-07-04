@@ -979,3 +979,11 @@ def test_check_sample_weight():
     assert_equal(_num_samples(X), _num_samples(checked_sample_weight))
     assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
     assert_equal(X.dtype, checked_sample_weight.dtype)
+
+
+def test_iter_attribute():
+    # Regression test on bad n_iter_ value. Previous bug n_iter_ was one off
+    # it's right value (#11340).
+    estimator = KMeans(algorithm="elkan", max_iter=1)
+    estimator.fit(np.random.rand(10, 10))
+    assert estimator.n_iter_ == 1

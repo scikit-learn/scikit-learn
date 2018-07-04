@@ -122,9 +122,9 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             decision function. Must be False (default) for compatibility
             with the others outlier detection tools.
 
-        .. deprecated:: 0.20
-            ``raw_values`` has been deprecated in 0.20 and will be removed
-            in 0.22.
+            .. deprecated:: 0.20
+                ``raw_values`` has been deprecated in 0.20 and will be removed
+                in 0.22.
 
         Returns
         -------
