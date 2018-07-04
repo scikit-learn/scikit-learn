@@ -681,6 +681,15 @@ Linear, kernelized and related models
   version 0.22 to account better for unscaled features. :issue:`8361` by
   :user:`Gaurav Dhingra <gxyd>` and :user:`Ting Neo <neokt>`.
 
+Feature Extraction
+
+- Deprecate ``stop_words='english'`` parameter in
+  :class:`feature_extraction.text.CountVectorizer`,
+  :class:`feature_extraction.text.TfidfVectorizer`,
+  :class:`feature_extraction.text.HashingVectorizer` as the current list is
+  controversial and may lead to unexpected results. :issue:`10735` 
+  by :user:`Mohammad Shahebaz <shaz13>`
+
 - Added convergence warning to :class:`svm.LinearSVC` and
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.

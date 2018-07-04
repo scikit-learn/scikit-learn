@@ -4,6 +4,7 @@ import warnings
 import pytest
 from scipy import sparse
 
+from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -14,6 +15,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import ENGLISH_MINIMAL_STOP_WORDS
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -31,7 +33,7 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises,
+                                   SkipTest, assert_raises, assert_warns,
                                    assert_allclose_dense_sparse)
 
 from collections import defaultdict, Mapping
@@ -291,7 +293,10 @@ def test_countvectorizer_custom_vocabulary_gap_index():
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')
-    assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
+    assert_equal(assert_warns(DeprecationWarning, cv.get_stop_words),
+                 ENGLISH_STOP_WORDS)
+    cv.set_params(stop_words='english-minimal')
+    assert_equal(cv.get_stop_words(), ENGLISH_MINIMAL_STOP_WORDS)
     cv.set_params(stop_words='_bad_str_stop_')
     assert_raises(ValueError, cv.get_stop_words)
     cv.set_params(stop_words='_bad_unicode_stop_')
@@ -1104,3 +1109,30 @@ def test_vectorizers_invalid_ngram_range(vec):
     if isinstance(vec, HashingVectorizer):
         assert_raise_message(
             ValueError, message, vec.transform, ["good news everyone"])
+
+
+def test_vectorizer_stop_words_english():
+    message = ("stop_words='english' is deprecated in version 0.20 "
+               "and will be removed in 0.22. Provide the list of "
+               "stop words or consider using the max_df parameter, "
+               "if possible.")
+    for vec in [CountVectorizer(),
+                TfidfVectorizer(), HashingVectorizer()]:
+        vec.set_params(stop_words='english')
+        assert_warns_message(DeprecationWarning, message, vec.fit_transform,
+                             ["good news everyone"])
+
+
+def test_vectorizer_stop_words_inconsistent():
+    if PY2:
+        lstr = "[u'and', u'll', u've']"
+    else:
+        lstr = "['and', 'll', 've']"
+    message = ('Your stop_words may be inconsistent with your '
+               'preprocessing. Tokenizing the stop words generated '
+               'tokens %s not in stop_words.' % lstr)
+    for vec in [CountVectorizer(),
+                TfidfVectorizer(), HashingVectorizer()]:
+        vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
+        assert_warns_message(UserWarning, message, vec.fit_transform,
+                             ['hello world'])

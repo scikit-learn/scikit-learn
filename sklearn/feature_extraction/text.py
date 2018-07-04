@@ -29,12 +29,13 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
-from .stop_words import ENGLISH_STOP_WORDS
+from .stop_words import ENGLISH_STOP_WORDS, ENGLISH_MINIMAL_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
+           'ENGLISH_MINIMAL_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
            'strip_accents_ascii',
@@ -88,7 +89,13 @@ def strip_tags(s):
 
 def _check_stop_list(stop):
     if stop == "english":
+        warnings.warn("stop_words='english' is deprecated in version 0.20 "
+                      "and will be removed in 0.22. Provide the list of "
+                      "stop words or consider using the max_df parameter, "
+                      "if possible.", DeprecationWarning)
         return ENGLISH_STOP_WORDS
+    elif stop == 'english-minimal':
+        return ENGLISH_MINIMAL_STOP_WORDS
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
@@ -264,6 +271,18 @@ class VectorizerMixin(object):
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
 
+            inconsistent = set()
+            for w in stop_words or ():
+                tokens = list(tokenize(preprocess(w)))
+                for token in tokens:
+                    if token not in stop_words:
+                        inconsistent.add(token)
+            if inconsistent:
+                warnings.warn('Your stop_words may be inconsistent with your '
+                              'preprocessing. Tokenizing the stop words '
+                              'generated tokens %r not in stop_words.' %
+                              sorted(inconsistent))
+
             return lambda doc: self._word_ngrams(
                 tokenize(preprocess(self.decode(doc))), stop_words)
 
@@ -413,12 +432,18 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words : string {'english'}, list, or None (default)
-        If 'english', a built-in stop word list for English is used.
+    stop_words : string {'english-minimal'}, list, or None (default)
+        If 'english-minimal', a small built-in stop word list for English is
+        used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
+
+          .. deprecated:: 0.20
+             ``stop_words='english'`` is deprecated in version 0.20 and will be
+            removed in 0.22 as the current list is controversial and may lead
+            to unexpected results.
 
     lowercase : boolean, default=True
         Convert all characters to lowercase before tokenizing.
@@ -645,8 +670,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words : string {'english'}, list, or None (default)
-        If 'english', a built-in stop word list for English is used.
+    stop_words : string {'english-minimal'}, list, or None (default)
+        If 'english-minimal', a small built-in stop word list for English is
+        used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -655,6 +681,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
+
+          .. deprecated:: 0.20
+             ``stop_words='english'`` is deprecated in version 0.20 and will be
+            removed in 0.22 as the current list is controversial and may lead
+            to unexpected results.
 
     lowercase : boolean, True by default
         Convert all characters to lowercase before tokenizing.
@@ -1258,10 +1289,9 @@ class TfidfVectorizer(CountVectorizer):
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words : string {'english'}, list, or None (default)
-        If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned. 'english' is currently the only supported string
-        value.
+    stop_words : string {'english-minimal'}, list, or None (default)
+        If 'english-minimal', a small built-in stop word list for English is
+        used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -1270,6 +1300,11 @@ class TfidfVectorizer(CountVectorizer):
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
+
+          .. deprecated:: 0.20
+             ``stop_words='english'`` is deprecated in version 0.20 and will be
+            removed in 0.22 as the current list is controversial and may lead
+            to unexpected results.
 
     lowercase : boolean, default True
         Convert all characters to lowercase before tokenizing.
