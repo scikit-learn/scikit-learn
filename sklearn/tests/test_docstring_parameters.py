@@ -25,13 +25,8 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 IGNORED_MODULES = (
-    'decomposition',
-    'feature_extraction',
     'gaussian_process',
     'linear_model',
-    'manifold',
-    'metrics',
-    'discriminant_analysis',
     'ensemble',
     'feature_selection',
     'kernel_approximation',
