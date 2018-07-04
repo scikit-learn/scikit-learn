@@ -282,13 +282,16 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'` and `flatten_transform=True`:
-          array-like = (n_classifiers, n_samples * n_classes)
-          otherwise array-like = (n_classifiers, n_samples, n_classes)
-            Class probabilities calculated by each classifier.
-        If `voting='hard'`:
-          array-like = [n_samples, n_classifiers]
-            Class labels predicted by each classifier.
+        probabilities_or_labels
+            If `voting='soft'` and `flatten_transform=True`:
+                returns array-like of shape (n_classifiers, n_samples *
+                n_classes), being class probabilities calculated by each
+                classifier.
+            If `voting='soft' and `flatten_transform=False`:
+                array-like of shape (n_classifiers, n_samples, n_classes)
+            If `voting='hard'`:
+                array-like of shape (n_samples, n_classifiers), being
+                class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
 
