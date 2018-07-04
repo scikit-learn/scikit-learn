@@ -17,7 +17,7 @@ from .validation import (as_float_array,
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
-from ..utils.fixes import collections_abc
+from ..utils.fixes import Sequence
 from .deprecation import deprecated
 from .. import get_config
 
@@ -480,7 +480,7 @@ def tosequence(x):
     """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
-    elif isinstance(x, collections_abc.Sequence):
+    elif isinstance(x, Sequence):
         return x
     else:
         return list(x)

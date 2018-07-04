@@ -301,6 +301,8 @@ else:
 
 # To be removed once this fix is included in six
 try:
-    import collections.abc as collections_abc  # noqa
+    from collections.abc import Sequence, Iterable  # noqa
+    from collections.abc import Mapping, Sized  # noqa
 except ImportError:  # python <3.3
-    import collections as collections_abc  # noqa
+    from collections import Sequence, Iterable  # noqa
+    from collections import Mapping, Sized  # noqa

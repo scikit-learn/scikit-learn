@@ -17,9 +17,8 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
-from ..utils.fixes import collections_abc
+from ..utils.fixes import Sequence
 from .validation import check_array
-
 
 
 def _unique_multiclass(y):
@@ -236,7 +235,7 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    valid = ((isinstance(y, (collections_abc.Sequence, spmatrix))
+    valid = ((isinstance(y, (Sequence, spmatrix))
               or hasattr(y, '__array__')) and not isinstance(y, string_types))
 
     if not valid:
@@ -258,8 +257,7 @@ def type_of_target(y):
 
     # The old sequence of sequences format
     try:
-        if (not hasattr(y[0], '__array__')
-                and isinstance(y[0], collections_abc.Sequence)
+        if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
                 and not isinstance(y[0], string_types)):
             raise ValueError('You appear to be using a legacy multi-label data'
                              ' representation. Sequence of sequences are no'
