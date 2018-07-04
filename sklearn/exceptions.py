@@ -121,7 +121,7 @@ class FitFailedWarning(RuntimeWarning):
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     FitFailedWarning("Classifier fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000. Details:
-    \\nValueError('Penalty term must be positive; got (C=-2)'...)"
+    \\nValueError('Penalty term must be positive; got (C=-2)'...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
