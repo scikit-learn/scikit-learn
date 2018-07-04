@@ -30,6 +30,7 @@ import logging
 import numpy as np
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
+from ..utils import deprecated
 from ..utils import Bunch
 from ..externals.joblib import Memory
 from ..externals.six import b
@@ -77,8 +78,14 @@ TARGETS = (
 )
 
 
+@deprecated('This function was deprecated in version 0.20 and will be removed '
+            'in 0.22.')
 def scale_face(face):
     """Scale back to 0-1 range in case of normalization for plotting.
+
+    .. deprecated:: 0.20
+    This function was deprecated in version 0.20 and will be removed in 0.22.
+
 
     Parameters
     ----------
