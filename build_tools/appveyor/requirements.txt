@@ -7,9 +7,9 @@
 # fix the versions of numpy to force the use of numpy and scipy to use the whl
 # of the rackspace folder instead of trying to install from more recent
 # source tarball published on PyPI
-numpy==1.9.3
-scipy==0.16.0
-cython
+numpy==1.14.5
+scipy==1.1.0
+cython==0.27.3
 nose
 nose-timer
 wheel
