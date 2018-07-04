@@ -1444,8 +1444,9 @@ functions or non-estimator constructors.
 
     ``n_iter_no_change``
         Number of iterations with no improvement to wait before stopping the
-        iterative procedure. It is typically used with :term:`early stopping` to
-        avoid stopping too early.
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
 
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be

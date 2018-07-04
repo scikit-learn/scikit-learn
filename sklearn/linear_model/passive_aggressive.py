@@ -45,7 +45,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=1
+    n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -141,7 +141,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> clf.fit(X, y)
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
                   early_stopping=False, fit_intercept=True, loss='hinge',
-                  max_iter=None, n_iter=None, n_iter_no_change=None, n_jobs=1,
+                  max_iter=None, n_iter=None, n_iter_no_change=5, n_jobs=1,
                   random_state=0, shuffle=True, tol=None,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
@@ -166,7 +166,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     """
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
                  early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=None, shuffle=True, verbose=0, loss="hinge",
+                 n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
                  n_jobs=1, random_state=None, warm_start=False,
                  class_weight=None, average=False, n_iter=None):
         super(PassiveAggressiveClassifier, self).__init__(
@@ -297,7 +297,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=1
+    n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -379,7 +379,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> regr.fit(X, y)
     PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
                   epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
-                  max_iter=None, n_iter=None, n_iter_no_change=None,
+                  max_iter=None, n_iter=None, n_iter_no_change=5,
                   random_state=0, shuffle=True, tol=None,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(regr.coef_)
@@ -403,7 +403,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     """
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
                  early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=None, shuffle=True, verbose=0,
+                 n_iter_no_change=5, shuffle=True, verbose=0,
                  loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,
                  random_state=None, warm_start=False,
                  average=False, n_iter=None):

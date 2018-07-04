@@ -51,7 +51,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=None, warm_start=False, average=False,
+                 n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
         self.loss = loss
         self.penalty = penalty
@@ -101,7 +101,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
-        if self.n_iter_no_change is not None and self.n_iter_no_change < 1:
+        if self.n_iter_no_change < 1:
             raise ValueError("n_iter_no_change must be >= 1")
         if not (0.0 < self.validation_fraction < 1.0):
             raise ValueError("validation_fraction must be in ]0, 1[")
@@ -147,18 +147,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         else:
             max_iter = self.max_iter if self.max_iter is not None else 1000
         self._max_iter = max_iter
-
-        if self.n_iter_no_change is None:
-            if not for_partial_fit:
-                warnings.warn(
-                    "n_iter_no_change parameter has been added in %s in 0.20. "
-                    "If left unset, n_iter_no_change defaults to 1. "
-                    "From 0.22, n_iter_no_change will default to 5. Set "
-                    "n_iter_no_change to an integer to silence this warning."
-                    % type(self).__name__, FutureWarning)
-            self._n_iter_no_change = 1
-        else:
-            self._n_iter_no_change = self.n_iter_no_change
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -389,7 +377,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
         result = plain_sgd(coef, intercept, est.loss_function_,
                            penalty_type, alpha, C, est.l1_ratio,
                            dataset, validation_mask, est.early_stopping, est,
-                           int(est._n_iter_no_change),
+                           int(est.n_iter_no_change),
                            max_iter, tol, int(est.fit_intercept),
                            int(est.verbose), int(est.shuffle), seed,
                            pos_weight, neg_weight,
@@ -402,7 +390,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                                   average_intercept, est.loss_function_,
                                   penalty_type, alpha, C, est.l1_ratio,
                                   dataset, validation_mask, est.early_stopping,
-                                  est, int(est._n_iter_no_change),
+                                  est, int(est.n_iter_no_change),
                                   max_iter, tol,
                                   int(est.fit_intercept), int(est.verbose),
                                   int(est.shuffle), seed, pos_weight,
@@ -443,7 +431,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
-                 validation_fraction=0.1, n_iter_no_change=None,
+                 validation_fraction=0.1, n_iter_no_change=5,
                  class_weight=None, warm_start=False, average=False,
                  n_iter=None):
 
@@ -825,7 +813,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=1
+    n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -901,7 +889,7 @@ class SGDClassifier(BaseSGDClassifier):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=None,
-           n_iter=None, n_iter_no_change=None, n_jobs=1, penalty='l2',
+           n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
 
@@ -919,7 +907,7 @@ class SGDClassifier(BaseSGDClassifier):
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=None, class_weight=None, warm_start=False,
+                 n_iter_no_change=5, class_weight=None, warm_start=False,
                  average=False, n_iter=None):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -1063,7 +1051,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=None, warm_start=False, average=False,
+                 n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
         super(BaseSGDRegressor, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -1262,7 +1250,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             self.l1_ratio,
                             dataset,
                             validation_mask, self.early_stopping, self,
-                            int(self._n_iter_no_change),
+                            int(self.n_iter_no_change),
                             max_iter, tol,
                             int(self.fit_intercept),
                             int(self.verbose),
@@ -1294,7 +1282,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           self.l1_ratio,
                           dataset,
                           validation_mask, self.early_stopping, self,
-                          int(self._n_iter_no_change),
+                          int(self.n_iter_no_change),
                           max_iter, tol,
                           int(self.fit_intercept),
                           int(self.verbose),
@@ -1433,7 +1421,7 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=1
+    n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
@@ -1503,7 +1491,7 @@ class SGDRegressor(BaseSGDRegressor):
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
            learning_rate='invscaling', loss='squared_loss', max_iter=None,
-           n_iter=None, n_iter_no_change=None, penalty='l2', power_t=0.25,
+           n_iter=None, n_iter_no_change=5, penalty='l2', power_t=0.25,
            random_state=None, shuffle=True, tol=None, validation_fraction=0.1,
            verbose=0, warm_start=False)
 
@@ -1517,7 +1505,7 @@ class SGDRegressor(BaseSGDRegressor):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=None, warm_start=False, average=False,
+                 n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
         super(SGDRegressor, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,

@@ -1310,8 +1310,7 @@ def test_future_and_deprecation_warnings():
     # Test that warnings are raised. Will be removed in 0.21
 
     def init(max_iter=None, tol=None, n_iter=None, for_partial_fit=False):
-        sgd = SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter,
-                            n_iter_no_change=5)
+        sgd = SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter)
         sgd._validate_params(for_partial_fit=for_partial_fit)
 
     # When all default values are used
@@ -1329,22 +1328,6 @@ def test_future_and_deprecation_warnings():
 
     # Test that for_partial_fit will not throw warnings for max_iter or tol
     assert_no_warnings(init, None, None, None, True)
-
-
-def test_n_iter_no_change_future_warnings():
-    # Test that warnings are raised. Will be removed in 0.22
-
-    def init(n_iter_no_change=None, for_partial_fit=False):
-        sgd = SGDClassifier(n_iter_no_change=n_iter_no_change,
-                            max_iter=1000, tol=1e-5, n_iter=None)
-        sgd._validate_params(for_partial_fit=for_partial_fit)
-
-    msg = "n_iter_no_change parameter has been added in "
-    assert_warns_message(FutureWarning, msg, init)
-    # Test that n_iter_no_change set to an integer does not throw warnings
-    assert_no_warnings(init, 5)
-    # Test that partial_fit does not throw warnings
-    assert_no_warnings(init, None, True)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
