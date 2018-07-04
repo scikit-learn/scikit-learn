@@ -124,7 +124,7 @@ def _is_sorted_by_data(graph):
     out_of_order = graph.data[:-1] > graph.data[1:]
     line_change = np.unique(graph.indptr[1:-1] - 1)
     line_change = line_change[line_change < out_of_order.shape[0]]
-    return (out_of_order.sum() == out_of_order.take(line_change).sum())
+    return (out_of_order.sum() == out_of_order[line_change].sum())
 
 
 def _check_precomputed(X):
@@ -156,7 +156,7 @@ def _check_precomputed(X):
         raise TypeError('Sparse matrix in {!r} format is not supported due to '
                         'its handling of explicit zeros'.format(graph.format))
     copied = graph.format != 'csr'
-    graph = graph.tocsr()
+    graph = check_array(graph, accept_sparse='csr')
     check_non_negative(graph, whom="precomputed distance matrix.")
 
     if not _is_sorted_by_data(graph):

@@ -247,10 +247,6 @@ def test_precomputed_sparse_invalid():
     msg = "2 neighbors per samples are required, but some samples have only 1"
     assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=1)
 
-    # Same with an empty matrix
-    dist_csr = csr_matrix(np.zeros((3, 3)))
-    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=1)
-
     # Checks error with inconsistent distance matrix
     dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
