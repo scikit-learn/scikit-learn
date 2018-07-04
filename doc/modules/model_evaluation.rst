@@ -176,7 +176,7 @@ Here is an example of building custom scorers, and of using the
     >>> import numpy as np
     >>> def my_custom_loss_func(y_true, y_pred):
     ...     diff = np.abs(y_true - y_pred).max()
-    ...     return np.log(1 + diff)
+    ...     return np.log1p(diff)
     ...
     >>> # score will negate the return value of my_custom_loss_func,
     >>> # which will be np.log(2), 0.693, given the values for X
