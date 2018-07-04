@@ -1,6 +1,7 @@
 numpy
 scipy
-cython
+# Pin Cython to avoid bug with 0.28.x on Python 3.7 
+cython==0.27.3
 pytest
 wheel
 wheelhouse_uploader
