@@ -567,6 +567,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         .. versionadded:: 0.17
 
+    store_covariances : boolean
+        Deprecated, use `store_covariance`.
+
     Attributes
     ----------
     covariance_ : list of array-like, shape = [n_features, n_features]
