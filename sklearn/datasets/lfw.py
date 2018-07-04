@@ -77,6 +77,23 @@ TARGETS = (
 )
 
 
+def scale_face(face):
+    """Scale back to 0-1 range in case of normalization for plotting.
+
+    Parameters
+    ----------
+    face : array_like
+        The array to scale
+
+    Returns
+    -------
+    array_like
+        The scaled array
+    """
+    scaled = face - face.min()
+    scaled /= scaled.max()
+    return scaled
+
 #
 # Common private utilities for data fetching from the original LFW website
 # local disk caching, and image decoding.
