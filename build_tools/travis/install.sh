@@ -41,18 +41,22 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip \
             numpy=$NUMPY_VERSION \
             mkl
             
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip \
             numpy=$NUMPY_VERSION \
             nomkl
     fi
     source activate testenv
 
-	pip install cython==$CYTHON_VERSION ${PANDAS_VERSION+pandas==$PANDAS_VERSION} scipy==$SCIPY_VERSION
+    # conda does not yet have those dependencies ready with Python 3.7.
+	pip install nose pytest \
+                cython==$CYTHON_VERSION \
+                ${PANDAS_VERSION+pandas==$PANDAS_VERSION} \
+                scipy==$SCIPY_VERSION
 
     # Install nose-timer via pip
     pip install nose-timer
