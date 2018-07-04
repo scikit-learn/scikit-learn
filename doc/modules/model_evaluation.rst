@@ -317,6 +317,122 @@ parameter:
     >>> print(cv_results['test_fn'])
     [0 1 2 3 2]
 
+.. _which_scoring_function:
+
+Which scoring function should I use?
+====================================
+
+Before diving into the details of the many scores and metrics, we want
+to give some guidance, inspired by statistical decision theory, on the choice
+of scoring functions for supervised learning:
+*Which scoring function should I use?
+Which scoring function is a good one for my task?*
+In a nutshell, if the scoring function is given, e.g. in a kaggle competition,
+use that one.
+If you are free to choose and you think, your target variable :math:`y` is
+(at least kind of) a random variable, first clarify what it is you actually
+want to predict: the mean, the median or the mode of your target :math:`Y`?
+Then choose a **strictly consistent** scoring function for that.
+
+Point forecasts and consistent scoring functions
+------------------------------------------------
+
+Let's assume that the target variable :math:`Y` is a random variable, that
+we have observations/realizations :math:`y` and that we make predictions
+:math:`\hat{y}`.
+Scoring functions :math:`S(\hat{y}, y)` then rank the prediction :math:`\hat{y}`
+of different models, given the observation :math:`y`.
+The higher the score the better the correponding model.
+For a test or validation set :math:`y_i`, one usually uses
+:math:`\bar{S} = \frac{1}{n_\text{samples}}\sum_{i=0}^{n_\text{samples}-1} S(\hat{y}_i, y_i)`.
+The prediction :math:`\hat{y}` is said to be a point forecast.
+The optimal point forecast under :math:`S` is the Bayes Rule
+:math:`\hat{y} = \operatorname{argmin}_x \mathbb{E}[S(x,Y)]` (to get an
+unbiased estimate of :math:`\mathbb{E}[S(x,Y)]` for model evaluation is one
+reason to use a test set independent of the training set).
+Instead of a point forecast, one could try to issue the whole probability
+distribution :math:`F(y)` of the target variable :math:`Y`.
+This is called a probabilistic forecast.
+If you are free to choose a scoring function, you should first ask yourself,
+which functional of :math:`F(y)` you want to predict as a point forecast:
+the mean, the mode, the median, ...
+Then, a **strictly consistent** scoring function for this
+functional is to be preferred, see [G2009]_ for a definition of *strictly
+consistent* and for more details.
+The reasoning goes as follows: If the scoring function is (strictly) consistent
+for the functional at interest, this functional is the (unique) optimal point
+forecast under this scoring function.
+
+
+==================    ================    ===============================================
+functional            scoring function    property
+==================    ================    ===============================================
+**Classification**
+mean                  brier score         strictly consistent
+mean                  log loss            strictly consistent
+median                absolute error      strictly consistent
+mode                  zero-one loss       consistent (for binary classification)
+**Regression**
+mean                  squared error       strictly consistent (if finite 2nd moment)
+mean                  Poisson deviance    strictly consistent (for non-negative target y)
+mean                  Gamma deviance      strictly consistent (for positive target y)
+median                absolute error      strictly consistent
+mode                  zero-one loss       asymptotically consistent
+==================    ================    ===============================================
+
+The zero-one loss is equivalent to the accuracy score, meaning it gives
+different score values but the same ranking.
+R² is equivalent to squared loss.
+The Brier score is the squared error for classification.
+
+An example with binary classification
+-------------------------------------
+
+Suppose you want to predict whether an apple blossom in spring becomes an
+eatable apple fruit in autumn.
+This is binary classification for :math:`Y = \text{fruit} = 1` or
+:math:`Y = \text{no fruit} = 0`.
+The good thing about binary classification is that predicting the mean of
+:math:`Y`, :math:`\operatorname{E}[Y] = p` (a result of setting the values of
+:math:`Y` to 0 and 1), is equivalent to predicting the whole distribution
+:math:`F(Y=\text{fruit}) = \operatorname{Pr}(Y=\text{no fruit}) = p`.
+Therefore, a good scoring function is one that is strictly consistent for the
+mean, e.g. log loss or Brier score.
+Note that for binary classification, the mode - the most probable outcome
+(*fruit* if :math:`p>0.5`) -
+is less informative than the mean: To say that we expect a fruit is less
+informative than to say that we expect a fruit with probability :math:`p`.
+
+On the other side, depending on the purpose of your prediction, you might
+also be interested in the use of other scoring functions:
+
+* If you want to optimize the conditions for good blossoms and you therefore
+  cut of blossoms for which you predict *no fruit*, you might want to optimize
+  the false negative rate (predicting *no fruit* when it actually gives a
+  fruit) in order to avoid cutting of too many.
+* If you sell your apples in advance base on the predicted number of fruits,
+  you might want to avoid selling too much and therefore go for the false
+  positive rate (predicting *fruit* when it actually does not give a fruit).
+* Treating the target variable :math:`y` as a random variable may just be an
+  approximation, but the true nature might be deterministic.
+  For example, if there was no bee to pollinate the blossoms, there won't be
+  any fruit--with certainty.
+  Some scoring functions like the log loss have problems at the boundaries
+  :math:`\hat{y}=0` or :math:`\hat{y}=1` (the same might be
+  true for an estimator).
+* Your own use case...
+
+.. topic:: References:
+
+  .. [G2009] T. Gneiting, `Making and Evaluating Point Forecasts
+    <https://arxiv.org/abs/0912.0902>`_, `alternative link
+    <https://www.bundesbank.de/Redaktion/EN/Downloads/Bundesbank/Research_Centre/Conferences/2012/2012_06_01_eltville_11_gneiting_paper.pdf>`_
+
+  .. [GR2007] T. Gneiting & A. E. Raftery `Strictly Proper Scoring Rules, Prediction,
+    and Estimation
+    <https://doi.org/10.1198/016214506000001437>`_,
+    `alternative link <https://www.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf>`_
+
 .. _classification_metrics:
 
 Classification metrics
