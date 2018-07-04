@@ -134,7 +134,7 @@ plot_list = [
 ]
 
 nrows = 2
-ncols = int(np.ceil(len(plot_list) / 2))
+ncols = int(np.ceil(len(plot_list) / 2.))
 fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols,
                                                             4 * nrows))
 axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
