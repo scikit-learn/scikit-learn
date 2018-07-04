@@ -297,3 +297,10 @@ if np.array_equal(_nan_object_mask, np.array([True])):
 else:
     def _object_dtype_isnan(X):
         return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+
+
+# To be removed once this fix is included in six
+try:
+    import collections.abc as collections_abc  # noqa
+except ImportError:  # python <3.3
+    import collections as collections_abc  # noqa
