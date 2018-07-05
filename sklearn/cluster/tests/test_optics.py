@@ -143,7 +143,7 @@ def test_auto_extract_hier():
     assert_equal(len(set(clust.labels_)), 6)
 
 
-@pytest.mark.parameterize("reach, n_child, members", [
+@pytest.mark.parametrize("reach, n_child, members", [
     (np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
                0.9, 0.89, 0.88, 10, .9, .9, .9, .9]), 2, np.r_[0:6]),
     (np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
