@@ -655,7 +655,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -672,7 +672,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
