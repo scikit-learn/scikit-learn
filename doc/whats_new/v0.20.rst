@@ -497,9 +497,9 @@ Classifiers and regressors
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`, where the stopping criterion was stopping
-  the algorithm too early. A parameter `n_iter_no_change` was added and set by
-  default to 5. Previous behavior is equivalent to setting the parameter to 1.
-  :issue:`9043` by `Tom Dupre la Tour`_.
+  the algorithm before convergence. A parameter `n_iter_no_change` was added
+  and set by default to 5. Previous behavior is equivalent to setting the
+  parameter to 1. :issue:`9043` by `Tom Dupre la Tour`_.
 
 - Fixed a bug where liblinear and libsvm-based estimators would segfault if
   passed a scipy.sparse matrix with 64-bit indices. They now raise a
