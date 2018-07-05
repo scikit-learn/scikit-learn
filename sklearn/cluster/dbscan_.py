@@ -14,6 +14,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
+from ..utils.testing import ignore_warnings
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -129,8 +130,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         neighborhoods = np.empty(X.shape[0], dtype=object)
         X.sum_duplicates()  # XXX: modifies X's internals in-place
 
-        # set the diagonal to explicit zeros, as a point is its own neighbor
-        X.setdiag(np.zeros(X.shape[0]))
+        # set the diagonal to explicit values, as a point is its own neighbor
+        # XXX: modifies X's internals in-place
+        with ignore_warnings():
+            X.setdiag(X.diagonal())
 
         X_mask = X.data <= eps
         masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
