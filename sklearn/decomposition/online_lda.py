@@ -156,12 +156,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         to `1 / n_components`.
         In the literature, this is called `beta`.
 
-    learning_method : 'batch' | 'online', default='online'
+    learning_method : 'batch' | 'online', default='batch'
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
-        The default learning method is going to be changed to 'batch' in the
-        0.20 release.
+
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -171,6 +170,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 mini-batch of training data to update the ``components_``
                 variable incrementally. The learning rate is controlled by the
                 ``learning_decay`` and the ``learning_offset`` parameters.
+
+        .. versionchanged:: 0.20
+            The default learning method is now ``"batch"``.
 
     learning_decay : float, optional (default=0.7)
         It is a parameter that control learning rate in the online learning
@@ -262,7 +264,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method=None,
+                 topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
@@ -307,7 +309,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid 'learning_offset' parameter: %r"
                              % self.learning_offset)
 
-        if self.learning_method not in ("batch", "online", None):
+        if self.learning_method not in ("batch", "online"):
             raise ValueError("Invalid 'learning_method' parameter: %r"
                              % self.learning_method)
 
@@ -529,12 +531,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
-        if learning_method is None:
-            warnings.warn("The default value for 'learning_method' will be "
-                          "changed from 'online' to 'batch' in the release "
-                          "0.20. This warning was introduced in 0.18.",
-                          DeprecationWarning)
-            learning_method = 'online'
 
         batch_size = self.batch_size
 

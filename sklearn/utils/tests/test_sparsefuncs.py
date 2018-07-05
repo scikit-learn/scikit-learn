@@ -20,6 +20,7 @@ from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
                                             inplace_csr_row_normalize_l2)
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_allclose
 
 
 def test_mean_variance_axis0():
@@ -95,7 +96,7 @@ def test_incr_mean_variance_axis():
         # default params for incr_mean_variance
         last_mean = np.zeros(n_features)
         last_var = np.zeros_like(last_mean)
-        last_n = 0
+        last_n = np.zeros_like(last_mean, dtype=np.int64)
 
         # Test errors
         X = np.array(data_chunks[0])
@@ -137,6 +138,8 @@ def test_incr_mean_variance_axis():
         for input_dtype, output_dtype in expected_dtypes:
             for X_sparse in (X_csr, X_csc):
                 X_sparse = X_sparse.astype(input_dtype)
+                last_mean = last_mean.astype(output_dtype)
+                last_var = last_var.astype(output_dtype)
                 X_means, X_vars = mean_variance_axis(X_sparse, axis)
                 X_means_incr, X_vars_incr, n_incr = \
                     incr_mean_variance_axis(X_sparse, axis, last_mean,
@@ -146,6 +149,43 @@ def test_incr_mean_variance_axis():
                 assert_array_almost_equal(X_means, X_means_incr)
                 assert_array_almost_equal(X_vars, X_vars_incr)
                 assert_equal(X.shape[axis], n_incr)
+
+
+@pytest.mark.parametrize("axis", [0, 1])
+@pytest.mark.parametrize("sparse_constructor", [sp.csc_matrix, sp.csr_matrix])
+def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
+    old_means = np.array([535., 535., 535., 535.])
+    old_variances = np.array([4225., 4225., 4225., 4225.])
+    old_sample_count = np.array([2, 2, 2, 2], dtype=np.int64)
+
+    X = sparse_constructor(
+        np.array([[170, 170, 170, 170],
+                  [430, 430, 430, 430],
+                  [300, 300, 300, 300]]))
+
+    X_nan = sparse_constructor(
+        np.array([[170, np.nan, 170, 170],
+                  [np.nan, 170, 430, 430],
+                  [430, 430, np.nan, 300],
+                  [300, 300, 300, np.nan]]))
+
+    # we avoid creating specific data for axis 0 and 1: translating the data is
+    # enough.
+    if axis:
+        X = X.T
+        X_nan = X_nan.T
+
+    # take a copy of the old statistics since they are modified in place.
+    X_means, X_vars, X_sample_count = incr_mean_variance_axis(
+        X, axis, old_means.copy(), old_variances.copy(),
+        old_sample_count.copy())
+    X_nan_means, X_nan_vars, X_nan_sample_count = incr_mean_variance_axis(
+        X_nan, axis, old_means.copy(), old_variances.copy(),
+        old_sample_count.copy())
+
+    assert_allclose(X_nan_means, X_means)
+    assert_allclose(X_nan_vars, X_vars)
+    assert_allclose(X_nan_sample_count, X_sample_count)
 
 
 def test_mean_variance_illegal_axis():
