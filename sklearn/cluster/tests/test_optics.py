@@ -8,6 +8,9 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
 from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
+from sklearn import metrics
+from sklearn.cluster.dbscan_ import DBSCAN
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -75,6 +78,40 @@ def test_close_extract():
     assert_equal(max(clust3.extract_dbscan(.3)[1]), 2)
 
 
+def test_dbscan_optics_parity():
+    # Test that OPTICS clustering metrics are < 2% difference of DBSCAN
+
+    centers = [[1, 1], [-1, -1], [1, -1]]
+    X, labels_true = make_blobs(n_samples=750, centers=centers,
+                                cluster_std=0.4, random_state=0)
+
+    # calculate optics with dbscan extract at 0.3 epsilon
+    op = OPTICS(min_samples=10).fit(X)
+    core_optics, labels_optics = op.extract_dbscan(0.3)
+
+    op_h = metrics.homogeneity_score(labels_true, labels_optics)
+    op_c = metrics.completeness_score(labels_true, labels_optics)
+    op_V = metrics.v_measure_score(labels_true, labels_optics)
+    op_m = metrics.adjusted_mutual_info_score(labels_true, labels_optics)
+    op_s = metrics.silhouette_score(X, labels_optics)
+
+    op_metrics = np.array([op_h, op_c, op_V, op_m, op_s])
+
+    # calculate dbscan labels and cluster metrics
+    db = DBSCAN(eps=0.3, min_samples=10).fit(X)
+
+    db_h = metrics.homogeneity_score(labels_true, db.labels_)
+    db_c = metrics.completeness_score(labels_true, db.labels_)
+    db_V = metrics.v_measure_score(labels_true, db.labels_)
+    db_m = metrics.adjusted_mutual_info_score(labels_true, db.labels_)
+    db_s = metrics.silhouette_score(X, db.labels_)
+
+    db_metrics = np.array([db_h, db_c, db_V, db_m, db_s])
+
+    # compare metrics
+    assert_allclose(db_metrics, op_metrics, atol=0.02)
+
+
 def test_auto_extract_hier():
     # Tests auto extraction gets correct # of clusters with varying density
 
@@ -115,8 +152,8 @@ def test_cluster_pruning():
     root = _TreeNode(ordering, 0, 20, None)
 
     # Build cluster tree inplace on root node
-    _cluster_tree(root, None, _find_local_maxima(reach, 5),
-                  reach, ordering, 5, .75, .7, .4, .3)
+    _cluster_tree(root, None, cluster_boundaries, reach, ordering,
+                  5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
     assert_equal(2, len(root.children))
 
@@ -136,8 +173,8 @@ def test_sigmin_pruning():
     root = _TreeNode(ordering, 0, 20, None)
 
     # Build cluster tree inplace on root node
-    _cluster_tree(root, None, _find_local_maxima(reach, 5),
-                  reach, ordering, 5, .75, .7, .4, .3)
+    _cluster_tree(root, None, cluster_boundaries, reach, ordering,
+                  5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
     assert_array_equal(np.r_[0:15], root.children[0].points)
 
@@ -165,7 +202,6 @@ def test_reach_dists():
 
     # Expected values, matches 'RD' results from:
     # http://chemometria.us.edu.pl/download/optics.py
-    # Skip to line 385
 
     v = [np.inf, 0.606005, 0.472013, 0.162951, 0.161000, 0.385547, 0.179715,
          0.213507, 0.348468, 0.308146, 0.560519, 0.266072, 0.764384, 0.253164,
