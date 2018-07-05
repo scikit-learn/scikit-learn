@@ -244,7 +244,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         # Validate hyperparameters
         if not self.n_estimators:
-            warnings.warn("'n_estimators' default value will be changed to 100 in version 0.22.", FutureWarning)
+            warnings.warn("'n_estimators' default value will be changed to 100 "
+                          "in version 0.22.", FutureWarning)
             self.n_estimators = 10
 
         # Validate or convert input data
