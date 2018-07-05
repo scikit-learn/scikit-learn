@@ -210,7 +210,7 @@ def test_warning_raised_with_deprecated_n_estimator(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
                            max_depth=1)
-    assert_warns(FutureWarning, func=clf.fit, X=iris.data, y=iris.target)
+    assert_no_warnings(func=clf.fit, X=iris.data, y=iris.target)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
@@ -219,6 +219,14 @@ def test_no_warning_raised_with_correct_n_estimator(name):
     clf = ForestClassifier(n_estimators=100, random_state=1, max_features=1,
                            max_depth=1)
     assert_no_warnings(func=clf.fit, X=iris.data, y=iris.target)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_no_warning_raised_with_correct_n_estimator(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(n_estimators=None, random_state=1, max_features=1,
+                           max_depth=1)
+    assert_warns(FutureWarning, func=clf.fit, X=iris.data, y=iris.target)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
