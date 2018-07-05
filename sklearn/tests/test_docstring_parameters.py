@@ -40,7 +40,6 @@ IGNORED_MODULES = (
     'model_selection',
     'multioutput',
     'setup',
-    'utils',
     'neighbors',
     # Deprecated modules
     'cross_validation',
