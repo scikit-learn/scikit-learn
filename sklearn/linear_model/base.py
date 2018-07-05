@@ -53,10 +53,10 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     Parameters
     ----------
-    X : numpy array or sparse matrix of shape [n_samples,n_features]
+    X : array_like, shape = (n_samples, n_features)
         Training data
 
-    y : numpy array of shape [n_samples, ]
+    y : array_like, shape = (n_samples, )
         Target values.
 
     sample_weight : numpy array of shape [n_samples, ]
@@ -187,7 +187,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : array_like, shape = (n_samples, n_features)
             Samples.
 
         Returns
@@ -225,7 +225,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : array_like, shape = (n_samples, n_features)
             Samples.
 
         Returns
@@ -255,7 +255,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : array_like, shape = (n_samples, n_features)
             Samples.
 
         Returns
@@ -402,10 +402,10 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : array-like, shape = (n_samples, n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : array_like, shape = (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
         sample_weight : numpy array of shape [n_samples]
