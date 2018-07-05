@@ -202,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
