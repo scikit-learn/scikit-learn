@@ -66,12 +66,12 @@ from __future__ import print_function
 
 import sys
 from datetime import datetime
+import csv
 
+from sklearn.externals.six.moves.urllib.request import urlopen
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-
-import pandas as pd
 
 from sklearn import cluster, covariance, manifold
 
@@ -155,7 +155,10 @@ for symbol in symbols:
     print('Fetching quote history for %r' % symbol, file=sys.stderr)
     url = ('https://raw.githubusercontent.com/scikit-learn/examples-data/'
            'master/financial-data/{}.csv')
-    quotes.append(pd.read_csv(url.format(symbol)))
+    data = list(csv.DictReader(l.decode('utf8')
+                               for l in urlopen(url.format(symbol))))
+    quotes.append({'close': [float(rec['close']) for rec in data],
+                   'open': [float(rec['open']) for rec in data]})
 
 close_prices = np.vstack([q['close'] for q in quotes])
 open_prices = np.vstack([q['open'] for q in quotes])
