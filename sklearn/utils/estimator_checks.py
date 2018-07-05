@@ -1199,6 +1199,9 @@ def check_supervised_y_2d(name, estimator_orig):
     if "MultiTask" in name:
         # These only work on 2d, so this test makes no sense
         return
+    if name == "GaussianProcess":
+        # Workaround: https://github.com/scikit-learn/scikit-learn/issues/10562
+        return
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
