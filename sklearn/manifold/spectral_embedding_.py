@@ -67,7 +67,7 @@ def _graph_connected_component(graph, node_id):
 
 
 def _graph_is_connected(graph):
-    """ Return whether the graph is connected (True) or Not (False)
+    """Return whether the graph is connected (True) or Not (False)
 
     Parameters
     ----------
