@@ -879,10 +879,10 @@ larger parent cluster.
     other samples. This affects adjacent points when they are considered as
     candidates for being marked as *core samples*. While this effect is quite
     local to the starting point of the dataset and is unlikely to be noticed
-    on even moderately large datasets, non-core boundry points may also switch
-    cluster labels if they are close to a competeing cluster due to how
-    reachability distances are calculated for the first non-core point of
-    newly discovered clusters when the reachability graph is constructed. 
+    on even moderately large datasets, it is worth also noting that non-core
+    boundry points may switch cluster labels on the rare occasion that they
+    are equidistant to a competeing cluster due to how the graph is read from
+    left to right when assigning labels. 
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``

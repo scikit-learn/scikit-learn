@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
@@ -14,7 +15,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
@@ -35,23 +36,28 @@ def test_correct_number_of_clusters():
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
+    msg = ("Number of training samples (n_samples=1) must be greater than "
+           "min_samples (min_samples=10) used for clustering.")
 
     # Compute OPTICS
     X = [[1, 1]]
     clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
 
     # Run the fit
-    assert_raises(ValueError, clust.fit, X)
+    assert_raise_message(ValueError, msg, clust.fit, X)
 
 
 def test_empty_extract():
     # Test extract where fit() has not yet been run.
+    msg = ("This OPTICS instance is not fitted yet. Call 'fit' with "
+           "appropriate arguments before using this method.")
     clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
-    assert_raises(ValueError, clust.extract_dbscan, 0.01)
+    assert_raise_message(ValueError, msg, clust.extract_dbscan, 0.01)
 
 
 def test_bad_extract():
     # Test an extraction of eps too close to original eps
+    msg = "Specify an epsilon smaller than 0.015. Got 0.3."
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
@@ -59,7 +65,7 @@ def test_bad_extract():
     # Compute OPTICS
     clust = OPTICS(max_bound=5.0 * 0.003, min_samples=10)
     clust2 = clust.fit(X)
-    assert_raises(ValueError, clust2.extract_dbscan, 0.3)
+    assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
 
 
 def test_close_extract():
@@ -137,13 +143,17 @@ def test_auto_extract_hier():
     assert_equal(len(set(clust.labels_)), 6)
 
 
-def test_cluster_pruning():
-    # Tests pruning left and right, deletion of empty node_lists
+@pytest.mark.parameterize("reach, n_child, members", [
+    (np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
+               0.9, 0.89, 0.88, 10, .9, .9, .9, .9]), 2, np.r_[0:6]),
+    (np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
+               0.9, 0.89, 0.88, 100, .9, .9, .9, .9]), 1, np.r_[0:15])])
+def test_cluster_sigmin_pruning(reach, n_child, members):
+    # Tests pruning left and right, insignificant splitpoints, empty nodelists
     # Parameters chosen specifically for this task
 
-    # Three pseudo clusters, 2 of which are too small
-    reach = np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9,
-                      10, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, .9])
+    # Case 1: Three pseudo clusters, 2 of which are too small
+    # Case 2: Two pseudo clusters, 1 of which are too small
     # Normalize
     reach = reach / np.max(reach[1:])
 
@@ -155,28 +165,8 @@ def test_cluster_pruning():
     _cluster_tree(root, None, cluster_boundaries, reach, ordering,
                   5, .75, .7, .4, .3)
     assert_equal(root.split_point, cluster_boundaries[0])
-    assert_equal(2, len(root.children))
-
-
-def test_sigmin_pruning():
-    # Tests pruning of insignificant splitpoints
-    # Parameters chosen specifically for this task
-
-    # Two pseudo clusters, 1 of which are too small
-    reach = np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9,
-                      10, 0.9, 0.9, 0.89, 0.88, 100, .9, .9, .9, .9])
-    # Normalize
-    reach = reach / np.max(reach[1:])
-
-    ordering = np.r_[0:20]
-    cluster_boundaries = _find_local_maxima(reach, 5)
-    root = _TreeNode(ordering, 0, 20, None)
-
-    # Build cluster tree inplace on root node
-    _cluster_tree(root, None, cluster_boundaries, reach, ordering,
-                  5, .75, .7, .4, .3)
-    assert_equal(root.split_point, cluster_boundaries[0])
-    assert_array_equal(np.r_[0:15], root.children[0].points)
+    assert_equal(n_child, len(root.children))
+    assert_array_equal(members, root.children[0].points)
 
 
 def test_reach_dists():
