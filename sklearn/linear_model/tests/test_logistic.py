@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
+from sklearn.utils.testing import SkipTest
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model.logistic import (
@@ -1144,11 +1145,11 @@ def test_saga_vs_liblinear():
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
 
 
-def xxx_test_dtype_match():
+def test_dtype_match():
     # Disabled to unblock the 0.19.2 release. See:
     # https://github.com/scikit-learn/scikit-learn/issues/11438
     # Test that np.float32 input data is not cast to np.float64 when possible
-
+    raise SkipTest()
     X_32 = np.array(X).astype(np.float32)
     y_32 = np.array(Y1).astype(np.float32)
     X_64 = np.array(X).astype(np.float64)
