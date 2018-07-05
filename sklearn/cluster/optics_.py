@@ -554,16 +554,23 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
     return np.arange(n_samples)[is_core], labels
 
 
-def _automatic_cluster(reachability_plot, reachability_ordering,
+def _automatic_cluster(reachability_plot, ordering,
                        maxima_ratio, rejection_ratio,
                        similarity_threshold, significant_min,
                        min_cluster_size_ratio, min_maxima_ratio):
-    """Converts reachability plot to cluster tree and returns root node."""
+    """Converts reachability plot to cluster tree and returns root node.
+
+    Parameters
+    ----------
+
+    reachability_plot : list, required
+        Reachability distances ordered by OPTICS ordering index.
+
+    """
 
     min_neighborhood_size = 2
-    min_cluster_size = int(min_cluster_size_ratio *
-                           len(reachability_ordering))
-    neighborhood_size = int(min_maxima_ratio * len(reachability_ordering))
+    min_cluster_size = int(min_cluster_size_ratio * len(ordering))
+    neighborhood_size = int(min_maxima_ratio * len(ordering))
 
     # Should this check for < min_samples? Should this be public?
     if min_cluster_size < 5:
@@ -575,10 +582,9 @@ def _automatic_cluster(reachability_plot, reachability_ordering,
 
     local_maxima_points = _find_local_maxima(reachability_plot,
                                              neighborhood_size)
-    root_node = _TreeNode(reachability_ordering, 0,
-                          len(reachability_ordering), None)
+    root_node = _TreeNode(ordering, 0, len(ordering), None)
     _cluster_tree(root_node, None, local_maxima_points,
-                  reachability_plot, reachability_ordering, min_cluster_size,
+                  reachability_plot, ordering, min_cluster_size,
                   maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min)
 
