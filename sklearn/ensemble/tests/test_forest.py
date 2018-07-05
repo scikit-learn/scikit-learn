@@ -222,7 +222,7 @@ def test_no_warning_raised_with_correct_n_estimator(name):
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_no_warning_raised_with_correct_n_estimator(name):
+def test_raised_warning_with_n_estimator_as_none(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(n_estimators=None, random_state=1, max_features=1,
                            max_depth=1)
