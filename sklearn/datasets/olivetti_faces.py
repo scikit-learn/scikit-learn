@@ -41,6 +41,13 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
     Download it if necessary.
 
+    =================   =====================
+    Classes                                40
+    Samples total                         400
+    Dimensionality                       4096
+    Features            real, between 0 and 1
+    =================   =====================
+
     Read more in the :ref:`User Guide <olivetti_faces_dataset>`.
 
     Parameters

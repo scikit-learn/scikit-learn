@@ -52,6 +52,13 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     Download it if necessary.
 
+    =================   ====================================
+    Classes                                               23
+    Samples total                                    4898431
+    Dimensionality                                        41
+    Features            discrete (int) or continuous (float)
+    =================   ====================================
+
     Read more in the :ref:`User Guide <kddcup99_dataset>`.
 
     .. versionadded:: 0.18

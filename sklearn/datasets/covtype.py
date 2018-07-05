@@ -47,6 +47,13 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     Download it if necessary.
 
+    =================   ============
+    Classes                        7
+    Samples total             581012
+    Dimensionality                54
+    Features                     int
+    =================   ============
+
     Read more in the :ref:`User Guide <covtype_dataset>`.
 
     Parameters

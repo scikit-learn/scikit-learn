@@ -18,6 +18,15 @@ The second one, :func:`sklearn.datasets.fetch_20newsgroups_vectorized`,
 returns ready-to-use features, i.e., it is not necessary to use a feature
 extractor.
 
+**Data Set Characteristics:**
+
+    =================   ==========
+    Classes                     20
+    Samples total            18846
+    Dimensionality               1
+    Features                  text
+    =================   ==========
+
 Usage
 ~~~~~
 

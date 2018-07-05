@@ -20,6 +20,15 @@ As described on the original website:
     homogeneous background with the subjects in an upright, frontal position 
     (with tolerance for some side movement).
 
+**Data Set Characteristics:**
+
+    =================   =====================
+    Classes                                40
+    Samples total                         400
+    Dimensionality                       4096
+    Features            real, between 0 and 1
+    =================   =====================
+
 The image is quantized to 256 grey levels and stored as unsigned 8-bit 
 integers; the loader will convert these to floating point values on the 
 interval [0, 1], which are easier to work with for many algorithms.

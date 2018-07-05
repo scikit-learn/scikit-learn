@@ -229,6 +229,13 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     Download it if necessary.
 
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
+
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
@@ -386,6 +393,13 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
     Download it if necessary.
+
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
 
     In the official `README.txt`_ this task is described as the
     "Restricted" task.  As I am not sure as to implement the

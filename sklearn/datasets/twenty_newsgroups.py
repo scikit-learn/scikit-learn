@@ -140,6 +140,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Download it if necessary.
 
+    =================   ==========
+    Classes                     20
+    Samples total            18846
+    Dimensionality               1
+    Features                  text
+    =================   ==========
+
     Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
     Parameters
@@ -292,6 +299,13 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
+
+    =================   ==========
+    Classes                     20
+    Samples total            18846
+    Dimensionality          130107
+    Features                  real
+    =================   ==========
 
     Read more in the :ref:`User Guide <20newsgroups_dataset>`.
 
