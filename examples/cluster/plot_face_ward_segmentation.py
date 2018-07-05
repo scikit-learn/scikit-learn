@@ -61,7 +61,7 @@ plt.figure(figsize=(5, 5))
 plt.imshow(face, cmap=plt.cm.gray)
 for l in range(n_clusters):
     plt.contour(label == l, contours=1,
-                colors=[plt.cm.spectral(l / float(n_clusters)), ])
+                colors=[plt.cm.nipy_spectral(l / float(n_clusters)), ])
 plt.xticks(())
 plt.yticks(())
 plt.show()
