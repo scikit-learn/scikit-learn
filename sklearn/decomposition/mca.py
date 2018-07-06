@@ -99,8 +99,9 @@ class MCA():
         # THE RESULT
         X_pjn = Matrix_mult(X.values,G[:,:dim])/S[:dim]/10
         X_i = -Matrix_mult(i_sup,G[:,:dim])/S[:dim]/10
-        print(X_i)
-        return X_i
+        return X_pjn
 
-    def fit_transform(self, X, n_components):
+    def fit_transform(self, X, y=None):
+        X = self._fit(X)
+        return X
         pass
