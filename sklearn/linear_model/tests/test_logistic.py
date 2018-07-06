@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
@@ -197,8 +198,8 @@ def test_multinomial_validation(solver):
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
-    msg = ('Logistic Regression supports only liblinear, newton-cg, '
-           'lbfgs, sag and saga solvers, got wrong_name')
+    msg = ("Logistic Regression supports only solvers in ['liblinear', "
+           "'newton-cg', 'lbfgs', 'sag', 'saga', 'auto'], got wrong_name.")
     lr = LR(solver="wrong_name")
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -222,6 +223,37 @@ def test_check_solver_option(LR):
                solver)
         lr = LR(solver=solver, dual=True)
         assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+
+@pytest.mark.parametrize('model, warn_solver',
+                         [(LogisticRegression, True),
+                          (LogisticRegressionCV, False)])
+def test_logistic_regression_warnings(model, warn_solver):
+    clf_solver_warning = model(multi_class='ovr')
+    clf_multi_class_warning = model(solver='lbfgs')
+    clf_no_warnings = model(solver='lbfgs', multi_class='ovr')
+
+    solver_warning_msg = "Default solver will be changed to 'auto'"
+    multi_class_warning_msg = "Default multi_class will be changed to 'multi"
+
+    if warn_solver:
+        assert_warns_message(FutureWarning, solver_warning_msg,
+                             clf_solver_warning.fit, iris.data, iris.target)
+    else:
+        assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
+
+    assert_warns_message(FutureWarning, multi_class_warning_msg,
+                         clf_multi_class_warning.fit, iris.data, iris.target)
+    assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
+
+
+@pytest.mark.parametrize('penalty', ['l1', 'l2'])
+@pytest.mark.parametrize('multi_class', ['ovr', 'multinomial'])
+@pytest.mark.parametrize('model', [LogisticRegression, LogisticRegressionCV])
+def test_logistic_regression_auto(penalty, multi_class, model):
+    # Test logistic regression with auto mode
+    clf = model(penalty=penalty, multi_class=multi_class, solver='auto')
+    clf.fit(iris.data, iris.target)
 
 
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
