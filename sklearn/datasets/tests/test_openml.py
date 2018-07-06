@@ -1,6 +1,8 @@
 """Test the openml loader.
 """
+import json
 import numpy as np
+import unittest.mock
 
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import _get_data_features
@@ -35,10 +37,24 @@ def fetch_dataset_from_openml(data_id, data_name, data_version, expected_observa
         target = data_by_id.details['default_target_attribute']
         if feature_name_type[target] == 'numeric':
             assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype, np.number)
+    return data_by_id
 
 
+def mock_data_description(id):
+    description = open('mock_openml/%d/data_description.txt' % id, 'r').read()
+    return json.loads(description)['data_set_description']
+
+
+def mock_data_features(id):
+    features = open('mock_openml/%d/data_features.txt' % id, 'r').read()
+    return json.loads(features)['data_features']['feature']
+
+
+@unittest.mock.patch('sklearn.datasets.openml._get_data_description_by_id', mock_data_description)
+@unittest.mock.patch('sklearn.datasets.openml._get_data_features', mock_data_features)
 def test_fetch_openml_iris():
     # classification dataset with numeric only columns
+
     data_id = 61
     data_name = 'iris'
     data_version = 1
@@ -67,8 +83,8 @@ def test_fetch_openml_cpu():
     fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
 
 
-def test_fetch_openml_sparse():
-    # regression dataset with numeric and categorical columns
+def test_fetch_openml_australian():
+    # sparse dataset
     data_id = 292
     data_name = 'Australian'
     data_version = 1
