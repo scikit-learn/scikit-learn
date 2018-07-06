@@ -19,7 +19,6 @@ import numpy as np
 from .base import get_data_home
 from ..externals._liacarff.arff import loads
 from ..externals.joblib import Memory
-from ..externals.six import StringIO
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 

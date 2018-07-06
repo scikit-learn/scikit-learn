@@ -14,8 +14,8 @@ def fetch_dataset_from_openml(data_id, data_name, data_version, expected_observa
     assert int(data_by_name_id.details['id']) == data_id
 
     # fetch without version
-    data_by_name = fetch_openml(data_name)
-    assert int(data_by_name.details['id']) == data_id
+    fetch_openml(data_name)
+    # without specifying the version, there is no guarantee that the data id will be the same
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id)
@@ -65,6 +65,23 @@ def test_fetch_openml_cpu():
     expected_observations = 209
     expected_features = 7
     fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+
+
+def test_fetch_openml_sparse():
+    # regression dataset with numeric and categorical columns
+    data_id = 292
+    data_name = 'Australian'
+    data_version = 1
+    expected_observations = 690
+    expected_features = 14
+    assert_warns_message(
+        UserWarning,
+        "Version 1 of dataset Australian is inactive,",
+        fetch_dataset_from_openml,
+        **{'data_id': data_id, 'data_name': data_name, 'data_version': data_version,
+           'expected_observations': expected_observations,
+           'expected_features': expected_features}
+    )
 
 
 def test_fetch_openml_inactive():
