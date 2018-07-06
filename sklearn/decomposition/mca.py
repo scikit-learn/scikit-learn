@@ -3,6 +3,17 @@ not possible without Vivek Yadak's help
 http://vxy10.github.io/2016/06/10/intro-MCA/
 """
 
+# TODO: Handle Sparse Arrays?
+# TODO: handle benzecri correction
+# TODO: Handle greenacre correction
+# TODO: derive n_components if not provided?
+# TODO: Add documentation
+# TODO: Add lots of comments
+# TODO: Add BaseClass
+# TODO: add .score methods
+# TODO: Make Expl_var accessible
+# TODO: SVD svd_solver parameter
+
 from scipy.linalg import diagsvd
 from numpy.linalg import svd
 import numpy as np
@@ -104,4 +115,3 @@ class MCA():
     def fit_transform(self, X, y=None):
         X = self._fit(X)
         return X
-        pass
