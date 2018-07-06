@@ -66,6 +66,13 @@ def make_dataset(X, y, sample_weight, random_state=None):
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    dataset
+        The ``Dataset`` abstraction
+    intercept_decay
+        The intercept decay
     """
 
     rng = check_random_state(random_state)
@@ -187,7 +194,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : array_like, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape = (n_samples, n_features)
             Samples.
 
         Returns
@@ -225,7 +232,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape = (n_samples, n_features)
             Samples.
 
         Returns
@@ -255,7 +262,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape = (n_samples, n_features)
             Samples.
 
         Returns
@@ -402,7 +409,7 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like or sparse matrix, shape = (n_samples, n_features)
             Training data
 
         y : array_like, shape = (n_samples, n_targets)
