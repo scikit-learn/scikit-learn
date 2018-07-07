@@ -49,6 +49,11 @@ def strip_accents_unicode(s):
     implementation 20 times slower than the strip_accents_ascii basic
     normalization.
 
+    Parameters
+    ----------
+    s : string
+        The string to strip
+
     See also
     --------
     strip_accents_ascii
@@ -68,6 +73,11 @@ def strip_accents_ascii(s):
     Warning: this solution is only suited for languages that have a direct
     transliteration to ASCII symbols.
 
+    Parameters
+    ----------
+    s : string
+        The string to strip
+
     See also
     --------
     strip_accents_unicode
@@ -82,6 +92,11 @@ def strip_tags(s):
 
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
+
+    Parameters
+    ----------
+    s : string
+        The string to strip
     """
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
 
@@ -106,6 +121,11 @@ class VectorizerMixin(object):
         """Decode the input into a string of unicode symbols
 
         The decoding strategy depends on the vectorizer parameters.
+
+        Parameters
+        ----------
+        doc : string
+            The string to decode
         """
         if self.input == 'filename':
             with open(doc, 'rb') as fh:
@@ -391,13 +411,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable
-        Whether the feature should be made of word or character n-grams.
-        Option 'char_wb' creates character n-grams only from text inside
-        word boundaries; n-grams at the edges of words are padded with space.
-
-        If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
+    lowercase : boolean, default=True
+        Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
@@ -408,11 +423,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    ngram_range : tuple (min_n, max_n), default=(1, 1)
-        The lower and upper boundary of the range of n-values for different
-        n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
-
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
 
@@ -420,30 +430,37 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-    lowercase : boolean, default=True
-        Convert all characters to lowercase before tokenizing.
-
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
+
+    analyzer : string, {'word', 'char', 'char_wb'} or callable
+        Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries; n-grams at the edges of words are padded with space.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
+
     n_features : integer, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-
-    norm : 'l1', 'l2' or None, optional
-        Norm used to normalize term vectors. None for no normalization.
 
     binary : boolean, default=False.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
 
-    dtype : type, optional
-        Type of the matrix returned by fit_transform() or transform().
+    norm : 'l1', 'l2' or None, optional
+        Norm used to normalize term vectors. None for no normalization.
 
     alternate_sign : boolean, optional, default True
         When True, an alternating sign is added to the features as to
@@ -459,6 +476,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         .. deprecated:: 0.19
             This option will be removed in 0.21.
+    dtype : type, optional
+        Type of the matrix returned by fit_transform() or transform().
+
 
     See also
     --------
@@ -496,11 +516,21 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         This method is just there to mark the fact that this transformer
         can work in a streaming setup.
 
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Training data.
         """
         return self
 
     def fit(self, X, y=None):
-        """Does nothing: this transformer is stateless."""
+        """Does nothing: this transformer is stateless.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Training data.
+        """
         # triggers a parameter validation
         if isinstance(X, six.string_types):
             raise ValueError(
@@ -623,13 +653,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable
-        Whether the feature should be made of word or character n-grams.
-        Option 'char_wb' creates character n-grams only from text inside
-        word boundaries; n-grams at the edges of words are padded with space.
-
-        If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
+    lowercase : boolean, True by default
+        Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
@@ -639,11 +664,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
-
-    ngram_range : tuple (min_n, max_n)
-        The lower and upper boundary of the range of n-values for different
-        n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
@@ -656,14 +676,24 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    lowercase : boolean, True by default
-        Convert all characters to lowercase before tokenizing.
-
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+    ngram_range : tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
+
+    analyzer : string, {'word', 'char', 'char_wb'} or callable
+        Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries; n-grams at the edges of words are padded with space.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
 
     max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document
@@ -1238,11 +1268,8 @@ class TfidfVectorizer(CountVectorizer):
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
 
-    analyzer : string, {'word', 'char'} or callable
-        Whether the feature should be made of word or character n-grams.
-
-        If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
+    lowercase : boolean, default True
+        Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
@@ -1253,10 +1280,11 @@ class TfidfVectorizer(CountVectorizer):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    ngram_range : tuple (min_n, max_n)
-        The lower and upper boundary of the range of n-values for different
-        n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+    analyzer : string, {'word', 'char'} or callable
+        Whether the feature should be made of word or character n-grams.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -1271,14 +1299,16 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    lowercase : boolean, default True
-        Convert all characters to lowercase before tokenizing.
-
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+    ngram_range : tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
 
     max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document

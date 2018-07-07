@@ -79,7 +79,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer',
-             'MaxAbsScaler', 'MinMaxScaler', 'StandardScaler',
+             'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
 
 

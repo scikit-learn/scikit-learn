@@ -282,6 +282,19 @@ else:
     from numpy import nanpercentile  # noqa
 
 
+if np_version < (1, 9):
+    def nanmedian(a, axis=None):
+        if axis is None:
+            data = a.reshape(-1)
+            return np.median(np.compress(~np.isnan(data), data))
+        else:
+            data = a.T if not axis else a
+            return np.array([np.median(np.compress(~np.isnan(row), row))
+                             for row in data])
+else:
+    from numpy import nanmedian  # noqa
+
+
 # Fix for behavior inconsistency on numpy.equal for object dtypes.
 # For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
 # instead of equality. This fix returns the mask of NaNs in an array of
