@@ -425,7 +425,13 @@ class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
 class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
-    Terminal regions need not to be updated for least squares. """
+    Terminal regions need not to be updated for least squares.
+
+    Parameters
+    ----------
+    n_classes : int
+        Number of classes
+    """
 
     def init_estimator(self):
         return MeanEstimator()
@@ -501,7 +507,13 @@ class LeastSquaresError(RegressionLossFunction):
 
 
 class LeastAbsoluteError(RegressionLossFunction):
-    """Loss function for least absolute deviation (LAD) regression. """
+    """Loss function for least absolute deviation (LAD) regression.
+
+    Parameters
+    ----------
+    n_classes : int
+        Number of classes
+    """
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
