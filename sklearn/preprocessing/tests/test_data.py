@@ -906,6 +906,52 @@ def test_scale_input_finiteness_validation():
                         scale, X)
 
 
+def test_robust_scaler_error_sparse():
+    X_sparse = sparse.rand(1000, 10)
+    scaler = RobustScaler(with_centering=True)
+    err_msg = "Cannot center sparse matrices"
+    with pytest.raises(ValueError, match=err_msg):
+        scaler.fit(X_sparse)
+
+
+@pytest.mark.parametrize("with_centering", [True, False])
+@pytest.mark.parametrize("with_scaling", [True, False])
+@pytest.mark.parametrize("X", [np.random.randn(10, 3),
+                               sparse.rand(10, 3, density=0.5)])
+def test_robust_scaler_attributes(X, with_centering, with_scaling):
+    # check consistent type of attributes
+    if with_centering and sparse.issparse(X):
+        pytest.skip("RobustScaler cannot center sparse matrix")
+
+    scaler = RobustScaler(with_centering=with_centering,
+                          with_scaling=with_scaling)
+    scaler.fit(X)
+
+    if with_centering:
+        assert isinstance(scaler.center_, np.ndarray)
+    else:
+        assert scaler.center_ is None
+    if with_scaling:
+        assert isinstance(scaler.scale_, np.ndarray)
+    else:
+        assert scaler.scale_ is None
+
+
+def test_robust_scaler_col_zero_sparse():
+    # check that the scaler is working when there is not data materialized in a
+    # column of a sparse matrix
+    X = np.random.randn(10, 5)
+    X[:, 0] = 0
+    X = sparse.csr_matrix(X)
+
+    scaler = RobustScaler(with_centering=False)
+    scaler.fit(X)
+    assert scaler.scale_[0] == pytest.approx(1)
+
+    X_trans = scaler.transform(X)
+    assert_allclose(X[:, 0].toarray(), X_trans[:, 0].toarray())
+
+
 def test_robust_scaler_2d_arrays():
     # Test robust scaling of 2d array along first axis
     rng = np.random.RandomState(0)
@@ -917,6 +963,29 @@ def test_robust_scaler_2d_arrays():
 
     assert_array_almost_equal(np.median(X_scaled, axis=0), 5 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
+
+
+@pytest.mark.parametrize("density", [0, 0.05, 0.1, 0.5, 1])
+@pytest.mark.parametrize("strictly_signed",
+                         ['positive', 'negative', 'zeros', None])
+def test_robust_scaler_equivalence_dense_sparse(density, strictly_signed):
+    # Check the equivalence of the fitting with dense and sparse matrices
+    X_sparse = sparse.rand(1000, 5, density=density).tocsc()
+    if strictly_signed == 'positive':
+        X_sparse.data = np.abs(X_sparse.data)
+    elif strictly_signed == 'negative':
+        X_sparse.data = - np.abs(X_sparse.data)
+    elif strictly_signed == 'zeros':
+        X_sparse.data = np.zeros(X_sparse.data.shape, dtype=np.float64)
+    X_dense = X_sparse.toarray()
+
+    scaler_sparse = RobustScaler(with_centering=False)
+    scaler_dense = RobustScaler(with_centering=False)
+
+    scaler_sparse.fit(X_sparse)
+    scaler_dense.fit(X_dense)
+
+    assert_allclose(scaler_sparse.scale_, scaler_dense.scale_)
 
 
 def test_robust_scaler_transform_one_row_csr():
