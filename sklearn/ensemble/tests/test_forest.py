@@ -1337,3 +1337,26 @@ def test_backend_respected():
         clf.predict_proba(X)
 
     assert ba.count == 0
+
+
+def check_multi_target(name, oob_score):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
+
+    X, y = datasets.make_classification()
+    # Make y have string classes.
+    y = np.array(['foo' if v else 'bar' for v in y]).reshape((y.shape[0], 1))
+
+    # Make multi-target.
+    ys = np.hstack([y, y])
+
+    # Try to fix and predict.
+    clf.fit(X, ys)
+    clf.predict(X)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
+    check_multi_target(name, oob_score)

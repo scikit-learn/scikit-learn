@@ -1828,3 +1828,25 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
+
+
+def check_multi_target(name):
+    Tree = CLF_TREES[name]
+
+    clf = Tree()
+
+    X, y = datasets.make_classification()
+    # Make y have string classes.
+    y = np.array(['foo' if v else 'bar' for v in y]).reshape((y.shape[0], 1))
+
+    # Make multi-target.
+    ys = np.hstack([y, y])
+
+    # Try to fix and predict.
+    clf.fit(X, ys)
+    clf.predict(X)
+
+
+@pytest.mark.parametrize('name', CLF_TREES)
+def test_multi_target(name):
+    check_multi_target(name)
