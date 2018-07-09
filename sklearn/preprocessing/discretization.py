@@ -22,13 +22,13 @@ from ..utils.fixes import np_version
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
-    """Bins continuous data into k equal width intervals.
+    """Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
     Parameters
     ----------
-    n_bins : int or array-like, shape (n_features,) (default=2)
+    n_bins : int or array-like, shape (n_features,) (default=5)
         The number of bins to produce. The intervals for the bins are
         determined by the minimum and maximum of the input data.
         Raises ValueError if ``n_bins < 2``.
@@ -123,7 +123,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=2, ignored_features=None, encode='onehot',
+    def __init__(self, n_bins=5, ignored_features=None, encode='onehot',
                  dtype=np.float64, strategy='quantile'):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
@@ -182,7 +182,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == 'kmeans':
-                from ..cluster import KMeans
+                from ..cluster import KMeans  # fixes import loops
                 # Deterministic initialization with uniform spacing
                 col_min, col_max = column.min(), column.max()
                 uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)

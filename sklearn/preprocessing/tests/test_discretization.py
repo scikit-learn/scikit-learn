@@ -5,7 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import warnings
 
-from sklearn.datasets import make_blobs
 from sklearn.externals.six.moves import xrange as range
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
@@ -270,14 +269,6 @@ def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
     est = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal')
     Xt = est.fit_transform(X)
     assert_array_equal(expected_3bins, Xt.ravel())
-
-
-def test_kmeans_strategy():
-    X, y = make_blobs(cluster_std=0.2, centers=np.array([0, 5, 8, 8])[:, None])
-    y[y == 3] = 2
-    Xt = KBinsDiscretizer(n_bins=3, strategy='kmeans',
-                          encode='ordinal').fit_transform(X)
-    assert_array_equal(Xt.ravel(), y)
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
