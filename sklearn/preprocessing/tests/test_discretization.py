@@ -144,17 +144,17 @@ def test_ignored_invalid():
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
-@pytest.mark.parametrize('n_bins', [2, 3])
-def test_same_min_max(strategy, n_bins):
+def test_same_min_max(strategy):
     warnings.simplefilter("always")
     X = np.array([[1, -2],
                   [1, -1],
                   [1, 0],
                   [1, 1]])
-    est = KBinsDiscretizer(strategy=strategy, n_bins=n_bins, encode='ordinal')
+    est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode='ordinal')
     assert_warns_message(UserWarning,
                          "Feature 0 is constant and will be replaced "
                          "with 0.", est.fit, X)
+    assert est.n_bins_[0] == 1
     # replace the feature with zeros
     Xt = est.transform(X)
     assert_array_equal(Xt[:, 0], np.zeros(X.shape[0]))
