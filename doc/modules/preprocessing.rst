@@ -547,7 +547,7 @@ K-bins discretization
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
   ...               [  6., 3., 11 ]])
-  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 4, 2], encode='ordinal').fit(X)
+  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 2, 2], encode='ordinal').fit(X)
 
 By default the output is one-hot encoded into a sparse matrix
 (See :ref:`preprocessing_categorical_features`)
@@ -557,14 +557,14 @@ the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
  - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
- - feature 2: :math:`{[-\infty, 4), [4, 5), [5, 5.5), [5.5, \infty)}`
+ - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
  Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
-  array([[ 0., 2., 1.],
-         [ 1., 3., 1.],
+  array([[ 0., 1., 1.],
+         [ 1., 1., 1.],
          [ 2., 0., 0.]])
 
 The resulting dataset contains ordinal attributes which can be further used

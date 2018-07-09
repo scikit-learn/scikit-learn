@@ -169,11 +169,18 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             if jj in ignored:
                 bin_edges[jj] = np.array([])
                 continue
-            column = X[:, jj][:, None]
+            column = X[:, jj]
+            col_min, col_max = column.min(), column.max()
+
+            if col_min == col_max:
+                warnings.warn("Feature %d is constant and will be "
+                              "replaced with 0." % jj)
+                n_bins[jj] = 1
+                bin_edges[jj] = np.array([-np.inf, np.inf])
+                continue
 
             if self.strategy == 'uniform':
-                bin_edges[jj] = np.linspace(column.min(), column.max(),
-                                            n_bins[jj] + 1)
+                bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
 
             elif self.strategy == 'quantile':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
@@ -183,22 +190,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
             elif self.strategy == 'kmeans':
                 from ..cluster import KMeans  # fixes import loops
+
                 # Deterministic initialization with uniform spacing
-                col_min, col_max = column.min(), column.max()
                 uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                centers = km.fit(column).cluster_centers_[:, 0]
+                centers = km.fit(column[:, None]).cluster_centers_[:, 0]
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
-
-            if bin_edges[jj][0] == bin_edges[jj][-1] and n_bins[jj] > 2:
-                warnings.warn("Feature %d is constant and will be "
-                              "replaced with 0." % jj)
-                n_bins[jj] = 1
-                bin_edges[jj] = np.array([-np.inf, np.inf])
 
         self.bin_edges_ = bin_edges
         self.n_bins_ = n_bins
