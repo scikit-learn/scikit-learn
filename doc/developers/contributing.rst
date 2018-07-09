@@ -34,6 +34,14 @@ See :ref:`new_contributors` to get started.
 
 |
 
+
+In case you experience issues using this package, do not hesitate to submit a
+ticket to the
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
+also welcome to post feature requests or pull requests.
+
+
+=======
 Ways to contribute
 ==================
 
@@ -53,11 +61,36 @@ project maintainers.
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
-link to it from your website, or simply say "I use it":
+link to it from your website, or simply star to say "I use it":
 
 .. raw:: html
 
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+   <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
+   data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+   scikit-learn/scikit-learn on GitHub">Star</a>
+   <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+.. topic:: Contributing to related projects
+
+   Scikit-learn thrives in an ecosystem of several related projects, which also
+   may have relevant issues to work on, including smaller projects such as:
+
+   * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc&type=Issues>`__
+   * `joblib <https://github.com/joblib/joblib/issues>`__
+   * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
+   * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+
+   and larger projects:
+
+   * `numpy <https://github.com/numpy/numpy/issues>`__
+   * `scipy <https://github.com/scipy/scipy/issues>`__
+   * `matplotlib <https://github.com/matplotlib/matplotlib/issues>`__
+   * and so on.
+
+   Look for issues marked "help wanted" or similar.
+   Helping these projects may help Scikit-learn too.
+   See also :ref:`related_projects`.
+
 
 Submitting a bug report or a feature request
 ============================================
@@ -88,7 +121,7 @@ How to make a good bug report
 -----------------------------
 
 When you submit an issue to `Github
-<https://github.com/scikit-learn/scikit-learn/issues>`_, please do your best to
+<https://github.com/scikit-learn/scikit-learn/issues>`__, please do your best to
 follow these guidelines! This will make it a lot easier to provide you with good
 feedback:
 
@@ -118,54 +151,6 @@ feedback:
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
 
-
-.. _git_repo:
-
-Retrieving the latest code
-==========================
-
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
-
-You can check out the latest sources with the command::
-
-    git clone git://github.com/scikit-learn/scikit-learn.git
-
-or if you have write privileges::
-
-    git clone git@github.com:scikit-learn/scikit-learn.git
-
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. It is thus preferred that
-you add the scikit-learn directory to your ``PYTHONPATH`` and build the
-extension in place::
-
-    python setup.py build_ext --inplace
-
-
-Another option is to install the package in editable mode if you change your
-code a lot and do not want to have to reinstall every time. This basically
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
-
-    pip install --editable .
-
-.. note::
-
-    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
-
-.. note::
-
-    If you decide to do an editable install you have to rerun::
-
-        python setup.py build_ext --inplace
-
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
-
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
 
 
 Contributing code
@@ -375,6 +360,7 @@ and Cython optimizations.
      ====================== ===================
      Commit Message Marker  Action Taken by CI
      ---------------------- -------------------
+     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
      [ci skip]              CI is skipped completely
      [doc skip]             Docs are not built
      [doc quick]            Docs built, but excludes example gallery plots
@@ -416,7 +402,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
 
     Note that not all issues which need contributors will have this tag.
 
@@ -434,10 +420,9 @@ HTML output by building the documentation website.
 Building the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
-``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
+Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
 
 To build the documentation, you need to be in the ``doc`` folder::
 
@@ -454,11 +439,12 @@ To generate the full web site, including the example gallery::
 
 Generating the example gallery will run all our examples which takes a
 while. To save some time, you can use:
-    - ``make html-noplot``: this will generate the documentation without the
-      example gallery. This is useful when changing a docstring for example.
-    - ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
-      matching ``your_regex_goes_here`` will be run. This is particularly
-      useful if you are modifying a few examples.
+
+- ``make html-noplot``: this will generate the documentation without the
+  example gallery. This is useful when changing a docstring for example.
+- ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
+  matching ``your_regex_goes_here`` will be run. This is particularly
+  useful if you are modifying a few examples.
 
 That should create all the documentation in the ``_build/html/stable``
 directory.  Set the environment variable `NO_MATHJAX=1` if you intend to view
@@ -879,7 +865,7 @@ from high-level questions to a more detailed check-list.
   the tests validate that the code is correct, i.e. doing what the
   documentation says it does? If the change is a bug-fix, is a
   non-regression test included? Look at `this
-  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`_
+  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
   to get started with testing in Python.
 
 - Do the tests pass in the continuous integration build? If
@@ -930,41 +916,41 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimator = obj.fit(data, targets)
+      estimator = estimator.fit(data, targets)
 
     or::
 
-      estimator = obj.fit(data)
+      estimator = estimator.fit(data)
 
 :Predictor:
 
     For supervised learning, or some unsupervised problems, implements::
 
-      prediction = obj.predict(data)
+      prediction = predictor.predict(data)
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
 
-      probability = obj.predict_proba(data)
+      probability = predictor.predict_proba(data)
 
 :Transformer:
 
     For filtering or modifying the data, in a supervised or unsupervised
     way, implements::
 
-      new_data = obj.transform(data)
+      new_data = transformer.transform(data)
 
     When fitting and transforming can be performed much more efficiently
     together than separately, implements::
 
-      new_data = obj.fit_transform(data)
+      new_data = transformer.fit_transform(data)
 
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
     measure or a likelihood of unseen data, implements (higher is better)::
 
-      score = obj.score(data)
+      score = model.score(data)
 
 Estimators
 ----------
@@ -1153,7 +1139,7 @@ the correct interface more easily.
     and optionally the mixin classes in ``sklearn.base``.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
-    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_.
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`__.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin

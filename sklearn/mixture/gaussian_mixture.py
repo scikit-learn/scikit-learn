@@ -448,15 +448,18 @@ class GaussianMixture(BaseMixture):
     n_components : int, defaults to 1.
         The number of mixture components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'},
-            defaults to 'full'.
+    covariance_type : {'full' (default), 'tied', 'diag', 'spherical'}
         String describing the type of covariance parameters to use.
-        Must be one of::
+        Must be one of:
 
-            'full' (each component has its own general covariance matrix),
-            'tied' (all components share the same general covariance matrix),
-            'diag' (each component has its own diagonal covariance matrix),
-            'spherical' (each component has its own single variance).
+        'full'
+            each component has its own general covariance matrix
+        'tied'
+            all components share the same general covariance matrix
+        'diag'
+            each component has its own diagonal covariance matrix
+        'spherical'
+            each component has its own single variance
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the

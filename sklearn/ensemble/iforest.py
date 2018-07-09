@@ -109,7 +109,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - offset_.
+        We have the relation: ``decision_function = score_samples - offset_``.
         When the contamination parameter is set to "auto", the offset is equal
         to -0.5 as the scores of inliers are close to 0 and the scores of
         outliers are close to -1. When a contamination parameter different
