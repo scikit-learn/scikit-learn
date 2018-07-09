@@ -235,9 +235,8 @@ data.
   independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
-  To address this issue you can use :class:`sklearn.decomposition.PCA`
-  or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
-  to further remove the linear correlation across features.
+  To address this issue you can use :class:`sklearn.decomposition.PCA` with
+  ``whiten=True`` to further remove the linear correlation across features.
 
 .. topic:: Scaling a 1D array
 
@@ -447,15 +446,13 @@ Such features can be efficiently coded as integers, for instance
 ``[1, 2, 1]``.
 
 To convert categorical features to such integer codes, we can use the
-:class:`CategoricalEncoder`. When specifying that we want to perform an
-ordinal encoding, the estimator transforms each categorical feature to one
+:class:`OrdinalEncoder`. This estimator transforms each categorical feature to one
 new feature of integers (0 to n_categories - 1)::
 
-    >>> enc = preprocessing.CategoricalEncoder(encoding='ordinal')
+    >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)  # doctest: +ELLIPSIS
-    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-              encoding='ordinal', handle_unknown='error')
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 
@@ -467,18 +464,19 @@ browsers was ordered arbitrarily).
 Another possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K, also known as one-hot or
 dummy encoding.
-This type of encoding is the default behaviour of the :class:`CategoricalEncoder`.
-The :class:`CategoricalEncoder` then transforms each categorical feature with
+This type of encoding can be obtained with the :class:`OneHotEncoder`,
+which transforms each categorical feature with
 ``n_categories`` possible values into ``n_categories`` binary features, with
 one of them 1, and all others 0.
 
 Continuing the example above::
 
-  >>> enc = preprocessing.CategoricalEncoder()
+  >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS
-  CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-            encoding='onehot', handle_unknown='error')
+  OneHotEncoder(categorical_features=None, categories=None,
+         dtype=<... 'numpy.float64'>, handle_unknown='error',
+         n_values=None, sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
   array([[1., 0., 0., 1., 0., 1.],
@@ -497,14 +495,15 @@ dataset::
     >>> genders = ['female', 'male']
     >>> locations = ['from Africa', 'from Asia', 'from Europe', 'from US']
     >>> browsers = ['uses Chrome', 'uses Firefox', 'uses IE', 'uses Safari']
-    >>> enc = preprocessing.CategoricalEncoder(categories=[genders, locations, browsers])
+    >>> enc = preprocessing.OneHotEncoder(categories=[genders, locations, browsers])
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS
-    CategoricalEncoder(categories=[...],
-              dtype=<... 'numpy.float64'>, encoding='onehot',
-              handle_unknown='error')
+    OneHotEncoder(categorical_features=None,
+           categories=[...],
+           dtype=<... 'numpy.float64'>, handle_unknown='error',
+           n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
@@ -516,11 +515,12 @@ during transform, no error will be raised but the resulting one-hot encoded
 columns for this feature will be all zeros
 (``handle_unknown='ignore'`` is only supported for one-hot encoding)::
 
-    >>> enc = preprocessing.CategoricalEncoder(handle_unknown='ignore')
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS
-    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-              encoding='onehot', handle_unknown='ignore')
+    OneHotEncoder(categorical_features=None, categories=None,
+           dtype=<... 'numpy.float64'>, handle_unknown='ignore',
+           n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 

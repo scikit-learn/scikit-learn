@@ -78,6 +78,9 @@ class deprecated(object):
             return fun(*args, **kwargs)
 
         wrapped.__doc__ = self._update_doc(wrapped.__doc__)
+        # Add a reference to the wrapped function so that we can introspect
+        # on function arguments in Python 2 (already works in Python 3)
+        wrapped.__wrapped__ = fun
 
         return wrapped
 

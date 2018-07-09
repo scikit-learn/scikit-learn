@@ -165,8 +165,10 @@ General Concepts
         tree-based models such as random forests and gradient boosting
         models that often work better and faster with integer-coded
         categorical variables.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
         <category_encoders>`_ package for tools related to encoding
@@ -433,6 +435,13 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
     indexable
         An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
         sequence (usually a list).
@@ -448,10 +457,12 @@ General Concepts
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
-        :term:`memory mapping`.
+        :term:`memory mapping`. See :ref:`parallelism` for more
+        information.
 
     label indicator matrix
     multilabel indicator matrix
+    multilabel indicator matrices
         The format used to represent multilabel data, where each row of a 2d
         array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
@@ -483,7 +494,7 @@ General Concepts
         do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
-        specifying another ``missing_values`` value when imputation or
+        specifying another ``missing_values`` value when :term:`imputation` or
         learning can be performed in integer space.  :term:`Unlabeled data`
         is a special case of missing values in the :term:`target`.
 
@@ -939,8 +950,9 @@ such as:
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
-        test data, returning a number. See :ref:`scoring_parameter`; see also
-        :term:`evaluation metric`.
+        test data, returning a number. Unlike :term:`evaluation metrics`,
+        a greater returned number must correspond with a *better* score.
+        See :ref:`scoring_parameter`.
 
 Further examples:
 
@@ -1066,6 +1078,13 @@ Target Types
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
+
+    multioutput
+    multi-output
+        A target where each sample has multiple classification/regression
+        labels. See :term:`multiclass multioutput` and :term:`continuous
+        multioutput`. We do not currently support modelling mixed
+        classification and regression targets.
 
 .. _glossary_methods:
 
