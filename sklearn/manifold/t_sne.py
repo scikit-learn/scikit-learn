@@ -910,3 +910,7 @@ class TSNE(BaseEstimator):
         """
         self.fit_transform(X)
         return self
+
+    @property
+    def _pairwise(self):
+        return self.metric == "precomputed"
