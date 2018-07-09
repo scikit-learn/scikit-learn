@@ -2,7 +2,7 @@
 """
 import json
 import numpy as np
-import unittest.mock
+import sklearn
 
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import _get_data_features
@@ -50,10 +50,14 @@ def mock_data_features(id):
     return json.loads(features)['data_features']['feature']
 
 
-@unittest.mock.patch('sklearn.datasets.openml._get_data_description_by_id', mock_data_description)
-@unittest.mock.patch('sklearn.datasets.openml._get_data_features', mock_data_features)
+def _patch_webbased_functions():
+    sklearn.datasets.openml._get_data_description_by_id = mock_data_description
+    sklearn.datasets.openml._get_data_features = mock_data_features
+
+
 def test_fetch_openml_iris():
     # classification dataset with numeric only columns
+    _patch_webbased_functions()
 
     data_id = 61
     data_name = 'iris'
