@@ -301,7 +301,6 @@ Miscellaneous
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
-
 Bug fixes
 .........
 
@@ -643,6 +642,8 @@ Misc
 
 - Invalid input for :class:`model_selection.ParameterGrid` now raises TypeError.
   :issue:`10928` by :user:`Solutus Immensus <solutusimmensus>`
+
+Preprocessing
 
 - In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
   will be from ``True`` to ``False`` in 0.22.

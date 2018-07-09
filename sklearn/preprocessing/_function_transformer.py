@@ -86,7 +86,6 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.inverse_func = inverse_func
         self.validate = validate
         self.accept_sparse = accept_sparse
-        self.force_all_finite = force_all_finite
         self.pass_y = pass_y
         self.check_inverse = check_inverse
         self.kw_args = kw_args
