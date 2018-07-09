@@ -1238,7 +1238,7 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
+        cdef double w = 1.0
 
         cdef double impurity = 0.0
 
@@ -1248,7 +1248,11 @@ cdef class MAE(RegressionCriterion):
 
                 y_ik = y[i * self.y_stride + k]
 
-                impurity += <double> fabs((<double> y_ik) - <double> self.node_medians[k])
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                impurity += (<double> fabs((<double> y_ik) - 
+							<double> self.node_medians[k])) * w
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* impurity_left,
@@ -1269,6 +1273,7 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t median
+        cdef double w = 1.0
 
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
@@ -1283,8 +1288,11 @@ cdef class MAE(RegressionCriterion):
 
                 y_ik = y[i * self.y_stride + k]
 
-                impurity_left[0] += <double>fabs((<double> y_ik) -
-                                                 <double> median)
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                impurity_left[0] += (<double> fabs((<double> y_ik) -
+                                                 <double> median)) * w
         impurity_left[0] /= <double>((self.weighted_n_left) * self.n_outputs)
 
         for k in range(self.n_outputs):
@@ -1294,8 +1302,11 @@ cdef class MAE(RegressionCriterion):
 
                 y_ik = y[i * self.y_stride + k]
 
-                impurity_right[0] += <double>fabs((<double> y_ik) -
-                                                  <double> median)
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                impurity_right[0] += (<double>fabs((<double> y_ik) -
+                                                  <double> median)) * w
         impurity_right[0] /= <double>((self.weighted_n_right) *
                                       self.n_outputs)
 
