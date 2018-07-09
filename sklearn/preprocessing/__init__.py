@@ -33,7 +33,7 @@ from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
-from .discretization import KBinsDiscretizer
+from ._discretization import KBinsDiscretizer
 
 from .imputation import Imputer
 
