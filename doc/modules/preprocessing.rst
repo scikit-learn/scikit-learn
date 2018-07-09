@@ -547,26 +547,24 @@ K-bins discretization
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
   ...               [  6., 3., 11 ]])
-  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2], encode='ordinal').fit(X)
-  >>> est.bin_width_
-  array([3., 1., 2.])
+  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 2, 2], encode='ordinal').fit(X)
 
 By default the output is one-hot encoded into a sparse matrix
 (See :ref:`preprocessing_categorical_features`)
 and this can be configured with the ``encode`` parameter.
-For each feature, the bin width is computed during ``fit`` and together with
+For each feature, the bin edges are computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
- - feature 1: :math:`{[-\infty, 0), [0, 3), [3, \infty)}`
- - feature 2: :math:`{[-\infty, 4), [4, 5), [5, \infty)}`
- - feature 3: :math:`{[-\infty, 13), [13, \infty)}`
+ - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
+ - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
+ - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
  Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
-  array([[ 0., 2., 1.],
-         [ 1., 2., 1.],
+  array([[ 0., 1., 1.],
+         [ 1., 1., 1.],
          [ 2., 0., 0.]])
 
 The resulting dataset contains ordinal attributes which can be further used
@@ -575,6 +573,18 @@ in a :class:`sklearn.pipeline.Pipeline`.
 Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
 bins, whereas discretization focuses on assigning feature values to these bins.
+
+:class:`KBinsDiscretizer` implements different binning strategies, which can be
+selected with the ``strategy`` parameter. The 'uniform' strategy uses
+constant-width bins. The 'quantile' strategy uses the quantiles values to have
+equally populated bins in each feature. The 'kmeans' strategy defines bins based
+on a k-means clustering procedure performed on each feature independently.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_plot_discretization.py`
+  * :ref:`sphx_glr_auto_examples_plot_discretization_classification.py`
+  * :ref:`sphx_glr_auto_examples_plot_discretization_strategies.py`
 
 .. _preprocessing_binarization:
 
