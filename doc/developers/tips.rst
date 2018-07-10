@@ -106,7 +106,7 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 Issue: Usage questions
     ::
 
-        You're asking an usage question. The issue tracker is mainly for bugs and new features. For usage questions, it is recommended to try other places such as [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) and [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn), or turn to people around you for help.
+        You're asking a usage question. The issue tracker is mainly for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
 
 Issue: You're welcome to update the docs
     ::
