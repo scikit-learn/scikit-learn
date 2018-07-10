@@ -116,11 +116,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid number of features (%d)." % n_features)
     
     @staticmethod
-    def _validate_feature_name(feature,x):
+    def _validate_feature_name(feature, x):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
         if feature.isdigit():
-            raise ValueError("For fixed size features must be nondigit, got %s on %s." % (feature,x))
+            raise ValueError('For fixed size features must be nondigit, ' 
+                             'got %s on %s.'
+                              % (feature, x))
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -144,7 +146,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     def _partial_fit(self, X, y=None):
         if getattr(self, "feature_names_", None) is None:
             self.feature_names_ = []
-            
+
         if getattr(self, "vocabulary_", None) is None:
             self.vocabulary_ = {}
             
@@ -156,9 +158,10 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
-                    self._validate_feature_name(f,x)
+                    self._validate_feature_name(f, x)
                     if len(feature_names) == self.n_features:
-                        raise ValueError("The size of vocab is larger than n_features.")
+                        raise ValueError("The size of vocab is "
+                                         "larger than n_features.")
                     feature_names.append(f)
                     vocab[f] = len(vocab)
                     
