@@ -1192,8 +1192,10 @@ def check_estimators_pickle(name, estimator_orig):
 
     # check if input with nans pickles properly
     if name in ALLOW_NAN:
-        # set random 10 elements to be corrupted
-        X.ravel()[np.random.choice(X.size, 10, replace=False)] = np.nan
+        # set random 10 elements to be np.nan
+        rng = np.random.RandomState(42)
+        mask = rng.choice(X.size, 10, replace=True)
+        X[mask] = np.nan
         estimator.fit(X, y)
 
         nan_result = dict()
@@ -1203,8 +1205,6 @@ def check_estimators_pickle(name, estimator_orig):
 
         # pickle and unpickle!
         pickled_estimator = pickle.dumps(estimator)
-        if estimator.__module__.startswith('sklearn.'):
-            assert_true(b"version" in pickled_estimator)
         unpickled_estimator = pickle.loads(pickled_estimator)
 
         for method in nan_result:
