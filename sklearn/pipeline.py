@@ -139,6 +139,8 @@ class Pipeline(_BaseComposition):
            False, False])
     """
 
+    _fit_transform_one = staticmethod(_fit_transform_one)
+
     # BaseEstimator interface
 
     def __init__(self, steps, memory=None):
@@ -173,11 +175,6 @@ class Pipeline(_BaseComposition):
         """
         self._set_params('steps', **kwargs)
         return self
-
-    @property
-    def _fit_transform_one(self):
-        # property needed because `memory.cache` doesn't accept class methods
-        return _fit_transform_one
 
     def _validate_steps(self):
         names, estimators = zip(*self.steps)
@@ -657,6 +654,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
+    _fit_one_transformer = staticmethod(_fit_one_transformer)
+    _fit_transform_one = staticmethod(_fit_transform_one)
+    _transform_one = staticmethod(_transform_one)
+
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
@@ -719,18 +720,6 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                 for name, trans in self.transformer_list
                 if trans is not None)
 
-    @property
-    def _fit_one_transformer(self):
-        return _fit_one_transformer
-
-    @property
-    def _fit_transform_one(self):
-        return _fit_transform_one
-
-    @property
-    def _transform_one(self):
-        return _transform_one
-
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -773,7 +762,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self._update_transformer_list(transformers)
         return self
 
-    def _stack_results(self, Xs):
+    @staticmethod
+    def _stack_results(Xs):
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
