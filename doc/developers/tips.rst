@@ -163,6 +163,11 @@ Issue/Comment: Linking to comments
 
         Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
 
+Issue: Add StackOverflow standard reply to Developers’ Tips and Tricks
+    ::
+
+        It appears you are asking a question, rather than raising a software development issue. Consider visiting Stack Overflow ([here] https://stackoverflow.com/questions/tagged/scikit-learn) and the Mailing List ([here] https://mail.python.org/mailman/listinfo/scikit-learn)
+
 PR-NEW: Better description
     ::
 
