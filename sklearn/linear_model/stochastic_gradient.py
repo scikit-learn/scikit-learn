@@ -851,15 +851,15 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -1460,15 +1460,15 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
