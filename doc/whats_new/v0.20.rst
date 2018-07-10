@@ -830,6 +830,12 @@ Misc
   indices should be rejected.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
+Preprocessing
+
+- In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
+  will be from ``True`` to ``False`` in 0.22.
+  :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes to estimator checks
 ---------------------------
 
