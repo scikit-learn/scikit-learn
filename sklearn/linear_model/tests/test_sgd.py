@@ -1,3 +1,4 @@
+
 import pickle
 import unittest
 import pytest
@@ -25,7 +26,7 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
-
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import sgd_fast
 
 
@@ -101,7 +102,8 @@ Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
 
-# Classification Test Case
+###############################################################################
+# Tests common to classification and regression
 
 class CommonTest(object):
 
@@ -186,6 +188,9 @@ class CommonTest(object):
 
     def test_warm_start_optimal(self):
         self._test_warm_start(X, Y, "optimal")
+
+    def test_warm_start_adaptive(self):
+        self._test_warm_start(X, Y, "adaptive")
 
     def test_input_format(self):
         # Input format tests.
@@ -272,6 +277,68 @@ class CommonTest(object):
         assert_raises(ValueError, self.factory,
                       alpha=0, learning_rate="optimal")
 
+    def test_early_stopping(self):
+        for early_stopping in [True, False]:
+            max_iter = 1000
+            clf = self.factory(early_stopping=early_stopping, tol=1e-3,
+                               max_iter=max_iter).fit(X, Y)
+            assert clf.n_iter_ < max_iter
+            assert not hasattr(clf, '_X_val')
+            assert not hasattr(clf, '_y_val')
+            assert not hasattr(clf, '_sample_weight_val')
+
+    def test_adaptive_longer_than_constant(self):
+        clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf1.fit(iris.data, iris.target)
+        clf2 = self.factory(learning_rate="constant", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf2.fit(iris.data, iris.target)
+        assert clf1.n_iter_ > clf2.n_iter_
+
+    def test_validation_set_not_used_for_training(self):
+        X, Y = iris.data, iris.target
+        validation_fraction = 0.4
+        random_state = 42
+        shuffle = False
+        clf1 = self.factory(early_stopping=True, random_state=random_state,
+                            validation_fraction=validation_fraction,
+                            learning_rate='constant', eta0=0.01,
+                            tol=None, max_iter=1000, shuffle=shuffle)
+        clf1.fit(X, Y)
+
+        idx_train, idx_val = train_test_split(
+            np.arange(X.shape[0]), test_size=validation_fraction,
+            random_state=random_state)
+        clf2 = self.factory(early_stopping=False,
+                            random_state=random_state,
+                            learning_rate='constant', eta0=0.01,
+                            tol=None, max_iter=1000, shuffle=shuffle)
+        idx_train = np.sort(idx_train)  # remove shuffling
+        clf2.fit(X[idx_train], np.array(Y)[idx_train])
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
+
+    @ignore_warnings(ConvergenceWarning)
+    def test_n_iter_no_change(self):
+        # test that n_iter_ increases monotonically with n_iter_no_change
+        for early_stopping in [True, False]:
+            n_iter_list = [self.factory(early_stopping=early_stopping,
+                                        n_iter_no_change=n_iter_no_change,
+                                        tol=1e-4, max_iter=1000
+                                        ).fit(X, Y).n_iter_
+                           for n_iter_no_change in [2, 3, 10]]
+            assert_array_equal(n_iter_list, sorted(n_iter_list))
+
+    def test_not_enough_sample_for_early_stopping(self):
+        # test an error is raised if the training or validation set is empty
+        clf = self.factory(early_stopping=True, validation_fraction=0.99)
+        with pytest.raises(ValueError):
+            clf.fit(X3, Y3)
+
+
+###############################################################################
+# Classification Test Case
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
@@ -321,6 +388,18 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Test parameter validity check
         assert_raises(ValueError, self.factory, shuffle="false")
 
+    def test_sgd_early_stopping_param(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, early_stopping="false")
+
+    def test_sgd_validation_fraction(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, validation_fraction=-.1)
+
+    def test_sgd_n_iter_no_change(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, n_iter_no_change=0)
+
     def test_argument_coef(self):
         # Checks coef_init not allowed as model argument (only fit)
         # Provided coef_ does not match dataset
@@ -337,6 +416,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Provided intercept_ does not match dataset.
         assert_raises(ValueError, self.factory().fit,
                       X, Y, intercept_init=np.zeros((3,)))
+
+    def test_sgd_early_stopping_with_partial_fit(self):
+        # Test parameter validity check
+        assert_raises(ValueError,
+                      self.factory(early_stopping=True).partial_fit, X, Y)
 
     def test_set_intercept_binary(self):
         # Checks intercept_ shape for the warm starts in binary case
@@ -809,6 +893,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_partial_fit_equal_fit_adaptive(self):
+        self._test_partial_fit_equal_fit("adaptive")
+
     def test_regression_losses(self):
         clf = self.factory(alpha=0.01, learning_rate="constant",
                            eta0=0.1, loss="epsilon_insensitive")
@@ -1092,6 +1179,9 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
+
+    def test_partial_fit_equal_fit_adaptive(self):
+        self._test_partial_fit_equal_fit("adaptive")
 
     def test_loss_function_epsilon(self):
         clf = self.factory(epsilon=0.9)
