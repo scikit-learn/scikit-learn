@@ -14,46 +14,75 @@ Multiclass and multilabel algorithms
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 ``multiclass`` and ``multilabel`` classification problems
-by decomposing such problems into binary classification problems. Multioutput
+by decomposing such problems into binary classification problems. ``multioutput``
 regression is also supported.
 
-- **Multiclass classification** means a classification task with more than
-  two classes; e.g., classify a set of images of fruits which may be oranges,
-  apples, or pears. Multiclass classification makes the assumption that each
-  sample is assigned to one and only one label: a fruit can be either an
-  apple or a pear but not both at the same time.
+- **Multiclass classification** produce single output that is categorical variable.
+  In other words, a single classification task with more than two classes.
 
-- **Multilabel classification** assigns to each sample a set of target
-  labels. This can be thought as predicting properties of a data-point
-  that are not mutually exclusive, such as topics that are relevant for a
-  document. A text might be about any of religion, politics, finance or
-  education at the same time or none of these.
+  - valid :term:`multiclass` representation for
+    :func:`~utils.multiclass.type_of_target` (`y`) are:
 
-- **Multioutput regression** assigns each sample a set of target
-  values.  This can be thought of as predicting several properties
-  for each data-point, such as wind direction and magnitude at a
-  certain location.
+    - 1d or column vector containing more than two discrete values.
+    - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a single element per row, where each column represents one class.
 
-- **Multioutput-multiclass classification** 
+  - *example:* classify a set of images of fruits which may be oranges, apples,
+    or pears. Multiclass classification makes the assumption that each sample is
+    assigned to one and only one label: a fruit can be either an apple or a pear
+    but not both at the same time.
+
+- **Multilabel classification** predict a set of binary attributes that can
+  either be true or false independently of one another. In other words, assigns
+  to each sample a set of target labels. (This task can also be seen as a binary
+  label multioutput task)
+
+  - valid representation :term:`multilabel` `y` is:
+
+    - either dense (or sparse) :term:`binary` matrix of shape
+      ``(n_samples, n_classes)`` with multiple active elements per row to denote
+      that the sample belongs to multiple classes. Each column represents a class.
+
+  - *example:* based on an arbitrary set of features from fruit images, **Multilabel
+    classification** simultaneously predict a set of binary attributes such as:
+    grows in a tree, has stone fruit, is citric ...
+
+- **Multioutput regression** predicts multiple outputs that are all continuous
+  variables. In other words, assigns each sample a set of target values.
+
+  - valid representation :term:`multilabel` `y` is:
+
+    - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
+      concatenation of :term:`continuous` variables.
+
+  - *example:* based on an arbitrary set of features from fruit images, predicts
+    a set of :term:`contineous` variables such as: weight, sugar content, calories, etc.
+
+- **Multioutput-multiclass classification**
   (also known as **multi-task classification**)
   means that a single estimator has to handle several joint classification
   tasks. This is both a generalization of the multi-label classification
   task, which only considers binary classification, as well as a
-  generalization of the multi-class classification task.  *The output format
-  is a 2d numpy array or sparse matrix.*
+  generalization of the multi-class classification task.
 
-  The set of labels can be different for each output variable.
-  For instance, a sample could be assigned "pear" for an output variable that
-  takes possible values in a finite set of species such as "pear", "apple"; 
-  and "blue" or "green" for a second output variable that takes possible values
-  in a finite set of colors such as "green", "red", "blue", "yellow"...
 
-  This means that any classifiers handling multi-output
-  multiclass or multi-task classification tasks,
-  support the multi-label classification task as a special case.
-  Multi-task classification is similar to the multi-output
-  classification task with different model formulations. For
-  more information, see the relevant estimator documentation.
+  - valid representation :term:`multilabel` `y` is:
+
+    - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
+      concatenation of 1d :term:`multiclass` variables.
+
+  - *example:*  The set of labels can be different for each output variable.
+    For instance, a sample could be assigned "pear" for an output variable that
+    takes possible values in a finite set of species such as "pear", "apple";
+    and "blue" or "green" for a second output variable that takes possible values
+    in a finite set of colors such as "green", "red", "blue", "yellow"...
+
+  - Note that any classifiers handling multi-output
+    multiclass or multi-task classification tasks,
+    support the multi-label classification task as a special case.
+    Multi-task classification is similar to the multi-output
+    classification task with different model formulations. For
+    more information, see the relevant estimator documentation.
+
 
 All scikit-learn classifiers are capable of multiclass classification,
 but the meta-estimators offered by :mod:`sklearn.multiclass`
@@ -168,7 +197,7 @@ This strategy, also known as **one-vs-all**, is implemented in
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
-interpretability. Since each class is represented by one and only one classifier, 
+interpretability. Since each class is represented by one and only one classifier,
 it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
 default choice.
@@ -371,7 +400,7 @@ that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
 Below is an example of multioutput classification:
-    
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -434,7 +463,7 @@ averaged together.
 Regressor Chain
 ================
 
-Regressor chains (see :class:`RegressorChain`) is analogous to 
-ClassifierChain as a way of combining a number of regressions 
-into a single multi-target model that is capable of exploiting 
+Regressor chains (see :class:`RegressorChain`) is analogous to
+ClassifierChain as a way of combining a number of regressions
+into a single multi-target model that is capable of exploiting
 correlations among targets.
