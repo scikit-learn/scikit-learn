@@ -826,18 +826,18 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
 @pytest.mark.parametrize("imputer_constructor",
                          [SimpleImputer, ChainedImputer, MissingIndicator])
 @pytest.mark.parametrize(
-    "missing_values, X_missing_value, err_type, err_msg",
-    [("NaN", np.nan, ValueError, "contains"),
-     ("-1", -1, TypeError, "not compatible")])
+    "missing_values, X_missing_value, err_msg",
+    [("NaN", np.nan, "Input contains NaN"),
+     ("-1", -1, "data type of 'missing_values' and 'X' are not compatible")])
 def test_inconsistent_dtype_X_missing_values(imputer_constructor,
                                              missing_values, X_missing_value,
-                                             err_type, err_msg):
+                                             err_msg):
     # regression test for issue #11390. Comparison between incoherent dtype
     # for X and missing_values was not raising a proper error.
-    X = np.random.randn(1000, 10)
+    X = np.random.randn(10, 10)
     X[0, 0] = X_missing_value
 
     imputer = imputer_constructor(missing_values=missing_values)
 
-    with pytest.raises(err_type, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(X)
