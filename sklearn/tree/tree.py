@@ -1152,7 +1152,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    splitter : string, optional (default="best")
+    splitter : string, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1189,7 +1189,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1336,7 +1336,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : string, optional (default="best")
+    splitter : string, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1373,7 +1373,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.

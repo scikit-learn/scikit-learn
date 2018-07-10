@@ -10,6 +10,8 @@ Installing scikit-learn
     :ref:`install the latest development version<install_bleeding_edge>`.
 
 
+.. _install_official_release:
+
 Installing the latest release
 =============================
 
@@ -43,6 +45,12 @@ it as ``scikit-learn[alldeps]``. The most common use case for this is in a
 ``requirements.txt`` file used as part of an automated build process for a PaaS
 application or a Docker image. This option is not intended for manual
 installation from the command line.
+
+For installation instructions for more distributions see
+:ref:`other distributions <install_by_distribution>`.
+For compiling the development version from source, or building the package
+if no distribution is available for your architecture, see the
+:ref:`advanced-installation`.
 
 Third-party Distributions
 ==========================
@@ -92,6 +100,3 @@ WinPython for Windows
 The `WinPython <https://winpython.github.io/>`_ project distributes
 scikit-learn as an additional plugin.
 
-
-For installation instructions for particular operating systems or for compiling
-the bleeding edge version, see the :ref:`advanced-installation`.

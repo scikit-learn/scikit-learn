@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -1452,7 +1454,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
-    output_dict: bool (default = False)
+    output_dict : bool (default = False)
         If True, return output as dict
 
     Returns

@@ -1,6 +1,145 @@
+============================
+Computing with scikit-learn
+============================
+
+.. _scaling_strategies:
+
+Strategies to scale computationally: bigger data
+=================================================
+
+For some applications the amount of examples, features (or both) and/or the
+speed at which they need to be processed are challenging for traditional
+approaches. In these cases scikit-learn has a number of options you can
+consider to make your system scale.
+
+Scaling with instances using out-of-core learning
+--------------------------------------------------
+
+Out-of-core (or "external memory") learning is a technique used to learn from
+data that cannot fit in a computer's main memory (RAM).
+
+Here is a sketch of a system designed to achieve this goal:
+
+  1. a way to stream instances
+  2. a way to extract features from instances
+  3. an incremental algorithm
+
+Streaming instances
+....................
+
+Basically, 1. may be a reader that yields instances from files on a
+hard drive, a database, from a network stream etc. However,
+details on how to achieve this are beyond the scope of this documentation.
+
+Extracting features
+...................
+
+\2. could be any relevant way to extract features among the
+different :ref:`feature extraction <feature_extraction>` methods supported by
+scikit-learn. However, when working with data that needs vectorization and
+where the set of features or values is not known in advance one should take
+explicit care. A good example is text classification where unknown terms are
+likely to be found during training. It is possible to use a stateful
+vectorizer if making multiple passes over the data is reasonable from an
+application point of view. Otherwise, one can turn up the difficulty by using
+a stateless feature extractor. Currently the preferred way to do this is to
+use the so-called :ref:`hashing trick<feature_hashing>` as implemented by
+:class:`sklearn.feature_extraction.FeatureHasher` for datasets with categorical
+variables represented as list of Python dicts or
+:class:`sklearn.feature_extraction.text.HashingVectorizer` for text documents.
+
+Incremental learning
+.....................
+
+Finally, for 3. we have a number of options inside scikit-learn. Although not
+all algorithms can learn incrementally (i.e. without seeing all the instances
+at once), all estimators implementing the ``partial_fit`` API are candidates.
+Actually, the ability to learn incrementally from a mini-batch of instances
+(sometimes called "online learning") is key to out-of-core learning as it
+guarantees that at any given time there will be only a small amount of
+instances in the main memory. Choosing a good size for the mini-batch that
+balances relevancy and memory footprint could involve some tuning [1]_.
+
+Here is a list of incremental estimators for different tasks:
+
+  - Classification
+      + :class:`sklearn.naive_bayes.MultinomialNB`
+      + :class:`sklearn.naive_bayes.BernoulliNB`
+      + :class:`sklearn.linear_model.Perceptron`
+      + :class:`sklearn.linear_model.SGDClassifier`
+      + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+      + :class:`sklearn.neural_network.MLPClassifier`
+  - Regression
+      + :class:`sklearn.linear_model.SGDRegressor`
+      + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
+      + :class:`sklearn.neural_network.MLPRegressor`
+  - Clustering
+      + :class:`sklearn.cluster.MiniBatchKMeans`
+      + :class:`sklearn.cluster.Birch`
+  - Decomposition / feature Extraction
+      + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
+      + :class:`sklearn.decomposition.IncrementalPCA`
+      + :class:`sklearn.decomposition.LatentDirichletAllocation`
+  - Preprocessing
+      + :class:`sklearn.preprocessing.StandardScaler`
+      + :class:`sklearn.preprocessing.MinMaxScaler`
+      + :class:`sklearn.preprocessing.MaxAbsScaler`
+
+For classification, a somewhat important thing to note is that although a
+stateless feature extraction routine may be able to cope with new/unseen
+attributes, the incremental learner itself may be unable to cope with
+new/unseen targets classes. In this case you have to pass all the possible
+classes to the first ``partial_fit`` call using the ``classes=`` parameter.
+
+Another aspect to consider when choosing a proper algorithm is that not all of
+them put the same importance on each example over time. Namely, the
+``Perceptron`` is still sensitive to badly labeled examples even after many
+examples whereas the ``SGD*`` and ``PassiveAggressive*`` families are more
+robust to this kind of artifacts. Conversely, the latter also tend to give less
+importance to remarkably different, yet properly labeled examples when they
+come late in the stream as their learning rate decreases over time.
+
+Examples
+..........
+
+Finally, we have a full-fledged example of
+:ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. It is aimed at
+providing a starting point for people wanting to build out-of-core learning
+systems and demonstrates most of the notions discussed above.
+
+Furthermore, it also shows the evolution of the performance of different
+algorithms with the number of processed examples.
+
+.. |accuracy_over_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_001.png
+    :target: ../auto_examples/applications/plot_out_of_core_classification.html
+    :scale: 80
+
+.. centered:: |accuracy_over_time|
+
+Now looking at the computation time of the different parts, we see that the
+vectorization is much more expensive than learning itself. From the different
+algorithms, ``MultinomialNB`` is the most expensive, but its overhead can be
+mitigated by increasing the size of the mini-batches (exercise: change
+``minibatch_size`` to 100 and 10000 in the program and compare).
+
+.. |computation_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_003.png
+    :target: ../auto_examples/applications/plot_out_of_core_classification.html
+    :scale: 80
+
+.. centered:: |computation_time|
+
+
+Notes
+......
+
+.. [1] Depending on the algorithm the mini-batch size can influence results or
+       not. SGD*, PassiveAggressive*, and discrete NaiveBayes are truly online
+       and are not affected by batch size. Conversely, MiniBatchKMeans
+       convergence rate is affected by the batch size. Also, its memory
+       footprint can vary dramatically with batch size.
+
 .. _computational_performance:
 
-=========================
 Computational Performance
 =========================
 
@@ -27,7 +166,7 @@ non-linear, or with fewer parameters) often run faster but are not always able
 to take into account the same exact properties of the data as more complex ones.
 
 Prediction Latency
-==================
+------------------
 
 One of the most straight-forward concerns one may have when using/choosing a
 machine learning toolkit is the latency at which predictions can be made in a
@@ -43,7 +182,7 @@ A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
 
 Bulk versus Atomic mode
------------------------
+........................
 
 In general doing predictions in bulk (many instances at the same time) is
 more efficient for a number of reasons (branching predictability, CPU cache,
@@ -68,27 +207,28 @@ To benchmark different estimators for your case you can simply change the
 :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
-.. topic:: Configuring Scikit-learn for reduced validation overhead
+Configuring Scikit-learn for reduced validation overhead
+.........................................................
 
-    Scikit-learn does some validation on data that increases the overhead per
-    call to ``predict`` and similar functions. In particular, checking that
-    features are finite (not NaN or infinite) involves a full pass over the
-    data. If you ensure that your data is acceptable, you may suppress
-    checking for finiteness by setting the environment variable
-    ``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
-    scikit-learn, or configure it in Python with :func:`sklearn.set_config`.
-    For more control than these global settings, a :func:`config_context`
-    allows you to set this configuration within a specified context::
+Scikit-learn does some validation on data that increases the overhead per
+call to ``predict`` and similar functions. In particular, checking that
+features are finite (not NaN or infinite) involves a full pass over the
+data. If you ensure that your data is acceptable, you may suppress
+checking for finiteness by setting the environment variable
+``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
+scikit-learn, or configure it in Python with :func:`sklearn.set_config`.
+For more control than these global settings, a :func:`config_context`
+allows you to set this configuration within a specified context::
 
-      >>> import sklearn
-      >>> with sklearn.config_context(assume_finite=True):
-      ...    pass  # do learning/prediction here with reduced validation
+  >>> import sklearn
+  >>> with sklearn.config_context(assume_finite=True):
+  ...    pass  # do learning/prediction here with reduced validation
 
-    Note that this will affect all uses of
-    :func:`sklearn.utils.assert_all_finite` within the context.
+Note that this will affect all uses of
+:func:`sklearn.utils.assert_all_finite` within the context.
 
 Influence of the Number of Features
------------------------------------
+....................................
 
 Obviously when the number of features increases so does the memory
 consumption of each example. Indeed, for a matrix of :math:`M` instances
@@ -109,7 +249,7 @@ the number of features (non-linear cases can happen depending on the global
 memory footprint and estimator).
 
 Influence of the Input Data Representation
-------------------------------------------
+...........................................
 
 Scipy provides sparse matrix data structures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
@@ -142,7 +282,7 @@ for more information on how to build (or convert your data to) sparse matrix
 formats. Most of the time the ``CSR`` and ``CSC`` formats work best.
 
 Influence of the Model Complexity
----------------------------------
+..................................
 
 Generally speaking, when model complexity increases, predictive power and
 latency are supposed to increase. Increasing predictive power is usually
@@ -152,7 +292,7 @@ families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
 SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAgressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
+PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
 decision function that is applied at prediction time is the same (a dot product)
 , so latency should be equivalent.
 
@@ -206,7 +346,7 @@ with a speedy linear model but prediction power will very likely suffer in
 the process.
 
 Feature Extraction Latency
---------------------------
+..........................
 
 Most scikit-learn models are usually pretty fast as they are implemented
 either with compiled Cython extensions or optimized computing libraries.
@@ -229,7 +369,7 @@ feature extraction code as it may be a good place to start optimizing when
 your overall latency is too slow for your application.
 
 Prediction Throughput
-=====================
+----------------------
 
 Another important metric to care about when sizing production systems is the
 throughput i.e. the number of predictions you can make in a given amount of
@@ -252,10 +392,10 @@ explanation on how to achieve this is beyond the scope of this documentation
 though.
 
 Tips and Tricks
-===============
+----------------
 
 Linear algebra libraries
-------------------------
+.........................
 
 As scikit-learn relies heavily on Numpy/Scipy and linear algebra in general it
 makes sense to take explicit care of the versions of these libraries.
@@ -311,7 +451,7 @@ Debian / Ubuntu.
 .. _working_memory:
 
 Limiting Working Memory
------------------------
+........................
 
 Some calculations when implemented using standard numpy vectorized operations
 involve using a large amount of temporary memory.  This may potentially exhaust
@@ -330,7 +470,7 @@ An example of a chunked operation adhering to this setting is
 row-wise reductions of a pairwise distance matrix.
 
 Model Compression
------------------
+..................
 
 Model compression in scikit-learn only concerns linear models for the moment.
 In this context it means that we want to control the model sparsity (i.e. the
@@ -357,7 +497,7 @@ Furthermore, sparsifying can be very useful to reduce the memory usage of
 predictive models deployed on production servers.
 
 Model Reshaping
----------------
+................
 
 Model reshaping consists in selecting only a portion of the available features
 to fit a model. In other words, if a model discards features during the
@@ -376,7 +516,77 @@ In the case of sparse input (particularly in ``CSR`` format), it is generally
 sufficient to not generate the relevant features, leaving their columns empty.
 
 Links
------
+......
 
   - `scikit-learn developer performance documentation <../developers/performance.html>`_
   - `Scipy sparse matrix formats documentation <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+
+Parallelism, resource management, and configuration
+=====================================================
+
+.. _parallelism:
+
+Parallel and distributed computing
+-----------------------------------
+
+Scikit-learn uses the `joblib <https://joblib.readthedocs.io/en/latest/>`__
+library to enable parallel computing inside its estimators. See the
+joblib documentation for the switches to control parallel computing.
+
+Note that, by default, scikit-learn uses its embedded (vendored) version
+of joblib. A configuration switch (documented below) controls this
+behavior.
+
+Configuration switches
+-----------------------
+
+Python runtime
+..............
+
+:func:`sklearn.set_config` controls the following behaviors:
+
+:assume_finite:
+
+    used to skip validation, which enables faster computations but may
+    lead to segmentation faults if the data contains NaNs.
+
+:working_memory:
+
+    the optimal size of temporary arrays used by some algoritms.
+
+.. _environment_variable:
+
+Environment variables
+......................
+
+These environment variables should be set before importing scikit-learn.
+
+:SKLEARN_SITE_JOBLIB:
+
+    When this environment variable is set to a non zero value,
+    scikit-learn uses the site joblib rather than its vendored version.
+    Consequently, joblib must be installed for scikit-learn to run.
+    Note that using the site joblib is at your own risks: the versions of
+    scikt-learn and joblib need to be compatible. In addition, dumps from
+    joblib.Memory might be incompatible, and you might loose some caches
+    and have to redownload some datasets.
+
+:SKLEARN_ASSUME_FINITE:
+
+    Sets the default value for the `assume_finite` argument of
+    :func:`sklearn.set_config`.
+
+:SKLEARN_WORKING_MEMORY:
+
+    Sets the default value for the `working_memory` argument of
+    :func:`sklearn.set_config`.
+
+:SKLEARN_SEED:
+
+    Sets the seed of the global random generator when running the tests,
+    for reproducibility.
+
+:SKLEARN_SKIP_NETWORK_TESTS:
+
+    When this environment variable is set to a non zero value, the tests
+    that need network access are skipped.
