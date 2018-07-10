@@ -36,10 +36,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         If ``n_bins`` is an array, and there is an ignored feature at
         index ``i``, ``n_bins[i]`` will be ignored.
 
-    ignored_features : int array-like (default=None)
-        Column indices of ignored features. (Example: Categorical features.)
-        If ``None``, all features will be discretized.
-
     encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
 
@@ -78,9 +74,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         The edges of each bin. Contain arrays of varying shapes (n_bins_, ).
         Ignored features will have empty arrays.
 
-    transformed_features_ : int array, shape (n_features,)
-        Features which are transformed.
-
     Examples
     --------
     >>> X = [[-2, 1, -4,   -1],
@@ -117,16 +110,18 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
       np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
 
+    You can combine ``KBinsDiscretizer`` with ``ColumnTransformer`` if you
+    only want to preprocess part of the features.
+
     See also
     --------
      sklearn.preprocessing.Binarizer : class used to bin values as ``0`` or
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=5, ignored_features=None, encode='onehot',
-                 dtype=np.float64, strategy='quantile'):
+    def __init__(self, n_bins=5, encode='onehot', dtype=np.float64,
+                 strategy='quantile'):
         self.n_bins = n_bins
-        self.ignored_features = ignored_features
         self.encode = encode
         self.dtype = dtype
         self.strategy = strategy
@@ -159,16 +154,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              .format(valid_strategy, self.strategy))
 
         n_features = X.shape[1]
-        ignored = self._validate_ignored_features(n_features)
-        self.transformed_features_ = np.delete(np.arange(n_features), ignored)
-
-        n_bins = self._validate_n_bins(n_features, ignored)
+        n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
-            if jj in ignored:
-                bin_edges[jj] = np.array([])
-                continue
             column = X[:, jj]
             col_min, col_max = column.min(), column.max()
 
@@ -206,7 +195,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _validate_n_bins(self, n_features, ignored):
+    def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature.
 
         Also ensures that ignored bins are zero.
@@ -232,7 +221,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of shape (n_features,).")
 
         bad_nbins_value = (n_bins < 2) | (n_bins != orig_bins)
-        bad_nbins_value[ignored] = False
 
         violating_indices = np.where(bad_nbins_value)[0]
         if violating_indices.shape[0] > 0:
@@ -241,24 +229,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of bins at indices {}. Number of bins "
                              "must be at least 2, and must be an int."
                              .format(KBinsDiscretizer.__name__, indices))
-        n_bins[ignored] = 0
         return n_bins
-
-    def _validate_ignored_features(self, n_features):
-        ignored = self.ignored_features
-        if ignored is None:
-            return np.array([], dtype='int64')
-
-        ignored = check_array(ignored, ensure_2d=False, dtype=int)
-        ignored = column_or_1d(ignored)
-
-        if len(set(ignored)) != ignored.shape[0]:
-            raise ValueError("Duplicate ignored column indices found.")
-
-        if np.all(ignored >= 0) and np.all(ignored < n_features):
-            return ignored
-
-        raise ValueError("Invalid ignored feature index.")
 
     def transform(self, X):
         """Discretizes the data.
@@ -277,21 +248,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = self._validate_X_post_fit(X)
 
         Xt = _transform_selected(X, self._transform, self.dtype,
-                                 self.transformed_features_, copy=True,
-                                 retain_order=True)
+                                 copy=True, retain_order=True)
 
         if self.encode == 'ordinal':
             return Xt
 
-        # Only one-hot encode discretized features
-        mask = np.ones(X.shape[1], dtype=bool)
-        if self.ignored_features is not None:
-            mask[self.ignored_features] = False
-
         encode_sparse = self.encode == 'onehot'
-        return OneHotEncoder(n_values=self.n_bins_[mask],
-                             categorical_features='all'
-                             if self.ignored_features is None else mask,
+        return OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
                              sparse=encode_sparse).fit_transform(Xt)
 
     def _validate_X_post_fit(self, X):
@@ -305,9 +268,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     def _transform(self, X):
         """Performs transformation on X, with no ignored features."""
-        trans = self.transformed_features_
+        bin_edges = self.bin_edges_
 
-        bin_edges = self.bin_edges_[trans]
         for jj in range(X.shape[1]):
             # Values which are close to a bin edge are susceptible to numeric
             # instability. Add eps to X so these values are binned correctly
@@ -319,7 +281,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
             X[:, jj] = np.digitize(X[:, jj] + eps, bin_edges[jj][1:])
 
-        np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
+        np.clip(X, 0, self.n_bins_ - 1, out=X)
 
         return X
 
@@ -341,22 +303,18 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ["bin_edges_"])
 
-        # Currently, OneHotEncoder doesn't support inverse_transform
         if self.encode != 'ordinal':
             raise ValueError("inverse_transform only supports "
                              "'encode = ordinal'. Got encode={!r} instead."
                              .format(self.encode))
 
         Xt = self._validate_X_post_fit(Xt)
-        trans = self.transformed_features_
         Xinv = Xt.copy()
-        Xinv_sel = Xinv[:, trans]
 
-        n_features = Xinv_sel.shape[1]
+        n_features = Xinv.shape[1]
         for jj in range(n_features):
-            bin_edges = self.bin_edges_[trans][jj]
+            bin_edges = self.bin_edges_[jj]
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-            Xinv_sel[:, jj] = bin_centers[np.int_(Xinv_sel[:, jj])]
+            Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
 
-        Xinv[:, trans] = Xinv_sel
         return Xinv
