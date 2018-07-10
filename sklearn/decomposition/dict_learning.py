@@ -383,7 +383,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
         dictionary[:, k] = np.dot(R, code[k, :].T)
         if positive:
-            dictionary[:, k][dictionary[:, k] < 0] = 0.0
+            np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
         # Scale k'th atom
         atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
         if atom_norm_square < 1e-20:
@@ -394,7 +394,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 print("Adding new random atom")
             dictionary[:, k] = random_state.randn(n_features)
             if positive:
-                dictionary[:, k][dictionary[:, k] < 0] = 0.0
+                np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
