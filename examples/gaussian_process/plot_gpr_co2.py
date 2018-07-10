@@ -65,10 +65,14 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 print(__doc__)
 

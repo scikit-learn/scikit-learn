@@ -22,13 +22,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.arff import loadarff
 
-from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.datasets import get_data_home
 from sklearn.externals.joblib import Memory
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 print(__doc__)
 

@@ -23,10 +23,14 @@ smoother spatial appearance.
 import io
 from scipy.io.arff import loadarff
 import matplotlib.pyplot as plt
-from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.datasets import get_data_home
 from sklearn.externals.joblib import Memory
 from sklearn.neural_network import MLPClassifier
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 print(__doc__)
 

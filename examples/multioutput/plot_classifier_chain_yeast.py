@@ -39,7 +39,6 @@ import io
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io.arff import loadarff
-from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.datasets import get_data_home
 from sklearn.externals.joblib import Memory
 from sklearn.multioutput import ClassifierChain
@@ -47,6 +46,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.linear_model import LogisticRegression
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 print(__doc__)
 
