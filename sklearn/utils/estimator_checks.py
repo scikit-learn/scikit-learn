@@ -1194,7 +1194,7 @@ def check_estimators_pickle(name, estimator_orig):
         # set random 10 elements to be np.nan
         rng = np.random.RandomState(42)
         mask = rng.choice(X.size, 10, replace=True)
-        X[mask] = np.nan
+        X.reshape(-1)[mask] = np.nan
         estimator.fit(X, y)
 
         nan_result = dict()
