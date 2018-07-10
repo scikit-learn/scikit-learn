@@ -160,7 +160,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         new_code = ((np.sign(cov) *
                     np.maximum(np.abs(cov) - regularization, 0)).T)
         if positive:
-            new_code[new_code < 0] = 0
+            np.clip(new_code, 0, None, out=new_code)
 
     elif algorithm == 'omp':
         # TODO: Should verbose argument be passed to this?
