@@ -1193,7 +1193,7 @@ def check_estimators_pickle(name, estimator_orig):
     if name in ALLOW_NAN:
         # set random 10 elements to be np.nan
         rng = np.random.RandomState(42)
-        mask = rng.choice(X.size, 10, replace=True)
+        mask = rng.choice(X.size, 10, replace=False)
         X.reshape(-1)[mask] = np.nan
         estimator.fit(X, y)
 
@@ -1209,12 +1209,11 @@ def check_estimators_pickle(name, estimator_orig):
         for method in nan_result:
             unpickled_nan_result = getattr(unpickled_estimator, method)(X)
             if name == 'ChainedImputer':
-                assert_allclose_dense_sparse(nan_result[method],
-                                             unpickled_nan_result,
-                                             rtol=1e-5, atol=0.1)
+                tol = {'rtol': 1e-5, 'atol': 0.1}
             else:
+                tol = {}
                 assert_allclose_dense_sparse(nan_result[method],
-                                             unpickled_nan_result)
+                                             unpickled_nan_result, **tol)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
