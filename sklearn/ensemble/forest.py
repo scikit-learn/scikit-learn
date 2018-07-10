@@ -52,7 +52,7 @@ from scipy.sparse import hstack as sparse_hstack
 
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder

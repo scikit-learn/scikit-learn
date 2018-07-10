@@ -9,7 +9,7 @@ if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
     from joblib import __version__
     from joblib import logger
 else:
-    from ._joblib import *
-    from ._joblib import __version__
-    from ._joblib import logger
+    from .joblib import *
+    from .joblib import __version__
+    from .joblib import logger
 

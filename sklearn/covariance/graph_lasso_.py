@@ -22,7 +22,7 @@ from ..utils import deprecated
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 import collections
 
 

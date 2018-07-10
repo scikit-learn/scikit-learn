@@ -19,7 +19,7 @@ from scipy.interpolate import interp1d
 from .base import _preprocess_data
 from ..base import BaseEstimator
 from ..externals import six
-from ..externals.joblib import Memory, Parallel, delayed
+from ..utils import Memory, Parallel, delayed
 from ..feature_selection.base import SelectorMixin
 from ..utils import (as_float_array, check_random_state, check_X_y, safe_mask,
                      deprecated)
@@ -109,7 +109,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
             memory = Memory(cachedir=memory, verbose=0)
         elif not isinstance(memory, Memory):
             raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
+                             " a sklearn.utils.Memory"
                              " instance, got 'memory={!r}' instead.".format(
                                  type(memory)))
 

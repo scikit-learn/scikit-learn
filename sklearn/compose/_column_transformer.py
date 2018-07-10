@@ -12,7 +12,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..pipeline import (
     _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
