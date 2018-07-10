@@ -26,7 +26,8 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
          {"bar": 1, "quux": 1, "quuux": 2}]
 
     v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
-    #[TODO] check how to deal with not materializing X in memory calling fit_transform()
+    #[TODO] check how to deal with not materializing 
+    # X in memory calling fit_transform()
     #X = v.fit_transform(iter(D) if iterable else D)
  
     v.fit(iter(D) if iterable else D)
