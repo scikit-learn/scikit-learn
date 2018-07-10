@@ -796,6 +796,19 @@ In the following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
+If the default value of a parameter needs to be changed, it is recommended to
+replace the default value with ``deprecated`` and raise ``FutureWarning`` when
+users are using the default value. In the following example, we change the
+default value of ``n_clusters`` from 5 to 10 (current version is 0.20)::
+
+    import warnings
+
+    def example_function(n_clusters='deprecated'):
+        if n_clusters == 'deprecated':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            n_clusters = 5
+
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
