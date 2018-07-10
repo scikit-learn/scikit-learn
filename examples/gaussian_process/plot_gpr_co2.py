@@ -65,7 +65,7 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-from sklearn.externals.six.moves import urllib_request
+from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
@@ -78,7 +78,7 @@ def load_mauna_loa_atmospheric_c02():
            'ftp/trends/co2/sio-keel-flask/maunaloa_c.dat')
     dates = []
     ppmvs = []
-    with urllib_request.urlopen(url) as f:
+    with urlopen(url) as f:
         for line in f:
             line = line.decode('utf8')
             if not line.startswith('MLO'):

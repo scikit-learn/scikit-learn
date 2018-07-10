@@ -39,7 +39,7 @@ import io
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io.arff import loadarff
-from sklearn.externals.six.moves import urllib_request
+from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.datasets import get_data_home
 from sklearn.externals.joblib import Memory
 from sklearn.multioutput import ClassifierChain
@@ -58,7 +58,7 @@ memory = Memory(get_data_home())
 @memory.cache()
 def fetch_yeast():
     url = 'https://www.openml.org/data/download/4644190/file2754771351f4.arff'
-    content = urllib_request.urlopen(url).read()
+    content = urlopen(url).read()
     # loadarff doesn't like nominals to be quoted
     content = content.decode('utf8').replace('"', '')
     data, meta = loadarff(io.StringIO(content))

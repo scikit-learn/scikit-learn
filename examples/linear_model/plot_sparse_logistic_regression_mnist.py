@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.io.arff import loadarff
 
-from sklearn.externals.six.moves import urllib_request
+from sklearn.externals.six.moves.urllib_request import urlopen
 from sklearn.datasets import get_data_home
 from sklearn.externals.joblib import Memory
 from sklearn.linear_model import LogisticRegression
@@ -44,7 +44,7 @@ memory = Memory(get_data_home())
 
 @memory.cache()
 def fetch_mnist():
-    content = urllib_request.urlopen(
+    content = urlopen(
         'https://www.openml.org/data/download/52667/mnist_784.arff').read()
     data, meta = loadarff(io.StringIO(content.decode('utf8')))
     data = data.view([('pixels', '<f8', 784), ('class', '|S1')])
