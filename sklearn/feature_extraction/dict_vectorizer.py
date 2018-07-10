@@ -8,6 +8,7 @@ from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
+import numbers
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
