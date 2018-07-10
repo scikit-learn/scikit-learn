@@ -17,7 +17,6 @@ from ._encoders import _transform_selected
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
-from ..utils.validation import column_or_1d
 from ..utils.fixes import np_version
 
 
