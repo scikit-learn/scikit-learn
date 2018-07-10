@@ -916,41 +916,41 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimator = obj.fit(data, targets)
+      estimator = estimator.fit(data, targets)
 
     or::
 
-      estimator = obj.fit(data)
+      estimator = estimator.fit(data)
 
 :Predictor:
 
     For supervised learning, or some unsupervised problems, implements::
 
-      prediction = obj.predict(data)
+      prediction = predictor.predict(data)
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
 
-      probability = obj.predict_proba(data)
+      probability = predictor.predict_proba(data)
 
 :Transformer:
 
     For filtering or modifying the data, in a supervised or unsupervised
     way, implements::
 
-      new_data = obj.transform(data)
+      new_data = transformer.transform(data)
 
     When fitting and transforming can be performed much more efficiently
     together than separately, implements::
 
-      new_data = obj.fit_transform(data)
+      new_data = transformer.fit_transform(data)
 
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
     measure or a likelihood of unseen data, implements (higher is better)::
 
-      score = obj.score(data)
+      score = model.score(data)
 
 Estimators
 ----------

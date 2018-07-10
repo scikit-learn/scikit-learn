@@ -142,7 +142,7 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     plt.axis('tight')
 
     # Quadratic Discriminant Analysis
-    qda = QuadraticDiscriminantAnalysis(store_covariances=True)
+    qda = QuadraticDiscriminantAnalysis(store_covariance=True)
     y_pred = qda.fit(X, y).predict(X)
     splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
     plot_qda_cov(qda, splot)

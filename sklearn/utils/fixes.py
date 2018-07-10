@@ -12,6 +12,7 @@ at which the fixe is no longer needed.
 
 import os
 import errno
+import sys
 
 import numpy as np
 import scipy.sparse as sp
@@ -39,6 +40,7 @@ euler_gamma = getattr(np, 'euler_gamma',
 
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
+PY3_OR_LATER = sys.version_info[0] >= 3
 
 
 # Remove when minimum required NumPy >= 1.10
@@ -278,6 +280,19 @@ if np_version < (1, 11):
             return np.array([np.nan] * size_q)
 else:
     from numpy import nanpercentile  # noqa
+
+
+if np_version < (1, 9):
+    def nanmedian(a, axis=None):
+        if axis is None:
+            data = a.reshape(-1)
+            return np.median(np.compress(~np.isnan(data), data))
+        else:
+            data = a.T if not axis else a
+            return np.array([np.median(np.compress(~np.isnan(row), row))
+                             for row in data])
+else:
+    from numpy import nanmedian  # noqa
 
 
 # Fix for behavior inconsistency on numpy.equal for object dtypes.

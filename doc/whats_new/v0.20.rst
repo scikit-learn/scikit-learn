@@ -65,6 +65,11 @@ random sampling procedures.
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`linear_model.SGDClassifier` (bug fix)
+- :class:`linear_model.SGDRegressor` (bug fix)
+- :class:`linear_model.PassiveAggressiveClassifier` (bug fix)
+- :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
+- :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
@@ -74,6 +79,12 @@ Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
+
+**Other backward incompatible change** The vendored version of the joblib
+module is now found at `sklearn.externals._joblib` (:issue:`11166`). The
+main API of joblib is still exposed in `sklearn.externals.joblib`, but
+code doing imports of subpackages of `sklearn.externals.joblib` will
+break.
 
 Changelog
 ---------
@@ -142,8 +153,15 @@ Preprocessing
   other features in a round-robin fashion. :issue:`8478` by
   :user:`Sergey Feldman <sergeyf>`.
 
-- Updated :class:`preprocessing.MinMaxScaler` to pass through NaN values. :issue:`10404`
-  by :user:`Lucija Gregov <LucijaGregov>`.
+- :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor` and
+  :class:`linear_model.Perceptron` now expose ``early_stopping``,
+  ``validation_fraction`` and ``n_iter_no_change`` parameters, to stop
+  optimization monitoring the score on a validation set. A new learning rate
+  ``"adaptive"`` strategy divides the learning rate by 5 each time
+  ``n_iter_no_change`` consecutive epochs fail to improve the model.
+  :issue:`9043` by `Tom Dupre la Tour`_.
 
 Model evaluation
 
@@ -184,6 +202,10 @@ Misc
   consumption limits in chunked operations, such as the new
   :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
+
+- An environment variable to use the site joblib instead of the vendored
+  one was added (:ref:`environment_variable`).
+  :issue:`11166`by `Gael Varoquaux`_
 
 Enhancements
 ............
@@ -276,27 +298,28 @@ Preprocessing
   classes found which are ignored.
   :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
 
-- :class:`preprocessing.QuantileTransformer` handles and ignores NaN values.
-  :issue:`10404` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- Updated :class:`preprocessing.MinMaxScaler` and
-  :func:`preprocessing.minmax_scale` to pass through NaN values.
-  :issue:`10404` and :issue:`11243` by :user:`Lucija Gregov <LucijaGregov>` and
+- NaN values are ignored and handled in the following preprocessing methods:
+  :class:`preprocessing.MaxAbsScaler`,
+  :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.RobustScaler`,
+  :class:`preprocessing.StandardScaler`,
+  :class:`preprocessing.PowerTransformer`,
+  :class:`preprocessing.QuantileTransformer` classes and
+  :func:`preprocessing.maxabs_scale`,
+  :func:`preprocessing.minmax_scale`,
+  :func:`preprocessing.robust_scale`,
+  :func:`preprocessing.scale`,
+  :func:`preprocessing.power_transform`,
+  :func:`preprocessing.quantile_transform` functions respectively addressed in
+  issues :issue:`11011`, :issue:`11005`, :issue:`11308`, :issue:`11206`,
+  :issue:`11306`, and :issue:`10437`.
+  By :user:`Lucija Gregov <LucijaGregov>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- :class:`preprocessing.StandardScaler` and :func:`preprocessing.scale`
-  ignore and pass-through NaN values.
-  :issue:`11206` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- :class:`preprocessing.MaxAbsScaler` and :func:`preprocessing.maxabs_scale`
-  handles and ignores NaN values.
-  :issue:`11011` by `Lucija Gregov <LucihaGregov>` and
-  :user:`Guillaume Lemaitre <glemaitre>`
-
-- :class:`preprocessing.PowerTransformer` and
-  :func:`preprocessing.power_transform` ignore and pass-through NaN values.
-  :issue:`11306` by :user:`Guillaume Lemaitre <glemaitre>`.
-
+- :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale`
+  can be fitted using sparse matrices.
+  :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
+  
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -332,6 +355,9 @@ Decomposition and manifold learning
 - Speed improvements for both 'exact' and 'barnes_hut' methods in
   :class:`manifold.TSNE`. :issue:`10593` and :issue:`10610` by
   `Tom Dupre la Tour`_.
+
+- Support sparse input in :meth:`manifold.Isomap.fit`. :issue:`8554` by
+  :user:`Leland McInnes <lmcinnes>`.
 
 Metrics
 
@@ -459,8 +485,8 @@ Classifiers and regressors
 - Fixed a bug in :class:`sklearn.linear_model.Lasso`
   where the coefficient had wrong shape when ``fit_intercept=False``.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
-  
-- Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the 
+
+- Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the
   multi_class='multinomial' with binary output with warm_start = True
   :issue:`10836` by :user:`Aishwarya Srinivasan <aishgrt1>`.
 
@@ -470,6 +496,15 @@ Classifiers and regressors
 - Fixed condition triggering gap computation in :class:`linear_model.Lasso`
   and :class:`linear_model.ElasticNet` when working with sparse matrices.
   :issue:`10992` by `Alexandre Gramfort`_.
+
+- Fixed a bug in :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor` and
+  :class:`linear_model.Perceptron`, where the stopping criterion was stopping
+  the algorithm before convergence. A parameter `n_iter_no_change` was added
+  and set by default to 5. Previous behavior is equivalent to setting the
+  parameter to 1. :issue:`9043` by `Tom Dupre la Tour`_.
 
 - Fixed a bug where liblinear and libsvm-based estimators would segfault if
   passed a scipy.sparse matrix with 64-bit indices. They now raise a
@@ -542,6 +577,11 @@ Decomposition, manifold learning and clustering
   by :user:`Vighnesh Birodkar <vighneshbirodkar>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- Fixed a bug in :func:`cluster.k_means_elkan` where the returned `iteration`
+  was 1 less than the correct value. Also added the missing `n_iter_` attribute
+  in the docstring of :class:`cluster.KMeans`. :issue:`11353` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 Metrics
 
 - Fixed a bug in :func:`metrics.precision_recall_fscore_support`
@@ -588,13 +628,13 @@ Feature Extraction
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
 
-- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which 
+- Fixed bug in :class:`feature_extraction.text.TFIDFVectorizer` which
   was ignoring the parameter ``dtype``. In addition,
   :class:`feature_extraction.text.TFIDFTransformer` will preserve ``dtype``
   for floating and raise a warning if ``dtype`` requested is integer.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Utils
 
 - :func:`utils.check_array` yield a ``FutureWarning`` indicating
@@ -693,6 +733,11 @@ Decomposition, manifold learning and clustering
   'precomputed', in which case the input matrix ``X`` should be a matrix of
   pairwise distances or squared distances. :issue:`9775` by
   :user:`William de Vazelhes <wdevazelhes>`.
+
+- Added function :func:`fit_predict` to :class:`mixture.GaussianMixture` and
+  :class:`mixture.GaussianMixture`, which is essentially equivalent to calling
+  :func:`fit` and :func:`predict`. :issue:`10336` by
+  :user:`Shu Haoran <haoranShu>` and :user:`Andrew Peng <Andrew-peng>`.
 
 Metrics
 
