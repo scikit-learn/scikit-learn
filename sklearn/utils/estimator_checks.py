@@ -1212,8 +1212,8 @@ def check_estimators_pickle(name, estimator_orig):
                 tol = {'rtol': 1e-5, 'atol': 0.1}
             else:
                 tol = {}
-                assert_allclose_dense_sparse(nan_result[method],
-                                             unpickled_nan_result, **tol)
+            assert_allclose_dense_sparse(nan_result[method],
+                                         unpickled_nan_result, **tol)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
