@@ -340,15 +340,15 @@ Point forecasts and consistent scoring functions
 Let's assume that the target variable :math:`Y` is a random variable, that
 we have observations/realizations :math:`y` and that we make predictions
 :math:`\hat{y}`.
-Scoring functions :math:`S(\hat{y}, y)` then rank the prediction :math:`\hat{y}`
+Scoring functions :math:`S(y, \hat{y})` then rank the prediction :math:`\hat{y}`
 of different models, given the observation :math:`y`.
-The higher the score the better the correponding model.
+The higher the score the better the corresponding model.
 For a test or validation set :math:`y_i`, one usually uses
-:math:`\bar{S} = \frac{1}{n_\text{samples}}\sum_{i=0}^{n_\text{samples}-1} S(\hat{y}_i, y_i)`.
+:math:`\bar{S} = \frac{1}{n_\text{samples}}\sum_{i=0}^{n_\text{samples}-1} S(y_i, \hat{y}_i)`.
 The prediction :math:`\hat{y}` is said to be a point forecast.
 The optimal point forecast under :math:`S` is the Bayes Rule
-:math:`\hat{y} = \operatorname{argmin}_x \mathbb{E}[S(x,Y)]` (to get an
-unbiased estimate of :math:`\mathbb{E}[S(x,Y)]` for model evaluation is one
+:math:`\hat{y} = \operatorname{argmax}_x \mathbb{E}[S(Y,x)]` (to get an
+unbiased estimate of :math:`\mathbb{E}[S(Y,x)]` for model evaluation is one
 reason to use a test set independent of the training set).
 Instead of a point forecast, one could try to issue the whole probability
 distribution :math:`F(y)` of the target variable :math:`Y`.
@@ -364,21 +364,21 @@ for the functional at interest, this functional is the (unique) optimal point
 forecast under this scoring function.
 
 
-==================    ================    ===============================================
-functional            scoring function    property
-==================    ================    ===============================================
+==================    ========================    ===============================================
+functional            scoring or loss function    property
+==================    ========================    ===============================================
 **Classification**
-mean                  brier score         strictly consistent
-mean                  log loss            strictly consistent
-median                absolute error      strictly consistent
-mode                  zero-one loss       consistent (for binary classification)
+mean                  Brier score                 strictly consistent
+mean                  log loss                    strictly consistent
+median                absolute error              strictly consistent
+mode                  zero-one loss               consistent (for binary classification)
 **Regression**
-mean                  squared error       strictly consistent (if finite 2nd moment)
-mean                  Poisson deviance    strictly consistent (for non-negative target y)
-mean                  Gamma deviance      strictly consistent (for positive target y)
-median                absolute error      strictly consistent
-mode                  zero-one loss       asymptotically consistent
-==================    ================    ===============================================
+mean                  squared error               strictly consistent (if finite 2nd moment)
+mean                  Poisson deviance            strictly consistent (for non-negative target y)
+mean                  Gamma deviance              strictly consistent (for positive target y)
+median                absolute error              strictly consistent
+mode                  zero-one loss               asymptotically consistent
+==================    ========================    ===============================================
 
 The zero-one loss is equivalent to the accuracy score, meaning it gives
 different score values but the same ranking.
