@@ -109,40 +109,6 @@ def test_invalid_n_features():
                          "received 5", est.transform, bad_X)
 
 
-@pytest.mark.parametrize(
-    'strategy, expected',
-    [('uniform', [[0., 1.5, 0., 0.], [1., 2.5, 1., 0.],
-                  [2., 3.5, 2., 1.], [2., 4.5, 2., 2.]]),
-     ('kmeans', [[0., 1.5, 0., 0.], [0., 2.5, 0., 0.],
-                 [1., 3.5, 1., 1.], [2., 4.5, 2., 2.]]),
-     ('quantile', [[0., 1.5, 0., 0.], [1., 2.5, 1., 1.],
-                   [2., 3.5, 2., 2.], [2., 4.5, 2., 2.]])])
-def test_ignored_transform(strategy, expected):
-    # Feature at col_idx=1 should not change
-    est = KBinsDiscretizer(n_bins=3, ignored_features=[1],
-                           encode='ordinal', strategy=strategy).fit(X)
-    assert_array_equal(expected, est.transform(X))
-
-
-def test_ignored_invalid():
-    # Duplicate column
-    est = KBinsDiscretizer(ignored_features=[1, 1])
-    assert_raise_message(ValueError, "Duplicate ignored column indices found.",
-                         est.fit, X)
-
-    invalid_ignored = [
-        [-1],  # Invalid index
-        [4],  # Invalid index
-        ['a'],  # Not an integer index
-        [4.5],  # Not an integer index
-        [[1, 2], [3, 4]]  # Invalid shape
-    ]
-
-    for invalid in invalid_ignored:
-        est = KBinsDiscretizer(ignored_features=invalid)
-        assert_raises(ValueError, est.fit, X)
-
-
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
 def test_same_min_max(strategy):
     warnings.simplefilter("always")
@@ -168,23 +134,6 @@ def test_transform_1d_behavior():
     est = KBinsDiscretizer(n_bins=2)
     est.fit(X.reshape(-1, 1))
     assert_raises(ValueError, est.transform, X)
-
-
-def test_inverse_transform_with_ignored():
-    est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2],
-                           encode='ordinal', strategy='uniform').fit(X)
-    Xt = [[0, 1, -4.5, 0],
-          [0, 2, -3.5, 0],
-          [1, 3, -2.5, 1],
-          [1, 3, -1.5, 2]]
-
-    Xinv = est.inverse_transform(Xt)
-    expected = [[-1.25, 1, -4.5, -0.5],
-                [-1.25, 2, -3.5, -0.5],
-                [0.25, 3, -2.5, 0.5],
-                [0.25, 3, -1.5, 1.5]]
-
-    assert_array_equal(expected, Xinv)
 
 
 def test_numeric_stability():
@@ -214,7 +163,9 @@ def test_encode_options():
                            encode='onehot-dense').fit(X)
     Xt_2 = est.transform(X)
     assert not sp.issparse(Xt_2)
-    assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
+    assert_array_equal(OneHotEncoder(
+                           categories=[np.arange(i) for i in [2, 3, 3, 3]],
+                           sparse=False)
                        .fit_transform(Xt_1), Xt_2)
     assert_raise_message(ValueError, "inverse_transform only supports "
                          "'encode = ordinal'. Got encode='onehot-dense' "
@@ -223,23 +174,14 @@ def test_encode_options():
                            encode='onehot').fit(X)
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
-    assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
+    assert_array_equal(OneHotEncoder(
+                           categories=[np.arange(i) for i in [2, 3, 3, 3]],
+                           sparse=True)
                        .fit_transform(Xt_1).toarray(),
                        Xt_3.toarray())
     assert_raise_message(ValueError, "inverse_transform only supports "
                          "'encode = ordinal'. Got encode='onehot' "
                          "instead.", est.inverse_transform, Xt_2)
-
-
-def test_one_hot_encode_with_ignored_features():
-    est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
-                           encode='onehot-dense', strategy='uniform').fit(X)
-    Xt = est.transform(X)
-    Xt_expected = [[1, 0, 0, 1, 0, 0, 1.5, -4],
-                   [0, 1, 0, 1, 0, 0, 2.5, -3],
-                   [0, 0, 1, 0, 1, 0, 3.5, -2],
-                   [0, 0, 1, 0, 0, 1, 4.5, -1]]
-    assert_array_equal(Xt_expected, Xt)
 
 
 def test_invalid_strategy_option():
@@ -292,3 +234,17 @@ def test_transform_outside_fit_range(strategy):
     X2t = kbd.transform(X2)
     assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
     assert_array_equal(X2t.min(axis=0), [0])
+
+
+def test_overwrite():
+    X = np.array([0, 1, 2, 3])[:, None]
+    X_before = X.copy()
+
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    Xt = est.fit_transform(X)
+    assert_array_equal(X, X_before)
+
+    Xt_before = Xt.copy()
+    Xinv = est.inverse_transform(Xt)
+    assert_array_equal(Xt, Xt_before)
+    assert_array_equal(Xinv, np.array([[0.5], [1.5], [2.5], [2.5]]))
