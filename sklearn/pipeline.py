@@ -763,7 +763,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         return self
 
     @staticmethod
-    def _stack_results(Xs):
+    def _stack_arrays(Xs):
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -799,7 +799,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         Xs, transformers = zip(*result)
         self._update_transformer_list(transformers)
 
-        return self._stack_results(Xs)
+        return self._stack_arrays(Xs)
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -823,7 +823,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return self._stack_results(Xs)
+        return self._stack_arrays(Xs)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
