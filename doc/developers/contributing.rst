@@ -797,9 +797,12 @@ In the following example, k is deprecated and renamed to n_clusters::
             n_clusters = k
 
 If the default value of a parameter needs to be changed, it is recommended to
-replace the default value with ``deprecated`` and raise ``FutureWarning`` when
-users are using the default value. In the following example, we change the
-default value of ``n_clusters`` from 5 to 10 (current version is 0.20)::
+replace the default value with a specific value (e.g., ``deprecated``) and
+raise ``FutureWarning`` when users are using the default value. In the
+following example, we change the default value of ``n_clusters`` from 5 to 10
+(current version is 0.20). You can also refer to recent merged PRs
+(e.g., `#10331 <https://github.com/scikit-learn/scikit-learn/pull/10331>`__
+and `#11043 <https://github.com/scikit-learn/scikit-learn/pull/11043>`__)::
 
     import warnings
 
@@ -813,7 +816,8 @@ As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
 0.x-dev, the message should say deprecation occurred in version 0.x and
-the removal will be in 0.(x+2). For example, if the deprecation happened
+the removal will be in 0.(x+2), so that users will have enough time to
+adapt their code to the new behaviour. For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
