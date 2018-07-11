@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.estimator_checks import check_estimator
 
 from sklearn.datasets import load_iris
 
@@ -183,6 +184,12 @@ def test_novelty_training_scores():
     scores_2 = clf_2.negative_outlier_factor_
 
     assert_array_almost_equal(scores_1, scores_2)
+
+
+def test_novelty_true_common_tests():
+    # the common tests are run for the default LOF (novelty=False).
+    # here we run these common tests for LOF when novelty=True
+    check_estimator(neighbors.LocalOutlierFactor(novelty=True))
 
 
 def test_deprecation():
