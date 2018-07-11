@@ -9,13 +9,13 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
 from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
-from sklearn import metrics
+from sklearn.metrics.cluster import contingency_matrix
 from sklearn.cluster.dbscan_ import DBSCAN
-from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_less
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
@@ -85,7 +85,7 @@ def test_close_extract():
 
 
 def test_dbscan_optics_parity():
-    # Test that OPTICS clustering metrics are < 2% difference of DBSCAN
+    # Test that OPTICS clustering labels are < 5 difference of DBSCAN
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
@@ -95,27 +95,18 @@ def test_dbscan_optics_parity():
     op = OPTICS(min_samples=10).fit(X)
     core_optics, labels_optics = op.extract_dbscan(0.3)
 
-    op_h = metrics.homogeneity_score(labels_true, labels_optics)
-    op_c = metrics.completeness_score(labels_true, labels_optics)
-    op_V = metrics.v_measure_score(labels_true, labels_optics)
-    op_m = metrics.adjusted_mutual_info_score(labels_true, labels_optics)
-    op_s = metrics.silhouette_score(X, labels_optics)
-
-    op_metrics = np.array([op_h, op_c, op_V, op_m, op_s])
-
-    # calculate dbscan labels and cluster metrics
+    # calculate dbscan labels
     db = DBSCAN(eps=0.3, min_samples=10).fit(X)
 
-    db_h = metrics.homogeneity_score(labels_true, db.labels_)
-    db_c = metrics.completeness_score(labels_true, db.labels_)
-    db_V = metrics.v_measure_score(labels_true, db.labels_)
-    db_m = metrics.adjusted_mutual_info_score(labels_true, db.labels_)
-    db_s = metrics.silhouette_score(X, db.labels_)
+    confusion_m = contingency_matrix(db.labels_, labels_optics)
+    agree = np.max(confusion_m, axis=1)
+    disagree = np.sum(confusion_m) - np.sum(agree)
 
-    db_metrics = np.array([db_h, db_c, db_V, db_m, db_s])
+    # verify core_labels match
+    assert_array_equal(core_optics, db.core_sample_indices_)
 
-    # compare metrics
-    assert_allclose(db_metrics, op_metrics, atol=0.02)
+    # verify label mismatch is < 5 labels
+    assert_less(disagree, 5)
 
 
 def test_auto_extract_hier():
