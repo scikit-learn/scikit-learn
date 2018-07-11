@@ -98,7 +98,7 @@ def test_dbscan_optics_parity():
     db = DBSCAN(eps=0.3, min_samples=10).fit(X)
 
     contingency = contingency_matrix(db.labels_, labels_optics)
-    agree = np.min(np.max(contingency, axis=1), np.min(contingency, axis=0))
+    agree = min(np.max(contingency, axis=1), np.max(contingency, axis=0))
     disagree = np.sum(contingency) - np.sum(agree)
 
     # verify core_labels match
