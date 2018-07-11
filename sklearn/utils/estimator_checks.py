@@ -1166,6 +1166,13 @@ def check_estimators_pickle(name, estimator_orig):
         X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
+    # check if input with nans pickles properly
+    if name in ALLOW_NAN:
+        # set random 10 elements to be np.nan
+        rng = np.random.RandomState(42)
+        mask = rng.choice(X.size, 10, replace=False)
+        X.reshape(-1)[mask] = np.nan
+
     estimator = clone(estimator_orig)
 
     # some estimators only take multioutputs
@@ -1187,33 +1194,12 @@ def check_estimators_pickle(name, estimator_orig):
 
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
-        assert_allclose_dense_sparse(result[method], unpickled_result)
-
-    # check if input with nans pickles properly
-    if name in ALLOW_NAN:
-        # set random 10 elements to be np.nan
-        rng = np.random.RandomState(42)
-        mask = rng.choice(X.size, 10, replace=False)
-        X.reshape(-1)[mask] = np.nan
-        estimator.fit(X, y)
-
-        nan_result = dict()
-        for method in check_methods:
-            if hasattr(estimator, method):
-                nan_result[method] = getattr(estimator, method)(X)
-
-        # pickle and unpickle!
-        pickled_estimator = pickle.dumps(estimator)
-        unpickled_estimator = pickle.loads(pickled_estimator)
-
-        for method in nan_result:
-            unpickled_nan_result = getattr(unpickled_estimator, method)(X)
-            if name == 'ChainedImputer':
-                tol = {'rtol': 1e-5, 'atol': 0.1}
-            else:
-                tol = {}
-            assert_allclose_dense_sparse(nan_result[method],
-                                         unpickled_nan_result, **tol)
+        if name == 'ChainedImputer':
+            tol = {'rtol': 1e-5, 'atol': 0.1}
+        else:
+            tol = {}
+        assert_allclose_dense_sparse(result[method],
+                                     unpickled_result, **tol)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
