@@ -240,7 +240,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             Data in the binned space.
         """
         check_is_fitted(self, ["bin_edges_"])
-        X = self._validate_X_post_fit(X)
 
         X = check_array(X, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
