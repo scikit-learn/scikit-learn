@@ -234,3 +234,15 @@ def test_transform_outside_fit_range(strategy):
     X2t = kbd.transform(X2)
     assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
     assert_array_equal(X2t.min(axis=0), [0])
+
+def test_overwrite():
+    X = np.array([0, 1, 2, 3])[:, None]
+    X_before = X.copy()
+    
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    Xt = est.fit_transform(X)
+    assert_array_equal(X, X_before)
+    
+    Xt_before = Xt.copy()
+    Xinv = est.inverse_transform(Xt)
+    assert_array_equal(Xt, Xt_before)

@@ -49,9 +49,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ordinal
             Return the bin identifier encoded as an integer value.
 
-    dtype : number type, default=np.float
-        Desired dtype of output.
-
     strategy : {'uniform', 'quantile', 'kmeans'}, (default='quantile')
         Strategy used to define the widths of the bins.
 
@@ -119,11 +116,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=5, encode='onehot', dtype=np.float64,
-                 strategy='quantile'):
+    def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
         self.n_bins = n_bins
         self.encode = encode
-        self.dtype = dtype
         self.strategy = strategy
 
     def fit(self, X, y=None):
@@ -248,33 +243,30 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = self._validate_X_post_fit(X)
 
         X = check_array(X, dtype=FLOAT_DTYPES)
+        n_features = self.n_bins_.shape[0]
+        if X.shape[1] != n_features:
+            raise ValueError("Incorrect number of features. Expecting {}, "
+                             "received {}.".format(n_features, X.shape[1]))
+
+        Xt = X.copy()
         bin_edges = self.bin_edges_
-        for jj in range(X.shape[1]):
+        for jj in range(Xt.shape[1]):
             # Values which are close to a bin edge are susceptible to numeric
             # instability. Add eps to X so these values are binned correctly
             # with respect to their decimal truncation. See documentation of
             # numpy.isclose for an explanation of ``rtol`` and ``atol``.
             rtol = 1.e-5
             atol = 1.e-8
-            eps = atol + rtol * np.abs(X[:, jj])
-            X[:, jj] = np.digitize(X[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(X, 0, self.n_bins_ - 1, out=X)
+            eps = atol + rtol * np.abs(Xt[:, jj])
+            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
+        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
         if self.encode == 'ordinal':
-            return X
+            return Xt
 
         encode_sparse = self.encode == 'onehot'
         return OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
-                             sparse=encode_sparse).fit_transform(X)
-
-    def _validate_X_post_fit(self, X):
-        X = check_array(X, dtype='numeric')
-
-        n_features = self.n_bins_.shape[0]
-        if X.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, X.shape[1]))
-        return X
+                             sparse=encode_sparse).fit_transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
@@ -299,10 +291,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "'encode = ordinal'. Got encode={!r} instead."
                              .format(self.encode))
 
-        Xt = self._validate_X_post_fit(Xt)
+        Xt = check_array(Xt, dtype='numeric')
+        n_features = self.n_bins_.shape[0]
+        if Xt.shape[1] != n_features:
+            raise ValueError("Incorrect number of features. Expecting {}, "
+                             "received {}.".format(n_features, Xt.shape[1]))
         Xinv = Xt.copy()
 
-        n_features = Xinv.shape[1]
         for jj in range(n_features):
             bin_edges = self.bin_edges_[jj]
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
