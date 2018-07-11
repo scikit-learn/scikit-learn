@@ -17,6 +17,7 @@ from ._encoders import _transform_selected
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 from ..utils.fixes import np_version
 
 
@@ -246,29 +247,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, ["bin_edges_"])
         X = self._validate_X_post_fit(X)
 
-        Xt = _transform_selected(X, self._transform, self.dtype,
-                                 copy=True, retain_order=True)
-
-        if self.encode == 'ordinal':
-            return Xt
-
-        encode_sparse = self.encode == 'onehot'
-        return OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
-                             sparse=encode_sparse).fit_transform(Xt)
-
-    def _validate_X_post_fit(self, X):
-        X = check_array(X, dtype='numeric')
-
-        n_features = self.n_bins_.shape[0]
-        if X.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, X.shape[1]))
-        return X
-
-    def _transform(self, X):
-        """Performs transformation on X, with no ignored features."""
+        X = check_array(X, dtype=FLOAT_DTYPES)
         bin_edges = self.bin_edges_
-
         for jj in range(X.shape[1]):
             # Values which are close to a bin edge are susceptible to numeric
             # instability. Add eps to X so these values are binned correctly
@@ -277,11 +257,23 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             rtol = 1.e-5
             atol = 1.e-8
             eps = atol + rtol * np.abs(X[:, jj])
-
             X[:, jj] = np.digitize(X[:, jj] + eps, bin_edges[jj][1:])
-
         np.clip(X, 0, self.n_bins_ - 1, out=X)
 
+        if self.encode == 'ordinal':
+            return X
+
+        encode_sparse = self.encode == 'onehot'
+        return OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
+                             sparse=encode_sparse).fit_transform(X)
+
+    def _validate_X_post_fit(self, X):
+        X = check_array(X, dtype='numeric')
+
+        n_features = self.n_bins_.shape[0]
+        if X.shape[1] != n_features:
+            raise ValueError("Incorrect number of features. Expecting {}, "
+                             "received {}.".format(n_features, X.shape[1]))
         return X
 
     def inverse_transform(self, Xt):
