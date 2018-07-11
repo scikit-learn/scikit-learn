@@ -33,7 +33,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -777,9 +777,9 @@ def test_bagging_regressor_with_missing_inputs():
     for y in y_values:
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(
-            Imputer(),
-            Imputer(missing_values=np.inf),
-            Imputer(missing_values=np.NINF),
+            SimpleImputer(),
+            SimpleImputer(missing_values=np.inf),
+            SimpleImputer(missing_values=np.NINF),
             regressor
         )
         pipeline.fit(X, y).predict(X)
@@ -807,9 +807,9 @@ def test_bagging_classifier_with_missing_inputs():
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
-        Imputer(),
-        Imputer(missing_values=np.inf),
-        Imputer(missing_values=np.NINF),
+        SimpleImputer(),
+        SimpleImputer(missing_values=np.inf),
+        SimpleImputer(missing_values=np.NINF),
         classifier
     )
     pipeline.fit(X, y).predict(X)
