@@ -241,13 +241,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ["bin_edges_"])
 
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
-        if X.shape[1] != n_features:
+        if Xt.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, X.shape[1]))
+                             "received {}.".format(n_features, Xt.shape[1]))
 
-        Xt = X.copy()
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
             # Values which are close to a bin edge are susceptible to numeric
@@ -290,12 +289,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "'encode = ordinal'. Got encode={!r} instead."
                              .format(self.encode))
 
-        Xt = check_array(Xt, dtype='numeric')
+        Xinv = check_array(Xt, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
-        if Xt.shape[1] != n_features:
+        if Xinv.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, Xt.shape[1]))
-        Xinv = Xt.copy()
+                             "received {}.".format(n_features, Xinv.shape[1]))
 
         for jj in range(n_features):
             bin_edges = self.bin_edges_[jj]
