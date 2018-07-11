@@ -5,11 +5,12 @@ import os as _os
 
 # An environment variable to use the site joblib
 if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
+    from joblib import __all__
     from joblib import *
     from joblib import __version__
     from joblib import logger
 else:
+    from .joblib import __all__
     from .joblib import *
     from .joblib import __version__
     from .joblib import logger
-
