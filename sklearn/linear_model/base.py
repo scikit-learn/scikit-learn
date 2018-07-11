@@ -53,13 +53,13 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     Parameters
     ----------
-    X : array_like, shape = (n_samples, n_features)
+    X : array_like, shape (n_samples, n_features)
         Training data
 
-    y : array_like, shape = (n_samples, )
+    y : array_like, shape (n_samples, )
         Target values.
 
-    sample_weight : numpy array of shape [n_samples, ]
+    sample_weight : numpy array of shape (n_samples,)
         The weight of each sample
 
     random_state : int, RandomState instance or None (default)
@@ -194,12 +194,12 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : array, shape (n_samples,)
             Returns predicted values.
         """
         return self._decision_function(X)
@@ -232,7 +232,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -262,12 +262,12 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape [n_samples]
             Predicted class label per sample.
         """
         scores = self.decision_function(X)
@@ -409,10 +409,10 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Training data
 
-        y : array_like, shape = (n_samples, n_targets)
+        y : array_like, shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
         sample_weight : numpy array of shape [n_samples]
