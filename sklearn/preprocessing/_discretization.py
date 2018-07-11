@@ -12,7 +12,6 @@ import numpy as np
 import warnings
 
 from . import OneHotEncoder
-from ._encoders import _transform_selected
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
