@@ -733,6 +733,29 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
+    Examples
+    --------
+    >>> from sklearn.cluster import AgglomerativeClustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AgglomerativeClustering().fit(X)
+    >>> clustering
+    ... # doctest: +NORMALIZE_WHITESPACE
+    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
+                connectivity=None, linkage='ward', memory=None, n_clusters=2,
+                pooling_func='deprecated')
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering.n_components_
+    1
+    >>> clustering.children_
+    array([[0, 1],
+           [3, 5],
+           [2, 6],
+           [4, 7],
+           [8, 9]])
+
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
