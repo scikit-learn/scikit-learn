@@ -276,10 +276,10 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.kernel_approximation import AdditiveChi2Sampler 
+    >>> from sklearn.kernel_approximation import AdditiveChi2Sampler
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0, 0], [1, 1], [2, 0], [0, 4]]
-    >>> y = [0, 0, 1, 1] 
+    >>> y = [0, 0, 1, 1]
     >>> chi2_feature = AdditiveChi2Sampler(sample_steps=1)
     >>> X_features = chi2_feature.fit_transform(X, y)
     >>> clf = SGDClassifier(max_iter=5)
