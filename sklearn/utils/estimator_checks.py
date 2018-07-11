@@ -225,8 +225,9 @@ def _yield_clustering_checks(name, clusterer):
 
 def _yield_outliers_checks(name, estimator):
 
-    # checks for all outlier detectors
-    yield check_outliers_fit_predict
+    # checks for outlier detectors that have a fit_predict method
+    if hasattr(estimator, 'fit_predict'):
+        yield check_outliers_fit_predict
 
     # checks for estimators that can be used on a test set
     if hasattr(estimator, 'predict'):
@@ -495,10 +496,6 @@ def check_estimator_sparse_data(name, estimator_orig):
         try:
             with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
                 estimator.fit(X, y)
-            if hasattr(estimator, 'novelty'):
-                # for estimators such as LocalOutlierFactor, predict is
-                # only available when novelty=True
-                estimator.set_params(novelty=True)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 assert_equal(pred.shape, (X.shape[0],))
@@ -611,10 +608,6 @@ def check_dtype_object(name, estimator_orig):
 
     estimator.fit(X, y)
     if hasattr(estimator, "predict"):
-        if hasattr(estimator, 'novelty'):
-            # for estimators such as LocalOutlierFactor, predict is
-            # only available when novelty=True
-            estimator.set_params(novelty=True)
         estimator.predict(X)
 
     if hasattr(estimator, "transform"):
@@ -672,10 +665,6 @@ def check_dict_unchanged(name, estimator_orig):
     set_random_state(estimator, 1)
 
     estimator.fit(X, y)
-    if hasattr(estimator, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict and
-        # decision_function are only available when novelty=True
-        estimator.set_params(novelty=True)
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
         if hasattr(estimator, method):
@@ -754,10 +743,6 @@ def check_fit2d_predict1d(name, estimator_orig):
         estimator.n_components = 1
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = 1
-    if hasattr(estimator, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict and
-        # decision_function are only available when novelty=True
-        estimator.set_params(novelty=True)
 
     set_random_state(estimator, 1)
     estimator.fit(X, y)
@@ -804,12 +789,6 @@ def check_methods_subset_invariance(name, estimator_orig):
 
     set_random_state(estimator, 1)
     estimator.fit(X, y)
-
-    if hasattr(estimator, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict,
-        # decision_function and score_samples are only available when
-        # novelty=True
-        estimator.set_params(novelty=True)
 
     for method in ["predict", "transform", "decision_function",
                    "score_samples", "predict_proba"]:
@@ -1115,11 +1094,6 @@ def check_estimators_dtypes(name, estimator_orig):
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
 
-        if hasattr(estimator, 'novelty'):
-            # for estimators such as LocalOutlierFactor, predict and
-            # decision_function are only available when novelty=True
-            estimator.set_params(novelty=True)
-
         for method in methods:
             if hasattr(estimator, method):
                 getattr(estimator, method)(X_train)
@@ -1188,11 +1162,6 @@ def check_estimators_nan_inf(name, estimator_orig):
             # actually fit
             estimator.fit(X_train_finite, y)
 
-            if hasattr(estimator, 'novelty'):
-                # for estimators such as LocalOutlierFactor, predict is only
-                # available when novelty=True
-                estimator.set_params(novelty=True)
-
             # predict
             if hasattr(estimator, "predict"):
                 try:
@@ -1254,11 +1223,6 @@ def check_estimators_pickle(name, estimator_orig):
 
     set_random_state(estimator)
     estimator.fit(X, y)
-
-    if hasattr(estimator, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict and
-        # decision_function are only available when novelty=True
-        estimator.set_params(novelty=True)
 
     result = dict()
     for method in check_methods:
@@ -1551,12 +1515,6 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     # with lists
     estimator.fit(X.tolist())
 
-    if hasattr(estimator, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict,
-        # decision_function and score_samples are only available when
-        # novelty=True
-        estimator.set_params(novelty=True)
-
     y_pred = estimator.predict(X)
     assert y_pred.shape == (n_samples,)
     assert y_pred.dtype.kind == 'i'
@@ -1646,11 +1604,6 @@ def check_estimators_unfitted(name, estimator_orig):
     estimator = clone(estimator_orig)
 
     msg = "fit"
-
-    if hasattr(estimator, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict and
-        # decision_function are only available when novelty=True
-        estimator.set_params(novelty=True)
 
     if hasattr(estimator, 'predict'):
         assert_raise_message((AttributeError, ValueError), msg,
@@ -2098,11 +2051,6 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     estimator_2 = clone(estimator_orig)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
-    if hasattr(estimator_1, 'novelty'):
-        # for estimators such as LocalOutlierFactor, predict and
-        # decision_function are only available when novelty=True
-        estimator_1.set_params(novelty=True)
-        estimator_2.set_params(novelty=True)
 
     y_ = NotAnArray(np.asarray(y))
     X_ = NotAnArray(np.asarray(X))
@@ -2383,10 +2331,10 @@ def check_outliers_fit_predict(name, estimator_orig):
     assert y_pred.dtype.kind == 'i'
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
-    # check fit_predict = fit.predict when possible. if novelty is an attribute
-    # of the estimator this implies that fit.predict and fit_predict cannot be
-    # applied to the same instance of the estimator.
-    if hasattr(estimator, 'predict') and not hasattr(estimator, 'novelty'):
+    # check fit_predict = fit.predict when the estimator has both a predict and
+    # a fit_predict method. recall that it is already assumed here that the
+    # estimator has a fit_predict method
+    if hasattr(estimator, 'predict'):
         y_pred_2 = estimator.fit(X).predict(X)
         assert_array_equal(y_pred, y_pred_2)
 
