@@ -15,7 +15,6 @@ from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_less
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
@@ -98,15 +97,15 @@ def test_dbscan_optics_parity():
     # calculate dbscan labels
     db = DBSCAN(eps=0.3, min_samples=10).fit(X)
 
-    confusion_m = contingency_matrix(db.labels_, labels_optics)
-    agree = np.max(confusion_m, axis=1)
-    disagree = np.sum(confusion_m) - np.sum(agree)
+    contingency = contingency_matrix(db.labels_, labels_optics)
+    agree = np.min(np.max(contingency, axis=1), np.min(contingency, axis=0))
+    disagree = np.sum(contingency) - np.sum(agree)
 
     # verify core_labels match
     assert_array_equal(core_optics, db.core_sample_indices_)
 
     # verify label mismatch is < 5 labels
-    assert_less(disagree, 5)
+    assert disagree < 5
 
 
 def test_auto_extract_hier():
