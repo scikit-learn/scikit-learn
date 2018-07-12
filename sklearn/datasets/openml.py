@@ -2,7 +2,6 @@ import json
 import numbers
 import sys
 import os
-import pandas as pd
 from os.path import join, exists
 from warnings import warn
 
@@ -29,17 +28,6 @@ _DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
 
 def _openml_fileid_url(file_id):
     return "https://www.openml.org/data/v1/download/{}/".format(file_id)
-
-
-def _liacarff_to_dataframe(liacarff):
-    num_keys = {'numeric', 'real'}
-    expected_keys = {'data', 'attributes', 'description', 'relation'}
-    if liacarff.keys() != expected_keys:
-        raise ValueError('liacarff object does not contain correct keys.')
-    data_ = np.array(liacarff['data'])
-    arff_dict = {col_name: pd.Series(data_[:, idx], dtype=np.float64 if str(col_type).lower() in num_keys else object)
-                 for idx, (col_name, col_type) in enumerate(liacarff['attributes'])}
-    return pd.DataFrame(arff_dict)
 
 
 def _get_data_info_by_name(name, version):
@@ -123,8 +111,16 @@ def _download_data(url):
     return arff
 
 
+def _convert_numericals(data, name_feature):
+    for feature in name_feature.values():
+        if feature['data_type'] == "numeric":
+            idx = int(feature['index'])
+            data[:, idx] = data[:, idx].astype(np.float)
+    return data
+
+
 def fetch_openml(name_or_id=None, version='active', data_home=None,
-                 target_column='default-target', memory=True):
+                 target_column_name='default-target', memory=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -145,7 +141,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    target_column : string or None, default 'default-target'
+    target_column_name : string or None, default 'default-target'
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
         is used. If ``None``, all columns are returned as data and the
@@ -201,24 +197,28 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
                  data_description['version'], data_description['name']))
-    if target_column == "default-target":
-        target_column = data_description.get('default_target_attribute', None)
+    if target_column_name == "default-target":
+        target_column_name = data_description.get('default_target_attribute', None)
 
     # download actual data
     features = _get_data_features_(data_id)
+    name_feature = {feature['name']: feature for feature in features}
+
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # and target at start or end, we could use a view instead.
     data_columns = []
     for feature in features:
-        if (feature['name'] != target_column and feature['is_ignore'] ==
+        if (feature['name'] != target_column_name and feature['is_ignore'] ==
                 'false' and feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
     data_arff_url_ = _openml_fileid_url(data_description['file_id'])
 
-    data = _liacarff_to_dataframe(_download_data_(data_arff_url_))
-    if target_column is not None:
-        y = data[target_column]
+    data = np.array(_download_data_(data_arff_url_)['data'], dtype=object)
+    data = _convert_numericals(data, name_feature)
+
+    if target_column_name is not None:
+        y = data[:, int(name_feature[target_column_name]['index'])]
     else:
         y = None
 
@@ -227,7 +227,8 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         dtype = None
     else:
         dtype = object
-    X = np.array([data[c] for c in data_columns], dtype=dtype).T
+    col_slice = [int(name_feature[col_name]['index']) for col_name in data_columns]
+    X = np.array(data[:, col_slice], dtype=dtype)
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
