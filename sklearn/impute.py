@@ -118,7 +118,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
 
-    fill_value : string or numerical value, optional
+    fill_value : string or numerical value, optional (default=None)
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
         If left to the default, fill_value will be 0 when imputing numerical
@@ -752,7 +752,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
         # ensures exploration, i.e. at least some probability of sampling
-        abs_corr_mat[abs_corr_mat < tolerance] = tolerance
+        np.clip(abs_corr_mat, tolerance, None, out=abs_corr_mat)
         # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
         # needs to sum to 1 for np.random.choice sampling
