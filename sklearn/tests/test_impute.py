@@ -705,3 +705,22 @@ def test_chained_imputer_additive_matrix():
                              random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.01)
+
+
+def regression_test_sparse_zeros():
+    # regression test on wrong statistics computation for sparse input with
+    # explicit zeros. (#11495)
+    X = np.array([[0, 0, 0],
+                  [0, 0, 0],
+                  [1, 1, 1]])
+    X = sparse.csc_matrix(X)
+    X[0] = 0
+
+    X_true = np.array([[1, 1, 1],
+                       [1, 1, 1],
+                       [1, 1, 1]])
+
+    imputer = SimpleImputer(missing_values=0, strategy='mean')
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
