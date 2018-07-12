@@ -747,14 +747,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                 pooling_func='deprecated')
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
-    >>> clustering.n_components_
-    1
-    >>> clustering.children_
-    array([[0, 1],
-           [3, 5],
-           [2, 6],
-           [4, 7],
-           [8, 9]])
 
     """
 
