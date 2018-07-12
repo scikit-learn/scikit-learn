@@ -28,8 +28,8 @@ def plot_decision_function(classifier, sample_weight, axis, title):
 
     # plot the line, the points, and the nearest vectors to the plane
     axis.contourf(xx, yy, Z, alpha=0.75, cmap=plt.cm.bone)
-    axis.scatter(X[:, 0], X[:, 1], c=Y, s=100 * sample_weight, alpha=0.9,
-                 cmap=plt.cm.bone)
+    axis.scatter(X[:, 0], X[:, 1], c=y, s=100 * sample_weight, alpha=0.9,
+                 cmap=plt.cm.bone, edgecolors='black')
 
     axis.axis('off')
     axis.set_title(title)
@@ -38,7 +38,7 @@ def plot_decision_function(classifier, sample_weight, axis, title):
 # we create 20 points
 np.random.seed(0)
 X = np.r_[np.random.randn(10, 2) + [1, 1], np.random.randn(10, 2)]
-Y = [1] * 10 + [-1] * 10
+y = [1] * 10 + [-1] * 10
 sample_weight_last_ten = abs(np.random.randn(len(X)))
 sample_weight_constant = np.ones(len(X))
 # and bigger weights to some outliers
@@ -49,10 +49,10 @@ sample_weight_last_ten[9] *= 15
 
 # fit the model
 clf_weights = svm.SVC()
-clf_weights.fit(X, Y, sample_weight=sample_weight_last_ten)
+clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
 
 clf_no_weights = svm.SVC()
-clf_no_weights.fit(X, Y)
+clf_no_weights.fit(X, y)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 plot_decision_function(clf_no_weights, sample_weight_constant, axes[0],

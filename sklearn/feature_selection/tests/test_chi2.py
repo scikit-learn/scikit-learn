@@ -3,15 +3,18 @@ Tests for chi2, currently the only feature selection function designed
 specifically to work with sparse matrices.
 """
 
+import warnings
+
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 import scipy.stats
 
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.feature_selection.univariate_selection import _chisquare
-
-from nose.tools import assert_raises
-from numpy.testing import assert_equal, assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import clean_warning_registry
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -33,22 +36,22 @@ def test_chi2():
 
     chi2 = mkchi2(k=1).fit(X, y)
     chi2 = mkchi2(k=1).fit(X, y)
-    assert_equal(chi2.get_support(indices=True), [0])
-    assert_equal(chi2.transform(X), np.array(X)[:, [0]])
+    assert_array_equal(chi2.get_support(indices=True), [0])
+    assert_array_equal(chi2.transform(X), np.array(X)[:, [0]])
 
     chi2 = mkchi2(k=2).fit(X, y)
-    assert_equal(sorted(chi2.get_support(indices=True)), [0, 2])
+    assert_array_equal(sorted(chi2.get_support(indices=True)), [0, 2])
 
-    Xsp = csr_matrix(X, dtype=np.float)
+    Xsp = csr_matrix(X, dtype=np.float64)
     chi2 = mkchi2(k=2).fit(Xsp, y)
-    assert_equal(sorted(chi2.get_support(indices=True)), [0, 2])
+    assert_array_equal(sorted(chi2.get_support(indices=True)), [0, 2])
     Xtrans = chi2.transform(Xsp)
-    assert_equal(Xtrans.shape, [Xsp.shape[0], 2])
+    assert_array_equal(Xtrans.shape, [Xsp.shape[0], 2])
 
     # == doesn't work on scipy.sparse matrices
     Xtrans = Xtrans.toarray()
     Xtrans2 = mkchi2(k=2).fit_transform(Xsp, y).toarray()
-    assert_equal(Xtrans, Xtrans2)
+    assert_array_almost_equal(Xtrans, Xtrans2)
 
 
 def test_chi2_coo():
@@ -64,6 +67,20 @@ def test_chi2_negative():
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     for X in (X, np.array(X), csr_matrix(X)):
         assert_raises(ValueError, chi2, X, y)
+
+
+def test_chi2_unused_feature():
+    # Unused feature should evaluate to NaN
+    # and should issue no runtime warning
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as warned:
+        warnings.simplefilter('always')
+        chi, p = chi2([[1, 0], [0, 0]], [1, 0])
+        for w in warned:
+            if 'divide by zero' in repr(w):
+                raise AssertionError('Found unexpected warning %s' % w)
+    assert_array_equal(chi, [1, np.nan])
+    assert_array_equal(p[1], np.nan)
 
 
 def test_chisquare():

@@ -8,8 +8,8 @@ Density Estimation
 Density estimation walks the line between unsupervised learning, feature
 engineering, and data modeling.  Some of the most popular and useful
 density estimation techniques are mixture models such as
-Gaussian Mixtures (:class:`sklearn.mixture.GMM`), and neighbor-based
-approaches such as the kernel density estimate
+Gaussian Mixtures (:class:`sklearn.mixture.GaussianMixture`), and
+neighbor-based approaches such as the kernel density estimate
 (:class:`sklearn.neighbors.KernelDensity`).
 Gaussian Mixtures are discussed more fully in the context of
 :ref:`clustering <clustering>`, because the technique is also useful as
@@ -24,7 +24,7 @@ A histogram is a simple visualization of data where bins are defined, and the
 number of data points within each bin is tallied.  An example of a histogram
 can be seen in the upper-left panel of the following figure:
 
-.. |hist_to_kde| image:: ../auto_examples/neighbors/images/plot_kde_1d_001.png
+.. |hist_to_kde| image:: ../auto_examples/neighbors/images/sphx_glr_plot_kde_1d_001.png
    :target: ../auto_examples/neighbors/plot_kde_1d.html
    :scale: 80
 
@@ -68,7 +68,7 @@ dimensionality causes its performance to degrade in high dimensions.
 In the following figure, 100 points are drawn from a bimodal distribution,
 and the kernel density estimates are shown for three choices of kernels:
 
-.. |kde_1d_distribution| image:: ../auto_examples/neighbors/images/plot_kde_1d_003.png
+.. |kde_1d_distribution| image:: ../auto_examples/neighbors/images/sphx_glr_plot_kde_1d_003.png
    :target: ../auto_examples/neighbors/plot_kde_1d.html
    :scale: 80
 
@@ -103,7 +103,7 @@ to an unsmooth (i.e. high-variance) density distribution.
 :class:`sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 
-.. |kde_kernels| image:: ../auto_examples/neighbors/images/plot_kde_1d_002.png
+.. |kde_kernels| image:: ../auto_examples/neighbors/images/sphx_glr_plot_kde_1d_002.png
    :target: ../auto_examples/neighbors/plot_kde_1d.html
    :scale: 80
 
@@ -112,7 +112,7 @@ forms, which are shown in the following figure:
 The form of these kernels is as follows:
 
 * Gaussian kernel (``kernel = 'gaussian'``)
-  
+
   :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
 
 * Tophat kernel (``kernel = 'tophat'``)
@@ -120,7 +120,7 @@ The form of these kernels is as follows:
   :math:`K(x; h) \propto 1` if :math:`x < h`
 
 * Epanechnikov kernel (``kernel = 'epanechnikov'``)
-  
+
   :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
 
 * Exponential kernel (``kernel = 'exponential'``)
@@ -139,13 +139,13 @@ The kernel density estimator can be used with any of the valid distance
 metrics (see :class:`sklearn.neighbors.DistanceMetric` for a list of available metrics), though
 the results are properly normalized only for the Euclidean metric.  One
 particularly useful metric is the
-`Haversine distance <http://en.wikipedia.org/wiki/Haversine_formula>`_
+`Haversine distance <https://en.wikipedia.org/wiki/Haversine_formula>`_
 which measures the angular distance between points on a sphere.  Here
 is an example of using a kernel density estimate for a visualization
 of geospatial data, in this case the distribution of observations of two
 different species on the South American continent:
 
-.. |species_kde| image:: ../auto_examples/neighbors/images/plot_species_kde_001.png
+.. |species_kde| image:: ../auto_examples/neighbors/images/sphx_glr_plot_species_kde_001.png
    :target: ../auto_examples/neighbors/plot_species_kde.html
    :scale: 80
 
@@ -158,7 +158,7 @@ Here is an example of using this process to
 create a new set of hand-written digits, using a Gaussian kernel learned
 on a PCA projection of the data:
 
-.. |digits_kde| image:: ../auto_examples/neighbors/images/plot_digits_kde_sampling_001.png
+.. |digits_kde| image:: ../auto_examples/neighbors/images/sphx_glr_plot_digits_kde_sampling_001.png
    :target: ../auto_examples/neighbors/plot_digits_kde_sampling.html
    :scale: 80
 
@@ -169,12 +169,12 @@ probabilistically drawn given the KDE model.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_kde_1d.py`: computation of simple kernel
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_kde_1d.py`: computation of simple kernel
     density estimates in one dimension.
 
-  * :ref:`example_neighbors_plot_digits_kde_sampling.py`: an example of using
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_digits_kde_sampling.py`: an example of using
     Kernel Density estimation to learn a generative model of the hand-written
     digits data, and drawing new samples from this model.
 
-  * :ref:`example_neighbors_plot_species_kde.py`: an example of Kernel Density
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_species_kde.py`: an example of Kernel Density
     estimation using the Haversine distance metric to visualize geospatial data

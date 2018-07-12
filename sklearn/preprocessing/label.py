@@ -9,16 +9,14 @@
 from collections import defaultdict
 import itertools
 import array
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import np_version
-from ..utils.fixes import sparse_min_max
-from ..utils.fixes import astype
-from ..utils.fixes import in1d
+from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -39,18 +37,127 @@ __all__ = [
 ]
 
 
-def _check_numpy_unicode_bug(labels):
-    """Check that user is not subject to an old numpy bug
+def _encode_numpy(values, uniques=None, encode=False):
+    # only used in _encode below, see docstring there for details
+    if uniques is None:
+        if encode:
+            uniques, encoded = np.unique(values, return_inverse=True)
+            return uniques, encoded
+        else:
+            # unique sorts
+            return np.unique(values)
+    if encode:
+        diff = _encode_check_unknown(values, uniques)
+        if diff:
+            raise ValueError("y contains previously unseen labels: %s"
+                             % str(diff))
+        encoded = np.searchsorted(uniques, values)
+        return uniques, encoded
+    else:
+        return uniques
 
-    Fixed in master before 1.7.0:
 
-      https://github.com/numpy/numpy/pull/243
+def _encode_python(values, uniques=None, encode=False):
+    # only used in _encode below, see docstring there for details
+    if uniques is None:
+        uniques = sorted(set(values))
+        uniques = np.array(uniques, dtype=values.dtype)
+    if encode:
+        table = {val: i for i, val in enumerate(uniques)}
+        try:
+            encoded = np.array([table[v] for v in values])
+        except KeyError as e:
+            raise ValueError("y contains previously unseen labels: %s"
+                             % str(e))
+        return uniques, encoded
+    else:
+        return uniques
+
+
+def _encode(values, uniques=None, encode=False):
+    """Helper function to factorize (find uniques) and encode values.
+
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+    The numpy method has the limitation that the `uniques` need to
+    be sorted. Importantly, this is not checked but assumed to already be
+    the case. The calling method needs to ensure this for all non-object
+    values.
+
+    Parameters
+    ----------
+    values : array
+        Values to factorize or encode.
+    uniques : array, optional
+        If passed, uniques are not determined from passed values (this
+        can be because the user specified categories, or because they
+        already have been determined in fit).
+    encode : bool, default False
+        If True, also encode the values into integer codes based on `uniques`.
+
+    Returns
+    -------
+    uniques
+        If ``encode=False``. The unique values are sorted if the `uniques`
+        parameter was None (and thus inferred from the data).
+    (uniques, encoded)
+        If ``encode=True``.
 
     """
-    if np_version[:3] < (1, 7, 0) and labels.dtype.kind == 'U':
-        raise RuntimeError("NumPy < 1.7.0 does not implement searchsorted"
-                           " on unicode data correctly. Please upgrade"
-                           " NumPy to use LabelEncoder with unicode inputs.")
+    if values.dtype == object:
+        return _encode_python(values, uniques, encode)
+    else:
+        return _encode_numpy(values, uniques, encode)
+
+
+def _encode_check_unknown(values, uniques, return_mask=False):
+    """
+    Helper function to check for unknowns in values to be encoded.
+
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+
+    Parameters
+    ----------
+    values : array
+        Values to check for unknowns.
+    uniques : array
+        Allowed uniques values.
+    return_mask : bool, default False
+        If True, return a mask of the same shape as `values` indicating
+        the valid values.
+
+    Returns
+    -------
+    diff : list
+        The unique values present in `values` and not in `uniques` (the
+        unknown values).
+    valid_mask : boolean array
+        Additionally returned if ``return_mask=True``.
+
+    """
+    if values.dtype == object:
+        uniques_set = set(uniques)
+        diff = list(set(values) - uniques_set)
+        if return_mask:
+            if diff:
+                valid_mask = np.array([val in uniques_set for val in values])
+            else:
+                valid_mask = np.ones(len(values), dtype=bool)
+            return diff, valid_mask
+        else:
+            return diff
+    else:
+        unique_values = np.unique(values)
+        diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
+        if return_mask:
+            if diff:
+                valid_mask = np.in1d(values, uniques)
+            else:
+                valid_mask = np.ones(len(values), dtype=bool)
+            return diff, valid_mask
+        else:
+            return diff
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -91,6 +198,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
+    See also
+    --------
+    sklearn.preprocessing.OrdinalEncoder : encode categorical features
+        using a one-hot or ordinal encoding scheme.
     """
 
     def fit(self, y):
@@ -106,8 +217,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
-        self.classes_ = np.unique(y)
+        self.classes_ = _encode(y)
         return self
 
     def fit_transform(self, y):
@@ -123,8 +233,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        self.classes_, y = _encode(y, encode=True)
         return y
 
     def transform(self, y):
@@ -140,13 +249,13 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
+        # transform of empty array is empty array
+        if _num_samples(y) == 0:
+            return np.array([])
 
-        classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+        _, y = _encode(y, uniques=self.classes_, encode=True)
+        return y
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -161,10 +270,15 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : numpy array of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
+        # inverse transform of empty array is empty array
+        if _num_samples(y) == 0:
+            return np.array([])
 
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
-        if diff:
-            raise ValueError("y contains new labels: %s" % str(diff))
+        if len(diff):
+            raise ValueError(
+                    "y contains previously unseen labels: %s" % str(diff))
         y = np.asarray(y)
         return self.classes_[y]
 
@@ -173,7 +287,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
-    available in the scikit. A simple way to extend these algorithms
+    available in scikit-learn. A simple way to extend these algorithms
     to the multi-class classification case is to use the so-called
     one-vs-all scheme.
 
@@ -212,22 +326,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Represents the type of the target data as evaluated by
         utils.multiclass.type_of_target. Possible type are 'continuous',
         'continuous-multioutput', 'binary', 'multiclass',
-        'mutliclass-multioutput', 'multilabel-indicator', and 'unknown'.
-
-    multilabel_ : boolean
-        True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels. The ``multilabel_`` attribute is deprecated
-        and will be removed in 0.18
+        'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
     sparse_input_ : boolean,
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
-
-    indicator_matrix_ : str
-        'sparse' when the input data to tansform is a multilable-indicator and
-        is sparse, None otherwise. The ``indicator_matrix_`` attribute is
-        deprecated as of version 0.16 and will be removed in 0.18
-
 
     Examples
     --------
@@ -267,6 +370,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     --------
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
+    sklearn.preprocessing.OneHotEncoder : encode categorical features
+        using a one-hot aka one-of-K scheme.
     """
 
     def __init__(self, neg_label=0, pos_label=1, sparse_output=False):
@@ -289,7 +394,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape (n_samples,) or (n_samples, n_classes)
+        y : array of shape [n_samples,] or [n_samples, n_classes]
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification.
 
@@ -308,18 +413,41 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes_ = unique_labels(y)
         return self
 
-    def transform(self, y):
-        """Transform multi-class labels to binary labels
+    def fit_transform(self, y):
+        """Fit label binarizer and transform multi-class labels to binary
+        labels.
 
-        The output of transform is sometimes referred to by some authors as the
-        1-of-K coding scheme.
+        The output of transform is sometimes referred to    as
+        the 1-of-K coding scheme.
 
         Parameters
         ----------
-        y : numpy array or sparse matrix of shape (n_samples,) or
-            (n_samples, n_classes) Target values. The 2-d matrix should only
-            contain 0 and 1, represents multilabel classification. Sparse
-            matrix can be CSR, CSC, COO, DOK, or LIL.
+        y : array or sparse matrix of shape [n_samples,] or \
+            [n_samples, n_classes]
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification. Sparse matrix can be
+            CSR, CSC, COO, DOK, or LIL.
+
+        Returns
+        -------
+        Y : array or CSR matrix of shape [n_samples, n_classes]
+            Shape will be [n_samples, 1] for binary problems.
+        """
+        return self.fit(y).transform(y)
+
+    def transform(self, y):
+        """Transform multi-class labels to binary labels
+
+        The output of transform is sometimes referred to by some authors as
+        the 1-of-K coding scheme.
+
+        Parameters
+        ----------
+        y : array or sparse matrix of shape [n_samples,] or \
+            [n_samples, n_classes]
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification. Sparse matrix can be
+            CSR, CSC, COO, DOK, or LIL.
 
         Returns
         -------
@@ -350,10 +478,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         threshold : float or None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when:
-                - Y contains the output of decision_function (classifier)
-            Use 0.5 when:
-                - Y contains the output of predict_proba
+            Use 0 when ``Y`` contains the output of decision_function
+            (classifier).
+            Use 0.5 when ``Y`` contains the output of predict_proba.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
@@ -393,7 +520,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
-    available in the scikit. A simple way to extend these algorithms
+    available in scikit-learn. A simple way to extend these algorithms
     to the multi-class classification case is to use the so-called
     one-vs-all scheme.
 
@@ -482,10 +609,13 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     classes = np.asarray(classes)
 
     if y_type == "binary":
-        if len(classes) == 1:
-            Y = np.zeros((len(y), 1), dtype=np.int)
-            Y += neg_label
-            return Y
+        if n_classes == 1:
+            if sparse_output:
+                return sp.csr_matrix((n_samples, 1), dtype=int)
+            else:
+                Y = np.zeros((len(y), 1), dtype=np.int)
+                Y += neg_label
+                return Y
         elif len(classes) >= 3:
             y_type = "multiclass"
 
@@ -498,7 +628,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = in1d(y, classes)
+        y_in_classes = np.in1d(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
         indptr = np.hstack((0, np.cumsum(y_in_classes)))
@@ -519,7 +649,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = astype(Y, int, copy=False)
+        Y = Y.astype(int, copy=False)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -527,7 +657,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         if pos_switch:
             Y[Y == pos_label] = 0
     else:
-        Y.data = astype(Y.data, int, copy=False)
+        Y.data = Y.data.astype(int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
@@ -556,7 +686,7 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        row_max = sparse_min_max(y, 1)[1]
+        row_max = min_max_axis(y, 1)[1]
         row_nnz = np.diff(y.indptr)
 
         y_data_repeated_max = np.repeat(row_max, row_nnz)
@@ -620,9 +750,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
             return classes[y[:, 1]]
         else:
             if len(classes) == 1:
-                y = np.empty(len(y), dtype=classes.dtype)
-                y.fill(classes[0])
-                return y
+                return np.repeat(classes[0], len(y))
             else:
                 return classes[y.ravel()]
 
@@ -657,6 +785,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> from sklearn.preprocessing import MultiLabelBinarizer
     >>> mlb = MultiLabelBinarizer()
     >>> mlb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
@@ -670,7 +799,12 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
+    See also
+    --------
+    sklearn.preprocessing.OneHotEncoder : encode categorical features
+        using a one-hot aka one-of-K scheme.
     """
+
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -730,7 +864,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         class_mapping = np.empty(len(tmp), dtype=dtype)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
-        yt.indices = np.take(inverse, yt.indices)
+        # ensure yt.indices keeps its current dtype
+        yt.indices = np.array(inverse[yt.indices], dtype=yt.indices.dtype,
+                              copy=False)
 
         if not self.sparse_output:
             yt = yt.toarray()
@@ -753,6 +889,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
+        check_is_fitted(self, 'classes_')
+
         class_to_index = dict(zip(self.classes_, range(len(self.classes_))))
         yt = self._transform(y, class_to_index)
 
@@ -777,9 +915,19 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         indices = array.array('i')
         indptr = array.array('i', [0])
+        unknown = set()
         for labels in y:
-            indices.extend(set(class_mapping[label] for label in labels))
+            index = set()
+            for label in labels:
+                try:
+                    index.add(class_mapping[label])
+                except KeyError:
+                    unknown.add(label)
+            indices.extend(index)
             indptr.append(len(indices))
+        if unknown:
+            warnings.warn('unknown class(es) {0} will be ignored'
+                          .format(sorted(unknown, key=str)))
         data = np.ones(len(indices), dtype=int)
 
         return sp.csr_matrix((data, indices, indptr),
@@ -799,6 +947,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
+        check_is_fitted(self, 'classes_')
+
         if yt.shape[1] != len(self.classes_):
             raise ValueError('Expected indicator for {0} classes, but got {1}'
                              .format(len(self.classes_), yt.shape[1]))

@@ -4,7 +4,7 @@ Image denoising using dictionary learning
 =========================================
 
 An example comparing the effect of reconstructing noisy fragments
-of the Lena image using firstly online :ref:`DictionaryLearning` and
+of a raccoon face image using firstly online :ref:`DictionaryLearning` and
 various transform methods.
 
 The dictionary is fitted on the distorted left half of the image, and
@@ -37,38 +37,44 @@ from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from scipy.misc import lena
+import scipy as sp
 
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
-###############################################################################
-# Load Lena image and extract patches
-lena = lena() / 256.0
+
+try:  # SciPy >= 0.16 have face in misc
+    from scipy.misc import face
+    face = face(gray=True)
+except ImportError:
+    face = sp.face(gray=True)
+
+# Convert from uint8 representation with values between 0 and 255 to
+# a floating point representation with values between 0 and 1.
+face = face / 255.
 
 # downsample for higher speed
-lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + lena[1::2, 1::2]
-lena /= 4.0
-height, width = lena.shape
+face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+face /= 4.0
+height, width = face.shape
 
 # Distort the right half of the image
 print('Distorting image...')
-distorted = lena.copy()
-distorted[:, height // 2:] += 0.075 * np.random.randn(width, height // 2)
+distorted = face.copy()
+distorted[:, width // 2:] += 0.075 * np.random.randn(height, width // 2)
 
 # Extract all reference patches from the left half of the image
 print('Extracting reference patches...')
 t0 = time()
 patch_size = (7, 7)
-data = extract_patches_2d(distorted[:, :height // 2], patch_size)
+data = extract_patches_2d(distorted[:, :width // 2], patch_size)
 data = data.reshape(data.shape[0], -1)
 data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
 print('done in %.2fs.' % (time() - t0))
 
-###############################################################################
+# #############################################################################
 # Learn the dictionary from reference patches
 
 print('Learning the dictionary...')
@@ -85,13 +91,13 @@ for i, comp in enumerate(V[:100]):
                interpolation='nearest')
     plt.xticks(())
     plt.yticks(())
-plt.suptitle('Dictionary learned from Lena patches\n' +
+plt.suptitle('Dictionary learned from face patches\n' +
              'Train time %.1fs on %d patches' % (dt, len(data)),
              fontsize=16)
 plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
-###############################################################################
+# #############################################################################
 # Display the distorted image
 
 def show_with_diff(image, reference, title):
@@ -99,7 +105,8 @@ def show_with_diff(image, reference, title):
     plt.figure(figsize=(5, 3.3))
     plt.subplot(1, 2, 1)
     plt.title('Image')
-    plt.imshow(image, vmin=0, vmax=1, cmap=plt.cm.gray, interpolation='nearest')
+    plt.imshow(image, vmin=0, vmax=1, cmap=plt.cm.gray,
+               interpolation='nearest')
     plt.xticks(())
     plt.yticks(())
     plt.subplot(1, 2, 2)
@@ -113,14 +120,14 @@ def show_with_diff(image, reference, title):
     plt.suptitle(title, size=16)
     plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
-show_with_diff(distorted, lena, 'Distorted image')
+show_with_diff(distorted, face, 'Distorted image')
 
-###############################################################################
+# #############################################################################
 # Extract noisy patches and reconstruct them using the dictionary
 
 print('Extracting noisy patches... ')
 t0 = time()
-data = extract_patches_2d(distorted[:, height // 2:], patch_size)
+data = extract_patches_2d(distorted[:, width // 2:], patch_size)
 data = data.reshape(data.shape[0], -1)
 intercept = np.mean(data, axis=0)
 data -= intercept
@@ -138,26 +145,22 @@ transform_algorithms = [
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
     print(title + '...')
-    reconstructions[title] = lena.copy()
+    reconstructions[title] = face.copy()
     t0 = time()
     dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
     code = dico.transform(data)
     patches = np.dot(code, V)
-
-    if transform_algorithm == 'threshold':
-        patches -= patches.min()
-        patches /= patches.max()
 
     patches += intercept
     patches = patches.reshape(len(data), *patch_size)
     if transform_algorithm == 'threshold':
         patches -= patches.min()
         patches /= patches.max()
-    reconstructions[title][:, height // 2:] = reconstruct_from_patches_2d(
-        patches, (width, height // 2))
+    reconstructions[title][:, width // 2:] = reconstruct_from_patches_2d(
+        patches, (height, width // 2))
     dt = time() - t0
     print('done in %.2fs.' % dt)
-    show_with_diff(reconstructions[title], lena,
+    show_with_diff(reconstructions[title], face,
                    title + ' (time: %.1fs)' % dt)
 
 plt.show()

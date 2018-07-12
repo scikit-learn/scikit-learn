@@ -36,7 +36,6 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
 
-###############################################################################
 l = 100
 x, y = np.indices((l, l))
 
@@ -52,12 +51,16 @@ circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
 circle3 = (x - center3[0]) ** 2 + (y - center3[1]) ** 2 < radius3 ** 2
 circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4 ** 2
 
-###############################################################################
+# #############################################################################
 # 4 circles
 img = circle1 + circle2 + circle3 + circle4
-mask = img.astype(bool)
-img = img.astype(float)
 
+# We use a mask that limits to the foreground: the problem that we are
+# interested in here is not separating the objects from the background,
+# but separating them one from the other.
+mask = img.astype(bool)
+
+img = img.astype(float)
 img += 1 + 0.2 * np.random.randn(*img.shape)
 
 # Convert the image into a graph with the value of the gradient on the
@@ -77,7 +80,7 @@ label_im[mask] = labels
 plt.matshow(img)
 plt.matshow(label_im)
 
-###############################################################################
+# #############################################################################
 # 2 circles
 img = circle1 + circle2
 mask = img.astype(bool)

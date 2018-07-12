@@ -1,25 +1,26 @@
-.. currentmodule:: sklearn.grid_search
+
+
+.. currentmodule:: sklearn.model_selection
 
 .. _grid_search:
 
-===============================================
-Grid Search: Searching for estimator parameters
-===============================================
+===========================================
+Tuning the hyper-parameters of an estimator
+===========================================
 
-Parameters that are not directly learnt within estimators can be set by
-searching a parameter space for the best :ref:`cross_validation` score.
-Typical examples include ``C``, ``kernel`` and ``gamma`` for Support Vector
-Classifier, ``alpha`` for Lasso, etc.
+Hyper-parameters are parameters that are not directly learnt within estimators.
+In scikit-learn they are passed as arguments to the constructor of the
+estimator classes. Typical examples include ``C``, ``kernel`` and ``gamma``
+for Support Vector Classifier, ``alpha`` for Lasso, etc.
+
+It is possible and recommended to search the hyper-parameter space for the
+best :ref:`cross validation <cross_validation>` score.
 
 Any parameter provided when constructing an estimator may be optimized in this
-manner.  Specifically, to find the names and current values for all parameters
+manner. Specifically, to find the names and current values for all parameters
 for a given estimator, use::
 
   estimator.get_params()
-
-Such parameters are often referred to as *hyperparameters* (particularly in
-Bayesian learning), distinguishing them from the parameters optimised in a
-machine learning procedure.
 
 A search consists of:
 
@@ -37,6 +38,12 @@ all parameter combinations, while :class:`RandomizedSearchCV` can sample a
 given number of candidates from a parameter space with a specified
 distribution. After describing these tools we detail
 :ref:`best practice <grid_search_tips>` applicable to both approaches.
+
+Note that it is common that a small subset of those parameters can have a large
+impact on the predictive or computation performance of the model while others
+can be left to their default values. It is recommended to read the docstring of
+the estimator class to get a finer understanding of their expected behavior,
+possibly by reading the enclosed reference to the literature.  
 
 Exhaustive Grid Search
 ======================
@@ -59,18 +66,27 @@ The :class:`GridSearchCV` instance implements the usual estimator API: when
 "fitting" it on a dataset all the possible combinations of parameter values are
 evaluated and the best combination is retained.
 
-.. currentmodule:: sklearn.grid_search
+.. currentmodule:: sklearn.model_selection
 
 .. topic:: Examples:
 
-    - See :ref:`example_model_selection_grid_search_digits.py` for an example of
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`example_model_selection_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
       net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
+
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+      for an example of Grid Search within a cross validation loop on the iris
+      dataset. This is the best practice for evaluating the performance of a
+      model with grid search.
+
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+      for an example of :class:`GridSearchCV` being used to evaluate multiple
+      metrics simultaneously.
 
 .. _randomized_parameter_search:
 
@@ -93,8 +109,8 @@ iterations, is specified using the ``n_iter`` parameter.
 For each parameter, either a distribution over possible values or a list of
 discrete choices (which will be sampled uniformly) can be specified::
 
-  [{'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
-    'kernel': ['rbf'], 'class_weight':['auto', None]}]
+  {'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
+    'kernel': ['rbf'], 'class_weight':['balanced', None]}
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
@@ -106,9 +122,12 @@ consecutive calls.
 
     .. warning::
 
-        The distributions in ``scipy.stats`` do not allow specifying a random
-        state. Instead, they use the global numpy random state, that can be seeded
-        via ``np.random.seed`` or set using ``np.random.set_state``.
+        The distributions in ``scipy.stats`` prior to version scipy 0.16
+        do not allow specifying a random state. Instead, they use the global
+        numpy random state, that can be seeded via ``np.random.seed`` or set
+        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+        the :mod:`sklearn.model_selection` module sets the random state provided
+        by the user if scipy >= 0.16 is also available.
 
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
@@ -116,7 +135,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`example_model_selection_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
@@ -146,6 +165,27 @@ scoring function can be specified via the ``scoring`` parameter to
 specialized cross-validation tools described below.
 See :ref:`scoring_parameter` for more details.
 
+.. _multimetric_grid_search:
+
+Specifying multiple metrics for evaluation
+------------------------------------------
+
+``GridSearchCV`` and ``RandomizedSearchCV`` allow specifying multiple metrics
+for the ``scoring`` parameter.
+
+Multimetric scoring can either be specified as a list of strings of predefined
+scores names or a dict mapping the scorer name to the scorer function and/or
+the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
+
+When specifying multiple metrics, the ``refit`` parameter must be set to the
+metric (string) for which the ``best_params_`` will be found and used to build
+the ``best_estimator_`` on the whole dataset. If the search should not be
+refit, set ``refit=False``. Leaving refit to the default value ``None`` will
+result in an error when using multiple metrics.
+
+See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+for an example usage.
+
 Composite estimators and parameter spaces
 -----------------------------------------
 
@@ -164,7 +204,7 @@ it is recommended to split the data into a **development set** (to
 be fed to the ``GridSearchCV`` instance) and an **evaluation set**
 to compute performance metrics.
 
-This can be done by using the :func:`cross_validation.train_test_split`
+This can be done by using the :func:`train_test_split`
 utility function.
 
 Parallelism
@@ -194,7 +234,7 @@ Model specific cross-validation
 -------------------------------
 
 
-Some models can fit data for a range of value of some parameter almost
+Some models can fit data for a range of values of some parameter almost
 as efficiently as fitting the estimator for a single value of the
 parameter. This feature can be leveraged to perform a more efficient
 cross-validation used for model selection of this parameter.
@@ -230,7 +270,7 @@ Some models can offer an information-theoretic closed-form formula of the
 optimal estimate of the regularization parameter by computing a single
 regularization path (instead of several when using cross-validation).
 
-Here is the list of models benefitting from the Aikike Information
+Here is the list of models benefiting from the Akaike Information
 Criterion (AIC) or the Bayesian Information Criterion (BIC) for automated
 model selection:
 

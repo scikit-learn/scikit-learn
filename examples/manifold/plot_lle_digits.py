@@ -29,8 +29,8 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import offsetbox
-from sklearn import (manifold, datasets, decomposition, ensemble, lda,
-                     random_projection)
+from sklearn import (manifold, datasets, decomposition, ensemble,
+                     discriminant_analysis, random_projection)
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data
@@ -48,14 +48,14 @@ def plot_embedding(X, title=None):
     plt.figure()
     ax = plt.subplot(111)
     for i in range(X.shape[0]):
-        plt.text(X[i, 0], X[i, 1], str(digits.target[i]),
+        plt.text(X[i, 0], X[i, 1], str(y[i]),
                  color=plt.cm.Set1(y[i] / 10.),
                  fontdict={'weight': 'bold', 'size': 9})
 
     if hasattr(offsetbox, 'AnnotationBbox'):
         # only print thumbnails with matplotlib > 1.0
         shown_images = np.array([[1., 1.]])  # just something big
-        for i in range(digits.data.shape[0]):
+        for i in range(X.shape[0]):
             dist = np.sum((X[i] - shown_images) ** 2, 1)
             if np.min(dist) < 4e-3:
                 # don't show points that are too close
@@ -107,11 +107,11 @@ plot_embedding(X_pca,
 #----------------------------------------------------------------------
 # Projection on to the first 2 linear discriminant components
 
-print("Computing LDA projection")
+print("Computing Linear Discriminant Analysis projection")
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
-X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
+X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2).fit_transform(X2, y)
 plot_embedding(X_lda,
                "Linear Discriminant projection of the digits (time %.2fs)" %
                (time() - t0))

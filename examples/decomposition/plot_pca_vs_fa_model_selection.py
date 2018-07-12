@@ -23,7 +23,6 @@ Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 by Thomas P. Minka is also compared.
 
 """
-print(__doc__)
 
 # Authors: Alexandre Gramfort
 #          Denis A. Engemann
@@ -35,10 +34,12 @@ from scipy import linalg
 
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.cross_validation import cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
-###############################################################################
+print(__doc__)
+
+# #############################################################################
 # Create the data
 
 n_samples, n_features, rank = 1000, 50, 10
@@ -54,14 +55,14 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-###############################################################################
+# #############################################################################
 # Fit the models
 
 n_components = np.arange(0, n_features, 5)  # options for n_components
 
 
 def compute_scores(X):
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     fa = FactorAnalysis()
 
     pca_scores, fa_scores = [], []
@@ -90,7 +91,7 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     n_components_pca = n_components[np.argmax(pca_scores)]
     n_components_fa = n_components[np.argmax(fa_scores)]
 
-    pca = PCA(n_components='mle')
+    pca = PCA(svd_solver='full', n_components='mle')
     pca.fit(X)
     n_components_pca_mle = pca.n_components_
 
@@ -105,7 +106,8 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     plt.axvline(n_components_pca, color='b',
                 label='PCA CV: %d' % n_components_pca, linestyle='--')
     plt.axvline(n_components_fa, color='r',
-                label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
+                label='FactorAnalysis CV: %d' % n_components_fa,
+                linestyle='--')
     plt.axvline(n_components_pca_mle, color='k',
                 label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
 

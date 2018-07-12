@@ -18,7 +18,10 @@
    - Added function get_n_iter that exposes the number of iterations.
         See issue 3499: https://github.com/scikit-learn/scikit-learn/issues/3499
         See pull 3501: https://github.com/scikit-learn/scikit-learn/pull/3501
-   
+
+   Modified 2015:
+   - Patched liblinear for sample_weights - Manoj Kumar
+     See https://github.com/scikit-learn/scikit-learn/pull/5274
  */
 
 #include <math.h>
@@ -1240,9 +1243,10 @@ static int solve_l2r_l1l2_svr(
 //
 // See Algorithm 5 of Yu et al., MLJ 2010
 
-#undef GETI
-#define GETI(i) (y[i]+1)
-// To support weights for instances, use GETI(i) (i)
+
+#define SAMPLE_WEIGHT(i) upper_bound[y[i]+1]*sample_weight[i]
+// To support weights for instances, use SAMPLE_WEIGHT(i)
+// Each instance is weighted by sample_weight*class_weight)
 
 int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn,
 					   int max_iter)
@@ -1258,6 +1262,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	double innereps = 1e-2;
 	double innereps_min = min(1e-8, eps);
 	double upper_bound[3] = {Cn, 0, Cp};
+	double *sample_weight = prob->sample_weight;
 
 	for(i=0; i<l; i++)
 	{
@@ -1272,12 +1277,12 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	}
 
 	// Initial alpha can be set here. Note that
-	// 0 < alpha[i] < upper_bound[GETI(i)]
-	// alpha[2*i] + alpha[2*i+1] = upper_bound[GETI(i)]
+	// 0 < alpha[i] < SAMPLE_WEIGHT(i)
+	// alpha[2*i] + alpha[2*i+1] = SAMPLE_WEIGHT(i)
 	for(i=0; i<l; i++)
 	{
-		alpha[2*i] = min(0.001*upper_bound[GETI(i)], 1e-8);
-		alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
+		alpha[2*i] = min(0.001*SAMPLE_WEIGHT(i), 1e-8);
+		alpha[2*i+1] = SAMPLE_WEIGHT(i) - alpha[2*i];
 	}
 
 	for(i=0; i<w_size; i++)
@@ -1309,7 +1314,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 		{
 			i = index[s];
 			schar yi = y[i];
-			double C = upper_bound[GETI(i)];
+			double C = SAMPLE_WEIGHT(i);
 			double ywTx = 0, xisq = xTx[i];
 			feature_node *xi = prob->x[i];
 			while (xi->index != -1)
@@ -1392,7 +1397,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	v *= 0.5;
 	for(i=0; i<l; i++)
 		v += alpha[2*i] * log(alpha[2*i]) + alpha[2*i+1] * log(alpha[2*i+1])
-			- upper_bound[GETI(i)] * log(upper_bound[GETI(i)]);
+			- SAMPLE_WEIGHT(i) * log(SAMPLE_WEIGHT(i));
 	info("Objective value = %lf\n", v);
 
 	delete [] xTx;
@@ -1701,10 +1706,10 @@ static int solve_l1r_l2_svc(
 // solution will be put in w
 //
 // See Yuan et al. (2011) and appendix of LIBLINEAR paper, Fan et al. (2008)
-
-#undef GETI
-#define GETI(i) (y[i]+1)
-// To support weights for instances, use GETI(i) (i)
+#undef SAMPLE_WEIGHT
+#define SAMPLE_WEIGHT(i) C[y[i]+1]*sample_weight[i]
+// To support weights for instances, use SAMPLE_WEIGHT(i)
+// Each instance is weighted by (class_weight*sample_weight)
 
 static int solve_l1r_lr(
 	const problem *prob_col, double *w, double eps,
@@ -1741,6 +1746,7 @@ static int solve_l1r_lr(
 	double *exp_wTx_new = new double[l];
 	double *tau = new double[l];
 	double *D = new double[l];
+	double *sample_weight = prob_col->sample_weight;
 	feature_node *x;
 
 	double C[3] = {Cn,0,Cp};
@@ -1773,7 +1779,7 @@ static int solve_l1r_lr(
 			double val = x->value;
 			exp_wTx[ind] += w[j]*val;
 			if(y[ind] == -1)
-				xjneg_sum[j] += C[GETI(ind)]*val;
+				xjneg_sum[j] += SAMPLE_WEIGHT(ind)*val;
 			x++;
 		}
 	}
@@ -1781,8 +1787,8 @@ static int solve_l1r_lr(
 	{
 		exp_wTx[j] = exp(exp_wTx[j]);
 		double tau_tmp = 1/(1+exp_wTx[j]);
-		tau[j] = C[GETI(j)]*tau_tmp;
-		D[j] = C[GETI(j)]*exp_wTx[j]*tau_tmp*tau_tmp;
+		tau[j] = SAMPLE_WEIGHT(j)*tau_tmp;
+		D[j] = SAMPLE_WEIGHT(j)*exp_wTx[j]*tau_tmp*tau_tmp;
 	}
 
 	while(newton_iter < max_newton_iter)
@@ -1958,7 +1964,7 @@ static int solve_l1r_lr(
 		negsum_xTd = 0;
 		for(int i=0; i<l; i++)
 			if(y[i] == -1)
-				negsum_xTd += C[GETI(i)]*xTd[i];
+				negsum_xTd += SAMPLE_WEIGHT(i)*xTd[i];
 
 		int num_linesearch;
 		for(num_linesearch=0; num_linesearch < max_num_linesearch; num_linesearch++)
@@ -1969,7 +1975,7 @@ static int solve_l1r_lr(
 			{
 				double exp_xTd = exp(xTd[i]);
 				exp_wTx_new[i] = exp_wTx[i]*exp_xTd;
-				cond += C[GETI(i)]*log((1+exp_wTx_new[i])/(exp_xTd+exp_wTx_new[i]));
+				cond += SAMPLE_WEIGHT(i)*log((1+exp_wTx_new[i])/(exp_xTd+exp_wTx_new[i]));
 			}
 
 			if(cond <= 0)
@@ -1981,8 +1987,8 @@ static int solve_l1r_lr(
 				{
 					exp_wTx[i] = exp_wTx_new[i];
 					double tau_tmp = 1/(1+exp_wTx[i]);
-					tau[i] = C[GETI(i)]*tau_tmp;
-					D[i] = C[GETI(i)]*exp_wTx[i]*tau_tmp*tau_tmp;
+					tau[i] = SAMPLE_WEIGHT(i)*tau_tmp;
+					D[i] = SAMPLE_WEIGHT(i)*exp_wTx[i]*tau_tmp*tau_tmp;
 				}
 				break;
 			}
@@ -2049,9 +2055,9 @@ static int solve_l1r_lr(
 		}
 	for(j=0; j<l; j++)
 		if(y[j] == 1)
-			v += C[GETI(j)]*log(1+1/exp_wTx[j]);
+			v += SAMPLE_WEIGHT(j)*log(1+1/exp_wTx[j]);
 		else
-			v += C[GETI(j)]*log(1+exp_wTx[j]);
+			v += SAMPLE_WEIGHT(j)*log(1+exp_wTx[j]);
 
 	info("Objective value = %lf\n", v);
 	info("#nonzeros/#features = %d/%d\n", nnz, w_size);
@@ -2083,6 +2089,7 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 	prob_col->n = n;
 	prob_col->y = new double[l];
 	prob_col->x = new feature_node*[n];
+	prob_col->sample_weight=prob->sample_weight;
 
 	for(i=0; i<l; i++)
 		prob_col->y[i] = prob->y[i];
@@ -2240,6 +2247,7 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 static int train_one(const problem *prob, const parameter *param, double *w, double Cp, double Cn)
 {
 	double eps=param->eps;
+	double* sample_weight=prob->sample_weight;
 	int max_iter=param->max_iter;
 	int pos = 0;
 	int neg = 0;
@@ -2260,10 +2268,11 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			for(int i = 0; i < prob->l; i++)
 			{
 				if(prob->y[i] > 0)
-					C[i] = Cp;
+					C[i] = sample_weight[i]*Cp;
 				else
-					C[i] = Cn;
+					C[i] = sample_weight[i]*Cn;
 			}
+
 			fun_obj=new l2r_lr_fun(prob, C);
 			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
@@ -2409,8 +2418,12 @@ model* train(const problem *prob, const parameter *param)
 
 		// constructing the subproblem
 		feature_node **x = Malloc(feature_node *,l);
+		double *sample_weight = new double[l];
 		for(i=0;i<l;i++)
+		{
 			x[i] = prob->x[perm[i]];
+			sample_weight[i] = prob->sample_weight[perm[i]];
+		}
 
 		int k;
 		problem sub_prob;
@@ -2418,6 +2431,7 @@ model* train(const problem *prob, const parameter *param)
 		sub_prob.n = n;
 		sub_prob.x = Malloc(feature_node *,sub_prob.l);
 		sub_prob.y = Malloc(double,sub_prob.l);
+		sub_prob.sample_weight = sample_weight;
 
 		for(k=0; k<sub_prob.l; k++)
 			sub_prob.x[k] = x[k];
@@ -2484,6 +2498,7 @@ model* train(const problem *prob, const parameter *param)
 		free(sub_prob.x);
 		free(sub_prob.y);
 		free(weighted_C);
+		delete[] sample_weight;
 	}
 	return model_;
 }
@@ -2895,6 +2910,8 @@ void free_model_content(struct model *model_ptr)
 		free(model_ptr->w);
 	if(model_ptr->label != NULL)
 		free(model_ptr->label);
+	if(model_ptr->n_iter != NULL)
+	    free(model_ptr->n_iter);
 }
 
 void free_and_destroy_model(struct model **model_ptr_ptr)

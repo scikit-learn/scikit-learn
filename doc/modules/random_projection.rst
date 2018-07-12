@@ -22,7 +22,7 @@ technique for distance based method.
 .. topic:: References:
 
  * Sanjoy Dasgupta. 2000.
-   `Experiments with random projection. <http://cseweb.ucsd.edu/users/dasgupta/papers/randomf.pdf>`_
+   `Experiments with random projection. <http://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
    In Proceedings of the Sixteenth conference on Uncertainty in artificial
    intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
    Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
@@ -41,7 +41,7 @@ The Johnson-Lindenstrauss lemma
 
 The main theoretical result behind the efficiency of random projection is the
 `Johnson-Lindenstrauss lemma (quoting Wikipedia)
-<http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
+<https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
 
   In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional
@@ -64,19 +64,19 @@ bounded distortion introduced by the random projection::
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)
   array([ 7894,  9868, 11841])
 
-.. figure:: ../auto_examples/images/plot_johnson_lindenstrauss_bound_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_johnson_lindenstrauss_bound_001.png
    :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
-.. figure:: ../auto_examples/images/plot_johnson_lindenstrauss_bound_002.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_johnson_lindenstrauss_bound_002.png
    :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_johnson_lindenstrauss_bound.py`
+  * See :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
     empirical validation using sparse random matrices.
 

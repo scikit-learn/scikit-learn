@@ -30,11 +30,11 @@ from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
 from sklearn.externals.joblib import Memory
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import KFold
 
-###############################################################################
+# #############################################################################
 # Generate data
 n_samples = 200
 size = 40  # image size
@@ -58,9 +58,9 @@ noise = np.random.randn(y.shape[0])
 noise_coef = (linalg.norm(y, 2) / np.exp(snr / 20.)) / linalg.norm(noise, 2)
 y += noise_coef * noise  # add noise
 
-###############################################################################
+# #############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
-cv = KFold(len(y), 2)  # cross-validation generator for model selection
+cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
 cachedir = tempfile.mkdtemp()
 mem = Memory(cachedir=cachedir, verbose=1)
@@ -85,10 +85,10 @@ clf = Pipeline([('anova', anova), ('ridge', ridge)])
 clf = GridSearchCV(clf, {'anova__percentile': [5, 10, 20]}, cv=cv)
 clf.fit(X, y)  # set the best parameters
 coef_ = clf.best_estimator_.steps[-1][1].coef_
-coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_)
+coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_.reshape(1, -1))
 coef_selection_ = coef_.reshape(size, size)
 
-###############################################################################
+# #############################################################################
 # Inverse the transformation to plot the results on an image
 plt.close('all')
 plt.figure(figsize=(7.3, 2.7))

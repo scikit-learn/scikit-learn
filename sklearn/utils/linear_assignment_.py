@@ -5,14 +5,15 @@ Hungarian algorithm (also known as Munkres algorithm).
 """
 # Based on original code by Brain Clapper, adapted to NumPy by Gael Varoquaux.
 # Heavily refactored by Lars Buitinck.
+#
+# TODO: a version of this algorithm has been incorporated in SciPy; use that
+# when SciPy 0.17 is released.
 
 # Copyright (c) 2008 Brian M. Clapper <bmc@clapper.org>, Gael Varoquaux
 # Author: Brian M. Clapper, Gael Varoquaux
 # LICENSE: BSD
 
 import numpy as np
-
-from .fixes import astype
 
 
 def linear_assignment(X):
@@ -28,7 +29,7 @@ def linear_assignment(X):
 
     Returns
     -------
-    indices : array,
+    indices : array
         The pairs of (row, col) indices in the original array giving
         the original ordering.
 
@@ -47,7 +48,7 @@ def linear_assignment(X):
        *Journal of the Society of Industrial and Applied Mathematics*,
        5(1):32-38, March, 1957.
 
-    5. http://en.wikipedia.org/wiki/Hungarian_algorithm
+    5. https://en.wikipedia.org/wiki/Hungarian_algorithm
     """
     indices = _hungarian(X).tolist()
     indices.sort()
@@ -190,7 +191,7 @@ def _step4(state):
     # We convert to int as numpy operations are faster on int
     C = (state.C == 0).astype(np.int)
     covered_C = C * state.row_uncovered[:, np.newaxis]
-    covered_C *= astype(state.col_uncovered, dtype=np.int, copy=False)
+    covered_C *= state.col_uncovered.astype(dtype=np.int, copy=False)
     n = state.C.shape[0]
     m = state.C.shape[1]
     while True:
@@ -212,7 +213,7 @@ def _step4(state):
                 state.row_uncovered[row] = False
                 state.col_uncovered[col] = True
                 covered_C[:, col] = C[:, col] * (
-                    astype(state.row_uncovered, dtype=np.int, copy=False))
+                    state.row_uncovered.astype(dtype=np.int, copy=False))
                 covered_C[row] = 0
 
 

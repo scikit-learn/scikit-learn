@@ -14,8 +14,9 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         cblas_libs.append('m')
 
+    config.add_subpackage('cluster')
     config.add_extension("pairwise_fast",
-                         sources=["pairwise_fast.c"],
+                         sources=["pairwise_fast.pyx"],
                          include_dirs=[os.path.join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
@@ -23,6 +24,7 @@ def configuration(parent_package="", top_path=None):
                          extra_compile_args=blas_info.pop('extra_compile_args',
                                                           []),
                          **blas_info)
+    config.add_subpackage('tests')
 
     return config
 

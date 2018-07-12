@@ -4,9 +4,9 @@ interface for model selection and evaluation using
 arbitrary score functions.
 
 A scorer object is a callable that can be passed to
-:class:`sklearn.grid_search.GridSearchCV` or
-:func:`sklearn.cross_validation.cross_val_score` as the ``scoring`` parameter,
-to specify how a model should be evaluated.
+:class:`sklearn.model_selection.GridSearchCV` or
+:func:`sklearn.model_selection.cross_val_score` as the ``scoring``
+parameter, to specify how a model should be evaluated.
 
 The signature of the call is ``(estimator, X, y)`` where ``estimator``
 is the model to be evaluated, ``X`` is the test data and ``y`` is the
@@ -14,20 +14,31 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 """
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta, abstractmethod
-from functools import partial
+from abc import ABCMeta
+from collections import Iterable
 
 import numpy as np
 
 from . import (r2_score, median_absolute_error, mean_absolute_error,
-               mean_squared_error, accuracy_score, f1_score,
-               roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss)
+               mean_squared_error, mean_squared_log_error, accuracy_score,
+               f1_score, roc_auc_score, average_precision_score,
+               precision_score, recall_score, log_loss,
+               balanced_accuracy_score, explained_variance_score,
+               brier_score_loss)
+
 from .cluster import adjusted_rand_score
+from .cluster import homogeneity_score
+from .cluster import completeness_score
+from .cluster import v_measure_score
+from .cluster import mutual_info_score
+from .cluster import adjusted_mutual_info_score
+from .cluster import normalized_mutual_info_score
+from .cluster import fowlkes_mallows_score
+
 from ..utils.multiclass import type_of_target
 from ..externals import six
 from ..base import is_regressor
@@ -38,10 +49,6 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-
-    @abstractmethod
-    def __call__(self, estimator, X, y, sample_weight=None):
-        pass
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -80,6 +87,7 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+
         y_pred = estimator.predict(X)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
@@ -115,7 +123,10 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
+        if y_type == "binary":
+            y_pred = y_pred[:, 1]
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -188,6 +199,18 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    """Get a scorer from string
+
+    Parameters
+    ----------
+    scoring : str | callable
+        scoring method as string. If callable it is returned as is.
+
+    Returns
+    -------
+    scorer : callable
+        The scorer.
+    """
     if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
@@ -230,20 +253,136 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """
-    has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
-        raise TypeError("estimator should a be an estimator implementing "
+        raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
-    elif has_scoring:
+    if isinstance(scoring, six.string_types):
         return get_scorer(scoring)
-    elif hasattr(estimator, 'score'):
-        return _passthrough_scorer
-    elif allow_none:
-        return None
+    elif callable(scoring):
+        # Heuristic to ensure user has not passed a metric
+        module = getattr(scoring, '__module__', None)
+        if hasattr(module, 'startswith') and \
+           module.startswith('sklearn.metrics.') and \
+           not module.startswith('sklearn.metrics.scorer') and \
+           not module.startswith('sklearn.metrics.tests.'):
+            raise ValueError('scoring value %r looks like it is a metric '
+                             'function rather than a scorer. A scorer should '
+                             'require an estimator as its first parameter. '
+                             'Please use `make_scorer` to convert a metric '
+                             'to a scorer.' % scoring)
+        return get_scorer(scoring)
+    elif scoring is None:
+        if hasattr(estimator, 'score'):
+            return _passthrough_scorer
+        elif allow_none:
+            return None
+        else:
+            raise TypeError(
+                "If no scoring is specified, the estimator passed should "
+                "have a 'score' method. The estimator %r does not."
+                % estimator)
+    elif isinstance(scoring, Iterable):
+        raise ValueError("For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead. "
+                         "{0} was passed.".format(scoring))
     else:
-        raise TypeError(
-            "If no scoring is specified, the estimator passed should "
-            "have a 'score' method. The estimator %r does not." % estimator)
+        raise ValueError("scoring value should either be a callable, string or"
+                         " None. %r was passed" % scoring)
+
+
+def _check_multimetric_scoring(estimator, scoring=None):
+    """Check the scoring parameter in cases when multiple metrics are allowed
+
+    Parameters
+    ----------
+    estimator : sklearn estimator instance
+        The estimator for which the scoring will be applied.
+
+    scoring : string, callable, list/tuple, dict or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values can be wrapped
+        into multiple scorers that return one value each.
+
+        See :ref:`multimetric_grid_search` for an example.
+
+        If None the estimator's default scorer (if available) is used.
+        The return value in that case will be ``{'score': <default_scorer>}``.
+        If the estimator's default scorer is not available, a ``TypeError``
+        is raised.
+
+    Returns
+    -------
+    scorers_dict : dict
+        A dict mapping each scorer name to its validated scorer.
+
+    is_multimetric : bool
+        True if scorer is a list/tuple or dict of callables
+        False if scorer is None/str/callable
+    """
+    if callable(scoring) or scoring is None or isinstance(scoring,
+                                                          six.string_types):
+        scorers = {"score": check_scoring(estimator, scoring=scoring)}
+        return scorers, False
+    else:
+        err_msg_generic = ("scoring should either be a single string or "
+                           "callable for single metric evaluation or a "
+                           "list/tuple of strings or a dict of scorer name "
+                           "mapped to the callable for multiple metric "
+                           "evaluation. Got %s of type %s"
+                           % (repr(scoring), type(scoring)))
+
+        if isinstance(scoring, (list, tuple, set)):
+            err_msg = ("The list/tuple elements must be unique "
+                       "strings of predefined scorers. ")
+            invalid = False
+            try:
+                keys = set(scoring)
+            except TypeError:
+                invalid = True
+            if invalid:
+                raise ValueError(err_msg)
+
+            if len(keys) != len(scoring):
+                raise ValueError(err_msg + "Duplicate elements were found in"
+                                 " the given list. %r" % repr(scoring))
+            elif len(keys) > 0:
+                if not all(isinstance(k, six.string_types) for k in keys):
+                    if any(callable(k) for k in keys):
+                        raise ValueError(err_msg +
+                                         "One or more of the elements were "
+                                         "callables. Use a dict of score name "
+                                         "mapped to the scorer callable. "
+                                         "Got %r" % repr(scoring))
+                    else:
+                        raise ValueError(err_msg +
+                                         "Non-string types were found in "
+                                         "the given list. Got %r"
+                                         % repr(scoring))
+                scorers = {scorer: check_scoring(estimator, scoring=scorer)
+                           for scorer in scoring}
+            else:
+                raise ValueError(err_msg +
+                                 "Empty list was given. %r" % repr(scoring))
+
+        elif isinstance(scoring, dict):
+            keys = set(scoring)
+            if not all(isinstance(k, six.string_types) for k in keys):
+                raise ValueError("Non-string types were found in the keys of "
+                                 "the given dict. scoring=%r" % repr(scoring))
+            if len(keys) == 0:
+                raise ValueError("An empty dict was passed. %r"
+                                 % repr(scoring))
+            scorers = {key: check_scoring(estimator, scoring=scorer)
+                       for key, scorer in scoring.items()}
+        else:
+            raise ValueError(err_msg_generic)
+        return scorers, True
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
@@ -294,7 +433,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> ftwo_scorer
     make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
@@ -313,17 +452,22 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
 
 # Standard regression scores
+explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
-mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                        greater_is_better=False)
-mean_absolute_error_scorer = make_scorer(mean_absolute_error,
-                                         greater_is_better=False)
-median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                           greater_is_better=False)
+neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
+                                            greater_is_better=False)
+neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
+                                                greater_is_better=False)
+neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
+                                             greater_is_better=False)
+
+neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
+                                               greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 f1_scorer = make_scorer(f1_score)
+balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
 roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
@@ -334,25 +478,50 @@ precision_scorer = make_scorer(precision_score)
 recall_scorer = make_scorer(recall_score)
 
 # Score function for probabilistic classification
-log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
-                              needs_proba=True)
+neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
+                                  needs_proba=True)
+brier_score_loss_scorer = make_scorer(brier_score_loss,
+                                      greater_is_better=False,
+                                      needs_proba=True)
+
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
+homogeneity_scorer = make_scorer(homogeneity_score)
+completeness_scorer = make_scorer(completeness_score)
+v_measure_scorer = make_scorer(v_measure_score)
+mutual_info_scorer = make_scorer(mutual_info_score)
+adjusted_mutual_info_scorer = make_scorer(adjusted_mutual_info_score)
+normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
+fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
-SCORERS = dict(r2=r2_scorer,
-               median_absolute_error=median_absolute_error_scorer,
-               mean_absolute_error=mean_absolute_error_scorer,
-               mean_squared_error=mean_squared_error_scorer,
+
+SCORERS = dict(explained_variance=explained_variance_scorer,
+               r2=r2_scorer,
+               neg_median_absolute_error=neg_median_absolute_error_scorer,
+               neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+               neg_mean_squared_error=neg_mean_squared_error_scorer,
+               neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
-               log_loss=log_loss_scorer,
-               adjusted_rand_score=adjusted_rand_scorer)
+               neg_log_loss=neg_log_loss_scorer,
+               brier_score_loss=brier_score_loss_scorer,
+               # Cluster metrics that use supervised evaluation
+               adjusted_rand_score=adjusted_rand_scorer,
+               homogeneity_score=homogeneity_scorer,
+               completeness_score=completeness_scorer,
+               v_measure_score=v_measure_scorer,
+               mutual_info_score=mutual_info_scorer,
+               adjusted_mutual_info_score=adjusted_mutual_info_scorer,
+               normalized_mutual_info_score=normalized_mutual_info_scorer,
+               fowlkes_mallows_score=fowlkes_mallows_scorer)
+
 
 for name, metric in [('precision', precision_score),
                      ('recall', recall_score), ('f1', f1_score)]:
     SCORERS[name] = make_scorer(metric)
     for average in ['macro', 'micro', 'samples', 'weighted']:
         qualified_name = '{0}_{1}'.format(name, average)
-        SCORERS[qualified_name] = make_scorer(partial(metric, pos_label=None,
-                                                      average=average))
+        SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
+                                              average=average)

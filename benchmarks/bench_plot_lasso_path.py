@@ -32,7 +32,7 @@ def compute_bench(samples_range, features_range):
             dataset_kwargs = {
                 'n_samples': n_samples,
                 'n_features': n_features,
-                'n_informative': n_features / 10,
+                'n_informative': n_features // 10,
                 'effective_rank': min(n_samples, n_features) / 10,
                 #'effective_rank': None,
                 'bias': 0.0,
@@ -105,13 +105,13 @@ if __name__ == '__main__':
 
         # dummy point plot to stick the legend to since surface plot do not
         # support legends (yet?)
-        #ax.plot([1], [1], [1], color=c, label=label)
+        # ax.plot([1], [1], [1], color=c, label=label)
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
         ax.set_zlabel('Time (s)')
         ax.set_zlim3d(0.0, max_time * 1.1)
         ax.set_title(label)
-        #ax.legend()
+        # ax.legend()
         i += 1
     plt.show()

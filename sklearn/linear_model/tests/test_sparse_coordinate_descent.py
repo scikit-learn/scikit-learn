@@ -15,7 +15,7 @@ from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
 
 
 def test_sparse_coef():
-    # Check that the sparse_coef propery works
+    # Check that the sparse_coef property works
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 
@@ -267,3 +267,27 @@ def test_same_output_sparse_dense_lasso_and_enet_cv():
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
         assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
         assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+
+
+def test_same_multiple_output_sparse_dense():
+    for normalize in [True, False]:
+        l = ElasticNet(normalize=normalize)
+        X = [[0, 1, 2, 3, 4],
+             [0, 2, 5, 8, 11],
+             [9, 10, 11, 12, 13],
+             [10, 11, 12, 13, 14]]
+        y = [[1, 2, 3, 4, 5],
+             [1, 3, 6, 9, 12],
+             [10, 11, 12, 13, 14],
+             [11, 12, 13, 14, 15]]
+        ignore_warnings(l.fit)(X, y)
+        sample = np.array([1, 2, 3, 4, 5]).reshape(1, -1)
+        predict_dense = l.predict(sample)
+
+        l_sp = ElasticNet(normalize=normalize)
+        X_sp = sp.coo_matrix(X)
+        ignore_warnings(l_sp.fit)(X_sp, y)
+        sample_sparse = sp.coo_matrix(sample)
+        predict_sparse = l_sp.predict(sample_sparse)
+
+        assert_array_almost_equal(predict_sparse, predict_dense)

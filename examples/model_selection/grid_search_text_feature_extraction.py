@@ -1,3 +1,4 @@
+
 """
 ==========================================================
 Sample pipeline for text feature extraction and evaluation
@@ -56,7 +57,7 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import SGDClassifier
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
 print(__doc__)
@@ -66,7 +67,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
 
-###############################################################################
+# #############################################################################
 # Load some categories from the training set
 categories = [
     'alt.atheism',
@@ -83,8 +84,8 @@ print("%d documents" % len(data.filenames))
 print("%d categories" % len(data.target_names))
 print()
 
-###############################################################################
-# define a pipeline combining a text feature extractor with a simple
+# #############################################################################
+# Define a pipeline combining a text feature extractor with a simple
 # classifier
 pipeline = Pipeline([
     ('vect', CountVectorizer()),
@@ -100,6 +101,7 @@ parameters = {
     'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams or bigrams
     #'tfidf__use_idf': (True, False),
     #'tfidf__norm': ('l1', 'l2'),
+    'clf__max_iter': (5,),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
     #'clf__n_iter': (10, 50, 80),

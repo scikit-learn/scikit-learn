@@ -15,25 +15,26 @@ from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal, assert_warns
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
-from nose.tools import raises, assert_almost_equal
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
 from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
-from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import (
+        assert_almost_equal, assert_greater, assert_less, assert_raises,
+)
 
 
 @contextmanager
 def no_stdout_stderr():
     old_stdout = sys.stdout
     old_stderr = sys.stderr
-    sys.stdout = open(os.devnull, 'w')
-    sys.stderr = open(os.devnull, 'w')
-    yield
-    sys.stdout.flush()
-    sys.stderr.flush()
-    sys.stdout = old_stdout
-    sys.stderr = old_stderr
+    with open(os.devnull, 'w') as devnull:
+        sys.stdout = devnull
+        sys.stderr = devnull
+        yield
+        devnull.flush()
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -198,34 +199,34 @@ def test_theil_sen_2d():
 
 def test_calc_breakdown_point():
     bp = _breakdown_point(1e10, 2)
-    assert_less(np.abs(bp - 1 + 1/(np.sqrt(2))), 1.e-6)
+    assert_less(np.abs(bp - 1 + 1 / (np.sqrt(2))), 1.e-6)
 
 
-@raises(ValueError)
 def test_checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSenRegressor(max_subpopulation=-1, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
+    assert_raises(ValueError, theil_sen.fit, X, y)
 
 
-@raises(ValueError)
 def test_checksubparams_too_few_subsamples():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSenRegressor(n_subsamples=1, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(n_subsamples=1, random_state=0)
+    assert_raises(ValueError, theil_sen.fit, X, y)
 
 
-@raises(ValueError)
 def test_checksubparams_too_many_subsamples():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSenRegressor(n_subsamples=101, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(n_subsamples=101, random_state=0)
+    assert_raises(ValueError, theil_sen.fit, X, y)
 
 
-@raises(ValueError)
 def test_checksubparams_n_subsamples_if_less_samples_than_features():
     random_state = np.random.RandomState(0)
     n_samples, n_features = 10, 20
     X = random_state.normal(size=(n_samples, n_features))
     y = random_state.normal(size=n_samples)
-    TheilSenRegressor(n_subsamples=9, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(n_subsamples=9, random_state=0)
+    assert_raises(ValueError, theil_sen.fit, X, y)
 
 
 def test_subpopulation():

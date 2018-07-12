@@ -2,7 +2,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 """
 The built-in correlation models submodule for the gaussian_process module.
@@ -10,8 +10,11 @@ The built-in correlation models submodule for the gaussian_process module.
 
 
 import numpy as np
+from ..utils import deprecated
 
 
+@deprecated("The function absolute_exponential of correlation_models is "
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def absolute_exponential(theta, d):
     """
     Absolute exponential autocorrelation model.
@@ -38,8 +41,8 @@ def absolute_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.abs(np.asarray(d, dtype=np.float))
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.abs(np.asarray(d, dtype=np.float64))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -54,6 +57,8 @@ def absolute_exponential(theta, d):
         return np.exp(- np.sum(theta.reshape(1, n_features) * d, axis=1))
 
 
+@deprecated("The function squared_exponential of correlation_models is "
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def squared_exponential(theta, d):
     """
     Squared exponential correlation model (Radial Basis Function).
@@ -81,8 +86,8 @@ def squared_exponential(theta, d):
         autocorrelation model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -97,6 +102,8 @@ def squared_exponential(theta, d):
         return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
 
 
+@deprecated("The function generalized_exponential of correlation_models is "
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def generalized_exponential(theta, d):
     """
     Generalized exponential correlation model.
@@ -125,8 +132,8 @@ def generalized_exponential(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -147,6 +154,8 @@ def generalized_exponential(theta, d):
     return r
 
 
+@deprecated("The function pure_nugget of correlation_models is "
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def pure_nugget(theta, d):
     """
     Spatial independence correlation model (pure nugget).
@@ -174,8 +183,8 @@ def pure_nugget(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     n_eval = d.shape[0]
     r = np.zeros(n_eval)
@@ -184,6 +193,8 @@ def pure_nugget(theta, d):
     return r
 
 
+@deprecated("The function cubic of correlation_models is "
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def cubic(theta, d):
     """
     Cubic correlation model::
@@ -211,8 +222,8 @@ def cubic(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -234,6 +245,8 @@ def cubic(theta, d):
     return r
 
 
+@deprecated("The function linear of correlation_models is "
+            "deprecated in version 0.19.1 and will be removed in 0.22.")
 def linear(theta, d):
     """
     Linear correlation model::
@@ -261,8 +274,8 @@ def linear(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]

@@ -68,12 +68,14 @@ data = digits.data / 16.
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
+data_train, targets_train = (data[:n_samples // 2],
+                             digits.target[:n_samples // 2])
 
 
 # Now predict the value of the digit on the second half:
-data_test, targets_test = data[n_samples / 2:], digits.target[n_samples / 2:]
-#data_test = scaler.transform(data_test)
+data_test, targets_test = (data[n_samples // 2:],
+                           digits.target[n_samples // 2:])
+# data_test = scaler.transform(data_test)
 
 # Create a classifier: a support vector classifier
 kernel_svm = svm.SVC(gamma=.2)
@@ -169,7 +171,7 @@ pca = PCA(n_components=8).fit(data_train)
 
 X = pca.transform(data_train)
 
-# Gemerate grid along first two principal components
+# Generate grid along first two principal components
 multiples = np.arange(-2, 2, 0.1)
 # steps along first component
 first = multiples[:, np.newaxis] * pca.components_[0, :]
@@ -193,7 +195,7 @@ plt.figure(figsize=(12, 5))
 for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
     # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
     plt.subplot(1, 3, i + 1)
     Z = clf.predict(flat_grid)
 
@@ -203,7 +205,8 @@ for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
     plt.axis('off')
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired,
+                edgecolors=(0, 0, 0))
 
     plt.title(titles[i])
 plt.tight_layout()

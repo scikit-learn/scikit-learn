@@ -14,10 +14,12 @@ import lxml.html
 from lxml.etree import ElementTree
 import numpy as np
 
+import codecs
+
 pages = {
     u'ar': u'http://ar.wikipedia.org/wiki/%D9%88%D9%8A%D9%83%D9%8A%D8%A8%D9%8A%D8%AF%D9%8A%D8%A7',
     u'de': u'http://de.wikipedia.org/wiki/Wikipedia',
-    u'en': u'http://en.wikipedia.org/wiki/Wikipedia',
+    u'en': u'https://en.wikipedia.org/wiki/Wikipedia',
     u'es': u'http://es.wikipedia.org/wiki/Wikipedia',
     u'fr': u'http://fr.wikipedia.org/wiki/Wikip%C3%A9dia',
     u'it': u'http://it.wikipedia.org/wiki/Wikipedia',
@@ -54,16 +56,15 @@ for lang, page in pages.items():
         print("Downloading %s" % page)
         request = Request(page)
         # change the User Agent to avoid being blocked by Wikipedia
-        # downloading a couple of articles ones should not be abusive
+        # downloading a couple of articles should not be considered abusive
         request.add_header('User-Agent', 'OpenAnything/1.0')
         html_content = opener.open(request).read()
         open(html_filename, 'wb').write(html_content)
 
     # decode the payload explicitly as UTF-8 since lxml is confused for some
     # reason
-    html_content = open(html_filename).read()
-    if hasattr(html_content, 'decode'):
-        html_content = html_content.decode('utf-8')
+    with codecs.open(html_filename,'r','utf-8') as html_file:
+        html_content = html_file.read()
     tree = ElementTree(lxml.html.document_fromstring(html_content))
     i = 0
     j = 0

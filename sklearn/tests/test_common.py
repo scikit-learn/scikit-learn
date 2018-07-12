@@ -10,14 +10,19 @@ from __future__ import print_function
 import os
 import warnings
 import sys
+import re
 import pkgutil
+import functools
 
-from sklearn.externals.six import PY3
+import pytest
+
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import ConvergenceWarning
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -25,12 +30,10 @@ from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
-    CROSS_DECOMPOSITION,
+    set_checking_parameters,
     check_parameters_default_constructible,
-    check_class_weight_balanced_linear_classifier,
-    check_transformer_n_iter,
-    check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_no_attributes_set_in_init,
+    check_class_weight_balanced_linear_classifier)
 
 
 def test_all_estimator_no_base_class():
@@ -42,34 +45,74 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, clonable
-    # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
 
     # Meta sanity-check to make sure that the estimator introspection runs
     # properly
     assert_greater(len(estimators), 0)
 
-    for name, Estimator in estimators:
-        # some can just not be sensibly default constructed
-        yield check_parameters_default_constructible, name, Estimator
+
+@pytest.mark.parametrize(
+        'name, Estimator',
+        all_estimators(include_meta_estimators=True)
+)
+def test_parameters_default_constructible(name, Estimator):
+    # Test that estimators are default-constructible
+    check_parameters_default_constructible(name, Estimator)
 
 
-def test_non_meta_estimators():
-    # input validation etc for non-meta estimators
-    estimators = all_estimators()
-    for name, Estimator in estimators:
+def _tested_non_meta_estimators():
+    for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
         if name.startswith("_"):
             continue
-        for check in _yield_all_checks(name, Estimator):
-            yield check, name, Estimator
+        yield name, Estimator
+
+
+def _generate_checks_per_estimator(check_generator, estimators):
+    for name, Estimator in estimators:
+        estimator = Estimator()
+        for check in check_generator(name, estimator):
+            yield name, Estimator, check
+
+
+def _rename_partial(val):
+    if isinstance(val, functools.partial):
+        kwstring = "".join(["{}={}".format(k, v)
+                            for k, v in val.keywords.items()])
+        return "{}({})".format(val.func.__name__, kwstring)
+
+
+@pytest.mark.parametrize(
+        "name, Estimator, check",
+        _generate_checks_per_estimator(_yield_all_checks,
+                                       _tested_non_meta_estimators()),
+        ids=_rename_partial
+)
+def test_non_meta_estimators(name, Estimator, check):
+    # Common tests for non-meta estimators
+    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        estimator = Estimator()
+        set_checking_parameters(estimator)
+        check(name, estimator)
+
+
+@pytest.mark.parametrize("name, Estimator",
+                         _tested_non_meta_estimators())
+def test_no_attributes_set_in_init(name, Estimator):
+    # input validation etc for non-meta estimators
+    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+                                   UserWarning, FutureWarning)):
+        estimator = Estimator()
+        # check this on class
+        check_no_attributes_set_in_init(name, estimator)
 
 
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
-    # 'configure' functions in the setup.pys in the scikit
+    # 'configure' functions in the setup.pys in scikit-learn
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
@@ -84,35 +127,28 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            if PY3:
-                with open('setup.py') as f:
-                    exec(f.read(), dict(__name__='__main__'))
-            else:
-                execfile('setup.py', dict(__name__='__main__'))
+            with open('setup.py') as f:
+                exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
 
 
-def test_class_weight_balanced_linear_classifiers():
+def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
-        linear_classifiers = [
-            (name, clazz)
-            for name, clazz in classifiers
-            if 'class_weight' in clazz().get_params().keys()
-               and issubclass(clazz, LinearClassifierMixin)]
+        for name, clazz in classifiers:
+            if ('class_weight' in clazz().get_params().keys() and
+                    issubclass(clazz, LinearClassifierMixin)):
+                yield name, clazz
 
-    for name, Classifier in linear_classifiers:
-        if name == "LogisticRegressionCV":
-            # Contrary to RidgeClassifierCV, LogisticRegressionCV use actual
-            # CV folds and fit a model for each CV iteration before averaging
-            # the coef. Therefore it is expected to not behave exactly as the
-            # other linear model.
-            continue
-        yield check_class_weight_balanced_linear_classifier, name, Classifier
+
+@pytest.mark.parametrize("name, Classifier",
+                         _tested_linear_classifiers())
+def test_class_weight_balanced_linear_classifiers(name, Classifier):
+    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @ignore_warnings
@@ -142,58 +178,24 @@ def test_root_import_all_completeness():
         assert_in(modname, sklearn.__all__)
 
 
-def test_non_transformer_estimators_n_iter():
-    # Test that all estimators of type which are non-transformer
-    # and which have an attribute of max_iter, return the attribute
-    # of n_iter atleast 1.
-    for est_type in ['regressor', 'classifier', 'cluster']:
-        regressors = all_estimators(type_filter=est_type)
-        for name, Estimator in regressors:
-            # LassoLars stops early for the default alpha=1.0 for
-            # the iris dataset.
-            if name == 'LassoLars':
-                estimator = Estimator(alpha=0.)
-            else:
-                estimator = Estimator()
-            if hasattr(estimator, "max_iter"):
-                # These models are dependent on external solvers like
-                # libsvm and accessing the iter parameter is non-trivial.
-                if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV']):
-                    continue
+def test_all_tests_are_importable():
+    # Ensure that for each contentful subpackage, there is a test directory
+    # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-                # Tested in test_transformer_n_iter below
-                elif (name in CROSS_DECOMPOSITION or
-                      name in ['LinearSVC', 'LogisticRegression']):
-                    continue
-
-                else:
-                    # Multitask models related to ENet cannot handle
-                    # if y is mono-output.
-                    yield (check_non_transformer_estimators_n_iter,
-                           name, estimator, 'Multi' in name)
-
-
-def test_transformer_n_iter():
-    transformers = all_estimators(type_filter='transformer')
-    for name, Estimator in transformers:
-        estimator = Estimator()
-        # Dependent on external solvers and hence accessing the iter
-        # param is non-trivial.
-        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso', 'LogisticRegressionCV']
-
-        if hasattr(estimator, "max_iter") and name not in external_solver:
-            yield check_transformer_n_iter, name, estimator
-
-
-def test_get_params_invariance():
-    # Test for estimators that support get_params, that
-    # get_params(deep=False) is a subset of get_params(deep=True)
-    # Related to issue #4465
-
-    estimators = all_estimators(include_meta_estimators=False, include_other=True)
-    for name, Estimator in estimators:
-        if hasattr(Estimator, 'get_params'):
-            yield check_get_params_invariance, name, Estimator
+    HAS_TESTS_EXCEPTIONS = re.compile(r'''(?x)
+                                      \.externals(\.|$)|
+                                      \.tests(\.|$)|
+                                      \._
+                                      ''')
+    lookup = dict((name, ispkg)
+                  for _, name, ispkg
+                  in pkgutil.walk_packages(sklearn.__path__,
+                                           prefix='sklearn.'))
+    missing_tests = [name for name, ispkg in lookup.items()
+                     if ispkg
+                     and not HAS_TESTS_EXCEPTIONS.search(name)
+                     and name + '.tests' not in lookup]
+    assert_equal(missing_tests, [],
+                 '{0} do not have `tests` subpackages. Perhaps they require '
+                 '__init__.py or an add_subpackage directive in the parent '
+                 'setup.py'.format(missing_tests))

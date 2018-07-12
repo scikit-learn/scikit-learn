@@ -3,65 +3,49 @@
 SGD: Penalties
 ==============
 
-Plot the contours of the three penalties.
+Contours of where the penalty is equal to 1
+for the three penalties L1, L2 and elastic-net.
 
 All of the above are supported by
 :class:`sklearn.linear_model.stochastic_gradient`.
 
 """
-from __future__ import division
 print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+l1_color = "navy"
+l2_color = "c"
+elastic_net_color = "darkorange"
 
-def l1(xs):
-    return np.array([np.sqrt((1 - np.sqrt(x ** 2.0)) ** 2.0) for x in xs])
+line = np.linspace(-1.5, 1.5, 1001)
+xx, yy = np.meshgrid(line, line)
 
+l2 = xx ** 2 + yy ** 2
+l1 = np.abs(xx) + np.abs(yy)
+rho = 0.5
+elastic_net = rho * l1 + (1 - rho) * l2
 
-def l2(xs):
-    return np.array([np.sqrt(1.0 - x ** 2.0) for x in xs])
+plt.figure(figsize=(10, 10), dpi=100)
+ax = plt.gca()
 
+elastic_net_contour = plt.contour(xx, yy, elastic_net, levels=[1],
+                                  colors=elastic_net_color)
+l2_contour = plt.contour(xx, yy, l2, levels=[1], colors=l2_color)
+l1_contour = plt.contour(xx, yy, l1, levels=[1], colors=l1_color)
+ax.set_aspect("equal")
+ax.spines['left'].set_position('center')
+ax.spines['right'].set_color('none')
+ax.spines['bottom'].set_position('center')
+ax.spines['top'].set_color('none')
 
-def el(xs, z):
-    return np.array([(2 - 2 * x - 2 * z + 4 * x * z -
-                      (4 * z ** 2
-                       - 8 * x * z ** 2
-                       + 8 * x ** 2 * z ** 2
-                       - 16 * x ** 2 * z ** 3
-                       + 8 * x * z ** 3 + 4 * x ** 2 * z ** 4) ** (1. / 2)
-                      - 2 * x * z ** 2) / (2 - 4 * z) for x in xs])
+plt.clabel(elastic_net_contour, inline=1, fontsize=18,
+           fmt={1.0: 'elastic-net'}, manual=[(-1, -1)])
+plt.clabel(l2_contour, inline=1, fontsize=18,
+           fmt={1.0: 'L2'}, manual=[(-1, -1)])
+plt.clabel(l1_contour, inline=1, fontsize=18,
+           fmt={1.0: 'L1'}, manual=[(-1, -1)])
 
-
-def cross(ext):
-    plt.plot([-ext, ext], [0, 0], "k-")
-    plt.plot([0, 0], [-ext, ext], "k-")
-
-xs = np.linspace(0, 1, 100)
-
-alpha = 0.501  # 0.5 division throuh zero
-
-cross(1.2)
-
-plt.plot(xs, l1(xs), "r-", label="L1")
-plt.plot(xs, -1.0 * l1(xs), "r-")
-plt.plot(-1 * xs, l1(xs), "r-")
-plt.plot(-1 * xs, -1.0 * l1(xs), "r-")
-
-plt.plot(xs, l2(xs), "b-", label="L2")
-plt.plot(xs, -1.0 * l2(xs), "b-")
-plt.plot(-1 * xs, l2(xs), "b-")
-plt.plot(-1 * xs, -1.0 * l2(xs), "b-")
-
-plt.plot(xs, el(xs, alpha), "y-", label="Elastic Net")
-plt.plot(xs, -1.0 * el(xs, alpha), "y-")
-plt.plot(-1 * xs, el(xs, alpha), "y-")
-plt.plot(-1 * xs, -1.0 * el(xs, alpha), "y-")
-
-plt.xlabel(r"$w_0$")
-plt.ylabel(r"$w_1$")
-plt.legend()
-
-plt.axis("equal")
+plt.tight_layout()
 plt.show()

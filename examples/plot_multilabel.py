@@ -73,11 +73,11 @@ def plot_subfigure(X, Y, subplot, title, transform):
 
     zero_class = np.where(Y[:, 0])
     one_class = np.where(Y[:, 1])
-    plt.scatter(X[:, 0], X[:, 1], s=40, c='gray')
+    plt.scatter(X[:, 0], X[:, 1], s=40, c='gray', edgecolors=(0, 0, 0))
     plt.scatter(X[zero_class, 0], X[zero_class, 1], s=160, edgecolors='b',
-               facecolors='none', linewidths=2, label='Class 1')
+                facecolors='none', linewidths=2, label='Class 1')
     plt.scatter(X[one_class, 0], X[one_class, 1], s=80, edgecolors='orange',
-               facecolors='none', linewidths=2, label='Class 2')
+                facecolors='none', linewidths=2, label='Class 2')
 
     plot_hyperplane(classif.estimators_[0], min_x, max_x, 'k--',
                     'Boundary\nfor class 1')

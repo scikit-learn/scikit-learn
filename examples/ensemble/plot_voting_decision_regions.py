@@ -10,7 +10,7 @@ Plot the class probabilities of the first sample in a toy dataset
 predicted by three different classifiers and averaged by the
 `VotingClassifier`.
 
-First, three examplary classifiers are initialized (`DecisionTreeClassifier`,
+First, three exemplary classifiers are initialized (`DecisionTreeClassifier`,
 `KNeighborsClassifier`, and `SVC`) and used to initialize a
 soft-voting `VotingClassifier` with weights `[2, 1, 2]`, which means that
 the predicted probabilities of the `DecisionTreeClassifier` and `SVC`
@@ -66,7 +66,8 @@ for idx, clf, tt in zip(product([0, 1], [0, 1]),
     Z = Z.reshape(xx.shape)
 
     axarr[idx[0], idx[1]].contourf(xx, yy, Z, alpha=0.4)
-    axarr[idx[0], idx[1]].scatter(X[:, 0], X[:, 1], c=y, alpha=0.8)
+    axarr[idx[0], idx[1]].scatter(X[:, 0], X[:, 1], c=y,
+                                  s=20, edgecolor='k')
     axarr[idx[0], idx[1]].set_title(tt)
 
 plt.show()

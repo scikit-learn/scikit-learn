@@ -3,21 +3,21 @@ The :mod:`sklearn.datasets` module includes utilities to load datasets,
 including methods to load and fetch popular reference datasets. It also
 features some artificial data generators.
 """
-
+from .base import load_breast_cancer
+from .base import load_boston
 from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
 from .base import load_iris
 from .base import load_linnerud
-from .base import load_boston
-from .base import get_data_home
-from .base import clear_data_home
 from .base import load_sample_images
 from .base import load_sample_image
+from .base import load_wine
+from .base import get_data_home
+from .base import clear_data_home
 from .covtype import fetch_covtype
+from .kddcup99 import fetch_kddcup99
 from .mlcomp import load_mlcomp
-from .lfw import load_lfw_pairs
-from .lfw import load_lfw_people
 from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
@@ -64,20 +64,21 @@ __all__ = ['clear_data_home',
            'fetch_california_housing',
            'fetch_covtype',
            'fetch_rcv1',
+           'fetch_kddcup99',
            'get_data_home',
            'load_boston',
            'load_diabetes',
            'load_digits',
            'load_files',
            'load_iris',
-           'load_lfw_pairs',
-           'load_lfw_people',
+           'load_breast_cancer',
            'load_linnerud',
            'load_mlcomp',
            'load_sample_image',
            'load_sample_images',
            'load_svmlight_file',
            'load_svmlight_files',
+           'load_wine',
            'make_biclusters',
            'make_blobs',
            'make_circles',

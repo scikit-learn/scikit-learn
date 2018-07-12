@@ -114,7 +114,7 @@ cdef class DistanceMetric:
 
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
-             [3, 4, 5]])
+             [3, 4, 5]]
     >>> dist.pairwise(X)
     array([[ 0.        ,  5.19615242],
            [ 5.19615242,  0.        ]])
@@ -130,21 +130,22 @@ cdef class DistanceMetric:
     --------------  --------------------  --------  -------------------------------
     "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
-    "chebyshev"     ChebyshevDistance     -         ``sum(max(|x - y|))``
+    "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
-    "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
+    "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
 
-    **Metrics intended for two-dimensional vector spaces:**
+    **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
+    distance metric requires data in the form of [latitude, longitude] and both
+    inputs and outputs are in units of radians.
 
-    ============  ==================  ========================================
+    ============  ==================  ===============================================================
     identifier    class name          distance function
-    ------------  ------------------  ----------------------------------------
-    "haversine"   HaversineDistance   2 arcsin(sqrt(sin^2(0.5*dx)
-                                             + cos(x1)cos(x2)sin^2(0.5*dy)))
-    ============  ==================  ========================================
+    ------------  ------------------  ---------------------------------------------------------------
+    "haversine"   HaversineDistance   ``2 arcsin(sqrt(sin^2(0.5*dx) + cos(x1)cos(x2)sin^2(0.5*dy)))``
+    ============  ==================  ===============================================================
 
 
     **Metrics intended for integer-valued vector spaces:**  Though intended
@@ -175,7 +176,7 @@ cdef class DistanceMetric:
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "maching"          MatchingDistance         NNEQ / N
+    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
@@ -240,7 +241,7 @@ cdef class DistanceMetric:
             self.kwargs = state[4]
         self.vec_ptr = get_vec_ptr(self.vec)
         self.mat_ptr = get_mat_ptr(self.mat)
-        self.size = 1
+        self.size = self.vec.shape[0]
 
     @classmethod
     def get_metric(cls, metric, **kwargs):
@@ -329,7 +330,7 @@ cdef class DistanceMetric:
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
         return 0
 
-    cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         """Convert the reduced distance to the distance"""
         return rdist
 
@@ -341,7 +342,7 @@ cdef class DistanceMetric:
         """Convert the Reduced distance to the true distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -351,7 +352,7 @@ cdef class DistanceMetric:
         """Convert the true distance to the reduced distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -401,7 +402,7 @@ cdef class DistanceMetric:
 # Euclidean Distance
 #  d = sqrt(sum(x_i^2 - y_i^2))
 cdef class EuclideanDistance(DistanceMetric):
-    """Euclidean Distance metric
+    r"""Euclidean Distance metric
 
     .. math::
        D(x, y) = \sqrt{ \sum_i (x_i - y_i) ^ 2 }
@@ -417,7 +418,7 @@ cdef class EuclideanDistance(DistanceMetric):
                               ITYPE_t size) nogil except -1:
         return euclidean_rdist(x1, x2, size)
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -434,7 +435,7 @@ cdef class EuclideanDistance(DistanceMetric):
 # SEuclidean Distance
 #  d = sqrt(sum((x_i - y_i2)^2 / v_i))
 cdef class SEuclideanDistance(DistanceMetric):
-    """Standardized Euclidean Distance metric
+    r"""Standardized Euclidean Distance metric
 
     .. math::
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
@@ -461,7 +462,7 @@ cdef class SEuclideanDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -478,7 +479,7 @@ cdef class SEuclideanDistance(DistanceMetric):
 # Manhattan Distance
 #  d = sum(abs(x_i - y_i))
 cdef class ManhattanDistance(DistanceMetric):
-    """Manhattan/City-block Distance metric
+    r"""Manhattan/City-block Distance metric
 
     .. math::
        D(x, y) = \sum_i |x_i - y_i|
@@ -497,7 +498,7 @@ cdef class ManhattanDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Chebyshev Distance
-#  d = max_i(abs(x_i), abs(y_i))
+#  d = max_i(abs(x_i - y_i))
 cdef class ChebyshevDistance(DistanceMetric):
     """Chebyshev/Infinity Distance
 
@@ -520,7 +521,7 @@ cdef class ChebyshevDistance(DistanceMetric):
 # Minkowski Distance
 #  d = sum(x_i^p - y_i^p) ^ (1/p)
 cdef class MinkowskiDistance(DistanceMetric):
-    """Minkowski Distance
+    r"""Minkowski Distance
 
     .. math::
        D(x, y) = [\sum_i (x_i - y_i)^p] ^ (1/p)
@@ -550,7 +551,7 @@ cdef class MinkowskiDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return pow(rdist, 1. / self.p)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -565,12 +566,12 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # W-Minkowski Distance
-#  d = sum(w_i * (x_i^p - y_i^p)) ^ (1/p)
+#  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
-    """Weighted Minkowski Distance
+    r"""Weighted Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i w_i (x_i - y_i)^p] ^ (1/p)
+       D(x, y) = [\sum_i |w_i * (x_i - y_i)|^p] ^ (1/p)
 
     Weighted Minkowski Distance requires p >= 1 and finite.
 
@@ -609,7 +610,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return pow(rdist, 1. / self.p)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -642,6 +643,9 @@ cdef class MahalanobisDistance(DistanceMetric):
     """
     def __init__(self, V=None, VI=None):
         if VI is None:
+            if V is None:
+                raise ValueError("Must provide either V or VI "
+                                 "for Mahalanobis distance")
             VI = np.linalg.inv(V)
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
@@ -679,7 +683,7 @@ cdef class MahalanobisDistance(DistanceMetric):
                              ITYPE_t size) nogil except -1:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -696,7 +700,7 @@ cdef class MahalanobisDistance(DistanceMetric):
 # Hamming Distance
 #  d = N_unequal(x, y) / N_tot
 cdef class HammingDistance(DistanceMetric):
-    """Hamming Distance
+    r"""Hamming Distance
 
     Hamming distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
@@ -718,7 +722,7 @@ cdef class HammingDistance(DistanceMetric):
 # Canberra Distance
 #  D(x, y) = sum[ abs(x_i - y_i) / (abs(x_i) + abs(y_i)) ]
 cdef class CanberraDistance(DistanceMetric):
-    """Canberra Distance
+    r"""Canberra Distance
 
     Canberra distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
@@ -741,7 +745,7 @@ cdef class CanberraDistance(DistanceMetric):
 # Bray-Curtis Distance
 #  D(x, y) = sum[abs(x_i - y_i)] / sum[abs(x_i) + abs(y_i)]
 cdef class BrayCurtisDistance(DistanceMetric):
-    """Bray-Curtis Distance
+    r"""Bray-Curtis Distance
 
     Bray-Curtis distance is meant for discrete-valued vectors, though it is
     a valid metric for real-valued vectors.
@@ -766,7 +770,7 @@ cdef class BrayCurtisDistance(DistanceMetric):
 # Jaccard Distance (boolean)
 #  D(x, y) = N_unequal(x, y) / N_nonzero(x, y)
 cdef class JaccardDistance(DistanceMetric):
-    """Jaccard Distance
+    r"""Jaccard Distance
 
     Jaccard Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -791,7 +795,7 @@ cdef class JaccardDistance(DistanceMetric):
 # Matching Distance (boolean)
 #  D(x, y) = n_neq / n
 cdef class MatchingDistance(DistanceMetric):
-    """Matching Distance
+    r"""Matching Distance
 
     Matching Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -815,7 +819,7 @@ cdef class MatchingDistance(DistanceMetric):
 # Dice Distance (boolean)
 #  D(x, y) = n_neq / (2 * ntt + n_neq)
 cdef class DiceDistance(DistanceMetric):
-    """Dice Distance
+    r"""Dice Distance
 
     Dice Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -840,7 +844,7 @@ cdef class DiceDistance(DistanceMetric):
 # Kulsinski Distance (boolean)
 #  D(x, y) = (ntf + nft - ntt + n) / (n_neq + n)
 cdef class KulsinskiDistance(DistanceMetric):
-    """Kulsinski Distance
+    r"""Kulsinski Distance
 
     Kulsinski Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -865,7 +869,7 @@ cdef class KulsinskiDistance(DistanceMetric):
 # Rogers-Tanimoto Distance (boolean)
 #  D(x, y) = 2 * n_neq / (n + n_neq)
 cdef class RogersTanimotoDistance(DistanceMetric):
-    """Rogers-Tanimoto Distance
+    r"""Rogers-Tanimoto Distance
 
     Rogers-Tanimoto Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -889,7 +893,7 @@ cdef class RogersTanimotoDistance(DistanceMetric):
 # Russell-Rao Distance (boolean)
 #  D(x, y) = (n - ntt) / n
 cdef class RussellRaoDistance(DistanceMetric):
-    """Russell-Rao Distance
+    r"""Russell-Rao Distance
 
     Russell-Rao Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -913,7 +917,7 @@ cdef class RussellRaoDistance(DistanceMetric):
 # Sokal-Michener Distance (boolean)
 #  D(x, y) = 2 * n_neq / (n + n_neq)
 cdef class SokalMichenerDistance(DistanceMetric):
-    """Sokal-Michener Distance
+    r"""Sokal-Michener Distance
 
     Sokal-Michener Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -937,7 +941,7 @@ cdef class SokalMichenerDistance(DistanceMetric):
 # Sokal-Sneath Distance (boolean)
 #  D(x, y) = n_neq / (0.5 * n_tt + n_neq)
 cdef class SokalSneathDistance(DistanceMetric):
-    """Sokal-Sneath Distance
+    r"""Sokal-Sneath Distance
 
     Sokal-Sneath Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
@@ -994,7 +998,7 @@ cdef class HaversineDistance(DistanceMetric):
         return 2 * asin(sqrt(sin_0 * sin_0
                              + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return 2 * asin(sqrt(rdist))
 
     cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
@@ -1086,27 +1090,31 @@ cdef class PyFuncDistance(DistanceMetric):
     """
     def __init__(self, func, **kwargs):
         self.func = func
-        x = np.random.random(10)
-        try:
-            d = self.func(x, x, **kwargs)
-        except TypeError:
-            raise ValueError("func must be a callable taking two arrays")
-
-        try:
-            d = float(d)
-        except TypeError:
-            raise ValueError("func must return a float")
-
         self.kwargs = kwargs
 
+    # in cython < 0.26, GIL was required to be acquired during definition of
+    # the function and inside the body of the function. This behaviour is not
+    # allowed in cython >= 0.26 since it is a redundant GIL acquisition. The
+    # only way to be back compatible is to inherit `dist` from the base class
+    # without GIL and called an inline `_dist` which acquire GIL.
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size) except -1 with gil:
+                             ITYPE_t size) nogil except -1:
+        return self._dist(x1, x2, size)
+
+    cdef inline DTYPE_t _dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1 with gil:
         cdef np.ndarray x1arr
         cdef np.ndarray x2arr
-        with gil:
-            x1arr = _buffer_to_ndarray(x1, size)
-            x2arr = _buffer_to_ndarray(x2, size)
-            return self.func(x1arr, x2arr, **self.kwargs)
+        x1arr = _buffer_to_ndarray(x1, size)
+        x2arr = _buffer_to_ndarray(x2, size)
+        d = self.func(x1arr, x2arr, **self.kwargs)
+        try:
+            # Cython generates code here that results in a TypeError
+            # if d is the wrong type.
+            return d
+        except TypeError:
+            raise TypeError("Custom distance function must accept two "
+                            "vectors and return a float.")
 
 
 cdef inline double fmax(double a, double b) nogil:

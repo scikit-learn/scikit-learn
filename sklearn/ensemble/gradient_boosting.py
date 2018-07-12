@@ -17,43 +17,53 @@ The module structure is the following:
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
-#          Arnaud Joly
+#          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
 from __future__ import print_function
 from __future__ import division
-from abc import ABCMeta, abstractmethod
-from time import time
 
-import numbers
-import numpy as np
-
-from scipy import stats
+from abc import ABCMeta
+from abc import abstractmethod
 
 from .base import BaseEnsemble
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, check_array, check_X_y, column_or_1d
-from ..utils import check_consistent_length, deprecated
-from ..utils.extmath import logsumexp
-from ..utils.fixes import expit, bincount
-from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
-
-from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE, TREE_LEAF
-from ..tree._tree import PresortBestSplitter
-from ..tree._tree import FriedmanMSE
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
 
+import numbers
+import numpy as np
 
-class QuantileEstimator(BaseEstimator):
+from scipy import stats
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import issparse
+from scipy.special import expit
+
+from time import time
+from ..model_selection import train_test_split
+from ..tree.tree import DecisionTreeRegressor
+from ..tree._tree import DTYPE
+from ..tree._tree import TREE_LEAF
+
+from ..utils import check_random_state
+from ..utils import check_array
+from ..utils import check_X_y
+from ..utils import column_or_1d
+from ..utils import check_consistent_length
+from ..utils import deprecated
+from ..utils.fixes import logsumexp
+from ..utils.stats import _weighted_percentile
+from ..utils.validation import check_is_fitted
+from ..utils.multiclass import check_classification_targets
+from ..exceptions import NotFittedError
+
+
+class QuantileEstimator(object):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
@@ -64,7 +74,8 @@ class QuantileEstimator(BaseEstimator):
         if sample_weight is None:
             self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
         else:
-            self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
+            self.quantile = _weighted_percentile(y, sample_weight,
+                                                 self.alpha * 100.0)
 
     def predict(self, X):
         check_is_fitted(self, 'quantile')
@@ -74,7 +85,7 @@ class QuantileEstimator(BaseEstimator):
         return y
 
 
-class MeanEstimator(BaseEstimator):
+class MeanEstimator(object):
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
@@ -90,7 +101,7 @@ class MeanEstimator(BaseEstimator):
         return y
 
 
-class LogOddsEstimator(BaseEstimator):
+class LogOddsEstimator(object):
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -120,14 +131,14 @@ class ScaledLogOddsEstimator(LogOddsEstimator):
     scale = 0.5
 
 
-class PriorProbabilityEstimator(BaseEstimator):
+class PriorProbabilityEstimator(object):
     """An estimator predicting the probability of each
     class in the training data.
     """
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = bincount(y, weights=sample_weight)
+        class_counts = np.bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
@@ -138,11 +149,11 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-class ZeroEstimator(BaseEstimator):
+class ZeroEstimator(object):
     """An estimator that simply predicts zero. """
 
     def fit(self, X, y, sample_weight=None):
-        if np.issubdtype(y.dtype, int):
+        if np.issubdtype(y.dtype, np.signedinteger):
             # classification
             self.n_classes = np.unique(y).shape[0]
             if self.n_classes == 2:
@@ -393,7 +404,6 @@ class QuantileLossFunction(RegressionLossFunction):
 
     def __init__(self, n_classes, alpha=0.9):
         super(QuantileLossFunction, self).__init__(n_classes)
-        assert 0 < alpha < 1.0
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
@@ -407,10 +417,10 @@ class QuantileLossFunction(RegressionLossFunction):
 
         mask = y > pred
         if sample_weight is None:
-            loss = (alpha * diff[mask].sum() +
+            loss = (alpha * diff[mask].sum() -
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
-            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) +
+            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
                     (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
                     sample_weight.sum())
         return loss
@@ -438,7 +448,7 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     def _score_to_proba(self, score):
         """Template method to convert scores to probabilities.
 
-         the does not support probabilites raises AttributeError.
+         the does not support probabilities raises AttributeError.
         """
         raise TypeError('%s does not support predict_proba' % type(self).__name__)
 
@@ -458,8 +468,8 @@ class BinomialDeviance(ClassificationLossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("{0:s} requires 2 classes.".format(
-                self.__class__.__name__))
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
+                             .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
         super(BinomialDeviance, self).__init__(1)
 
@@ -498,7 +508,8 @@ class BinomialDeviance(ClassificationLossFunction):
         numerator = np.sum(sample_weight * residual)
         denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -564,7 +575,8 @@ class MultinomialDeviance(ClassificationLossFunction):
         denominator = np.sum(sample_weight * (y - residual) *
                              (1.0 - y + residual))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -589,8 +601,8 @@ class ExponentialLoss(ClassificationLossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("{0:s} requires 2 classes.".format(
-                self.__class__.__name__))
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
+                             .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
         super(ExponentialLoss, self).__init__(1)
 
@@ -621,7 +633,8 @@ class ExponentialLoss(ClassificationLossFunction):
         numerator = np.sum(y_ * sample_weight * np.exp(-y_ * pred))
         denominator = np.sum(sample_weight * np.exp(-y_ * pred))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -702,37 +715,44 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
-                                              _LearntSelectorMixin)):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
-    def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
-                 min_samples_leaf, min_weight_fraction_leaf,
-                 max_depth, init, subsample, max_features,
+    def __init__(self, loss, learning_rate, n_estimators, criterion,
+                 min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                 max_depth, min_impurity_decrease, min_impurity_split,
+                 init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 warm_start=False, presort='auto',
+                 validation_fraction=0.1, n_iter_no_change=None,
+                 tol=1e-4):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.loss = loss
+        self.criterion = criterion
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.subsample = subsample
         self.max_features = max_features
         self.max_depth = max_depth
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
         self.init = init
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
-
-        self.estimators_ = np.empty((0, 0), dtype=np.object)
+        self.presort = presort
+        self.validation_fraction = validation_fraction
+        self.n_iter_no_change = n_iter_no_change
+        self.tol = tol
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
-                   criterion, splitter, random_state):
+                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -748,27 +768,39 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
-                criterion=criterion,
-                splitter=splitter,
+                criterion=self.criterion,
+                splitter='best',
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                min_impurity_decrease=self.min_impurity_decrease,
+                min_impurity_split=self.min_impurity_split,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
-                random_state=random_state)
+                random_state=random_state,
+                presort=self.presort)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False)
+            if X_csc is not None:
+                tree.fit(X_csc, residual, sample_weight=sample_weight,
+                         check_input=False, X_idx_sorted=X_idx_sorted)
+            else:
+                tree.fit(X, residual, sample_weight=sample_weight,
+                         check_input=False, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                         sample_weight, sample_mask,
-                                         self.learning_rate, k=k)
+            if X_csr is not None:
+                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
+                                             sample_weight, sample_mask,
+                                             self.learning_rate, k=k)
+            else:
+                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                             sample_weight, sample_mask,
+                                             self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -824,29 +856,41 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             if self.max_features == "auto":
                 # if is_classification
                 if self.n_classes_ > 1:
-                    max_features = max(1, int(np.sqrt(self.n_features)))
+                    max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
                     # is regression
-                    max_features = self.n_features
+                    max_features = self.n_features_
             elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features)))
+                max_features = max(1, int(np.sqrt(self.n_features_)))
             elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features)))
+                max_features = max(1, int(np.log2(self.n_features_)))
             else:
                 raise ValueError("Invalid value for max_features: %r. "
                                  "Allowed string values are 'auto', 'sqrt' "
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
-            max_features = self.n_features
+            max_features = self.n_features_
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
-                max_features = max(int(self.max_features * self.n_features), 1)
+                max_features = max(int(self.max_features *
+                                       self.n_features_), 1)
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
         self.max_features_ = max_features
+
+        if not isinstance(self.n_iter_no_change,
+                          (numbers.Integral, np.integer, type(None))):
+            raise ValueError("n_iter_no_change should either be None or an "
+                             "integer. %r was passed"
+                             % self.n_iter_no_change)
+
+        allowed_presort = ('auto', True, False)
+        if self.presort not in allowed_presort:
+            raise ValueError("'presort' should be in {}. Got {!r} instead."
+                             .format(allowed_presort, self.presort))
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -876,6 +920,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             del self.oob_improvement_
         if hasattr(self, 'init_'):
             del self.init_
+        if hasattr(self, '_rng'):
+            del self._rng
 
     def _resize_state(self):
         """Add additional ``n_estimators`` entries to all attributes. """
@@ -898,6 +944,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
+    def _check_initialized(self):
+        """Check that the estimator is initialized, raising an error if not."""
+        check_is_fitted(self, 'estimators_')
+
+    @property
+    @deprecated("Attribute n_features was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def n_features(self):
+        return self.n_features_
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -908,8 +964,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
+            Target values (strings or integers in classification, real numbers
+            in regression)
             For classification, labels must correspond to classes.
 
         sample_weight : array-like, shape = [n_samples] or None
@@ -931,15 +987,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         Returns
         -------
         self : object
-            Returns self.
         """
         # if not warmstart - clear the estimator state
         if not self.warm_start:
             self._clear_state()
 
         # Check input
-        X, y = check_X_y(X, y, dtype=DTYPE)
-        n_samples, self.n_features = X.shape
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        n_samples, self.n_features_ = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
@@ -947,9 +1002,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         check_consistent_length(X, y, sample_weight)
 
-        y = self._validate_y(y)
+        y = self._validate_y(y, sample_weight)
 
-        random_state = check_random_state(self.random_state)
+        if self.n_iter_no_change is not None:
+            X, X_val, y, y_val, sample_weight, sample_weight_val = (
+                train_test_split(X, y, sample_weight,
+                                 random_state=self.random_state,
+                                 test_size=self.validation_fraction))
+        else:
+            X_val = y_val = sample_weight_val = None
+
         self._check_params()
 
         if not self._is_initialized():
@@ -962,6 +1024,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             # init predictions
             y_pred = self.init_.predict(X)
             begin_at_stage = 0
+
+            # The rng state must be preserved if warm_start is True
+            self._rng = check_random_state(self.random_state)
+
         else:
             # add more estimators to fitted model
             # invariant: warm_start = True
@@ -972,12 +1038,33 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                  % (self.n_estimators,
                                     self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
+            # The requirements of _decision_function (called in two lines
+            # below) are more constrained than fit. It accepts only CSR
+            # matrices.
+            X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
             y_pred = self._decision_function(X)
             self._resize_state()
 
+        if self.presort is True and issparse(X):
+            raise ValueError(
+                "Presorting is not supported for sparse matrices.")
+
+        presort = self.presort
+        # Allow presort to be 'auto', which means True if the dataset is dense,
+        # otherwise it will be False.
+        if presort == 'auto':
+            presort = not issparse(X)
+
+        X_idx_sorted = None
+        if presort:
+            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
+                                             dtype=np.int32)
+
         # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
-                                    begin_at_stage, monitor)
+        n_stages = self._fit_stages(X, y, y_pred, sample_weight, self._rng,
+                                    X_val, y_val, sample_weight_val,
+                                    begin_at_stage, monitor, X_idx_sorted)
+
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -985,10 +1072,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
 
+        self.n_estimators_ = n_stages
         return self
 
     def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
-                    begin_at_stage=0, monitor=None):
+                    X_val, y_val, sample_weight_val,
+                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -1009,17 +1098,18 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         else:
             min_weight_leaf = 0.
 
-        # init criterion and splitter
-        criterion = FriedmanMSE(1)
-        splitter = PresortBestSplitter(criterion,
-                                       self.max_features_,
-                                       self.min_samples_leaf,
-                                       min_weight_leaf,
-                                       random_state)
-
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
             verbose_reporter.init(self, begin_at_stage)
+
+        X_csc = csc_matrix(X) if issparse(X) else None
+        X_csr = csr_matrix(X) if issparse(X) else None
+
+        if self.n_iter_no_change is not None:
+            loss_history = np.ones(self.n_iter_no_change) * np.inf
+            # We create a generator to get the predictions for X_val after
+            # the addition of each successive stage
+            y_val_pred_iter = self._staged_decision_function(X_val)
 
         # perform boosting iterations
         i = begin_at_stage
@@ -1036,8 +1126,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, criterion, splitter,
-                                     random_state)
+                                     sample_mask, random_state, X_idx_sorted,
+                                     X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
@@ -1059,6 +1149,22 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 early_stopping = monitor(i, self, locals())
                 if early_stopping:
                     break
+
+            # We also provide an early stopping based on the score from
+            # validation set (X_val, y_val), if n_iter_no_change is set
+            if self.n_iter_no_change is not None:
+                # By calling next(y_val_pred_iter), we get the predictions
+                # for X_val after the addition of the current stage
+                validation_loss = loss_(y_val, next(y_val_pred_iter),
+                                        sample_weight_val)
+
+                # Require validation_score to be better (less) than at least
+                # one of the last n_iter_no_change evaluations
+                if np.any(validation_loss + self.tol < loss_history):
+                    loss_history[i % len(loss_history)] = validation_loss
+                else:
+                    break
+
         return i + 1
 
     def _make_estimator(self, append=True):
@@ -1067,12 +1173,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit`"
-                                 " before making predictions`.")
-        if X.shape[1] != self.n_features:
+        self._check_initialized()
+        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+        if X.shape[1] != self.n_features_:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
-                self.n_features, X.shape[1]))
+                self.n_features_, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score
 
@@ -1083,28 +1188,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
 
-    @deprecated(" and will be removed in 0.19")
-    def decision_function(self, X):
-        """Compute the decision function of ``X``.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        score : array, shape = [n_samples, n_classes] or [n_samples]
-            The decision function of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-            Regression and binary classification produce an array of shape
-            [n_samples].
-        """
-        X = check_array(X, dtype=DTYPE, order="C")
-        score = self._decision_function(X)
-        if score.shape[1] == 1:
-            return score.ravel()
-        return score
 
     def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
@@ -1114,8 +1197,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -1125,35 +1210,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score.copy()
-
-    @deprecated(" and will be removed in 0.19")
-    def staged_decision_function(self, X):
-        """Compute decision function of ``X`` for each iteration.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        score : generator of array, shape = [n_samples, k]
-            The decision function of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-            Regression and binary classification are special cases with
-            ``k == 1``, otherwise ``k==n_classes``.
-        """
-        for dec in self._staged_decision_function(X):
-            # no yield from in Python2.X
-            yield dec
 
     @property
     def feature_importances_(self):
@@ -1164,25 +1225,61 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit` before"
-                                 " `feature_importances_`.")
+        self._check_initialized()
 
-        total_sum = np.zeros((self.n_features, ), dtype=np.float64)
+        total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(tree.feature_importances_
-                            for tree in stage) / len(stage)
+            stage_sum = sum(tree.tree_.compute_feature_importances(
+                normalize=False) for tree in stage) / len(stage)
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)
+        importances /= importances.sum()
         return importances
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
+        # 'sample_weight' is not utilised but is used for
+        # consistency with similar method _validate_y of GBC
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
             y = y.astype(np.float64)
         # Default implementation
         return y
+
+    def apply(self, X):
+        """Apply trees in the ensemble to X, return leaf indices.
+
+        .. versionadded:: 0.17
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will
+            be converted to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators, n_classes]
+            For each datapoint x in X and for each tree in the ensemble,
+            return the index of the leaf x ends up in each estimator.
+            In the case of binary classification n_classes is 1.
+        """
+
+        self._check_initialized()
+        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+
+        # n_classes will be equal to 1 in the binary classification or the
+        # regression case.
+        n_estimators, n_classes = self.estimators_.shape
+        leaves = np.zeros((X.shape[0], n_estimators, n_classes))
+
+        for i in range(n_estimators):
+            for j in range(n_classes):
+                estimator = self.estimators_[i, j]
+                leaves[:, i, j] = estimator.apply(X, check_input=False)
+
+        return leaves
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
@@ -1219,17 +1316,43 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
-        Ignored if ``max_leaf_nodes`` is not None.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    criterion : string, optional (default="friedman_mse")
+        The function to measure the quality of a split. Supported criteria
+        are "friedman_mse" for the mean squared error with improvement
+        score by Friedman, "mse" for mean squared error, and "mae" for
+        the mean absolute error. The default value of "friedman_mse" is
+        generally the best as it can provide a better approximation in
+        some cases.
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
+        .. versionadded:: 0.18
+
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+        .. versionchanged:: 0.18
+           Added float values for fractions.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
 
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
@@ -1240,14 +1363,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=sqrt(n_features)`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a fraction and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
@@ -1260,9 +1384,35 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
-    init : BaseEstimator, None, optional (default=None)
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    init : estimator, optional
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1275,7 +1425,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1283,8 +1433,49 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    presort : bool or 'auto', optional (default='auto')
+        Whether to presort the data to speed up the finding of best splits in
+        fitting. Auto mode by default will use presorting on dense data and
+        default to normal sorting on sparse data. Setting presort to true on
+        sparse data will raise an error.
+
+        .. versionadded:: 0.17
+           *presort* parameter.
+
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if ``n_iter_no_change`` is set to an integer.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default None
+        ``n_iter_no_change`` is used to decide if early stopping will be used
+        to terminate training when validation score is not improving. By
+        default it is set to None to disable early stopping. If set to a
+        number, it will set aside ``validation_fraction`` size of the training
+        data as validation and terminate training when validation score is not
+        improving in all of the previous ``n_iter_no_change`` numbers of
+        iterations.
+
+        .. versionadded:: 0.20
+
+    tol : float, optional, default 1e-4
+        Tolerance for the early stopping. When the loss is not improving
+        by at least tol for ``n_iter_no_change`` iterations (if set to a
+        number), the training stops.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
+
+        .. versionadded:: 0.20
+
     feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -1302,14 +1493,22 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, loss_.K]
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, ``loss_.K``]
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
@@ -1330,24 +1529,39 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0,
-                 max_leaf_nodes=None, warm_start=False):
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None,
+                 random_state=None, max_features=None, verbose=0,
+                 max_leaf_nodes=None, warm_start=False,
+                 presort='auto', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
-            min_samples_split=min_samples_split,
+            criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_depth=max_depth, init=init, subsample=subsample,
             max_features=max_features,
             random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
+            warm_start=warm_start, presort=presort,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol)
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
+        check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
+        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_trim_classes < 2:
+            raise ValueError("y contains %d class after sample_weight "
+                             "trimmed classes with zero weights, while a "
+                             "minimum of 2 classes are required."
+                             % n_trim_classes)
         self.n_classes_ = len(self.classes_)
         return y
 
@@ -1356,8 +1570,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -1367,7 +1583,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -1381,8 +1597,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -1401,12 +1619,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y: array of shape = ["n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
         score = self.decision_function(X)
@@ -1421,8 +1641,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -1438,8 +1660,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Raises
         ------
@@ -1448,7 +1672,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -1466,8 +1690,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Raises
         ------
@@ -1476,7 +1702,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -1491,8 +1717,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -1542,17 +1770,43 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
-        Ignored if ``max_leaf_nodes`` is not None.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    criterion : string, optional (default="friedman_mse")
+        The function to measure the quality of a split. Supported criteria
+        are "friedman_mse" for the mean squared error with improvement
+        score by Friedman, "mse" for mean squared error, and "mae" for
+        the mean absolute error. The default value of "friedman_mse" is
+        generally the best as it can provide a better approximation in
+        some cases.
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
+        .. versionadded:: 0.18
+
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a fraction and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+        .. versionchanged:: 0.18
+           Added float values for fractions.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a fraction and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
 
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
@@ -1563,14 +1817,15 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=n_features`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a fraction and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
@@ -1584,11 +1839,38 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
-    init : BaseEstimator, None, optional (default=None)
+    init : estimator, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1601,13 +1883,47 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    presort : bool or 'auto', optional (default='auto')
+        Whether to presort the data to speed up the finding of best splits in
+        fitting. Auto mode by default will use presorting on dense data and
+        default to normal sorting on sparse data. Setting presort to true on
+        sparse data will raise an error.
+
+        .. versionadded:: 0.17
+           optional parameter *presort*.
+
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default None
+        ``n_iter_no_change`` is used to decide if early stopping will be used
+        to terminate training when validation score is not improving. By
+        default it is set to None to disable early stopping. If set to a
+        number, it will set aside ``validation_fraction`` size of the training
+        data as validation and terminate training when validation score is not
+        improving in all of the previous ``n_iter_no_change`` numbers of
+        iterations.
+
+        .. versionadded:: 0.20
+
+    tol : float, optional, default 1e-4
+        Tolerance for the early stopping. When the loss is not improving
+        by at least tol for ``n_iter_no_change`` iterations (if set to a
+        number), the training stops.
+
+        .. versionadded:: 0.20
 
 
     Attributes
@@ -1629,12 +1945,21 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    `init` : BaseEstimator
+    init_ : estimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
         The collection of fitted sub-estimators.
+
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
@@ -1654,36 +1979,44 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 warm_start=False, presort='auto', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
-            min_samples_split=min_samples_split,
+            criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_depth=max_depth, init=init, subsample=subsample,
             max_features=max_features,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            presort=presort, validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol)
 
     def predict(self, X):
         """Predict regression target for X.
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
         y : array of shape = [n_samples]
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
         return self._decision_function(X).ravel()
 
     def staged_predict(self, X):
@@ -1694,8 +2027,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -1704,3 +2039,26 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
         for y in self._staged_decision_function(X):
             yield y.ravel()
+
+    def apply(self, X):
+        """Apply trees in the ensemble to X, return leaf indices.
+
+        .. versionadded:: 0.17
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will
+            be converted to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators]
+            For each datapoint x in X and for each tree in the ensemble,
+            return the index of the leaf x ends up in each estimator.
+        """
+
+        leaves = super(GradientBoostingRegressor, self).apply(X)
+        leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
+        return leaves

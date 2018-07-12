@@ -19,11 +19,11 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_random_state, ConvergenceWarning
+from ..utils import check_random_state
 from ..utils import check_X_y, _get_n_jobs
-from ..utils.random import choice
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
+from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -101,7 +101,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     spatial_median : array, shape = [n_features]
         Spatial median.
 
-    n_iter: int
+    n_iter : int
         Number of iterations needed.
 
     References
@@ -242,9 +242,12 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     tol : float, optional, default 1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : RandomState or an int seed, optional, default None
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional, default None
+        A random number generator instance to define the state of the random
+        permutations generator.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     n_jobs : integer, optional, default 1
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -275,7 +278,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
@@ -361,10 +364,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
-            indices = [choice(n_samples,
-                              size=n_subsamples,
-                              replace=False,
-                              random_state=random_state)
+            indices = [random_state.choice(n_samples, size=n_subsamples,
+                                           replace=False)
                        for _ in range(self.n_subpopulation_)]
 
         n_jobs = _get_n_jobs(self.n_jobs)

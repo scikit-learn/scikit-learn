@@ -52,15 +52,14 @@ print("n_digits: %d, \t n_samples %d, \t n_features %d"
       % (n_digits, n_samples, n_features))
 
 
-print(79 * '_')
-print('% 9s' % 'init'
-      '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
+print(82 * '_')
+print('init\t\ttime\tinertia\thomo\tcompl\tv-meas\tARI\tAMI\tsilhouette')
 
 
 def bench_k_means(estimator, name, data):
     t0 = time()
     estimator.fit(data)
-    print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
+    print('%-9s\t%.2fs\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f'
           % (name, (time() - t0), estimator.inertia_,
              metrics.homogeneity_score(labels, estimator.labels_),
              metrics.completeness_score(labels, estimator.labels_),
@@ -83,9 +82,9 @@ pca = PCA(n_components=n_digits).fit(data)
 bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               name="PCA-based",
               data=data)
-print(79 * '_')
+print(82 * '_')
 
-###############################################################################
+# #############################################################################
 # Visualize the results on PCA-reduced data
 
 reduced_data = PCA(n_components=2).fit_transform(data)
@@ -93,7 +92,7 @@ kmeans = KMeans(init='k-means++', n_clusters=n_digits, n_init=10)
 kmeans.fit(reduced_data)
 
 # Step size of the mesh. Decrease to increase the quality of the VQ.
-h = .02     # point in the mesh [x_min, m_max]x[y_min, y_max].
+h = .02     # point in the mesh [x_min, x_max]x[y_min, y_max].
 
 # Plot the decision boundary. For that, we will assign a color to each
 x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1

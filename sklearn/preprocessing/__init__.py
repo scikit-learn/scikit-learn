@@ -12,6 +12,7 @@ from .data import MaxAbsScaler
 from .data import Normalizer
 from .data import RobustScaler
 from .data import StandardScaler
+from .data import QuantileTransformer
 from .data import add_dummy_feature
 from .data import binarize
 from .data import normalize
@@ -19,9 +20,13 @@ from .data import scale
 from .data import robust_scale
 from .data import maxabs_scale
 from .data import minmax_scale
-from .data import OneHotEncoder
-
+from .data import quantile_transform
+from .data import power_transform
+from .data import PowerTransformer
 from .data import PolynomialFeatures
+
+from ._encoders import OneHotEncoder
+from ._encoders import OrdinalEncoder
 
 from .label import label_binarize
 from .label import LabelBinarizer
@@ -30,6 +35,8 @@ from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
 
+# stub, remove in version 0.21
+from .data import CategoricalEncoder  # noqa
 
 __all__ = [
     'Binarizer',
@@ -41,8 +48,11 @@ __all__ = [
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',
+    'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
+    'OrdinalEncoder',
+    'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
@@ -54,4 +64,6 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
     'label_binarize',
+    'quantile_transform',
+    'power_transform',
 ]

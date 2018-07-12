@@ -1,10 +1,11 @@
 """ Test fast_dict.
 """
 import numpy as np
-from nose.tools import assert_equal
 
 from sklearn.utils.fast_dict import IntFloatDict, argmin
+from sklearn.utils.testing import assert_equal
 from sklearn.externals.six.moves import xrange
+
 
 def test_int_float_dict():
     rng = np.random.RandomState(0)
@@ -27,6 +28,6 @@ def test_int_float_dict():
 def test_int_float_dict_argmin():
     # Test the argmin implementation on the IntFloatDict
     keys = np.arange(100, dtype=np.intp)
-    values = np.arange(100, dtype=np.float)
+    values = np.arange(100, dtype=np.float64)
     d = IntFloatDict(keys, values)
     assert_equal(argmin(d), (0, 0))

@@ -15,9 +15,9 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 
-# Licence: BSD3
+# License: BSD3
 
 import warnings
 from math import sqrt, log
@@ -28,9 +28,9 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
-from ..utils.extmath import fast_logdet, fast_dot, randomized_svd, squared_norm
+from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -88,9 +88,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling. Only used
-        if ``svd_method`` equals 'randomized'
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
 
     Attributes
     ----------
@@ -147,11 +149,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
+        y : Ignored
+
         Returns
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float)
+        X = check_array(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -254,8 +258,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Wpsi = self.components_ / self.noise_variance_
         cov_z = linalg.inv(Ih + np.dot(Wpsi, self.components_.T))
-        tmp = fast_dot(X_transformed, Wpsi.T)
-        X_transformed = fast_dot(tmp, cov_z)
+        tmp = np.dot(X_transformed, Wpsi.T)
+        X_transformed = np.dot(tmp, cov_z)
 
         return X_transformed
 
@@ -309,12 +313,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'components_')
@@ -322,7 +326,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi)
                           - fast_logdet(precision))
@@ -333,12 +336,14 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
+
+        y : Ignored
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
