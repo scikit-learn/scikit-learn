@@ -1238,9 +1238,8 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
-        cdef double w = 1.0
-
-        cdef double impurity = 0.0
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t impurity = 0.0
 
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
@@ -1251,9 +1250,9 @@ cdef class MAE(RegressionCriterion):
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                impurity += (<double> fabs((<double> y_ik) - 
-							<double> self.node_medians[k])) * w
-        return impurity / (self.weighted_n_node_samples * self.n_outputs)
+                impurity += fabs(y_ik - self.node_medians[k]) * w
+
+        return <double>(impurity / (self.weighted_n_node_samples *                              self.n_outputs))
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
@@ -1273,7 +1272,9 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t median
-        cdef double w = 1.0
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t imp_left = 0.0
+        cdef DOUBLE_t imp_right = 0.0
 
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
@@ -1291,9 +1292,9 @@ cdef class MAE(RegressionCriterion):
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                impurity_left[0] += (<double> fabs((<double> y_ik) -
-                                                 <double> median)) * w
-        impurity_left[0] /= <double>((self.weighted_n_left) * self.n_outputs)
+                imp_left += fabs(y_ik - median) * w
+        impurity_left[0] = <double> (imp_left / (self.weighted_n_left *
+                                     self.n_outputs))
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> right_child[k]).get_median()
@@ -1305,10 +1306,9 @@ cdef class MAE(RegressionCriterion):
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                impurity_right[0] += (<double>fabs((<double> y_ik) -
-                                                  <double> median)) * w
-        impurity_right[0] /= <double>((self.weighted_n_right) *
-                                      self.n_outputs)
+                imp_right += fabs(y_ik - median) * w
+        impurity_right[0] = <double> (imp_right / (self.weighted_n_right *
+                                      self.n_outputs))
 
 
 cdef class FriedmanMSE(MSE):
