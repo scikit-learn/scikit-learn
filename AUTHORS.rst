@@ -59,10 +59,13 @@ The following people have been core contributors to scikit-learn's development a
   * `Alexandre Passos <http://atpassos.posterous.com>`_
   * `Fabian Pedregosa <http://fa.bianp.net/blog/>`_
   * `Peter Prettenhofer <https://sites.google.com/site/peterprettenhofer/>`_
+  * `Hanmin Qin <https://github.com/qinhanmin2014>`_
   * Bertrand Thirion
+  * `Joris Van den Bossche` <https://github.com/jorisvandenbossche>`_
   * `Jake VanderPlas <http://staff.washington.edu/jakevdp/>`_
   * Nelle Varoquaux
   * `Gael Varoquaux <http://gael-varoquaux.info/>`_
+  * `Roman Yurchak <https://github.com/rth>`_
   * Ron Weiss
 
 Please do not email the authors directly to ask for assistance or report issues.
