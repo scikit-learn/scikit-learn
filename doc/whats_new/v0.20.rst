@@ -31,8 +31,8 @@ String or pandas Categorical columns can now be encoded with
 
 :class:`~compose.TransformedTargetRegressor` helps when the regression target
 needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
-joins :class:`~preprocessing.QuantileTransformer` as a non-linear
-transformation.
+and :class:`~preprocessing.KBinsDiscretizer` join
+:class:`~preprocessing.QuantileTransformer` as non-linear transformations.
 
 Beyond this, we have added :term:`sample_weight` support to several estimators
 (including :class:`~cluster.KMeans`, :class:`~linear_model.BayesianRidge` and
