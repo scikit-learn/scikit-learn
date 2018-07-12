@@ -461,23 +461,14 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
     """
 
     n_samples = len(core_distances)
-    is_core = np.ones(n_samples, dtype=bool)
-    labels = -np.ones(n_samples, dtype=int)
-    cluster_id = -1
+    is_core = np.zeros(n_samples, dtype=bool)
+    labels = np.zeros(n_samples, dtype=int)
 
-    for entry in ordering:
-        if reachability[entry] > eps:
-            if core_distances[entry] <= eps:
-                cluster_id += 1
-                labels[entry] = cluster_id
-            else:
-                is_core[entry] = False
-        else:
-            labels[entry] = cluster_id
-            if core_distances[entry] <= eps:
-                is_core[entry] = True
-            else:
-                is_core[entry] = False
+    far_reach = reachability > eps
+    near_core = core_distances <= eps
+    labels[ordering] = np.cumsum(far_reach[ordering] & near_core[ordering]) - 1
+    labels[far_reach & ~near_core] = -1
+    is_core[near_core] = True
     return np.arange(n_samples)[is_core], labels
 
 

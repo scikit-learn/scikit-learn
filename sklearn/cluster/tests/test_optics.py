@@ -83,29 +83,35 @@ def test_close_extract():
     assert_equal(max(clust3.extract_dbscan(.3)[1]), 2)
 
 
-def test_dbscan_optics_parity():
-    # Test that OPTICS clustering labels are < 5 difference of DBSCAN
+@pytest.mark.parametrize('eps', [0.1, .3, .5])
+@pytest.mark.parametrize('min_samples', [3, 10, 20])
+def test_dbscan_optics_parity(eps, min_samples):
+    # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=10).fit(X)
-    core_optics, labels_optics = op.extract_dbscan(0.3)
+    op = OPTICS(min_samples=min_samples).fit(X)
+    core_optics, labels_optics = op.extract_dbscan(eps)
 
     # calculate dbscan labels
-    db = DBSCAN(eps=0.3, min_samples=10).fit(X)
+    db = DBSCAN(eps=0.3, min_samples=min_samples).fit(X)
 
     contingency = contingency_matrix(db.labels_, labels_optics)
-    agree = min(np.max(contingency, axis=1), np.max(contingency, axis=0))
-    disagree = np.sum(contingency) - np.sum(agree)
+    agree = min(np.sum(np.max(contingency, axis=0)),
+                np.sum(np.max(contingency, axis=1)))
+    disagree = X.shape[0] - agree
 
     # verify core_labels match
     assert_array_equal(core_optics, db.core_sample_indices_)
 
-    # verify label mismatch is < 5 labels
-    assert disagree < 5
+    non_core_count = len(labels_optics) - len(core_optics)
+    percent_mismatch = np.round((disagree - 1) / non_core_count, 2)
+
+    # verify label mismatch is <= 5% labels
+    assert percent_mismatch <= 0.05
 
 
 def test_auto_extract_hier():
