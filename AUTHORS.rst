@@ -65,8 +65,8 @@ The following people have been core contributors to scikit-learn's development a
   * `Jake VanderPlas <http://staff.washington.edu/jakevdp/>`_
   * Nelle Varoquaux
   * `Gael Varoquaux <http://gael-varoquaux.info/>`_
-  * `Roman Yurchak <https://github.com/rth>`_
   * Ron Weiss
+  * `Roman Yurchak <https://github.com/rth>`_
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
