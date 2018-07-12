@@ -905,8 +905,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     If the algorithm stops before fully converging (because of ``tol`` of
     ``max_iter``), ``labels_`` and ``means_`` will not be consistent, i.e. the
     ``means_`` will not be the means of the points in each cluster.
-    Also, the estimator will reassign ``labels_`` after the last iteration to make
-    ``labels_`` consistent with ``predict`` on the training set.
+    Also, the estimator will reassign ``labels_`` after the last iteration to
+    make ``labels_`` consistent with ``predict`` on the training set.
 
     """
 
