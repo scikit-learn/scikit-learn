@@ -37,6 +37,7 @@ ImputerTriplet = namedtuple('ImputerTriplet', ['feat_idx',
 __all__ = [
     'SimpleImputer',
     'ChainedImputer',
+    'SamplingImputer'
 ]
 
 

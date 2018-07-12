@@ -87,8 +87,30 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
-.. _chained_imputer:
 
+Unlike the strategies of the :class:`SimpleImputer`, which are all deterministic,
+the :class:`SamplingImputer` class provides a non deterministic strategy to perform
+univariate feature imputation. Imputation is performed by sampling uniformly at
+random from the non missing values. The :class:`SamplingImputer` class supports
+sparse and categorical data. It works the same way as the :class:`SimpleImputer`::
+
+    >>> import numpy as np
+    >>> from sklearn.impute import SamplingImputer
+    >>> X = np.array([[1, -1],
+                      [2, -2],
+                      [np.nan, np.nan],
+                      [np.nan, np.nan],
+                      [np.nan, np.nan]])
+    >>> imp = SamplingImputer(missing_values=np.nan, random_state=0)
+    >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+    [[1, -1],
+     [1, -1],
+     [1, -2],
+     [2, -1],
+     [2, -1]]
+
+
+.. _chained_imputer:
 
 Multivariate feature imputation
 ===============================
