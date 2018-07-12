@@ -456,6 +456,11 @@ def test_imputation_copy():
     Xt[0, 0] = -1
     assert_false(np.all(X == Xt))
 
+    imputer = SamplingImputer(missing_values=0, copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = -1
+    assert_false(np.all(X == Xt))
+
     # copy=True, sparse csr => copy
     X = X_orig.copy()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
@@ -464,9 +469,19 @@ def test_imputation_copy():
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
 
+    imputer = SamplingImputer(missing_values=X.data[0], copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_false(np.all(X.data == Xt.data))
+
     # copy=False, dense => no copy
     X = X_orig.copy().toarray()
     imputer = SimpleImputer(missing_values=0, strategy="mean", copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = -1
+    assert_array_almost_equal(X, Xt)
+
+    imputer = SamplingImputer(missing_values=0, copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
     assert_array_almost_equal(X, Xt)
@@ -479,10 +494,20 @@ def test_imputation_copy():
     Xt.data[0] = -1
     assert_array_almost_equal(X.data, Xt.data)
 
+    imputer = SamplingImputer(missing_values=X.data[0], copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_array_almost_equal(X.data, Xt.data)
+
     # copy=False, sparse csr => copy
     X = X_orig.copy()
     imputer = SimpleImputer(missing_values=X.data[0], strategy="mean",
                             copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_false(np.all(X.data == Xt.data))
+
+    imputer = SamplingImputer(missing_values=X.data[0], copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
@@ -793,6 +818,24 @@ def test_sampling_error_invalid_type(dtype):
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.transform(X)
+
+
+def test_sampling_sparse():
+    # Test imputation on sparse matrix using SamplingImputer
+    X = np.zeros((5, 5))
+    X[3:5] = 1
+    X = sparse.csc_matrix(X)
+
+    # store some explicit zeros
+    X[0] = 0
+
+    X_true = np.ones((5, 5))
+
+    imputer = SamplingImputer(missing_values=0)
+    with pytest.warns(UserWarning, match="conversion to dense array"):
+        X_trans = imputer.fit_transform(X)
+
+    assert_allclose(X_trans, X_true)
 
 
 def test_sampling_imputation_copy():

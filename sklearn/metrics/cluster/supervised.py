@@ -25,14 +25,23 @@ from ...utils.validation import check_array
 from ...utils.fixes import comb
 
 
-def comb2(n):
+def _comb2(n):
     # the exact version is faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
 
 
 def check_clusterings(labels_true, labels_pred):
-    """Check that the two clusterings matching 1D integer arrays."""
+    """Check that the labels arrays are 1D and of same dimension.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        The true labels
+
+    labels_pred : int array, shape = [n_samples]
+        The predicted labels
+    """
     labels_true = np.asarray(labels_true)
     labels_pred = np.asarray(labels_pred)
 
@@ -205,11 +214,11 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     # Compute the ARI using the contingency data
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
-    sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
-    sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
+    sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
+    sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
+    sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
 
-    prod_comb = (sum_comb_c * sum_comb_k) / comb2(n_samples)
+    prod_comb = (sum_comb_c * sum_comb_k) / _comb2(n_samples)
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
@@ -861,7 +870,13 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
 
 
 def entropy(labels):
-    """Calculates the entropy for a labeling."""
+    """Calculates the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : int array, shape = [n_samples]
+        The labels
+    """
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]

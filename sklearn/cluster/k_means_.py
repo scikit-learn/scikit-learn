@@ -859,6 +859,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     inertia_ : float
         Sum of squared distances of samples to their closest cluster center.
 
+    n_iter_ : int
+        Number of iterations run.
+
     Examples
     --------
 

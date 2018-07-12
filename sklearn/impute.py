@@ -752,7 +752,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
         # ensures exploration, i.e. at least some probability of sampling
-        abs_corr_mat[abs_corr_mat < tolerance] = tolerance
+        np.clip(abs_corr_mat, tolerance, None, out=abs_corr_mat)
         # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
         # needs to sum to 1 for np.random.choice sampling
@@ -1086,7 +1086,8 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
             values, counts = np.unique(column, return_counts=True)
 
-            if n_implicit_zeros[i] > 0:
+            # count explicit and implicit zeros if missing_value != 0
+            if missing_values != 0 and n_implicit_zeros[i] > 0:
                 if 0 in values:
                     counts[values == 0] += n_implicit_zeros[i]
                 else:
@@ -1159,12 +1160,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             X = X[:, valid_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X):
-            if self.missing_values == 0:
-                warnings.warn("Imputation will only be performed on explicit "
-                              "zeros. To impute on all zeros, please provide a"
-                              " dense array.")
-
+        if sparse.issparse(X) and self.missing_values != 0:
             mask_data = _get_mask(X.data, self.missing_values)
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i]:X.indptr[i+1]]
@@ -1176,6 +1172,11 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
                 column[mask_column] = values
 
         else:
+            if sparse.issparse(X):
+                warnings.warn("Imputation on zeros of sparse matrix will force"
+                              " conversion to dense array.")
+                X = X.toarray()
+
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             for i in range(n_missing.shape[0]):
