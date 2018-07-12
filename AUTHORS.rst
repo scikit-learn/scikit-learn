@@ -47,6 +47,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Kyle Kastner <http://kastnerkyle.github.io>`_
   * `Manoj Kumar <https://manojbits.wordpress.com>`_
   * Robert Layton
+  * `Guillaume Lemaitre <https://github.com/glemaitre>`_
   * `Wei Li <http://kuantkid.github.io/>`_
   * Paolo Losi
   * `Gilles Louppe <http://glouppe.github.io/>`_
