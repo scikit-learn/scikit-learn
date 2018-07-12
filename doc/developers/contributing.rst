@@ -796,11 +796,11 @@ In the following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
-If the default value of a parameter needs to be changed, it is recommended to
-replace the default value with a specific value (e.g., ``deprecated``) and
-raise ``FutureWarning`` when users are using the default value. In the
-following example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20). You can also refer to recent merged PRs
+If the default value of a parameter needs to be changed, please replace the
+default value with a specific value (e.g., ``warn``) and raise
+``FutureWarning`` when users are using the default value. In the following
+example, we change the default value of ``n_clusters`` from 5 to 10
+(current version is 0.20). You can also refer to merged PRs
 (e.g., `#10331 <https://github.com/scikit-learn/scikit-learn/pull/10331>`__
 and `#11043 <https://github.com/scikit-learn/scikit-learn/pull/11043>`__)::
 
