@@ -873,16 +873,18 @@ larger parent cluster.
 .. topic:: Comparison with DBSCAN
     
     The results from OPTICS ``extract_dbscan`` method and DBSCAN are not quite
-    identical. This is in part because the first sample processed by OPTICS
-    will always have a reachability distance that is set to ``inf``, and will
-    thus generally be marked as noise regardless of the surrounding density of
-    other samples. This affects adjacent points when they are considered as
-    candidates for being marked as *core samples*. While this effect is quite
-    local to the starting point of the dataset and is unlikely to be noticed
-    on even moderately large datasets, it is worth also noting that non-core
-    boundry points may switch cluster labels on the rare occasion that they
-    are equidistant to a competeing cluster due to how the graph is read from
-    left to right when assigning labels. 
+    identical. Specifically, while *core_samples* returned from both OPTICS
+    and DBSCAN are guaranteed to be identical, labeling of periphery and noise
+    points is not. This is in part because the first sample processed by
+    OPTICS will always have a reachability distance that is set to ``inf``,
+    and will thus generally be marked as noise rather than periphery. This
+    affects adjacent points when they are considered as candidates for being
+    marked as either periphery or noise. While this effect is quite local to
+    the starting point of the dataset and is unlikely to be noticed on even
+    moderately large datasets, it is worth also noting that non-core boundry
+    points may switch cluster labels on the rare occasion that they are
+    equidistant to a competeing cluster due to how the graph is read from left
+    to right when assigning labels. 
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``
