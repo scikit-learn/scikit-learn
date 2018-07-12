@@ -68,7 +68,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
 
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
-                     sample_weight=None, return_mean=False):
+                     sample_weight=None, return_mean=False, check_input=True):
     """
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
     the X is a sparse matrix, no centering is done, but normalization can still
@@ -90,8 +90,15 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
 
-    X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
-                    dtype=FLOAT_DTYPES)
+    if check_input:
+        X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
+                        dtype=FLOAT_DTYPES)
+    elif copy:
+        if sp.issparse(X):
+            X = X.copy()
+        else:
+            X = X.copy(order='K')
+
     y = np.asarray(y, dtype=X.dtype)
 
     if fit_intercept:
