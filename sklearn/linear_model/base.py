@@ -448,7 +448,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
+             check_input=True):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
 
@@ -457,11 +458,12 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            copy=False, return_mean=True)
+            copy=False, return_mean=True, check_input=check_input)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy)
+            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
+            check_input=check_input)
     if hasattr(precompute, '__array__') and (
             fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):
