@@ -17,7 +17,7 @@ from .validation import (as_float_array,
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
-from ..utils.fixes import Sequence
+from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .. import get_config
 

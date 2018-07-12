@@ -12,7 +12,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
-from ..utils.fixes import Mapping
+from ..utils.fixes import _Mapping as Mapping
 
 
 def _tosequence(X):

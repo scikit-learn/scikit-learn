@@ -39,7 +39,7 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import Iterable
+from ..utils.fixes import _Iterable as Iterable
 from ..externals import six
 from ..base import is_regressor
 

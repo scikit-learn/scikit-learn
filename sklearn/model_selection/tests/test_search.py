@@ -14,7 +14,7 @@ import pytest
 
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.fixes import PY3_OR_LATER
-from sklearn.utils.fixes import Iterable, Sized
+from sklearn.utils.fixes import _Iterable as Iterable, _Sized as Sized
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises

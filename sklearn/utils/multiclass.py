@@ -17,7 +17,7 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
-from ..utils.fixes import Sequence
+from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
 
 

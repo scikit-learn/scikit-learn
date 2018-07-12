@@ -34,7 +34,8 @@ from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
-from ..utils.fixes import Mapping, Sequence, Iterable
+from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
+from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
