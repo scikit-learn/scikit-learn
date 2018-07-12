@@ -1181,25 +1181,20 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
-
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
         assert_true(b"version" in pickled_estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
 
+    result = dict()
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X)
+
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
-        if name == 'ChainedImputer':
-            tol = {'rtol': 1e-5, 'atol': 0.1}
-        else:
-            tol = {}
-        assert_allclose_dense_sparse(result[method],
-                                     unpickled_result, **tol)
+        assert_allclose_dense_sparse(result[method], unpickled_result)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
