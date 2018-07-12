@@ -793,3 +793,49 @@ def test_sampling_error_invalid_type(dtype):
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.transform(X)
+
+
+def test_sampling_imputation_copy():
+    # Test imputation with copy using SamplingImputer
+    X_orig = np.array([[0, 0, 0, 0, -1],
+                       [-1, -1, 0, 0, 1],
+                       [0, 1, 1, -1, 0],
+                       [1, 0, -1, 0, 1],
+                       [1, 0, 0, 1, 0],
+                       [-1, -1, 1, 0, -1]])
+    X_orig = sparse.csr_matrix(X_orig)
+
+    # copy=True, dense => copy
+    X = X_orig.copy().toarray()
+    imputer = SamplingImputer(missing_values=-1, copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = 2
+    assert_false(np.all(X == Xt))
+
+    # copy=True, sparse csr => copy
+    X = X_orig.copy()
+    imputer = SamplingImputer(missing_values=-1, copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = 2
+    assert_false(np.all(X.data == Xt.data))
+
+    # copy=False, dense => no copy
+    X = X_orig.copy().toarray()
+    imputer = SamplingImputer(missing_values=-1, copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = 2
+    assert_array_almost_equal(X, Xt)
+
+    # copy=False, sparse csc => no copy
+    X = X_orig.copy().tocsc()
+    imputer = SamplingImputer(missing_values=-1, copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = 2
+    assert_array_almost_equal(X.data, Xt.data)
+
+    # copy=False, sparse csr => copy
+    X = X_orig.copy()
+    imputer = SamplingImputer(missing_values=-1, copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = 2
+    assert_false(np.all(X.data == Xt.data))

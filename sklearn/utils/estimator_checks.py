@@ -82,11 +82,16 @@ ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer', 'SamplingImputer',
              'MaxAbsScaler', 'MinMaxScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
 
+ALLOW_NON_NUMERIC = ['SimpleImputer', 'SamplingImputer']
+
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    yield check_dtype_object
+
+    if name not in ALLOW_NON_NUMERIC:
+        yield check_dtype_object
+
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
     yield check_estimators_fit_returns_self
