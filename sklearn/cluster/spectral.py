@@ -377,15 +377,17 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     >>> import numpy as np
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
-    >>> clustering = SpectralClustering(n_clusters=2).fit(X)
+    >>> clustering = SpectralClustering(n_clusters=2,
+    ...         assign_labels="discretize",
+    ...         random_state=0).fit(X)
     >>> clustering.labels_
-    array([0, 0, 0, 1, 1, 1], dtype=int32)
+    array([1, 1, 1, 0, 0, 0])
     >>> clustering
     ... # doctest: +NORMALIZE_WHITESPACE
-    SpectralClustering(affinity='rbf', assign_labels='kmeans', coef0=1, degree=3,
-              eigen_solver=None, eigen_tol=0.0, gamma=1.0, kernel_params=None,
-              n_clusters=2, n_init=10, n_jobs=1, n_neighbors=10,
-              random_state=None)
+    SpectralClustering(affinity='rbf', assign_labels='discretize', coef0=1,
+              degree=3, eigen_solver=None, eigen_tol=0.0, gamma=1.0,
+              kernel_params=None, n_clusters=2, n_init=10, n_jobs=1,
+              n_neighbors=10, random_state=0)
 
     Notes
     -----
