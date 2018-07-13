@@ -62,7 +62,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Peter Prettenhofer <https://sites.google.com/site/peterprettenhofer/>`_
   * `Hanmin Qin <https://github.com/qinhanmin2014>`_
   * Bertrand Thirion
-  * `Joris Van den Bossche` <https://github.com/jorisvandenbossche>`_
+  * `Joris Van den Bossche <https://github.com/jorisvandenbossche>`_
   * `Jake VanderPlas <http://staff.washington.edu/jakevdp/>`_
   * Nelle Varoquaux
   * `Gael Varoquaux <http://gael-varoquaux.info/>`_
