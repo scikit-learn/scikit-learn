@@ -436,7 +436,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
          multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
          verbose=0)
     >>> clf.score(data_transformed, digits.target)
-    0.9987631416202845
+    0.9987...
 
     References
     ----------
