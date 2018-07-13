@@ -1,6 +1,5 @@
 """Test the search module"""
 
-from collections import Iterable, Sized
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.joblib._compat import PY3_OR_LATER
@@ -14,6 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.fixes import sp_version
+from sklearn.utils.fixes import _Iterable as Iterable, _Sized as Sized
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
