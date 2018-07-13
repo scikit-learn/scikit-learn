@@ -14,6 +14,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 from collections import namedtuple
+from collections import Counter
 
 from .base import BaseEstimator, TransformerMixin
 from .base import clone
@@ -1045,6 +1046,17 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
         return np.vectorize(is_not_none)(a)
 
+    def _get_values_counts(self, array):
+        if array.size > 0:
+            counter = Counter(array)
+            values, counts = zip(*counter.items())
+            values = np.array(values)
+            counts = np.array(counts)
+        else:
+            values = np.empty(0)
+            counts = np.empty(0)
+        return values, counts
+
     def fit(self, X, y=None):
         """Fit the imputer on X.
 
@@ -1085,7 +1097,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
             column = column[~mask_column]
 
-            values, counts = np.unique(column, return_counts=True)
+            values, counts = self._get_values_counts(column)
 
             # count explicit and implicit zeros if missing_value != 0
             if missing_values != 0 and n_implicit_zeros[i] > 0:
@@ -1117,7 +1129,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
         for i in range(X.shape[1]):
             column = X[~mask[:, i], i]
             if column.size > 0:
-                uniques[i], counts = np.unique(column, return_counts=True)
+                uniques[i], counts = self._get_values_counts(column)
                 if uniques[i].size == column.size:
                     probas[i] = None
                 else:

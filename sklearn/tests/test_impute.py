@@ -741,7 +741,7 @@ def test_sampling_preserved_statistics():
     # check that: - filled values are drawn only within non-missing values
     #             - different random_states give different imputations
     #             - values are drawn uniformly at random
-    X = np.random.rand(20).reshape(-1, 1)
+    X = np.random.rand(100).reshape(-1, 1)
     X[::2] = np.nan
 
     uniques = np.unique(X)
@@ -836,49 +836,3 @@ def test_sampling_sparse():
         X_trans = imputer.fit_transform(X)
 
     assert_allclose(X_trans, X_true)
-
-
-def test_sampling_imputation_copy():
-    # Test imputation with copy using SamplingImputer
-    X_orig = np.array([[0, 0, 0, 0, -1],
-                       [-1, -1, 0, 0, 1],
-                       [0, 1, 1, -1, 0],
-                       [1, 0, -1, 0, 1],
-                       [1, 0, 0, 1, 0],
-                       [-1, -1, 1, 0, -1]])
-    X_orig = sparse.csr_matrix(X_orig)
-
-    # copy=True, dense => copy
-    X = X_orig.copy().toarray()
-    imputer = SamplingImputer(missing_values=-1, copy=True)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = 2
-    assert_false(np.all(X == Xt))
-
-    # copy=True, sparse csr => copy
-    X = X_orig.copy()
-    imputer = SamplingImputer(missing_values=-1, copy=True)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = 2
-    assert_false(np.all(X.data == Xt.data))
-
-    # copy=False, dense => no copy
-    X = X_orig.copy().toarray()
-    imputer = SamplingImputer(missing_values=-1, copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = 2
-    assert_array_almost_equal(X, Xt)
-
-    # copy=False, sparse csc => no copy
-    X = X_orig.copy().tocsc()
-    imputer = SamplingImputer(missing_values=-1, copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = 2
-    assert_array_almost_equal(X.data, Xt.data)
-
-    # copy=False, sparse csr => copy
-    X = X_orig.copy()
-    imputer = SamplingImputer(missing_values=-1, copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt.data[0] = 2
-    assert_false(np.all(X.data == Xt.data))
