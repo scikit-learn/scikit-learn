@@ -205,8 +205,7 @@ def check_probability(name):
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_warning_raised_with_deprecated_n_estimator(name):
-    print(FOREST_CLASSIFIERS)
+def test_no_warning_raised_with_deprecated_n_estimator(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
                            max_depth=1)
