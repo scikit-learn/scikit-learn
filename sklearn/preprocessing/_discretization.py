@@ -263,8 +263,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             return Xt
 
         encode_sparse = self.encode == 'onehot'
-        return OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
-                             sparse=encode_sparse).fit_transform(Xt)
+        self.ohe_encoder_ = OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
+                                      sparse=encode_sparse)
+        return self.ohe_encoder_.fit_transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
@@ -285,9 +286,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, ["bin_edges_"])
 
         if self.encode != 'ordinal':
-            raise ValueError("inverse_transform only supports "
-                             "'encode = ordinal'. Got encode={!r} instead."
-                             .format(self.encode))
+            Xt = self.ohe_encoder_.inverse_transform(Xt)
 
         Xinv = check_array(Xt, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]

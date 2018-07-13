@@ -167,9 +167,6 @@ def test_encode_options():
                            categories=[np.arange(i) for i in [2, 3, 3, 3]],
                            sparse=False)
                        .fit_transform(Xt_1), Xt_2)
-    assert_raise_message(ValueError, "inverse_transform only supports "
-                         "'encode = ordinal'. Got encode='onehot-dense' "
-                         "instead.", est.inverse_transform, Xt_2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
     Xt_3 = est.transform(X)
@@ -179,9 +176,6 @@ def test_encode_options():
                            sparse=True)
                        .fit_transform(Xt_1).toarray(),
                        Xt_3.toarray())
-    assert_raise_message(ValueError, "inverse_transform only supports "
-                         "'encode = ordinal'. Got encode='onehot' "
-                         "instead.", est.inverse_transform, Xt_2)
 
 
 def test_invalid_strategy_option():
@@ -212,15 +206,27 @@ def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
-def test_inverse_transform(strategy):
+@pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
+def test_inverse_transform(strategy, encode):
     X = np.random.RandomState(0).randn(100, 3)
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal')
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
     Xt = kbd.fit_transform(X)
-    assert_array_equal(Xt.max(axis=0) + 1, kbd.n_bins_)
+    if encode != 'ordinal':
+        Xt_tmp = kbd.ohe_encoder_.inverse_transform(Xt)
+    else:
+        Xt_tmp = Xt
+    assert_array_equal(Xt_tmp.max(axis=0) + 1, kbd.n_bins_)
 
     X2 = kbd.inverse_transform(Xt)
     X2t = kbd.fit_transform(X2)
-    assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
+    if encode != 'ordinal':
+        Xt_tmp = kbd.ohe_encoder_.inverse_transform(X2t)
+    else:
+        Xt_tmp = X2t
+    assert_array_equal(Xt_tmp.max(axis=0) + 1, kbd.n_bins_)
+    if encode == 'onehot':
+        Xt = Xt.todense()
+        X2t = X2t.todense()
     assert_array_equal(Xt, X2t)
 
 
