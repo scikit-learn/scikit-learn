@@ -917,12 +917,27 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         node and has children `children_[i - n_features]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
+
+    Examples
+    --------
+    >>> from sklearn.cluster import FeatureAgglomeration
+    >>> import numpy as np
+    >>> X = np.array([[1, 5], [2, 4], [2, 4],
+    ...               [1, 7], [2, 8], [3, 8]])
+    >>> clustering = FeatureAgglomeration(n_clusters=2).fit(X)
+    >>> clustering.labels_
+    array([1, 0])
+    >>> clustering
+    ... # doctest: +NORMALIZE_WHITESPACE
+    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
+               connectivity=None, linkage='ward', memory=None, n_clusters=2,
+               pooling_func='deprecated')
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func="deprecated"):
         super(FeatureAgglomeration, self).__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
