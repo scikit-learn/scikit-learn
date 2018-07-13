@@ -927,11 +927,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> clustering = FeatureAgglomeration(n_clusters=2).fit(X)
     >>> clustering.labels_
     array([1, 0])
-    >>> clustering
-    ... # doctest: +NORMALIZE_WHITESPACE
-    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-               connectivity=None, linkage='ward', memory=None, n_clusters=2,
-               pooling_func='deprecated')
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
