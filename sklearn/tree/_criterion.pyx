@@ -1252,8 +1252,7 @@ cdef class MAE(RegressionCriterion):
 
                 impurity += fabs(y_ik - self.node_medians[k]) * w
 
-        return <double>(impurity / (self.weighted_n_node_samples *
-                                    self.n_outputs))
+        return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
