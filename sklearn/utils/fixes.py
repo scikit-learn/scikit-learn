@@ -194,7 +194,6 @@ if np_version < (1, 12):
 else:
     from numpy.ma import MaskedArray    # noqa
 
-
 # To be removed once this fix is included in six
 try:
     from collections.abc import Sequence as _Sequence  # noqa
