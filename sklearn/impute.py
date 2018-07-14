@@ -42,7 +42,7 @@ __all__ = [
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask is np.nan:
+    if is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":
             return np.isnan(X)
         elif X.dtype.kind in ("i", "u"):
