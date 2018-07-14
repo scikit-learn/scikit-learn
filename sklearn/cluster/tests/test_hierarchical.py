@@ -329,7 +329,7 @@ def test_vector_scikit_single_vs_scipy_single():
         children.sort(axis=1)
         assert_array_equal(children, children_, 'linkage tree differs'
                                                 ' from scipy impl for'
-                                                ' linkage: ' + linkage)
+                                                ' single linkage.')
 
         cut = _hc_cut(k, children, n_leaves)
         cut_ = _hc_cut(k, children_, n_leaves)
