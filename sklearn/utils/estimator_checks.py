@@ -1166,9 +1166,9 @@ def check_estimators_pickle(name, estimator_orig):
         X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
-    # check if input with nans pickles properly
+    # include NaN values when the estimator should deal with them
     if name in ALLOW_NAN:
-        # set random 10 elements to be np.nan
+        # set randomly 10 elements to np.nan
         rng = np.random.RandomState(42)
         mask = rng.choice(X.size, 10, replace=False)
         X.reshape(-1)[mask] = np.nan
