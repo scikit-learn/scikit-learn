@@ -33,8 +33,8 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises,
                                    assert_allclose_dense_sparse)
-
-from collections import defaultdict, Mapping
+from sklearn.utils.fixes import _Mapping as Mapping
+from collections import defaultdict
 from functools import partial
 import pickle
 from io import StringIO
