@@ -15,7 +15,6 @@ from __future__ import division
 
 import warnings
 from itertools import chain, combinations
-from collections import Iterable
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
@@ -29,6 +28,7 @@ from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import signature, comb
+from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
