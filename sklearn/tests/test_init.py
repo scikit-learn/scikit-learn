@@ -48,9 +48,7 @@ def test_import_sklearn_no_warnings():
                                      "pytest" in line or
                                      # ignore DeprecationWarnings due to
                                      # numpy.oldnumeric
-                                     "oldnumeric" in line or
-                                     # ignore FutureWarnings
-                                     "FutureWarning" in line
+                                     "oldnumeric" in line
                                      )])
         assert 'Warning' not in message
         assert 'Error' not in message
