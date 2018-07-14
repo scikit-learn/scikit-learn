@@ -73,8 +73,12 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure = plt.figure(figsize=(27, 9))
-i = 1
+fig, axes = plt.subplots(len(classifiers) + 1, len(datasets), figsize=(9, 27))
+
+row = 0
+column = 0
+title_font_size = 25
+
 # iterate over datasets
 for ds_cnt, ds in enumerate(datasets):
     # preprocess dataset, split into training and test part
@@ -91,9 +95,9 @@ for ds_cnt, ds in enumerate(datasets):
     # just plot the dataset first
     cm = plt.cm.RdBu
     cm_bright = ListedColormap(['#FF0000', '#0000FF'])
-    ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
-    if ds_cnt == 0:
-        ax.set_title("Input data")
+    ax = axes[0, column]
+    if ds_cnt == 1:
+        ax.set_title("Input data", fontsize=title_font_size)
     # Plot the training points
     ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
                edgecolors='k')
@@ -104,11 +108,11 @@ for ds_cnt, ds in enumerate(datasets):
     ax.set_ylim(yy.min(), yy.max())
     ax.set_xticks(())
     ax.set_yticks(())
-    i += 1
 
+    row = 1
     # iterate over classifiers
     for name, clf in zip(names, classifiers):
-        ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+        ax = axes[row, column]
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
 
@@ -134,11 +138,12 @@ for ds_cnt, ds in enumerate(datasets):
         ax.set_ylim(yy.min(), yy.max())
         ax.set_xticks(())
         ax.set_yticks(())
-        if ds_cnt == 0:
-            ax.set_title(name)
+        if ds_cnt == 1:
+            ax.set_title(name, fontsize=title_font_size)
         ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                 size=15, horizontalalignment='right')
-        i += 1
+        row += 1
+    column += 1
 
 plt.tight_layout()
 plt.show()
