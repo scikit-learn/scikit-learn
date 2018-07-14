@@ -1,7 +1,6 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections import Sequence
 
 import numpy as np
 from scipy.sparse import issparse
@@ -16,6 +15,7 @@ from .validation import (as_float_array,
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
+from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
 
 

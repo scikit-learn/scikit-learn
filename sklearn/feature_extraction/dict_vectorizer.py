@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 from array import array
-from collections import Mapping
 from operator import itemgetter
 
 import numpy as np
@@ -13,6 +12,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
+from ..utils.fixes import _Mapping as Mapping
 
 
 def _tosequence(X):
