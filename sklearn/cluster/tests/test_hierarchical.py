@@ -278,7 +278,7 @@ def assess_same_labelling(cut1, cut2):
     assert_true((co_clust[0] == co_clust[1]).all())
 
 
-def test_scikit_vs_scipy():
+def test_sparse_scikit_vs_scipy():
     # Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     n, p, k = 10, 5, 3
     rng = np.random.RandomState(0)
@@ -309,6 +309,31 @@ def test_scikit_vs_scipy():
 
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
+
+def test_vector_scikit_single_vs_scipy_single():
+    n, p, k = 10, 5, 3
+    rng = np.random.RandomState(0)
+
+    for i in range(5):
+        X = .1 * rng.normal(size=(n, p))
+        X -= 4. * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out = hierarchy.linkage(X, method=single)
+        children_ = out[:, :2].astype(np.int)
+
+        children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
+
+
+        # Sort the order of child nodes per row for consistency
+        children.sort(axis=1)
+        assert_array_equal(children, children_, 'linkage tree differs'
+                                                ' from scipy impl for'
+                                                ' linkage: ' + linkage)
+
+        cut = _hc_cut(k, children, n_leaves)
+        cut_ = _hc_cut(k, children_, n_leaves)
+        assess_same_labelling(cut, cut_)
 
 
 def test_identical_points():
