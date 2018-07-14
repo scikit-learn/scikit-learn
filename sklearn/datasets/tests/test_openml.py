@@ -1,23 +1,27 @@
 """Test the openml loader.
 """
+import arff
 import json
 import numpy as np
 import sklearn
 
+from functools import partial
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import _get_data_features
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 
 
-def fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features):
+def fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features):
     # fetch with version
     data_by_name_id = fetch_openml(data_name, version=data_version)
     assert int(data_by_name_id.details['id']) == data_id
 
     # fetch without version
     fetch_openml(data_name)
-    # without specifying the version, there is no guarantee that the data id will be the same
+    # without specifying the version, there is no guarantee that the data id
+    # will be the same
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id)
@@ -26,45 +30,67 @@ def fetch_dataset_from_openml(data_id, data_name, data_version, expected_observa
     assert data_by_id.target.shape == (expected_observations, )
 
     # check numeric features:
-    feature_name_type = {feature['name']: feature['data_type'] for feature in _get_data_features(data_id)}
+    feature_name_type = {feature['name']: feature['data_type']
+                         for feature in _get_data_features(data_id)}
     for idx, feature_name in enumerate(data_by_id.feature_names):
         if feature_name_type[feature_name] == 'numeric':
             # casting trick according to Jaime at
-            # stackoverflow.com/questions/19486283/how-do-i-quickly-check-if-all-elements-of-numpy-array-are-floats
-            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype, np.number)
+            # stackoverflow.com/questions/19486283/
+            # how-do-i-quickly-check-if-all-elements-of-numpy-array-are-floats
+            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype,
+                                 np.number)
 
     if 'default_target_attribute' in data_by_id.details:
         target = data_by_id.details['default_target_attribute']
         if feature_name_type[target] == 'numeric':
-            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype, np.number)
+            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype,
+                                 np.number)
     return data_by_id
 
 
+def mock_get_data_info_by_name(name_or_id, version, data_id):
+    data_info = open('mock_openml/%d/%s_%s.json' % (data_id, name_or_id,
+                                                    version),
+                     'r').read()
+    data_info_json = json.loads(data_info)
+    return data_info_json['data']['dataset'][0]
+
+
 def mock_data_description(id):
-    description = open('mock_openml/%d/data_description.txt' % id, 'r').read()
+    description = open('mock_openml/%d/data_description.json' % id, 'r').read()
     return json.loads(description)['data_set_description']
 
 
 def mock_data_features(id):
-    features = open('mock_openml/%d/data_features.txt' % id, 'r').read()
+    features = open('mock_openml/%d/data_features.json' % id, 'r').read()
     return json.loads(features)['data_features']['feature']
 
 
-def _patch_webbased_functions():
+def mock_download_data(_, data_id):
+    arff_fp = open('mock_openml/%d/data.arff' % data_id, 'r').read()
+    return arff.load(arff_fp)
+
+
+def _monkey_patch_webbased_functions(data_id):
+
     sklearn.datasets.openml._get_data_description_by_id = mock_data_description
     sklearn.datasets.openml._get_data_features = mock_data_features
+    sklearn.datasets.openml._download_data = partial(mock_download_data,
+                                                     data_id=data_id)
+    sklearn.datasets.openml._get_data_info_by_name = \
+        partial(mock_get_data_info_by_name, data_id=data_id)
 
 
 def test_fetch_openml_iris():
     # classification dataset with numeric only columns
-    _patch_webbased_functions()
-
     data_id = 61
     data_name = 'iris'
     data_version = 1
     expected_observations = 150
     expected_features = 4
-    fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+    _monkey_patch_webbased_functions(data_id)
+    fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features)
 
 
 def test_fetch_openml_anneal():
@@ -74,7 +100,8 @@ def test_fetch_openml_anneal():
     data_version = 1
     expected_observations = 898
     expected_features = 38
-    fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+    fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features)
 
 
 def test_fetch_openml_cpu():
@@ -84,7 +111,8 @@ def test_fetch_openml_cpu():
     data_version = 1
     expected_observations = 209
     expected_features = 7
-    fetch_dataset_from_openml(data_id, data_name, data_version, expected_observations, expected_features)
+    fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features)
 
 
 def test_fetch_openml_australian():
@@ -98,7 +126,8 @@ def test_fetch_openml_australian():
         UserWarning,
         "Version 1 of dataset Australian is inactive,",
         fetch_dataset_from_openml,
-        **{'data_id': data_id, 'data_name': data_name, 'data_version': data_version,
+        **{'data_id': data_id, 'data_name': data_name,
+           'data_version': data_version,
            'expected_observations': expected_observations,
            'expected_features': expected_features}
     )

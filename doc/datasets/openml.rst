@@ -69,7 +69,8 @@ to get more information on the dataset on the openml website::
   >>> print(mice.url)
   https://www.openml.org/d/40966
 
-The id is also the best way to specify how to fetch a dataset from OpenML::
+The id is also the most specific way to specify how to fetch a dataset from
+OpenML::
 
   >>> mice = fetch_openml(40966, data_home=custom_data_home)
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP

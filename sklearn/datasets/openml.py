@@ -31,14 +31,36 @@ def _openml_fileid_url(file_id):
 
 
 def _get_data_info_by_name(name, version):
+    """
+    Utilizes the openml dataset listing api to find a dataset by
+    name/version
+    OpenML api fn:
+    https://www.openml.org/api_docs#!/data/get_data_list_data_name_data_name
+
+    Parameters
+    ----------
+    name : str
+        name of the dataset
+
+    version : int or str
+        If version is an integer, the exact name/version will be obtained from
+        OpenML. If version is a string (value: "active") it will take the first
+        version from OpenML that is annotated as active. Any other string values
+        except "active" are treated as integer.
+
+    Returns
+    -------
+    json_data['data']['dataset'][0]: json
+        json representation of the first dataset object that adhired to the search
+        criteria
+
+    """
     data_found = True
     try:
         if version == "active":
-            json_string = urlopen(_SEARCH_NAME.format(name
-                                                      + "/status/active/"))
+            response = urlopen(_SEARCH_NAME.format(name) + "/status/active/")
         else:
-            json_string = urlopen(_SEARCH_NAME.format(name)
-                                  + "/data_version/{}".format(version))
+            response = urlopen((_SEARCH_NAME + "/data_version/{}").format(name, version))
     except HTTPError as error:
         if error.code == 412:
             data_found = False
@@ -49,10 +71,9 @@ def _get_data_info_by_name(name, version):
         # might have been deactivated. will warn later
         data_found = True
         try:
-            json_string = urlopen(_SEARCH_NAME.format(name) +
-                                  "/data_version/{}/status/deactivated".format(
-                                      version))
+            response = urlopen((_SEARCH_NAME + "/data_version/{}/status/deactivated").format(name, version))
         except HTTPError as error:
+            # 412 is an OpenML specific error code, indicating a generic error (e.g., data not found)
             if error.code == 412:
                 data_found = False
             else:
@@ -65,14 +86,14 @@ def _get_data_info_by_name(name, version):
         raise ValueError("Dataset {} with version {}"
                          " not found.".format(name, version))
 
-    json_data = json.loads(json_string.read().decode("utf-8"))
+    json_data = json.loads(response.read().decode("utf-8"))
     return json_data['data']['dataset'][0]
 
 
 def _get_data_description_by_id(data_id):
     data_found = True
     try:
-        json_string = urlopen(_DATA_INFO.format(data_id))
+        response = urlopen(_DATA_INFO.format(data_id))
     except HTTPError as error:
         if error.code == 412:
             data_found = False
@@ -80,26 +101,32 @@ def _get_data_description_by_id(data_id):
         # not in except for nicer traceback
         raise ValueError("Dataset with id {} "
                          "not found.".format(data_id))
-    json_data = json.loads(json_string.read().decode("utf-8"))
+    json_data = json.loads(response.read().decode("utf-8"))
+    response.close()
     return json_data['data_set_description']
 
 
 def _get_data_features(data_id):
     data_found = True
     try:
-        json_string = urlopen(_DATA_FEATURES.format(data_id))
+        response = urlopen(_DATA_FEATURES.format(data_id))
     except HTTPError as error:
+        # 412 is an OpenML specific error code, indicating a generic error (e.g., data not found)
         if error.code == 412:
             data_found = False
+        else:
+            raise error
     if not data_found:
         # not in except for nicer traceback
         raise ValueError("Dataset with id {} "
                          "not found.".format(data_id))
-    json_data = json.loads(json_string.read().decode("utf-8"))
+    json_data = json.loads(response.read().decode("utf-8"))
+    response.close()
     return json_data['data_features']['feature']
 
 
-def _download_data(url):
+def _download_data(file_id):
+    url = _openml_fileid_url(file_id)
     response = urlopen(url)
     if sys.version_info[0] == 2:
         # Python2.7 numpy can't handle unicode?
@@ -120,7 +147,7 @@ def _convert_numericals(data, name_feature):
 
 
 def fetch_openml(name_or_id=None, version='active', data_home=None,
-                 target_column_name='default-target', memory=True):
+                 target_column_name='default-target', cache=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -147,8 +174,8 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         is used. If ``None``, all columns are returned as data and the
         tharget is ``None``.
 
-    memory : boolean, default=True
-        Whether to store downloaded datasets using joblib.
+    cache : boolean, default=True
+        Whether to cache downloaded datasets using joblib.
 
     Returns
     -------
@@ -162,7 +189,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
-    if memory:
+    if cache:
         mem = Memory(join(data_home, 'cache'), verbose=0).cache
     else:
         def mem(func):
@@ -212,9 +239,8 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         if (feature['name'] != target_column_name and feature['is_ignore'] ==
                 'false' and feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
-    data_arff_url_ = _openml_fileid_url(data_description['file_id'])
 
-    data = np.array(_download_data_(data_arff_url_)['data'], dtype=object)
+    data = np.array(_download_data_(data_description['file_id'])['data'], dtype=object)
     data = _convert_numericals(data, name_feature)
 
     if target_column_name is not None:
