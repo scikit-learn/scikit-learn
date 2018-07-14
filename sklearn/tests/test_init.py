@@ -34,7 +34,10 @@ def test_import_sklearn_no_warnings():
         pkgs = pkgutil.iter_modules(path=sklearn.__path__, prefix='sklearn.')
         import_modules = '; '.join(['import ' + modname
                                     for _, modname, _ in pkgs
-                                    if not modname.startswith('_')])
+                                    if (not modname.startswith('_') and
+                                        # add deprecated top level modules
+                                        # below to ignore them
+                                        modname not in [])])
 
         message = subprocess.check_output(['python', '-Wdefault',
                                            '-c', import_modules],
