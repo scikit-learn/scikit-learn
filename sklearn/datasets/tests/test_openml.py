@@ -2,6 +2,7 @@
 """
 import json
 import numpy as np
+import os
 import scipy.sparse
 import sklearn
 
@@ -54,22 +55,31 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
 
 
 def _monkey_patch_webbased_functions(context, data_id):
+    testdir_path = os.path.dirname(os.path.realpath(__file__))
+
     def _mock_data_description(id):
-        description = open('mock_openml/%d/data_description.json' % id, 'r').read()
+        path = os.path.join(testdir_path,
+                           'mock_openml/%d/data_description.json' % id)
+        description = open(path, 'r').read()
         return json.loads(description)['data_set_description']
 
     def _mock_data_features(id):
-        features = open('mock_openml/%d/data_features.json' % id, 'r').read()
+        path = os.path.join(testdir_path,
+                            'mock_openml/%d/data_features.json' % id)
+        features = open(path, 'r').read()
         return json.loads(features)['data_features']['feature']
 
     def _mock_download_data(_):
-        arff_fp = open('mock_openml/%d/data.arff' % data_id, 'r').read()
+        path = os.path.join(testdir_path, 'mock_openml/%d/data.arff' % data_id)
+        arff_fp = open(path, 'r').read()
         return load(arff_fp)
 
     def _mock_get_data_info_by_name(name_or_id, version):
-        data_info = open('mock_openml/%d/%s_%s.json' % (data_id, name_or_id,
-                                                        version),
-                         'r').read()
+        path = os.path.join(testdir_path,
+                            'mock_openml/%d/%s_%s.json' % (data_id,
+                                                           name_or_id,
+                                                           version))
+        data_info = open(path, 'r').read()
         data_info_json = json.loads(data_info)
         return data_info_json['data']['dataset'][0]
 
