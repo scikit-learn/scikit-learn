@@ -809,6 +809,8 @@ cdef class WeightedMedianCalculator:
         cdef int raw_k = 0
         #with gil:
         #    print ("verify_state()... raw median: " + str(debug_median) + "; k based median: " + str(new_median))
+        if self.samples.size() == 0:
+            return 0
 
         raw_median = self.verify_median()
         if (self.get_median() != raw_median):
