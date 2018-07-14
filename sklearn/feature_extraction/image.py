@@ -229,6 +229,9 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         if (isinstance(max_patches, (numbers.Integral))
                 and max_patches < all_patches):
             return max_patches
+        elif (isinstance(max_patches, (numbers.Integral))
+              and max_patches >= all_patches):
+            return all_patches
         elif (isinstance(max_patches, (numbers.Real))
                 and 0 < max_patches < 1):
             return int(max_patches * all_patches)
@@ -469,6 +472,11 @@ class PatchExtractor(BaseEstimator):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Training data.
         """
         return self
 

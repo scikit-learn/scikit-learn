@@ -1,7 +1,7 @@
 .. _labeled_faces_in_the_wild:
 
 The Labeled Faces in the Wild face recognition dataset
-======================================================
+------------------------------------------------------
 
 This dataset is a collection of JPEG pictures of famous people collected
 over the internet, all details are available on the official website:
@@ -25,15 +25,15 @@ face detector from various online websites.
 
 
 Usage
------
+~~~~~
 
 ``scikit-learn`` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
-interesting slices into memmaped numpy arrays. This dataset size is more
+interesting slices into memmapped numpy arrays. This dataset size is more
 than 200 MB. The first load typically takes more than a couple of minutes
 to fully decode the relevant part of the JPEG files into numpy arrays. If
 the dataset has  been loaded once, the following times the loading times
-less than 200ms by using a memmaped version memoized on the disk in the
+less than 200ms by using a memmapped version memoized on the disk in the
 ``~/scikit_learn_data/lfw_home/`` folder using ``joblib``.
 
 The first loader is used for the Face Identification task: a multi-class
@@ -113,6 +113,6 @@ an evaluation ``10_folds`` set meant to compute performance metrics using a
 
 
 Examples
---------
+~~~~~~~~
 
 :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`

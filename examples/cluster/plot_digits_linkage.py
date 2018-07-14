@@ -56,14 +56,14 @@ X, y = nudge_images(X, y)
 
 #----------------------------------------------------------------------
 # Visualize the clustering
-def plot_clustering(X_red, X, labels, title=None):
+def plot_clustering(X_red, labels, title=None):
     x_min, x_max = np.min(X_red, axis=0), np.max(X_red, axis=0)
     X_red = (X_red - x_min) / (x_max - x_min)
 
     plt.figure(figsize=(6, 4))
     for i in range(X_red.shape[0]):
         plt.text(X_red[i, 0], X_red[i, 1], str(y[i]),
-                 color=plt.cm.spectral(labels[i] / 10.),
+                 color=plt.cm.nipy_spectral(labels[i] / 10.),
                  fontdict={'weight': 'bold', 'size': 9})
 
     plt.xticks([])
@@ -71,7 +71,7 @@ def plot_clustering(X_red, X, labels, title=None):
     if title is not None:
         plt.title(title, size=17)
     plt.axis('off')
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 #----------------------------------------------------------------------
 # 2D embedding of the digits dataset
@@ -85,9 +85,9 @@ for linkage in ('ward', 'average', 'complete', 'single'):
     clustering = AgglomerativeClustering(linkage=linkage, n_clusters=10)
     t0 = time()
     clustering.fit(X_red)
-    print("%s : %.2fs" % (linkage, time() - t0))
+    print("%s :\t%.2fs" % (linkage, time() - t0))
 
-    plot_clustering(X_red, X, clustering.labels_, "%s linkage" % linkage)
+    plot_clustering(X_red, clustering.labels_, "%s linkage" % linkage)
 
 
 plt.show()

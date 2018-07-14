@@ -1,9 +1,10 @@
-Breast Cancer Wisconsin (Diagnostic) Database
-=============================================
+.. _breast_cancer_dataset:
 
-Notes
------
-Data Set Characteristics:
+Breast cancer wisconsin (diagnostic) dataset
+--------------------------------------------
+
+**Data Set Characteristics:**
+
     :Number of Instances: 569
 
     :Number of Attributes: 30 numeric, predictive attributes and the class
@@ -103,8 +104,8 @@ This database is also available through the UW CS ftp server:
 ftp ftp.cs.wisc.edu
 cd math-prog/cpo-dataset/machine-learn/WDBC/
 
-References
-----------
+.. topic:: References
+
    - W.N. Street, W.H. Wolberg and O.L. Mangasarian. Nuclear feature extraction 
      for breast tumor diagnosis. IS&T/SPIE 1993 International Symposium on 
      Electronic Imaging: Science and Technology, volume 1905, pages 861-870,

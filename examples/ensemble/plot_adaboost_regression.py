@@ -3,7 +3,7 @@
 Decision Tree Regression with AdaBoost
 ======================================
 
-A decision tree is boosted using the AdaBoost.R2 [1] algorithm on a 1D
+A decision tree is boosted using the AdaBoost.R2 [1]_ algorithm on a 1D
 sinusoidal dataset with a small amount of Gaussian noise.
 299 boosts (300 decision trees) is compared with a single decision tree
 regressor. As the number of boosts is increased the regressor can fit more

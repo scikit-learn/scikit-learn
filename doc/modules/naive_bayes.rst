@@ -8,17 +8,18 @@ Naive Bayes
 
 
 Naive Bayes methods are a set of supervised learning algorithms
-based on applying Bayes' theorem with the "naive" assumption of independence
-between every pair of features. Given a class variable :math:`y` and a
-dependent feature vector :math:`x_1` through :math:`x_n`,
-Bayes' theorem states the following relationship:
+based on applying Bayes' theorem with the "naive" assumption of
+conditional independence between every pair of features given the
+value of the class variable. Bayes' theorem states the following
+relationship, given class variable :math:`y` and dependent feature
+vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
    P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Using the naive independence assumption that
+Using the naive conditional independence assumption that
 
 .. math::
 
@@ -133,6 +134,49 @@ in further computations.
 Setting :math:`\alpha = 1` is called Laplace smoothing,
 while :math:`\alpha < 1` is called Lidstone smoothing.
 
+.. _complement_naive_bayes:
+
+Complement Naive Bayes
+----------------------
+
+:class:`ComplementNB` implements the complement naive Bayes (CNB) algorithm.
+CNB is an adaptation of the standard multinomial naive Bayes (MNB) algorithm
+that is particularly suited for imbalanced data sets. Specifically, CNB uses
+statistics from the *complement* of each class to compute the model's weights.
+The inventors of CNB show empirically that the parameter estimates for CNB are
+more stable than those for MNB. Further, CNB regularly outperforms MNB (often
+by a considerable margin) on text classification tasks. The procedure for
+calculating the weights is as follows:
+
+.. math::
+
+    \hat{\theta}_{ci} = \frac{\alpha_i + \sum_{j:y_j \neq c} d_{ij}}
+                             {\alpha + \sum_{j:y_j \neq c} \sum_{k} d_{kj}}
+
+    w_{ci} = \log \hat{\theta}_{ci}
+
+    w_{ci} = \frac{w_{ci}}{\sum_{j} |w_{cj}|}
+
+where the summations are over all documents :math:`j` not in class :math:`c`,
+:math:`d_{ij}` is either the count or tf-idf value of term :math:`i` in document
+:math:`j`, :math:`\alpha_i` is a smoothing hyperparameter like that found in
+MNB, and :math:`\alpha = \sum_{i} \alpha_i`. The second normalization addresses
+the tendency for longer documents to dominate parameter estimates in MNB. The
+classification rule is:
+
+.. math::
+
+    \hat{c} = \arg\min_c \sum_{i} t_i w_{ci}
+
+i.e., a document is assigned to the class that is the *poorest* complement
+match.
+
+.. topic:: References:
+
+ * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+   `Tackling the poor assumptions of naive bayes text classifiers.
+   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+   In ICML (Vol. 3, pp. 616-623).
 
 .. _bernoulli_naive_bayes:
 

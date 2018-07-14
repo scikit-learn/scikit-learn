@@ -131,7 +131,8 @@ class BayesianGaussianMixture(BaseMixture):
 
     weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
-        distribution (Dirichlet). The higher concentration puts more mass in
+        distribution (Dirichlet). This is commonly called gamma in the
+        literature. The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         mixture weights simplex. The value of the parameter must be greater
@@ -171,7 +172,8 @@ class BayesianGaussianMixture(BaseMixture):
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
-        convergence when fit is called several time on similar problems.
+        convergence when fit is called several times on similar problems.
+        See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
         Enable verbose output. If 1 then it prints the current

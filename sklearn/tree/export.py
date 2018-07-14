@@ -14,7 +14,6 @@ This module defines export functions for decision trees.
 from numbers import Integral
 
 import numpy as np
-import warnings
 
 from ..externals import six
 from ..utils.validation import check_is_fitted
@@ -68,10 +67,12 @@ def _color_brew(n):
 class Sentinel(object):
     def __repr__(self):
         return '"tree.dot"'
+
+
 SENTINEL = Sentinel()
 
 
-def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
+def export_graphviz(decision_tree, out_file=None, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
@@ -92,12 +93,15 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
     Parameters
     ----------
-    decision_tree : decision tree classifier
+    decision_tree : decision tree regressor or classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, optional (default='tree.dot')
+    out_file : file object or string, optional (default=None)
         Handle or name of the output file. If ``None``, the result is
-        returned as a string. This will the default from version 0.20.
+        returned as a string.
+
+        .. versionchanged:: 0.20
+            Default of out_file changed from "tree.dot" to None.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -393,12 +397,6 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
     own_file = False
     return_string = False
     try:
-        if out_file == SENTINEL:
-            warnings.warn("out_file can be set to None starting from 0.18. "
-                          "This will be the default in 0.20.",
-                          DeprecationWarning)
-            out_file = "tree.dot"
-
         if isinstance(out_file, six.string_types):
             if six.PY3:
                 out_file = open(out_file, "w", encoding="utf-8")
@@ -458,10 +456,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             out_file.write('rankdir=LR ;\n')
 
         # Now recurse the tree and add node & edge attributes
-        if isinstance(decision_tree, _tree.Tree):
-            recurse(decision_tree, 0, criterion="impurity")
-        else:
-            recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
+        recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
 
         # If required, draw leaf nodes at same depth as each other
         if leaves_parallel:

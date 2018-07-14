@@ -69,10 +69,9 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -138,8 +137,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Tolerance for 'arpack' method.
         Not used if eigen_solver=='dense'.
 
-    max_iter : maximum number of iterations for 'arpack' method
-        not used if eigen_solver=='dense'
+    max_iter : int
+        Maximum number of iterations for 'arpack' method.
+        Not used if eigen_solver=='dense'
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -193,10 +193,9 @@ def locally_linear_embedding(
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
@@ -298,7 +297,11 @@ def locally_linear_embedding(
         raise ValueError("output dimension must be less than or equal "
                          "to input dimension")
     if n_neighbors >= N:
-        raise ValueError("n_neighbors must be less than number of points")
+        raise ValueError(
+            "Expected n_neighbors <= n_samples, "
+            " but n_samples = %d, n_neighbors = %d" %
+            (N, n_neighbors)
+        )
 
     if n_neighbors <= 0:
         raise ValueError("n_neighbors must be positive")
@@ -585,11 +588,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    embedding_vectors_ : array-like, shape [n_components, n_samples]
+    embedding_ : array-like, shape [n_samples, n_components]
         Stores the embedding vectors
 
     reconstruction_error_ : float
-        Reconstruction error associated with `embedding_vectors_`
+        Reconstruction error associated with `embedding_`
 
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
@@ -652,6 +655,8 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
+        y : Ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -666,6 +671,8 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         ----------
         X : array-like of shape [n_samples, n_features]
             training set.
+
+        y : Ignored
 
         Returns
         -------
