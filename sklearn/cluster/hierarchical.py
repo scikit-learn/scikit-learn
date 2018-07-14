@@ -740,8 +740,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AgglomerativeClustering().fit(X)
-    >>> clustering
-    ... # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
     AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
                 connectivity=None, linkage='ward', memory=None, n_clusters=2,
                 pooling_func='deprecated')
