@@ -822,7 +822,7 @@ cdef class WeightedMedianCalculator:
             
                 #self.ae = -100000
                 #self.sum_ae_0_k = -200000
-                self.k = -1000
+                #self.k = -1000
                 raise ValueError("Medians not correct???", "raw median: " + str(raw_median), "k based median: " + str(self.get_median()))      
         
         raw_k = self.verify_k()
