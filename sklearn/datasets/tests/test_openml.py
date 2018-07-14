@@ -2,6 +2,7 @@
 """
 import json
 import numpy as np
+import scipy.sparse
 import sklearn
 
 from sklearn.datasets import fetch_openml
@@ -10,8 +11,10 @@ from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.externals._liacarff.arff import load
 
+
 def fetch_dataset_from_openml(data_id, data_name, data_version,
-                              expected_observations, expected_features):
+                              expected_observations, expected_features,
+                              expect_sparse):
     # fetch with version
     data_by_name_id = fetch_openml(name=data_name, version=data_version)
     assert int(data_by_name_id.details['id']) == data_id
@@ -26,6 +29,10 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     assert data_by_id.target.shape == (expected_observations, )
+    if expect_sparse:
+        assert isinstance(data_by_id.data, scipy.sparse.csr_matrix)
+    else:
+        assert isinstance(data_by_id.data, np.ndarray)
 
     # check numeric features:
     feature_name_type = {feature['name']: feature['data_type']
@@ -46,17 +53,15 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def _mock_data_description(id):
-    description = open('mock_openml/%d/data_description.json' % id, 'r').read()
-    return json.loads(description)['data_set_description']
-
-
-def _mock_data_features(id):
-    features = open('mock_openml/%d/data_features.json' % id, 'r').read()
-    return json.loads(features)['data_features']['feature']
-
-
 def _monkey_patch_webbased_functions(context, data_id):
+    def _mock_data_description(id):
+        description = open('mock_openml/%d/data_description.json' % id, 'r').read()
+        return json.loads(description)['data_set_description']
+
+    def _mock_data_features(id):
+        features = open('mock_openml/%d/data_features.json' % id, 'r').read()
+        return json.loads(features)['data_features']['feature']
+
     def _mock_download_data(_):
         arff_fp = open('mock_openml/%d/data.arff' % data_id, 'r').read()
         return load(arff_fp)
@@ -91,7 +96,8 @@ def test_fetch_openml_iris(monkeypatch):
     with monkeypatch.context() as m:
         _monkey_patch_webbased_functions(m, data_id)
         fetch_dataset_from_openml(data_id, data_name, data_version,
-                                  expected_observations, expected_features)
+                                  expected_observations, expected_features,
+                                  expect_sparse=False)
 
 
 def test_fetch_openml_anneal():
@@ -102,7 +108,8 @@ def test_fetch_openml_anneal():
     expected_observations = 898
     expected_features = 38
     fetch_dataset_from_openml(data_id, data_name, data_version,
-                              expected_observations, expected_features)
+                              expected_observations, expected_features,
+                              expect_sparse=False)
 
 
 def test_fetch_openml_cpu():
@@ -113,11 +120,14 @@ def test_fetch_openml_cpu():
     expected_observations = 209
     expected_features = 7
     fetch_dataset_from_openml(data_id, data_name, data_version,
-                              expected_observations, expected_features)
+                              expected_observations, expected_features,
+                              expect_sparse=False)
 
 
 def test_fetch_openml_australian():
     # sparse dataset
+    # Australian is the only sparse dataset that is reasonably small
+    # as it is inactive, we need to catch the warning
     data_id = 292
     data_name = 'Australian'
     data_version = 1
@@ -130,7 +140,12 @@ def test_fetch_openml_australian():
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
            'expected_observations': expected_observations,
-           'expected_features': expected_features}
+           'expected_features': expected_features,
+           'expect_sparse': False}
+        # Sadly, due to a bug in liac-arff library, the data
+        # is always returned as a dense array.
+        # discussion in OpenML library:
+        # https://github.com/openml/openml-python/issues/487
     )
 
 
@@ -151,6 +166,7 @@ def test_fetch_nonexiting():
     # there is no active version of glass2
     assert_raise_message(ValueError, "No active dataset glass2 found",
                          fetch_openml, None, 'glass2')
+
 
 def test_fetch_openml_raises_illegal_argument():
     assert_raise_message(ValueError, "Dataset id=",

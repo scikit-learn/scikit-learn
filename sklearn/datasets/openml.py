@@ -1,5 +1,4 @@
 import json
-import numbers
 import sys
 import os
 from os.path import join, exists
@@ -28,6 +27,28 @@ _DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
 
 def _openml_fileid_url(file_id):
     return "https://www.openml.org/data/v1/download/{}/".format(file_id)
+
+
+def _convert_arff_data(arff_data):
+    """
+    converts the arff object into the appropriate matrix type (now: np.ndarray,
+    later also: scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
+    liac-arff dict, the object from the 'data' key)
+
+    Parameters
+    ----------
+    arff_data : list or dict
+        as obtained from liac-arff object
+
+    returns : np.ndarray (or later also: scipy.sparse.csr_matrix)
+    """
+    if isinstance(arff_data, list):
+        X = np.array(arff_data, dtype=object)
+    # elif: extendable for sparse arff in future ()
+    else:
+        raise ValueError('Unexpected Data Type obtained from arff ' +
+                         '(This should never happen).')
+    return X
 
 
 def _get_data_info_by_name(name, version):
@@ -179,7 +200,7 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
         is used. If ``None``, all columns are returned as data and the
-        tharget is ``None``.
+        target is ``None``.
 
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
@@ -250,7 +271,7 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
                 'false' and feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
 
-    data = np.array(_download_data_(data_description['file_id'])['data'], dtype=object)
+    data = _convert_arff_data(_download_data_(data_description['file_id'])['data'])
     data = _convert_numericals(data, name_feature)
 
     if target_column_name is not None:
@@ -264,7 +285,7 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
     else:
         dtype = object
     col_slice = [int(name_feature[col_name]['index']) for col_name in data_columns]
-    X = np.array(data[:, col_slice], dtype=dtype)
+    X = data[:, col_slice].astype(dtype)
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
