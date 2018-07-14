@@ -42,7 +42,8 @@ def test_import_sklearn_no_warnings():
                                           stderr=subprocess.STDOUT)
         message = message.decode("utf-8")
         message = '\n'.join([line for line in message.splitlines()
-                             if not (  # ignore ImportWarning
+                             if not (
+                                     # ignore ImportWarning due to Cython
                                      "ImportWarning" in line or
                                      # ignore DeprecationWarning due to pytest
                                      "pytest" in line or
@@ -55,4 +56,4 @@ def test_import_sklearn_no_warnings():
 
     except Exception as e:
         raise SkipTest('soft-failed test_import_sklearn_no_warnings.\n'
-                       ' %s' % e)
+                       ' %s, \n %s' % (e, message))
