@@ -17,6 +17,7 @@ from distutils.version import LooseVersion
 import numpy as np
 from scipy import sparse
 from scipy import stats
+from scipy.optimize import brent
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -2491,10 +2492,15 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         transformed = []
 
         for col in X.T:
-            # the computation of lambda is influenced by NaNs and we need to
-            # get rid of them to compute them.
-            _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
-            col_trans = boxcox(col, lmbda)
+            if self.method == 'box-cox':
+                # the computation of lambda is influenced by NaNs and we need to
+                # get rid of them to compute them.
+                _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
+                col_trans = boxcox(col, lmbda)
+            else:  # neo-johnson
+                lmbda = 1  #self._yeo_johnson_optimize(col)
+                col_trans = self._yeo_johnson_transform(col, lmbda)
+
             self.lambdas_.append(lmbda)
             transformed.append(col_trans)
 
@@ -2507,6 +2513,49 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
+    def _yeo_johnson_loglikelihood(self, x, lmbda):
+        psi = self._yeo_johnson_transform(x, lmbda)
+        n = x.shape[0]
+
+        # Estimated mean and variance of the normal distribution
+        mu = psi.sum() / n
+        sig_sq = np.power(psi - mu, 2).sum() / n
+
+        loglike = (-.5 / sig_sq) * np.power(psi - mu, 2).sum()
+        loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
+
+        return loglike
+
+    def _yeo_johnson_transform(self, x, lmbda):
+
+        out = np.zeros(shape=x.shape)
+        pos = (x >= 0)  # binary mask
+
+        # when x >= 0
+        if lmbda < 1e-19:
+            out[pos] = np.log(x[pos] + 1)
+        else:  #lmbda != 0
+            out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
+
+        # when x < 0
+        if lmbda < 2 - 1e-19:
+            out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
+        else:  # lmbda == 2
+            out[~pos] = -np.log(-x[~pos] + 1)
+
+        return out
+
+    def _yeo_johnson_optimize(self, x):
+        """Find and return optimal lambda parameter of the transform by maximum
+        likelihood optimization.
+        """
+
+        def objective(lmbda, x):
+            # solver is a minimizer and we need to maximise the log likelihood
+            return -self._yeo_johnson_loglikelihood(x, lmbda)
+
+        return brent(objective, brack=(0, 2), args=(x,))
+
     def transform(self, X):
         """Apply the power transform to each feature using the fitted lambdas.
 
@@ -2518,8 +2567,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_positive=True, check_shape=True)
 
+        trans_fun = {'box-cox': boxcox,
+                     'yeo-johnson': self._yeo_johnson_transform
+                     }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = boxcox(X[:, i], lmbda)
+            X[:, i] = trans_fun(X[:, i], lmbda)
 
         if self.standardize:
             X = self._scaler.transform(X)
@@ -2590,7 +2642,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              "than fitting data. Should have {n}, data has {m}"
                              .format(n=len(self.lambdas_), m=X.shape[1]))
 
-        valid_methods = ('box-cox',)
+        valid_methods = ('box-cox', 'yeo-johnson')
         if check_method and self.method not in valid_methods:
             raise ValueError("'method' must be one of {}, "
                              "got {} instead."
