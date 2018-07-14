@@ -374,11 +374,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return sum(all_importances) / len(self.estimators_)
 
 
-# This is a utility function for joblib's Parallel. It can't go locally in
-# ForestClassifier or ForestRegressor, because joblib complains that it cannot
-# pickle it when placed there.
-
 def _accumulate_prediction(predict, X, out, lock):
+    """This is a utility function for joblib's Parallel.
+
+    It can't go locally in ForestClassifier or ForestRegressor, because joblib
+    complains that it cannot pickle it when placed there.
+    """
     prediction = predict(X, check_input=False)
     with lock:
         if len(out) == 1:
