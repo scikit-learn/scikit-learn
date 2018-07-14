@@ -15,7 +15,7 @@ from scipy.sparse.linalg import eigsh, svds
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..externals import six
-from ..utils import check_random_state
+from ..utils import init_arpack
 
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
@@ -144,16 +144,12 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                 # sqrt() to be np.nan. This causes some vectors in vt
                 # to be np.nan.
                 A = safe_sparse_dot(array.T, array)
-                random_state = check_random_state(self.random_state)
-                # initialize with [-1,1] as in ARPACK
-                v0 = random_state.uniform(-1, 1, A.shape[0])
+                v0 = init_arpack(A.shape[0], self.random_state)
                 _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
                 vt = v.T
             if np.any(np.isnan(u)):
                 A = safe_sparse_dot(array, array.T)
-                random_state = check_random_state(self.random_state)
-                # initialize with [-1,1] as in ARPACK
-                v0 = random_state.uniform(-1, 1, A.shape[0])
+                v0 = init_arpack(A.shape[0], self.random_state)
                 _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
         assert_all_finite(u)

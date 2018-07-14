@@ -17,7 +17,8 @@ from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
 from ..externals import six
-from ..utils import check_random_state, check_array, check_symmetric
+from ..utils import (check_random_state, check_array,
+                     check_symmetric, init_arpack_v0)
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
@@ -267,7 +268,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
-            v0 = random_state.uniform(-1, 1, laplacian.shape[0])
+            v0 = init_arpack_v0(laplacian.shape[0], random_state)
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol, v0=v0)

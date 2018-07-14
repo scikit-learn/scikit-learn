@@ -7,7 +7,7 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
-from ..utils import check_random_state
+from ..utils import check_random_state, init_arpack_v0
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -201,9 +201,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             self.lambdas_, self.alphas_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
-            random_state = check_random_state(self.random_state)
-            # initialize with [-1,1] as in ARPACK
-            v0 = random_state.uniform(-1, 1, K.shape[0])
+            v0 = init_arpack_v0(K.shape[0], self.random_state)
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
