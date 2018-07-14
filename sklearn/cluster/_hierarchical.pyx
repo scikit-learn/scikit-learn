@@ -459,6 +459,35 @@ def single_linkage_label(L):
 cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         np.ndarray[DTYPE_t, ndim=2, mode='c'] raw_data,
         DistanceMetric dist_metric):
+    """
+    Compute the the necessary elements of a minimum spanning
+    tree for computation of single linkage clustering. This
+    represents the MST-LINKAGE-CORE algorithm from
+    *Modern hierarchical, agglomerative clustering algorithms*
+    by Daniel Mullner (https://arxiv.org/abs/1109.2378).
+
+    In contrast to the scipy implementation is never computes
+    a full distance matrix, generating distances only as they
+    are needed and releasing them when no longer needed.
+
+    Parameters
+    ----------
+    raw_data: array of shape (n_samples, n_features)
+        The array of feature data to be clustered.
+
+    dist_metric: DistanceMetric
+        A distance metric function (from sklearn.neighbors.dist_metrics)
+        used to compute distances.
+
+    Returns
+    -------
+    mst_core_data: array of shape (n_samples, 3)
+        An array providing information from which one
+        can either compute an MST, or the linkage hierarchy
+        very efficiently. See https://arxiv.org/abs/1109.2378
+        algorithm MST-LINKAGE-CORE for more details.
+    """
+
 
     cdef np.ndarray[DTYPE_t, ndim=1] current_distances_arr
     cdef np.ndarray[np.int8_t, ndim=1] in_tree_arr
