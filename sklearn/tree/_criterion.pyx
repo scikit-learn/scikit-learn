@@ -1252,8 +1252,7 @@ cdef class MAE(RegressionCriterion):
 
                 impurity += fabs(y_ik - self.node_medians[k]) * w
 
-        return <double>(impurity / (self.weighted_n_node_samples *
-                                    self.n_outputs))
+        return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
@@ -1294,8 +1293,7 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 imp_left += fabs(y_ik - median) * w
-        impurity_left[0] = <double> (imp_left / (self.weighted_n_left *
-                                     self.n_outputs))
+        impurity_left[0] = imp_left / (self.weighted_n_left * self.n_outputs)
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> right_child[k]).get_median()
@@ -1308,8 +1306,7 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 imp_right += fabs(y_ik - median) * w
-        impurity_right[0] = <double> (imp_right / (self.weighted_n_right *
-                                      self.n_outputs))
+        impurity_right[0] = imp_right / (self.weighted_n_right * self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):
