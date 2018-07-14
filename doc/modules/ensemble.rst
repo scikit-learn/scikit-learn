@@ -257,10 +257,12 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
-**relative importance of the features**.
+**relative importance of the features**. In scikit-learn, this fraction
+is combined with the decrease in gini impurity to create a normalized
+estimate of improvement in the classification ability of the tree.
 
 By **averaging** those expected activity rates over several randomized
 trees one can **reduce the variance** of such an estimate and use it
