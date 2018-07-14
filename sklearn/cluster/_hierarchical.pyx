@@ -462,7 +462,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
     """
     Compute the the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
-    represents the MST-LINKAGE-CORE algorithm from
+    represents the MST-LINKAGE-CORE algorithm (Figure 6) from
     *Modern hierarchical, agglomerative clustering algorithms*
     by Daniel Mullner (https://arxiv.org/abs/1109.2378).
 
