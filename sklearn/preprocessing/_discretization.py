@@ -188,6 +188,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.bin_edges_ = bin_edges
         self.n_bins_ = n_bins
 
+        if self.encode != 'ordinal':
+            encode_sparse = self.encode == 'onehot'
+            self.ohe_encoder_ = OneHotEncoder(
+                categories=[np.arange(i) for i in self.n_bins_],
+                sparse=encode_sparse)
+
         return self
 
     def _validate_n_bins(self, n_features):
@@ -262,9 +268,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.encode == 'ordinal':
             return Xt
 
-        encode_sparse = self.encode == 'onehot'
-        self.ohe_encoder_ = OneHotEncoder(categories=[np.arange(i) for i in self.n_bins_],
-                                      sparse=encode_sparse)
         return self.ohe_encoder_.fit_transform(Xt)
 
     def inverse_transform(self, Xt):
