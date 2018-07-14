@@ -718,7 +718,8 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
                                              err_msg):
     # regression test for issue #11390. Comparison between incoherent dtype
     # for X and missing_values was not raising a proper error.
-    X = np.random.randn(10, 10)
+    rng = np.random.RandomState(42)
+    X = rng.randn(10, 10)
     X[0, 0] = X_missing_value
 
     imputer = imputer_constructor(missing_values=missing_values)
