@@ -93,11 +93,11 @@ def test_fetch_openml_iris(monkeypatch):
     data_version = 1
     expected_observations = 150
     expected_features = 4
-    with monkeypatch.context() as m:
-        _monkey_patch_webbased_functions(m, data_id)
-        fetch_dataset_from_openml(data_id, data_name, data_version,
-                                  expected_observations, expected_features,
-                                  expect_sparse=False)
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features,
+                              expect_sparse=False)
 
 
 def test_fetch_openml_anneal():
