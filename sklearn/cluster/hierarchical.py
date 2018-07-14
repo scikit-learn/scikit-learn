@@ -471,8 +471,8 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
             X = X[i, j]
         if (linkage == 'single'
                 and affinity != 'precomputed'
-                    and not callable(affinity)
-                        and affinity in METRIC_MAPPING):
+                and not callable(affinity)
+                and affinity in METRIC_MAPPING):
 
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)

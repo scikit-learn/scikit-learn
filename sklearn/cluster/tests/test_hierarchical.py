@@ -310,6 +310,7 @@ def test_sparse_scikit_vs_scipy():
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
+
 def test_vector_scikit_single_vs_scipy_single():
     n, p, k = 10, 5, 3
     rng = np.random.RandomState(0)
