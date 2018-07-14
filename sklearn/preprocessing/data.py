@@ -17,7 +17,7 @@ from distutils.version import LooseVersion
 import numpy as np
 from scipy import sparse
 from scipy import stats
-from scipy.optimize import brent
+from scipy import optimize
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -2498,7 +2498,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
                 col_trans = boxcox(col, lmbda)
             else:  # neo-johnson
-                lmbda = 1  #self._yeo_johnson_optimize(col)
+                lmbda = self._yeo_johnson_optimize(col)
                 col_trans = self._yeo_johnson_transform(col, lmbda)
 
             self.lambdas_.append(lmbda)
@@ -2513,23 +2513,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _yeo_johnson_loglikelihood(self, x, lmbda):
-        psi = self._yeo_johnson_transform(x, lmbda)
-        n = x.shape[0]
-
-        # Estimated mean and variance of the normal distribution
-        mu = psi.sum() / n
-        sig_sq = np.power(psi - mu, 2).sum() / n
-
-        loglike = (-.5 / sig_sq) * np.power(psi - mu, 2).sum()
-        loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
-
-        return loglike
-
     def _yeo_johnson_transform(self, x, lmbda):
 
         out = np.zeros(shape=x.shape)
         pos = (x >= 0)  # binary mask
+
+        # Note: we're comparing lmbda to 1e-19 instead of strict equality to 0.
+        # See scipy/special/_boxcox.pxd for a rationale behind this
 
         # when x >= 0
         if lmbda < 1e-19:
@@ -2546,15 +2536,29 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return out
 
     def _yeo_johnson_optimize(self, x):
-        """Find and return optimal lambda parameter of the transform by maximum
-        likelihood optimization.
+        """Find and return optimal lambda parameter of the Yeo-Johnson
+        transform by MLE, for observed data x.
+
+        Like for coxbox, MLE is done via the brent optimizer.
         """
 
-        def objective(lmbda, x):
-            # solver is a minimizer and we need to maximise the log likelihood
-            return -self._yeo_johnson_loglikelihood(x, lmbda)
+        def _neg_log_likelihood(lmbda):
+            """Return the negative log likelihood of the observed data x as a
+            function of lambda."""
+            psi = self._yeo_johnson_transform(x, lmbda)
+            n = x.shape[0]
 
-        return brent(objective, brack=(0, 2), args=(x,))
+            # Estimated mean and variance of the normal distribution
+            mu = psi.sum() / n
+            sig_sq = np.power(psi - mu, 2).sum() / n
+
+            loglike = -n / 2 * np.log(sig_sq)
+            loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
+
+            return -loglike
+
+        # choosing backet -2, 2 like for boxcox
+        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
     def transform(self, X):
         """Apply the power transform to each feature using the fitted lambdas.
