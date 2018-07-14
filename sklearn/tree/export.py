@@ -83,6 +83,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
+    This function requires matplotlib, and works best with matplotlib >= 1.5.
 
     Read more in the :ref:`User Guide <tree>`.
 
