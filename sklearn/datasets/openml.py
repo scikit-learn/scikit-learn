@@ -146,17 +146,24 @@ def _convert_numericals(data, name_feature):
     return data
 
 
-def fetch_openml(name_or_id=None, version='active', data_home=None,
+def fetch_openml(id=None, name=None, version='active', data_home=None,
                  target_column_name='default-target', cache=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
     combination of name and version (i.e. there might be multiple
-    versions of the 'iris' dataset).
+    versions of the 'iris' dataset). Please give either name or id
+    (not both). In case a name is given, a version can also be
+    provided.
 
     Parameters
     ----------
-    name_or_id : string or integer
+    id : int
+        OpenML ID of the dataset. The most specific way of retrieving a
+        dataset. If ID is not given, name (and potential version) are
+        used to obtain a dataset.
+
+    name : string
         Identifier of the dataset. If integer, assumed to be the id of the
         dataset on OpenML, if string, assumed to be the name of the dataset.
 
@@ -202,22 +209,25 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     if not exists(data_home):
         os.makedirs(data_home)
 
-    # check if dataset id is known
-    if isinstance(name_or_id, numbers.Integral):
-        if version != "active":
+    # check legal function arguments. id XOR (name, version) should be provided
+    if name is not None:
+        if id is not None:
+            raise ValueError(
+                "Dataset id={} and name={} passed, but you can only "
+                "specify a numeric id or a name, not both.".format(id, name))
+        data_info = _get_data_info_by_name_(name, version)
+        data_id = data_info['did']
+    elif id is not None:
+        # from the previous if statement, it is given that name is None
+        if version is not "active":
             raise ValueError(
                 "Dataset id={} and version={} passed, but you can only "
-                "specify a numeric id or a version, not both.".format(
-                    name_or_id, version))
-        data_id = name_or_id
-    elif isinstance(name_or_id, str):
-        data_info = _get_data_info_by_name_(name_or_id, version)
-        data_id = data_info['did']
-
+                "specify a numeric id or a version, not both.".format(id,
+                                                                      name))
+        data_id = id
     else:
-        raise TypeError(
-            "Invalid name_or_id {}, should be string or integer.".format(
-                name_or_id))
+        raise ValueError(
+            "Neither name nor id are provided. Please provide name xor id.")
 
     data_description = _get_data_description_by_id_(data_id)
     if data_description['status'] != "active":

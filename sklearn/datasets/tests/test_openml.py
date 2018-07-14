@@ -1,25 +1,23 @@
 """Test the openml loader.
 """
-import arff
 import json
 import numpy as np
 import sklearn
 
-from functools import partial
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import _get_data_features
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-
+from sklearn.externals._liacarff.arff import load
 
 def fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features):
     # fetch with version
-    data_by_name_id = fetch_openml(data_name, version=data_version)
+    data_by_name_id = fetch_openml(name=data_name, version=data_version)
     assert int(data_by_name_id.details['id']) == data_id
 
     # fetch without version
-    fetch_openml(data_name)
+    fetch_openml(name=data_name)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
@@ -48,49 +46,52 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def mock_get_data_info_by_name(name_or_id, version, data_id):
-    data_info = open('mock_openml/%d/%s_%s.json' % (data_id, name_or_id,
-                                                    version),
-                     'r').read()
-    data_info_json = json.loads(data_info)
-    return data_info_json['data']['dataset'][0]
-
-
-def mock_data_description(id):
+def _mock_data_description(id):
     description = open('mock_openml/%d/data_description.json' % id, 'r').read()
     return json.loads(description)['data_set_description']
 
 
-def mock_data_features(id):
+def _mock_data_features(id):
     features = open('mock_openml/%d/data_features.json' % id, 'r').read()
     return json.loads(features)['data_features']['feature']
 
 
-def mock_download_data(_, data_id):
-    arff_fp = open('mock_openml/%d/data.arff' % data_id, 'r').read()
-    return arff.load(arff_fp)
+def _monkey_patch_webbased_functions(context, data_id):
+    def _mock_download_data(_):
+        arff_fp = open('mock_openml/%d/data.arff' % data_id, 'r').read()
+        return load(arff_fp)
+
+    def _mock_get_data_info_by_name(name_or_id, version):
+        data_info = open('mock_openml/%d/%s_%s.json' % (data_id, name_or_id,
+                                                        version),
+                         'r').read()
+        data_info_json = json.loads(data_info)
+        return data_info_json['data']['dataset'][0]
+
+    context.setattr(sklearn.datasets.openml,
+                    '_get_data_description_by_id',
+                    _mock_data_description)
+    context.setattr(sklearn.datasets.openml,
+                    '_get_data_features',
+                    _mock_data_features)
+    context.setattr(sklearn.datasets.openml, '_download_data',
+                    _mock_download_data)
+    context.setattr(sklearn.datasets.openml,
+                    '_get_data_info_by_name',
+                    _mock_get_data_info_by_name)
 
 
-def _monkey_patch_webbased_functions(data_id):
-
-    sklearn.datasets.openml._get_data_description_by_id = mock_data_description
-    sklearn.datasets.openml._get_data_features = mock_data_features
-    sklearn.datasets.openml._download_data = partial(mock_download_data,
-                                                     data_id=data_id)
-    sklearn.datasets.openml._get_data_info_by_name = \
-        partial(mock_get_data_info_by_name, data_id=data_id)
-
-
-def test_fetch_openml_iris():
+def test_fetch_openml_iris(monkeypatch):
     # classification dataset with numeric only columns
     data_id = 61
     data_name = 'iris'
     data_version = 1
     expected_observations = 150
     expected_features = 4
-    _monkey_patch_webbased_functions(data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version,
-                              expected_observations, expected_features)
+    with monkeypatch.context() as m:
+        _monkey_patch_webbased_functions(m, data_id)
+        fetch_dataset_from_openml(data_id, data_name, data_version,
+                                  expected_observations, expected_features)
 
 
 def test_fetch_openml_anneal():
@@ -142,8 +143,24 @@ def test_fetch_openml_inactive():
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        "glass2", 1)
-    # there is no active version of glass2
+        None, "glass2", 1)
     assert glas2_by_version.details['id'] == '40675'
+
+
+def test_fetch_nonexiting():
+    # there is no active version of glass2
     assert_raise_message(ValueError, "No active dataset glass2 found",
-                         fetch_openml, 'glass2')
+                         fetch_openml, None, 'glass2')
+
+def test_fetch_openml_raises_illegal_argument():
+    assert_raise_message(ValueError, "Dataset id=",
+                         fetch_openml, -1, "name")
+
+    assert_raise_message(ValueError, "Dataset id=",
+                         fetch_openml, -1, None, "version")
+
+    assert_raise_message(ValueError, "Dataset id=",
+                         fetch_openml, -1, "name", "version")
+
+    assert_raise_message(ValueError, "Neither name nor id are provided. " +
+                         "Please provide name xor id.", fetch_openml)
