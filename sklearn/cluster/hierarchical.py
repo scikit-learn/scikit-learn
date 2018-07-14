@@ -19,7 +19,7 @@ from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
-from ..neighbors import DistanceMetric
+from ..neighbors import DistanceMetric, METRIC_MAPPING
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -470,7 +470,9 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
             X = X[i, j]
         if (linkage == 'single'
             and affinity != 'precomputed'
-            and not callable(affinity)):
+            and not callable(affinity)
+            and affinity in METRIC_MAPPING):
+
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)
 
