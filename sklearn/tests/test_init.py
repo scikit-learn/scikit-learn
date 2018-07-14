@@ -4,10 +4,8 @@ import subprocess
 
 import pkgutil
 
-import pytest
-
 import sklearn
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, SkipTest
 
 __author__ = 'Yaroslav Halchenko'
 __license__ = 'BSD'
@@ -55,5 +53,5 @@ def test_import_sklearn_no_warnings():
         assert 'Error' not in message
 
     except Exception as e:
-        pytest.skip('soft-failed test_import_sklearn_no_warnings.\n'
-                    ' %s' % e)
+        raise SkipTest('soft-failed test_import_sklearn_no_warnings.\n'
+                       ' %s' % e)
