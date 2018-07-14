@@ -790,11 +790,30 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k=None):
-        if k is not None:
+    def example_function(n_clusters=8, k='deprecated'):
+        if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+When the change occurs inside a class, the validation and the warning will be
+raised at ``fit`` time::
+
+  import warnings
+
+  class ExampleEstimator:
+      def __init__(self, n_clusters=8, k='deprecated'):
+          self.n_clusters = n_clusters
+          self.k = k
+
+      def fit(self, X, y):
+          if k != 'deprecated':
+              warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                            "will be removed in 0.15.", DeprecationWarning)
+              self._n_clusters = k
+          else:
+              self._n_clusters = self.n_clusters
+
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
@@ -806,12 +825,26 @@ and `#11043 <https://github.com/scikit-learn/scikit-learn/pull/11043>`__)::
 
     import warnings
 
-    def example_function(n_clusters='deprecated'):
-        if n_clusters == 'deprecated':
+    def example_function(n_clusters='warn'):
+        if n_clusters == 'warn':
             warnings.warn("The default value of n_clusters will change from "
                           "5 to 10 in 0.22.", FutureWarning)
             n_clusters = 5
 
+When the change is in a class, validation and warning will be done in ``fit``::
+
+  import warnings
+
+  class ExampleEstimator:
+      def __init__(self, n_clusters='warn'):
+          self.n_clusters = n_clusters
+
+      def fit(self, X, y):
+          if self.n_clusters == 'warn':
+            warnings.warn("The default value of n_clusters will change from "
+                          "5 to 10 in 0.22.", FutureWarning)
+            self._n_clusters = 5
+            
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
