@@ -110,13 +110,14 @@ def test_fetch_openml_iris(monkeypatch):
                               expect_sparse=False)
 
 
-def test_fetch_openml_anneal():
+def test_fetch_openml_anneal(monkeypatch):
     # classification dataset with numeric and categorical columns
     data_id = 2
     data_name = 'anneal'
     data_version = 1
     expected_observations = 898
     expected_features = 38
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
                               expect_sparse=False)
