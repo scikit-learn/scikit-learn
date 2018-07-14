@@ -324,7 +324,6 @@ def test_vector_scikit_single_vs_scipy_single():
 
         children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
 
-
         # Sort the order of child nodes per row for consistency
         children.sort(axis=1)
         assert_array_equal(children, children_, 'linkage tree differs'
