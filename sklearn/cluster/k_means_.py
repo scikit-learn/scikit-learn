@@ -183,7 +183,7 @@ def _check_sample_weight(X, sample_weight):
 
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
-            precompute_distances='auto', n_init=10, max_iter=300,
+            precompute_distances='auto', n_init='warn', max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
             algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
@@ -235,14 +235,15 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+        n_init consecutive runs in terms of inertia. Note the defaul value will
+        be changed to 1 in 0.22.
 
     max_iter : int, optional, default 300
         Maximum number of iterations of the k-means algorithm to run.
 
     verbose : boolean, optional
         Verbosity mode.
-
+n_init=10
     tol : float, optional
         The relative increment in the results before declaring convergence.
 
@@ -296,6 +297,10 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         Returned only if `return_n_iter` is set to True.
 
     """
+    if n_init == 'warn':
+        warnings.warn("The default value of n_init will change from "
+                      "10 to 1 in 0.22", FutureWarning)
+
     if n_init <= 0:
         raise ValueError("Invalid number of initializations."
                          " n_init=%d must be bigger than zero." % n_init)
@@ -904,10 +909,15 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     """
 
-    def __init__(self, n_clusters=8, init='k-means++', n_init=10,
+    def __init__(self, n_clusters=8, init='k-means++', n_init='warn',
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=1, algorithm='auto'):
+
+        if n_init == 'warn':
+            warnings.warn("The default value of n_init will change from "
+                          "10 to 1 in 0.22", FutureWarning)
+            n_init = 10
 
         self.n_clusters = n_clusters
         self.init = init
