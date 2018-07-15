@@ -17,8 +17,12 @@ Python implementation of the ICA algorithms: FastICA including, infomax, extende
     .. [4] Ablin, P., Cardoso, J.F., Gramfort, A., 2017. Faster Independent
            Component Analysis by preconditioning with Hessian approximations.
            arXiv:1706.08171
+           
+ Example script can be found at ![here] (https://github.com/Nikeshbajaj/ICA_InfoMax_Picard_FastICA/blob/master/Example.ipynb)
+           
 """
 # Authors: Nikesh Bajaj, with help of reference articles and mne library
+# http://nikeshbajaj.in
 
 
 import math
