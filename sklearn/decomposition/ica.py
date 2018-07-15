@@ -22,6 +22,7 @@ Python implementation of the ICA algorithms: FastICA including, infomax, extende
 
 
 import math
+import numpy as np
 from copy import deepcopy
 from distutils.version import LooseVersion
 
@@ -510,3 +511,30 @@ def random_permutation(n_samples, random_state=None):
     idx = rng.rand(n_samples)
     randperm = np.argsort(idx)
     return randperm
+
+def check_version(library, min_version):
+    r"""Check minimum library version required.
+    Parameters
+    ----------
+    library : str
+        The library name to import. Must have a ``__version__`` property.
+    min_version : str
+        The minimum version string. Anything that matches
+        ``'(\d+ | [a-z]+ | \.)'``. Can also be empty to skip version
+        check (just check for library presence).
+    Returns
+    -------
+    ok : bool
+        True if the library exists with at least the specified version.
+    """
+    ok = True
+    try:
+        library = __import__(library)
+    except ImportError:
+        ok = False
+    else:
+        if min_version:
+            this_version = LooseVersion(library.__version__)
+            if this_version < min_version:
+                ok = False
+    return ok
