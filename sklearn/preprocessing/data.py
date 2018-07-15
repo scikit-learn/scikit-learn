@@ -2398,10 +2398,12 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired.
 
-    Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
-    requires input data to be strictly positive. The optimal parameter
-    for stabilizing variance and minimizing skewness is estimated through
-    maximum likelihood.
+    Currently, PowerTransformer supports the Box-Cox transform and the
+    Yeo-Johson transform. The optimal parameter for stabilizing variance and
+    minimizing skewness is estimated through maximum likelihood.
+
+    Box-Cox requires input data to be strictly positive, while Yeo-Johnson
+    supports both positive or negative data.
 
     By default, zero-mean, unit-variance normalization is applied to the
     transformed data.
@@ -2411,8 +2413,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     method : str, (default='box-cox')
-        The power transform method. Currently, 'box-cox' (Box-Cox transform)
-        is the only option available.
+        The power transform method. Available methods are 'box-cox' and
+        'yeo-johnson'.
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
@@ -2462,6 +2464,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
     Royal Statistical Society B, 26, 211-252 (1964).
 
+    I.K. Yeo and R.A. Johnson, "A new family of power transformations to
+    improve normality or symmetry." Biometrika, 87(4), pp.954-959. (2000)
     """
     def __init__(self, method='box-cox', standardize=True, copy=True):
         self.method = method
@@ -2469,11 +2473,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Estimate the optimal parameter for each feature.
+        """Estimate the optimal parameter lambda for each feature.
 
-        The optimal parameter for minimizing skewness is estimated
-        on each feature independently. If the method is Box-Cox,
-        the lambdas are estimated using maximum likelihood.
+        The optimal lambda parameter for minimizing skewness is estimated on
+        each feature independently using maximum likelihood.
 
         Parameters
         ----------
@@ -2546,6 +2549,17 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             else:
                 X = (X_trans * lambda + 1) ** (1 / lambda)
 
+        The inverse of the Yeo-Johnson transformation is given by::
+
+            if X >= 0 and lambda == 0:
+                X = exp(X_trans) - 1
+            elif X >= 0 and lambda != 0:
+                X = (X_trans * lambda + 1) ** (1 / lambda) - 1
+            elif X < 0 and lambda != 2:
+                X = 1 - (-(2 - lambda) * X_trans + 1) ** (1 / (2 - lambda))
+            elif X < 0 and lambda == 2:
+                X = 1 - exp(-X_trans)
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -2566,6 +2580,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
     def _box_cox_inverse_tranform(self, x, lmbda):
+        """Return inverse-transformed input x following Box-Cox inverse
+        transform with parameter lambda.
+        """
         if lmbda == 0:
             x_inv = np.exp(x)
         else:
@@ -2574,6 +2591,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return x_inv
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
+        """Return inverse-transformed input x following Yeo-Johnson inverse
+        transform with parameter lambda.
+        """
         x_inv = np.zeros(x.shape)
         pos = x >= 0
 
@@ -2593,6 +2613,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return x_inv
 
     def _yeo_johnson_transform(self, x, lmbda):
+        """Return transformed input x following Yeo-Johnson transform with
+        parameter lambda.
+        """
 
         out = np.zeros(shape=x.shape)
         pos = (x >= 0)  # binary mask
