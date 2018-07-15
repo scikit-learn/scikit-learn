@@ -41,14 +41,11 @@ __all__ = [
 
 
 def _check_inputs_dtype(X, missing_values):
-    """Check that the type of missing_values is in accordance with the
-    dtype of X.
-    """
     if (X.dtype.kind in ("f", "i", "u") and
             not isinstance(missing_values, numbers.Real)):
         raise ValueError("The data type of 'missing_values' and 'X' are "
                          "not compatible. 'missing_values' data type is "
-                         "{} and 'X' is {}."
+                         "{} and 'X' is {}. Both type should be numerical."
                          .format(type(missing_values), X.dtype))
 
 
