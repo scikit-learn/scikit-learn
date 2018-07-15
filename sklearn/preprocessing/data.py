@@ -2620,8 +2620,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         We here use scipy builtins which uses the brent optimizer.
         """
-        # the computation of lambda is influenced by NaNs and we need to
-        # get rid of them to compute them.
+        # the computation of lambda is influenced by NaNs so we need to
+        # get rid of them
         _, lmbda = stats.boxcox(x[~np.isnan(x)], lmbda=None)
 
         return lmbda
@@ -2648,6 +2648,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
             return -loglike
 
+        # the computation of lambda is influenced by NaNs so we need to
+        # get rid of them
+        x = x[~np.isnan(x)]
         # choosing backet -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 

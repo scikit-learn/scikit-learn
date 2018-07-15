@@ -2185,3 +2185,22 @@ def test_optimization_power_transformer(method, lmbda):
 
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples,
                         decimal=2)
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+def test_power_transformer_nans(method):
+    # Make sure lambda estimation is not influenced by NaN values
+    # and that transform() supports NaN silently
+
+    X = np.abs(X_1col)
+    pt = PowerTransformer(method=method)
+    pt.fit(X)
+    lmbda_no_nans = pt.lambdas_[0]
+
+    # concat nans at the end and check lambda stays the same
+    X = np.concatenate([X, np.full_like(X, np.nan)])
+    pt.fit(X)
+    lmbda_nans = pt.lambdas_[0]
+
+    assert_equal(lmbda_no_nans, lmbda_nans)
+    pt.transform(X)
