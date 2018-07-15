@@ -253,8 +253,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
-    >>> clustering
-    ... # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
     DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
         metric_params=None, min_samples=2, n_jobs=1, p=None)
 
