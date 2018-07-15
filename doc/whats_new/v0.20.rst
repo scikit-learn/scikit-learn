@@ -31,8 +31,8 @@ String or pandas Categorical columns can now be encoded with
 
 :class:`~compose.TransformedTargetRegressor` helps when the regression target
 needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
-joins :class:`~preprocessing.QuantileTransformer` as a non-linear
-transformation.
+and :class:`~preprocessing.KBinsDiscretizer` join
+:class:`~preprocessing.QuantileTransformer` as non-linear transformations.
 
 Beyond this, we have added :term:`sample_weight` support to several estimators
 (including :class:`~cluster.KMeans`, :class:`~linear_model.BayesianRidge` and
@@ -126,6 +126,13 @@ Preprocessing
   derives the categories based on the unique values in the features instead of
   the maximum value in the features. :issue:`9151` and :issue:`10521` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
+
+- Added :class:`preprocessing.KBinsDiscretizer` for turning
+  continuous features into categorical or one-hot encoded
+  features. :issue:`7668`, :issue:`9647`, :issue:`10195`,
+  :issue:`10192`, :issue:`11272` and :issue:`11467`.
+  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
+  and `Tom Dupre la Tour`_.
 
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
@@ -829,6 +836,12 @@ Misc
   ``accept_large_sparse`` to control whether scipy.sparse matrices with 64-bit
   indices should be rejected.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
+
+Preprocessing
+
+- In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
+  will be from ``True`` to ``False`` in 0.22.
+  :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes to estimator checks
 ---------------------------
