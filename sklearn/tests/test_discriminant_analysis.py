@@ -1,6 +1,9 @@
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_array_equal, assert_no_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -255,6 +258,33 @@ def test_lda_store_covariance():
         clf.covariance_,
         np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
     )
+
+
+@pytest.mark.parametrize('n_features', [3, 5])
+@pytest.mark.parametrize('n_classes', [5, 3])
+def test_lda_dimension_warning(n_classes, n_features):
+    RNG = check_random_state(0)
+    n_samples = 10
+    X = RNG.randn(n_samples , n_features)
+    # we create n_classes labels by repeating and truncating a
+    # range(n_classes) until n_samples
+    y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
+    max_components = min(n_features, n_classes - 1)
+
+    for n_components in [max_components - 1, None, max_components]:
+        # if n_components < min(n_classes - 1, n_features), no warning
+        lda = LinearDiscriminantAnalysis(n_components=n_components)
+        assert_no_warnings(lda.fit, X, y)
+
+    for n_components in [max_components + 1,
+                         max(n_features, n_classes - 1) + 1]:
+        # if n_components < min(n_classes - 1, n_features), raise warning
+        lda = LinearDiscriminantAnalysis(n_components=n_components)
+        msg = ("n_components cannot be superior to min(n_features, "
+               "n_classes - 1). Using min(n_features, "
+               "n_classes - 1) = min(%d, %d - 1) = %d components." %
+               (n_features, n_classes, max_components))
+        assert_warns_message(ChangedBehaviorWarning, msg, lda.fit, X, y)
 
 
 def test_qda():
