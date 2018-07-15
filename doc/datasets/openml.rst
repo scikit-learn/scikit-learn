@@ -24,7 +24,8 @@ from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml('miceprotein', version=4, data_home=custom_data_home)
+  >>> mice = fetch_openml(name='miceprotein', version=4,
+  data_home=custom_data_home)
 
 To fully specify a dataset, you need to provide a name and a version, though the
 version is optional, see :ref:`openml_versions`_ below.
@@ -96,8 +97,8 @@ entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be inactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
-``fetch_openml("miceprotein")`` can yield different results at different times
-if earlier versions become inactive.
+``fetch_openml(name="miceprotein")`` can yield different results at different
+times if earlier versions become inactive.
 You can see that the dataset with id 40966 that we fetched above is the version 1
 of the "miceprotein" dataset::
 
@@ -107,7 +108,7 @@ of the "miceprotein" dataset::
 In fact, this dataset only has one version. The iris dataset on the other hand
 has multiple versions::
 
-  >>> iris = fetch_openml("iris", data_home=custom_data_home)
+  >>> iris = fetch_openml(name="iris", data_home=custom_data_home)
   >>> iris.details['version']  #doctest: +SKIP
   '1'
   >>> iris.details['id']  #doctest: +SKIP
@@ -135,7 +136,7 @@ a binarized version of the data::
         dtype='|S1')
 
 You can also specify both the name and the version, which also uniquely identifies the dataset:: 
-  >>> iris_version_3 = fetch_openml("iris", version=3, data_home=custom_data_home)
+  >>> iris_version_3 = fetch_openml(name="iris", version=3, data_home=custom_data_home)
   >>> iris_version_3.details['version']
   '3'
   >>> iris_version_3.details['id']

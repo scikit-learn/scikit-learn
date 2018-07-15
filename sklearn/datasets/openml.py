@@ -66,14 +66,14 @@ def _get_data_info_by_name(name, version):
     version : int or str
         If version is an integer, the exact name/version will be obtained from
         OpenML. If version is a string (value: "active") it will take the first
-        version from OpenML that is annotated as active. Any other string values
-        except "active" are treated as integer.
+        version from OpenML that is annotated as active. Any other string
+        values except "active" are treated as integer.
 
     Returns
     -------
     json_data['data']['dataset'][0]: json
-        json representation of the first dataset object that adhired to the search
-        criteria
+        json representation of the first dataset object that adhired to the
+        search criteria
 
     """
     data_found = True
@@ -81,7 +81,8 @@ def _get_data_info_by_name(name, version):
         if version == "active":
             response = urlopen(_SEARCH_NAME.format(name) + "/status/active/")
         else:
-            response = urlopen((_SEARCH_NAME + "/data_version/{}").format(name, version))
+            response = urlopen((_SEARCH_NAME +
+                                "/data_version/{}").format(name, version))
     except HTTPError as error:
         if error.code == 412:
             data_found = False
@@ -92,9 +93,12 @@ def _get_data_info_by_name(name, version):
         # might have been deactivated. will warn later
         data_found = True
         try:
-            response = urlopen((_SEARCH_NAME + "/data_version/{}/status/deactivated").format(name, version))
+            url = (_SEARCH_NAME +
+                   "/data_version/{}/status/deactivated").format(name, version)
+            response = urlopen(url)
         except HTTPError as error:
-            # 412 is an OpenML specific error code, indicating a generic error (e.g., data not found)
+            # 412 is an OpenML specific error code, indicating a generic error
+            # (e.g., data not found)
             if error.code == 412:
                 data_found = False
             else:
@@ -132,7 +136,8 @@ def _get_data_features(data_id):
     try:
         response = urlopen(_DATA_FEATURES.format(data_id))
     except HTTPError as error:
-        # 412 is an OpenML specific error code, indicating a generic error (e.g., data not found)
+        # 412 is an OpenML specific error code, indicating a generic error
+        # (e.g., data not found)
         if error.code == 412:
             data_found = False
         else:
@@ -256,7 +261,8 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
              " been found in the dataset. Try using a newer version.".format(
                  data_description['version'], data_description['name']))
     if target_column_name == "default-target":
-        target_column_name = data_description.get('default_target_attribute', None)
+        target_column_name = data_description.get('default_target_attribute',
+                                                  None)
 
     # download actual data
     features = _get_data_features_(data_id)
@@ -271,7 +277,8 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
                 'false' and feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
 
-    data = _convert_arff_data(_download_data_(data_description['file_id'])['data'])
+    arff_data = _download_data_(data_description['file_id'])['data']
+    data = _convert_arff_data(arff_data)
     data = _convert_numericals(data, name_feature)
 
     if target_column_name is not None:
@@ -284,7 +291,8 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
         dtype = None
     else:
         dtype = object
-    col_slice = [int(name_feature[col_name]['index']) for col_name in data_columns]
+    col_slice = [int(name_feature[col_name]['index'])
+                 for col_name in data_columns]
     X = data[:, col_slice].astype(dtype)
 
     description = u"{}\n\nDownloaded from openml.org.".format(
