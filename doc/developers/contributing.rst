@@ -790,23 +790,23 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k='deprecated'):
-        if k != 'deprecated':
+    def example_function(n_clusters=8, k='not_used'):
+        if k != 'not_used':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
-When the change is in a class, we conduct validate and raise warning in ``fit``::
+When the change is in a class, we validate and raise warning in ``fit``::
 
   import warnings
 
-  class ExampleEstimator:
-      def __init__(self, n_clusters=8, k='deprecated'):
+  class ExampleEstimator(BaseEstimator):
+      def __init__(self, n_clusters=8, k='not_used'):
           self.n_clusters = n_clusters
           self.k = k
 
       def fit(self, X, y):
-          if k != 'deprecated':
+          if k != 'not_used':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
               self._n_clusters = k
@@ -830,7 +830,7 @@ and `#11043 <https://github.com/scikit-learn/scikit-learn/pull/11043>`__)::
                           "5 to 10 in 0.22.", FutureWarning)
             n_clusters = 5
 
-When the change is in a class, we conduct validate and raise warning in ``fit``::
+When the change is in a class, we validate and raise warning in ``fit``::
 
   import warnings
 
@@ -860,6 +860,10 @@ same information as the deprecation warning as explained above. Use the
   .. deprecated:: 0.13
      ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
      in 0.15.
+
+What's more, a deprecation requires a test which ensures that the warning is
+raised in relevant cases but not in other cases. The warning should be caught
+in all other tests, and there should be no warning in the examples.
 
 
 .. currentmodule:: sklearn
