@@ -1238,8 +1238,8 @@ def test_nestimators_future_warning():
                       RandomTreesEmbedding]
 
     # When n_estimators default value is used
-    msg_future = "The default value of n_estimators will change "
-    "from 10 to 100 in 0.22"
+    msg_future = "The default value of n_estimators will change from "
+    "10 in version 0.20 to 100 in 0.22."
 
     for Estimator in all_estimators:
         est = Estimator()
