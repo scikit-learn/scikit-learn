@@ -1,8 +1,8 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections import Sequence
 import sys
+import numbers
 
 import numpy as np
 from scipy.sparse import issparse
@@ -17,6 +17,7 @@ from .validation import (as_float_array,
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
+from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .. import get_config
 
@@ -556,3 +557,38 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
                       (working_memory, np.ceil(row_bytes * 2 ** -20)))
         chunk_n_rows = 1
     return chunk_n_rows
+
+
+def is_scalar_nan(x):
+    """Tests if x is NaN
+
+    This function is meant to overcome the issue that np.isnan does not allow
+    non-numerical types as input, and that np.nan is not np.float('nan').
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+
+    Examples
+    --------
+    >>> is_scalar_nan(np.nan)
+    True
+    >>> is_scalar_nan(float("nan"))
+    True
+    >>> is_scalar_nan(None)
+    False
+    >>> is_scalar_nan("")
+    False
+    >>> is_scalar_nan([np.nan])
+    False
+    """
+
+    # convert from numpy.bool_ to python bool to ensure that testing
+    # is_scalar_nan(x) is True does not fail.
+    # Redondant np.floating is needed because numbers can't match np.float32
+    # in python 2.
+    return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))

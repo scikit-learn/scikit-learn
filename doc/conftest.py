@@ -8,6 +8,8 @@ from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_network
 from sklearn.datasets import get_data_home
+from sklearn.datasets.base import _pkl_filepath
+from sklearn.datasets.twenty_newsgroups import CACHE_NAME
 from sklearn.utils.testing import install_mldata_mock
 from sklearn.utils.testing import uninstall_mldata_mock
 
@@ -49,7 +51,8 @@ def setup_rcv1():
 
 def setup_twenty_newsgroups():
     data_home = get_data_home()
-    if not exists(join(data_home, '20news_home')):
+    cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
+    if not exists(cache_path):
         raise SkipTest("Skipping dataset loading doctests")
 
 
@@ -57,6 +60,9 @@ def setup_working_with_text_data():
     if IS_PYPY and os.environ.get('CI', None):
         raise SkipTest('Skipping too slow test with PyPy on CI')
     check_skip_network()
+    cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
+    if not exists(cache_path):
+        raise SkipTest("Skipping dataset loading doctests")
 
 
 def setup_compose():
@@ -66,22 +72,33 @@ def setup_compose():
         raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
+def setup_impute():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping impute.rst, pandas not installed")
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
-    if fname.endswith('datasets/labeled_faces.rst'):
+    is_index = fname.endswith('datasets/index.rst')
+    if fname.endswith('datasets/labeled_faces.rst') or is_index:
         setup_labeled_faces()
-    elif fname.endswith('datasets/mldata.rst'):
+    elif fname.endswith('datasets/mldata.rst') or is_index:
         setup_mldata()
-    elif fname.endswith('datasets/rcv1.rst'):
+    elif fname.endswith('datasets/rcv1.rst') or is_index:
         setup_rcv1()
-    elif fname.endswith('datasets/twenty_newsgroups.rst'):
+    elif fname.endswith('datasets/twenty_newsgroups.rst') or is_index:
         setup_twenty_newsgroups()
-    elif fname.endswith('tutorial/text_analytics/working_with_text_data.rst'):
+    elif fname.endswith('tutorial/text_analytics/working_with_text_data.rst')\
+            or is_index:
         setup_working_with_text_data()
-    elif fname.endswith('modules/compose.rst'):
+    elif fname.endswith('modules/compose.rst') or is_index:
         setup_compose()
     elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
         raise SkipTest('FeatureHasher is not compatible with PyPy')
+    elif fname.endswith('modules/impute.rst'):
+        setup_impute()
 
 
 def pytest_runtest_teardown(item):

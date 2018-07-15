@@ -12,7 +12,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 from sklearn.exceptions import FitFailedWarning
 
-from sklearn.tests.test_grid_search import FailingClassifier
+from sklearn.model_selection.tests.test_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -744,7 +744,7 @@ def test_permutation_test_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
     permutation_test_score(p, X, y, cv=5)
@@ -756,7 +756,7 @@ def test_cross_val_score_allow_nans():
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0] / 2)
     p = Pipeline([
-        ('imputer', SimpleImputer(strategy='mean', missing_values='NaN')),
+        ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
     cross_val_score(p, X, y, cv=5)

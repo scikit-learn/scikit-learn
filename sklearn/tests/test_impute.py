@@ -5,13 +5,15 @@ import pytest
 import numpy as np
 from scipy import sparse
 
+import io
+
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
-from sklearn.impute import SimpleImputer, MICEImputer
+from sklearn.impute import SimpleImputer, ChainedImputer
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.pipeline import Pipeline
@@ -24,18 +26,17 @@ def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
-    Test:
-        - along the two axes
-        - with dense and sparse arrays
+    Test with dense and sparse arrays
 
     Check that:
         - the statistics (mean, median, mode) are correct
         - the missing values are imputed correctly"""
 
     err_msg = "Parameters: strategy = %s, missing_values = %s, " \
-              "axis = {0}, sparse = {1}" % (strategy, missing_values)
+              "sparse = {0}" % (strategy, missing_values)
 
     assert_ae = assert_array_equal
+
     if X.dtype.kind == 'f' or X_true.dtype.kind == 'f':
         assert_ae = assert_array_almost_equal
 
@@ -43,8 +44,8 @@ def _check_statistics(X, X_true,
     imputer = SimpleImputer(missing_values, strategy=strategy)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_ae(imputer.statistics_, statistics,
-              err_msg=err_msg.format(0, False))
-    assert_ae(X_trans, X_true, err_msg=err_msg.format(0, False))
+              err_msg=err_msg.format(False))
+    assert_ae(X_trans, X_true, err_msg=err_msg.format(False))
 
     # Sparse matrix
     imputer = SimpleImputer(missing_values, strategy=strategy)
@@ -55,8 +56,8 @@ def _check_statistics(X, X_true,
         X_trans = X_trans.toarray()
 
     assert_ae(imputer.statistics_, statistics,
-              err_msg=err_msg.format(0, True))
-    assert_ae(X_trans, X_true, err_msg=err_msg.format(0, True))
+              err_msg=err_msg.format(True))
+    assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
 
 def test_imputation_shape():
@@ -64,16 +65,36 @@ def test_imputation_shape():
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent']:
+    for strategy in ['mean', 'median', 'most_frequent', "constant"]:
         imputer = SimpleImputer(strategy=strategy)
         X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
         assert X_imputed.shape == (10, 2)
         X_imputed = imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
-        mice_imputer = MICEImputer(initial_strategy=strategy)
-        X_imputed = mice_imputer.fit_transform(X)
+        chained_imputer = ChainedImputer(initial_strategy=strategy)
+        X_imputed = chained_imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
+
+
+@pytest.mark.parametrize("strategy", ["const", 101, None])
+def test_imputation_error_invalid_strategy(strategy):
+    X = np.ones((3, 5))
+    X[0, 0] = np.nan
+
+    with pytest.raises(ValueError, match=str(strategy)):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning(strategy):
+    X = np.ones((3, 5))
+    X[:, 0] = np.nan
+
+    with pytest.warns(UserWarning, match="Deleting"):
+        imputer = SimpleImputer(strategy=strategy, verbose=True)
+        imputer.fit_transform(X)
 
 
 def safe_median(arr, *args, **kwargs):
@@ -101,9 +122,10 @@ def test_imputation_mean_median():
     values = np.arange(1, shape[0] + 1)
     values[4::2] = - values[4::2]
 
-    tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
+    tests = [("mean", np.nan, lambda z, v, p: safe_mean(np.hstack((z, v)))),
              ("mean", 0, lambda z, v, p: np.mean(v)),
-             ("median", "NaN", lambda z, v, p: safe_median(np.hstack((z, v)))),
+             ("median", np.nan,
+              lambda z, v, p: safe_median(np.hstack((z, v)))),
              ("median", 0, lambda z, v, p: np.median(v))]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -184,7 +206,37 @@ def test_imputation_median_special_cases():
     statistics_median = [0, 5, 0, -2.5, 2.5, 4.5, -4.5, .5]
 
     _check_statistics(X, X_imputed_median, "median",
-                      statistics_median, 'NaN')
+                      statistics_median, np.nan)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+@pytest.mark.parametrize("dtype", [None, object, str])
+def test_imputation_mean_median_error_invalid_type(strategy, dtype):
+    X = np.array([["a", "b", 3],
+                  [4, "e", 6],
+                  ["g", "h", 9]], dtype=dtype)
+
+    with pytest.raises(ValueError, match="non-numeric data"):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["constant", "most_frequent"])
+@pytest.mark.parametrize("dtype", [str, np.dtype('U'), np.dtype('S')])
+def test_imputation_const_mostf_error_invalid_types(strategy, dtype):
+    # Test imputation on non-numeric data using "most_frequent" and "constant"
+    # strategy
+    X = np.array([
+        [np.nan, np.nan, "a", "f"],
+        [np.nan, "c", np.nan, "d"],
+        [np.nan, "b", "d", np.nan],
+        [np.nan, "c", "d", "h"],
+    ], dtype=dtype)
+
+    err_msg = "SimpleImputer does not support data"
+    with pytest.raises(ValueError, match=err_msg):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit(X).transform(X)
 
 
 def test_imputation_most_frequent():
@@ -208,6 +260,169 @@ def test_imputation_most_frequent():
     # test will fail after an update of scipy, SimpleImputer will need to be
     # updated to be consistent with the new (correct) behaviour
     _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
+
+
+@pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
+def test_imputation_most_frequent_objects(marker):
+    # Test imputation using the most-frequent strategy.
+    X = np.array([
+        [marker, marker, "a", "f"],
+        [marker, "c", marker, "d"],
+        [marker, "b", "d", marker],
+        [marker, "c", "d", "h"],
+    ], dtype=object)
+
+    X_true = np.array([
+        ["c", "a", "f"],
+        ["c", "d", "d"],
+        ["b", "d", "d"],
+        ["c", "d", "h"],
+    ], dtype=object)
+
+    imputer = SimpleImputer(missing_values=marker,
+                            strategy="most_frequent")
+    X_trans = imputer.fit(X).transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize("dtype", [object, "category"])
+def test_imputation_most_frequent_pandas(dtype):
+    # Test imputation using the most frequent strategy on pandas df
+    pd = pytest.importorskip("pandas")
+
+    f = io.StringIO(u"Cat1,Cat2,Cat3,Cat4\n"
+                    ",i,x,\n"
+                    "a,,y,\n"
+                    "a,j,,\n"
+                    "b,j,x,")
+
+    df = pd.read_csv(f, dtype=dtype)
+
+    X_true = np.array([
+        ["a", "i", "x"],
+        ["a", "j", "y"],
+        ["a", "j", "x"],
+        ["b", "j", "x"]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy="most_frequent")
+    X_trans = imputer.fit_transform(df)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize("X_data, missing_value", [(1, 0), (1., np.nan)])
+def test_imputation_constant_error_invalid_type(X_data, missing_value):
+    # Verify that exceptions are raised on invalid fill_value type
+    X = np.full((3, 5), X_data)
+    X[0, 0] = missing_value
+
+    with pytest.raises(ValueError, match="imputing numerical"):
+        imputer = SimpleImputer(missing_values=missing_value,
+                                strategy="constant",
+                                fill_value="x")
+        imputer.fit_transform(X)
+
+
+def test_imputation_constant_integer():
+    # Test imputation using the constant strategy on integers
+    X = np.array([
+        [-1, 2, 3, -1],
+        [4, -1, 5, -1],
+        [6, 7, -1, -1],
+        [8, 9, 0, -1]
+    ])
+
+    X_true = np.array([
+        [0, 2, 3, 0],
+        [4, 0, 5, 0],
+        [6, 7, 0, 0],
+        [8, 9, 0, 0]
+    ])
+
+    imputer = SimpleImputer(missing_values=-1, strategy="constant",
+                            fill_value=0)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize("array_constructor", [sparse.csr_matrix, np.asarray])
+def test_imputation_constant_float(array_constructor):
+    # Test imputation using the constant strategy on floats
+    X = np.array([
+        [np.nan, 1.1, 0, np.nan],
+        [1.2, np.nan, 1.3, np.nan],
+        [0, 0, np.nan, np.nan],
+        [1.4, 1.5, 0, np.nan]
+    ])
+
+    X_true = np.array([
+        [-1, 1.1, 0, -1],
+        [1.2, -1, 1.3, -1],
+        [0, 0, -1, -1],
+        [1.4, 1.5, 0, -1]
+    ])
+
+    X = array_constructor(X)
+
+    X_true = array_constructor(X_true)
+
+    imputer = SimpleImputer(strategy="constant", fill_value=-1)
+    X_trans = imputer.fit_transform(X)
+
+    assert_allclose_dense_sparse(X_trans, X_true)
+
+
+@pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
+def test_imputation_constant_object(marker):
+    # Test imputation using the constant strategy on objects
+    X = np.array([
+        [marker, "a", "b", marker],
+        ["c", marker, "d", marker],
+        ["e", "f", marker, marker],
+        ["g", "h", "i", marker]
+    ], dtype=object)
+
+    X_true = np.array([
+        ["missing", "a", "b", "missing"],
+        ["c", "missing", "d", "missing"],
+        ["e", "f", "missing", "missing"],
+        ["g", "h", "i", "missing"]
+    ], dtype=object)
+
+    imputer = SimpleImputer(missing_values=marker, strategy="constant",
+                            fill_value="missing")
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize("dtype", [object, "category"])
+def test_imputation_constant_pandas(dtype):
+    # Test imputation using the constant strategy on pandas df
+    pd = pytest.importorskip("pandas")
+
+    f = io.StringIO(u"Cat1,Cat2,Cat3,Cat4\n"
+                    ",i,x,\n"
+                    "a,,y,\n"
+                    "a,j,,\n"
+                    "b,j,x,")
+
+    df = pd.read_csv(f, dtype=dtype)
+
+    X_true = np.array([
+        ["missing_value", "i", "x", "missing_value"],
+        ["a", "missing_value", "y", "missing_value"],
+        ["a", "j", "missing_value", "missing_value"],
+        ["b", "j", "x", "missing_value"]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy="constant")
+    X_trans = imputer.fit_transform(df)
+
+    assert_array_equal(X_trans, X_true)
 
 
 def test_imputation_pipeline_grid_search():
@@ -271,7 +486,7 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
-def test_mice_rank_one():
+def test_chained_imputer_rank_one():
     rng = np.random.RandomState(0)
     d = 100
     A = rng.rand(d, 1)
@@ -281,10 +496,10 @@ def test_mice_rank_one():
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
-    imputer = MICEImputer(n_imputations=5,
-                          n_burn_in=5,
-                          verbose=True,
-                          random_state=rng)
+    imputer = ChainedImputer(n_imputations=5,
+                             n_burn_in=5,
+                             verbose=True,
+                             random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
     assert_allclose(X_filled, X, atol=0.001)
 
@@ -293,22 +508,22 @@ def test_mice_rank_one():
     "imputation_order",
     ['random', 'roman', 'ascending', 'descending', 'arabic']
 )
-def test_mice_imputation_order(imputation_order):
+def test_chained_imputer_imputation_order(imputation_order):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
-    X[:, 0] = 1  # this column should not be discarded by MICEImputer
+    X[:, 0] = 1  # this column should not be discarded by ChainedImputer
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          n_nearest_features=5,
-                          min_value=0,
-                          max_value=1,
-                          verbose=False,
-                          imputation_order=imputation_order,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             n_nearest_features=5,
+                             min_value=0,
+                             max_value=1,
+                             verbose=False,
+                             imputation_order=imputation_order,
+                             random_state=rng)
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
     if imputation_order == 'roman':
@@ -327,18 +542,18 @@ def test_mice_imputation_order(imputation_order):
     "predictor",
     [DummyRegressor(), BayesianRidge(), ARDRegression()]
 )
-def test_mice_predictors(predictor):
+def test_chained_imputer_predictors(predictor):
     rng = np.random.RandomState(0)
 
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          predictor=predictor,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             predictor=predictor,
+                             random_state=rng)
     imputer.fit_transform(X)
 
     # check that types are correct for predictors
@@ -351,19 +566,19 @@ def test_mice_predictors(predictor):
     assert len(set(hashes)) == len(hashes)
 
 
-def test_mice_clip():
+def test_chained_imputer_clip():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          min_value=0.1,
-                          max_value=0.2,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             min_value=0.1,
+                             max_value=0.2,
+                             random_state=rng)
 
     Xt = imputer.fit_transform(X)
     assert_allclose(np.min(Xt[X == 0]), 0.1)
@@ -375,7 +590,7 @@ def test_mice_clip():
     "strategy",
     ["mean", "median", "most_frequent"]
 )
-def test_mice_missing_at_transform(strategy):
+def test_chained_imputer_missing_at_transform(strategy):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
@@ -385,31 +600,31 @@ def test_mice_missing_at_transform(strategy):
     X_train[:, 0] = 1  # definitely no missing values in 0th column
     X_test[0, 0] = 0  # definitely missing value in 0th column
 
-    mice = MICEImputer(missing_values=0,
-                       n_imputations=1,
-                       n_burn_in=1,
-                       initial_strategy=strategy,
-                       random_state=rng).fit(X_train)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             initial_strategy=strategy,
+                             random_state=rng).fit(X_train)
     initial_imputer = SimpleImputer(missing_values=0,
                                     strategy=strategy).fit(X_train)
 
-    # if there were no missing values at time of fit, then mice will
+    # if there were no missing values at time of fit, then imputer will
     # only use the initial imputer for that feature at transform
-    assert np.all(mice.transform(X_test)[:, 0] ==
+    assert np.all(imputer.transform(X_test)[:, 0] ==
                   initial_imputer.transform(X_test)[:, 0])
 
 
-def test_mice_transform_stochasticity():
+def test_chained_imputer_transform_stochasticity():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
-    imputer = MICEImputer(missing_values=0,
-                          n_imputations=1,
-                          n_burn_in=1,
-                          random_state=rng)
+    imputer = ChainedImputer(missing_values=0,
+                             n_imputations=1,
+                             n_burn_in=1,
+                             random_state=rng)
     imputer.fit(X)
 
     X_fitted_1 = imputer.transform(X)
@@ -419,12 +634,12 @@ def test_mice_transform_stochasticity():
     assert np.mean(X_fitted_1) != pytest.approx(np.mean(X_fitted_2))
 
 
-def test_mice_no_missing():
+def test_chained_imputer_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
     X[:, 0] = np.nan
-    m1 = MICEImputer(n_imputations=10, random_state=rng)
-    m2 = MICEImputer(n_imputations=10, random_state=rng)
+    m1 = ChainedImputer(n_imputations=10, random_state=rng)
+    m2 = ChainedImputer(n_imputations=10, random_state=rng)
     pred1 = m1.fit(X).transform(X)
     pred2 = m2.fit_transform(X)
     # should exclude the first column entirely
@@ -437,7 +652,7 @@ def test_mice_no_missing():
     "rank",
     [3, 5]
 )
-def test_mice_transform_recovery(rank):
+def test_chained_imputer_transform_recovery(rank):
     rng = np.random.RandomState(0)
     n = 100
     d = 100
@@ -455,15 +670,15 @@ def test_mice_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = MICEImputer(n_imputations=10,
-                          n_burn_in=10,
-                          verbose=True,
-                          random_state=rng).fit(X_train)
+    imputer = ChainedImputer(n_imputations=10,
+                             n_burn_in=10,
+                             verbose=True,
+                             random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, rtol=1e-5, atol=0.1)
 
 
-def test_mice_additive_matrix():
+def test_chained_imputer_additive_matrix():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
@@ -484,9 +699,9 @@ def test_mice_additive_matrix():
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = MICEImputer(n_imputations=25,
-                          n_burn_in=10,
-                          verbose=True,
-                          random_state=rng).fit(X_train)
+    imputer = ChainedImputer(n_imputations=25,
+                             n_burn_in=10,
+                             verbose=True,
+                             random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
     assert_allclose(X_test_filled, X_test_est, atol=0.01)

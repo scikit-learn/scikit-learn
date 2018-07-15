@@ -6,6 +6,8 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+import pytest
+
 import numpy as np
 
 from sklearn.utils.fixes import euler_gamma
@@ -15,7 +17,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -105,8 +106,20 @@ def test_iforest_error():
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          IsolationForest(max_samples=1000).fit, X)
-    assert_no_warnings(IsolationForest(max_samples='auto').fit, X)
-    assert_no_warnings(IsolationForest(max_samples=np.int64(2)).fit, X)
+    # note that assert_no_warnings does not apply since it enables a
+    # PendingDeprecationWarning triggered by scipy.sparse's use of
+    # np.matrix. See issue #11251.
+    with pytest.warns(None) as record:
+        IsolationForest(max_samples='auto').fit(X)
+    user_warnings = [each for each in record
+                     if issubclass(each.category, UserWarning)]
+    assert len(user_warnings) == 0
+    with pytest.warns(None) as record:
+        IsolationForest(max_samples=np.int64(2)).fit(X)
+    user_warnings = [each for each in record
+                     if issubclass(each.category, UserWarning)]
+    assert len(user_warnings) == 0
+
     assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
     assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
 

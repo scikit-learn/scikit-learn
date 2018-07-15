@@ -78,6 +78,12 @@ or ``conda``::
 The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
 
 
+Changelog
+---------
+
+See the `changelog <http://scikit-learn.org/dev/whats_new.html>`__
+for a history of notable changes to scikit-learn.
+
 Development
 -----------
 
