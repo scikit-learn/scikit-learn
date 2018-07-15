@@ -263,6 +263,7 @@ def test_lda_store_covariance():
 @pytest.mark.parametrize('n_features', [3, 5])
 @pytest.mark.parametrize('n_classes', [5, 3])
 def test_lda_dimension_warning(n_classes, n_features):
+    # FIXME: Future warning to be removed in 0.22
     rng = check_random_state(0)
     n_samples = 10
     X = rng.randn(n_samples, n_features)
@@ -280,11 +281,17 @@ def test_lda_dimension_warning(n_classes, n_features):
                          max(n_features, n_classes - 1) + 1]:
         # if n_components > min(n_classes - 1, n_features), raise warning
         lda = LinearDiscriminantAnalysis(n_components=n_components)
-        msg = ("n_components cannot be superior to min(n_features, "
+        msg = ("n_components cannot be larger than min(n_features, "
                "n_classes - 1). Using min(n_features, "
                "n_classes - 1) = min(%d, %d - 1) = %d components." %
                (n_features, n_classes, max_components))
         assert_warns_message(ChangedBehaviorWarning, msg, lda.fit, X, y)
+        future_msg = ("In version 0.22, invalid values for "
+                      " the n_components argument will raise a "
+                      "ValueError. You should set n_components to None"
+                      " (default), or a value smaller than "
+                      "min(n_features, n_classes - 1).")
+        assert_warns_message(FutureWarning, future_msg, lda.fit, X, y)
 
 
 def test_qda():
