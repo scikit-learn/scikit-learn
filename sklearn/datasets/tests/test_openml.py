@@ -59,7 +59,7 @@ def _monkey_patch_webbased_functions(context, data_id):
 
     def _mock_data_description(id):
         path = os.path.join(testdir_path,
-                           'mock_openml/%d/data_description.json' % id)
+                            'mock_openml/%d/data_description.json' % id)
         description = open(path, 'r').read()
         return json.loads(description)['data_set_description']
 
