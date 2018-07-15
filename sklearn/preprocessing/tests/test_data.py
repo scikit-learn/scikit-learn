@@ -2003,8 +2003,9 @@ def test_quantile_transform_valid_axis():
                         ". Got axis=2", quantile_transform, X.T, axis=2)
 
 
-def test_power_transformer_notfitted():
-    pt = PowerTransformer(method='box-cox')
+@pytest.mark.parametrize("method", ['box-cox', 'yeo-johnson'])
+def test_power_transformer_notfitted(method):
+    pt = PowerTransformer(method=method)
     X = np.abs(X_1col)
     assert_raises(NotFittedError, pt.transform, X)
     assert_raises(NotFittedError, pt.inverse_transform, X)
@@ -2062,10 +2063,11 @@ def test_power_transformer_2d():
 
 
 def test_power_transformer_strictly_positive_exception():
+    # Exceptions should be raised for negative arrays and zero arrays when
+    # method is coxbox
+
     pt = PowerTransformer(method='box-cox')
     pt.fit(np.abs(X_2d))
-
-    # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
     not_positive_message = 'strictly positive'
 
@@ -2076,7 +2078,7 @@ def test_power_transformer_strictly_positive_exception():
                          pt.fit, X_with_negatives)
 
     assert_raise_message(ValueError, not_positive_message,
-                         power_transform, X_with_negatives)
+                         power_transform, X_with_negatives, 'box-cox')
 
     assert_raise_message(ValueError, not_positive_message,
                          pt.transform, np.zeros(X_2d.shape))
@@ -2085,11 +2087,22 @@ def test_power_transformer_strictly_positive_exception():
                          pt.fit, np.zeros(X_2d.shape))
 
     assert_raise_message(ValueError, not_positive_message,
-                         power_transform, np.zeros(X_2d.shape))
+                         power_transform, np.zeros(X_2d.shape), 'box-cox')
+
+    # It should not raise any error for yeo-johnson
+    pt = PowerTransformer(method='yeo-johnson')
+    pt.fit(np.abs(X_2d))
+    pt.transform(X_with_negatives)
+    pt.fit(X_with_negatives)
+    power_transform(X_with_negatives, method='yeo-johnson')
+    pt.transform(np.zeros(X_2d.shape))
+    pt.fit(np.zeros(X_2d.shape))
+    power_transform(np.zeros(X_2d.shape), method='yeo-johnson')
 
 
-def test_power_transformer_shape_exception():
-    pt = PowerTransformer(method='box-cox')
+@pytest.mark.parametrize("method", ['box-cox', 'yeo-johnson'])
+def test_power_transformer_shape_exception(method):
+    pt = PowerTransformer(method=method)
     X = np.abs(X_2d)
     pt.fit(X)
 
@@ -2122,3 +2135,13 @@ def test_power_transformer_lambda_zero():
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
+
+
+def test_power_transformer_lambda_one():
+    # Make sure lambda = 1 corresponds to the identity for yeo-johnson
+    pt = PowerTransformer(method='yeo-johnson', standardize=False)
+    X = np.abs(X_2d)[:, 0:1]
+
+    pt.lambdas_ = np.array([1])
+    X_trans = pt.transform(X)
+    assert_array_almost_equal(X_trans, X)
