@@ -533,7 +533,7 @@ cdef class WeightedMedianCalculator:
             return -1
         self.update_median_parameters_post_push(data, weight, original_median, 
                                                 push_index)
-        self.verify_state()
+        #self.verify_state()
         return 0
 
     cdef int update_median_parameters_post_push(
@@ -555,67 +555,22 @@ cdef class WeightedMedianCalculator:
         self.total_weight += weight
 
         if data == original_median:
-            if debug == 1:
-                with gil:
-                    print ("push_index: " + str(push_index))
-                    print ("self.total_weight: " + str(self.total_weight))
-                    print ("self.samples.size(): " + str(self.samples.size()))
-                    print ("BEFORE self.k: " + str(self.k))
-                    print ("BEFORE self.sum_w_0_k: " + str(self.sum_w_0_k))
 
             if push_index < self.k:
-                if debug == 1:
-                    with gil:
-                        print ("a")
                 self.sum_w_0_k += weight
                 self.k += 1
-                '''
-                if (self.k < self.samples.size() and
-                  (self.sum_w_0_k < self.total_weight / 2.0)):
-                    
-                    with gil:
-                        print ("aa")              
-                '''
-                changed = 1
-            
-            if self.k > self.samples.size():
-                with gil:
-                    raise ValueError("push ah ha ha ha!! self.k:" + str(self.k) + "; self.samples.size():" + str(self.samples.size()))
-                           
+                                       
             while(self.k > 1 and ((self.sum_w_0_k -
                                    self.samples.get_weight_from_index(self.k-1))
-                                  >= self.total_weight / 2.0)):
-                if debug == 1:                                  
-                    with gil:
-                        print ("b")                                    
+                                  >= self.total_weight / 2.0)):     
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
-                changed = 1
 
             while(self.k < self.samples.size() and
                   (self.sum_w_0_k < self.total_weight / 2.0)):
-                if debug == 1:                  
-                    with gil:
-                        print ("c")                    
+              
                 self.k += 1
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
-                changed = 1
-
-            if changed == 0:
-                if debug == 1:
-                    with gil:
-                        print ("Not changed!?")
-            
-            with gil:
-                if debug == 1:
-                    print ("AFTER self.k: " + str(self.k))
-                    print ("AFTER self.sum_w_0_k: " + str(self.sum_w_0_k))
-
-            #debug:
-            if debug == 1:
-                with gil:
-                    for i in range(self.samples.size()):
-                        print (str(i) + ") Data:" + str(self.samples.get_value_from_index(i)) + "; Wt:" + str(self.samples.get_weight_from_index(i)))   
 
             return 0
 
@@ -657,7 +612,7 @@ cdef class WeightedMedianCalculator:
 
         removal_index = self.samples.remove(data, weight)
         self.update_median_parameters_post_remove(data, weight, original_median,                                          removal_index)
-        self.verify_state()
+        #self.verify_state()
         return 0
 
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except -1:
@@ -677,7 +632,7 @@ cdef class WeightedMedianCalculator:
         removal_index = self.samples.pop(data, weight)
         self.update_median_parameters_post_remove(data[0], weight[0],
                                                   original_median, removal_index)
-        self.verify_state()
+        #self.verify_state()
         return 0
 
     cdef int update_median_parameters_post_remove(
@@ -699,8 +654,6 @@ cdef class WeightedMedianCalculator:
             self.sum_w_0_k = self.total_weight
             return 0
 
-        cdef int debug = 0
-
         # get the current weighted median
         self.total_weight -= weight
 
@@ -708,59 +661,18 @@ cdef class WeightedMedianCalculator:
         # to look on both sides of k because there may be duplicates 
         # with differing weights:
         if data == original_median:
-            if debug == 1:
-                with gil:
-                    print ("removal_index: " + str(removal_index))
-                    print ("self.total_weight: " + str(self.total_weight))
-                    print ("self.samples.size(): " + str(self.samples.size()))
-                    print ("BEFORE self.k: " + str(self.k))
-                    print ("BEFORE self.sum_w_0_k: " + str(self.sum_w_0_k))
-
             if removal_index < self.k:
-                if debug == 1:
-                    with gil:
-                        print ("a")
                 self.k -= 1
-                self.sum_w_0_k -= weight
-                changed = 1
-            
-            if self.k > self.samples.size() + 1:
-                with gil:
-                    raise ValueError("ah ha ha ha!! self.k:" + str(self.k) + "; self.samples.size():" + str(self.samples.size()))
+                self.sum_w_0_k -= weight            
             
             while(self.k < self.samples.size() and (self.sum_w_0_k < self.total_weight / 2.0)):
-                if debug == 1:
-                    with gil:
-                        print ("b")                
                 self.k += 1
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
-                changed = 1
 
             while(self.k > 1 and ((self.sum_w_0_k - self.samples.get_weight_from_index(self.k-1)) >= self.total_weight / 2.0)):
-                if debug == 1:
-                    with gil:
-                        print ("c")                
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
-                changed = 1
-
-            if changed == 0:
-                if debug == 1:
-                    with gil:
-                        print ("Not changed!?")
-                    # self.sum_w_0_k += self.samples.get_weight_from_index(self.k)
-
-            if debug == 1:
-                with gil:
-                    print ("AFTER self.k: " + str(self.k))
-                    print ("AFTER self.sum_w_0_k: " + str(self.sum_w_0_k))
-
-            # debug:
-            # if debug == 1:
-            #    with gil:
-            #        for i in range(self.samples.size()):
-            #            print (str(i) + ") Data:" + str#(self.samples.get_value_from_index(i)) + "; Wt:" + str(self.samples.get_weight_from_index(i)))               
-                    
+            
             return 0
 
         if data < original_median:
