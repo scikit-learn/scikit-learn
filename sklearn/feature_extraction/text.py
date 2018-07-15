@@ -488,7 +488,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     ...     'And the third one.',
     ...     'Is this the first document?',
     ... ]
-    >>>
     >>> vectorizer = HashingVectorizer()
     >>> print(vectorizer._get_hasher())  # doctest: +NORMALIZE_WHITESPACE
     FeatureHasher(alternate_sign=True, dtype=<class 'numpy.float64'>,
@@ -501,7 +500,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
      [ 0.  0.  0. ...,  0.  0.  0.]]
     >>> print(X.shape)
     (4, 1048576)
-    >>>
     >>> vectorizer = HashingVectorizer(n_features=2**3)
     >>> print(vectorizer._get_hasher())  # doctest: +NORMALIZE_WHITESPACE
     FeatureHasher(alternate_sign=True, dtype=<class 'numpy.float64'>,
