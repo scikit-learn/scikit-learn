@@ -1,0 +1,303 @@
+%
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%
+% Attributes 2 and 8 deleted.
+%
+% As used by Kilpatrick, D. & Cameron-Jones, M. (1998). Numeric prediction
+% using instance-based learning with encoding length selection. In Progress
+% in Connectionist-Based Information Systems. Singapore: Springer-Verlag.
+%
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%
+% 1. Title: Relative CPU Performance Data 
+% 
+% 2. Source Information
+%    -- Creators: Phillip Ein-Dor and Jacob Feldmesser
+%      -- Ein-Dor: Faculty of Management; Tel Aviv University; Ramat-Aviv; 
+%         Tel Aviv, 69978; Israel
+%    -- Donor: David W. Aha (aha@ics.uci.edu) (714) 856-8779   
+%    -- Date: October, 1987
+%  
+% 3. Past Usage:
+%     1. Ein-Dor and Feldmesser (CACM 4/87, pp 308-317)
+%        -- Results: 
+%           -- linear regression prediction of relative cpu performance
+%           -- Recorded 34% average deviation from actual values 
+%     2. Kibler,D. & Aha,D. (1988).  Instance-Based Prediction of
+%        Real-Valued Attributes.  In Proceedings of the CSCSI (Canadian
+%        AI) Conference.
+%        -- Results:
+%           -- instance-based prediction of relative cpu performance
+%           -- similar results; no transformations required
+%     - Predicted attribute: cpu relative performance (numeric)
+% 
+% 4. Relevant Information:
+%    -- The estimated relative performance values were estimated by the authors
+%       using a linear regression method.  See their article (pp 308-313) for
+%       more details on how the relative performance values were set.
+% 
+% 5. Number of Instances: 209 
+% 
+% 6. Number of Attributes: 10 (6 predictive attributes, 2 non-predictive, 
+%                              1 goal field, and the linear regression's guess)
+% 
+% 7. Attribute Information:
+%    1. vendor name: 30 
+%       (adviser, amdahl,apollo, basf, bti, burroughs, c.r.d, cambex, cdc, dec, 
+%        dg, formation, four-phase, gould, honeywell, hp, ibm, ipl, magnuson, 
+%        microdata, nas, ncr, nixdorf, perkin-elmer, prime, siemens, sperry, 
+%        sratus, wang)
+%    2. Model Name: many unique symbols
+%    3. MYCT: machine cycle time in nanoseconds (integer)
+%    4. MMIN: minimum main memory in kilobytes (integer)
+%    5. MMAX: maximum main memory in kilobytes (integer)
+%    6. CACH: cache memory in kilobytes (integer)
+%    7. CHMIN: minimum channels in units (integer)
+%    8. CHMAX: maximum channels in units (integer)
+%    9. PRP: published relative performance (integer)
+%   10. ERP: estimated relative performance from the original article (integer)
+% 
+% 8. Missing Attribute Values: None
+% 
+% 9. Class Distribution: the class value (PRP) is continuously valued.
+%    PRP Value Range:   Number of Instances in Range:
+%    0-20               31
+%    21-100             121
+%    101-200            27
+%    201-300            13
+%    301-400            7
+%    401-500            4
+%    501-600            2
+%    above 600          4
+% 
+% Summary Statistics:
+%            Min  Max   Mean    SD      PRP Correlation
+%    MCYT:   17   1500  203.8   260.3   -0.3071
+%    MMIN:   64   32000 2868.0  3878.7   0.7949
+%    MMAX:   64   64000 11796.1 11726.6  0.8630
+%    CACH:   0    256   25.2    40.6     0.6626
+%    CHMIN:  0    52    4.7     6.8      0.6089
+%    CHMAX:  0    176   18.2    26.0     0.6052
+%    PRP:    6    1150  105.6   160.8    1.0000
+%    ERP:   15    1238  99.3    154.8    0.9665
+%
+
+@relation 'cpu'
+@attribute vendor { adviser, amdahl, apollo, basf, bti, burroughs, c.r.d, cdc, cambex, dec, dg, formation, four-phase, gould, hp, harris, honeywell, ibm, ipl, magnuson, microdata, nas, ncr, nixdorf, perkin-elmer, prime, siemens, sperry, sratus, wang}
+@attribute MYCT real
+@attribute MMIN real
+@attribute MMAX real
+@attribute CACH real
+@attribute CHMIN real
+@attribute CHMAX real
+@attribute class real
+@data
+adviser,125,256,6000,256,16,128,199
+amdahl,29,8000,32000,32,8,32,253
+amdahl,29,8000,32000,32,8,32,253
+amdahl,29,8000,32000,32,8,32,253
+amdahl,29,8000,16000,32,8,16,132
+amdahl,26,8000,32000,64,8,32,290
+amdahl,23,16000,32000,64,16,32,381
+amdahl,23,16000,32000,64,16,32,381
+amdahl,23,16000,64000,64,16,32,749
+amdahl,23,32000,64000,128,32,64,1238
+apollo,400,1000,3000,0,1,2,23
+apollo,400,512,3500,4,1,6,24
+basf,60,2000,8000,65,1,8,70
+basf,50,4000,16000,65,1,8,117
+bti,350,64,64,0,1,4,15
+bti,200,512,16000,0,4,32,64
+burroughs,167,524,2000,8,4,15,23
+burroughs,143,512,5000,0,7,32,29
+burroughs,143,1000,2000,0,5,16,22
+burroughs,110,5000,5000,142,8,64,124
+burroughs,143,1500,6300,0,5,32,35
+burroughs,143,3100,6200,0,5,20,39
+burroughs,143,2300,6200,0,6,64,40
+burroughs,110,3100,6200,0,6,64,45
+c.r.d,320,128,6000,0,1,12,28
+c.r.d,320,512,2000,4,1,3,21
+c.r.d,320,256,6000,0,1,6,28
+c.r.d,320,256,3000,4,1,3,22
+c.r.d,320,512,5000,4,1,5,28
+c.r.d,320,256,5000,4,1,6,27
+cdc,25,1310,2620,131,12,24,102
+cdc,25,1310,2620,131,12,24,102
+cdc,50,2620,10480,30,12,24,74
+cdc,50,2620,10480,30,12,24,74
+cdc,56,5240,20970,30,12,24,138
+cdc,64,5240,20970,30,12,24,136
+cdc,50,500,2000,8,1,4,23
+cdc,50,1000,4000,8,1,5,29
+cdc,50,2000,8000,8,1,5,44
+cambex,50,1000,4000,8,3,5,30
+cambex,50,1000,8000,8,3,5,41
+cambex,50,2000,16000,8,3,5,74
+cambex,50,2000,16000,8,3,6,74
+cambex,50,2000,16000,8,3,6,74
+dec,133,1000,12000,9,3,12,54
+dec,133,1000,8000,9,3,12,41
+dec,810,512,512,8,1,1,18
+dec,810,1000,5000,0,1,1,28
+dec,320,512,8000,4,1,5,36
+dec,200,512,8000,8,1,8,38
+dg,700,384,8000,0,1,1,34
+dg,700,256,2000,0,1,1,19
+dg,140,1000,16000,16,1,3,72
+dg,200,1000,8000,0,1,2,36
+dg,110,1000,4000,16,1,2,30
+dg,110,1000,12000,16,1,2,56
+dg,220,1000,8000,16,1,2,42
+formation,800,256,8000,0,1,4,34
+formation,800,256,8000,0,1,4,34
+formation,800,256,8000,0,1,4,34
+formation,800,256,8000,0,1,4,34
+formation,800,256,8000,0,1,4,34
+four-phase,125,512,1000,0,8,20,19
+gould,75,2000,8000,64,1,38,75
+gould,75,2000,16000,64,1,38,113
+gould,75,2000,16000,128,1,38,157
+hp,90,256,1000,0,3,10,18
+hp,105,256,2000,0,3,10,20
+hp,105,1000,4000,0,3,24,28
+hp,105,2000,4000,8,3,19,33
+hp,75,2000,8000,8,3,24,47
+hp,75,3000,8000,8,3,48,54
+hp,175,256,2000,0,3,24,20
+harris,300,768,3000,0,6,24,23
+harris,300,768,3000,6,6,24,25
+harris,300,768,12000,6,6,24,52
+harris,300,768,4500,0,1,24,27
+harris,300,384,12000,6,1,24,50
+harris,300,192,768,6,6,24,18
+harris,180,768,12000,6,1,31,53
+honeywell,330,1000,3000,0,2,4,23
+honeywell,300,1000,4000,8,3,64,30
+honeywell,300,1000,16000,8,2,112,73
+honeywell,330,1000,2000,0,1,2,20
+honeywell,330,1000,4000,0,3,6,25
+honeywell,140,2000,4000,0,3,6,28
+honeywell,140,2000,4000,0,4,8,29
+honeywell,140,2000,4000,8,1,20,32
+honeywell,140,2000,32000,32,1,20,175
+honeywell,140,2000,8000,32,1,54,57
+honeywell,140,2000,32000,32,1,54,181
+honeywell,140,2000,32000,32,1,54,181
+honeywell,140,2000,4000,8,1,20,32
+ibm,57,4000,16000,1,6,12,82
+ibm,57,4000,24000,64,12,16,171
+ibm,26,16000,32000,64,16,24,361
+ibm,26,16000,32000,64,8,24,350
+ibm,26,8000,32000,0,8,24,220
+ibm,26,8000,16000,0,8,16,113
+ibm,480,96,512,0,1,1,15
+ibm,203,1000,2000,0,1,5,21
+ibm,115,512,6000,16,1,6,35
+ibm,1100,512,1500,0,1,1,18
+ibm,1100,768,2000,0,1,1,20
+ibm,600,768,2000,0,1,1,20
+ibm,400,2000,4000,0,1,1,28
+ibm,400,4000,8000,0,1,1,45
+ibm,900,1000,1000,0,1,2,18
+ibm,900,512,1000,0,1,2,17
+ibm,900,1000,4000,4,1,2,26
+ibm,900,1000,4000,8,1,2,28
+ibm,900,2000,4000,0,3,6,28
+ibm,225,2000,4000,8,3,6,31
+ibm,225,2000,4000,8,3,6,31
+ibm,180,2000,8000,8,1,6,42
+ibm,185,2000,16000,16,1,6,76
+ibm,180,2000,16000,16,1,6,76
+ibm,225,1000,4000,2,3,6,26
+ibm,25,2000,12000,8,1,4,59
+ibm,25,2000,12000,16,3,5,65
+ibm,17,4000,16000,8,6,12,101
+ibm,17,4000,16000,32,6,12,116
+ibm,1500,768,1000,0,0,0,18
+ibm,1500,768,2000,0,0,0,20
+ibm,800,768,2000,0,0,0,20
+ipl,50,2000,4000,0,3,6,30
+ipl,50,2000,8000,8,3,6,44
+ipl,50,2000,8000,8,1,6,44
+ipl,50,2000,16000,24,1,6,82
+ipl,50,2000,16000,24,1,6,82
+ipl,50,8000,16000,48,1,10,128
+magnuson,100,1000,8000,0,2,6,37
+magnuson,100,1000,8000,24,2,6,46
+magnuson,100,1000,8000,24,3,6,46
+magnuson,50,2000,16000,12,3,16,80
+magnuson,50,2000,16000,24,6,16,88
+magnuson,50,2000,16000,24,6,16,88
+microdata,150,512,4000,0,8,128,33
+nas,115,2000,8000,16,1,3,46
+nas,115,2000,4000,2,1,5,29
+nas,92,2000,8000,32,1,6,53
+nas,92,2000,8000,32,1,6,53
+nas,92,2000,8000,4,1,6,41
+nas,75,4000,16000,16,1,6,86
+nas,60,4000,16000,32,1,6,95
+nas,60,2000,16000,64,5,8,107
+nas,60,4000,16000,64,5,8,117
+nas,50,4000,16000,64,5,10,119
+nas,72,4000,16000,64,8,16,120
+nas,72,2000,8000,16,6,8,48
+nas,40,8000,16000,32,8,16,126
+nas,40,8000,32000,64,8,24,266
+nas,35,8000,32000,64,8,24,270
+nas,38,16000,32000,128,16,32,426
+nas,48,4000,24000,32,8,24,151
+nas,38,8000,32000,64,8,24,267
+nas,30,16000,32000,256,16,24,603
+ncr,112,1000,1000,0,1,4,19
+ncr,84,1000,2000,0,1,6,21
+ncr,56,1000,4000,0,1,6,26
+ncr,56,2000,6000,0,1,8,35
+ncr,56,2000,8000,0,1,8,41
+ncr,56,4000,8000,0,1,8,47
+ncr,56,4000,12000,0,1,8,62
+ncr,56,4000,16000,0,1,8,78
+ncr,38,4000,8000,32,16,32,80
+ncr,38,4000,8000,32,16,32,80
+ncr,38,8000,16000,64,4,8,142
+ncr,38,8000,24000,160,4,8,281
+ncr,38,4000,16000,128,16,32,190
+nixdorf,200,1000,2000,0,1,2,21
+nixdorf,200,1000,4000,0,1,4,25
+nixdorf,200,2000,8000,64,1,5,67
+perkin-elmer,250,512,4000,0,1,7,24
+perkin-elmer,250,512,4000,0,4,7,24
+perkin-elmer,250,1000,16000,1,1,8,64
+prime,160,512,4000,2,1,5,25
+prime,160,512,2000,2,3,8,20
+prime,160,1000,4000,8,1,14,29
+prime,160,1000,8000,16,1,14,43
+prime,160,2000,8000,32,1,13,53
+siemens,240,512,1000,8,1,3,19
+siemens,240,512,2000,8,1,5,22
+siemens,105,2000,4000,8,3,8,31
+siemens,105,2000,6000,16,6,16,41
+siemens,105,2000,8000,16,4,14,47
+siemens,52,4000,16000,32,4,12,99
+siemens,70,4000,12000,8,6,8,67
+siemens,59,4000,12000,32,6,12,81
+siemens,59,8000,16000,64,12,24,149
+siemens,26,8000,24000,32,8,16,183
+siemens,26,8000,32000,64,12,16,275
+siemens,26,8000,32000,128,24,32,382
+sperry,116,2000,8000,32,5,28,56
+sperry,50,2000,32000,24,6,26,182
+sperry,50,2000,32000,48,26,52,227
+sperry,50,2000,32000,112,52,104,341
+sperry,50,4000,32000,112,52,104,360
+sperry,30,8000,64000,96,12,176,919
+sperry,30,8000,64000,128,12,176,978
+sperry,180,262,4000,0,1,3,24
+sperry,180,512,4000,0,1,3,24
+sperry,180,262,4000,0,1,3,24
+sperry,180,512,4000,0,1,3,24
+sperry,124,1000,8000,0,1,8,37
+sperry,98,1000,8000,32,2,8,50
+sratus,125,2000,8000,0,2,14,41
+wang,480,512,8000,32,0,0,47
+wang,480,1000,4000,0,0,0,25

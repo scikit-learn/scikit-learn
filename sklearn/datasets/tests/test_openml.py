@@ -123,44 +123,37 @@ def test_fetch_openml_anneal(monkeypatch):
                               expect_sparse=False)
 
 
-def test_fetch_openml_cpu():
+def test_fetch_openml_cpu(monkeypatch):
     # regression dataset with numeric and categorical columns
     data_id = 561
     data_name = 'cpu'
     data_version = 1
     expected_observations = 209
     expected_features = 7
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
                               expect_sparse=False)
 
 
-def test_fetch_openml_australian():
+def test_fetch_openml_australian(monkeypatch):
     # sparse dataset
     # Australian is the only sparse dataset that is reasonably small
-    # as it is inactive, we need to catch the warning
+    # as it is inactive, we need to catch the warning. Due to mocking
+    # framework, it is not deactivated in our tests
     data_id = 292
     data_name = 'Australian'
     data_version = 1
     expected_observations = 690
     expected_features = 14
-    assert_warns_message(
-        UserWarning,
-        "Version 1 of dataset Australian is inactive,",
-        fetch_dataset_from_openml,
-        **{'data_id': data_id, 'data_name': data_name,
-           'data_version': data_version,
-           'expected_observations': expected_observations,
-           'expected_features': expected_features,
-           'expect_sparse': False}
-        # Sadly, due to a bug in liac-arff library, the data
-        # is always returned as a dense array.
-        # discussion in OpenML library:
-        # https://github.com/openml/openml-python/issues/487
-    )
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features,
+                              expect_sparse=False)
 
 
 def test_fetch_openml_inactive():
+    # makes contact with openml server. not mocked
     # fetch inactive dataset by id
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
@@ -174,6 +167,7 @@ def test_fetch_openml_inactive():
 
 
 def test_fetch_nonexiting():
+    # makes contact with openml server. not mocked
     # there is no active version of glass2
     assert_raise_message(ValueError, "No active dataset glass2 found",
                          fetch_openml, None, 'glass2')
