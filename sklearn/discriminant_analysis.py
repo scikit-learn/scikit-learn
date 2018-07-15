@@ -459,7 +459,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                     "n_components cannot be superior to min(n_features, "
                     "n_classes - 1). Using min(n_features, "
                     "n_classes - 1) = min(%d, %d - 1) = %d components."
-                    % (X.shape[1], len(self.classes_), max_components) ,
+                    % (X.shape[1], len(self.classes_), max_components),
                     ChangedBehaviorWarning)
                 self._max_components = max_components
             else:

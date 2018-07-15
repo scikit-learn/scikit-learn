@@ -265,7 +265,7 @@ def test_lda_store_covariance():
 def test_lda_dimension_warning(n_classes, n_features):
     RNG = check_random_state(0)
     n_samples = 10
-    X = RNG.randn(n_samples , n_features)
+    X = RNG.randn(n_samples, n_features)
     # we create n_classes labels by repeating and truncating a
     # range(n_classes) until n_samples
     y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
