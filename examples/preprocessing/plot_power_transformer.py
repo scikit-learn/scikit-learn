@@ -1,19 +1,19 @@
 """
-==========================================================
-Using PowerTransformer to apply the Box-Cox transformation
-==========================================================
+======================
+Using PowerTransformer
+======================
 
-This example demonstrates the use of the Box-Cox transform through
-:class:`preprocessing.PowerTransformer` to map data from various distributions
-to a normal distribution.
+This example demonstrates the use of the Box-Cox and Yeo-Johnson transforms
+through :class:`preprocessing.PowerTransformer` to map data from various
+distributions to a normal distribution.
 
-Box-Cox is useful as a transformation in modeling problems where
-homoscedasticity and normality are desired. Below are examples of Box-Cox
-applied to six different probability distributions: Lognormal, Chi-squared,
-Weibull, Gaussian, Uniform, and Bimodal.
+The power transform is useful as a transformation in modeling problems where
+homoscedasticity and normality are desired. Below are examples of Box-Cox and
+Yeo-Johnwon applied to six different probability distributions: Lognormal,
+Chi-squared, Weibull, Gaussian, Uniform, and Bimodal.
 
-Note that the transformation successfully maps the data to a normal
-distribution when applied to certain datasets, but is ineffective with others.
+Note that the transformations successfully map the data to a normal
+distribution when applied to certain datasets, but are ineffective with others.
 This highlights the importance of visualizing the data before and after
 transformation. Also note that while the standardize option is set to False for
 the plot examples, by default, :class:`preprocessing.PowerTransformer` also
@@ -21,6 +21,7 @@ applies zero-mean, unit-variance standardization to the transformed outputs.
 """
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
+# Author: Nicolas Hug <contact@nicolas-hug.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -36,7 +37,8 @@ FONT_SIZE = 6
 BINS = 100
 
 
-pt = PowerTransformer(method='box-cox', standardize=False)
+bc = PowerTransformer(method='box-cox', standardize=False)
+yj = PowerTransformer(method='yeo-johnson', standardize=False)
 rng = np.random.RandomState(304)
 size = (N_SAMPLES, 1)
 
@@ -78,10 +80,11 @@ distributions = [
 colors = ['firebrick', 'darkorange', 'goldenrod',
           'seagreen', 'royalblue', 'darkorchid']
 
-fig, axes = plt.subplots(nrows=4, ncols=3)
+fig, axes = plt.subplots(nrows=6, ncols=3)
 axes = axes.flatten()
-axes_idxs = [(0, 3), (1, 4), (2, 5), (6, 9), (7, 10), (8, 11)]
-axes_list = [(axes[i], axes[j]) for i, j in axes_idxs]
+axes_idxs = [(0, 3, 6), (1, 4, 7), (2, 5, 8), (9, 12, 15), (10, 13, 16),
+             (11, 14, 17)]
+axes_list = [(axes[i], axes[j], axes[k]) for (i, j, k) in axes_idxs]
 
 
 for distribution, color, axes in zip(distributions, colors, axes_list):
@@ -89,20 +92,27 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
     # scale all distributions to the range [0, 10]
     X = minmax_scale(X, feature_range=(1e-10, 10))
 
-    # perform power transform
-    X_trans = pt.fit_transform(X)
-    lmbda = round(pt.lambdas_[0], 2)
+    # perform power transforms
+    X_trans_bc = bc.fit_transform(X)
+    lmbda_bc = round(bc.lambdas_[0], 2)
+    X_trans_yj = yj.fit_transform(X)
+    lmbda_yj = round(yj.lambdas_[0], 2)
 
-    ax_original, ax_trans = axes
+    ax_original, ax_bc, ax_yj = axes
 
     ax_original.hist(X, color=color, bins=BINS)
     ax_original.set_title(name, fontsize=FONT_SIZE)
     ax_original.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
 
-    ax_trans.hist(X_trans, color=color, bins=BINS)
-    ax_trans.set_title('{} after Box-Cox, $\lambda$ = {}'.format(name, lmbda),
-                       fontsize=FONT_SIZE)
-    ax_trans.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
+    for ax, X_trans, meth_name, lmbda in zip((ax_bc, ax_yj),
+                                             (X_trans_bc, X_trans_yj),
+                                             ('Box-Cox', 'Yeo-Johnson'),
+                                             (lmbda_bc, lmbda_yj)):
+        ax.hist(X_trans, color=color, bins=BINS)
+        ax.set_title('{} after {}, $\lambda$ = {}'.format(name, meth_name,
+                                                          lmbda),
+                     fontsize=FONT_SIZE)
+        ax.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
 
 
 plt.tight_layout()
