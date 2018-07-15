@@ -2491,17 +2491,18 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.lambdas_ = []
         transformed = []
 
-        for col in X.T:
-            if self.method == 'box-cox':
-                # the computation of lambda is influenced by NaNs and we need to
-                # get rid of them to compute them.
-                _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
-                col_trans = boxcox(col, lmbda)
-            else:  # yeo-johnson
-                lmbda = self._yeo_johnson_optimize(col)
-                col_trans = self._yeo_johnson_transform(col, lmbda)
+        opt_fun = {'box-cox': self._box_cox_optimize,
+                   'yeo-johnson': self._yeo_johnson_optimize
+                   }[self.method]
+        trans_fun = {'box-cox': boxcox,
+                     'yeo-johnson': self._yeo_johnson_transform
+                     }[self.method]
 
+        for col in X.T:
+            lmbda = opt_fun(col)
             self.lambdas_.append(lmbda)
+
+            col_trans = trans_fun(col, lmbda)
             transformed.append(col_trans)
 
         self.lambdas_ = np.array(self.lambdas_)
@@ -2612,6 +2613,18 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             out[~pos] = -np.log(-x[~pos] + 1)
 
         return out
+
+    def _box_cox_optimize(self, x):
+        """Find and return optimal lambda parameter of the Box-Cox transform by
+        MLE, for observed data x.
+
+        We here use scipy builtins which uses the brent optimizer.
+        """
+        # the computation of lambda is influenced by NaNs and we need to
+        # get rid of them to compute them.
+        _, lmbda = stats.boxcox(x[~np.isnan(x)], lmbda=None)
+
+        return lmbda
 
     def _yeo_johnson_optimize(self, x):
         """Find and return optimal lambda parameter of the Yeo-Johnson
