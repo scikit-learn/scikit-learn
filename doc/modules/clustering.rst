@@ -1166,7 +1166,7 @@ adjusted for chance and will tend to increase as the number of different labels
 between the label assignments.
 
 The expected value for the mutual information can be calculated using the
-following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
+following equation [VEB2009]_. In this equation,
 :math:`a_i = |U_i|` (the number of elements in :math:`U_i`) and
 :math:`b_j = |V_j|` (the number of elements in :math:`V_j`).
 
@@ -1181,15 +1181,15 @@ calculated using a similar form to that of the adjusted Rand index:
 
 .. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
 
-For normalized mutual information and adjusted mutual information, the normalizing 
-value is typically some mean of the entropies of each clustering. Various means exist,
-and no firm rules exist for preferring one over the others.  The decision is largely 
-a field-by-field basis; for instance, in community detection, the arithmetic mean is
-most common. Yang et al. (2016) found that each normalizing method provided 
-"qualitatively similar behaviours". In our implementation, this is
-controlled by the ``average_method`` parameter.
+For normalized mutual information and adjusted mutual information, the normalizing
+value is typically some *generalized* mean of the entropies of each clustering.
+Various generalized means exist, and no firm rules exist for preferring one over the
+others.  The decision is largely a field-by-field basis; for instance, in community
+detection, the arithmetic mean is most common. Each
+normalizing method provides "qualitatively similar behaviours" [YAT2016]_. In our
+implementation, this is controlled by the ``average_method`` parameter.
 
-Vinh et al. (2010) named variants of NMI and AMI by their averaging method. Their
+Vinh et al. (2010) named variants of NMI and AMI by their averaging method [VEB2010]_. Their
 'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
 more broadly common names.
 
@@ -1200,13 +1200,13 @@ more broadly common names.
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+ * [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
    `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
    ISBN 9781605585161.
 
- * Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+ * [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
    <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
@@ -1217,7 +1217,8 @@ more broadly common names.
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
    
- * Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of community
+ * [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+   community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
    
@@ -1261,8 +1262,7 @@ Their harmonic mean called **V-measure** is computed by
   0.51...
 
 The V-measure is actually equivalent to the mutual information (NMI)
-discussed above normalized by the arithmetic mean of the label 
-entropies [B2011]_.
+discussed above, with the aggregation function being the arithmetic mean [B2011]_.
 
 Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
@@ -1437,7 +1437,7 @@ Advantages
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
-- **Bounded range [0, 1]**:  Values close to zero indicate two label
+- **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
   **purely** independent label assignments and a AMI of exactly 1 indicates

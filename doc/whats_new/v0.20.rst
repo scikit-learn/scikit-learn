@@ -121,6 +121,7 @@ Metrics
 - Partial AUC is available via ``max_fpr`` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
+
 - Added control over the normalizer in 
   :func:`metrics.normalized_mutual_information_score` and
   :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
@@ -537,6 +538,7 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 - In :func:`metrics.normalized_mutual_information_score` and
   :func:`metrics.adjusted_mutual_information_score`, 
   warn that ``average_method``
