@@ -2160,3 +2160,28 @@ def test_power_transformer_lambda_one():
     pt.lambdas_ = np.array([1])
     X_trans = pt.transform(X)
     assert_array_almost_equal(X_trans, X)
+
+
+@pytest.mark.parametrize("method, lmbda", [('box-cox', .5),
+                                           ('yeo-johnson', .1)])
+def test_optimization_power_transformer(method, lmbda):
+    """Test the optimization procedure
+
+    - set a predefined value for lambda
+    - apply inverse_transform to a normal dist (we get X_inv)
+    - apply fit_transform to X_inv (we get X_inv_trans)
+    - check that X_inv_trans is roughly equal to X
+    """
+
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    X = rng.normal(size=(n_samples, 1))
+
+    pt = PowerTransformer(method=method, standardize=False)
+    pt.lambdas_ = [lmbda]
+    X_inv = pt.inverse_transform(X)
+    pt.lambdas_ = [9999]  # just to make sure
+    X_inv_trans = pt.fit_transform(X_inv)
+
+    assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples,
+                        decimal=2)
