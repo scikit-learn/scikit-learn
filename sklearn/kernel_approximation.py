@@ -435,7 +435,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
          verbose=0)
-    >>> clf.score(data_transformed, digits.target)
+    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
     0.9987...
 
     References
