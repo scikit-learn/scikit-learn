@@ -38,44 +38,6 @@
 				"name": "NumberOfSymbolicFeatures",
 				"value": "33.0"
 			}]
-		}, {
-			"did": 989,
-			"name": "anneal",
-			"version": 3,
-			"status": "active",
-			"format": "ARFF",
-			"file_id": 53523,
-			"quality": [{
-				"name": "MajorityClassSize",
-				"value": "684.0"
-			}, {
-				"name": "MaxNominalAttDistinctValues",
-				"value": "9.0"
-			}, {
-				"name": "MinorityClassSize",
-				"value": "214.0"
-			}, {
-				"name": "NumberOfClasses",
-				"value": "2.0"
-			}, {
-				"name": "NumberOfFeatures",
-				"value": "39.0"
-			}, {
-				"name": "NumberOfInstances",
-				"value": "898.0"
-			}, {
-				"name": "NumberOfInstancesWithMissingValues",
-				"value": "898.0"
-			}, {
-				"name": "NumberOfMissingValues",
-				"value": "22175.0"
-			}, {
-				"name": "NumberOfNumericFeatures",
-				"value": "6.0"
-			}, {
-				"name": "NumberOfSymbolicFeatures",
-				"value": "33.0"
-			}]
 		}]
 	}
 }

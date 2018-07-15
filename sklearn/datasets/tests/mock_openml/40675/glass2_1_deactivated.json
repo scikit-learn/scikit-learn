@@ -1,0 +1,40 @@
+{
+	"data": {
+		"dataset": [{
+			"did": 40675,
+			"name": "glass2",
+			"version": 1,
+			"status": "deactivated",
+			"format": "ARFF",
+			"file_id": 4965250,
+			"quality": [{
+				"name": "MajorityClassSize",
+				"value": "87.0"
+			}, {
+				"name": "MinorityClassSize",
+				"value": "76.0"
+			}, {
+				"name": "NumberOfClasses",
+				"value": "2.0"
+			}, {
+				"name": "NumberOfFeatures",
+				"value": "10.0"
+			}, {
+				"name": "NumberOfInstances",
+				"value": "163.0"
+			}, {
+				"name": "NumberOfInstancesWithMissingValues",
+				"value": "0.0"
+			}, {
+				"name": "NumberOfMissingValues",
+				"value": "0.0"
+			}, {
+				"name": "NumberOfNumericFeatures",
+				"value": "9.0"
+			}, {
+				"name": "NumberOfSymbolicFeatures",
+				"value": "1.0"
+			}]
+		}]
+	}
+}
