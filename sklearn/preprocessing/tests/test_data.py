@@ -2180,7 +2180,7 @@ def test_optimization_power_transformer(method, lmbda):
     pt = PowerTransformer(method=method, standardize=False)
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
-    pt.lambdas_ = [9999]  # just to make sure
+    del pt.lambdas_  # just to make sure
     X_inv_trans = pt.fit_transform(X_inv)
 
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples,
