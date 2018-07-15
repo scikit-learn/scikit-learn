@@ -145,3 +145,11 @@ You can also specify both the name and the version, which also uniquely identifi
 ..
     >>> import shutil
     >>> shutil.rmtree(custom_data_home)
+
+
+.. topic:: References:
+
+ * Vanschoren, van Rijn, Bischl and Torgo
+   `"OpenML: networked science in machine learning"
+   <https://arxiv.org/pdf/1407.7722.pdf>`_,
+   ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
