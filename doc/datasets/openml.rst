@@ -24,8 +24,7 @@ from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml(name='miceprotein', version=4,
-  data_home=custom_data_home)
+  >>> mice = fetch_openml(name='miceprotein', version=4, data_home=custom_data_home)
 
 To fully specify a dataset, you need to provide a name and a version, though the
 version is optional, see :ref:`openml_versions`_ below.
