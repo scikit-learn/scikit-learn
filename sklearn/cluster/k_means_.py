@@ -300,6 +300,7 @@ n_init=10
     if n_init == 'warn':
         warnings.warn("The default value of n_init will change from "
                       "10 to 1 in 0.22", FutureWarning)
+        n_init = 10
 
     if n_init <= 0:
         raise ValueError("Invalid number of initializations."
@@ -914,11 +915,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=1, algorithm='auto'):
 
-        if n_init == 'warn':
-            warnings.warn("The default value of n_init will change from "
-                          "10 to 1 in 0.22", FutureWarning)
-            n_init = 10
-
         self.n_clusters = n_clusters
         self.init = init
         self.max_iter = max_iter
@@ -930,6 +926,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.copy_x = copy_x
         self.n_jobs = n_jobs
         self.algorithm = algorithm
+        if n_init == 'warn':
+            warnings.warn("The default value of n_init will change from "
+                          "10 to 1 in 0.22", FutureWarning)
+            n_init = 10
 
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)

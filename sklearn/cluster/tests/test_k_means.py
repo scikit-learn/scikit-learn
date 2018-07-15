@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.validation import _num_samples
@@ -987,3 +988,16 @@ def test_iter_attribute():
     estimator = KMeans(algorithm="elkan", max_iter=1)
     estimator.fit(np.random.rand(10, 10))
     assert estimator.n_iter_ == 1
+
+
+def test_deprecation_warnings():
+    # Test that warnings are raised. Will be removed in 0.22
+
+    # When n_init is specified (no warning)
+    km = KMeans(n_init=1)
+    assert_no_warnings(km.fit, X)
+
+    # When n_init is not specified (warns)
+    msg_future = "The default value of n_init will change from 10 to 1 in 0.22"
+    km = KMeans()
+    assert_warns_message(FutureWarning, msg_future, km.fit, X)
