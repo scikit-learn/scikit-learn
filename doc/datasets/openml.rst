@@ -30,9 +30,9 @@ To fully specify a dataset, you need to provide a name and a version, though the
 version is optional, see :ref:`openml_versions`_ below.
 The dataset contains a total of 1080 examples belonging to 8 different classes::
 
-  >>> mice.data.shape
-  (1080, 81)
-  >>> mice.target.shape
+  >>> mice.data.shape  #doctest: +SKIP
+  (1080, 77)
+  >>> mice.target.shape  #doctest: +SKIP
   (1080,)
   >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   array([b"'c-CS-m'", b"'c-CS-s'", b"'c-SC-m'", b"'c-SC-s'", b"'t-CS-m'",

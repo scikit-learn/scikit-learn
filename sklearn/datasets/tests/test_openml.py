@@ -185,6 +185,24 @@ def test_fetch_openml_australian(monkeypatch):
     )
 
 
+def test_fetch_openml_miceprotein(monkeypatch):
+    data_id = 40966
+    data_name = 'MiceProtein'
+    data_version = 4
+    expected_observations = 7
+    expected_features = 77
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    data = fetch_dataset_from_openml(data_id, data_name, data_version,
+                                     expected_observations, expected_features,
+                                     expect_sparse=False)
+    # JvR: very important check, as this dataset defined several row ids
+    # and ignore attributes. Note that data_features json has 82 attributes,
+    # and row id (1), ignore attributes (3) have been removed (and target is
+    # stored in data.target)
+    assert (data.data.shape == (expected_observations, expected_features))
+    assert (data.target.shape == (expected_observations, ))
+
+
 def test_fetch_openml_inactive(monkeypatch):
     # makes contact with openml server. not mocked
     # fetch inactive dataset by id
