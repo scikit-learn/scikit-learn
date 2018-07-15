@@ -11,11 +11,8 @@ from warnings import warn
 import numpy as np
 import sys
 import time
-try:  # scipy.misc.logsumexp is deprecated in scipy 1.0.0
-    from scipy.special import logsumexp
-except ImportError:
-    from scipy.misc import logsumexp
 from scipy.optimize import minimize
+from ..utils.fixes import logsumexp
 from ..metrics import pairwise_distances
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
