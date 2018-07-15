@@ -610,7 +610,7 @@ def is_scalar_nan(x):
     return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
 
 
-def init_arpack_v0(size, random_state):
+def _init_arpack_v0(size, random_state):
     """Initialize the starting vector for iteration in ARPACK functions
 
     Initialize a ndarray with values sampled from the uniform distribution
