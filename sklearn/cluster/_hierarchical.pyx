@@ -488,14 +488,9 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         algorithm MST-LINKAGE-CORE for more details.
     """
 
-
-    cdef np.ndarray[DTYPE_t, ndim=1] current_distances_arr
-    cdef np.ndarray[np.int8_t, ndim=1] in_tree_arr
-    cdef np.ndarray[DTYPE_t, ndim=2] result_arr
-
-    cdef DTYPE_t * current_distances
+    cdef DTYPE_t[:] current_distances
     cdef DTYPE_t * raw_data_ptr
-    cdef np.int8_t * in_tree
+    cdef np.int8_t[:] in_tree
     cdef DTYPE_t[:, ::1] raw_data_view
     cdef DTYPE_t[:, ::1] result
 
@@ -519,14 +514,10 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         <DTYPE_t *> raw_data.data))
     raw_data_ptr = (<DTYPE_t *> &raw_data_view[0, 0])
 
-    result_arr = np.zeros((dim - 1, 3))
-    in_tree_arr = np.zeros(dim, dtype=np.int8)
+    result = np.zeros((dim - 1, 3))
+    in_tree = np.zeros(dim, dtype=np.int8)
     current_node = 0
-    current_distances_arr = np.infty * np.ones(dim)
-
-    result = (<DTYPE_t[:dim - 1, :3:1]> (<DTYPE_t *> result_arr.data))
-    in_tree = (<np.int8_t *> in_tree_arr.data)
-    current_distances = (<DTYPE_t *> current_distances_arr.data)
+    current_distances = np.infty * np.ones(dim)
 
     for i in range(1, dim):
 
@@ -566,4 +557,4 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         result[i - 1, 2] = new_distance
         current_node = new_node
 
-    return result_arr
+    return result
