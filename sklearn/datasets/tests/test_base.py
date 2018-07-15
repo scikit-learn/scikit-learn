@@ -5,6 +5,9 @@ import warnings
 import numpy
 from pickle import loads
 from pickle import dumps
+from functools import partial
+
+import pytest
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -19,20 +22,15 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals.six import b, u
+from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
-
-
-DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
-LOAD_FILES_ROOT = tempfile.mkdtemp(prefix="scikit_learn_load_files_test_")
-TEST_CATEGORY_DIR1 = ""
-TEST_CATEGORY_DIR2 = ""
 
 
 def _remove_dir(path):
@@ -40,32 +38,42 @@ def _remove_dir(path):
         shutil.rmtree(path)
 
 
-def teardown_module():
-    """Test fixture (clean up) run once after all tests of this module"""
-    for path in [DATA_HOME, LOAD_FILES_ROOT]:
-        _remove_dir(path)
+@pytest.fixture(scope="module")
+def data_home(tmpdir_factory):
+    tmp_file = str(tmpdir_factory.mktemp("scikit_learn_data_home_test"))
+    yield tmp_file
+    _remove_dir(tmp_file)
 
 
-def setup_load_files():
-    global TEST_CATEGORY_DIR1
-    global TEST_CATEGORY_DIR2
-    TEST_CATEGORY_DIR1 = tempfile.mkdtemp(dir=LOAD_FILES_ROOT)
-    TEST_CATEGORY_DIR2 = tempfile.mkdtemp(dir=LOAD_FILES_ROOT)
-    sample_file = tempfile.NamedTemporaryFile(dir=TEST_CATEGORY_DIR1,
+@pytest.fixture(scope="module")
+def load_files_root(tmpdir_factory):
+    tmp_file = str(tmpdir_factory.mktemp("scikit_learn_load_files_test"))
+    yield tmp_file
+    _remove_dir(tmp_file)
+
+
+@pytest.fixture
+def test_category_dir_1(load_files_root):
+    test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
+    sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1,
                                               delete=False)
     sample_file.write(b("Hello World!\n"))
     sample_file.close()
+    yield str(test_category_dir1)
+    _remove_dir(test_category_dir1)
 
 
-def teardown_load_files():
-    _remove_dir(TEST_CATEGORY_DIR1)
-    _remove_dir(TEST_CATEGORY_DIR2)
+@pytest.fixture
+def test_category_dir_2(load_files_root):
+    test_category_dir2 = tempfile.mkdtemp(dir=load_files_root)
+    yield str(test_category_dir2)
+    _remove_dir(test_category_dir2)
 
 
-def test_data_home():
+def test_data_home(data_home):
     # get_data_home will point to a pre-existing folder
-    data_home = get_data_home(data_home=DATA_HOME)
-    assert_equal(data_home, DATA_HOME)
+    data_home = get_data_home(data_home=data_home)
+    assert_equal(data_home, data_home)
     assert_true(os.path.exists(data_home))
 
     # clear_data_home will delete both the content and the folder it-self
@@ -73,53 +81,44 @@ def test_data_home():
     assert_false(os.path.exists(data_home))
 
     # if the folder is missing it will be created again
-    data_home = get_data_home(data_home=DATA_HOME)
+    data_home = get_data_home(data_home=data_home)
     assert_true(os.path.exists(data_home))
 
 
-def test_default_empty_load_files():
-    res = load_files(LOAD_FILES_ROOT)
+def test_default_empty_load_files(load_files_root):
+    res = load_files(load_files_root)
     assert_equal(len(res.filenames), 0)
     assert_equal(len(res.target_names), 0)
     assert_equal(res.DESCR, None)
 
 
-def test_default_load_files():
-    try:
-        setup_load_files()
-        res = load_files(LOAD_FILES_ROOT)
-        assert_equal(len(res.filenames), 1)
-        assert_equal(len(res.target_names), 2)
-        assert_equal(res.DESCR, None)
-        assert_equal(res.data, [b("Hello World!\n")])
-    finally:
-        teardown_load_files()
+def test_default_load_files(test_category_dir_1, test_category_dir_2,
+                            load_files_root):
+    res = load_files(load_files_root)
+    assert_equal(len(res.filenames), 1)
+    assert_equal(len(res.target_names), 2)
+    assert_equal(res.DESCR, None)
+    assert_equal(res.data, [b("Hello World!\n")])
 
 
-def test_load_files_w_categories_desc_and_encoding():
-    try:
-        setup_load_files()
-        category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
-        res = load_files(LOAD_FILES_ROOT, description="test",
-                         categories=category, encoding="utf-8")
-        assert_equal(len(res.filenames), 1)
-        assert_equal(len(res.target_names), 1)
-        assert_equal(res.DESCR, "test")
-        assert_equal(res.data, [u("Hello World!\n")])
-    finally:
-        teardown_load_files()
+def test_load_files_w_categories_desc_and_encoding(
+        test_category_dir_1, test_category_dir_2, load_files_root):
+    category = os.path.abspath(test_category_dir_1).split('/').pop()
+    res = load_files(load_files_root, description="test",
+                     categories=category, encoding="utf-8")
+    assert_equal(len(res.filenames), 1)
+    assert_equal(len(res.target_names), 1)
+    assert_equal(res.DESCR, "test")
+    assert_equal(res.data, [u("Hello World!\n")])
 
 
-def test_load_files_wo_load_content():
-    try:
-        setup_load_files()
-        res = load_files(LOAD_FILES_ROOT, load_content=False)
-        assert_equal(len(res.filenames), 1)
-        assert_equal(len(res.target_names), 2)
-        assert_equal(res.DESCR, None)
-        assert_equal(res.get('data'), None)
-    finally:
-        teardown_load_files()
+def test_load_files_wo_load_content(
+        test_category_dir_1, test_category_dir_2, load_files_root):
+    res = load_files(load_files_root, load_content=False)
+    assert_equal(len(res.filenames), 1)
+    assert_equal(len(res.target_names), 2)
+    assert_equal(res.DESCR, None)
+    assert_equal(res.get('data'), None)
 
 
 def test_load_sample_images():
@@ -138,11 +137,7 @@ def test_load_digits():
     assert_equal(numpy.unique(digits.target).size, 10)
 
     # test return_X_y option
-    X_y_tuple = load_digits(return_X_y=True)
-    bunch = load_digits()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(digits, partial(load_digits))
 
 
 def test_load_digits_n_class_lt_10():
@@ -161,15 +156,7 @@ def test_load_sample_image():
 
 
 def test_load_missing_sample_image_error():
-    have_PIL = True
-    try:
-        try:
-            from scipy.misc import imread
-        except ImportError:
-            from scipy.misc.pilutil import imread  # noqa
-    except ImportError:
-        have_PIL = False
-    if have_PIL:
+    if pillow_installed:
         assert_raises(AttributeError, load_sample_image,
                       'blop.jpg')
     else:
@@ -184,11 +171,7 @@ def test_load_diabetes():
     assert_true(res.DESCR)
 
     # test return_X_y option
-    X_y_tuple = load_diabetes(return_X_y=True)
-    bunch = load_diabetes()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(res, partial(load_diabetes))
 
 
 def test_load_linnerud():
@@ -201,11 +184,7 @@ def test_load_linnerud():
     assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
-    X_y_tuple = load_linnerud(return_X_y=True)
-    bunch = load_linnerud()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(res, partial(load_linnerud))
 
 
 def test_load_iris():
@@ -217,11 +196,7 @@ def test_load_iris():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    X_y_tuple = load_iris(return_X_y=True)
-    bunch = load_iris()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(res, partial(load_iris))
 
 
 def test_load_wine():
@@ -232,11 +207,7 @@ def test_load_wine():
     assert_true(res.DESCR)
 
     # test return_X_y option
-    X_y_tuple = load_wine(return_X_y=True)
-    bunch = load_wine()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(res, partial(load_wine))
 
 
 def test_load_breast_cancer():
@@ -248,11 +219,7 @@ def test_load_breast_cancer():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    X_y_tuple = load_breast_cancer(return_X_y=True)
-    bunch = load_breast_cancer()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(res, partial(load_breast_cancer))
 
 
 def test_load_boston():
@@ -264,11 +231,7 @@ def test_load_boston():
     assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
-    X_y_tuple = load_boston(return_X_y=True)
-    bunch = load_boston()
-    assert_true(isinstance(X_y_tuple, tuple))
-    assert_array_equal(X_y_tuple[0], bunch.data)
-    assert_array_equal(X_y_tuple[1], bunch.target)
+    check_return_X_y(res, partial(load_boston))
 
 
 def test_loads_dumps_bunch():
@@ -282,7 +245,7 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     bunch = Bunch(key='original')
     # This reproduces a problem when Bunch pickles have been created
     # with scikit-learn 0.16 and are read with 0.17. Basically there
-    # is a suprising behaviour because reading bunch.key uses
+    # is a surprising behaviour because reading bunch.key uses
     # bunch.__dict__ (which is non empty for 0.16 Bunch objects)
     # whereas assigning into bunch.key uses bunch.__setattr__. See
     # https://github.com/scikit-learn/scikit-learn/issues/6196 for

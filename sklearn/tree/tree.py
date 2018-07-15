@@ -540,23 +540,23 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -567,7 +567,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a percentage and
+            - If float, then `max_features` is a fraction and
               `int(max_features * n_features)` features are considered at each
               split.
             - If "auto", then `max_features=sqrt(n_features)`.
@@ -672,7 +672,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The number of outputs when ``fit`` is performed.
 
     tree_ : Tree object
-        The underlying Tree object.
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
 
     Notes
     -----
@@ -783,7 +786,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         super(DecisionTreeClassifier, self).fit(
@@ -906,23 +908,23 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
@@ -933,7 +935,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
@@ -1009,7 +1011,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The number of outputs when ``fit`` is performed.
 
     tree_ : Tree object
-        The underlying Tree object.
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
 
     Notes
     -----
@@ -1117,7 +1122,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         Returns
         -------
         self : object
-            Returns self.
         """
 
         super(DecisionTreeRegressor, self).fit(
@@ -1148,7 +1152,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    splitter : string, optional (default="best")
+    splitter : string, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1162,34 +1166,34 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a percentage and
+            - If float, then `max_features` is a fraction and
               `int(max_features * n_features)` features are considered at each
               split.
             - If "auto", then `max_features=sqrt(n_features)`.
@@ -1262,7 +1266,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     See also
     --------
-    ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
+    sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
@@ -1331,7 +1336,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : string, optional (default="best")
+    splitter : string, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1345,34 +1350,34 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
+        - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
         - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
+        - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
         .. versionchanged:: 0.18
-           Added float values for percentages.
+           Added float values for fractions.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
+        - If float, then `max_features` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
@@ -1425,7 +1430,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier,
+    sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----

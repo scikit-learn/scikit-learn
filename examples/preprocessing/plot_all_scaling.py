@@ -102,6 +102,8 @@ distributions = [
 # scale the output between 0 and 1 for the colorbar
 y = minmax_scale(y_full)
 
+# plasma does not exist in matplotlib < 1.5
+cmap = getattr(cm, 'plasma_r', cm.hot_r)
 
 def create_axes(title, figsize=(16, 6)):
     fig = plt.figure(figsize=figsize)
@@ -153,7 +155,7 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
     ax.set_ylabel(x1_label)
 
     # The scatter plot
-    colors = cm.plasma_r(y)
+    colors = cmap(y)
     ax.scatter(X[:, 0], X[:, 1], alpha=0.5, marker='o', s=5, lw=0, c=colors)
 
     # Removing the top and the right spine for aesthetics
@@ -209,7 +211,7 @@ def make_plot(item_idx):
                       title="Zoom-in")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
-    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cm.plasma_r,
+    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cmap,
                               norm=norm, orientation='vertical',
                               label='Color mapping for values of y')
 
@@ -297,15 +299,14 @@ make_plot(4)
 #
 # ``PowerTransformer`` applies a power transformation to each
 # feature to make the data more Gaussian-like. Currently,
-# ``PowerTransformer`` implements the Box-Cox transform. It differs from
-# QuantileTransformer (Gaussian output) in that it does not map the
-# data to a zero-mean, unit-variance Gaussian distribution. Instead, Box-Cox
+# ``PowerTransformer`` implements the Box-Cox transform. The Box-Cox transform
 # finds the optimal scaling factor to stabilize variance and mimimize skewness
-# through maximum likelihood estimation. Note that Box-Cox can only be applied
-# to positive, non-zero data. Income and number of households happen to be
-# strictly positive, but if negative values are present, a constant can be
-# added to each feature to shift it into the positive range - this is known as
-# the two-parameter Box-Cox transform.
+# through maximum likelihood estimation. By default, ``PowerTransformer`` also
+# applies zero-mean, unit variance normalization to the transformed output.
+# Note that Box-Cox can only be applied to positive, non-zero data. Income and
+# number of households happen to be strictly positive, but if negative values
+# are present, a constant can be added to each feature to shift it into the
+# positive range - this is known as the two-parameter Box-Cox transform.
 
 make_plot(5)
 

@@ -6,7 +6,10 @@ scikit-learn data folder.
 """
 
 from sklearn.datasets import fetch_kddcup99
+from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_equal, SkipTest
+from functools import partial
+
 
 
 def test_percent10():
@@ -37,6 +40,9 @@ def test_percent10():
     data = fetch_kddcup99('smtp')
     assert_equal(data.data.shape, (9571, 3))
     assert_equal(data.target.shape, (9571,))
+
+    fetch_func = partial(fetch_kddcup99, 'smtp')
+    check_return_X_y(data, fetch_func)
 
 
 def test_shuffle():
