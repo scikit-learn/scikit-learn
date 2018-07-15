@@ -27,6 +27,13 @@ from distutils.version import LooseVersion
 
 class ICA():
     '''
+       S =  A*X
+       X =  W*S
+       X : input data shape (nf,ns), nf- number of features or number of channels, ns- number of samples
+       S : decomposed data  (n,ns)   n - number of components choosen, default n=nf
+       A : Transform matirx  (n,n)
+       W : inverse transform matrix (n,n)
+    
     Signal decomposition using Independent Component Analysis (ICA), very usefule for EEG signal decompositions
     Including InfoMax, Extendent InfoMax and Picard methods, default as FastICA as usual 
 
@@ -39,16 +46,64 @@ class ICA():
         The number of components used for PCA decomposition. If None, no dimensionality reduction will be 
         applied and `max_pca_components` will equal the number of channels (number of features) supplied for 
         decomposing data.
+    n_pca_components:  int | float
+        The number of PCA components used after ICA recomposition.
+    random_state:  None | int | instance of np.random.RandomState
+    method : {'fastica', 'infomax', 'extended-infomax', 'picard'}
+        The ICA method to use. Defaults to 'fastica'. For reference, see [1]_,
+        [2]_, [3]_ and [4]_. 
+    fit_params : dict | None
+        Additional parameters passed to the ICA estimator as specified by `method`.
+    max_iter : int
+        Maximum number of iterations during fit.
     
-    n_pca_components: int | None, 
-    random_state :None, 
-    method : 'fastica', 
-    fit_params: None, 
-    max_iter: 200
+    
+    Attributes
+    ----------
+    Estimated Values
+    -----
+    pca_mean_        :  mean substacted from data before computing PCA
+    pca_components_  : PCA transform matrix
+    pca_explained_variance_ :  variance of Principle components
+    unmixing_matrix_ : ICA unmixing matrix A
+    mixing_matrix_   : ICA mixing matrix W
+    whitener_        : Standard deviaation of data before applying ICA 
+    
+    n_components
+    max_pca_components
+    n_pca_components
+    random_state
+    fit_params
     
     
+    Methods:
+    ---------
+       S =  A*X
+       X =  W*S
+       X : input data shape (nf,ns), nf- number of features or number of channels, ns- number of samples
+       S : decomposed data  (n,ns)   n - number of components choosen, default n=nf
+       A : Transform matirx  (n,n)
+       W : inverse transform matrix (n,n)
+       
+    fit(self, X, normalize=False):
+        Fitting to data matrix X, X ndarray (nf,ns)
+    transform(self, Xdata):
+        Decompose Xdata into Independent Components
+        return Xd (ndarray)
+    get_tMatrix(self):
+        Get Tranformation matrix
+        return A (n,n)
+    get_sMatrix(self):
+        Get Inverse Transform matrix
+        return W (n,n)
+    whitening(self, X):
+        To normlize the standard deviation of entire data (not the usual normailization)
     
     '''
+    
+       
+    
+    
     def __init__(self, n_components=None, max_pca_components=None, n_pca_components=None, random_state=None, 
         method='fastica', fit_params=None, max_iter=200):
 
@@ -61,9 +116,6 @@ class ICA():
         if (n_components is not None and max_pca_components is not None and n_components > max_pca_components):
             raise ValueError('n_components must be smaller than max_pca_components')
             
-
-        self.current_fit = 'unfitted'
-        self.verbose = verbose
         self.n_components = n_components
         self.max_pca_components = max_pca_components   
         self.n_pca_components = n_pca_components
@@ -111,7 +163,7 @@ class ICA():
         self.n_samples_ = X.shape[1]
 
 
-        Xw, self.whitener = self.whitening(X)
+        Xw, self.whitener_ = self.whitening(X)
 
 
 
@@ -183,7 +235,7 @@ class ICA():
         # Apply unmixing to low dimension PCA
         Xd = np.dot(self.unmixing_matrix_, pca_Xd)
         return Xd
-    def get_Matrix(self):
+    def get_sMatrix(self):
         """Get Final ICA weight matrix.
         Returns
         -------
@@ -193,7 +245,7 @@ class ICA():
         return np.dot(self.mixing_matrix_[:, :self.n_components].T,
                       self.pca_components_[:self.n_components]).T
     
-    def get_tMat(self):
+    def get_tMatrix(self):
         return np.dot(self.unmixing_matrix_,self.pca_components_)
 
 def infomax(data, weights=None, l_rate=None, block=None, w_change=1e-12,
