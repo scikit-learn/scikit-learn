@@ -414,7 +414,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        
         super(ForestClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
