@@ -338,7 +338,7 @@ Density estimation, novelty detection
 
 The class :class:`OneClassSVM` implements a One-Class SVM which is used in outlier detection. 
 
-See section :ref:`novelty_detection` for OneClassSVM description and usage.
+See section :ref:`outlier_detection` for OneClassSVM description and usage.
 
 Complexity
 ==========
