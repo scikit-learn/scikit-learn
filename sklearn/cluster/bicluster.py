@@ -138,18 +138,23 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                                       **kwargs)
 
         elif self.svd_method == 'arpack':
-            u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs)
+            v0 = _init_arpack_v0(min(array.shape), self.random_state)
+            u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs, v0=v0)
             if np.any(np.isnan(vt)):
                 # some eigenvalues of A * A.T are negative, causing
                 # sqrt() to be np.nan. This causes some vectors in vt
                 # to be np.nan.
                 A = safe_sparse_dot(array.T, array)
-                v0 = _init_arpack_v0(A.shape[0], self.random_state)
+                if A.shape[0] != min(array.shape):
+                    # We have to renitialize v0 differently because the shape
+                    # here can be different from the previous init
+                    v0 = _init_arpack_v0(A.shape[0], self.random_state)
                 _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
                 vt = v.T
             if np.any(np.isnan(u)):
                 A = safe_sparse_dot(array, array.T)
-                v0 = _init_arpack_v0(A.shape[0], self.random_state)
+                if A.shape[0] != min(array.shape):
+                    v0 = _init_arpack_v0(A.shape[0], self.random_state)
                 _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
         assert_all_finite(u)

@@ -74,7 +74,7 @@ from time import time
 from collections import defaultdict
 import os.path
 
-from sklearn.utils import gen_batches
+from sklearn.utils import gen_batches, _init_arpack_v0
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import (make_low_rank_matrix,
@@ -257,7 +257,7 @@ def svd_timing(X, n_comps, n_iter, n_oversamples,
     return U, mu, V, call_time
 
 
-def norm_diff(A, norm=2, msg=True):
+def norm_diff(A, norm=2, msg=True, random_state=None):
     """
     Compute the norm diff with the original matrix, when randomized
     SVD is called with *params.
@@ -269,7 +269,9 @@ def norm_diff(A, norm=2, msg=True):
         print("... computing %s norm ..." % norm)
     if norm == 2:
         # s = sp.linalg.norm(A, ord=2)  # slow
-        value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False)
+        v0 = _init_arpack_v0(min(A.shape), random_state)
+        value = sp.sparse.linalg.svds(A, k=1,
+                return_singular_vectors=False, v0=v0)
     else:
         if sp.sparse.issparse(A):
             value = sp.sparse.linalg.norm(A, ord=norm)

@@ -13,7 +13,7 @@ from scipy.linalg import pinv2, svd
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array, check_consistent_length, _init_arpack_v0
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..exceptions import ConvergenceWarning
@@ -800,10 +800,12 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     CCA
     """
 
-    def __init__(self, n_components=2, scale=True, copy=True):
+    def __init__(self, n_components=2, scale=True,
+                 copy=True, random_state=None):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
+        self.random_state = random_state
 
     def fit(self, X, Y):
         """Fit model to data.
@@ -844,7 +846,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         if self.n_components >= np.min(C.shape):
             U, s, V = svd(C, full_matrices=False)
         else:
-            U, s, V = svds(C, k=self.n_components)
+            v0 = _init_arpack_v0(min(C.shape), self.random_state)
+            U, s, V = svds(C, k=self.n_components, v0=v0)
         # Deterministic output
         U, V = svd_flip(U, V)
         V = V.T

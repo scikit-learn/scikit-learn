@@ -24,6 +24,7 @@ from ..externals import six
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
+from ..utils import _init_arpack_v0 
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -508,8 +509,7 @@ class PCA(_BasePCA):
         X -= self.mean_
 
         if svd_solver == 'arpack':
-            # random init solution, as ARPACK does it internally
-            v0 = random_state.uniform(-1, 1, size=min(X.shape))
+            v0 = _init_arpack_v0(min(X.shape), self.random_state)
             U, S, V = svds(X, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
