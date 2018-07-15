@@ -813,14 +813,35 @@ When the change is in a class, we validate and raise warning in ``fit``::
           else:
               self._n_clusters = self.n_clusters
 
+As in these examples, the warning message should always give both the
+version in which the deprecation happened and the version in which the
+old behavior will be removed. If the deprecation happened in version
+0.x-dev, the message should say deprecation occurred in version 0.x and
+the removal will be in 0.(x+2), so that users will have enough time to
+adapt their code to the new behaviour. For example, if the deprecation happened
+in version 0.18-dev, the message should say it happened in version 0.18
+and the old behavior will be removed in version 0.20.
+
+In addition, a deprecation note should be added in the docstring, recalling the
+same information as the deprecation warning as explained above. Use the
+``.. deprecated::`` directive::
+
+  .. deprecated:: 0.13
+     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
+     in 0.15.
+
+What's more, a deprecation requires a test which ensures that the warning is
+raised in relevant cases but not in other cases. The warning should be caught
+in all other tests, and there should be no warning in the examples.
+
+Change the default value of a parameter
+---------------------------------------
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
 ``FutureWarning`` when users are using the default value. In the following
 example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20). You can also refer to merged PRs
-(e.g., `#10331 <https://github.com/scikit-learn/scikit-learn/pull/10331>`__
-and `#11043 <https://github.com/scikit-learn/scikit-learn/pull/11043>`__)::
+(current version is 0.20)::
 
     import warnings
 
@@ -843,28 +864,9 @@ When the change is in a class, we validate and raise warning in ``fit``::
             warnings.warn("The default value of n_clusters will change from "
                           "5 to 10 in 0.22.", FutureWarning)
             self._n_clusters = 5
-            
-As in these examples, the warning message should always give both the
-version in which the deprecation happened and the version in which the
-old behavior will be removed. If the deprecation happened in version
-0.x-dev, the message should say deprecation occurred in version 0.x and
-the removal will be in 0.(x+2), so that users will have enough time to
-adapt their code to the new behaviour. For example, if the deprecation happened
-in version 0.18-dev, the message should say it happened in version 0.18
-and the old behavior will be removed in version 0.20.
 
-In addition, a deprecation note should be added in the docstring, recalling the
-same information as the deprecation warning as explained above. Use the
-``.. deprecated::`` directive::
-
-  .. deprecated:: 0.13
-     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
-     in 0.15.
-
-What's more, a deprecation requires a test which ensures that the warning is
-raised in relevant cases but not in other cases. The warning should be caught
-in all other tests, and there should be no warning in the examples.
-
+As for the deprecation, the warning message should state in which version the
+default value will be changed.
 
 .. currentmodule:: sklearn
 
