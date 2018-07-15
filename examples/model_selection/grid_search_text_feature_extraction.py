@@ -22,7 +22,7 @@ Here is a sample output of a run on a quad-core machine::
   pipeline: ['vect', 'tfidf', 'clf']
   parameters:
   {'clf__alpha': (1.0000000000000001e-05, 9.9999999999999995e-07),
-   'clf__n_iter': (10, 50, 80),
+   'clf__max_iter': (10, 50, 80),
    'clf__penalty': ('l2', 'elasticnet'),
    'tfidf__use_idf': (True, False),
    'vect__max_n': (1, 2),
@@ -33,7 +33,7 @@ Here is a sample output of a run on a quad-core machine::
   Best score: 0.940
   Best parameters set:
       clf__alpha: 9.9999999999999995e-07
-      clf__n_iter: 50
+      clf__max_iter: 50
       clf__penalty: 'elasticnet'
       tfidf__use_idf: True
       vect__max_n: 2
@@ -104,7 +104,7 @@ parameters = {
     'clf__max_iter': (5,),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
-    #'clf__n_iter': (10, 50, 80),
+    #'clf__max_iter': (10, 50, 80),
 }
 
 if __name__ == "__main__":
