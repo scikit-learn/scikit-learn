@@ -41,7 +41,7 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 
-=======
+==================
 Ways to contribute
 ==================
 

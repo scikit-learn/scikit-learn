@@ -67,7 +67,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         will have ``n_bins_[i] == 0``.
 
     bin_edges_ : array of arrays, shape (n_features, )
-        The edges of each bin. Contain arrays of varying shapes (n_bins_, ).
+        The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
         Ignored features will have empty arrays.
 
     Examples

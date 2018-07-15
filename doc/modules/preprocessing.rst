@@ -582,9 +582,9 @@ on a k-means clustering procedure performed on each feature independently.
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_plot_discretization.py`
-  * :ref:`sphx_glr_auto_examples_plot_discretization_classification.py`
-  * :ref:`sphx_glr_auto_examples_plot_discretization_strategies.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
 
 .. _preprocessing_binarization:
 

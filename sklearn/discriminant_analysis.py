@@ -622,9 +622,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         self.tol = tol
 
     @property
-    @deprecated("Attribute covariances_ was deprecated in version"
+    @deprecated("Attribute ``covariances_`` was deprecated in version"
                 " 0.19 and will be removed in 0.21. Use "
-                "covariance_ instead")
+                "``covariance_`` instead")
     def covariances_(self):
         return self.covariance_
 
