@@ -11,6 +11,12 @@ This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
 Thanks to our many contributors!
 
+.. warning::
+
+    Version 0.20 will be the last version of scikit-learn to support Python2.7.
+    From scikit-learn 0.21 onwards, only Python 3.x will be supported.
+    Scikit-learn 0.21 will also drop support for Python 3.4.
+
 Highlights
 ----------
 
