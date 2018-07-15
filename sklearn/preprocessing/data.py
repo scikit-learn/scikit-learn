@@ -2412,7 +2412,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    method : str, (default='box-cox')
+    method : str, (default='yeo-johnson')
         The power transform method. Available methods are 'box-cox' and
         'yeo-johnson'.
 
@@ -2467,7 +2467,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     I.K. Yeo and R.A. Johnson, "A new family of power transformations to
     improve normality or symmetry." Biometrika, 87(4), pp.954-959. (2000)
     """
-    def __init__(self, method='box-cox', standardize=True, copy=True):
+    def __init__(self, method='yeo-johnson', standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
         self.copy = copy
