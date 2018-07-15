@@ -2011,6 +2011,21 @@ def test_power_transformer_notfitted(method):
     assert_raises(NotFittedError, pt.inverse_transform, X)
 
 
+@pytest.mark.parametrize('standardize', [True, False])
+@pytest.mark.parametrize('X', [X_1col, X_2d])
+def test_power_transformer_inverse(standardize, X):
+    # Make sure we get the original input when applying transform and then
+    # inverse transform
+    pt = PowerTransformer(method='yeo-johnson', standardize=standardize)
+    X_trans = pt.fit_transform(X)
+    assert_almost_equal(X, pt.inverse_transform(X_trans))
+
+    X = np.abs(X)
+    pt = PowerTransformer(method='box-cox', standardize=standardize)
+    X_trans = pt.fit_transform(X)
+    assert_almost_equal(X, pt.inverse_transform(X_trans))
+
+
 def test_power_transformer_1d():
     X = np.abs(X_1col)
 

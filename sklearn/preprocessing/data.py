@@ -2497,7 +2497,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 # get rid of them to compute them.
                 _, lmbda = stats.boxcox(col[~np.isnan(col)], lmbda=None)
                 col_trans = boxcox(col, lmbda)
-            else:  # neo-johnson
+            else:  # yeo-johnson
                 lmbda = self._yeo_johnson_optimize(col)
                 col_trans = self._yeo_johnson_transform(col, lmbda)
 
@@ -2556,15 +2556,40 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         if self.standardize:
             X = self._scaler.inverse_transform(X)
 
+        inv_fun = {'box-cox': self._box_cox_inverse_tranform,
+                   'yeo-johnson': self._yeo_johnson_inverse_transform
+                   }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            x = X[:, i]
-            if lmbda == 0:
-                x_inv = np.exp(x)
-            else:
-                x_inv = (x * lmbda + 1) ** (1 / lmbda)
-            X[:, i] = x_inv
+            X[:, i] = inv_fun(X[:, i], lmbda)
 
         return X
+
+    def _box_cox_inverse_tranform(self, x, lmbda):
+        if lmbda == 0:
+            x_inv = np.exp(x)
+        else:
+            x_inv = (x * lmbda + 1) ** (1 / lmbda)
+
+        return x_inv
+
+    def _yeo_johnson_inverse_transform(self, x, lmbda):
+        x_inv = np.zeros(x.shape)
+        pos = x >= 0
+
+        # when x >= 0
+        if lmbda < 1e-19:
+            x_inv[pos] = np.exp(x[pos]) - 1
+        else:  # lmbda != 0
+            x_inv[pos] = np.power(x[pos] * lmbda + 1, 1 / lmbda) - 1
+
+        # when x < 0
+        if lmbda < 2 - 1e-19:
+            x_inv[~pos] = 1 - np.power(-(2 - lmbda) * x[~pos] + 1,
+                                       1 / (2 - lmbda))
+        else:  # lmbda == 2
+            x_inv[~pos] = 1 - np.exp(-x[~pos])
+
+        return x_inv
 
     def _yeo_johnson_transform(self, x, lmbda):
 
@@ -2577,7 +2602,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         # when x >= 0
         if lmbda < 1e-19:
             out[pos] = np.log(x[pos] + 1)
-        else:  #lmbda != 0
+        else:  # lmbda != 0
             out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
 
         # when x < 0
