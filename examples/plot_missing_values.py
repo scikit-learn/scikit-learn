@@ -28,7 +28,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
 from sklearn.impute import SimpleImputer, ChainedImputer, MissingIndicator
 from sklearn.model_selection import cross_val_score
-from sklearn.metrics import mean_absolute_error
 
 rng = np.random.RandomState(0)
 
