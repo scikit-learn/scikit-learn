@@ -62,6 +62,7 @@ from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
+from sklearn.utils import shuffle
 
 from sklearn import datasets
 
@@ -2161,9 +2162,12 @@ def test_power_transformer_lambda_one():
     X_trans = pt.transform(X)
     assert_array_almost_equal(X_trans, X)
 
-
-@pytest.mark.parametrize("method, lmbda", [('box-cox', .5),
-                                           ('yeo-johnson', .1)])
+@pytest.mark.parametrize("method, lmbda",[('box-cox', .1),
+                                          ('box-cox', .5),
+                                          ('yeo-johnson', .1),
+                                          ('yeo-johnson', .5),
+                                          ('yeo-johnson', 1.),
+                                          ])
 def test_optimization_power_transformer(method, lmbda):
     """Test the optimization procedure
 
@@ -2175,16 +2179,19 @@ def test_optimization_power_transformer(method, lmbda):
 
     rng = np.random.RandomState(0)
     n_samples = 1000
-    X = rng.normal(size=(n_samples, 1))
+    X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
 
     pt = PowerTransformer(method=method, standardize=False)
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
-    del pt.lambdas_  # just to make sure
+
+    pt = PowerTransformer(method=method, standardize=False)
     X_inv_trans = pt.fit_transform(X_inv)
 
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples,
                         decimal=2)
+    assert_almost_equal(0, X_inv_trans.mean(), decimal=1)
+    assert_almost_equal(1, X_inv_trans.std(), decimal=1)
 
 
 @pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
@@ -2199,10 +2206,12 @@ def test_power_transformer_nans(method):
 
     # concat nans at the end and check lambda stays the same
     X = np.concatenate([X, np.full_like(X, np.nan)])
+    X = shuffle(X, random_state=0)
+
     pt.fit(X)
     lmbda_nans = pt.lambdas_[0]
 
-    assert_equal(lmbda_no_nans, lmbda_nans)
+    assert_almost_equal(lmbda_no_nans, lmbda_nans, decimal=7)
 
     X_trans = pt.transform(X)
     assert_array_equal(np.isnan(X_trans), np.isnan(X))
