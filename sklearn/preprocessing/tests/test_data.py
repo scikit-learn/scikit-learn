@@ -2203,4 +2203,6 @@ def test_power_transformer_nans(method):
     lmbda_nans = pt.lambdas_[0]
 
     assert_equal(lmbda_no_nans, lmbda_nans)
-    pt.transform(X)
+
+    X_trans = pt.transform(X)
+    assert_array_equal(np.isnan(X_trans), np.isnan(X))
