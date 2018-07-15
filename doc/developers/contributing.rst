@@ -796,8 +796,7 @@ In the following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
-When the change occurs inside a class, the validation and the warning will be
-raised at ``fit`` time::
+When the change is in a class, we conduct validate and raise warning in ``fit``::
 
   import warnings
 
@@ -831,7 +830,7 @@ and `#11043 <https://github.com/scikit-learn/scikit-learn/pull/11043>`__)::
                           "5 to 10 in 0.22.", FutureWarning)
             n_clusters = 5
 
-When the change is in a class, validation and warning will be done in ``fit``::
+When the change is in a class, we conduct validate and raise warning in ``fit``::
 
   import warnings
 
