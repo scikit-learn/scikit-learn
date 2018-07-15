@@ -270,8 +270,10 @@ def norm_diff(A, norm=2, msg=True, random_state=None):
     if norm == 2:
         # s = sp.linalg.norm(A, ord=2)  # slow
         v0 = _init_arpack_v0(min(A.shape), random_state)
-        value = sp.sparse.linalg.svds(A, k=1,
-                return_singular_vectors=False, v0=v0)
+        value = sp.sparse.linalg.svds(A,
+                                      k=1,
+                                      return_singular_vectors=False,
+                                      v0=v0)
     else:
         if sp.sparse.issparse(A):
             value = sp.sparse.linalg.norm(A, ord=norm)
