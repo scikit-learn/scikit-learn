@@ -479,6 +479,46 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This is the second second document.',
+    ...     'And the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>>
+    >>> vectorizer = HashingVectorizer()
+    >>> print(vectorizer._get_hasher())  # doctest: +NORMALIZE_WHITESPACE
+    FeatureHasher(alternate_sign=True, dtype=<class 'numpy.float64'>,
+           input_type='string', n_features=1048576, non_negative=False)
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]
+     [ 0.  0.  0. ...,  0.  0.  0.]]
+    >>> print(X.shape)
+    (4, 1048576)
+    >>>
+    >>> vectorizer = HashingVectorizer(n_features=2**3)
+    >>> print(vectorizer._get_hasher())  # doctest: +NORMALIZE_WHITESPACE
+    FeatureHasher(alternate_sign=True, dtype=<class 'numpy.float64'>,
+           input_type='string', n_features=8, non_negative=False)
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[-0.89442719  0.          0.          0.          0.          0.4472136
+       0.          0.        ]
+     [-0.40824829  0.          0.          0.81649658  0.          0.40824829
+       0.          0.        ]
+     [ 0.          0.          0.          0.         -0.70710678  0.
+      -0.70710678  0.        ]
+     [-0.89442719  0.          0.          0.          0.          0.4472136
+       0.          0.        ]]
+    >>> print(X.shape)
+    (4, 8)
+
 
     See also
     --------
@@ -745,6 +785,27 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    >>> from sklearn.feature_extraction.text import TfidfVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This is the second second document.',
+    ...     'And the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = TfidfVectorizer()
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(vectorizer.get_feature_names())
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[ 0.          0.43877674  0.54197657  0.43877674  0.          0.
+       0.35872874  0.          0.43877674]
+     [ 0.          0.27230147  0.          0.27230147  0.          0.85322574
+       0.22262429  0.          0.27230147]
+     [ 0.55280532  0.          0.          0.          0.55280532  0.
+       0.28847675  0.55280532  0.        ]
+     [ 0.          0.43877674  0.54197657  0.43877674  0.          0.
+       0.35872874  0.          0.43877674]]
 
     See also
     --------
@@ -1376,6 +1437,25 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This is the second second document.',
+    ...     'And the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = CountVectorizer()
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(vectorizer.get_feature_names())
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[0 1 1 1 0 0 1 0 1]
+     [0 1 0 1 0 2 1 0 1]
+     [1 0 0 0 1 0 1 1 0]
+     [0 1 1 1 0 0 1 0 1]]
 
     See also
     --------
