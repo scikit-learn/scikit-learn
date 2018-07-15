@@ -1012,8 +1012,8 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
     -----
     Columns which only contained missing values at `fit` are discarded upon
     `transform`.
-
     """
+
     def __init__(self, missing_values=np.nan,
                  verbose=0, copy=True, random_state=None):
         self.missing_values = missing_values
@@ -1075,7 +1075,13 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
         X = self._validate_input(X)
 
-        if sparse.issparse(X):
+        if sparse.issparse(X) and self.missing_values == 0:
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            raise ValueError("Imputation not possible when missing_values == 0"
+                             " and input is sparse. Provide a dense array "
+                             "instead.")
+        elif sparse.issparse(X):
             self.uniques_, self.probas_ = self._sparse_fit(X,
                                                            self.missing_values)
         else:
@@ -1099,8 +1105,8 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
 
             values, counts = self._get_values_counts(column)
 
-            # count explicit and implicit zeros if missing_value != 0
-            if missing_values != 0 and n_implicit_zeros[i] > 0:
+            # count implicit zeros
+            if n_implicit_zeros[i] > 0:
                 if 0 in values:
                     counts[values == 0] += n_implicit_zeros[i]
                 else:
@@ -1173,7 +1179,11 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             X = X[:, valid_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X) and self.missing_values != 0:
+        if sparse.issparse(X) and self.missing_values == 0:
+            raise ValueError("Imputation not possible when missing_values == 0"
+                             " and input is sparse. Provide a dense array "
+                             "instead.")
+        elif sparse.issparse(X):
             mask_data = _get_mask(X.data, self.missing_values)
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i]:X.indptr[i+1]]
@@ -1185,11 +1195,6 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
                 column[mask_column] = values
 
         else:
-            if sparse.issparse(X):
-                warnings.warn("Imputation on zeros of sparse matrix will force"
-                              " conversion to dense array.")
-                X = X.toarray()
-
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             for i in range(n_missing.shape[0]):
