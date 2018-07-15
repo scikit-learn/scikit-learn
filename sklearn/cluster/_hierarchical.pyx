@@ -557,4 +557,4 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         result[i - 1, 2] = new_distance
         current_node = new_node
 
-    return result
+    return np.array(result)
