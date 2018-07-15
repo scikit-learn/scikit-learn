@@ -32,24 +32,45 @@ the score of each chain in the ensemble (although this is not guaranteed
 with randomly ordered chains).
 """
 
-print(__doc__)
-
 # Author: Adam Kleczewski
 # License: BSD 3 clause
 
+import io
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.io.arff import loadarff
+from sklearn.datasets import get_data_home
+from sklearn.externals.joblib import Memory
 from sklearn.multioutput import ClassifierChain
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.linear_model import LogisticRegression
-from sklearn.datasets import fetch_mldata
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
+
+print(__doc__)
 
 # Load a multi-label dataset
-yeast = fetch_mldata('yeast')
-X = yeast['data']
-Y = yeast['target'].transpose().toarray()
+
+memory = Memory(get_data_home())
+
+
+@memory.cache()
+def fetch_yeast():
+    url = 'https://www.openml.org/data/download/4644190/file2754771351f4.arff'
+    content = urlopen(url).read()
+    # loadarff doesn't like nominals to be quoted
+    content = content.decode('utf8').replace('"', '')
+    data, meta = loadarff(io.StringIO(content))
+    data = data.view([('features', '<f8', 103), ('classes', '|S5', 14)])
+    return data['features'], data['classes'] == b'TRUE'
+
+
+X, Y = fetch_yeast()
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,
                                                     random_state=0)
 

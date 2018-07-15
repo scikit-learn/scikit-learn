@@ -20,15 +20,33 @@ To make the example run faster, we use very few hidden units, and train only
 for a very short time. Training longer would result in weights with a much
 smoother spatial appearance.
 """
+import io
+from scipy.io.arff import loadarff
+import matplotlib.pyplot as plt
+from sklearn.datasets import get_data_home
+from sklearn.externals.joblib import Memory
+from sklearn.neural_network import MLPClassifier
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
+
 print(__doc__)
 
-import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_mldata
-from sklearn.neural_network import MLPClassifier
+memory = Memory(get_data_home())
 
-mnist = fetch_mldata("MNIST original")
+
+@memory.cache()
+def fetch_mnist():
+    content = urlopen(
+        'https://www.openml.org/data/download/52667/mnist_784.arff').read()
+    data, meta = loadarff(io.StringIO(content.decode('utf8')))
+    data = data.view([('pixels', '<f8', 784), ('class', '|S1')])
+    return data['pixels'], data['class']
+
+X, y = fetch_mnist()
 # rescale the data, use the traditional train/test split
-X, y = mnist.data / 255., mnist.target
 X_train, X_test = X[:60000], X[60000:]
 y_train, y_test = y[:60000], y[60000:]
 

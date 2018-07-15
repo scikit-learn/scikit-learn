@@ -17,14 +17,22 @@ multi-layer perceptron model on this dataset.
 
 """
 import time
+import io
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.io.arff import loadarff
 
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import get_data_home
+from sklearn.externals.joblib import Memory
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
+try:
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 print(__doc__)
 
@@ -35,9 +43,19 @@ print(__doc__)
 t0 = time.time()
 train_samples = 5000
 
-mnist = fetch_mldata('MNIST original')
-X = mnist.data.astype('float64')
-y = mnist.target
+memory = Memory(get_data_home())
+
+
+@memory.cache()
+def fetch_mnist():
+    content = urlopen(
+        'https://www.openml.org/data/download/52667/mnist_784.arff').read()
+    data, meta = loadarff(io.StringIO(content.decode('utf8')))
+    data = data.view([('pixels', '<f8', 784), ('class', '|S1')])
+    return data['pixels'], data['class']
+
+X, y = fetch_mnist()
+
 random_state = check_random_state(0)
 permutation = random_state.permutation(X.shape[0])
 X = X[permutation]
