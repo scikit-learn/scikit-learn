@@ -821,18 +821,20 @@ def test_sampling_error_invalid_type(dtype):
 
 
 def test_sampling_sparse():
-    # Test imputation on sparse matrix using SamplingImputer
+    # Test imputation on sparse matrix
+    # check error raised with missing_values == 0
     X = np.zeros((5, 5))
     X[3:5] = 1
     X = sparse.csc_matrix(X)
 
-    # store some explicit zeros
-    X[0] = 0
-
-    X_true = np.ones((5, 5))
+    imputer = SamplingImputer(missing_values=1)
+    X_trans = imputer.fit_transform(X)
+    assert X_trans.nnz == 0
 
     imputer = SamplingImputer(missing_values=0)
-    with pytest.warns(UserWarning, match="conversion to dense array"):
-        X_trans = imputer.fit_transform(X)
+    with pytest.raises(ValueError, match="Provide a dense array"):
+        imputer.fit(X)
 
-    assert_allclose(X_trans, X_true)
+    imputer.fit(X.toarray())
+    with pytest.raises(ValueError, match="Provide a dense array"):
+        imputer.transform(X)

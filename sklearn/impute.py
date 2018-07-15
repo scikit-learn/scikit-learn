@@ -1193,6 +1193,8 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
                                                     n_missing,
                                                     p=valid_probas[i])
                 column[mask_column] = values
+            # in case some missing values are imputed with 0
+            X.eliminate_zeros()
 
         else:
             mask = _get_mask(X, self.missing_values)
