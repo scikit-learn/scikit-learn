@@ -20,10 +20,11 @@ the lower the better
 from __future__ import division
 
 import warnings
+from functools import partial
+
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.stats import rankdata
-from functools import partial
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
