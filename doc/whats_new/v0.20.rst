@@ -137,12 +137,14 @@ Preprocessing
   DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
   and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
-- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
-  power transformation, allowing users to map data from any distribution to a
-  Gaussian distribution. This is useful as a variance-stabilizing transformation
-  in situations where normality and homoscedasticity are desirable.
+- Added :class:`preprocessing.PowerTransformer`, which implements the
+  Yeo-Johnson and Box-Cox power transformations, allowing users to map data
+  from any distribution to a Gaussian distribution. This is useful as a
+  variance-stabilizing transformation in situations where normality and
+  homoscedasticity are desirable.
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
-  :user:`Maniteja Nandana <maniteja123>`.
+  :user:`Maniteja Nandana <maniteja123>`, and :issue:`10261` by :user:`Nicolas
+  Hug <contact@nicolas-hug.com`.
 
 - Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
