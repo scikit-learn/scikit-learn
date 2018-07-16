@@ -1676,3 +1676,33 @@ def test_calibration_loss():
     assert_raises(ValueError, calibration_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, calibration_loss, y_true, y_pred - 1.)
     assert_raises(ValueError, calibration_loss, y_true, y_pred, reducer="foo")
+
+    # general case
+    n_bins = 2
+    y_true = np.array([0, 0, 1, 1])
+    y_pred = np.array([0.25, 0.25, 0.75, 0.75])
+
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max",sliding_window=True), 0.25)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum", sliding_window=True), 1./6)
+
+    # edge case with one element per bin only
+    n_bins = 4
+    y_true = np.array([1, 0, 0, 1])
+    y_pred = np.array([0.25, 0.25, 0.75, 0.75])
+
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max",sliding_window=True), 0.75)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum", sliding_window=True), 0.5)
+
+    # edge case with one bin only
+    n_bins = 1
+    y_true = np.array([1, 0, 0, 1])
+    y_pred = np.array([0.25, 0.25, 0.75, 0.75])
+
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max", sliding_window=True), 0)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum", sliding_window=True), 0)
