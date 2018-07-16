@@ -884,7 +884,6 @@ def test_random_search_cv_results():
         # For random_search, all the param array vals should be unmasked
         assert_false(any(np.ma.getmaskarray(cv_results['param_C'])) or
                      any(np.ma.getmaskarray(cv_results['param_gamma'])))
-        check_cv_results_grid_scores_consistency(search)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1582,7 +1581,7 @@ def test_adaptive_search_cv():
     for attr in dir(gscv):
         if attr[0].islower() and attr[-1:] == '_' and \
            attr not in {'cv_results_', 'best_estimator_',
-                        'grid_scores_'}:
+                        'refit_time_'}:
             assert_equal(getattr(gscv, attr), getattr(mycv, attr),
                          msg='Attribute %s not equal' % attr)
 
