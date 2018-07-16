@@ -44,7 +44,7 @@ VERSION = sklearn.__version__
 
 if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
-    NUMPY_MIN_VERSION = '1.4.0'
+    NUMPY_MIN_VERSION = '1.14.0'
 else:
     SCIPY_MIN_VERSION = '0.13.3'
     NUMPY_MIN_VERSION = '1.8.2'
