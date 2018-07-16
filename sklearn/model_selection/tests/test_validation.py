@@ -1326,6 +1326,7 @@ def test_cross_val_predict_method_checking():
     check_cross_val_predict_with_method(est)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')
 def test_gridsearchcv_cross_val_predict_with_method():
     est = GridSearchCV(LogisticRegression(random_state=42),
                        {'C': [0.1, 1]},
