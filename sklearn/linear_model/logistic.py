@@ -710,16 +710,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
-            if 0 < verbose <= 1:
-                iprint = 50
-            elif 1 < verbose <= 2:
-                iprint = 1
-            elif 2 < verbose <= 3:
-                iprint = 100
-            elif verbose > 3:
-                iprint = 101
-            else:
-                iprint = -1
+            iprint = [-1, 50, 1, 100, 101][
+                np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             w0, loss, info = optimize.fmin_l_bfgs_b(
                 func, w0, fprime=None,
                 args=(X, target, 1. / C, sample_weight),
