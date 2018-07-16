@@ -564,9 +564,9 @@ def check_sample_weight_invariance(name, estimator_orig):
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
                       [3, 3], [3, 3], [3, 3], [3, 3],
-                      [4, 1], [4, 1], [4, 1], [4, 1]])
+                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
         y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2])
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('float'))
 
         if has_fit_parameter(estimator_orig, "random_state"):
             estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)), random_state=0)
@@ -584,10 +584,10 @@ def check_sample_weight_invariance(name, estimator_orig):
                 raise ValueError("For %s sample_weight=None is not equivalent to "
                                  "sample_weight=ones" % name)
         if hasattr(estimator_orig, "transform"):
-            X_pred1 = estimator1.transform(X)
-            X_pred2 = estimator2.transform(X)
+            X_trans1 = estimator1.transform(X)
+            X_trans2 = estimator2.transform(X)
             try:
-                assert_allclose(X_pred1, X_pred2, rtol=0.5)
+                assert_allclose(X_trans1, X_trans2, rtol=0.5)
             except ValueError:
                 raise ValueError("For %s sample_weight=None is not equivalent to "
                                  "sample_weight=ones" % name)
