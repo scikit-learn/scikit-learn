@@ -22,7 +22,7 @@
         <strong>Applications</strong>: Spam detection, Image recognition.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVM<svm>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
+    :ref:`SVM<svm_classification>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
 
     .. raw:: html
 
@@ -52,7 +52,7 @@
         <strong>Applications</strong>: Drug response, Stock prices.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVR<svm>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
+    :ref:`SVR<svm_regression>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
 
     .. raw:: html
 
@@ -206,6 +206,8 @@
                     <ul>
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
+                    </li>
+                    <li><em>July 2018.</em> scikit-learn 0.19.2 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
                     </li>
                     <li><em>October 2017.</em> scikit-learn 0.19.1 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
                     </li>

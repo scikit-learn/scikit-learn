@@ -84,5 +84,5 @@ The definition of what gets run in the Cron job is done in the .travis.yml
 config file, exactly the same way as the other Travis jobs. We use a ``if: type
 = cron`` filter in order for the build to be run only in Cron jobs.
 
-The branch targetted by the Cron job and the frequency of the Cron job is set
+The branch targeted by the Cron job and the frequency of the Cron job is set
 via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.

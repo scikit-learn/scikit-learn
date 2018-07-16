@@ -26,7 +26,6 @@ The module structure is the following:
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from numpy.core.umath_tests import inner1d
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
@@ -286,7 +285,7 @@ def _samme_proba(estimator, n_classes, X):
     # Displace zero probabilities so the log is defined.
     # Also fix negative elements which may occur with
     # negative sample weights.
-    proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+    np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
     log_proba = np.log(proba)
 
     return (n_classes - 1) * (log_proba - (1. / n_classes)
@@ -308,10 +307,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
+    base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes.
+        Support for sample weighting is required, as well as proper
+        ``classes_`` and ``n_classes_`` attributes. If ``None``, then
+        the base estimator is ``DecisionTreeClassifier(max_depth=1)``
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -358,7 +358,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     See also
     --------
-    AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
+    AdaBoostRegressor, GradientBoostingClassifier,
+    sklearn.tree.DecisionTreeClassifier
 
     References
     ----------
@@ -516,12 +517,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Also fix negative elements which may occur with
         # negative sample weights.
         proba = y_predict_proba  # alias for readability
-        proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+        np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
 
         # Boost weight using multi-class AdaBoost SAMME.R alg
         estimator_weight = (-1. * self.learning_rate
-                                * (((n_classes - 1.) / n_classes) *
-                                   inner1d(y_coding, np.log(y_predict_proba))))
+                            * ((n_classes - 1.) / n_classes)
+                            * (y_coding * np.log(y_predict_proba)).sum(axis=1))
 
         # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
@@ -745,7 +746,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
@@ -841,7 +842,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
@@ -863,9 +864,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeRegressor)
+    base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required.
+        Support for sample weighting is required. If ``None``, then
+        the base estimator is ``DecisionTreeRegressor(max_depth=3)``
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -902,7 +904,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     See also
     --------
-    AdaBoostClassifier, GradientBoostingRegressor, DecisionTreeRegressor
+    AdaBoostClassifier, GradientBoostingRegressor,
+    sklearn.tree.DecisionTreeRegressor
 
     References
     ----------

@@ -19,6 +19,7 @@ from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder
 from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
+from sklearn.exceptions import ConvergenceWarning
 
 
 # Values required for approximating the logistic sigmoid by
@@ -98,7 +99,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
-        problems as in hyperparameter optimization.
+        problems as in hyperparameter optimization. See :term:`the Glossary
+        <warm_start>`.
 
     copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
@@ -407,7 +409,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
             lml = -0.5 * a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
+                - np.log1p(np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)
@@ -428,7 +430,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
             if convergence_dict["warnflag"] != 0:
                 warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict)
+                              " state: %s" % convergence_dict,
+                              ConvergenceWarning)
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)
@@ -504,7 +507,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
-        problems as in hyperparameter optimization.
+        problems as in hyperparameter optimization. See :term:`the Glossary
+        <warm_start>`.
 
     copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the

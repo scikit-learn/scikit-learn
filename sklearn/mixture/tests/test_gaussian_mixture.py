@@ -1,8 +1,9 @@
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clauseimport warnings
+# License: BSD 3 clause
 
 import sys
+import copy
 import warnings
 
 import numpy as np
@@ -569,6 +570,26 @@ def test_gaussian_mixture_predict_predict_proba():
         assert_greater(adjusted_rand_score(Y, Y_pred), .95)
 
 
+def test_gaussian_mixture_fit_predict():
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    for covar_type in COVARIANCE_TYPE:
+        X = rand_data.X[covar_type]
+        Y = rand_data.Y
+        g = GaussianMixture(n_components=rand_data.n_components,
+                            random_state=rng, weights_init=rand_data.weights,
+                            means_init=rand_data.means,
+                            precisions_init=rand_data.precisions[covar_type],
+                            covariance_type=covar_type)
+
+        # check if fit_predict(X) is equivalent to fit(X).predict(X)
+        f = copy.deepcopy(g)
+        Y_pred1 = f.fit(X).predict(X)
+        Y_pred2 = g.fit_predict(X)
+        assert_array_equal(Y_pred1, Y_pred2)
+        assert_greater(adjusted_rand_score(Y, Y_pred2), .95)
+
+
 def test_gaussian_mixture_fit():
     # recover the ground truth
     rng = np.random.RandomState(0)
@@ -743,7 +764,6 @@ def test_gaussian_mixture_verbose():
 
 
 def test_warm_start():
-
     random_state = 0
     rng = np.random.RandomState(random_state)
     n_samples, n_features, n_components = 500, 2, 2
@@ -783,6 +803,25 @@ def test_warm_start():
 
     assert_true(not g.converged_)
     assert_true(h.converged_)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_convergence_detected_with_warm_start():
+    # We check that convergence is detected when warm_start=True
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    n_components = rand_data.n_components
+    X = rand_data.X['full']
+
+    for max_iter in (1, 2, 50):
+        gmm = GaussianMixture(n_components=n_components, warm_start=True,
+                              max_iter=max_iter, random_state=rng)
+        for _ in range(100):
+            gmm.fit(X)
+            if gmm.converged_:
+                break
+        assert gmm.converged_
+        assert max_iter >= gmm.n_iter_
 
 
 def test_score():
@@ -970,14 +1009,14 @@ def test_sample():
 @ignore_warnings(category=ConvergenceWarning)
 def test_init():
     # We check that by increasing the n_init number we have a better solution
-    random_state = 0
-    rand_data = RandomData(np.random.RandomState(random_state), scale=1)
-    n_components = rand_data.n_components
-    X = rand_data.X['full']
+    for random_state in range(25):
+        rand_data = RandomData(np.random.RandomState(random_state), scale=1)
+        n_components = rand_data.n_components
+        X = rand_data.X['full']
 
-    gmm1 = GaussianMixture(n_components=n_components, n_init=1,
-                           max_iter=1, random_state=random_state).fit(X)
-    gmm2 = GaussianMixture(n_components=n_components, n_init=100,
-                           max_iter=1, random_state=random_state).fit(X)
+        gmm1 = GaussianMixture(n_components=n_components, n_init=1,
+                               max_iter=1, random_state=random_state).fit(X)
+        gmm2 = GaussianMixture(n_components=n_components, n_init=10,
+                               max_iter=1, random_state=random_state).fit(X)
 
-    assert_greater(gmm2.lower_bound_, gmm1.lower_bound_)
+        assert gmm2.lower_bound_ >= gmm1.lower_bound_

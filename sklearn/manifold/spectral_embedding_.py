@@ -208,7 +208,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method
       Andrew V. Knyazev
-      http://dx.doi.org/10.1137%2FS1064827500366124
+      https://doi.org/10.1137%2FS1064827500366124
     """
     adjacency = check_symmetric(adjacency)
 
@@ -487,8 +487,6 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored
-
         Returns
         -------
         self : object
@@ -528,8 +526,6 @@ class SpectralEmbedding(BaseEstimator):
             X : array-like, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
-
-        Y: Ignored
 
         Returns
         -------

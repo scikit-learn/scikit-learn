@@ -169,13 +169,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
-    # We are initializing this to "zeros" and not empty, because
-    # it is passed to scipy linalg functions and thus if it has NaNs,
-    # even if they are in the upper part that it not used, we
-    # get errors raised.
-    # Once we support only scipy > 0.12 we can use check_finite=False and
-    # go back to "empty"
-    L = np.zeros((max_features, max_features), dtype=X.dtype)
+    L = np.empty((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
     solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
@@ -550,7 +544,7 @@ class Lars(LinearModel, RegressorMixin):
         remove fit_intercept which is set True by default.
 
         .. deprecated:: 0.20
-        
+
             The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
@@ -625,10 +619,8 @@ class Lars(LinearModel, RegressorMixin):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        self.copy_X)
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -1179,12 +1171,6 @@ class LarsCV(Lars):
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
-
-    @property
-    @deprecated("Attribute ``cv_mse_path_`` is deprecated in 0.18 and "
-                "will be removed in 0.20. Use ``mse_path_`` instead")
-    def cv_mse_path_(self):
-        return self.mse_path_
 
 
 class LassoLarsCV(LarsCV):
