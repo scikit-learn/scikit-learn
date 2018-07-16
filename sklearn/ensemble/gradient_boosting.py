@@ -1902,7 +1902,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape (n_estimators, ``loss_.K``)
+    estimators_ : ndarray of DecisionTreeRegressor,\
+shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
