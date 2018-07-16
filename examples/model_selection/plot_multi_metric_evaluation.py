@@ -61,9 +61,8 @@ plt.title("GridSearchCV evaluating using multiple scorers simultaneously",
 
 plt.xlabel("min_samples_split")
 plt.ylabel("Score")
-plt.grid()
 
-ax = plt.axes()
+ax = plt.gca()
 ax.set_xlim(0, 402)
 ax.set_ylim(0.73, 1)
 
