@@ -1318,24 +1318,33 @@ Calibration loss
 The :func:`calibration_loss` function computes the expected and maximum
 calibration losses as defined in [1] for binary classes.
 
-Across all items in a set N predictions, the calibration loss measures
-the aggregated difference between (1) the average predicted probability
-assigned to the possible outcomes for item i, and (2) the frequencies
-of the actual outcome.
-Therefore, the lower the calibration loss is for a set of predictions, the
+Given a set of bins over predicted probabilities, the calibration loss
+measures the overall discrepancy per bin between
+(1) the average predicted probabilities assigned to the positive class, and
+(2) the frequencies of the positive class in the actual outcome in the same
+bin.
+
+When ``sliding_window`` is set to ``False``, bins are an evenly spaced binning
+over predicted probabilities and thus never overlap.
+When ``sliding_window`` is set to ``True``, bins ... and thus might overlap.
+The lower the calibration loss is for a set of predictions, the
 better the predictions are calibrated.
 
 The aggregation method ``reducer`` can be either:
 
-- 'sum' for :math:`\sum_k P_k \delta_k`, denoted as expected calibration error
-  (ECE) in [1] when the optional parameter 'sliding_window' is set to False
-  or calB in [2] when the ``sliding_window`` is set to ``True``
-- 'max' for :math:`\max_k \delta_k`, denoted as maximum calibration error
-  (MCE) in [1]
-where :math:`k` spans all bins,
-:math:`P_k = \dfrac{\sum_{b_k} w_t}{\sum_t w_t}` denotes the (normalized)
+- ``'sum'``: this computes :math:`\sum_k P_k \delta_k`.
+  When the ``sliding_window`` is set to ``False`` this is
+  the expected calibration error (ECE) in [1].
+  When the ``sliding_window`` is set to ``True`` this is
+  calB in [2].
+- ``'max'`` this computes :math:`\max_k \delta_k`.
+  This is the maximum calibration error
+  (MCE) in [1].
+
+Here :math:`k` spans all bins,
+:math:`P_k = \dfrac{\sum_{t\in b_k} w_t}{\sum_t w_t}` denotes the (normalized)
 weight of bin :math:`k` and
-:math:`\delta_k = \dfrac{|\sum_{b_k} w_t o_t - \sum_{b_k} w_t f_t)|}{\sum_{b_k} w_t}` denotes
+:math:`\delta_k = \dfrac{|\sum_{t\in b_k} w_t o_t - \sum_{t\in b_k} w_t f_t|}{\sum_{t\in b_k} w_t}` denotes
 the absolute difference between the average frequency of positive class and the
 average predicted probability of positive class in bin :math:`k`.
 
