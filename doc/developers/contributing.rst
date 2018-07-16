@@ -796,6 +796,23 @@ In the following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
+If a parameter's default value is to be deprecated, use ``DeprecationWarning``
+appropriately. In the following example, ``n`` has a default value 
+of 10 which is deprecated and changed to 100, so that when an instance of 
+``Example_Class`` is initiated, then a DeprecationWarning will be raised. ::
+
+    import warnings
+
+    
+    class Example_Class():
+        def __init__(self,
+                 n=100):
+            n = n
+	    warnings.warn("'n_estimators''s default value was changed to 100
+            in version 0.19", DeprecationWarning) 
+
+
+
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
 old behavior will be removed. If the deprecation happened in version
