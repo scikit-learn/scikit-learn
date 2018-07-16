@@ -1478,16 +1478,16 @@ Utilities from joblib:
    :toctree: generated/
    :template: class.rst
 
-   utils.Memory
-   utils.Parallel
+   utils.joblib.Memory
+   utils.joblib.Parallel
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   utils.cpu_count
-   utils.delayed
-   utils.parallel_backend
+   utils.joblib.cpu_count
+   utils.joblib.delayed
+   utils.joblib.parallel_backend
 
 Recently deprecated
 ===================

@@ -33,7 +33,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.utils import Memory
+from sklearn.utils.joblib import Memory
 
 
 JUNK_FOOD_DOCS = (
@@ -908,7 +908,7 @@ def test_pipeline_wrong_memory():
                             ('svc', SVC())], memory=memory)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.utils.Memory."
+                        "sklearn.utils.joblib.Memory."
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
@@ -931,7 +931,7 @@ def test_pipeline_with_cache_attribute():
                     memory=dummy)
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.utils.Memory."
+                        "sklearn.utils.joblib.Memory."
                         " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 

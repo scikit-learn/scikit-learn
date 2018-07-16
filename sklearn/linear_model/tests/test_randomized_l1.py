@@ -56,7 +56,7 @@ def test_randomized_lasso_error_memory():
                           selection_threshold=selection_threshold,
                           memory=tempdir)
     assert_raises_regex(ValueError, "'memory' should either be a string or"
-                        " a sklearn.utils.Memory instance",
+                        " a sklearn.utils.joblib.Memory instance",
                         clf.fit, X, y)
 
 
