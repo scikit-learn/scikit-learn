@@ -684,7 +684,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             else:
                 w0[:, :coef.shape[1]] = coef
 
-
     if multi_class == 'multinomial':
         # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
         if solver in ['lbfgs', 'newton-cg']:
