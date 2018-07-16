@@ -459,6 +459,25 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
+    Examples
+    --------
+    >>> from sklearn import datasets, svm
+    >>> from sklearn.kernel_approximation import Nystroem
+    >>> digits = datasets.load_digits(n_class=9)
+    >>> data = digits.data / 16.
+    >>> clf = svm.LinearSVC()
+    >>> feature_map_nystroem = Nystroem(gamma=.2,
+    ...                                 random_state=1,
+    ...                                 n_components=300)
+    >>> data_transformed = feature_map_nystroem.fit_transform(data)
+    >>> clf.fit(data_transformed, digits.target)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
+         verbose=0)
+    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
+    0.9987...
 
     References
     ----------
