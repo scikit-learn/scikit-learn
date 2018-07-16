@@ -51,7 +51,6 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
@@ -1167,6 +1166,13 @@ def check_estimators_pickle(name, estimator_orig):
         X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
+    # include NaN values when the estimator should deal with them
+    if name in ALLOW_NAN:
+        # set randomly 10 elements to np.nan
+        rng = np.random.RandomState(42)
+        mask = rng.choice(X.size, 10, replace=False)
+        X.reshape(-1)[mask] = np.nan
+
     estimator = clone(estimator_orig)
 
     # some estimators only take multioutputs
@@ -1175,16 +1181,16 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
-
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
         assert_true(b"version" in pickled_estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
+
+    result = dict()
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X)
 
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)

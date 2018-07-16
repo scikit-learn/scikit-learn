@@ -42,19 +42,17 @@ __all__ = [
 
 
 def _check_inputs_dtype(X, missing_values):
-    """Check that the dtype of X is in accordance with the one of
-    missing_values."""
     if (X.dtype.kind in ("f", "i", "u") and
             not isinstance(missing_values, numbers.Real)):
-        raise ValueError("The data type of 'missing_values' and 'X' are "
-                         "not compatible. 'missing_values' data type is "
-                         "{} and 'X' is {}."
-                         .format(type(missing_values), X.dtype))
+        raise ValueError("'X' and 'missing_values' types are expected to be"
+                         " both numerical. Got X.dtype={} and "
+                         " type(missing_values)={}."
+                         .format(X.dtype, type(missing_values)))
 
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask is np.nan:
+    if is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":
             return np.isnan(X)
         elif X.dtype.kind in ("i", "u"):
@@ -764,7 +762,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
         # ensures exploration, i.e. at least some probability of sampling
-        abs_corr_mat[abs_corr_mat < tolerance] = tolerance
+        np.clip(abs_corr_mat, tolerance, None, out=abs_corr_mat)
         # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
         # needs to sum to 1 for np.random.choice sampling
