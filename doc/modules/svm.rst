@@ -341,9 +341,6 @@ samples, it will detect the soft boundary of that set so as to
 classify new points as belonging to that set or not. The class that
 implements this is called :class:`OneClassSVM`.
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
-
 See, section :ref:`outlier_detection` for more details on this usage.
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
