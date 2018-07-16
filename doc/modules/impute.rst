@@ -96,7 +96,7 @@ sparse and categorical data. It works the same way as the :class:`SimpleImputer`
 
     >>> import numpy as np
     >>> from sklearn.impute import SamplingImputer
-    >>> X = np.array([[1, -1],
+    >>> X = np.array([[1, -1],            # doctest: +NORMALIZE_WHITESPACE
                       [2, -2],
                       [np.nan, np.nan],
                       [np.nan, np.nan],
