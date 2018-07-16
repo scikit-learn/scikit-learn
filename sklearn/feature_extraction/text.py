@@ -437,6 +437,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -679,6 +681,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -1302,6 +1306,8 @@ class TfidfVectorizer(CountVectorizer):
         If a string, it is passed to _check_stop_list and the appropriate stop
         list is returned. 'english' is currently the only supported string
         value.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
