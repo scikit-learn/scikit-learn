@@ -336,9 +336,10 @@ floating point values instead of integer values::
 Density estimation, novelty detection
 =======================================
 
-The class :class:`OneClassSVM` implements a One-Class SVM which is used in outlier detection. 
+The class :class:`OneClassSVM` implements a One-Class SVM which is used in
+outlier detection. 
 
-See :ref:`outlier_detection` for OneClassSVM description and usage.
+See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
 Complexity
 ==========
