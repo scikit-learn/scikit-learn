@@ -1460,7 +1460,7 @@ def test_hinge_loss_multiclass():
         1 - pred_decision[4][3] + pred_decision[4][2],
         1 - pred_decision[5][2] + pred_decision[5][3]
     ])
-    dummy_losses[dummy_losses <= 0] = 0
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_equal(hinge_loss(y_true, pred_decision),
                  dummy_hinge_loss)
@@ -1498,7 +1498,7 @@ def test_hinge_loss_multiclass_with_missing_labels():
         1 - pred_decision[3][1] + pred_decision[3][2],
         1 - pred_decision[4][2] + pred_decision[4][3]
     ])
-    dummy_losses[dummy_losses <= 0] = 0
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_equal(hinge_loss(y_true, pred_decision, labels=labels),
                  dummy_hinge_loss)
@@ -1525,7 +1525,7 @@ def test_hinge_loss_multiclass_invariance_lists():
         1 - pred_decision[4][3] + pred_decision[4][2],
         1 - pred_decision[5][2] + pred_decision[5][3]
     ])
-    dummy_losses[dummy_losses <= 0] = 0
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert_equal(hinge_loss(y_true, pred_decision),
                  dummy_hinge_loss)

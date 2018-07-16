@@ -352,6 +352,42 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
+
+    Parameters
+    ----------
+    est : Estimator object
+        The estimator to fit
+
+    i : int
+        Index of the positive class
+
+    X : numpy array or sparse matrix of shape [n_samples,n_features]
+        Training data
+
+    y : numpy array of shape [n_samples, ]
+        Target values
+
+    alpha : float
+        The regularization parameter
+
+    C : float
+        Maximum step size for passive aggressive
+
+    learning_rate : string
+        The learning rate. Accepted values are 'constant', 'optimal',
+        'invscaling', 'pa1' and 'pa2'.
+
+    max_iter : int
+        The maximum number of iterations (epochs)
+
+    pos_weight : float
+        The weight of the positive class
+
+    neg_weight : float
+        The weight of the negative class
+
+    sample_weight : numpy array of shape [n_samples, ]
+        The weight of each sample
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
@@ -815,15 +851,15 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -1424,15 +1460,15 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 

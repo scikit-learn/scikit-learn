@@ -1,7 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections import Sequence
+
 import numbers
 
 import numpy as np
@@ -18,6 +18,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count, Parallel, Memory, delayed
 from ..externals.joblib import parallel_backend
 from ..exceptions import DataConversionWarning
+from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .. import get_config
 

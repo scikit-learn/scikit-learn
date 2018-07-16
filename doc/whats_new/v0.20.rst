@@ -31,8 +31,8 @@ String or pandas Categorical columns can now be encoded with
 
 :class:`~compose.TransformedTargetRegressor` helps when the regression target
 needs to be transformed to be modeled. :class:`~preprocessing.PowerTransformer`
-joins :class:`~preprocessing.QuantileTransformer` as a non-linear
-transformation.
+and :class:`~preprocessing.KBinsDiscretizer` join
+:class:`~preprocessing.QuantileTransformer` as non-linear transformations.
 
 Beyond this, we have added :term:`sample_weight` support to several estimators
 (including :class:`~cluster.KMeans`, :class:`~linear_model.BayesianRidge` and
@@ -121,10 +121,17 @@ Preprocessing
   the maximum value in the features. :issue:`9151` and :issue:`10521` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.KBinsDiscretizer` for turning
+  continuous features into categorical or one-hot encoded
+  features. :issue:`7668`, :issue:`9647`, :issue:`10195`,
+  :issue:`10192`, :issue:`11272` and :issue:`11467`.
+  by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
+  and `Tom Dupre la Tour`_.
+
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
   DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
-  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`_.
+  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
   power transformation, allowing users to map data from any distribution to a

@@ -42,7 +42,7 @@ __all__ = [
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask is np.nan:
+    if is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":
             return np.isnan(X)
         elif X.dtype.kind in ("i", "u"):
@@ -752,7 +752,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
         # ensures exploration, i.e. at least some probability of sampling
-        abs_corr_mat[abs_corr_mat < tolerance] = tolerance
+        np.clip(abs_corr_mat, tolerance, None, out=abs_corr_mat)
         # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
         # needs to sum to 1 for np.random.choice sampling
