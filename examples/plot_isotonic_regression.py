@@ -28,7 +28,7 @@ from sklearn.utils import check_random_state
 n = 100
 x = np.arange(n)
 rs = check_random_state(0)
-y = rs.randint(-50, 50, size=(n,)) + 50. * np.log(1 + np.arange(n))
+y = rs.randint(-50, 50, size=(n,)) + 50. * np.log1p(np.arange(n))
 
 # #############################################################################
 # Fit IsotonicRegression and LinearRegression models

@@ -917,7 +917,8 @@ def _sort_centers(centers):
 def test_weighted_vs_repeated():
     # a sample weight of N should yield the same result as an N-fold
     # repetition of the sample
-    sample_weight = np.random.randint(1, 5, size=n_samples)
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weight, axis=0)
     estimators = [KMeans(init="k-means++", n_clusters=n_clusters,
                          random_state=42),

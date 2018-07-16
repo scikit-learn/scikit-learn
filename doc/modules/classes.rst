@@ -98,6 +98,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
@@ -112,6 +113,7 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
+   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -1240,6 +1242,7 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
