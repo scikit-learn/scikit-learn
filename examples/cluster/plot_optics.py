@@ -6,6 +6,14 @@ Demo of OPTICS clustering algorithm
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
+
+The clustering is first used in its automatic settings, which is the
+:class:`sklearn.cluster.OPTICS` algorithm, and then setting specific
+thresholds on the reachability, which corresponds to DBSCAN.
+
+We can see that the different clusters of OPTICS can be recovered with
+different choices of thresholds in DBSCAN.
+
 """
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
@@ -49,14 +57,9 @@ labels = clust.labels_[clust.ordering_]
 plt.figure(figsize=(10, 7))
 G = gridspec.GridSpec(2, 3)
 ax1 = plt.subplot(G[0, :])
-ax1.set_ylabel('Reachability (epsilon distance)')
-ax1.set_title('Reachability Plot')
 ax2 = plt.subplot(G[1, 0])
-ax2.set_title('Automatic Clustering')
 ax3 = plt.subplot(G[1, 1])
-ax3.set_title('Clustering at 0.25 epsilon cut')
 ax4 = plt.subplot(G[1, 2])
-ax4.set_title('Clustering at 0.75 epsilon cut')
 
 # Reachability plot
 color = ['g.', 'r.', 'b.', 'y.', 'c.']
@@ -67,6 +70,8 @@ for k, c in zip(range(0, 5), color):
 ax1.plot(space[labels == -1], reachability[labels == -1], 'k.', alpha=0.3)
 ax1.plot(space, np.ones_like(space) * 0.75, 'k-', alpha=0.5)
 ax1.plot(space, np.ones_like(space) * 0.25, 'k-.', alpha=0.5)
+ax1.set_ylabel('Reachability (epsilon distance)')
+ax1.set_title('Reachability Plot')
 
 # OPTICS
 color = ['g.', 'r.', 'b.', 'y.', 'c.']
@@ -74,6 +79,7 @@ for k, c in zip(range(0, 5), color):
     Xk = X[clust.labels_ == k]
     ax2.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
 ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], 'k+', alpha=0.1)
+ax2.set_title('Automatic Clustering\nOPTICS')
 
 # DBSCAN at 0.25
 color = ['g', 'greenyellow', 'olive', 'r', 'b', 'c']
@@ -81,6 +87,7 @@ for k, c in zip(range(0, 6), color):
     Xk = X[labels_025 == k]
     ax3.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3, marker='.')
 ax3.plot(X[labels_025 == -1, 0], X[labels_025 == -1, 1], 'k+', alpha=0.1)
+ax3.set_title('Clustering at 0.25 epsilon cut\nDBSCAN')
 
 # DBSCAN at 0.75
 color = ['g.', 'm.', 'y.', 'c.']
@@ -88,6 +95,7 @@ for k, c in zip(range(0, 4), color):
     Xk = X[labels_075 == k]
     ax4.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
 ax4.plot(X[labels_075 == -1, 0], X[labels_075 == -1, 1], 'k+', alpha=0.1)
+ax4.set_title('Clustering at 0.75 epsilon cut\nDBSCAN')
 
 plt.tight_layout()
 plt.show()
