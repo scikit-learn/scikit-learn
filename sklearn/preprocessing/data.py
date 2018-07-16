@@ -2666,14 +2666,14 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
-            psi = self._yeo_johnson_transform(x, lmbda)
+            transformed = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
 
             # Estimated mean and variance of the normal distribution
-            mu = psi.sum() / n_samples
-            sig_sq = np.power(psi - mu, 2).sum() / n_samples
+            est_mean = transformed.sum() / n_samples
+            est_var = np.power(transformed - est_mean, 2).sum() / n_samples
 
-            loglike = -n_samples / 2 * np.log(sig_sq)
+            loglike = -n_samples / 2 * np.log(est_var)
             loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
 
             return -loglike
