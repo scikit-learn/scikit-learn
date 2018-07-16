@@ -94,7 +94,7 @@ def test_lars_lstsq():
     X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
@@ -102,7 +102,7 @@ def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
     alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
-    coef_lstsq = np.linalg.lstsq(X, y)[0]
+    coef_lstsq = np.linalg.lstsq(X, y, rcond=None)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
 
@@ -473,6 +473,7 @@ def test_lars_path_readonly_data():
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 
 
+@ignore_warnings(DeprecationWarning)  # positive deprecated, remove in 0.22
 def test_lars_path_positive_constraint():
     # this is the main test for the positive parameter on the lars_path method
     # the estimator classes just make use of this function
