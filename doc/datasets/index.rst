@@ -158,7 +158,7 @@ They can be loaded using the following functions:
 
 .. include:: ../../sklearn/datasets/descr/california_housing.rst
 
-.. _generated_datasets:
+.. _sample_generators:
 
 Generated datasets
 ==================
