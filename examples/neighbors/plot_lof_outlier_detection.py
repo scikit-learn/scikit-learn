@@ -44,42 +44,25 @@ ground_truth = np.ones(len(X), dtype=int)
 ground_truth[-n_outliers:] = -1
 
 # fit the model for outlier detection (default)
-clf = LocalOutlierFactor(n_neighbors=20)
+clf = LocalOutlierFactor(n_neighbors=20, contamination=0.1)
 # use fit_predict to compute the predicted labels of the training samples
 # (when LOF is used for outlier detection, the estimator has no predict,
 # decision_function and score_samples methods).
 y_pred = clf.fit_predict(X)
 n_errors = (y_pred != ground_truth).sum()
-
-# IMPORTANT: for illustration purpose we would like to plot the level sets of
-# the decision function however decision_function is not available when
-# LOF is used for outlier detection. We thus refit the model in a novelty
-# detection mode (with novelty=True) so that we can compute the decision
-# function on a grid. Note that when using novelty=True, you MUST not use
-# predict, decision_function and score_samples on the training set X as this
-# would lead to wrong results. You must only use these methods on new unseen
-# data (which are not in the training set)
-
-# refit the model with novelty=True
-clf = LocalOutlierFactor(n_neighbors=20, novelty=True)
-clf.fit(X)
-xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
-Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
+X_scores = clf.negative_outlier_factor_
 
 plt.title("Local Outlier Factor (LOF)")
-plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
-
-a = plt.scatter(X_inliers[:, 0], X_inliers[:, 1], c='white',
-                edgecolor='k', s=20)
-b = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red',
-                edgecolor='k', s=20)
+plt.scatter(X[:, 0], X[:, 1], color='k', s=3., label='Data points')
+# plot circles with radius proportional to the outlier scores
+radius = (X_scores.max() - X_scores) / (X_scores.max() - X_scores.min())
+plt.scatter(X[:, 0], X[:, 1], s=1000 * radius, edgecolors='r',
+            facecolors='none', label='Outlier scores')
 plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
-plt.legend([a, b],
-           ["true inliers",
-            "true outliers"],
-           loc="upper left")
 plt.xlabel("prediction errors: %d" % (n_errors))
+legend = plt.legend(loc='upper left')
+legend.legendHandles[0]._sizes = [10]
+legend.legendHandles[1]._sizes = [20]
 plt.show()
