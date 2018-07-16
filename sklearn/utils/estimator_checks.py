@@ -18,7 +18,6 @@ from sklearn.externals.joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_is
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -2195,7 +2194,7 @@ def check_set_params(name, estimator_orig):
     curr_params = estimator.get_params(deep=False)
     assert_equal(set(orig_params.keys()), set(curr_params.keys()), msg)
     for k, v in curr_params.items():
-        assert_is(orig_params[k], v, msg)
+        assert orig_params[k] is v, msg
 
     # some fuzz values
     test_values = [-np.inf, np.inf, None]
@@ -2222,7 +2221,7 @@ def check_set_params(name, estimator_orig):
                     assert_equal(set(params_before_exception.keys()),
                                  set(curr_params.keys()))
                     for k, v in curr_params.items():
-                        assert_is(params_before_exception[k], v)
+                        assert params_before_exception[k] is v
                 except AssertionError:
                     warnings.warn(change_warning_msg)
             else:
@@ -2231,7 +2230,7 @@ def check_set_params(name, estimator_orig):
                              set(curr_params.keys()),
                              msg)
                 for k, v in curr_params.items():
-                    assert_is(test_params[k], v, msg)
+                    assert test_params[k] is v, msg
         test_params[param_name] = default_value
 
 
