@@ -490,19 +490,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     ... ]
     >>> vectorizer = HashingVectorizer(n_features=2**4)
     >>> X = vectorizer.fit_transform(corpus)
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
-    [[-0.57735027  0.          0.          0.          0.          0.
-       0.          0.         -0.57735027  0.          0.          0.
-       0.          0.57735027  0.          0.        ]
-     [-0.81649658  0.          0.          0.          0.          0.
-       0.          0.          0.          0.          0.          0.40824829
-       0.          0.40824829  0.          0.        ]
-     [ 0.          0.          0.          0.         -0.70710678  0.70710678
-       0.          0.          0.          0.          0.          0.
-       0.          0.          0.          0.        ]
-     [-0.57735027  0.          0.          0.          0.          0.
-       0.          0.         -0.57735027  0.          0.          0.
-       0.          0.57735027  0.          0.        ]]
     >>> print(X.shape)
     (4, 16)
 
@@ -785,15 +772,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
-    [[0.         0.46979139 0.58028582 0.38408524 0.         0.
-      0.38408524 0.         0.38408524]
-     [0.         0.6876236  0.         0.28108867 0.         0.53864762
-      0.28108867 0.         0.28108867]
-     [0.51184851 0.         0.         0.26710379 0.51184851 0.
-      0.26710379 0.51184851 0.26710379]
-     [0.         0.46979139 0.58028582 0.38408524 0.         0.
-      0.38408524 0.         0.38408524]]
+    >>> print(X.shape)
+    (4, 9)
 
     See also
     --------
