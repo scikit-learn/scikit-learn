@@ -190,11 +190,11 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
         used to obtain a dataset.
 
     name : string
-        Identifier of the dataset. If integer, assumed to be the id of the
-        dataset on OpenML, if string, assumed to be the name of the dataset.
+        String identifier of the dataset. Note that OpenML can have multiple
+        datasets with the same name.
 
     version : integer or 'active', default='active'
-        Version of the dataset. Only used if ``name_or_id`` is a string.
+        Version of the dataset. Can only be provided if also ``name`` is given.
         If 'active' the oldest version that's still active is used.
 
     data_home : string or None, default None
