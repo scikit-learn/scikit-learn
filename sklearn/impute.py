@@ -226,7 +226,13 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                              "numerical value when imputing numerical "
                              "data".format(fill_value))
 
-        if sparse.issparse(X):
+        if sparse.issparse(X) and self.missing_values == 0:
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            raise ValueError("Imputation not possible when missing_values == 0"
+                             " and input is sparse. Provide a dense array "
+                             "instead.")
+        elif sparse.issparse(X):
             self.statistics_ = self._sparse_fit(X,
                                                 self.strategy,
                                                 self.missing_values,
@@ -255,36 +261,24 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
                 column = column[~mask_column]
 
-                # combine explicit and implicit zeros if missing_values != 0
-                if missing_values != 0:
-                    mask_zeros = _get_mask(column, 0)
-                    column = column[~mask_zeros]
-                    n_explicit_zeros = mask_zeros.sum()
-                    n_zeros = n_implicit_zeros[i] + n_explicit_zeros
-                else:
-                    n_zeros = n_implicit_zeros[i]
+                # combine explicit and implicit zeros
+                mask_zeros = _get_mask(column, 0)
+                column = column[~mask_zeros]
+                n_explicit_zeros = mask_zeros.sum()
+                n_zeros = n_implicit_zeros[i] + n_explicit_zeros
 
                 if strategy == "mean":
-                    if missing_values == 0:
-                        s = column.size
-                    else:
-                        s = column.size + n_zeros
+                    s = column.size + n_zeros
                     statistics[i] = np.nan if s == 0 else column.sum() / s
 
                 elif strategy == "median":
-                    if missing_values == 0:
-                        statistics[i] = _get_median(column, 0)
-                    else:
-                        statistics[i] = _get_median(column,
-                                                    n_zeros)
+                    statistics[i] = _get_median(column,
+                                                n_zeros)
 
                 elif strategy == "most_frequent":
-                    if missing_values == 0:
-                        statistics[i] = _most_frequent(column, 0, 0)
-                    else:
-                        statistics[i] = _most_frequent(column,
-                                                       0,
-                                                       n_zeros)
+                    statistics[i] = _most_frequent(column,
+                                                   0,
+                                                   n_zeros)
         return statistics
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
@@ -373,7 +367,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X) and self.missing_values != 0:
+        if sparse.issparse(X) and self.missing_values == 0:
+            raise ValueError("Imputation not possible when missing_values == 0"
+                             " and input is sparse. Provide a dense array "
+                             "instead.")
+        elif sparse.issparse(X):
             mask = _get_mask(X.data, self.missing_values)
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
