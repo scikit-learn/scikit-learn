@@ -732,6 +732,14 @@ def test_iterative_imputer_additive_matrix():
     assert_allclose(X_test_filled, X_test_est, atol=0.01)
 
 
+def test_iterative_imputer_error_param():
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 2)
+    imputer = IterativeImputer(n_iter=-1)
+    with pytest.raises(ValueError, match='should be a positive integer'):
+        imputer.fit_transform(X)
+
+
 @pytest.mark.parametrize("imputer_constructor",
                          [SimpleImputer, IterativeImputer])
 @pytest.mark.parametrize(

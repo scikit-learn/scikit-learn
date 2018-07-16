@@ -540,9 +540,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     -----
     This implementation was inspired by the R MICE package (Multivariate
     Imputation by Chained Equations), but differs from it by returning a single
-    imputation instead of multiple imputations. However, multiple imputation is
-    supported with multiple instances of the imputer with different random
-    seeds run in parallel.
+    imputation instead of multiple imputations. However, multiple imputation
+    can be achieved with multiple instances of the imputer with different
+    random seeds run in parallel.
 
     To support imputation in inductive mode we store each feature's predictor
     during the ``fit`` phase, and predict without refitting (in order) during
@@ -866,6 +866,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
 
+        if self.n_iter < 0:
+            raise ValueError(
+                "'n_iter' should be a positive integer. Got {} instead."
+                .format(self.n_iter))
+
         if self.predictor is None:
             if self.sample_posterior:
                 from .linear_model import BayesianRidge
@@ -886,10 +891,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        # edge case: in case the user specifies 0 for n_iter,
-        # then there is no need to do further imputation and the result should
-        # be just the initial imputation (before clipping)
-        if self.n_iter < 1:
+        if self.n_iter == 0:
             return Xt
 
         # order in which to impute
@@ -952,10 +954,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        # edge case: in case the user specifies 0 for n_iter,
-        # then there is no need to do further imputation and the result should
-        # be just the initial imputation (before clipping)
-        if self.n_iter < 1:
+        if self.n_iter == 0:
             return Xt
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter

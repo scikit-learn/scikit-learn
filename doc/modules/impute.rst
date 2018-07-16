@@ -96,12 +96,12 @@ Multivariate feature imputation
 A more sophisticated approach is to use the :class:`IterativeImputer` class,
 which models each feature with missing values as a function of other features,
 and uses that estimate for imputation. It does so in an iterated round-robin
-fashion: at each step, a feature column is designated as output `y` and the
-other feature columns are treated as inputs `X`. A regressor is fit on `(X, y)`
-for known `y`. Then, the regressor is used to predict the missing values of `y`.
-This is done for each feature in an iterative fashion, and then is repeated for
-`n_iter` imputation rounds. The results of the final imputation round are
-returned.
+fashion: at each step, a feature column is designated as output ``y`` and the
+other feature columns are treated as inputs ``X``. A regressor is fit on ``(X,
+y)`` for known ``y``. Then, the regressor is used to predict the missing values
+of ``y``.  This is done for each feature in an iterative fashion, and then is
+repeated for ``n_iter`` imputation rounds. The results of the final imputation
+round are returned.
 
     >>> import numpy as np
     >>> from sklearn.impute import IterativeImputer
@@ -128,23 +128,21 @@ Multiple vs. Single Imputation
 ==============================
 
 In the statistics community, it is common practice to perform multiple imputations,
-generating, for example, `m` separate imputations for a single feature matrix.
-Each of these `m` imputations is then put through the subsequent analysis pipeline
-(e.g. feature engineering, clustering, regression, classification). The `m` final
+generating, for example, ``m`` separate imputations for a single feature matrix.
+Each of these ``m`` imputations is then put through the subsequent analysis pipeline
+(e.g. feature engineering, clustering, regression, classification). The ``m`` final
 analysis results (e.g. held-out validation errors) allow the data scientist
 to obtain understanding of how analytic results may differ as a consequence
 of the inherent uncertainty caused by the missing values. The above practice
 is called multiple imputation.
 
 Our implementation of :class:`IterativeImputer` was inspired by the R MICE
-package (Multivariate Imputation by Chained Equations) [1], but differs from
-it in setting single imputation to default instead of multiple imputation.
-However, :class:`IterativeImputer` can also be used for multiple imputations
-by applying it repeatedly to the same dataset with different random seeds when
-``sample_posterior=True``.
-
-See Chapter 4 of "Statistical Analysis with Missing Data" [2] for more discussion
-on multiple vs. single imputations.
+package (Multivariate Imputation by Chained Equations) [1]_, but differs from
+it by returning a single imputation instead of multiple imputations.  However,
+:class:`IterativeImputer` can also be used for multiple imputations by applying
+it repeatedly to the same dataset with different random seeds when
+``sample_posterior=True``. See [2]_, chapter 4 for more discussion on multiple
+vs. single imputations.
 
 It is still an open problem as to how useful single vs. multiple imputation is in
 the context of prediction and classification when the user is not interested in
@@ -157,8 +155,10 @@ achieved by a single call to ``transform``.
 
 References
 ==========
-[1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate Imputation
-    by Chained Equations in R". Journal of Statistical Software 45: 1-67.
 
-[2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis with Missing
-    Data". John Wiley & Sons, Inc., New York, NY, USA.
+.. [1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
+   Imputation by Chained Equations in R". Journal of Statistical Software 45:
+   1-67.
+
+.. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
+   with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.

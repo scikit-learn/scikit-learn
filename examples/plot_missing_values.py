@@ -95,7 +95,7 @@ xval = np.arange(n_bars)
 x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
-            'Iterative Imputation']
+            'Multivariate Imputation']
 colors = ['r', 'g', 'b', 'orange']
 
 # plot diabetes results
