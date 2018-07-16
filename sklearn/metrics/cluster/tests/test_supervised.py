@@ -17,6 +17,7 @@ from sklearn.metrics.cluster.supervised import _generalized_average
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
+        assert_warns_message, ignore_warnings
 )
 from numpy.testing import assert_array_almost_equal
 
@@ -31,6 +32,18 @@ score_funcs = [
 ]
 
 
+def test_future_warning():
+    score_funcs_with_changing_means = [
+        normalized_mutual_info_score,
+        adjusted_mutual_info_score,
+    ]
+    warning_msg = "The behavior of "
+    args = [0, 0, 0], [0, 0, 0]
+    for score_func in score_funcs_with_changing_means:
+        assert_warns_message(FutureWarning, warning_msg, score_func, *args)
+
+
+@ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = ('labels_true and labels_pred must have same size,'
@@ -57,6 +70,7 @@ def test_generalized_average():
     assert means[0] == means[1] == means[2] == means[3]
 
 
+@ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
         assert_equal(score_func([], []), 1.0)
@@ -134,6 +148,7 @@ def test_non_consecutive_labels():
     assert_almost_equal(ari_2, 0.24, 2)
 
 
+@ignore_warnings(category=FutureWarning)
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
                              seed=42):
     # Compute score for random uniform cluster labelings
@@ -147,6 +162,7 @@ def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
     return scores
 
 
+@ignore_warnings(category=FutureWarning)
 def test_adjustment_for_chance():
     # Check that adjusted scores are almost zero on random labels
     n_clusters_range = [2, 10, 50, 90]
@@ -160,6 +176,7 @@ def test_adjustment_for_chance():
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_adjusted_mutual_info_score():
     # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
@@ -240,6 +257,7 @@ def test_contingency_matrix_sparse():
                                     eps=1e-10, sparse=True)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):

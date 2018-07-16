@@ -639,7 +639,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
+def adjusted_mutual_info_score(labels_true, labels_pred,
+                               average_method='warn'):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -672,17 +673,17 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    average_method : string or None, optional (default: None)
+    average_method : string, optional (default: 'warn')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If None, 'max' will be used. The default will change to
+        If 'warn', 'max' will be used. The default will change to
         'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
 
     Returns
     -------
-    ami: float(upperlimited by 1.0)
+    ami: float (upperlimited by 1.0)
        The AMI returns a value of 1 when the two partitions are identical
        (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
@@ -721,11 +722,11 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
-    if average_method is None:
+    if average_method == 'warn':
         warnings.warn("The behavior of AMI will change in version 0.22. "
                       "To match the behavior of 'v_measure_score', AMI will "
-                      "use average_method='arithmetic' by default."
-                      )
+                      "use average_method='arithmetic' by default.",
+                      FutureWarning)
         average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
@@ -760,7 +761,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, average_method=None):
 
 
 def normalized_mutual_info_score(labels_true, labels_pred,
-                                 average_method=None):
+                                 average_method='warn'):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
@@ -791,10 +792,10 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    average_method : string or None, optional (default: None)
+    average_method : string, optional (default: 'warn')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If None, 'geometric' will be used. The default will change to
+        If 'warn', 'geometric' will be used. The default will change to
         'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
@@ -830,11 +831,11 @@ def normalized_mutual_info_score(labels_true, labels_pred,
       0.0
 
     """
-    if average_method is None:
+    if average_method == 'warn':
         warnings.warn("The behavior of NMI will change in version 0.22. "
                       "To match the behavior of 'v_measure_score', NMI will "
-                      "use average_method='arithmetic' by default."
-                      )
+                      "use average_method='arithmetic' by default.",
+                      FutureWarning)
         average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
