@@ -2130,11 +2130,11 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=1
         cumsum_true[1:] = np.cumsum(y_true)
         cumsum_prob = np.zeros(y_prob.shape[0] + 1)
         cumsum_prob[1:] = np.cumsum(y_prob)
-        win_avg_pred_true = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
+        win_avg_pos = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
                              / bin_size)
-        win_bin_centroid = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
+        win_avg_pred = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
                             / bin_size)
-        deltas = np.abs(win_avg_pred_true - win_bin_centroid)
+        deltas = np.abs(win_avg_pos - win_avg_pred)
         if reducer == "max":
             loss = deltas.max()
         elif reducer == "sum":
