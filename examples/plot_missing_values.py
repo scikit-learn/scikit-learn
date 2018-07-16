@@ -4,15 +4,19 @@ Imputing missing values before building an estimator
 ====================================================
 
 Missing values can be replaced by the mean, the median or the most frequent
-value using the basic :class:`SimpleImputer`.
+value using the basic :class:`sklearn.impute.SimpleImputer`.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
-Another option is the :class:`IterativeImputer`. This uses round-robin linear
-regression, treating every variable as an output in turn. The version
-implemented assumes Gaussian (output) variables. If your features are obviously
-non-Normal, consider transforming them to look more Normal so as to improve
-performance.
+Another option is the :class:`sklearn.impute.ChainedImputer`. This uses
+round-robin linear regression, treating every variable as an output in
+turn. The version implemented assumes Gaussian (output) variables. If your
+features are obviously non-Normal, consider transforming them to look more
+Normal so as to improve performance.
+
+In addition of using an imputing method, we can also keep an indication of the
+missing information using :func:`sklearn.impute.MissingIndicator` which might
+carry some information.
 """
 
 import numpy as np
@@ -21,8 +25,8 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer, IterativeImputer
+from sklearn.pipeline import make_pipeline, make_union
+from sklearn.impute import SimpleImputer, IterativeImputer, MissingIndicator
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -60,20 +64,20 @@ def get_results(dataset):
     X_missing = X_full.copy()
     X_missing[np.where(missing_samples)[0], missing_features] = 0
     y_missing = y_full.copy()
-    estimator = Pipeline([("imputer", SimpleImputer(missing_values=0,
-                                                    strategy="mean")),
-                          ("forest", RandomForestRegressor(random_state=0,
-                                                           n_estimators=100))])
+    estimator = make_pipeline(
+        make_union(SimpleImputer(missing_values=0, strategy="mean"),
+                   MissingIndicator(missing_values=0)),
+        RandomForestRegressor(random_state=0, n_estimators=100))
     mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
                                          scoring='neg_mean_squared_error')
 
-    # Estimate the score after iterative imputation of the missing values
-    estimator = Pipeline([("imputer", IterativeImputer(missing_values=0,
-                                                       random_state=0)),
-                          ("forest", RandomForestRegressor(random_state=0,
-                                                           n_estimators=100))])
-    iterative_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                              scoring='neg_mean_squared_error')
+    # Estimate the score after chained imputation of the missing values
+    estimator = make_pipeline(
+        make_union(IterativeImputer(missing_values=0, random_state=0),
+                   MissingIndicator(missing_values=0)),
+        RandomForestRegressor(random_state=0, n_estimators=100))
+    chained_impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                            scoring='neg_mean_squared_error')
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),

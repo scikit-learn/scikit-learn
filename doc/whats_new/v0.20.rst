@@ -149,6 +149,10 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Added :class:`MissingIndicator` which generates a binary indicator for
+  missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+  
 - Added :class:`impute.IterativeImputer`, which is a strategy for imputing missing
   values by modeling each feature with missing values as a function of
   other features in a round-robin fashion. :issue:`8478` by
@@ -298,6 +302,11 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- :class:`preprocessing.OneHotEncoder` now supports the
+  :meth:`get_feature_names` method to obtain the transformed feature names.
+  :issue:`10181` by  :user:`Nirvan Anjirbag <Nirvan101>` and
+  `Joris Van den Bossche`_.
+
 - The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
   now ignores any unknown classes. A warning is raised stating the unknown classes
   classes found which are ignored.
@@ -388,6 +397,13 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Preprocessing and feature selection
+
+- Added select K best features functionality to
+  :class:`feature_selection.SelectFromModel`.
+  :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
+  :user:`Quazi Rahman <qmaruf>`.
 
 Decomposition, manifold learning and clustering
 
@@ -860,9 +876,17 @@ These changes mostly affect library developers.
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
 
-- Allow :func:`~utils.estimator_checks.check_estimator` to check that there is no
+- Allow :func:`utils.estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- The set of checks in :func:`utils.estimator_checks.check_estimator` now includes a
+  ``check_set_params`` test which checks that ``set_params`` is equivalent to
+  passing parameters in ``__init__`` and warns if it encounters parameter
+  validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
+  
+- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
