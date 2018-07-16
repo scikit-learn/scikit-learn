@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False):
-    """Loader for the California housing dataset from StatLib.
+    """Load the California housing dataset (regression).
 
     ==============     ==============
     Samples total               20640
