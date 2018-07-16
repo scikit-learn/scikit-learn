@@ -72,7 +72,7 @@ to get more information on the dataset on the openml website::
 The id is also the most specific way to specify how to fetch a dataset from
 OpenML::
 
-  >>> mice = fetch_openml(40966, data_home=custom_data_home)
+  >>> mice = fetch_openml(id=40966, data_home=custom_data_home)
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -113,13 +113,13 @@ has multiple versions::
   >>> iris.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_61 = fetch_openml(61, data_home=custom_data_home)
+  >>> iris_61 = fetch_openml(id=61, data_home=custom_data_home)
   >>> iris_61.details['version']  #doctest: +SKIP
   '1'
   >>> iris_61.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_969 = fetch_openml(969, data_home=custom_data_home)
+  >>> iris_969 = fetch_openml(id=969, data_home=custom_data_home)
   >>> iris_969.details['version']  #doctest: +SKIP
   '3'
   >>> iris_969.details['id']  #doctest: +SKIP

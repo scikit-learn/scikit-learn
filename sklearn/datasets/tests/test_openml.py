@@ -35,7 +35,7 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     # will be the same
 
     # fetch with dataset id
-    data_by_id = fetch_openml(data_id, cache=False)
+    data_by_id = fetch_openml(id=data_id, cache=False)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     assert data_by_id.target.shape == (expected_observations, )
@@ -210,12 +210,12 @@ def test_fetch_openml_inactive(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id, cache=False)
+        id=data_id, cache=False)
     # fetch inactive dataset by name and version
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        None, "glass2", 1, cache=False)
+        id=None, name="glass2", version=1, cache=False)
     assert int(glas2_by_version.details['id']) == data_id
 
 
@@ -225,18 +225,18 @@ def test_fetch_nonexiting(monkeypatch):
     data_id = 40675
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
-                         fetch_openml, None, 'glass2', cache=False)
+                         fetch_openml, id=None, name='glass2', cache=False)
 
 
 def test_fetch_openml_raises_illegal_argument():
     assert_raise_message(ValueError, "Dataset id=",
-                         fetch_openml, -1, "name")
+                         fetch_openml, id=-1, name="name")
 
     assert_raise_message(ValueError, "Dataset id=",
-                         fetch_openml, -1, None, "version")
+                         fetch_openml, id=-1, name=None, version="version")
 
     assert_raise_message(ValueError, "Dataset id=",
-                         fetch_openml, -1, "name", "version")
+                         fetch_openml, id=-1, name="name", version="version")
 
     assert_raise_message(ValueError, "Neither name nor id are provided. " +
                          "Please provide name xor id.", fetch_openml)

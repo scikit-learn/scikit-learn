@@ -172,7 +172,7 @@ def _convert_numericals(data, name_feature):
     return data
 
 
-def fetch_openml(id=None, name=None, version='active', data_home=None,
+def fetch_openml(name=None, version='active', id=None, data_home=None,
                  target_column_name='default-target', cache=True):
     """Fetch dataset from openml by name or dataset id.
 
@@ -184,11 +184,6 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
 
     Parameters
     ----------
-    id : int
-        OpenML ID of the dataset. The most specific way of retrieving a
-        dataset. If ID is not given, name (and potential version) are
-        used to obtain a dataset.
-
     name : string
         String identifier of the dataset. Note that OpenML can have multiple
         datasets with the same name.
@@ -196,6 +191,11 @@ def fetch_openml(id=None, name=None, version='active', data_home=None,
     version : integer or 'active', default='active'
         Version of the dataset. Can only be provided if also ``name`` is given.
         If 'active' the oldest version that's still active is used.
+
+    id : int
+        OpenML ID of the dataset. The most specific way of retrieving a
+        dataset. If ID is not given, name (and potential version) are
+        used to obtain a dataset.
 
     data_home : string or None, default None
         Specify another download and cache folder for the data sets. By default
