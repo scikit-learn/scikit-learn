@@ -1,11 +1,11 @@
 import os
 from sklearn.externals import joblib as joblib_vendored
+from sklearn.utils import Parallel, delayed, Memory, parallel_backend
 
 if os.environ.get('SKLEARN_SITE_JOBLIB', False):
     import joblib as joblib_site
 else:
     joblib_site = None
-from sklearn.utils import Parallel, delayed, Memory, parallel_backend
 
 
 def test_old_pickle(tmpdir):
