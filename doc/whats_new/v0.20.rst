@@ -137,7 +137,7 @@ Preprocessing
 - Added :class:`compose.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
   DataFrames. :issue:`9012` by `Andreas Müller`_ and `Joris Van den Bossche`_,
-  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`_.
+  and :issue:`11315` by :user:`Thomas Fan <thomasjpfan>`.
 
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
   power transformation, allowing users to map data from any distribution to a
@@ -208,7 +208,7 @@ Misc
 
 - An environment variable to use the site joblib instead of the vendored
   one was added (:ref:`environment_variable`).
-  :issue:`11166`by `Gael Varoquaux`_
+  :issue:`11166` by `Gael Varoquaux`_
 
 Enhancements
 ............
