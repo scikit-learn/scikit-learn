@@ -149,6 +149,10 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Added :class:`MissingIndicator` which generates a binary indicator for
+  missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+  
 - Added :class:`impute.ChainedImputer`, which is a strategy for imputing missing
   values by modeling each feature with missing values as a function of
   other features in a round-robin fashion. :issue:`8478` by
