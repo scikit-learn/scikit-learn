@@ -359,8 +359,8 @@ transforms achieve very Gaussian-like results, but with others, they are
 ineffective. This highlights the importance of visualizing the data before and
 after transformation.
 
-.. figure:: ../auto_examples/preprocessing/images/sphx_glr_map_data_to_normal_001.png
-   :target: ../auto_examples/preprocessing/map_data_to_normal.html
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_map_data_to_normal_001.png
+   :target: ../auto_examples/preprocessing/plot_map_data_to_normal.html
    :align: center
    :scale: 100
 
