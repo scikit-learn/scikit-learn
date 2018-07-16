@@ -102,12 +102,12 @@ sparse and categorical data. It works the same way as the :class:`SimpleImputer`
                       [np.nan, np.nan],
                       [np.nan, np.nan]])
     >>> imp = SamplingImputer(missing_values=np.nan, random_state=0)
-    >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
-    [[1, -1],
-     [1, -1],
-     [1, -2],
-     [2, -1],
-     [2, -1]]
+    >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE
+    [[1 -1]
+     [1 -1]
+     [1 -2]
+     [2 -1]
+     [2 -1]]
 
 
 .. _chained_imputer:
