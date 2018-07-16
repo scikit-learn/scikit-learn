@@ -2015,20 +2015,11 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=1
 
     Across all items in a set N predictions, the calibration loss measures
     the aggregated difference between (1) the average predicted probability
-    assigned to the possible outcomes for item i, and (2) the frequencies
-    of the actual outcome.
-    Therefore, the lower the calibration loss is for a set of predictions, the
-    better the predictions are calibrated.
-
-    The aggregation method can be either:
-    - 'sum' for sum_k P_k delta_k (default), denoted as ECE in [1],
-       or calB in [2] if sliding_window parameter is set to true
-    - 'max' for max_k delta_k, denoted as MCE in [1]
-    where k denotes a bin number and delta_k = abs(avg_freq_true_k - center_k)
+    assigned to the positive class for each item, and (2) the frequencies
+    of the positive class in the actual outcome.
 
     The calibration loss is appropriate for binary and categorical outcomes
-    that can be structured as true or false, but is inappropriate for ordinal
-    variables which can take on three or more values.
+    that can be structured as true or false.
     Which label is considered to be the positive label is controlled via the
     parameter pos_label, which defaults to 1.
 
@@ -2056,7 +2047,8 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=1
         provided sufficient data in bins.
 
     sliding_window : bool, optional (default=False)
-        If true, compute the
+        If true, compute the loss based on overlapping bins. Each neighboring
+        bins share all but 2 elements.
 
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
@@ -2090,17 +2082,6 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=1
     >>> calibration_loss(y_true, y_pred, n_bins=2, \
                          reducer="max")  # doctest: +ELLIPSIS
     0.25
-
-    References
-    ----------
-    [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
-        of Modern Neural Networks. Proceedings of the 34th International
-        Conference on Machine Learning, PMLR 70:1321-1330, 2017.
-        <http://proceedings.mlr.press/v70/guo17a.html>`
-    [2] `An experimental comparison of performance measures for classification.
-        C.Ferri, J.Hernandez-Orallo, R.Modroiu. Pattern Recognition Letters,
-        Volume 30, Issue 1, 2009.
-    <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

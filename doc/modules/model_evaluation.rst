@@ -1324,16 +1324,18 @@ assigned to the possible outcomes for item i, and (2) the frequencies
 of the actual outcome.
 Therefore, the lower the calibration loss is for a set of predictions, the
 better the predictions are calibrated.
-The aggregation method can be either:
+
+The aggregation method ``reducer`` can be either:
+
 - 'sum' for :math:`\sum_k P_k \delta_k`, denoted as expected calibration error
- (ECE) in [1] when the optional parameter 'sliding_window' is set to False
- or calB in [2] when the 'sliding_window' is set to True
+  (ECE) in [1] when the optional parameter 'sliding_window' is set to False
+  or calB in [2] when the ``sliding_window`` is set to ``True``
 - 'max' for :math:`\max_k \delta_k`, denoted as maximum calibration error
- (MCE) in [1]
+  (MCE) in [1]
 where :math:`k` spans all bins,
-:math:`P_k = \dfrac{\sum_{b_k} w_t}{\sum_{b_k} w_t}` denotes the (normalized)
+:math:`P_k = \dfrac{\sum_{b_k} w_t}{\sum_t w_t}` denotes the (normalized)
 weight of bin :math:`k` and
-:math:`delta_k = \dfrac{|\sum_{b_k} w_t(o_t - f_t)|}{\sum_{b_k} w_t}` denotes
+:math:`\delta_k = \dfrac{|\sum_{b_k} w_t o_t - \sum_{b_k} w_t f_t)|}{\sum_{b_k} w_t}` denotes
 the absolute difference between the average frequency of positive class and the
 average predicted probability of positive class in bin :math:`k`.
 
