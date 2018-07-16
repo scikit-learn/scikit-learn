@@ -161,9 +161,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     @property
     def fit_predict(self):
-        """"Fits the model to the training set X and returns the labels
-        (1 inlier, -1 outlier) on the training set according to the LOF score
-        and the contamination parameter.
+        """"Fits the model to the training set X and returns the labels.
+
+        Label is 1 for an inlier and -1 for an outlier according to the LOF
+        score and the contamination parameter.
 
         Parameters
         ----------
@@ -188,9 +189,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         return self._fit_predict
 
     def _fit_predict(self, X, y=None):
-        """"Fits the model to the training set X and returns the labels
-        (1 inlier, -1 outlier) on the training set according to the LOF score
-        and the contamination parameter.
+        """"Fits the model to the training set X and returns the labels.
+
+        Label is 1 for an inlier and -1 for an outlier according to the LOF
+        score and the contamination parameter.
 
         Parameters
         ----------
@@ -280,7 +282,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-
         if not self.novelty:
             msg = ('predict is not available when novelty=False, use '
                    'fit_predict if you want to predict on training data. Use '
@@ -292,6 +293,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
+
         If X is None, returns the same as fit_predict(X_train).
 
         Parameters
@@ -321,7 +323,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     @property
     def decision_function(self):
-        """Shifted opposite of the Local Outlier Factor of X
+        """Shifted opposite of the Local Outlier Factor of X.
 
         Bigger is better, i.e. large values correspond to inliers.
 
@@ -357,7 +359,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         return self._decision_function
 
     def _decision_function(self, X):
-        """Shifted opposite of the Local Outlier Factor of X
+        """Shifted opposite of the Local Outlier Factor of X.
 
         Bigger is better, i.e. large values correspond to inliers.
 
@@ -386,8 +388,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     @property
     def score_samples(self):
-        """Opposite of the Local Outlier Factor of X (as bigger is
-        better, i.e. large values correspond to inliers).
+        """Opposite of the Local Outlier Factor of X.
+
+        It is the opposite as as bigger is better, i.e. large values correspond
+        to inliers.
 
         Only available for novelty detection (when novelty is set to True).
         The argument X is supposed to contain *new data*: if X contains a
@@ -409,7 +413,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
-
         if not self.novelty:
             msg = ('score_samples is not available when novelty=False. The '
                    'scores of the training samples are always available '
@@ -421,8 +424,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         return self._score_samples
 
     def _score_samples(self, X):
-        """Opposite of the Local Outlier Factor of X (as bigger is
-        better, i.e. large values correspond to inliers).
+        """Opposite of the Local Outlier Factor of X.
+
+        It is the opposite as as bigger is better, i.e. large values correspond
+        to inliers.
 
         Only available for novelty detection (when novelty is set to True).
         The argument X is supposed to contain *new data*: if X contains a
@@ -444,7 +449,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
-
         check_is_fitted(self, ["offset_", "negative_outlier_factor_",
                                "_distances_fit_X_"])
         X = check_array(X, accept_sparse='csr')
