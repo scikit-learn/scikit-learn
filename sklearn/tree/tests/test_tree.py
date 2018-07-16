@@ -1693,22 +1693,24 @@ def test_no_sparse_y_support(name):
 
 
 def test_mae():
-    # check MAE criterion produces correct results
+    # Check MAE criterion produces correct results
     # on small toy dataset
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
-
+ 
+    # Test MAE where all sample weights are uniform:
     dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3], np.ones(5))
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
-    # Not providing a `sample_weight` should create a tree equivalent
-    # to having a `sample_weight` where all weights are 1 i.e.,
-    # we should get the same tree created as the above test:  
+    # Test MAE where a `sample_weight` is not explicitly provided.
+    # This is equivalent to providing uniform sample weights, though
+    # the internal logic is different:
     dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
+    # Test MAE where sample weights are non-uniform:
     dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3],
                [0.6, 0.3, 0.1, 1.0, 0.3])
     assert_array_almost_equal(dt_mae.tree_.impurity,
