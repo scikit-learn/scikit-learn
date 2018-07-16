@@ -13,6 +13,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
+from .optics_ import optics, OPTICS
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
@@ -22,6 +23,7 @@ __all__ = ['AffinityPropagation',
            'FeatureAgglomeration',
            'MeanShift',
            'MiniBatchKMeans',
+           'OPTICS',
            'SpectralClustering',
            'affinity_propagation',
            'dbscan',
@@ -30,6 +32,7 @@ __all__ = ['AffinityPropagation',
            'k_means',
            'linkage_tree',
            'mean_shift',
+           'optics',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',
