@@ -24,7 +24,7 @@ For comparison, we also add the output from
 """
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
-          Nicolas Hug <contact@nicolas-hug.com>
+#         Nicolas Hug <contact@nicolas-hug.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -42,8 +42,8 @@ BINS = 'auto'
 
 
 rng = np.random.RandomState(304)
-bc = PowerTransformer(method='box-cox', standardize=False)
-yj = PowerTransformer(method='yeo-johnson', standardize=False)
+bc = PowerTransformer(method='box-cox', standardize=True)
+yj = PowerTransformer(method='yeo-johnson', standardize=True)
 qt = QuantileTransformer(output_distribution='normal', random_state=rng)
 size = (N_SAMPLES, 1)
 
