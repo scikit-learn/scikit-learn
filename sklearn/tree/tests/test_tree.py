@@ -1697,7 +1697,7 @@ def test_mae():
     # on small toy dataset
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
- 
+
     # Test MAE where all sample weights are uniform:
     dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3], np.ones(5))
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
