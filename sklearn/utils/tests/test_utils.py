@@ -277,6 +277,7 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
 
+
 def test_init_arpack_v0():
     v0s = []
     for i in range(100):
