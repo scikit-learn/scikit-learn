@@ -302,6 +302,11 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- :class:`preprocessing.OneHotEncoder` now supports the
+  :meth:`get_feature_names` method to obtain the transformed feature names.
+  :issue:`10181` by  :user:`Nirvan Anjirbag <Nirvan101>` and
+  `Joris Van den Bossche`_.
+
 - The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
   now ignores any unknown classes. A warning is raised stating the unknown classes
   classes found which are ignored.
