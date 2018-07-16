@@ -776,7 +776,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        if self.pooling_func != 'deprecated':
+        if (self.pooling_func != 'deprecated' and
+                not isinstance(self, AgglomerationTransform)):
             warnings.warn('Agglomerative "pooling_func" parameter is not used.'
                           ' It has been deprecated in version 0.20 and will be'
                           'removed in 0.22', DeprecationWarning)
