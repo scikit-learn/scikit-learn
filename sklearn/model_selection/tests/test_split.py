@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
 
@@ -50,6 +51,8 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
+from sklearn.model_selection._split import CV_WARNING
+from sklearn.model_selection._split import NSPLIT_WARNING
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -1421,6 +1424,26 @@ def test_train_test_default_warning():
     assert_warns(FutureWarning, StratifiedShuffleSplit, train_size=0.75)
     assert_warns(FutureWarning, train_test_split, range(3),
                  train_size=0.75)
+
+
+def test_nsplit_default_warn():
+    # Test that warnings are raised. Will be removed in 0.22
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, KFold)
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, GroupKFold)
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, StratifiedKFold)
+    assert_warns_message(FutureWarning, NSPLIT_WARNING, TimeSeriesSplit)
+
+    assert_no_warnings(KFold, n_splits=5)
+    assert_no_warnings(GroupKFold, n_splits=5)
+    assert_no_warnings(StratifiedKFold, n_splits=5)
+    assert_no_warnings(TimeSeriesSplit, n_splits=5)
+
+
+def test_check_cv_default_warn():
+    # Test that warnings are raised. Will be removed in 0.22
+    assert_warns_message(FutureWarning, CV_WARNING, check_cv)
+
+    assert_no_warnings(check_cv, cv=5)
 
 
 def test_build_repr():
