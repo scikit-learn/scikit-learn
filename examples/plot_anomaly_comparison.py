@@ -80,7 +80,8 @@ anomaly_algorithms = [
     ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
     ("One-Class SVM", svm.OneClassSVM(nu=outliers_fraction, kernel="rbf",
                                       gamma=0.1)),
-    ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
+    ("Isolation Forest", IsolationForest(behaviour='new',
+                                         contamination=outliers_fraction,
                                          random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
         n_neighbors=35, contamination=outliers_fraction))]
