@@ -111,6 +111,7 @@ def test_randomized_lasso():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@ignore_warnings(DeprecationWarning)  # RandomizedLasso will be removed 0.21
 def test_randomized_lasso_precompute():
     # Check randomized lasso for different values of precompute
     n_resampling = 20
