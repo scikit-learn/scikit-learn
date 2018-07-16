@@ -99,6 +99,9 @@ Classifiers and regressors
 - :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
   ``predict`` method. The returned standard deviations will be zeros.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
@@ -107,9 +110,6 @@ Classifiers and regressors
   be fit with missing/non-finite values in X and/or multi-output Y to support
   wrapping pipelines that perform their own imputation.
   :issue:`9707` by :user:`Jimmy Wan <jimmywan>`.
-
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 
 Preprocessing
@@ -191,10 +191,11 @@ Misc
 
 Datasets
 
-- Added :func:`datasets.fetch_openml` to fetch any dataset from `OpenML <http://openml.org>`.
-  OpenML is a free, open data sharing platform and will replace mldata, which
-  is no longer maintained. :issue:`9908` by `Andreas Müller`_  and :user:`Jan N. van Rijn
-  <janvanrijn>`.
+- Added :func:`datasets.fetch_openml` to fetch datasets from `OpenML <http://openml.org>`.
+
+OpenML is a free, open data sharing platform and will be used instead of mldata
+as it provides better service availability. :issue:`9908` by `Andreas Müller`_
+and :user:`Jan N. van Rijn <janvanrijn>`.
 
 Enhancements
 ............

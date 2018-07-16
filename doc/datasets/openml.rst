@@ -13,7 +13,7 @@ Downloading datasets from the openml.org repository
 `openml.org <https://openml.org>`_ is a public repository for machine learning
 data and experiments, that allows everybody to upload open datasets.
 
-The ``sklearn.datasets`` package is able to directly download datasets
+The ``sklearn.datasets`` package is able to download datasets
 from the repository using the function
 :func:`sklearn.datasets.fetch_openml`.
 
@@ -37,8 +37,8 @@ You can get more information on the dataset by looking at the ``DESCR``
 and ``details`` attributes::
 
   >>> print(mice.DESCR) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
-  **Author**: Clara Higuera, Katheleen J. Gardiner, Krzysztof J. Cios  
-  **Source**: [UCI](https://archive.ics.uci.edu/ml/datasets/Mice+Protein+Expression) - 2015   
+  **Author**: Clara Higuera, Katheleen J. Gardiner, Krzysztof J. Cios
+  **Source**: [UCI](https://archive.ics.uci.edu/ml/datasets/Mice+Protein+Expression) - 2015
   **Please cite**: Higuera C, Gardiner KJ, Cios KJ (2015) Self-Organizing
   Feature Maps Identify Proteins Critical to Learning in a Mouse Model of Down
   Syndrome. PLoS ONE 10(6): e0129126...
@@ -57,11 +57,12 @@ and ``details`` attributes::
 
 The ``DESCR`` contains a free-text description of the data, while ``details``
 contains a dictionary of meta-data stored by openml, like the dataset id.
+For more details, see the `OpenML documentation <https://docs.openml.org/#data>`_
 The id of the mice protein dataset is 40966, and you can use this (or the name)
 to get more information on the dataset on the openml website::
 
-  >>> print(mice.url)
-  https://www.openml.org/d/40966
+  >>> mice.url
+  'https://www.openml.org/d/40966'
 
 The id is also the most specific way to specify how to fetch a dataset from
 OpenML::
