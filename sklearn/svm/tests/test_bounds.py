@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import sparse as sp
 
+import pytest
+
 from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
@@ -16,25 +18,24 @@ Y1 = [0, 1, 1, 1]
 Y2 = [2, 1, 0, 0]
 
 
-def test_l1_min_c():
-    losses = ['squared_hinge', 'log']
+@pytest.mark.parametrize('loss', ['squared_hinge', 'log'])
+@pytest.mark.parametrize('X_label', ['sparse', 'dense'])
+@pytest.mark.parametrize('Y_label', ['two-classes', 'multi-class'])
+@pytest.mark.parametrize('intercept_label', ['no-intercept', 'fit-intercept'])
+def test_l1_min_c(loss, X_label, Y_label, intercept_label):
     Xs = {'sparse': sparse_X, 'dense': dense_X}
     Ys = {'two-classes': Y1, 'multi-class': Y2}
     intercepts = {'no-intercept': {'fit_intercept': False},
                   'fit-intercept': {'fit_intercept': True,
                                     'intercept_scaling': 10}}
 
-    for loss in losses:
-        for X_label, X in Xs.items():
-            for Y_label, Y in Ys.items():
-                for intercept_label, intercept_params in intercepts.items():
-                    check = lambda: check_l1_min_c(X, Y, loss,
-                                                   **intercept_params)
-                    check.description = ('Test l1_min_c loss=%r %s %s %s' %
-                                         (loss, X_label, Y_label,
-                                          intercept_label))
-                    yield check
+    X = Xs[X_label]
+    Y = Ys[Y_label]
+    intercept_params = intercepts[intercept_label]
+    check_l1_min_c(X, Y, loss, **intercept_params)
 
+
+def test_l1_min_c_l2_loss():
     # loss='l2' should raise ValueError
     assert_raise_message(ValueError, "loss type not in",
                          l1_min_c, dense_X, Y1, "l2")

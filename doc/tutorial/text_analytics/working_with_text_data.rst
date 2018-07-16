@@ -457,7 +457,7 @@ The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
   >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
-  0.900...
+  0.9...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
@@ -554,7 +554,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`.
 
 * If you don't have labels, try using
-  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_plot_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look

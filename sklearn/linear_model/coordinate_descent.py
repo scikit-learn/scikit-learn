@@ -126,7 +126,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
-    r"""Compute Lasso path with coordinate descent
+    """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
 
@@ -140,7 +140,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -235,8 +235,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5])
     >>> print(coef_path)
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
+    [[0.         0.         0.46874778]
+     [0.2159048  0.4425765  0.23689075]]
 
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
@@ -246,8 +246,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
     ...                                             coef_path_lars[:, ::-1])
     >>> print(coef_path_continuous([5., 1., .5]))
-    [[ 0.          0.          0.46915237]
-     [ 0.2159048   0.4425765   0.23668876]]
+    [[0.         0.         0.46915237]
+     [0.2159048  0.4425765  0.23668876]]
 
 
     See also
@@ -269,7 +269,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    r"""Compute elastic net path with coordinate descent
+    """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -287,7 +287,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -627,11 +627,11 @@ class ElasticNet(LinearModel, RegressorMixin):
           max_iter=1000, normalize=False, positive=False, precompute=False,
           random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(regr.coef_) # doctest: +ELLIPSIS
-    [ 18.83816048  64.55968825]
+    [18.83816048 64.55968825]
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    1.45126075617
+    1.451...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
-    [ 1.45126076]
+    [1.451...]
 
 
     Notes
@@ -904,9 +904,9 @@ class Lasso(ElasticNet):
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [ 0.85  0.  ]
-    >>> print(clf.intercept_)
-    0.15
+    [0.85 0.  ]
+    >>> print(clf.intercept_)  # doctest: +ELLIPSIS
+    0.15...
 
     See also
     --------
@@ -1530,11 +1530,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.19947279427
+    0.1994727942696716
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    0.398882965428
+    0.398...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
-    [ 0.39888297]
+    [0.398...]
 
 
     Notes
@@ -1599,7 +1599,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskElasticNet(Lasso):
-    r"""Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1609,7 +1609,7 @@ class MultiTaskElasticNet(Lasso):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1676,7 +1676,7 @@ class MultiTaskElasticNet(Lasso):
         Independent term in decision function.
 
     coef_ : array, shape (n_tasks, n_features)
-        Parameter vector (W in the cost function formula). If a 1D y is \
+        Parameter vector (W in the cost function formula). If a 1D y is
         passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
@@ -1694,10 +1694,10 @@ class MultiTaskElasticNet(Lasso):
             l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
             selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.45663524  0.45612256]
-     [ 0.45663524  0.45612256]]
+    [[0.45663524 0.45612256]
+     [0.45663524 0.45612256]]
     >>> print(clf.intercept_)
-    [ 0.0872422  0.0872422]
+    [0.0872422 0.0872422]
 
     See also
     --------
@@ -1798,7 +1798,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    r"""Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for Lasso is::
 
@@ -1806,7 +1806,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1883,10 +1883,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
             normalize=False, random_state=None, selection='cyclic', tol=0.0001,
             warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.89393398  0.        ]
-     [ 0.89393398  0.        ]]
+    [[0.89393398 0.        ]
+     [0.89393398 0.        ]]
     >>> print(clf.intercept_)
-    [ 0.10606602  0.10606602]
+    [0.10606602 0.10606602]
 
     See also
     --------
@@ -1917,7 +1917,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    r"""Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1927,7 +1927,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -2057,10 +2057,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
            n_jobs=1, normalize=False, random_state=None, selection='cyclic',
            tol=0.0001, verbose=0)
     >>> print(clf.coef_)
-    [[ 0.52875032  0.46958558]
-     [ 0.52875032  0.46958558]]
+    [[0.52875032 0.46958558]
+     [0.52875032 0.46958558]]
     >>> print(clf.intercept_)
-    [ 0.00166409  0.00166409]
+    [0.00166409 0.00166409]
 
     See also
     --------
@@ -2098,7 +2098,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    r"""Multi-task L1/L2 Lasso with built-in cross-validation.
+    """Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskLasso is::
 
@@ -2106,7 +2106,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     Where::
 
-        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+        ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 

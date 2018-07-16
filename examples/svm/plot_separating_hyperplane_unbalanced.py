@@ -49,9 +49,8 @@ clf.fit(X, y)
 wclf = svm.SVC(kernel='linear', class_weight={1: 10})
 wclf.fit(X, y)
 
-# plot separating hyperplanes and samples
+# plot the samples
 plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
-plt.legend()
 
 # plot the decision functions for both classifiers
 ax = plt.gca()

@@ -25,14 +25,23 @@ from ...utils.validation import check_array
 from ...utils.fixes import comb
 
 
-def comb2(n):
+def _comb2(n):
     # the exact version is faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
 
 
 def check_clusterings(labels_true, labels_pred):
-    """Check that the two clusterings matching 1D integer arrays."""
+    """Check that the labels arrays are 1D and of same dimension.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        The true labels
+
+    labels_pred : int array, shape = [n_samples]
+        The predicted labels
+    """
     labels_true = np.asarray(labels_true)
     labels_pred = np.asarray(labels_pred)
 
@@ -205,11 +214,11 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     # Compute the ARI using the contingency data
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
-    sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
-    sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
+    sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
+    sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
+    sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
 
-    prod_comb = (sum_comb_c * sum_comb_k) / comb2(n_samples)
+    prod_comb = (sum_comb_c * sum_comb_k) / _comb2(n_samples)
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
@@ -343,10 +352,10 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
-      1.0...
+      1.000000
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
       ...                                                  # doctest: +ELLIPSIS
-      1.0...
+      1.000000
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
@@ -418,7 +427,7 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
       1.0
       >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      1.0
+      0.999...
 
     If classes members are split across different clusters, the
     assignment cannot be complete::
@@ -528,7 +537,7 @@ def v_measure_score(labels_true, labels_pred):
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
-    r"""Mutual Information between two clusterings.
+    """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`|U_i|` is the number of the samples
@@ -538,8 +547,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     .. math::
 
-        MI(U,V)=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \\frac{|U_i\cap V_j|}{N}
-        \log\\frac{N|U_i \cap V_j|}{|U_i||V_j|}
+        MI(U,V)=\\sum_{i=1}^{|U|} \\sum_{j=1}^{|V|} \\frac{|U_i\\cap V_j|}{N}
+        \\log\\frac{N|U_i \\cap V_j|}{|U_i||V_j|}
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -560,7 +569,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    contingency : {None, array, sparse matrix},
+    contingency : {None, array, sparse matrix}, \
                   shape = [n_classes_true, n_classes_pred]
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
@@ -852,15 +861,22 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples, = labels_true.shape
 
-    c = contingency_matrix(labels_true, labels_pred, sparse=True)
+    c = contingency_matrix(labels_true, labels_pred,
+                           sparse=True).astype(np.int64)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return tk / np.sqrt(pk * qk) if tk != 0. else 0.
+    return np.sqrt(tk / pk) * np.sqrt(tk / qk) if tk != 0. else 0.
 
 
 def entropy(labels):
-    """Calculates the entropy for a labeling."""
+    """Calculates the entropy for a labeling.
+
+    Parameters
+    ----------
+    labels : int array, shape = [n_samples]
+        The labels
+    """
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
