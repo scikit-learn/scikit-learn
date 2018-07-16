@@ -761,19 +761,22 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Examples
     --------
-    >>> from sklearn.feature_extraction.text import TfidfVectorizer
+    >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> corpus = [
     ...     'This is the first document.',
     ...     'This document is the second document.',
     ...     'And this is the third one.',
     ...     'Is this the first document?',
     ... ]
-    >>> vectorizer = TfidfVectorizer()
+    >>> vectorizer = CountVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
-    >>> print(X.shape)
-    (4, 9)
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[0 1 1 1 0 0 1 0 1]
+     [0 2 0 1 0 1 1 0 1]
+     [1 0 0 1 1 0 1 1 1]
+     [0 1 1 1 0 0 1 0 1]]
 
     See also
     --------
@@ -1408,22 +1411,19 @@ class TfidfVectorizer(CountVectorizer):
 
     Examples
     --------
-    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.feature_extraction.text import TfidfVectorizer
     >>> corpus = [
     ...     'This is the first document.',
     ...     'This document is the second document.',
     ...     'And this is the third one.',
     ...     'Is this the first document?',
     ... ]
-    >>> vectorizer = CountVectorizer()
+    >>> vectorizer = TfidfVectorizer()
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
-    [[0 1 1 1 0 0 1 0 1]
-     [0 2 0 1 0 1 1 0 1]
-     [1 0 0 1 1 0 1 1 1]
-     [0 1 1 1 0 0 1 0 1]]
+    >>> print(X.shape)
+    (4, 9)
 
     See also
     --------
