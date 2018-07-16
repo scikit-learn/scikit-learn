@@ -2009,14 +2009,13 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
-                     n_bins=10, sliding_window=False, normalize=True,
-                     pos_label=None):
-    """Compute  calibration loss.
+def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
+                     bin_size_ratio=0.1, sliding_window=False, pos_label=None):
+    """Compute calibration loss.
 
-    Across all items in a set N predictions, the calibration loss measures
-    the aggregated difference between (1) the average predicted probability
-    assigned to the positive class for each item, and (2) the frequencies
+    Across all items in a set of N predictions, the calibration loss measures
+    the aggregated difference between (1) the average predicted probabilities
+    assigned to the positive class, and (2) the frequencies
     of the positive class in the actual outcome.
 
     The calibration loss is appropriate for binary and categorical outcomes
@@ -2034,10 +2033,10 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
     y_prob : array, shape (n_samples,)
         Probabilities of the positive class.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like, shape (n_samples,), optional
         Sample weights.
 
-    reducer : string, must be among 'sum', 'max'
+    reducer : 'avg' | 'max'
         Aggregation method.
 
     n_bins : int, positive, optional (default=10)
@@ -2051,11 +2050,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
         If true, compute the loss based on overlapping bins. Each neighboring
         bins share all but 2 elements.
 
-    normalize : bool, optional (default=True)
-        If true, return the mean loss per sample.
-        Otherwise, return the sum of the per-sample losses.
-
-    pos_label : int or str, default=None
+    pos_label : int or str, optional (default=None)
         Label of the positive class. If None, the maximum label is used as
         positive class
 
@@ -2070,15 +2065,13 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
     >>> from sklearn.metrics import calibration_loss
     >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    >>> calibration_loss(y_true, y_pred, n_bins=2, \
-                         reducer="sum")  # doctest: +ELLIPSIS
+    >>> calibration_loss(y_true, y_pred, n_bins=2)  # doctest: +ELLIPSIS
     0.0
     >>> calibration_loss(y_true, y_pred, n_bins=2, \
                          reducer="max")  # doctest: +ELLIPSIS
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    >>> calibration_loss(y_true, y_pred, n_bins=2, \
-                         reducer="sum")  # doctest: +ELLIPSIS
+    >>> calibration_loss(y_true, y_pred, n_bins=2)  # doctest: +ELLIPSIS
     0.25
     >>> calibration_loss(y_true, y_pred, n_bins=2, \
                          reducer="max")  # doctest: +ELLIPSIS
@@ -2105,26 +2098,26 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
 
     if sliding_window:
         if sample_weight:
-            raise ValueError("sample_weight is incompatible sliding_window"
-                             "set to True")
-        bin_size = y_true.shape[0] // n_bins
+            raise ValueError("sample_weight is incompatible with "
+                             "sliding_window set to True")
+        bin_size = int(bin_size_ratio * y_true.shape[0])
+        # compute averages over a sliding window of size bin_size
         cumsum_true = np.zeros(y_true.shape[0] + 1)
         cumsum_true[1:] = np.cumsum(y_true)
         cumsum_prob = np.zeros(y_prob.shape[0] + 1)
         cumsum_prob[1:] = np.cumsum(y_prob)
-        win_avg_pos = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
-                       / bin_size)
-        win_avg_pred = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
-                        / bin_size)
-        deltas = np.abs(win_avg_pos - win_avg_pred)
+        avg_pos = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
+                   / bin_size)
+        avg_pred = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
+                    / bin_size)
+        deltas = np.abs(avg_pos - avg_pred)
         if reducer == "max":
             loss = deltas.max()
-        elif reducer == "sum":
+        elif reducer == "avg":
             loss = deltas.sum()
             count = deltas.shape[0]
     else:
-        step_size = 1 / float(n_bins)
-        i_thres = np.searchsorted(y_prob, np.arange(0, 1, step_size)).tolist()
+        i_thres = np.searchsorted(y_prob, np.arange(0, 1, bin_size_ratio)).tolist()
         i_thres.append(y_true.shape[0])
         for i, i_start in enumerate(i_thres[:-1]):
             i_end = i_thres[i+1]
@@ -2143,12 +2136,12 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
             count += delta_count
             if reducer == "max":
                 loss = max(loss, abs(avg_pred_true - bin_centroid))
-            elif reducer == "sum":
+            elif reducer == "avg":
                 delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
                 if not np.isnan(delta_loss):
                     loss += delta_loss
             else:
-                raise ValueError("reducer is neither 'sum' nor 'max'")
-    if reducer == "sum" and normalize:
+                raise ValueError("reducer is neither 'avg' nor 'max'")
+    if reducer == "avg":
         loss /= count
     return loss

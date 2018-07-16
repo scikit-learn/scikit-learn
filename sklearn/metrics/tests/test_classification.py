@@ -1635,30 +1635,34 @@ def test_brier_score_loss():
 
 def test_calibration_loss():
     # Check calibration_loss function
-    n_bins = 2
+    ratio = 0.5
     y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum"), 0.)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg"),
+        0.)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max"),
+        0.)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum",
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg",
                          sliding_window=True),
         0.05)
 
     y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum"), 0.25)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg"),
+        0.25)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max"), 0.25)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max"),
+        0.25)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum",
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg",
                          sliding_window=True),
         0.15)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max",
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max",
                          sliding_window=True),
         0.25)
 
@@ -1667,10 +1671,10 @@ def test_calibration_loss():
 
     assert_almost_equal(
         calibration_loss(y_true, y_pred, sample_weight=sample_weight,
-                         n_bins=n_bins, reducer="sum"), 0.1875)
+                         bin_size_ratio=ratio, reducer="avg"), 0.1875)
     assert_almost_equal(
         calibration_loss(y_true, y_pred, sample_weight=sample_weight,
-                         n_bins=n_bins, reducer="max"), 0.25)
+                         bin_size_ratio=ratio, reducer="max"), 0.25)
 
     assert_raises(ValueError, calibration_loss, y_true, y_pred[1:])
     assert_raises(ValueError, calibration_loss, y_true, y_pred + 1.)
@@ -1678,31 +1682,30 @@ def test_calibration_loss():
     assert_raises(ValueError, calibration_loss, y_true, y_pred, reducer="foo")
 
     # general case
-    n_bins = 2
     y_true = np.array([0, 0, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max",sliding_window=True), 0.25)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max",sliding_window=True), 0.25)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum", sliding_window=True), 1./6)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg", sliding_window=True), 1./6)
 
     # edge case with one element per bin only
-    n_bins = 4
+    ratio = 0.25
     y_true = np.array([1, 0, 0, 1])
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max",sliding_window=True), 0.75)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max", sliding_window=True), 0.75)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum", sliding_window=True), 0.5)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg", sliding_window=True), 0.5)
 
     # edge case with one bin only
-    n_bins = 1
+    ratio = 1.
     y_true = np.array([1, 0, 0, 1])
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="max", sliding_window=True), 0)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max", sliding_window=True), 0)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, n_bins=n_bins, reducer="sum", sliding_window=True), 0)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg", sliding_window=True), 0)
