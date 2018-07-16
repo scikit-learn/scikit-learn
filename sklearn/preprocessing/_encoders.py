@@ -15,8 +15,10 @@ from ..externals import six
 from ..utils import check_array
 from ..utils import deprecated
 from ..utils.fixes import _argmax
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from .label import LabelEncoder
+from ..utils.validation import check_is_fitted
+
+from .base import _transform_selected
+from .label import _encode, _encode_check_unknown
 
 
 range = six.moves.range
@@ -26,64 +28,6 @@ __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
-
-
-def _transform_selected(X, transform, dtype, selected="all", copy=True):
-    """Apply a transform function to portion of selected features
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape [n_samples, n_features]
-        Dense array or sparse matrix.
-
-    transform : callable
-        A callable transform(X) -> X_transformed
-
-    dtype : number type
-        Desired dtype of output.
-
-    copy : boolean, optional
-        Copy X even if it could be avoided.
-
-    selected: "all" or array of indices or mask
-        Specify which features to apply the transform to.
-
-    Returns
-    -------
-    X : array or sparse matrix, shape=(n_samples, n_features_new)
-    """
-    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
-
-    if isinstance(selected, six.string_types) and selected == "all":
-        return transform(X)
-
-    if len(selected) == 0:
-        return X
-
-    n_features = X.shape[1]
-    ind = np.arange(n_features)
-    sel = np.zeros(n_features, dtype=bool)
-    sel[np.asarray(selected)] = True
-    not_sel = np.logical_not(sel)
-    n_selected = np.sum(sel)
-
-    if n_selected == 0:
-        # No features selected.
-        return X
-    elif n_selected == n_features:
-        # All features selected.
-        return transform(X)
-    else:
-        X_sel = transform(X[:, ind[sel]])
-        # The columns of X which are not transformed need
-        # to be casted to the desire dtype before concatenation.
-        # Otherwise, the stacking will cast to the higher-precision dtype.
-        X_not_sel = X[:, ind[not_sel]].astype(dtype)
-
-        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-            return sparse.hstack((X_sel, X_not_sel))
-        else:
-            return np.hstack((X_sel, X_not_sel))
 
 
 class _BaseEncoder(BaseEstimator, TransformerMixin):
@@ -104,32 +48,30 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self._categories != 'auto':
-            for cats in self._categories:
-                if not np.all(np.sort(cats) == np.array(cats)):
-                    raise ValueError("Unsorted categories are not yet "
-                                     "supported")
+            if X.dtype != object:
+                for cats in self._categories:
+                    if not np.all(np.sort(cats) == np.array(cats)):
+                        raise ValueError("Unsorted categories are not "
+                                         "supported for numerical categories")
             if len(self._categories) != n_features:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
 
-        self._label_encoders_ = [LabelEncoder() for _ in range(n_features)]
+        self.categories_ = []
 
         for i in range(n_features):
-            le = self._label_encoders_[i]
             Xi = X[:, i]
             if self._categories == 'auto':
-                le.fit(Xi)
+                cats = _encode(Xi)
             else:
-                if handle_unknown == 'error':
-                    valid_mask = np.in1d(Xi, self._categories[i])
-                    if not np.all(valid_mask):
-                        diff = np.unique(Xi[~valid_mask])
+                cats = np.array(self._categories[i], dtype=X.dtype)
+                if self.handle_unknown == 'error':
+                    diff = _encode_check_unknown(Xi, cats)
+                    if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                le.classes_ = np.array(self._categories[i], dtype=X.dtype)
-
-        self.categories_ = [le.classes_ for le in self._label_encoders_]
+            self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
 
@@ -145,11 +87,11 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
             Xi = X[:, i]
-            valid_mask = np.in1d(Xi, self.categories_[i])
+            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
+                                                     return_mask=True)
 
             if not np.all(valid_mask):
                 if handle_unknown == 'error':
-                    diff = np.unique(X[~valid_mask, i])
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
@@ -160,7 +102,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     X_mask[:, i] = valid_mask
                     Xi = Xi.copy()
                     Xi[~valid_mask] = self.categories_[i][0]
-            X_int[:, i] = self._label_encoders_[i].transform(Xi)
+            _, encoded = _encode(Xi, self.categories_[i], encode=True)
+            X_int[:, i] = encoded
 
         return X_int, X_mask
 
@@ -195,8 +138,9 @@ class OneHotEncoder(_BaseEncoder):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories must be sorted and should not mix
-          strings and numeric values.
+          column. The passed categories should not mix strings and numeric
+          values within a single feature, and should be sorted in case of
+          numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
 
@@ -254,24 +198,24 @@ class OneHotEncoder(_BaseEncoder):
         in the training set. Only available when n_values is ``'auto'``.
 
         .. deprecated:: 0.20
-            The `active_features_` attribute was deprecated in version
+            The ``active_features_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and then potentially masked by `active_features_` afterwards)
+        (and then potentially masked by ``active_features_`` afterwards)
 
         .. deprecated:: 0.20
-            The `feature_indices_` attribute was deprecated in version
+            The ``feature_indices_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
         .. deprecated:: 0.20
-            The `n_values_` attribute was deprecated in version
+            The ``n_values_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
     Examples
@@ -327,21 +271,21 @@ class OneHotEncoder(_BaseEncoder):
     # Deprecated attributes
 
     @property
-    @deprecated("The 'active_features_' attribute was deprecated in version "
+    @deprecated("The ``active_features_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
     def active_features_(self):
         check_is_fitted(self, 'categories_')
         return self._active_features_
 
     @property
-    @deprecated("The 'feature_indices_' attribute was deprecated in version "
+    @deprecated("The ``feature_indices_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
         return self._feature_indices_
 
     @property
-    @deprecated("The 'n_values_' attribute was deprecated in version "
+    @deprecated("The ``n_values_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
     def n_values_(self):
         check_is_fitted(self, 'categories_')
@@ -747,8 +691,8 @@ class OrdinalEncoder(_BaseEncoder):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories must be sorted and should not mix
-          strings and numeric values.
+          column. The passed categories should not mix strings and numeric
+          values, and should be sorted in case of numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
 

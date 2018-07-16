@@ -86,7 +86,7 @@ The performance measure reported by *k*-fold cross-validation
 is then the average of the values computed in the loop.
 This approach can be computationally expensive,
 but does not waste too much data
-(as it is the case when fixing an arbitrary test set),
+(as is the case when fixing an arbitrary validation set),
 which is a major advantage in problems such as inverse inference
 where the number of samples is very small.
 
