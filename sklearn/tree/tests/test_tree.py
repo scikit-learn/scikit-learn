@@ -18,6 +18,7 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -1693,8 +1694,7 @@ def test_no_sparse_y_support(name):
 
 
 def test_mae():
-    ''' 
-    Check MAE criterion produces correct results on small toy dataset:
+    """Check MAE criterion produces correct results on small toy dataset:
 
     ------------------
     | X | y | weight |
@@ -1716,7 +1716,7 @@ def test_mae():
     Median = 4
 
     For all the samples, we can get the total error by summing:
-    Absolute(Median – y) * weight
+    Absolute(Median - y) * weight
 
     I.e., total error = (Absolute(4 - 3) * 0.1) 
                       + (Absolute(4 - 3) * 0.3)
@@ -1765,8 +1765,7 @@ def test_mae():
     Right Impurity = Total error / total weight
             = 1.2 / 1.6
             = 0.75
-            ------
-    '''
+            ------"""
 
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
@@ -1774,8 +1773,7 @@ def test_mae():
     # Test MAE where sample weights are non-uniform (as illustrated above):
     dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3],
                sample_weight=[0.6, 0.3, 0.1, 1.0, 0.3])
-    assert_array_almost_equal(dt_mae.tree_.impurity,
-                              [2.5 / 2.3, 0.3 / 0.7, 1.2 / 1.6])
+    assert_allclose(dt_mae.tree_.impurity, [2.5 / 2.3, 0.3 / 0.7, 1.2 / 1.6])
     assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
 
     # Test MAE where all sample weights are uniform:
