@@ -177,6 +177,10 @@ Model evaluation
 
 Decomposition, manifold learning and clustering
 
+- A new clustering algorithm: :class:`cluster.OPTICS`: an algoritm
+  related to :class:`cluster.DBSCAN`, that has hyperparameters easier to
+  set and tat scales better, by :user:`Shane <espg>`.
+
 - :class:`cluster.AgglomerativeClustering` now supports Single Linkage
   clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
