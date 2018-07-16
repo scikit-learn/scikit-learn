@@ -2009,8 +2009,9 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=10,
-                     sliding_window=False, normalize=True, pos_label=None):
+def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum",
+                     n_bins=10, sliding_window=False, normalize=True,
+                     pos_label=None):
     """Compute  calibration loss.
 
     Across all items in a set N predictions, the calibration loss measures
@@ -2112,9 +2113,9 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="sum", n_bins=1
         cumsum_prob = np.zeros(y_prob.shape[0] + 1)
         cumsum_prob[1:] = np.cumsum(y_prob)
         win_avg_pos = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
-                             / bin_size)
+                       / bin_size)
         win_avg_pred = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
-                            / bin_size)
+                        / bin_size)
         deltas = np.abs(win_avg_pos - win_avg_pred)
         if reducer == "max":
             loss = deltas.max()
