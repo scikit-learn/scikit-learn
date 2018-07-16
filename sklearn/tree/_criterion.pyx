@@ -1254,8 +1254,8 @@ cdef class MAE(RegressionCriterion):
 
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+    cdef void children_impurity(self, double* p_impurity_left,
+                                double* p_impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end]).
@@ -1273,14 +1273,11 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t median
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t imp_left = 0.0
-        cdef DOUBLE_t imp_right = 0.0
+        cdef DOUBLE_t impurity_left = 0.0
+        cdef DOUBLE_t impurity_right = 0.0
 
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
-
-        impurity_left[0] = 0.0
-        impurity_right[0] = 0.0
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> left_child[k]).get_median()
@@ -1292,8 +1289,9 @@ cdef class MAE(RegressionCriterion):
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                imp_left += fabs(y_ik - median) * w
-        impurity_left[0] = imp_left / (self.weighted_n_left * self.n_outputs)
+                impurity_left += fabs(y_ik - median) * w
+        p_impurity_left[0] = imp_left / (self.weighted_n_left * 
+                                         self.n_outputs)
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> right_child[k]).get_median()
@@ -1305,8 +1303,9 @@ cdef class MAE(RegressionCriterion):
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                imp_right += fabs(y_ik - median) * w
-        impurity_right[0] = imp_right / (self.weighted_n_right * self.n_outputs)
+                impurity_right += fabs(y_ik - median) * w
+        p_impurity_right[0] = imp_right / (self.weighted_n_right * 
+                                           self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):

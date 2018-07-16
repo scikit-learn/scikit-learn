@@ -514,7 +514,7 @@ Classifiers and regressors
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
   
-- Fixed a bug in :class:`tree.MAE` to ensure sample_weights are being used 
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
   during the calculation of tree MAE impurity. Previous behaviour could 
   cause suboptimal splits to be chosen since the impurity calculation 
   considered all samples to be of equal weight importance.
