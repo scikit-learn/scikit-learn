@@ -172,11 +172,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
     def fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm.
 
-        The method fits the model `n_init` times and set the parameters with
+        The method fits the model ``n_init`` times and sets the parameters with
         which the model has the largest likelihood or lower bound. Within each
-        trial, the method iterates between E-step and M-step for `max_iter`
+        trial, the method iterates between E-step and M-step for ``max_iter``
         times until the change of likelihood or lower bound is less than
-        `tol`, otherwise, a `ConvergenceWarning` is raised.
+        ``tol``, otherwise, a ``ConvergenceWarning`` is raised.
+        If ``warm_start`` is ``True``, then ``n_init`` is ignored and a single
+        initialization is performed upon the first call. Upon consecutive
+        calls, training starts where it left off.
 
         Parameters
         ----------
@@ -232,27 +235,28 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
             if do_init:
                 self._initialize_parameters(X, random_state)
-                self.lower_bound_ = -np.infty
+
+            lower_bound = (-np.infty if do_init else self.lower_bound_)
 
             for n_iter in range(1, self.max_iter + 1):
-                prev_lower_bound = self.lower_bound_
+                prev_lower_bound = lower_bound
 
                 log_prob_norm, log_resp = self._e_step(X)
                 self._m_step(X, log_resp)
-                self.lower_bound_ = self._compute_lower_bound(
+                lower_bound = self._compute_lower_bound(
                     log_resp, log_prob_norm)
 
-                change = self.lower_bound_ - prev_lower_bound
+                change = lower_bound - prev_lower_bound
                 self._print_verbose_msg_iter_end(n_iter, change)
 
                 if abs(change) < self.tol:
                     self.converged_ = True
                     break
 
-            self._print_verbose_msg_init_end(self.lower_bound_)
+            self._print_verbose_msg_init_end(lower_bound)
 
-            if self.lower_bound_ > max_lower_bound:
-                max_lower_bound = self.lower_bound_
+            if lower_bound > max_lower_bound:
+                max_lower_bound = lower_bound
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 
@@ -265,6 +269,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
+        self.lower_bound_ = max_lower_bound
 
         return log_resp.argmax(axis=1)
 

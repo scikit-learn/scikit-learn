@@ -98,9 +98,9 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.10..., -0.16..., -0.07...])
+    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> cross_val_score(clf, X, y, scoring='recall_macro') # doctest: +ELLIPSIS
+    array([0.980..., 0.960..., 0.979...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
