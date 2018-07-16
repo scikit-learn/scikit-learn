@@ -508,9 +508,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
+
+        * integer, to specify the number of folds in a (Stratified)KFold,
+        * An object to be used as a cross-validation generator.
+        * An iterable yielding train, test splits.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -547,6 +548,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -662,9 +664,10 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
+
+        * integer, to specify the number of folds in a (Stratified)KFold,
+        * An object to be used as a cross-validation generator.
+        * An iterable yielding train, test splits.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
