@@ -832,7 +832,7 @@ same information as the deprecation warning as explained above. Use the
 
 What's more, a deprecation requires a test which ensures that the warning is
 raised in relevant cases but not in other cases. The warning should be caught
-in all other tests (using e.g., ``pytest.mark.filter_warnings``),
+in all other tests (using e.g., ``@pytest.mark.filterwarnings``),
 and there should be no warning in the examples.
 
 
