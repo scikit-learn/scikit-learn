@@ -420,9 +420,10 @@ def check_cross_validate_single_metric(clf, X, y, scores):
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
-            # It must be True by default
+            # It must be True by default - deprecated
             mse_scores_dict = cross_validate(clf, X, y, cv=5,
-                                             scoring='neg_mean_squared_error')
+                                             scoring='neg_mean_squared_error',
+                                             return_train_score=True)
             assert_array_almost_equal(mse_scores_dict['train_score'],
                                       train_mse_scores)
         else:
@@ -436,10 +437,11 @@ def check_cross_validate_single_metric(clf, X, y, scores):
 
         # Single metric passed as a list
         if return_train_score:
-            # It must be True by default
-            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'])
+            # It must be True by default - deprecated
+            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
+                                            return_train_score=True)
             assert_array_almost_equal(r2_scores_dict['train_r2'],
-                                      train_r2_scores)
+                                      train_r2_scores, True)
         else:
             r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
                                             return_train_score=False)
@@ -472,8 +474,9 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
     for return_train_score in (True, False):
         for scoring in all_scoring:
             if return_train_score:
-                # return_train_score must be True by default
-                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring)
+                # return_train_score must be True by default - deprecated
+                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
+                                            return_train_score=True)
                 assert_array_almost_equal(cv_results['train_r2'],
                                           train_r2_scores)
                 assert_array_almost_equal(
@@ -1319,6 +1322,7 @@ def test_cross_val_predict_with_method():
     check_cross_val_predict_with_method(LogisticRegression())
 
 
+@pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
