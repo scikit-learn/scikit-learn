@@ -109,15 +109,17 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
+    norm_order : non-zero int, inf, -inf, default 1
+        Order of the norm used to filter the vectors of coefficients below
+        ``threshold`` in the case where the ``coef_`` attribute of the
+        estimator is of dimension 2.
+
     max_features : int or None, optional
         The maximum number of features selected scoring above ``threshold``.
         To disable ``threshold`` and only select based on ``max_features``,
         set ``threshold=-np.inf``.
 
-    norm_order : non-zero int, inf, -inf, default 1
-        Order of the norm used to filter the vectors of coefficients below
-        ``threshold`` in the case where the ``coef_`` attribute of the
-        estimator is of dimension 2.
+        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -130,12 +132,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         The threshold value used for feature selection.
     """
     def __init__(self, estimator, threshold=None, prefit=False,
-                 max_features=None, norm_order=1):
+                 norm_order=1, max_features=None):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
-        self.max_features = max_features
         self.norm_order = norm_order
+        self.max_features = max_features
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
