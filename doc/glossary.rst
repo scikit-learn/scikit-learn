@@ -294,7 +294,7 @@ General Concepts
         convergence of the training loss, to avoid over-fitting. This is
         generally done by monitoring the generalization score on a validation
         set. When available, it is activated through the parameter
-        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`

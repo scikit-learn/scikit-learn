@@ -2415,7 +2415,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     method : str, (default='yeo-johnson')
         The power transform method. Available methods are:
 
-        - 'yeo-johnson' [1]_, works with postive and negative values
+        - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
 
     standardize : boolean, default=True
