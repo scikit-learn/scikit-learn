@@ -3,10 +3,6 @@
 
     >>> import numpy as np
     >>> import os
-    >>> import tempfile
-    >>> # Create a temporary folder for the data fetcher
-    >>> custom_data_home = tempfile.mkdtemp()
-    >>> os.makedirs(os.path.join(custom_data_home, 'openml'))
 
 
 .. _openml:
@@ -70,7 +66,7 @@ to get more information on the dataset on the openml website::
 The id is also the most specific way to specify how to fetch a dataset from
 OpenML::
 
-  >>> mice = fetch_openml(id=40966, data_home=custom_data_home)
+  >>> mice = fetch_openml(id=40966)
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -105,22 +101,22 @@ of the "miceprotein" dataset::
 In fact, this dataset only has one version. The iris dataset on the other hand
 has multiple versions::
 
-  >>> iris = fetch_openml(name="iris", data_home=custom_data_home)
+  >>> iris = fetch_openml(name="iris")
   >>> iris.details['version']  #doctest: +SKIP
   '1'
   >>> iris.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_61 = fetch_openml(id=61, data_home=custom_data_home)
-  >>> iris_61.details['version']  #doctest: +SKIP
+  >>> iris_61 = fetch_openml(id=61)
+  >>> iris_61.details['version']
   '1'
-  >>> iris_61.details['id']  #doctest: +SKIP
+  >>> iris_61.details['id']
   '61'
 
-  >>> iris_969 = fetch_openml(id=969, data_home=custom_data_home)
-  >>> iris_969.details['version']  #doctest: +SKIP
+  >>> iris_969 = fetch_openml(id=969)
+  >>> iris_969.details['version']
   '3'
-  >>> iris_969.details['id']  #doctest: +SKIP
+  >>> iris_969.details['id']
   '969'
 
 Specifying the dataset by the name "iris" yields the lowest version, version 1, with the id 61.
@@ -128,21 +124,16 @@ To make sure you always get this exact dataset, it is safest to specify it by th
 The other dataset, with id 969, is version 3 (version 2 has become inactive), and contains
 a binarized version of the data::
 
-  >>> np.unique(iris_969.target)  #doctest: +SKIP
-  array([b'N', b'P'],
-        dtype='|S1')
+  >>> np.unique(iris_969.target)
+  array(['N', 'P'], dtype=object)
 
-You can also specify both the name and the version, which also uniquely identifies the dataset:: 
-  >>> iris_version_3 = fetch_openml(name="iris", version=3, data_home=custom_data_home)
+You can also specify both the name and the version, which also uniquely identifies the dataset::
+
+  >>> iris_version_3 = fetch_openml(name="iris", version=3)
   >>> iris_version_3.details['version']
   '3'
   >>> iris_version_3.details['id']
   '969'
-
-
-..
-    >>> import shutil
-    >>> shutil.rmtree(custom_data_home)
 
 
 .. topic:: References:
