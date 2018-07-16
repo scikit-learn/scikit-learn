@@ -21,6 +21,7 @@ from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
 from sklearn import config_context
+from pytest import approx
 
 
 def test_make_rng():
@@ -275,3 +276,14 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
                                            ([np.nan], False)])
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
+
+def test_init_arpack_v0():
+    v0s = []
+    for i in range(100):
+        v0s.append(_init_arpack_v0(1000, i))
+        if i > 0:
+            assert not any(np.equal(v0s[i], v0s[i-1]))
+
+    v0 = np.concatenate(v0s)
+    assert np.mean(v0) == approx(0, abs=1e-2)
+    assert np.std(v0) == approx(1/np.sqrt(3), abs=1e-3)
