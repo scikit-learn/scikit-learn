@@ -201,6 +201,7 @@ def test_fetch_openml_miceprotein(monkeypatch):
     # stored in data.target)
     assert (data.data.shape == (expected_observations, expected_features))
     assert (data.target.shape == (expected_observations, ))
+    assert (data.data.dtype == np.float64)
 
 
 def test_fetch_openml_inactive(monkeypatch):
@@ -239,4 +240,4 @@ def test_fetch_openml_raises_illegal_argument():
                          fetch_openml, id=-1, name="name", version="version")
 
     assert_raise_message(ValueError, "Neither name nor id are provided. " +
-                         "Please provide name xor id.", fetch_openml)
+                         "Please provide name or id.", fetch_openml)

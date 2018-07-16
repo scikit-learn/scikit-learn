@@ -253,7 +253,7 @@ def fetch_openml(name=None, version='active', id=None, data_home=None,
         data_id = id
     else:
         raise ValueError(
-            "Neither name nor id are provided. Please provide name xor id.")
+            "Neither name nor id are provided. Please provide name or id.")
 
     data_description = _get_data_description_by_id_(data_id)
     if data_description['status'] != "active":
