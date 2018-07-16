@@ -2,7 +2,7 @@
 
 import numpy as np
 from sklearn.utils.testing import assert_array_equal, assert_array_less
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal, ignore_warnings
 from sklearn.utils.testing import assert_equal, assert_true, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
@@ -194,6 +194,7 @@ def test_staged_predict():
     assert_array_almost_equal(score, staged_scores[-1])
 
 
+@ignore_warnings(DeprecationWarning)  # GridSearchCV iid 0.22
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification
