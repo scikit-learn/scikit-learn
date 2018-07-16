@@ -36,25 +36,23 @@ def _get_valid_samples_by_column(X, col):
 
 
 @pytest.mark.parametrize(
-    "est, func, support_sparse, strictly_positive",
-    [(MaxAbsScaler(), maxabs_scale, True, False),
-     (MinMaxScaler(), minmax_scale, False, False),
-     (StandardScaler(), scale, False, False),
-     (StandardScaler(with_mean=False), scale, True, False),
-     (PowerTransformer(), power_transform, False, True),
-     (QuantileTransformer(n_quantiles=10), quantile_transform, True, False),
-     (RobustScaler(), robust_scale, False, False),
-     (RobustScaler(with_centering=False), robust_scale, True, False)]
+    "est, func, support_sparse",
+    [(MaxAbsScaler(), maxabs_scale, True),
+     (MinMaxScaler(), minmax_scale, False),
+     (StandardScaler(), scale, False),
+     (StandardScaler(with_mean=False), scale, True),
+     (PowerTransformer(), power_transform, False),
+     (QuantileTransformer(n_quantiles=10), quantile_transform, True),
+     (RobustScaler(), robust_scale, False),
+     (RobustScaler(with_centering=False), robust_scale, True)]
 )
-def test_missing_value_handling(est, func, support_sparse, strictly_positive):
+def test_missing_value_handling(est, func, support_sparse):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
     X = iris.data.copy()
     n_missing = 50
     X[rng.randint(X.shape[0], size=n_missing),
       rng.randint(X.shape[1], size=n_missing)] = np.nan
-    if strictly_positive:
-        X += np.nanmin(X) + 0.1
     X_train, X_test = train_test_split(X, random_state=1)
     # sanity check
     assert not np.all(np.isnan(X_train), axis=0).any()

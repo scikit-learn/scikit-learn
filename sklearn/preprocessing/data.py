@@ -2506,11 +2506,12 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                               }[self.method]
 
         for col in X.T:
-            lmbda = optim_function(col)
-            self.lambdas_.append(lmbda)
+            with np.errstate(invalid='ignore'):  # hide NaN warnings
+                lmbda = optim_function(col)
+                self.lambdas_.append(lmbda)
 
-            col_trans = transform_function(col, lmbda)
-            transformed.append(col_trans)
+                col_trans = transform_function(col, lmbda)
+                transformed.append(col_trans)
 
         self.lambdas_ = np.array(self.lambdas_)
         transformed = np.array(transformed)
@@ -2536,7 +2537,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                               'yeo-johnson': self._yeo_johnson_transform
                               }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = transform_function(X[:, i], lmbda)
+            with np.errstate(invalid='ignore'):  # hide NaN warnings
+                X[:, i] = transform_function(X[:, i], lmbda)
 
         if self.standardize:
             X = self._scaler.transform(X)
@@ -2579,7 +2581,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                    'yeo-johnson': self._yeo_johnson_inverse_transform
                    }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = inv_fun(X[:, i], lmbda)
+            with np.errstate(invalid='ignore'):  # hide NaN warnings
+                X[:, i] = inv_fun(X[:, i], lmbda)
 
         return X
 
