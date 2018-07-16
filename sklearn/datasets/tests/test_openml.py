@@ -9,7 +9,7 @@ import sklearn
 from sklearn.datasets import fetch_openml
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-from sklearn.externals._liacarff.arff import load
+from sklearn.externals.arff import load
 from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
