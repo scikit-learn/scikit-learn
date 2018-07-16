@@ -1780,7 +1780,7 @@ def test_mae():
 
     # Test MAE where all sample weights are uniform:
     dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3], 
-               sample_weight = np.ones(5))
+               sample_weight=np.ones(5))
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
