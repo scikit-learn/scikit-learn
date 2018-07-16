@@ -1120,3 +1120,11 @@ def test_vectorizer_stop_words_inconsistent():
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
         assert_warns_message(UserWarning, message, vec.fit_transform,
                              ['hello world'])
+
+    # Test caching of inconsistency assessment
+    assert_warns_message(UserWarning, message, vec.fit_transform,
+                         ['hello world'])
+
+    vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
+    assert_warns_message(UserWarning, message, vec.fit_transform,
+                         ['hello world'])

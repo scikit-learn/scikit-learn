@@ -266,6 +266,24 @@ class VectorizerMixin(object):
         """Build or fetch the effective stop words list"""
         return _check_stop_list(self.stop_words)
 
+    def _check_stop_words_consistency(self, stop_words, preprocess, tokenize):
+        # NB: stop_words is validated, unlike self.stop_words
+        if id(self.stop_words) != getattr(self, '_stop_words_id', None):
+            inconsistent = set()
+            for w in stop_words or ():
+                tokens = list(tokenize(preprocess(w)))
+                for token in tokens:
+                    if token not in stop_words:
+                        inconsistent.add(token)
+            self._stop_words_inconsistent = inconsistent
+            self._stop_words_id = id(stop_words)
+
+        if self._stop_words_inconsistent:
+            warnings.warn('Your stop_words may be inconsistent with your '
+                          'preprocessing. Tokenizing the stop words '
+                          'generated tokens %r not in stop_words.' %
+                          sorted(self._stop_words_inconsistent))
+
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
         if callable(self.analyzer):
@@ -283,19 +301,8 @@ class VectorizerMixin(object):
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
-
-            inconsistent = set()
-            for w in stop_words or ():
-                tokens = list(tokenize(preprocess(w)))
-                for token in tokens:
-                    if token not in stop_words:
-                        inconsistent.add(token)
-            if inconsistent:
-                warnings.warn('Your stop_words may be inconsistent with your '
-                              'preprocessing. Tokenizing the stop words '
-                              'generated tokens %r not in stop_words.' %
-                              sorted(inconsistent))
-
+            self._check_stop_words_consistency(stop_words, preprocess,
+                                               tokenize)
             return lambda doc: self._word_ngrams(
                 tokenize(preprocess(self.decode(doc))), stop_words)
 
