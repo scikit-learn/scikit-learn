@@ -1015,9 +1015,7 @@ def test_random_search_cv_results_multimetric():
     # Scipy 0.12's stats dists do not accept seed, hence we use param grid
     params = dict(C=np.logspace(-10, 1), gamma=np.logspace(-5, 0, base=0.1))
     for iid in (True, False):
-        for 
-        
-        in (True, False):
+        for refit in (True, False):
             random_searches = []
             for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
                 # If True, for multi-metric pass refit='accuracy'
