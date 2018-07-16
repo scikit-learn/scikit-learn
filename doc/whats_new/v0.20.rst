@@ -392,6 +392,10 @@ Metrics
   faster. This avoids some reported freezes and MemoryErrors.
   :issue:`11135` by `Joel Nothman`_.
 
+- :func:`metrics.average_precision_score` now supports binary ``y_true``
+  other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label`` parameter.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
@@ -627,6 +631,10 @@ Metrics
 - Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
   :func:`metrics.mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- Fixed a bug where :func:`metrics.average_precision_score` will sometimes return
+  ``nan`` when ``sample_weight`` contains 0.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - Fixed a bug in :func:`metrics.fowlkes_mallows_score` to avoid integer
   overflow. Casted return value of `contingency_matrix` to `int64` and computed
