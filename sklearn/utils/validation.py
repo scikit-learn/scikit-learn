@@ -24,7 +24,7 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..externals._joblib import Memory
+from ..utils._joblib import Memory
 
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)

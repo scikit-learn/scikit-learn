@@ -26,7 +26,7 @@ from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..utils import Parallel, delayed
-from ..externals._joblib import logger
+from ..utils._joblib import logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
