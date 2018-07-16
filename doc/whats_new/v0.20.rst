@@ -834,6 +834,7 @@ Outlier Detection models
   prediction methods are ``predict``, ``decision_function`` and
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
   the ``fit_predict`` method is avaiable.
+  By :user:`Albert Thomas <albertcthomas>`.
 
 Covariance
 
