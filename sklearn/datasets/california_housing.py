@@ -54,6 +54,13 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False):
     """Loader for the California housing dataset from StatLib.
 
+    ==============     ==============
+    Samples total               20640
+    Dimensionality                  8
+    Features                     real
+    Target             real 0.15 - 5.
+    ==============     ==============
+
     Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
