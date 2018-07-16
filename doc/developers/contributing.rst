@@ -832,7 +832,9 @@ same information as the deprecation warning as explained above. Use the
 
 What's more, a deprecation requires a test which ensures that the warning is
 raised in relevant cases but not in other cases. The warning should be caught
-in all other tests, and there should be no warning in the examples.
+in all other tests (using e.g., ``pytest.mark.filter_warnings``),
+and there should be no warning in the examples.
+
 
 Change the default value of a parameter
 ---------------------------------------
@@ -865,8 +867,14 @@ When the change is in a class, we validate and raise warning in ``fit``::
                           "5 to 10 in 0.22.", FutureWarning)
             self._n_clusters = 5
 
-As for the deprecation, the warning message should state in which version the
-default value will be changed.
+Similar to deprecations, the warning message should always give both the
+version in which the change happened and the version in which the old behavior
+will be removed. The docstring needs to updated accordingly. We need a test
+which ensures that the warning is raised in relevant cases but not in other
+cases. The warning should be caught in all other tests
+(using e.g., ``pytest.mark.filter_warnings``), and there should be no warning
+in the examples.
+
 
 .. currentmodule:: sklearn
 
