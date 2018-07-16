@@ -481,42 +481,30 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.feature_extraction.text import HashingVectorizer
     >>> corpus = [
     ...     'This is the first document.',
-    ...     'This is the second second document.',
-    ...     'And the third one.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
     ...     'Is this the first document?',
     ... ]
-    >>> vectorizer = HashingVectorizer()
-    >>> print(vectorizer._get_hasher())  # doctest: +NORMALIZE_WHITESPACE
-    FeatureHasher(alternate_sign=True, dtype=<class 'numpy.float64'>,
-           input_type='string', n_features=1048576, non_negative=False)
+    >>> vectorizer = HashingVectorizer(n_features=2**4)
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
-    [[ 0.  0.  0. ...,  0.  0.  0.]
-     [ 0.  0.  0. ...,  0.  0.  0.]
-     [ 0.  0.  0. ...,  0.  0.  0.]
-     [ 0.  0.  0. ...,  0.  0.  0.]]
+    [[-0.57735027  0.          0.          0.          0.          0.
+       0.          0.         -0.57735027  0.          0.          0.
+       0.          0.57735027  0.          0.        ]
+     [-0.81649658  0.          0.          0.          0.          0.
+       0.          0.          0.          0.          0.          0.40824829
+       0.          0.40824829  0.          0.        ]
+     [ 0.          0.          0.          0.         -0.70710678  0.70710678
+       0.          0.          0.          0.          0.          0.
+       0.          0.          0.          0.        ]
+     [-0.57735027  0.          0.          0.          0.          0.
+       0.          0.         -0.57735027  0.          0.          0.
+       0.          0.57735027  0.          0.        ]]
     >>> print(X.shape)
-    (4, 1048576)
-    >>> vectorizer = HashingVectorizer(n_features=2**3)
-    >>> print(vectorizer._get_hasher())  # doctest: +NORMALIZE_WHITESPACE
-    FeatureHasher(alternate_sign=True, dtype=<class 'numpy.float64'>,
-           input_type='string', n_features=8, non_negative=False)
-    >>> X = vectorizer.fit_transform(corpus)
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
-    [[-0.89442719  0.          0.          0.          0.          0.4472136
-       0.          0.        ]
-     [-0.40824829  0.          0.          0.81649658  0.          0.40824829
-       0.          0.        ]
-     [ 0.          0.          0.          0.         -0.70710678  0.
-      -0.70710678  0.        ]
-     [-0.89442719  0.          0.          0.          0.          0.4472136
-       0.          0.        ]]
-    >>> print(X.shape)
-    (4, 8)
-
+    (4, 16)
 
     See also
     --------
@@ -784,11 +772,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         This is only available if no vocabulary was given.
 
+    Examples
+    --------
     >>> from sklearn.feature_extraction.text import TfidfVectorizer
     >>> corpus = [
     ...     'This is the first document.',
-    ...     'This is the second second document.',
-    ...     'And the third one.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
     ...     'Is this the first document?',
     ... ]
     >>> vectorizer = TfidfVectorizer()
@@ -796,14 +786,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
-    [[ 0.          0.43877674  0.54197657  0.43877674  0.          0.
-       0.35872874  0.          0.43877674]
-     [ 0.          0.27230147  0.          0.27230147  0.          0.85322574
-       0.22262429  0.          0.27230147]
-     [ 0.55280532  0.          0.          0.          0.55280532  0.
-       0.28847675  0.55280532  0.        ]
-     [ 0.          0.43877674  0.54197657  0.43877674  0.          0.
-       0.35872874  0.          0.43877674]]
+    [[0.         0.46979139 0.58028582 0.38408524 0.         0.
+      0.38408524 0.         0.38408524]
+     [0.         0.6876236  0.         0.28108867 0.         0.53864762
+      0.28108867 0.         0.28108867]
+     [0.51184851 0.         0.         0.26710379 0.51184851 0.
+      0.26710379 0.51184851 0.26710379]
+     [0.         0.46979139 0.58028582 0.38408524 0.         0.
+      0.38408524 0.         0.38408524]]
 
     See also
     --------
@@ -1441,8 +1431,8 @@ class TfidfVectorizer(CountVectorizer):
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> corpus = [
     ...     'This is the first document.',
-    ...     'This is the second second document.',
-    ...     'And the third one.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
     ...     'Is this the first document?',
     ... ]
     >>> vectorizer = CountVectorizer()
@@ -1451,8 +1441,8 @@ class TfidfVectorizer(CountVectorizer):
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
     [[0 1 1 1 0 0 1 0 1]
-     [0 1 0 1 0 2 1 0 1]
-     [1 0 0 0 1 0 1 1 0]
+     [0 2 0 1 0 1 1 0 1]
+     [1 0 0 1 1 0 1 1 1]
      [0 1 1 1 0 0 1 0 1]]
 
     See also
