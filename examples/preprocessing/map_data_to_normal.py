@@ -15,12 +15,20 @@ Chi-squared, Weibull, Gaussian, Uniform, and Bimodal.
 Note that the transformations successfully map the data to a normal
 distribution when applied to certain datasets, but are ineffective with others.
 This highlights the importance of visualizing the data before and after
-transformation. Also note that while the standardize option is set to False for
-the plot examples, by default, :class:`preprocessing.PowerTransformer` also
-applies zero-mean, unit-variance standardization to the transformed outputs.
+transformation.
+
+Also note that even though Box-Cox seems to perform better than Yeo-Johnson for
+lognormal and chi-squared distributions, keep in mind that Box-Cox does not
+support inputs with negative values.
 
 For comparison, we also add the output from
-:class:`preprocessing.QuantileTransformer`.
+:class:`preprocessing.QuantileTransformer`. It can force any arbitrary
+distribution into a gaussian, provided that there are enough training samples
+(thousands). Because it is a non-parametric method, it is harder to interpret
+than the parametric ones (Box-Cox and Yeo-Johnson).
+
+On "small" datasets (less than a few hundred points), the quantile transformer
+is prone to overfitting. The use of the power transform is then recommended.
 """
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
@@ -30,20 +38,21 @@ For comparison, we also add the output from
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.preprocessing import PowerTransformer, minmax_scale
+from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import QuantileTransformer
+from sklearn.model_selection import train_test_split
 
 print(__doc__)
 
 
-N_SAMPLES = 3000
+N_SAMPLES = 1000
 FONT_SIZE = 6
 BINS = 'auto'
 
 
 rng = np.random.RandomState(304)
-bc = PowerTransformer(method='box-cox', standardize=True)
-yj = PowerTransformer(method='yeo-johnson', standardize=True)
+bc = PowerTransformer(method='box-cox')
+yj = PowerTransformer(method='yeo-johnson')
 qt = QuantileTransformer(output_distribution='normal', random_state=rng)
 size = (N_SAMPLES, 1)
 
@@ -95,19 +104,18 @@ axes_list = [(axes[i], axes[j], axes[k], axes[l])
 
 for distribution, color, axes in zip(distributions, colors, axes_list):
     name, X = distribution
-    # scale all distributions to the range [0, 10]
-    X = minmax_scale(X, feature_range=(1e-10, 10))
+    X_train, X_test = train_test_split(X, test_size=.5)
 
     # perform power transforms and quantile transform
-    X_trans_bc = bc.fit_transform(X)
+    X_trans_bc = bc.fit(X_train).transform(X_test)
     lmbda_bc = round(bc.lambdas_[0], 2)
-    X_trans_yj = yj.fit_transform(X)
+    X_trans_yj = yj.fit(X_train).transform(X_test)
     lmbda_yj = round(yj.lambdas_[0], 2)
-    X_trans_qt = qt.fit_transform(X)
+    X_trans_qt = qt.fit(X_train).transform(X_test)
 
     ax_original, ax_bc, ax_yj, ax_qt = axes
 
-    ax_original.hist(X, color=color, bins=BINS)
+    ax_original.hist(X_train, color=color, bins=BINS)
     ax_original.set_title(name, fontsize=FONT_SIZE)
     ax_original.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
 
@@ -122,6 +130,7 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
             title += ', $\lambda$ = {}'.format(lmbda)
         ax.set_title(title, fontsize=FONT_SIZE)
         ax.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
+        ax.set_xlim([-3.5, 3.5])
 
 
 plt.tight_layout()
