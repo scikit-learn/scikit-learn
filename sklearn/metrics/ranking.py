@@ -216,7 +216,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
     """
     def _binary_uninterpolated_average_precision(
             y_true, y_score, pos_label=1, sample_weight=None):
-        precision, recall, thresholds = precision_recall_curve(
+        precision, recall, _ = precision_recall_curve(
             y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
         # Return the step function integral
         # The following works because the last entry of precision is
