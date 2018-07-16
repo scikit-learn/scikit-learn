@@ -609,7 +609,7 @@ def test_incremental_variance_numerical_stability():
             _incremental_mean_and_var(A1[i, :].reshape((1, A1.shape[1])),
                                       mean, var, n)
     assert_array_equal(n, A.shape[0])
-    assert_array_almost_equal(A.mean(axis=0), mean)
+    assert_allclose(A.mean(axis=0), mean, rtol=1e-12)
     assert_greater(tol, np.abs(stable_var(A) - var).max())
 
 

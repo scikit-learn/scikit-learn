@@ -704,7 +704,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     new_mean = new_sum / new_sample_count
     delta = new_mean - last_mean
     updated_mean = \
-        last_mean + (delta * new_sample_count) / updated_sample_count
+        last_mean + (delta * new_sample_count) / updated_sample_count  # fixes test
+        # (last_mean * last_sample_count + new_sum) / updated_sample_count  # breaks stability test
 
     if last_variance is None:
         updated_variance = None
