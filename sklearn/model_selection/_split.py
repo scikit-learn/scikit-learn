@@ -49,6 +49,17 @@ __all__ = ['BaseCrossValidator',
            'check_cv']
 
 
+NSPLIT_WARNING = (
+    "You should specify a value for `n_splits` instead of relying on the "
+    "default value. Note that this default value of 3 is deprecated in the "
+    "current version and will change in version 0.22 from 3 to 5.")
+
+CV_WARNING = (
+    "You should specify a value for `cv` instead of relying on the "
+    "default value. Note that this default value of 3 is deprecated in the "
+    "current version and will change in version 0.22 from 3 to 5.")
+
+
 class BaseCrossValidator(with_metaclass(ABCMeta)):
     """Base class for all cross-validators
 
@@ -406,8 +417,11 @@ class KFold(_BaseKFold):
     RepeatedKFold: Repeats K-Fold n times.
     """
 
-    def __init__(self, n_splits=3, shuffle=False,
+    def __init__(self, n_splits=None, shuffle=False,
                  random_state=None):
+        if n_splits is None:
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(KFold, self).__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -472,7 +486,10 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits=3):
+    def __init__(self, n_splits=None):
+        if n_splits is None:
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
 
@@ -567,7 +584,10 @@ class StratifiedKFold(_BaseKFold):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
 
-    def __init__(self, n_splits=3, shuffle=False, random_state=None):
+    def __init__(self, n_splits=None, shuffle=False, random_state=None):
+        if n_splits is None:
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
@@ -713,7 +733,10 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=3, max_train_size=None):
+    def __init__(self, n_splits=None, max_train_size=None):
+        if n_splits is None:
+            warnings.warn(NSPLIT_WARNING, FutureWarning)
+            n_splits = 3
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
                                               random_state=None)
@@ -1859,7 +1882,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=3, y=None, classifier=False):
+def check_cv(cv=None, y=None, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -1894,6 +1917,7 @@ def check_cv(cv=3, y=None, classifier=False):
         splits via the ``split`` method.
     """
     if cv is None:
+        warnings.warn(CV_WARNING, FutureWarning)
         cv = 3
 
     if isinstance(cv, numbers.Integral):
