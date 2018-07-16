@@ -88,6 +88,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_dtype_object
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
+    yield check_sample_weight_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
@@ -552,6 +553,24 @@ def check_sample_weights_list(name, estimator_orig):
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
 
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weight_invariance(name, estimator_orig):
+    if has_fit_parameter(estimator_orig, "sample_weight"):
+        estimator1 = clone(estimator_orig)
+        estimator2 = clone(estimator_orig)
+        X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                      [2, 1], [2, 2], [2, 3], [2, 4]])
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+        estimator1.fit(X, y, sample_weight=None)
+        estimator2.fit(X, y, sample_weight=np.ones(shape=len(y)))
+        X_pred1 = estimator1.predict(X)
+        X_pred2 = estimator2.predict(X)
+        try:
+            assert_array_equal(X_pred1, X_pred2)
+        except ValueError:
+            raise ValueError("For %s sample_weight=None is not equivalent to "
+                             "sample_weight=ones" % name)
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig):
