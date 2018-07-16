@@ -2438,9 +2438,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
     PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
-    >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
+    >>> print(pt.lambdas_)
     [1.38668178e+00 5.93926346e-09]
-    >>> print(pt.transform(data))  # doctest: +ELLIPSIS
+    >>> print(pt.transform(data))
     [[-1.31616039 -0.70710678]
      [ 0.20998268 -0.70710678]
      [ 1.1061777   1.41421356]]
@@ -2600,6 +2600,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
+
+        Note
+        ----
+        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
+        scipy/special/_boxcox.pxd for a rationale behind this
         """
         x_inv = np.zeros(x.shape, dtype=x.dtype)
         pos = x >= 0
@@ -2622,13 +2627,15 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     def _yeo_johnson_transform(self, x, lmbda):
         """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
+
+        Note
+        ----
+        We're comparing lmbda to 1e-19 instead of strict equality to 0. See
+        scipy/special/_boxcox.pxd for a rationale behind this
         """
 
         out = np.zeros(shape=x.shape, dtype=x.dtype)
         pos = x >= 0  # binary mask
-
-        # Note: we're comparing lmbda to 1e-19 instead of strict equality to 0.
-        # See scipy/special/_boxcox.pxd for a rationale behind this
 
         # when x >= 0
         if lmbda < 1e-19:

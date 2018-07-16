@@ -143,8 +143,8 @@ Preprocessing
   variance-stabilizing transformation in situations where normality and
   homoscedasticity are desirable.
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
-  :user:`Maniteja Nandana <maniteja123>`, and :issue:`10261` by :user:`Nicolas
-  Hug <contact@nicolas-hug.com`.
+  :user:`Maniteja Nandana <maniteja123>`, and :issue:`11520` by :user:`Nicolas
+  Hug <nicolashug>`.
 
 - Added the :class:`compose.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped

@@ -24,7 +24,7 @@ For comparison, we also add the output from
 """
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
-# Author: Nicolas Hug <contact@nicolas-hug.com>
+          Nicolas Hug <contact@nicolas-hug.com>
 # License: BSD 3 clause
 
 import numpy as np
