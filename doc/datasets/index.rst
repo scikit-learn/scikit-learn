@@ -130,6 +130,7 @@ They can be loaded using the following functions:
    fetch_covtype
    fetch_rcv1
    fetch_kddcup99
+   fetch_california_housing
 
 .. toctree::
     :maxdepth: 2
@@ -141,6 +142,7 @@ They can be loaded using the following functions:
     covtype
     rcv1
     kddcup99
+    california_housing
 
 .. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 
@@ -153,6 +155,8 @@ They can be loaded using the following functions:
 .. include:: ../../sklearn/datasets/descr/rcv1.rst
 
 .. include:: ../../sklearn/datasets/descr/kddcup99.rst
+
+.. include:: ../../sklearn/datasets/descr/california_housing.rst
 
 .. _generated_datasets:
 
