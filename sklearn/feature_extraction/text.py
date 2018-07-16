@@ -432,7 +432,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if ``analyzer == 'word'``. A list of stop words for
+        various languages can be retrieved using NLTK.
 
           .. deprecated:: 0.20
              ``stop_words='english'`` is deprecated in version 0.20 and will be
@@ -692,7 +693,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if ``analyzer == 'word'``. A list of stop words for
+        various languages can be retrieved using NLTK.
 
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
@@ -1339,7 +1341,8 @@ class TfidfVectorizer(CountVectorizer):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if ``analyzer == 'word'``. A list of stop words for
+        various languages can be retrieved using NLTK.
 
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
