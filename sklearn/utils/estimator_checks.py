@@ -556,7 +556,6 @@ def check_sample_weights_list(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weight_invariance(name, estimator_orig):
-<<<<<<< HEAD
     if (has_fit_parameter(estimator_orig, "sample_weight") and
                     name not in ["KMeans", "MiniBatchKMeans"]):
         estimator1 = clone(estimator_orig)
@@ -592,7 +591,7 @@ def check_sample_weight_invariance(name, estimator_orig):
             except ValueError:
                 raise ValueError("For %s sample_weight=None is not equivalent to "
                                  "sample_weight=ones" % name)
-            
+
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig):
