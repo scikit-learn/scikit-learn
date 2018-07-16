@@ -1,7 +1,7 @@
 .. _20newsgroups:
 
 The 20 newsgroups text dataset
-==============================
+------------------------------
 
 The 20 newsgroups dataset comprises around 18000 newsgroups posts on
 20 topics split in two subsets: one for training (or development)
@@ -19,7 +19,7 @@ returns ready-to-use features, i.e., it is not necessary to use a feature
 extractor.
 
 Usage
------
+~~~~~
 
 The :func:`sklearn.datasets.fetch_20newsgroups` function is a data
 fetching / caching functions that downloads the data archive from
@@ -62,7 +62,7 @@ attribute is the integer index of the category::
   >>> newsgroups_train.target.shape
   (11314,)
   >>> newsgroups_train.target[:10]
-  array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
+  array([ 7,  4,  4,  1, 14, 16, 13,  3,  2,  4])
 
 It is possible to load only a sub-selection of the categories by passing the
 list of the categories to load to the
@@ -78,10 +78,10 @@ list of the categories to load to the
   >>> newsgroups_train.target.shape
   (1073,)
   >>> newsgroups_train.target[:10]
-  array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
+  array([0, 1, 1, 1, 0, 1, 1, 0, 0, 0])
 
 Converting text to vectors
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
@@ -105,7 +105,7 @@ components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
   >>> vectors.nnz / float(vectors.shape[0])
-  159.01327433628319
+  159.01327...
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which returns
 ready-to-use tfidf features instead of file names.
@@ -115,7 +115,8 @@ ready-to-use tfidf features instead of file names.
 
 
 Filtering text for more realistic training
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 It is easy for a classifier to overfit on particular things that appear in the
 20 Newsgroups data, such as newsgroup headers. Many classifiers achieve very
 high F-scores, but their results would not generalize to other documents that
@@ -131,11 +132,13 @@ which is fast to train and achieves a decent F-score::
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
+  MultinomialNB(alpha=0.01, class_prior=None, fit_prior=True)
+
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.88213592402729568
+  0.88213...
 
-(The example :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py` shuffles
+(The example :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
 multinomial Naive Bayes gets a much higher F-score of 0.88. Are you suspicious
 yet of what's going on inside this classifier?)
@@ -150,10 +153,10 @@ Let's take a look at what the most informative features are:
   ...         print("%s: %s" % (category, " ".join(feature_names[top10])))
   ...
   >>> show_top10(clf, vectorizer, newsgroups_train.target_names)
-  alt.atheism: sgi livesey atheists writes people caltech com god keith edu
-  comp.graphics: organization thanks files subject com image lines university edu graphics
-  sci.space: toronto moon gov com alaska access henry nasa edu space
-  talk.religion.misc: article writes kent people christian jesus sandvik edu com god
+  alt.atheism: edu it and in you that is of to the
+  comp.graphics: edu in graphics it is for and of to the
+  sci.space: edu it that is in and space to of the
+  talk.religion.misc: not it you in is that and to of the
 
 You can now see many things that these features have overfit to:
 
@@ -183,7 +186,7 @@ blocks, and quotation blocks respectively.
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
-  0.77310350681274775
+  0.77310...
 
 This classifier lost over a lot of its F-score, just because we removed
 metadata that has little to do with topic classification.
@@ -195,10 +198,12 @@ It loses even more if we also strip this metadata from the training data:
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
+  MultinomialNB(alpha=0.01, class_prior=None, fit_prior=True)
+
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.76995175184521725
+  0.76995...
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
@@ -215,4 +220,4 @@ the ``--filter`` option to compare the results.
 
    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
 
-   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
