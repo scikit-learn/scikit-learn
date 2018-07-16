@@ -24,19 +24,18 @@ from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml(name='miceprotein', version=4, data_home=custom_data_home)
+  >>> mice = fetch_openml(name='miceprotein', version=4)
 
 To fully specify a dataset, you need to provide a name and a version, though the
 version is optional, see :ref:`openml_versions`_ below.
 The dataset contains a total of 1080 examples belonging to 8 different classes::
 
-  >>> mice.data.shape  #doctest: +SKIP
+  >>> mice.data.shape
   (1080, 77)
-  >>> mice.target.shape  #doctest: +SKIP
+  >>> mice.target.shape
   (1080,)
-  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
-  array([b"'c-CS-m'", b"'c-CS-s'", b"'c-SC-m'", b"'c-SC-s'", b"'t-CS-m'",
-  b"'t-CS-s'", b"'t-SC-m'", b"'t-SC-s'"], dtype='|S8')
+  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array(['c-CS-m', 'c-CS-s', 'c-SC-m', 'c-SC-s', 't-CS-m', 't-CS-s', 't-SC-m', 't-SC-s'], dtype=object)
 
 You can get more information on the dataset by looking at the ``DESCR``
 and ``details`` attributes::
@@ -49,16 +48,15 @@ and ``details`` attributes::
   Syndrome. PLoS ONE 10(6): e0129126...
 
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
-  {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
-  'creator': ...,
-  'upload_date': '2016-02-17T14:32:49', 'licence': 'Public', 'url':
-  'https://www.openml.org/data/v1/download/1804243/MiceProtein.ARFF', 'file_id':
-  '1804243', 'default_target_attribute': 'class', 'citation': 'Higuera C,
-  Gardiner KJ, Cios KJ (2015) Self-Organizing Feature Maps Identify Proteins
-  Critical to Learning in a Mouse Model of Down Syndrome. PLoS ONE 10(6):
-  e0129126. [Web Link] journal.pone.0129126', 'tag': ['OpenML100', 'study_14',
-  'study_34'], 'visibility': 'public', 'status': 'active', 'md5_checksum':
-  '3c479a6885bfa0438971388283a1ce32'}
+  {'id': '40966', 'name': 'MiceProtein', 'version': '4', 'format': 'ARFF',
+  'upload_date': '2017-11-08T16:00:15', 'licence': 'Public',
+  'url': 'https://www.openml.org/data/v1/download/17928620/MiceProtein.arff',
+  'file_id': '17928620', 'default_target_attribute': 'class',
+  'row_id_attribute': 'MouseID',
+  'ignore_attribute': ['Genotype', 'Treatment', 'Behavior'],
+  'tag': ['OpenML-CC18', 'study_135', 'study_98', 'study_99'],
+  'visibility': 'public', 'status': 'active',
+  'md5_checksum': '3c479a6885bfa0438971388283a1ce32'}
 
 
 The ``DESCR`` contains a free-text description of the data, while ``details``
