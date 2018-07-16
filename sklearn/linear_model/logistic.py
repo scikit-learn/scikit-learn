@@ -711,7 +711,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
-            if  0 < verbose <= 1:
+            if 0 < verbose <= 1:
                 iprint = 50
             elif 1 < verbose <= 2:
                 iprint = 1
