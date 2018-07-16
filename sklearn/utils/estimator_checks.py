@@ -261,6 +261,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
+    yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
 
@@ -2178,6 +2179,59 @@ def check_get_params_invariance(name, estimator_orig):
 
     assert_true(all(item in deep_params.items() for item in
                     shallow_params.items()))
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_set_params(name, estimator_orig):
+    # Check that get_params() returns the same thing
+    # before and after set_params() with some fuzz
+    estimator = clone(estimator_orig)
+
+    orig_params = estimator.get_params(deep=False)
+    msg = ("get_params result does not match what was passed to set_params")
+
+    estimator.set_params(**orig_params)
+    curr_params = estimator.get_params(deep=False)
+    assert_equal(set(orig_params.keys()), set(curr_params.keys()), msg)
+    for k, v in curr_params.items():
+        assert orig_params[k] is v, msg
+
+    # some fuzz values
+    test_values = [-np.inf, np.inf, None]
+
+    test_params = deepcopy(orig_params)
+    for param_name in orig_params.keys():
+        default_value = orig_params[param_name]
+        for value in test_values:
+            test_params[param_name] = value
+            try:
+                estimator.set_params(**test_params)
+            except (TypeError, ValueError) as e:
+                e_type = e.__class__.__name__
+                # Exception occurred, possibly parameter validation
+                warnings.warn("{} occurred during set_params. "
+                              "It is recommended to delay parameter "
+                              "validation until fit.".format(e_type))
+
+                change_warning_msg = "Estimator's parameters changed after " \
+                                     "set_params raised {}".format(e_type)
+                params_before_exception = curr_params
+                curr_params = estimator.get_params(deep=False)
+                try:
+                    assert_equal(set(params_before_exception.keys()),
+                                 set(curr_params.keys()))
+                    for k, v in curr_params.items():
+                        assert params_before_exception[k] is v
+                except AssertionError:
+                    warnings.warn(change_warning_msg)
+            else:
+                curr_params = estimator.get_params(deep=False)
+                assert_equal(set(test_params.keys()),
+                             set(curr_params.keys()),
+                             msg)
+                for k, v in curr_params.items():
+                    assert test_params[k] is v, msg
+        test_params[param_name] = default_value
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

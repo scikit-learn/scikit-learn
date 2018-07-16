@@ -860,9 +860,17 @@ These changes mostly affect library developers.
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
 
-- Allow :func:`~utils.estimator_checks.check_estimator` to check that there is no
+- Allow :func:`utils.estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- The set of checks in :func:`utils.estimator_checks.check_estimator` now includes a
+  ``check_set_params`` test which checks that ``set_params`` is equivalent to
+  passing parameters in ``__init__`` and warns if it encounters parameter
+  validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
+  
+- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
