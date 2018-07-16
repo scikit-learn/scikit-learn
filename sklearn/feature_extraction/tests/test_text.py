@@ -1107,18 +1107,6 @@ def test_vectorizers_invalid_ngram_range(vec):
             ValueError, message, vec.transform, ["good news everyone"])
 
 
-def test_vectorizer_stop_words_english():
-    message = ("stop_words='english' is deprecated in version 0.20 "
-               "and will be removed in 0.22. Provide the list of "
-               "stop words or consider using the max_df parameter, "
-               "if possible.")
-    for vec in [CountVectorizer(),
-                TfidfVectorizer(), HashingVectorizer()]:
-        vec.set_params(stop_words='english')
-        assert_warns_message(DeprecationWarning, message, vec.fit_transform,
-                             ["good news everyone"])
-
-
 def test_vectorizer_stop_words_inconsistent():
     if PY2:
         lstr = "[u'and', u'll', u've']"
