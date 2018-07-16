@@ -38,7 +38,7 @@ print(__doc__)
 
 N_SAMPLES = 3000
 FONT_SIZE = 6
-BINS = 100
+BINS = 'auto'
 
 
 rng = np.random.RandomState(304)
