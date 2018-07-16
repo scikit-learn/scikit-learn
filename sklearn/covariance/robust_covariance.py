@@ -144,6 +144,16 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         location = X_support.mean(axis=0)
         covariance = cov_computation_method(X_support)
         det = fast_logdet(covariance)
+
+        if det > previous_det:
+            # determinant has increased (should not happen)
+            warnings.warn("Determinant has increased; this should not happen: "
+                          "log(det) > log(previous_det) (%.15f > %.15f). "
+                          "You may want to try with a higher value of "
+                          "support_fraction (current value: %.3f)."
+                          % (det, previous_det, n_support / n_samples),
+                          RuntimeWarning)
+
         # update remaining iterations for early stopping
         remaining_iterations -= 1
 
@@ -161,8 +171,6 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
-        warnings.warn("Warning! det > previous_det (%.15f > %.15f)"
-                      % (det, previous_det), RuntimeWarning)
         results = previous_location, previous_covariance, \
             previous_det, previous_support, previous_dist
 
