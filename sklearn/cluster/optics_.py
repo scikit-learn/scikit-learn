@@ -315,8 +315,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         n_samples = len(X)
         # Start all points as 'unprocessed' ##
         self._processed = np.zeros((n_samples, 1), dtype=bool)
-        self.reachability_ = np.ones(n_samples) * np.inf
-        self.core_distances_ = np.ones(n_samples) * np.nan
+        self.reachability_ = np.empty(n_samples)
+        self.reachability_.fill(np.inf)
+        self.core_distances_ = np.empty(n_samples)
+        self.core_distances_.fill(np.nan)
         # Start all points as noise ##
         self.labels_ = -np.ones(n_samples, dtype=int)
         self.ordering_ = []
@@ -337,13 +339,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
         nbrs.fit(X)
         self.core_distances_[:] = nbrs.kneighbors(X,
                                                   self.min_samples)[0][:, -1]
-        self._nbrs = nbrs
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         for point in range(n_samples):
             if not self._processed[point]:
-                self._expand_cluster_order(point, X)
+                self._expand_cluster_order(point, X, nbrs)
 
         indices_, self.labels_ = _extract_optics(self.ordering_,
                                                  self.reachability_,
@@ -359,22 +360,22 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     # OPTICS helper functions; these should not be public #
 
-    def _expand_cluster_order(self, point, X):
+    def _expand_cluster_order(self, point, X, nbrs):
         # As above, not parallelizable. Parallelizing would allow items in
         # the 'unprocessed' list to switch to 'processed'
         if self.core_distances_[point] <= self.max_bound:
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
-                point = self._set_reach_dist(point, X)
+                point = self._set_reach_dist(point, X, nbrs)
         else:  # For very noisy points
             self.ordering_.append(point)
             self._processed[point] = True
 
-    def _set_reach_dist(self, point_index, X):
+    def _set_reach_dist(self, point_index, X, nbrs):
         P = np.array(X[point_index]).reshape(1, -1)
-        indices = self._nbrs.radius_neighbors(P, radius=self.max_bound,
-                                              return_distance=False)[0]
+        indices = nbrs.radius_neighbors(P, radius=self.max_bound,
+                                        return_distance=False)[0]
 
         # Getting indices of neighbors that have not been processed
         unproc = np.compress((~np.take(self._processed, indices)).ravel(),
