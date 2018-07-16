@@ -34,12 +34,25 @@ def norm(x):
     """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+
+    Parameters
+    ----------
+    x : array-like
+        Vector for which to compute the norm
     """
     return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y.T)."""
+    """Trace of np.dot(X, Y.T).
+
+    Parameters
+    ----------
+    X : array-like
+        First matrix
+    Y : array-like
+        Second matrix
+    """
     return np.dot(X.ravel(), Y.ravel())
 
 

@@ -4,6 +4,23 @@
 
 .. _changes_0_19:
 
+Version 0.19.2
+==============
+
+**October, 2018**
+
+This release is exclusively in order to support Python 3.7.
+
+Related changes
+---------------
+
+- ``n_iter_`` may vary from previous releases in
+  :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
+  :class:`linear_model.HuberRegressor`.  For Scipy <= 1.0.0, the optimizer could
+  perform more than the requested maximum number of iterations. Now both
+  estimators will report at most ``max_iter`` iterations even if more were
+  performed. :issue:`10723` by `Joel Nothman`_.
+
 Version 0.19.1
 ==============
 

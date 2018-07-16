@@ -199,7 +199,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return self
 
     def clone_with_theta(self, theta):
-        """Returns a clone of self with given hyperparameters theta. """
+        """Returns a clone of self with given hyperparameters theta.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The hyperparameters
+        """
         cloned = clone(self)
         cloned.theta = theta
         return cloned
@@ -395,6 +401,11 @@ class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
 
     .. versionadded:: 0.18
+
+    Parameters
+    ----------
+    kernels : list of Kernel objects
+        The other kernels
     """
 
     def __init__(self, kernels):
@@ -1268,7 +1279,7 @@ class Matern(RBF):
     length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on length_scale
 
-    nu: float, default: 1.5
+    nu : float, default: 1.5
         The parameter nu controlling the smoothness of the learned function.
         The smaller nu, the less smooth the approximated function is.
         For nu=inf, the kernel becomes equivalent to the RBF kernel and for
@@ -1755,7 +1766,7 @@ class PairwiseKernel(Kernel):
 
     Parameters
     ----------
-    gamma: float >= 0, default: 1.0
+    gamma : float >= 0, default: 1.0
         Parameter gamma of the pairwise kernel specified by metric
 
     gamma_bounds : pair of floats >= 0, default: (1e-5, 1e5)

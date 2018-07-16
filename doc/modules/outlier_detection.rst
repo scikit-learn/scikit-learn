@@ -99,6 +99,7 @@ but regular, observation outside the frontier.
    * See :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py` for visualizing the
      frontier learned around some data by a
      :class:`svm.OneClassSVM` object.
+   * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
