@@ -921,12 +921,12 @@ class SGDClassifier(BaseSGDClassifier):
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SGDClassifier()
+    >>> clf = linear_model.SGDClassifier(max_iter=1000)
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=None,
+           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
            n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
@@ -1524,12 +1524,12 @@ class SGDRegressor(BaseSGDRegressor):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor()
+    >>> clf = linear_model.SGDRegressor(max_iter=1000)
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='invscaling', loss='squared_loss', max_iter=None,
+           learning_rate='invscaling', loss='squared_loss', max_iter=1000,
            n_iter=None, n_iter_no_change=5, penalty='l2', power_t=0.25,
            random_state=None, shuffle=True, tol=None, validation_fraction=0.1,
            verbose=0, warm_start=False)

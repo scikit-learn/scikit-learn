@@ -296,7 +296,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     Examples
     --------
     >>> from sklearn.linear_model import RandomizedLasso
-    >>> randomized_lasso = RandomizedLasso()
+    >>> randomized_lasso = RandomizedLasso() # doctest: +SKIP
 
     References
     ----------
@@ -490,7 +490,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     Examples
     --------
     >>> from sklearn.linear_model import RandomizedLogisticRegression
-    >>> randomized_logistic = RandomizedLogisticRegression()
+    >>> randomized_logistic = RandomizedLogisticRegression() # doctest: +SKIP
 
     References
     ----------
