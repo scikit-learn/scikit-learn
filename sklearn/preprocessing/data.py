@@ -2437,13 +2437,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='box-cox', standardize=True)
+    PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
     >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
-    [ 1.051... -2.345...]
+    [1.38668178e+00 5.93926346e-09]
     >>> print(pt.transform(data))  # doctest: +ELLIPSIS
-    [[-1.332... -0.707...]
-     [ 0.256... -0.707...]
-     [ 1.076...  1.414...]]
+    [[-1.31616039 -0.70710678]
+     [ 0.20998268 -0.70710678]
+     [ 1.1061777   1.41421356]]
 
     See also
     --------
