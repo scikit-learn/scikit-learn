@@ -733,7 +733,7 @@ def test_iterative_imputer_additive_matrix():
 
 
 @pytest.mark.parametrize("imputer_constructor",
-                         [SimpleImputer, ChainedImputer])
+                         [SimpleImputer, IterativeImputer])
 @pytest.mark.parametrize(
     "imputer_missing_values, missing_value, err_msg",
     [("NaN", np.nan, "Input contains NaN"),
