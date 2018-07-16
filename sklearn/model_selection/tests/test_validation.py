@@ -402,7 +402,7 @@ def test_cross_validate_return_train_score_warn():
     result = {}
     for val in [False, True, 'warn']:
         result[val] = assert_no_warnings(cross_validate, estimator, X, y,
-                                         return_train_score=val)
+                                         return_train_score=val, cv=5)
 
     msg = (
         'You are accessing a training score ({!r}), '
