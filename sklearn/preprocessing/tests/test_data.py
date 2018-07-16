@@ -2162,12 +2162,13 @@ def test_power_transformer_lambda_one():
     X_trans = pt.transform(X)
     assert_array_almost_equal(X_trans, X)
 
-@pytest.mark.parametrize("method, lmbda",[('box-cox', .1),
-                                          ('box-cox', .5),
-                                          ('yeo-johnson', .1),
-                                          ('yeo-johnson', .5),
-                                          ('yeo-johnson', 1.),
-                                          ])
+
+@pytest.mark.parametrize("method, lmbda", [('box-cox', .1),
+                                           ('box-cox', .5),
+                                           ('yeo-johnson', .1),
+                                           ('yeo-johnson', .5),
+                                           ('yeo-johnson', 1.),
+                                           ])
 def test_optimization_power_transformer(method, lmbda):
     """Test the optimization procedure
 

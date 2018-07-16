@@ -2413,8 +2413,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     method : str, (default='yeo-johnson')
-        The power transform method. Available methods are 'box-cox' and
-        'yeo-johnson'.
+        The power transform method. Available methods are:
+
+        - 'box-cox' :ref:`(ref) <box_cox_paper_ref>`
+        - 'yeo-johnson' :ref:`(ref) <yeo_johnson_paper_ref>`
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
@@ -2461,11 +2463,16 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     References
     ----------
+
+    .. _box_cox_paper_ref:
+
     G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
     Royal Statistical Society B, 26, 211-252 (1964).
 
+    .. _yeo_johnson_paper_ref:
+
     I.K. Yeo and R.A. Johnson, "A new family of power transformations to
-    improve normality or symmetry." Biometrika, 87(4), pp.954-959. (2000)
+    improve normality or symmetry." Biometrika, 87(4), pp.954-959, (2000).
     """
     def __init__(self, method='yeo-johnson', standardize=True, copy=True):
         self.method = method
@@ -2494,18 +2501,18 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.lambdas_ = []
         transformed = []
 
-        opt_fun = {'box-cox': self._box_cox_optimize,
-                   'yeo-johnson': self._yeo_johnson_optimize
-                   }[self.method]
-        trans_fun = {'box-cox': boxcox,
-                     'yeo-johnson': self._yeo_johnson_transform
-                     }[self.method]
+        optim_function = {'box-cox': self._box_cox_optimize,
+                          'yeo-johnson': self._yeo_johnson_optimize
+                          }[self.method]
+        transform_function = {'box-cox': boxcox,
+                              'yeo-johnson': self._yeo_johnson_transform
+                              }[self.method]
 
         for col in X.T:
-            lmbda = opt_fun(col)
+            lmbda = optim_function(col)
             self.lambdas_.append(lmbda)
 
-            col_trans = trans_fun(col, lmbda)
+            col_trans = transform_function(col, lmbda)
             transformed.append(col_trans)
 
         self.lambdas_ = np.array(self.lambdas_)
@@ -2528,11 +2535,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_positive=True, check_shape=True)
 
-        trans_fun = {'box-cox': boxcox,
-                     'yeo-johnson': self._yeo_johnson_transform
-                     }[self.method]
+        transform_function = {'box-cox': boxcox,
+                              'yeo-johnson': self._yeo_johnson_transform
+                              }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = trans_fun(X[:, i], lmbda)
+            X[:, i] = transform_function(X[:, i], lmbda)
 
         if self.standardize:
             X = self._scaler.transform(X)
@@ -2660,13 +2667,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
             psi = self._yeo_johnson_transform(x, lmbda)
-            n = x.shape[0]
+            n_samples = x.shape[0]
 
             # Estimated mean and variance of the normal distribution
-            mu = psi.sum() / n
-            sig_sq = np.power(psi - mu, 2).sum() / n
+            mu = psi.sum() / n_samples
+            sig_sq = np.power(psi - mu, 2).sum() / n_samples
 
-            loglike = -n / 2 * np.log(sig_sq)
+            loglike = -n_samples / 2 * np.log(sig_sq)
             loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
 
             return -loglike
