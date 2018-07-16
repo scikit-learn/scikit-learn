@@ -13,10 +13,11 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, defaultdict, Sequence
+from collections import namedtuple, defaultdict
 from functools import partial, reduce
 from itertools import product
 import operator
+import time
 import warnings
 
 import numpy as np
@@ -33,6 +34,8 @@ from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
+from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
+from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -90,10 +93,26 @@ class ParameterGrid(object):
     """
 
     def __init__(self, param_grid):
+        if not isinstance(param_grid, (Mapping, Iterable)):
+            raise TypeError('Parameter grid is not a dict or '
+                            'a list ({!r})'.format(param_grid))
+
         if isinstance(param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
             param_grid = [param_grid]
+
+        # check if all entries are dictionaries of lists
+        for grid in param_grid:
+            if not isinstance(grid, dict):
+                raise TypeError('Parameter grid is not a '
+                                'dict ({!r})'.format(grid))
+            for key in grid:
+                if not isinstance(grid[key], Iterable):
+                    raise TypeError('Parameter grid value is not iterable '
+                                    '(key={!r}, value={!r})'
+                                    .format(key, grid[key]))
+
         self.param_grid = param_grid
 
     def __iter__(self):
@@ -750,10 +769,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.refit:
             self.best_estimator_ = clone(base_estimator).set_params(
                 **self.best_params_)
+            refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
             else:
                 self.best_estimator_.fit(X, **fit_params)
+            refit_end_time = time.time()
+            self.refit_time_ = refit_end_time - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers if self.multimetric_ else scorers['score']
@@ -762,32 +784,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_splits_ = n_splits
 
         return self
-
-    @property
-    def grid_scores_(self):
-        check_is_fitted(self, 'cv_results_')
-        if self.multimetric_:
-            raise AttributeError("grid_scores_ attribute is not available for"
-                                 " multi-metric evaluation.")
-        warnings.warn(
-            "The grid_scores_ attribute was deprecated in version 0.18"
-            " in favor of the more elaborate cv_results_ attribute."
-            " The grid_scores_ attribute will not be available from 0.20",
-            DeprecationWarning)
-
-        grid_scores = list()
-
-        for i, (params, mean, std) in enumerate(zip(
-                self.cv_results_['params'],
-                self.cv_results_['mean_test_score'],
-                self.cv_results_['std_test_score'])):
-            scores = np.array(list(self.cv_results_['split%d_test_score'
-                                                    % s][i]
-                                   for s in range(self.n_splits_)),
-                              dtype=np.float64)
-            grid_scores.append(_CVScoreTuple(params, mean, scores))
-
-        return grid_scores
 
 
 class GridSearchCV(BaseSearchCV):
@@ -871,17 +867,18 @@ class GridSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1060,6 +1057,11 @@ class GridSearchCV(BaseSearchCV):
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
 
+    refit_time_ : float
+        Seconds used for refitting the best model on the whole dataset.
+
+        This is present only if ``refit`` is not False.
+
     Notes
     ------
     The parameters selected are those that maximize the score of the left out
@@ -1205,17 +1207,18 @@ class RandomizedSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1370,6 +1373,11 @@ class RandomizedSearchCV(BaseSearchCV):
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
+
+    refit_time_ : float
+        Seconds used for refitting the best model on the whole dataset.
+
+        This is present only if ``refit`` is not False.
 
     Notes
     -----

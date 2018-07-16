@@ -99,9 +99,9 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', probability=True, random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
-    array([-0.09..., -0.16..., -0.07...])
+    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> cross_val_score(clf, X, y, scoring='recall_macro') # doctest: +ELLIPSIS
+    array([0.980..., 0.960..., 0.979...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -177,7 +177,7 @@ Here is an example of building custom scorers, and of using the
     >>> import numpy as np
     >>> def my_custom_loss_func(y_true, y_pred):
     ...     diff = np.abs(y_true - y_pred).max()
-    ...     return np.log(1 + diff)
+    ...     return np.log1p(diff)
     ...
     >>> # score will negate the return value of my_custom_loss_func,
     >>> # which will be np.log(2), 0.693, given the values for X
@@ -524,8 +524,11 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the `confusion matrix
+classification accuracy by computing the confusion matrix
+with each row corresponding to the true class
 <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
+(Wikipedia and other references may use different convention for axes.)
+
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -566,7 +569,7 @@ false negatives and true positives as follows::
     for an example of using a confusion matrix to classify
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of using a confusion matrix to classify text
     documents.
 
@@ -599,7 +602,7 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of classification report usage for text
     documents.
 
@@ -750,7 +753,7 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
@@ -860,10 +863,10 @@ specified by the ``average`` argument to the
 :func:`average_precision_score` (multilabel only), :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
-:ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
-with all labels included will produce equal precision, recall and :math:`F`,
-while "weighted" averaging may produce an F-score that is not between
-precision and recall.
+:ref:`above <average>`. Note that if all labels are included, "micro"-averaging
+in a multiclass setting will produce precision, recall and :math:`F`
+that are all identical to accuracy. Also note that "weighted" averaging may
+produce an F-score that is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 

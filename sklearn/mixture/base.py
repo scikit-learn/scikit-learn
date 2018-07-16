@@ -172,7 +172,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
     def fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm.
 
-        The method fit the model `n_init` times and set the parameters with
+        The method fits the model `n_init` times and set the parameters with
         which the model has the largest likelihood or lower bound. Within each
         trial, the method iterates between E-step and M-step for `max_iter`
         times until the change of likelihood or lower bound is less than
@@ -187,6 +187,32 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         self
+        """
+        self.fit_predict(X, y)
+        return self
+
+    def fit_predict(self, X, y=None):
+        """Estimate model parameters using X and predict the labels for X.
+
+        The method fits the model n_init times and sets the parameters with
+        which the model has the largest likelihood or lower bound. Within each
+        trial, the method iterates between E-step and M-step for `max_iter`
+        times until the change of likelihood or lower bound is less than
+        `tol`, otherwise, a `ConvergenceWarning` is raised. After fitting, it
+        predicts the most probable label for the input data points.
+
+        .. versionadded:: 0.20
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            List of n_features-dimensional data points. Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        labels : array, shape (n_samples,)
+            Component labels.
         """
         X = _check_X(X, self.n_components, ensure_min_samples=2)
         self._check_initial_parameters(X)
@@ -240,7 +266,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
 
-        return self
+        return log_resp.argmax(axis=1)
 
     def _e_step(self, X):
         """E step.

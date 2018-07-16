@@ -15,7 +15,6 @@ from __future__ import division
 
 import warnings
 from itertools import chain, combinations
-from collections import Iterable
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
@@ -29,6 +28,7 @@ from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import signature, comb
+from ..utils.fixes import _Iterable as Iterable
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
@@ -76,8 +76,8 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -301,8 +301,8 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -647,8 +647,8 @@ class StratifiedKFold(_BaseKFold):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -734,8 +734,8 @@ class TimeSeriesSplit(_BaseKFold):
         groups : array-like, with shape (n_samples,), optional
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1006,8 +1006,8 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1182,8 +1182,8 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1603,8 +1603,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1763,8 +1763,8 @@ class PredefinedSplit(BaseCrossValidator):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -1847,8 +1847,8 @@ class _CVIterableWrapper(BaseCrossValidator):
         groups : object
             Always ignored, exists for compatibility.
 
-        Returns
-        -------
+        Yields
+        ------
         train : ndarray
             The training set indices for that split.
 
@@ -2057,6 +2057,7 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test
 train_test_split.__test__ = False
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

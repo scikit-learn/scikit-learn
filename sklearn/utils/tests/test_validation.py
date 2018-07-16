@@ -7,8 +7,10 @@ from tempfile import NamedTemporaryFile
 from itertools import product
 
 import pytest
+from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
+from scipy import __version__ as scipy_version
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
 from sklearn.utils.testing import assert_raises
@@ -22,6 +24,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
+from sklearn.utils import deprecated
 from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
@@ -35,7 +38,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
-    check_memory
+    check_memory,
+    LARGE_SPARSE_SUPPORTED
 )
 import sklearn
 
@@ -464,6 +468,42 @@ def test_check_array_accept_sparse_no_exception():
     check_array(X_csr, accept_sparse=('csr',))
 
 
+@pytest.fixture(params=['csr', 'csc', 'coo', 'bsr'])
+def X_64bit(request):
+    X = sp.rand(20, 10, format=request.param)
+    for attr in ['indices', 'indptr', 'row', 'col']:
+        if hasattr(X, attr):
+            setattr(X, attr, getattr(X, attr).astype('int64'))
+    yield X
+
+
+def test_check_array_accept_large_sparse_no_exception(X_64bit):
+    # When large sparse are allowed
+    if LARGE_SPARSE_SUPPORTED:
+        check_array(X_64bit, accept_large_sparse=True, accept_sparse=True)
+
+
+def test_check_array_accept_large_sparse_raise_exception(X_64bit):
+    # When large sparse are not allowed
+    if LARGE_SPARSE_SUPPORTED:
+        msg = ("Only sparse matrices with 32-bit integer indices "
+               "are accepted. Got int64 indices.")
+        assert_raise_message(ValueError, msg,
+                             check_array, X_64bit,
+                             accept_sparse=True,
+                             accept_large_sparse=False)
+
+
+def test_check_array_large_indices_non_supported_scipy_version(X_64bit):
+    # Large indices should not be allowed for scipy<0.14.0
+    if not LARGE_SPARSE_SUPPORTED:
+        msg = ("Scipy version %s does not support large"
+               " indices, please upgrade your scipy"
+               " to 0.14.0 or above" % scipy_version)
+        assert_raise_message(ValueError, msg, check_array,
+                             X_64bit, accept_sparse='csc')
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
@@ -562,6 +602,15 @@ def test_has_fit_parameter():
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
     assert_true(has_fit_parameter(SVR, "sample_weight"))
     assert_true(has_fit_parameter(SVR(), "sample_weight"))
+
+    class TestClassWithDeprecatedFitMethod:
+        @deprecated("Deprecated for the purpose of testing has_fit_parameter")
+        def fit(self, X, y, sample_weight=None):
+            pass
+
+    assert has_fit_parameter(TestClassWithDeprecatedFitMethod,
+                             "sample_weight"), \
+        "has_fit_parameter fails for class with deprecated fit method."
 
 
 def test_check_symmetric():
@@ -663,6 +712,38 @@ def test_suppress_validation():
     assert_all_finite(X)
     sklearn.set_config(assume_finite=False)
     assert_raises(ValueError, assert_all_finite, X)
+
+
+def test_check_dataframe_warns_on_dtype():
+    # Check that warn_on_dtype also works for DataFrames.
+    # https://github.com/scikit-learn/scikit-learn/issues/10948
+    pd = importorskip("pandas")
+
+    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], dtype=object)
+    assert_warns_message(DataConversionWarning,
+                         "Data with input dtype object were all converted to "
+                         "float64.",
+                         check_array, df, dtype=np.float64, warn_on_dtype=True)
+    assert_warns(DataConversionWarning, check_array, df,
+                 dtype='numeric', warn_on_dtype=True)
+    assert_no_warnings(check_array, df, dtype='object', warn_on_dtype=True)
+
+    # Also check that it raises a warning for mixed dtypes in a DataFrame.
+    df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
+    assert_warns(DataConversionWarning, check_array, df_mixed,
+                 dtype=np.float64, warn_on_dtype=True)
+    assert_warns(DataConversionWarning, check_array, df_mixed,
+                 dtype='numeric', warn_on_dtype=True)
+    assert_warns(DataConversionWarning, check_array, df_mixed,
+                 dtype=object, warn_on_dtype=True)
+
+    # Even with numerical dtypes, a conversion can be made because dtypes are
+    # uniformized throughout the array.
+    df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
+    assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
+                 dtype='numeric', warn_on_dtype=True)
+    assert_no_warnings(check_array, df_mixed_numeric.astype(int),
+                       dtype='numeric', warn_on_dtype=True)
 
 
 class DummyMemory(object):

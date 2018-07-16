@@ -244,9 +244,6 @@ class MiniBatchSparsePCA(SparsePCA):
     components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    error_ : array
-        Vector of errors at each iteration.
-
     n_iter_ : int
         Number of iterations run.
 

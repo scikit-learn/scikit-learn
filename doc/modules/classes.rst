@@ -158,7 +158,14 @@ details.
     :toctree: generated
     :template: class.rst
 
+    compose.ColumnTransformer
     compose.TransformedTargetRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   compose.make_column_transformer
 
 .. _covariance_ref:
 
@@ -646,7 +653,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
-   impute.MICEImputer
+   impute.ChainedImputer
 
 .. _kernel_approximation_ref:
 
@@ -749,6 +756,7 @@ Kernels:
    linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:
@@ -894,6 +902,7 @@ details.
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
    metrics.calinski_harabaz_score
+   metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
    metrics.fowlkes_mallows_score
@@ -956,6 +965,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
+   metrics.pairwise_distances_chunked
 
 
 .. _mixture_ref:
@@ -1231,6 +1241,7 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
@@ -1239,7 +1250,7 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.CategoricalEncoder
+   preprocessing.OrdinalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
@@ -1462,6 +1473,7 @@ Low-level methods
    utils.testing.assert_raise_message
    utils.testing.all_estimators
 
+
 Recently deprecated
 ===================
 
@@ -1501,46 +1513,3 @@ To be removed in 0.21
 
    datasets.load_mlcomp
    linear_model.lasso_stability_path
-
-
-To be removed in 0.20
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   cross_validation.KFold
-   cross_validation.LabelKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.LeavePLabelOut
-   cross_validation.LabelShuffleSplit
-   cross_validation.ShuffleSplit
-   cross_validation.StratifiedKFold
-   cross_validation.StratifiedShuffleSplit
-   cross_validation.PredefinedSplit
-   decomposition.RandomizedPCA
-   gaussian_process.GaussianProcess
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.GridSearchCV
-   grid_search.RandomizedSearchCV
-   mixture.DPGMM
-   mixture.GMM
-   mixture.VBGMM
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   cross_validation.check_cv
-   cross_validation.cross_val_predict
-   cross_validation.cross_val_score
-   cross_validation.permutation_test_score
-   cross_validation.train_test_split
-   grid_search.fit_grid_point
-   learning_curve.learning_curve
-   learning_curve.validation_curve
