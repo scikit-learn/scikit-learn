@@ -698,7 +698,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             array representing the data
         random_state : RandomState or an int seed (0 by default)
             A random number generator instance to define the state of the
@@ -706,7 +706,7 @@ Here's a simple example of code using some of the above guidelines::
 
         Returns
         -------
-        x : numpy array, shape = (n_features,)
+        x : numpy array, shape (n_features,)
             A random point selected from X
         """
         X = check_array(X)
@@ -1037,11 +1037,9 @@ the predict method.
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, with shape = [N, D], where N is the number
-              of samples and D is the number of features.
+X             array-like, shape (n_samples, n_features)
 
-y             array, with shape = [N], where N is the number of
-              samples.
+y             array, shape (n_samples,)
 
 kwargs        optional data-dependent parameters.
 ============= ======================================================

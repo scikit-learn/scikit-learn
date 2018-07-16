@@ -19,11 +19,11 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
+from ..utils.fixes import _Sequence as Sequence
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
-import collections
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -608,7 +608,7 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, collections.Sequence):
+        if isinstance(n_alphas, Sequence):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -684,7 +684,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, collections.Sequence):
+            if not isinstance(n_alphas, Sequence):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                      n_alphas + 2)
                 alphas = alphas[1:-1]
