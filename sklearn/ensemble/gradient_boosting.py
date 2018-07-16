@@ -81,13 +81,13 @@ class QuantileEstimator(object):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples,n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : numpy array of shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : numpy array of shape (n_samples,)
             Individual weights for each sample
         """
         if sample_weight is None:
@@ -101,12 +101,12 @@ class QuantileEstimator(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y : array, shape = (n_samples,)
+        y : array, shape (n_samples,)
             Returns predicted values.
         """
         check_is_fitted(self, 'quantile')
@@ -123,13 +123,13 @@ class MeanEstimator(object):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples,n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : numpy array of shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : numpy array of shape (n_samples,)
             Individual weights for each sample
         """
         if sample_weight is None:
@@ -142,12 +142,12 @@ class MeanEstimator(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y : array, shape = (n_samples,)
+        y : array, shape (n_samples,)
             Returns predicted values.
         """
         check_is_fitted(self, 'mean')
@@ -166,13 +166,13 @@ class LogOddsEstimator(object):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples,n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : numpy array of shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : numpy array of shape (n_samples,)
             Individual weights for each sample
         """
         # pre-cond: pos, neg are encoded as 1, 0
@@ -192,12 +192,12 @@ class LogOddsEstimator(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y : array, shape = (n_samples,)
+        y : array, shape (n_samples,)
             Returns predicted values.
         """
         check_is_fitted(self, 'prior')
@@ -221,13 +221,13 @@ class PriorProbabilityEstimator(object):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples,n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : numpy array of shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : numpy array of shape (n_samples,)
             Individual weights for each sample
         """
         if sample_weight is None:
@@ -240,12 +240,12 @@ class PriorProbabilityEstimator(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y : array, shape = (n_samples,)
+        y : array, shape (n_samples,)
             Returns predicted values.
         """
         check_is_fitted(self, 'priors')
@@ -263,13 +263,13 @@ class ZeroEstimator(object):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples,n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : numpy array of shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : numpy array of shape (n_samples,)
             Individual weights for each sample
         """
         if np.issubdtype(y.dtype, np.signedinteger):
@@ -286,12 +286,12 @@ class ZeroEstimator(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y : array, shape = (n_samples,)
+        y : array, shape (n_samples,)
             Returns predicted values.
         """
         check_is_fitted(self, 'n_classes')
@@ -332,13 +332,13 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
 
@@ -348,10 +348,10 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
 
         Parameters
         ----------
-        y : np.ndarray, shape = [n_samples]
+        y : np.ndarray, shape (n_samples,)
             The target labels.
 
-        y_pred : np.ndarray, shape = [n_samples]
+        y_pred : np.ndarray, shape (n_samples,)
             The predictions.
         """
 
@@ -441,13 +441,13 @@ class LeastSquaresError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
@@ -461,10 +461,10 @@ class LeastSquaresError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : np.ndarray, shape = [n_samples]
+        y : np.ndarray, shape (n_samples,)
             The target labels.
 
-        pred : np.ndarray, shape = [n_samples]
+        pred : np.ndarray, shape (n_samples,)
             The predictions.
         """
         return y - pred.ravel()
@@ -522,13 +522,13 @@ class LeastAbsoluteError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
@@ -544,10 +544,10 @@ class LeastAbsoluteError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : np.ndarray, shape = [n_samples]
+        y : np.ndarray, shape (n_samples,)
             The target labels.
 
-        pred : np.ndarray, shape = [n_samples]
+        pred : np.ndarray, shape (n_samples,)
             The predictions.
         """
         pred = pred.ravel()
@@ -594,13 +594,13 @@ class HuberLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         pred = pred.ravel()
@@ -629,13 +629,13 @@ class HuberLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : np.ndarray, shape = [n_samples]
+        y : np.ndarray, shape (n_samples,)
             The target labels.
 
-        pred : np.ndarray, shape = [n_samples]
+        pred : np.ndarray, shape (n_samples,)
             The predictions.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
         pred = pred.ravel()
@@ -692,13 +692,13 @@ class QuantileLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         pred = pred.ravel()
@@ -720,10 +720,10 @@ class QuantileLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             The target labels.
 
-        pred : np.ndarray, shape = [n_samples]
+        pred : np.ndarray, shape (n_samples,)
             The predictions.
         """
         alpha = self.alpha
@@ -786,13 +786,13 @@ class BinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         # logaddexp(0, v) == log(1.0 + exp(v))
@@ -808,10 +808,10 @@ class BinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
         """
         return y - expit(pred.ravel())
@@ -879,13 +879,13 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         # create one-hot label encoding
@@ -905,10 +905,10 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : np.ndarray, shape = [n_samples]
+        y : np.ndarray, shape (n_samples,)
             The target labels.
 
-        pred : np.ndarray, shape = [n_samples]
+        pred : np.ndarray, shape (n_samples,)
             The predictions.
 
         k : int, optional (default=0)
@@ -975,13 +975,13 @@ class ExponentialLoss(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), optional
             Sample weights.
         """
         pred = pred.ravel()
@@ -996,10 +996,10 @@ class ExponentialLoss(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape = [n_samples]
+        pred : array, shape (n_samples,)
             Predicted labels
         """
         y_ = -(2. * y - 1.)
@@ -1364,16 +1364,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values (strings or integers in classification, real numbers
             in regression)
             For classification, labels must correspond to classes.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like, shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. In the case of
@@ -1602,14 +1602,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        score : generator of array, shape = [n_samples, k]
+        score : generator of array, shape (n_samples, k)
             The decision function of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
             Regression and binary classification are special cases with
@@ -1628,7 +1628,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Returns
         -------
-        feature_importances_ : array, shape = [n_features]
+        feature_importances_ : array, shape (n_features,)
         """
         self._check_initialized()
 
@@ -1658,14 +1658,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
             be converted to a sparse ``csr_matrix``.
 
         Returns
         -------
-        X_leaves : array_like, shape = [n_samples, n_estimators, n_classes]
+        X_leaves : array_like, shape (n_samples, n_estimators, n_classes)
             For each datapoint x in X and for each tree in the ensemble,
             return the index of the leaf x ends up in each estimator.
             In the case of binary classification n_classes is 1.
@@ -1881,16 +1881,16 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.20
 
-    feature_importances_ : array, shape = [n_features]
+    feature_importances_ : array, shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
-    oob_improvement_ : array, shape = [n_estimators]
+    oob_improvement_ : array, shape (n_estimators,)
         The improvement in loss (= deviance) on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    train_score_ : array, shape = [n_estimators]
+    train_score_ : array, shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
@@ -1902,7 +1902,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, ``loss_.K``]
+    estimators_ : ndarray of DecisionTreeRegressor, shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
@@ -1975,14 +1975,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        score : array, shape = [n_samples, n_classes] or [n_samples]
+        score : array, shape (n_samples, n_classes] or [n_samples)
             The decision function of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
             Regression and binary classification produce an array of shape
@@ -2002,14 +2002,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        score : generator of array, shape = [n_samples, k]
+        score : generator of array, shape (n_samples, k)
             The decision function of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
             Regression and binary classification are special cases with
@@ -2024,14 +2024,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape (n_samples,)
             The predicted values.
         """
         score = self.decision_function(X)
@@ -2046,14 +2046,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : generator of array of shape = [n_samples]
+        y : generator of array of shape (n_samples,)
             The predicted value of the input samples.
         """
         for score in self._staged_decision_function(X):
@@ -2065,7 +2065,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -2077,7 +2077,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -2095,7 +2095,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -2107,7 +2107,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
@@ -2122,14 +2122,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : generator of array of shape = [n_samples]
+        y : generator of array of shape (n_samples,)
             The predicted value of the input samples.
         """
         try:
@@ -2333,16 +2333,16 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Attributes
     ----------
-    feature_importances_ : array, shape = [n_features]
+    feature_importances_ : array, shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
-    oob_improvement_ : array, shape = [n_estimators]
+    oob_improvement_ : array, shape (n_estimators,)
         The improvement in loss (= deviance) on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    train_score_ : array, shape = [n_estimators]
+    train_score_ : array, shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
@@ -2354,7 +2354,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
+    estimators_ : ndarray of DecisionTreeRegressor, shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
     Notes
@@ -2411,14 +2411,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape (n_samples,)
             The predicted values.
         """
         X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
@@ -2432,14 +2432,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : generator of array of shape = [n_samples]
+        y : generator of array of shape (n_samples,)
             The predicted value of the input samples.
         """
         for y in self._staged_decision_function(X):
@@ -2452,14 +2452,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
             be converted to a sparse ``csr_matrix``.
 
         Returns
         -------
-        X_leaves : array_like, shape = [n_samples, n_estimators]
+        X_leaves : array_like, shape (n_samples, n_estimators)
             For each datapoint x in X and for each tree in the ensemble,
             return the index of the leaf x ends up in each estimator.
         """
