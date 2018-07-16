@@ -14,7 +14,10 @@ if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
 else:
     def _hashing_transform(*args, **kwargs):
-        raise NotImplementedError('FeatureHasher is not compatible with PyPy.')
+        raise NotImplementedError(
+                'FeatureHasher is not compatible with PyPy (see '
+                'https://github.com/scikit-learn/scikit-learn/issues/11540 '
+                'for the status updates).')
 
 
 def _iteritems(d):

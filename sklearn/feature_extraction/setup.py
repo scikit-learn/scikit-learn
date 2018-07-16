@@ -1,5 +1,5 @@
 import os
-import sys
+import platform
 
 
 def configuration(parent_package='', top_path=None):
@@ -11,7 +11,7 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    if "__pypy__" not in sys.modules:
+    if platform.python_implementation() == 'PyPy':
         config.add_extension('_hashing',
                              sources=['_hashing.pyx'],
                              include_dirs=[numpy.get_include()],

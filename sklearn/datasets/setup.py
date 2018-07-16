@@ -1,7 +1,7 @@
 
 import numpy
 import os
-import sys
+import platform
 
 
 def configuration(parent_package='', top_path=None):
@@ -11,7 +11,7 @@ def configuration(parent_package='', top_path=None):
     config.add_data_dir('descr')
     config.add_data_dir('images')
     config.add_data_dir(os.path.join('tests', 'data'))
-    if '__pypy__' not in sys.modules:
+    if platform.python_implementation() == 'PyPy':
         config.add_extension('_svmlight_format',
                              sources=['_svmlight_format.pyx'],
                              include_dirs=[numpy.get_include()])

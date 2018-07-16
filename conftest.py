@@ -5,7 +5,7 @@
 # doc/modules/clustering.rst and use sklearn from the local folder rather than
 # the one from site-packages.
 
-import sys
+import platform
 from distutils.version import LooseVersion
 
 import pytest
@@ -15,7 +15,7 @@ from _pytest.doctest import DoctestItem
 def pytest_collection_modifyitems(config, items):
 
     # FeatureHasher is not compatible with PyPy
-    if '__pypy__' in sys.modules:
+    if platform.python_implementation() == 'PyPy':
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:

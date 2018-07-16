@@ -7,6 +7,7 @@ descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
+import platform
 import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
@@ -41,7 +42,7 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-if '__pypy__' in sys.modules:
+if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.4.0'
 else:
