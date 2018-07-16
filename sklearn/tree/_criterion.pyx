@@ -1290,7 +1290,7 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 impurity_left += fabs(y_ik - median) * w
-        p_impurity_left[0] = imp_left / (self.weighted_n_left * 
+        p_impurity_left[0] = impurity_left / (self.weighted_n_left * 
                                          self.n_outputs)
 
         for k in range(self.n_outputs):
@@ -1304,7 +1304,7 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 impurity_right += fabs(y_ik - median) * w
-        p_impurity_right[0] = imp_right / (self.weighted_n_right * 
+        p_impurity_right[0] = impurity_right / (self.weighted_n_right * 
                                            self.n_outputs)
 
 
