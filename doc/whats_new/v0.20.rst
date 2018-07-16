@@ -774,7 +774,6 @@ Metrics
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-<<<<<<< HEAD
 - In :func:`metrics.normalized_mutual_information_score` and
   :func:`metrics.adjusted_mutual_information_score`, 
   warn that ``average_method``
@@ -786,13 +785,11 @@ Metrics
   version 0.19.
   :issue:`11124` by :user:`Arya McCarthy <aryamccarthy>`.
 
-=======
 - The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
   and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
   v0.22.  It no longer has any effect, as batch size is determined by global
   ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
->>>>>>> master
 
 Cluster
 
