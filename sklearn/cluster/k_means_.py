@@ -233,17 +233,19 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         False : never precompute distances
 
     n_init : int, optional, default: 10
+        .. versionchanged:: 0.22
+           n_init default version changed from 10 to 1
+
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia. Note the defaul value will
-        be changed to 1 in 0.22.
+        n_init consecutive runs in terms of inertia.
 
     max_iter : int, optional, default 300
         Maximum number of iterations of the k-means algorithm to run.
 
     verbose : boolean, optional
         Verbosity mode.
-n_init=10
+
     tol : float, optional
         The relative increment in the results before declaring convergence.
 
@@ -914,7 +916,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=1, algorithm='auto'):
-
         self.n_clusters = n_clusters
         self.init = init
         self.max_iter = max_iter
@@ -926,10 +927,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.copy_x = copy_x
         self.n_jobs = n_jobs
         self.algorithm = algorithm
-        if n_init == 'warn':
-            warnings.warn("The default value of n_init will change from "
-                          "10 to 1 in 0.22", FutureWarning)
-            n_init = 10
+
 
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
@@ -959,6 +957,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             are assigned equal weight (default: None)
 
         """
+        if self.n_init == 'warn':
+            warnings.warn("The default value of n_init will change from "
+                          "10 to 1 in 0.22", FutureWarning)
+            self.n_init = 10
+
         random_state = check_random_state(self.random_state)
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \

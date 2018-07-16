@@ -990,14 +990,12 @@ def test_iter_attribute():
     assert estimator.n_iter_ == 1
 
 
-def test_deprecation_warnings():
-    # Test that warnings are raised. Will be removed in 0.22
+def test_change_n_init_future_warning():
+    # FIXME: Remove this test in 0.22
 
-    # When n_init is specified (no warning)
     km = KMeans(n_init=1)
     assert_no_warnings(km.fit, X)
 
-    # When n_init is not specified (warns)
     msg_future = "The default value of n_init will change from 10 to 1 in 0.22"
     km = KMeans()
     assert_warns_message(FutureWarning, msg_future, km.fit, X)
