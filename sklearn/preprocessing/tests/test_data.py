@@ -873,6 +873,30 @@ def test_scaler_without_copy():
     assert_array_equal(X_csc.toarray(), X_csc_copy.toarray())
 
 
+def test_scaler_partial_fit_overflow():
+    # Test StandardScaler does not overflow in partial_fit #5602
+    rng = np.random.RandomState(0)
+
+    def gen_1d_uniform_batch(min_, max_, n):
+        return rng.uniform(min_, max_, size=(n, 1))
+
+    max_f = np.finfo(np.float64).max / 1e5
+    min_f = max_f / 1e2
+    stream_dim = 100
+    batch_dim = 500000
+
+    X = gen_1d_uniform_batch(min_=min_f, max_=min_f, n=batch_dim)
+
+    scaler = StandardScaler(with_std=False).fit(X)
+
+    iscaler = StandardScaler(with_std=False)
+    batch = gen_1d_uniform_batch(min_=min_f, max_=min_f, n=batch_dim)
+    for _ in range(stream_dim):
+        iscaler = iscaler.partial_fit(batch)
+
+    assert_allclose(iscaler.mean_, scaler.mean_)
+
+
 def test_scale_sparse_with_mean_raise_exception():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)

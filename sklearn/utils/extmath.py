@@ -696,13 +696,15 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
-    last_sum = last_mean * last_sample_count
     new_sum = np.nansum(X, axis=0)
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
 
-    updated_mean = (last_sum + new_sum) / updated_sample_count
+    new_mean = new_sum / new_sample_count
+    delta = new_mean - last_mean
+    updated_mean = \
+        last_mean + (delta * new_sample_count) / updated_sample_count
 
     if last_variance is None:
         updated_variance = None
@@ -710,6 +712,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
         new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
         last_unnormalized_variance = last_variance * last_sample_count
 
+        last_sum = last_mean * last_sample_count
         with np.errstate(divide='ignore', invalid='ignore'):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
