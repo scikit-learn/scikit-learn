@@ -310,17 +310,9 @@ to map data from any distribution to as close to a Gaussian distribution as
 possible in order to stabilize variance and minimize skewness.
 
 :class:`PowerTransformer` currently provides two such power transformations,
-the Box-Cox transform and the Yeo-Johnson transform. The Box-Cox transform is
-given by:
+the Yeo-Johnson transform and the Box-Cox transform.
 
-.. math::
-    x_i^{(\lambda)} =
-    \begin{cases}
-    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
-    \ln{(x_i)} & \text{if } \lambda = 0,
-    \end{cases}
-
-while the Yeo-Johnson is given by:
+The Yeo-Johnson transform is given by:
 
 .. math::
     x_i^{(\lambda)} =
@@ -330,6 +322,16 @@ while the Yeo-Johnson is given by:
     -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
+
+while the Box-Cox transform is given by:
+
+.. math::
+    x_i^{(\lambda)} =
+    \begin{cases}
+    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+    \ln{(x_i)} & \text{if } \lambda = 0,
+    \end{cases}
+
 
 Box-Cox can only be applied to strictly positive data. In both methods, the
 transformation is parameterized by :math:`\lambda`, which is determined through
@@ -357,8 +359,8 @@ transforms achieve very Gaussian-like results, but with others, they are
 ineffective. This highlights the importance of visualizing the data before and
 after transformation.
 
-.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_power_transformer_001.png
-   :target: ../auto_examples/preprocessing/plot_power_transformer.html
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_map_data_to_normal_001.png
+   :target: ../auto_examples/preprocessing/map_data_to_normal.html
    :align: center
    :scale: 100
 

@@ -2415,8 +2415,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     method : str, (default='yeo-johnson')
         The power transform method. Available methods are:
 
-        - 'box-cox' :ref:`(ref) <box_cox_paper_ref>`
-        - 'yeo-johnson' :ref:`(ref) <yeo_johnson_paper_ref>`
+        - 'yeo-johnson' [1]_, works with postive and negative values
+        - 'box-cox' [2]_, only works with strictly positive values
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
@@ -2464,15 +2464,12 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     References
     ----------
 
-    .. _box_cox_paper_ref:
+    .. [1] I.K. Yeo and R.A. Johnson, "A new family of power transformations to
+           improve normality or symmetry." Biometrika, 87(4), pp.954-959,
+           (2000).
 
-    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
-    Royal Statistical Society B, 26, 211-252 (1964).
-
-    .. _yeo_johnson_paper_ref:
-
-    I.K. Yeo and R.A. Johnson, "A new family of power transformations to
-    improve normality or symmetry." Biometrika, 87(4), pp.954-959, (2000).
+    .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
+           of the Royal Statistical Society B, 26, 211-252 (1964).
     """
     def __init__(self, method='yeo-johnson', standardize=True, copy=True):
         self.method = method
@@ -2601,7 +2598,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
         """
-        x_inv = np.zeros(x.shape)
+        x_inv = np.zeros(x.shape, dtype=x.dtype)
         pos = x >= 0
 
         # when x >= 0
@@ -2624,8 +2621,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         parameter lambda.
         """
 
-        out = np.zeros(shape=x.shape)
-        pos = (x >= 0)  # binary mask
+        out = np.zeros(shape=x.shape, dtype=x.dtype)
+        pos = x >= 0  # binary mask
 
         # Note: we're comparing lmbda to 1e-19 instead of strict equality to 0.
         # See scipy/special/_boxcox.pxd for a rationale behind this
@@ -2660,18 +2657,18 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """Find and return optimal lambda parameter of the Yeo-Johnson
         transform by MLE, for observed data x.
 
-        Like for coxbox, MLE is done via the brent optimizer.
+        Like for Box-Cox, MLE is done via the brent optimizer.
         """
 
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
-            transformed = self._yeo_johnson_transform(x, lmbda)
+            x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
 
             # Estimated mean and variance of the normal distribution
-            est_mean = transformed.sum() / n_samples
-            est_var = np.power(transformed - est_mean, 2).sum() / n_samples
+            est_mean = x_trans.sum() / n_samples
+            est_var = np.power(x_trans - est_mean, 2).sum() / n_samples
 
             loglike = -n_samples / 2 * np.log(est_var)
             loglike += (lmbda - 1) * (np.sign(x) * np.log(np.abs(x) + 1)).sum()
