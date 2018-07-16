@@ -154,7 +154,7 @@ They can be loaded using the following functions:
 
 .. include:: ./kddcup99.rst
 
-.. _generated_datasets:
+.. _sample_generators:
 
 Generated datasets
 ==================

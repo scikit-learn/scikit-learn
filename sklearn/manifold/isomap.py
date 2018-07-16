@@ -173,7 +173,7 @@ class Isomap(BaseEstimator, TransformerMixin):
             numpy array, precomputed tree, or NearestNeighbors
             object.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -191,7 +191,7 @@ class Isomap(BaseEstimator, TransformerMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
