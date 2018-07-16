@@ -838,3 +838,25 @@ def test_sampling_sparse():
     imputer.fit(X.toarray())
     with pytest.raises(ValueError, match="Provide a dense array"):
         imputer.transform(X)
+
+
+@pytest.mark.parametrize("imputer_constructor",
+                         [SimpleImputer, ChainedImputer])
+@pytest.mark.parametrize(
+    "imputer_missing_values, missing_value, err_msg",
+    [("NaN", np.nan, "Input contains NaN"),
+     ("-1", -1, "types are expected to be both numerical.")])
+def test_inconsistent_dtype_X_missing_values(imputer_constructor,
+                                             imputer_missing_values,
+                                             missing_value,
+                                             err_msg):
+    # regression test for issue #11390. Comparison between incoherent dtype
+    # for X and missing_values was not raising a proper error.
+    rng = np.random.RandomState(42)
+    X = rng.randn(10, 10)
+    X[0, 0] = missing_value
+
+    imputer = imputer_constructor(missing_values=imputer_missing_values)
+
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.fit_transform(X)
