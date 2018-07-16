@@ -1697,6 +1697,14 @@ def test_mae():
     # on small toy dataset
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
+
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3], np.ones(5))
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
+    assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
+
+    # Not providing a `sample_weight` should create a tree equivalent
+    # to having a `sample_weight` where all weights are 1 i.e.,
+    # we should get the same tree created as the above test:  
     dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
