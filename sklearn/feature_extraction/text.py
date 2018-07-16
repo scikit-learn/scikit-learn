@@ -744,7 +744,28 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
           - occurred in too few documents (`min_df`)
           - were cut off by feature selection (`max_features`).
 
-        This is only available if no vocabulary was given.
+        This is only available if no vocabulary was given 123123.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction import text
+    >>> vect = text.CountVectorizer()
+    >>> X = ['learning machine learning in python']
+    >>> vect.fit(X)
+    CountVectorizer(analyzer=u'word', binary=False, decode_error=u'strict',
+        dtype=<type 'numpy.int64'>, encoding=u'utf-8', input=u'content',
+        lowercase=True, max_df=1.0, max_features=None, min_df=1,
+        ngram_range=(1, 1), preprocessor=None, stop_words=None,
+        strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
+        tokenizer=None, vocabulary=None)
+    >>> vect.fit_transform(X)
+    <1x4 sparse matrix of type '<type 'numpy.int64'>'
+    with 4 stored elements in Compressed Sparse Row format>
+    >>> print(vect.fit_transform(X))
+    (0, 1)	2
+    (0, 2)	1
+    (0, 0)	1
+    (0, 3)	1
 
     See also
     --------
@@ -1376,6 +1397,28 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction import text
+    >>> vect = text.TfidfVectorizer()
+    >>> X = ['learning machine learning in python']
+    >>> vect.fit(X)
+    TfidfVectorizer(analyzer=u'word', binary=False, decode_error=u'strict',
+        dtype=<type 'numpy.int64'>, encoding=u'utf-8', input=u'content',
+        lowercase=True, max_df=1.0, max_features=None, min_df=1,
+        ngram_range=(1, 1), norm=u'l2', preprocessor=None, smooth_idf=True,
+        stop_words=None, strip_accents=None, sublinear_tf=False,
+        token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, use_idf=True,
+        vocabulary=None)
+    >>> vect.fit_transform(X)
+    <1x4 sparse matrix of type '<type 'numpy.float64'>'
+    with 4 stored elements in Compressed Sparse Row format>
+    >>> print(vect.fit_transform(X))
+    (0, 3)	0.377964473009
+    (0, 0)	0.377964473009
+    (0, 2)	0.377964473009
+    (0, 1)	0.755928946018
 
     See also
     --------
