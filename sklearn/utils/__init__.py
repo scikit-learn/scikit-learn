@@ -15,8 +15,8 @@ from .validation import (as_float_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
-from ..externals.joblib import cpu_count, Parallel, Memory, delayed
-from ..externals.joblib import parallel_backend
+from ._joblib import cpu_count, Parallel, Memory, delayed
+from ._joblib import parallel_backend
 from ..exceptions import DataConversionWarning
 from ..utils.fixes import _Sequence as Sequence
 from .deprecation import deprecated
