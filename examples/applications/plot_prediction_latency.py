@@ -285,7 +285,7 @@ configuration = {
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',
-         'instance': RandomForestRegressor(),
+         'instance': RandomForestRegressor(n_estimators=100),
          'complexity_label': 'estimators',
          'complexity_computer': lambda clf: clf.n_estimators},
         {'name': 'SVR',
