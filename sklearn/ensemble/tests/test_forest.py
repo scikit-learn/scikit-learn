@@ -1235,6 +1235,7 @@ def test_min_impurity_decrease():
                          [RandomForestClassifier, RandomForestRegressor,
                           ExtraTreesClassifier, ExtraTreesRegressor,
                           RandomTreesEmbedding])
+@pytest.mark.filterwarnings('ignore:default value of n_estimators')
 def test_nestimators_future_warning(forest):
     # FIXME: to be removed 0.22
 
