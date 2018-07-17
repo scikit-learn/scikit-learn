@@ -119,7 +119,7 @@ clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
 colors = ['navy', 'cyan', 'darkorange']
 lw = 2
 
-for fignum, (clf, cs, X, y) in enumerate(clf_sets):
+for clf, cs, X, y in clf_sets:
     # set up the plot for each regressor
     fig, axes = plt.subplots(nrows=2, sharey=True, figsize=(9, 10))
 
