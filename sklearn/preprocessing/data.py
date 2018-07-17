@@ -2621,8 +2621,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
 
-        Note
-        ----
+        Notes
+        -----
         We're comparing lmbda to 1e-19 instead of strict equality to 0. See
         scipy/special/_boxcox.pxd for a rationale behind this
         """
@@ -2648,8 +2648,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
 
-        Note
-        ----
+        Notes
+        -----
         We're comparing lmbda to 1e-19 instead of strict equality to 0. See
         scipy/special/_boxcox.pxd for a rationale behind this
         """
@@ -2721,7 +2721,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         check_positive : bool
             If True, check that all data is positive and non-zero (only if
-            self.method is box-cox).
+            ``self.method=='box-cox'``).
 
         check_shape : bool
             If True, check that n_features matches the length of self.lambdas_
