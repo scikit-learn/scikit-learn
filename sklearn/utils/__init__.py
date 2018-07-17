@@ -29,7 +29,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
-           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend"]
+           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
+           "hash"]
 
 
 class Bunch(dict):
