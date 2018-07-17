@@ -2495,30 +2495,30 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """
         X = self._check_input(X, check_positive=True, check_method=True)
 
-        self.lambdas_ = []
-        transformed = []
-
         optim_function = {'box-cox': self._box_cox_optimize,
                           'yeo-johnson': self._yeo_johnson_optimize
                           }[self.method]
-        transform_function = {'box-cox': boxcox,
-                              'yeo-johnson': self._yeo_johnson_transform
-                              }[self.method]
-
+        self.lambdas_ = []
         for col in X.T:
             with np.errstate(invalid='ignore'):  # hide NaN warnings
                 lmbda = optim_function(col)
                 self.lambdas_.append(lmbda)
-
-                col_trans = transform_function(col, lmbda)
-                transformed.append(col_trans)
-
         self.lambdas_ = np.array(self.lambdas_)
-        transformed = np.array(transformed)
 
         if self.standardize:
+            transform_function = {'box-cox': boxcox,
+                                  'yeo-johnson': self._yeo_johnson_transform
+                                  }[self.method]
+            transformed = []
+            for col, lmbda in zip(X.T, self.lambdas_):
+                with np.errstate(invalid='ignore'):  # hide NaN warnings
+                    col_trans = transform_function(col, lmbda)
+                    transformed.append(col_trans)
+            transformed = np.array(transformed)
+
             self._scaler = StandardScaler()
             self._scaler.fit(X=transformed.T)
+
 
         return self
 
@@ -2529,6 +2529,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             The data to be transformed using a power transformation.
+
+        Returns
+        -------
+        X_trans : array-like, shape (n_samples, n_features)
+            The transformed data.
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_positive=True, check_shape=True)
@@ -2688,7 +2693,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing backet -2, 2 like for boxcox
+        # choosing bracket -2, 2 like for boxcox
         return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
 
     def _check_input(self, X, check_positive=False, check_shape=False,
@@ -2700,7 +2705,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
 
         check_positive : bool
-            If True, check that all data is positive and non-zero.
+            If True, check that all data is positive and non-zero (only if
+            self.method is box-cox).
 
         check_shape : bool
             If True, check that n_features matches the length of self.lambdas_

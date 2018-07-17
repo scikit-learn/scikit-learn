@@ -2077,7 +2077,7 @@ def test_power_transformer_2d():
 
 def test_power_transformer_boxcox_strictly_positive_exception():
     # Exceptions should be raised for negative arrays and zero arrays when
-    # method is coxbox
+    # method is boxcox
 
     pt = PowerTransformer(method='box-cox')
     pt.fit(np.abs(X_2d))
