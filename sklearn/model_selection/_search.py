@@ -735,7 +735,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 means_weighted = np.average(scores, axis=1,
                                             weights=test_sample_counts)
                 means_unweighted = np.average(scores, axis=1)
-                if not np.allclose(means_weighted, means_unweighted, rtol=1e-4, atol=1e-4):
+                if not np.allclose(means_weighted, means_unweighted,
+                                   rtol=1e-4, atol=1e-4):
                     warn = True
                     continue
 
