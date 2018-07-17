@@ -333,7 +333,7 @@ Preprocessing
 - :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale`
   can be fitted using sparse matrices.
   :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -900,6 +900,13 @@ Preprocessing
 - In :class:`preprocessing.FunctionTransformer`, the default of ``validate``
   will be from ``True`` to ``False`` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+Model selection
+
+- The default number of cross-validation folds ``cv`` and the default number of
+  splits ``n_splits`` in the :class:`model_selection.KFold`-like splitters will change
+  from 3 to 5 in 0.22 to account for good practice in the community.
+  :issue:`11129` by :user:`Alexandre Boucaud <aboucaud>`.
 
 Changes to estimator checks
 ---------------------------
