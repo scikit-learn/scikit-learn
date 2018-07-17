@@ -18,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
-                     gen_batches, _get_n_jobs)
+                     gen_batches, _get_n_jobs, safe_repr)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -515,8 +515,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     MiniBatchSparsePCA
     """
     if method not in ('lars', 'cd'):
-        raise ValueError('Coding method %r not supported as a fit algorithm.'
-                         % method)
+        raise ValueError('Coding method %s not supported as a fit algorithm.'
+                         % safe_repr(method))
     method = 'lasso_' + method
 
     t0 = time.time()
