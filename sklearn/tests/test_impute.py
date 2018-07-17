@@ -484,7 +484,7 @@ def test_imputation_copy():
     imputer = SamplingImputer(missing_values=X.data[0], copy=True)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert_false(np.all(X.data == Xt.data))
+    assert_false(X.data[0] == Xt.data[0])
 
     # copy=False, dense => no copy
     X = X_orig.copy().toarray()
@@ -522,10 +522,7 @@ def test_imputation_copy():
     imputer = SamplingImputer(missing_values=X.data[0], copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert_false(np.all(X.data == Xt.data))
-
-    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
-    # made, even if copy=False.
+    assert_false(X.data[0] == Xt.data[0])
 
 
 @pytest.mark.parametrize(
