@@ -198,13 +198,14 @@ THRESHOLDED_METRICS = {
 
     "brier_score_loss": brier_score_loss,
 
-    "roc_auc_score": roc_auc_score,
+    "roc_auc_score": roc_auc_score,  # default: average="macro"
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
     "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
-    "average_precision_score": average_precision_score,
+    "average_precision_score":
+    average_precision_score,  # default: average="macro"
     "weighted_average_precision_score":
     partial(average_precision_score, average="weighted"),
     "samples_average_precision_score":
