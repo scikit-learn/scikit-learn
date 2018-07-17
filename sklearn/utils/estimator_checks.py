@@ -583,8 +583,8 @@ def check_sample_weights_invariance(name, estimator_orig):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
                 assert_allclose(X_pred1, X_pred2, rtol=0.5,
-                                err_msg="For %s sample_weight=None is not equivalent"
-                                        " to sample_weight=ones" % name)
+                    err_msg="For %s sample_weight=None is not equivalent"
+                            " to sample_weight=ones" % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
