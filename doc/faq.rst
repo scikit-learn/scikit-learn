@@ -179,9 +179,10 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <http://pypy.org/>`_ is the new, fast,
-just-in-time compiling Python implementation. Experimental support for
-PyPy3-v5.10+ has been added, which require Numpy 1.14.0+, and scipy 1.1.0+.
+In case you didn't know, `PyPy <http://pypy.org/>`_ is an alternative
+Python implementation with a built-in just-in-time compiler. Experimental
+support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
+and scipy 1.1.0+.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------
