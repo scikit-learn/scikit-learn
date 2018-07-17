@@ -25,8 +25,56 @@ _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
 _DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
 
 
+def _get_json_content_from_openml_api(url, error_message, raise_if_error):
+    """
+    Loads json data from the openml api
+
+    Parameters
+    ----------
+    url : str
+        The URL to load from. Should be an official OpenML endpoint
+
+    error_message : str
+        The error message to raise if an acceptable OpenML error is thrown
+        (acceptable error is, e.g., data id not found. Other errors, like 404's
+        will throw the native error message)
+
+    raise_if_error : bool
+        Whether to raise an error if OpenML returns an acceptable error (e.g.,
+        date not found). If this argument is set to False, a None is returned in
+        case of acceptable errors. Note that all other errors (e.g., 404) will
+        still be raised as normal.
+
+    Returns
+    -------
+    json_data : json or None
+        the json result from the OpenML server if the call was successful;
+        None otherwise iff raise_if_error was set to False and the error was
+        ``acceptable``
+    """
+    data_found = True
+    try:
+        response = urlopen(url)
+    except HTTPError as error:
+        # 412 is an OpenML specific error code, indicating a generic error
+        # (e.g., data not found)
+        if error.code == 412:
+            data_found = False
+        else:
+            raise error
+    if not data_found:
+        # not in except for nicer traceback
+        if raise_if_error:
+            raise ValueError(error_message)
+        else:
+            return None
+    json_data = json.loads(response.read().decode("utf-8"))
+    response.close()
+    return json_data
+
+
 def _openml_fileid_url(file_id):
-    return "https://www.openml.org/data/v1/download/{}/".format(file_id)
+    return "https://openml.org/data/v1/download/{}/".format(file_id)
 
 
 def _convert_arff_data(arff_data):
@@ -116,38 +164,16 @@ def _get_data_info_by_name(name, version):
 
 
 def _get_data_description_by_id(data_id):
-    data_found = True
-    try:
-        response = urlopen(_DATA_INFO.format(data_id))
-    except HTTPError as error:
-        if error.code == 412:
-            data_found = False
-    if not data_found:
-        # not in except for nicer traceback
-        raise ValueError("Dataset with id {} "
-                         "not found.".format(data_id))
-    json_data = json.loads(response.read().decode("utf-8"))
-    response.close()
+    url = _DATA_INFO.format(data_id)
+    error_message = "Dataset with id {} not found.".format(data_id)
+    json_data = _get_json_content_from_openml_api(url, error_message, True)
     return json_data['data_set_description']
 
 
 def _get_data_features(data_id):
-    data_found = True
-    try:
-        response = urlopen(_DATA_FEATURES.format(data_id))
-    except HTTPError as error:
-        # 412 is an OpenML specific error code, indicating a generic error
-        # (e.g., data not found)
-        if error.code == 412:
-            data_found = False
-        else:
-            raise error
-    if not data_found:
-        # not in except for nicer traceback
-        raise ValueError("Dataset with id {} "
-                         "not found.".format(data_id))
-    json_data = json.loads(response.read().decode("utf-8"))
-    response.close()
+    url = _DATA_FEATURES.format(data_id)
+    error_message = "Dataset with id {} not found.".format(data_id)
+    json_data = _get_json_content_from_openml_api(url, error_message, True)
     return json_data['data_features']['feature']
 
 
@@ -172,7 +198,7 @@ def _convert_numericals(data, name_feature):
     return data
 
 
-def fetch_openml(name=None, version='active', id=None, data_home=None,
+def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column_name='default-target', cache=True):
     """Fetch dataset from openml by name or dataset id.
 
@@ -192,9 +218,9 @@ def fetch_openml(name=None, version='active', id=None, data_home=None,
         Version of the dataset. Can only be provided if also ``name`` is given.
         If 'active' the oldest version that's still active is used.
 
-    id : int
+    data_id : int
         OpenML ID of the dataset. The most specific way of retrieving a
-        dataset. If ID is not given, name (and potential version) are
+        dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
 
     data_home : string or None, default None
@@ -235,25 +261,27 @@ def fetch_openml(name=None, version='active', id=None, data_home=None,
     if not exists(data_home):
         os.makedirs(data_home)
 
-    # check legal function arguments. id XOR (name, version) should be provided
+    # check legal function arguments. data_id XOR (name, version) should be
+    # provided
     if name is not None:
-        if id is not None:
+        if data_id is not None:
             raise ValueError(
-                "Dataset id={} and name={} passed, but you can only "
-                "specify a numeric id or a name, not both.".format(id, name))
+                "Dataset data_id={} and name={} passed, but you can only "
+                "specify a numeric data_id or a name, not both.".format(data_id,
+                                                                        name))
         data_info = _get_data_info_by_name_(name, version)
         data_id = data_info['did']
-    elif id is not None:
+    elif data_id is not None:
         # from the previous if statement, it is given that name is None
         if version is not "active":
             raise ValueError(
-                "Dataset id={} and version={} passed, but you can only "
-                "specify a numeric id or a version, not both.".format(id,
-                                                                      name))
-        data_id = id
+                "Dataset data_id={} and version={} passed, but you can only "
+                "specify a numeric data_id or a version, not "
+                "both.".format(data_id, name))
     else:
         raise ValueError(
-            "Neither name nor id are provided. Please provide name or id.")
+            "Neither name nor data_id are provided. Please provide name or "
+            "data_id.")
 
     data_description = _get_data_description_by_id_(data_id)
     if data_description['status'] != "active":

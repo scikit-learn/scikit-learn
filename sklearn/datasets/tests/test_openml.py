@@ -7,9 +7,9 @@ import scipy.sparse
 import sklearn
 
 from sklearn.datasets import fetch_openml
+from sklearn.datasets.openml import _get_data_features
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-from sklearn.externals.arff import load
 from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
@@ -35,7 +35,7 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     # will be the same
 
     # fetch with dataset id
-    data_by_id = fetch_openml(id=data_id, cache=False)
+    data_by_id = fetch_openml(data_id=data_id, cache=False)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     assert data_by_id.target.shape == (expected_observations, )
@@ -44,11 +44,10 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     else:
         assert isinstance(data_by_id.data, np.ndarray)
 
-    # check numeric features. Be sure to call to the mocked version, because
-    # urlopen is also mocked.
+    # check numeric features. Note that the response of _get_data_features is
+    # mocked too.
     feature_name_type = {feature['name']: feature['data_type']
-                         for feature in
-                         sklearn.datasets.openml._get_data_features(data_id)}
+                         for feature in _get_data_features(data_id)}
     for idx, feature_name in enumerate(data_by_id.feature_names):
         if feature_name_type[feature_name] == 'numeric':
             # casting trick according to Jaime at
@@ -67,31 +66,37 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
 
 def _monkey_patch_webbased_functions(context, data_id):
     testdir_path = os.path.dirname(os.path.realpath(__file__))
+    url_prefix_data_description = "https://openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
+    url_prefix_download_data = "https://openml.org/data/v1/"
+    url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
 
-    def _mock_data_description(id):
+    def _mock_urlopen_data_description(url):
+        assert (url.startswith(url_prefix_data_description))
+
         path = os.path.join(testdir_path,
-                            'mock_openml/%d/data_description.json' % id)
-        description = open(path, 'r').read()
-        return json.loads(description)['data_set_description']
+                            'mock_openml/%d/data_description.json' % data_id)
+        return urlopen('file://' + path)
 
-    def _mock_data_features(id):
+    def _mock_urlopen_data_features(url):
+        assert (url.startswith(url_prefix_data_features))
+
         path = os.path.join(testdir_path,
-                            'mock_openml/%d/data_features.json' % id)
-        features = open(path, 'r').read()
-        return json.loads(features)['data_features']['feature']
+                            'mock_openml/%d/data_features.json' % data_id)
+        return urlopen('file://' + path)
 
-    def _mock_download_data(_):
+    def _mock_urlopen_download_data(url):
+        assert (url.startswith(url_prefix_download_data))
+
         path = os.path.join(testdir_path, 'mock_openml/%d/data.arff' % data_id)
-        arff_fp = open(path, 'r').read()
-        return load(arff_fp)
+        return urlopen('file://' + path)
 
-    def _mock_urlopen(url):
+    def _mock_urlopen_data_list(url):
         # url contains key value pairs of attributes, e.g.,
         # openml.org/api/v1/json/data_name/iris/data_version/1 should
         # ideally become {data_name: 'iris', data_version: '1'}
-        api_prefix = "https://openml.org/api/v1/json/data/list/"
-        assert(url.startswith(api_prefix))
-        att_list = url[len(api_prefix):].split('/')
+        assert(url.startswith(url_prefix_data_list))
+        att_list = url[len(url_prefix_data_list):].split('/')
         key_val_dict = dict(zip(att_list[::2], att_list[1::2]))
         # add defaults, so we can make assumptions about the content
         if 'data_version' not in key_val_dict:
@@ -111,14 +116,19 @@ def _monkey_patch_webbased_functions(context, data_id):
                             hdrs=None, fp=None)
         return urlopen('file://' + json_file_path)
 
-    context.setattr(sklearn.datasets.openml,
-                    '_get_data_description_by_id',
-                    _mock_data_description)
-    context.setattr(sklearn.datasets.openml,
-                    '_get_data_features',
-                    _mock_data_features)
-    context.setattr(sklearn.datasets.openml, '_download_data',
-                    _mock_download_data)
+    def _mock_urlopen(url):
+        if url.startswith(url_prefix_data_list):
+            return _mock_urlopen_data_list(url)
+        elif url.startswith(url_prefix_data_features):
+            return _mock_urlopen_data_features(url)
+        elif url.startswith(url_prefix_download_data):
+            return _mock_urlopen_download_data(url)
+        elif url.startswith(url_prefix_data_description):
+            return _mock_urlopen_data_description(url)
+        else:
+            raise ValueError('Unknown mocking URL pattern (this should never ' +
+                             'happen): %s' % url)
+
     context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
 
 
@@ -211,12 +221,12 @@ def test_fetch_openml_inactive(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        id=data_id, cache=False)
+        data_id=data_id, cache=False)
     # fetch inactive dataset by name and version
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        id=None, name="glass2", version=1, cache=False)
+        data_id=None, name="glass2", version=1, cache=False)
     assert int(glas2_by_version.details['id']) == data_id
 
 
@@ -226,18 +236,19 @@ def test_fetch_nonexiting(monkeypatch):
     data_id = 40675
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
-                         fetch_openml, id=None, name='glass2', cache=False)
+                         fetch_openml, data_id=None, name='glass2', cache=False)
 
 
 def test_fetch_openml_raises_illegal_argument():
-    assert_raise_message(ValueError, "Dataset id=",
-                         fetch_openml, id=-1, name="name")
+    assert_raise_message(ValueError, "Dataset data_id=",
+                         fetch_openml, data_id=-1, name="name")
 
-    assert_raise_message(ValueError, "Dataset id=",
-                         fetch_openml, id=-1, name=None, version="version")
+    assert_raise_message(ValueError, "Dataset data_id=",
+                         fetch_openml, data_id=-1, name=None, version="version")
 
-    assert_raise_message(ValueError, "Dataset id=",
-                         fetch_openml, id=-1, name="name", version="version")
+    assert_raise_message(ValueError, "Dataset data_id=",
+                         fetch_openml, data_id=-1, name="name",
+                         version="version")
 
-    assert_raise_message(ValueError, "Neither name nor id are provided. " +
-                         "Please provide name or id.", fetch_openml)
+    assert_raise_message(ValueError, "Neither name nor data_id are provided. " +
+                         "Please provide name or data_id.", fetch_openml)

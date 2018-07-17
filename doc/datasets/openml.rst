@@ -58,16 +58,16 @@ and ``details`` attributes::
 The ``DESCR`` contains a free-text description of the data, while ``details``
 contains a dictionary of meta-data stored by openml, like the dataset id.
 For more details, see the `OpenML documentation <https://docs.openml.org/#data>`_
-The id of the mice protein dataset is 40966, and you can use this (or the name)
-to get more information on the dataset on the openml website::
+The ``data_id`` of the mice protein dataset is 40966, and you can use this (or
+the name) to get more information on the dataset on the openml website::
 
   >>> mice.url
   'https://www.openml.org/d/40966'
 
-The id is also the most specific way to specify how to fetch a dataset from
+The ``data_id`` is also the most specific way to specify how to fetch a dataset from
 OpenML::
 
-  >>> mice = fetch_openml(id=40966)
+  >>> mice = fetch_openml(data_id=40966)
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -85,7 +85,7 @@ OpenML::
 Dataset Versions
 ----------------
 
-A dataset is uniquely specified by its id, but not necessarily by its name.
+A dataset is uniquely specified by its ``data_id``, but not necessarily by its name.
 Several different "versions" of a dataset with the same name can exist which can contain
 entirely different datasets.
 If a particular version of a dataset has been found to contain significant
@@ -93,7 +93,7 @@ issues, it might be inactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
 ``fetch_openml(name="miceprotein")`` can yield different results at different
 times if earlier versions become inactive.
-You can see that the dataset with id 40966 that we fetched above is the version 1
+You can see that the dataset with ``data_id`` 40966 that we fetched above is the version 1
 of the "miceprotein" dataset::
 
   >>> mice.details['version']  #doctest: +SKIP
@@ -108,21 +108,21 @@ has multiple versions::
   >>> iris.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_61 = fetch_openml(id=61)
+  >>> iris_61 = fetch_openml(data_id=61)
   >>> iris_61.details['version']
   '1'
   >>> iris_61.details['id']
   '61'
 
-  >>> iris_969 = fetch_openml(id=969)
+  >>> iris_969 = fetch_openml(data_id=969)
   >>> iris_969.details['version']
   '3'
   >>> iris_969.details['id']
   '969'
 
-Specifying the dataset by the name "iris" yields the lowest version, version 1, with the id 61.
-To make sure you always get this exact dataset, it is safest to specify it by the dataset id.
-The other dataset, with id 969, is version 3 (version 2 has become inactive), and contains
+Specifying the dataset by the name "iris" yields the lowest version, version 1, with the ``data_id`` 61.
+To make sure you always get this exact dataset, it is safest to specify it by the dataset ``data_id``.
+The other dataset, with ``data_id`` 969, is version 3 (version 2 has become inactive), and contains
 a binarized version of the data::
 
   >>> np.unique(iris_969.target)
