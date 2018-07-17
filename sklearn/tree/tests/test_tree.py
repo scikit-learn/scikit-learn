@@ -1708,17 +1708,17 @@ def test_mae():
     |sum wt:|  2.3   |
     ------------------
 
-    Because we are dealing with sample weights, we cannot find the median by 
-    simply choosing/averaging the centre value(s), instead we consider the 
+    Because we are dealing with sample weights, we cannot find the median by
+    simply choosing/averaging the centre value(s), instead we consider the
     median where 50% of the cumulative weight is found (in a y sorted data set)
-    . Therefore with regards to this test data, the cumulative weight is >= 50% 
+    . Therefore with regards to this test data, the cumulative weight is >= 50%
     when y = 4.  Therefore:
     Median = 4
 
     For all the samples, we can get the total error by summing:
     Absolute(Median - y) * weight
 
-    I.e., total error = (Absolute(4 - 3) * 0.1) 
+    I.e., total error = (Absolute(4 - 3) * 0.1)
                       + (Absolute(4 - 3) * 0.3)
                       + (Absolute(4 - 4) * 1.0)
                       + (Absolute(4 - 6) * 0.6)
@@ -1746,7 +1746,7 @@ def test_mae():
 
     Impurity is found in the same way:
     Left node Median = 6
-    Total error = (Absolute(6 - 3) * 0.1) 
+    Total error = (Absolute(6 - 3) * 0.1)
                 + (Absolute(6 - 6) * 0.6)
                 = 0.3
 
@@ -1760,7 +1760,7 @@ def test_mae():
     Total error = (Absolute(4 - 3) * 0.3)
                 + (Absolute(4 - 4) * 1.0)
                 + (Absolute(4 - 7) * 0.3)
-                = 1.2 
+                = 1.2
 
     Right Impurity = Total error / total weight
             = 1.2 / 1.6
