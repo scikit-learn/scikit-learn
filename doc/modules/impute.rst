@@ -62,9 +62,9 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
     >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
-    [[3.          2.        ]
-     [6.          3.        ]
-     [7.          6.        ]]
+    [[3. 2.]
+     [6. 3.]
+     [7. 6.]]
 
 Note that this format is not meant to be used to implicitly store missing values
 in the matrix because it would densify it at transform time. Missing values encoded
