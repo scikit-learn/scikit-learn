@@ -20,7 +20,7 @@ California Housing dataset
         - Longitude     house block longitude
 
     :Missing Attribute Values: None
-               
+
 This dataset was obtained from the StatLib repository.
 http://lib.stat.cmu.edu/datasets/
 
