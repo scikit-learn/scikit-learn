@@ -27,6 +27,7 @@ from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_batches
+from ..utils import safe_repr
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..externals.joblib import Parallel
@@ -327,8 +328,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         pass
     else:
         raise ValueError("precompute_distances should be 'auto' or True/False"
-                         ", but a value of %r was passed" %
-                         precompute_distances)
+                         ", but a value of %s was passed" %
+                         safe_repr(precompute_distances))
 
     # Validate init array
     if hasattr(init, '__array__'):
