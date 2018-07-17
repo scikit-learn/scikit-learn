@@ -194,7 +194,7 @@ def test_staged_predict():
     assert_array_almost_equal(score, staged_scores[-1])
 
 
-@ignore_warnings(DeprecationWarning)  # GridSearchCV iid 0.22
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification

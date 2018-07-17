@@ -473,7 +473,7 @@ def test_lars_path_readonly_data():
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 
 
-@ignore_warnings(DeprecationWarning)  # positive deprecated, remove in 0.22
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_lars_path_positive_constraint():
     # this is the main test for the positive parameter on the lars_path method
     # the estimator classes just make use of this function

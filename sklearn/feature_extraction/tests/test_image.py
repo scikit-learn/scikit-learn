@@ -56,7 +56,7 @@ def test_grid_to_graph():
     assert_true(A.dtype == np.float64)
 
 
-@ignore_warnings(DeprecationWarning)  # scipy deprecation inside face
+@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions():
     try:
         face = sp.face(gray=True)
@@ -69,7 +69,7 @@ def test_connect_regions():
         graph = img_to_graph(face, mask)
         assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
 
-@ignore_warnings(DeprecationWarning)  # scipy deprecation inside face
+@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions_with_grid():
     try:
         face = sp.face(gray=True)

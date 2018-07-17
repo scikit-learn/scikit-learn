@@ -442,7 +442,7 @@ def check_gridsearch(name):
     clf.fit(iris.data, iris.target)
 
 
-@ignore_warnings(DeprecationWarning)  # GridSearchCV iid 0.22
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_gridsearch(name):
     # Check that base trees can be grid-searched.
