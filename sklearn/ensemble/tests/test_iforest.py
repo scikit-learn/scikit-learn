@@ -290,7 +290,7 @@ def test_deprecation():
     assert_warns_message(FutureWarning,
                          'Default "behaviour" parameter will change to "new" '
                          'in version 0.22',
-                         IsolationForest, )
+                         clf.fit, X)
 
     clf = IsolationForest().fit(X)
     assert_warns_message(DeprecationWarning,

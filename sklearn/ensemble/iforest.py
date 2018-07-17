@@ -172,13 +172,6 @@ class IsolationForest(BaseBagging, OutlierMixin):
         self.behaviour = behaviour
         self.contamination = contamination
 
-        if behaviour == 'old':
-            warnings.warn('Default "behaviour" parameter will change to "new" '
-                          'in version 0.22. Passing behaviour="new" makes '
-                          'IsolationForest decision_function change to match '
-                          'other anomaly detection algorithm API.',
-                          FutureWarning)
-
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 
@@ -207,6 +200,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
             self._contamination = 0.1
         else:
             self._contamination = self.contamination
+
+        if self.behaviour == 'old':
+            warnings.warn('Default "behaviour" parameter will change to "new" '
+                          'in version 0.22. Passing behaviour="new" makes '
+                          'IsolationForest decision_function change to match '
+                          'other anomaly detection algorithm API.',
+                          FutureWarning)
 
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
