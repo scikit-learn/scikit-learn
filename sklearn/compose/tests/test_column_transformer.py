@@ -99,6 +99,12 @@ def test_column_transformer():
         assert_array_equal(ct.fit_transform(X_array), res)
         assert_array_equal(ct.fit(X_array).transform(X_array), res)
 
+        # callable that returns any of the allowed specifiers
+        ct = ColumnTransformer([('trans', Trans(), lambda x: selection)],
+                               remainder='drop')
+        assert_array_equal(ct.fit_transform(X_array), res)
+        assert_array_equal(ct.fit(X_array).transform(X_array), res)
+
     ct = ColumnTransformer([('trans1', Trans(), [0]),
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
@@ -162,6 +168,12 @@ def test_column_transformer_dataframe():
 
     for selection, res in cases:
         ct = ColumnTransformer([('trans', Trans(), selection)],
+                               remainder='drop')
+        assert_array_equal(ct.fit_transform(X_df), res)
+        assert_array_equal(ct.fit(X_df).transform(X_df), res)
+
+        # callable that returns any of the allowed specifiers
+        ct = ColumnTransformer([('trans', Trans(), lambda X: selection)],
                                remainder='drop')
         assert_array_equal(ct.fit_transform(X_df), res)
         assert_array_equal(ct.fit(X_df).transform(X_df), res)
@@ -777,3 +789,31 @@ def test_column_transformer_no_estimators():
     assert len(ct.transformers_) == 1
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][2] == [0, 1, 2]
+
+
+def test_column_transformer_callable_specifier():
+    # assert that function gets the full array / dataframe
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_res_first = np.array([[0, 1, 2]]).T
+
+    def func(X):
+        assert_array_equal(X, X_array)
+        return [0]
+
+    ct = ColumnTransformer([('trans', Trans(), func)],
+                           remainder='drop')
+    assert_array_equal(ct.fit_transform(X_array), X_res_first)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
+
+    pd = pytest.importorskip('pandas')
+    X_df = pd.DataFrame(X_array, columns=['first', 'second'])
+
+    def func(X):
+        assert_array_equal(X.columns, X_df.columns)
+        assert_array_equal(X.values, X_df.values)
+        return ['first']
+
+    ct = ColumnTransformer([('trans', Trans(), func)],
+                           remainder='drop')
+    assert_array_equal(ct.fit_transform(X_df), X_res_first)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)

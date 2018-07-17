@@ -33,7 +33,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -755,6 +755,12 @@ def test_set_oob_score_label_encoding():
     assert_equal([x1, x2], [x3, x3])
 
 
+def replace(X):
+    X = X.copy().astype('float')
+    X[~np.isfinite(X)] = 0
+    return X
+
+
 def test_bagging_regressor_with_missing_inputs():
     # Check that BaggingRegressor can accept X with missing/infinite data
     X = np.array([
@@ -777,9 +783,7 @@ def test_bagging_regressor_with_missing_inputs():
     for y in y_values:
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(
-            Imputer(),
-            Imputer(missing_values=np.inf),
-            Imputer(missing_values=np.NINF),
+            FunctionTransformer(replace, validate=False),
             regressor
         )
         pipeline.fit(X, y).predict(X)
@@ -807,9 +811,7 @@ def test_bagging_classifier_with_missing_inputs():
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
-        Imputer(),
-        Imputer(missing_values=np.inf),
-        Imputer(missing_values=np.NINF),
+        FunctionTransformer(replace, validate=False),
         classifier
     )
     pipeline.fit(X, y).predict(X)
