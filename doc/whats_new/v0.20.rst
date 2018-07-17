@@ -11,6 +11,11 @@ This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
 Thanks to our many contributors!
 
+.. warning::
+
+    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
+    Scikit-learn 0.21 will require Python 3.5 or higher.
+
 Highlights
 ----------
 
@@ -392,6 +397,10 @@ Metrics
   faster. This avoids some reported freezes and MemoryErrors.
   :issue:`11135` by `Joel Nothman`_.
 
+- :func:`metrics.average_precision_score` now supports binary ``y_true``
+  other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label`` parameter.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
@@ -538,6 +547,12 @@ Classifiers and regressors
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
+  
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
+  during the calculation of tree MAE impurity. Previous behaviour could 
+  cause suboptimal splits to be chosen since the impurity calculation 
+  considered all samples to be of equal weight importance.
+  :issue:`11464` by :user:`John Stott <JohnStott>`.  
 
 Decomposition, manifold learning and clustering
 
@@ -627,6 +642,10 @@ Metrics
 - Fixed a bug to avoid integer overflow. Casted product to 64 bits integer in
   :func:`metrics.mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- Fixed a bug where :func:`metrics.average_precision_score` will sometimes return
+  ``nan`` when ``sample_weight`` contains 0.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - Fixed a bug in :func:`metrics.fowlkes_mallows_score` to avoid integer
   overflow. Casted return value of `contingency_matrix` to `int64` and computed
