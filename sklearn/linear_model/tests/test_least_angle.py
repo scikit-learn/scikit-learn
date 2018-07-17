@@ -88,6 +88,7 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
+@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')  # numpy deprecation
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
@@ -98,11 +99,12 @@ def test_lars_lstsq():
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
+@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')  # numpy deprecation
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
     alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
-    coef_lstsq = np.linalg.lstsq(X, y, rcond=None)[0]
+    coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
 
@@ -488,12 +490,10 @@ def test_lars_path_positive_constraint():
     # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
     #               diabetes['target'], method='lar', positive=True)
 
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(DeprecationWarning, match="broken"):
         linear_model.lars_path(diabetes['data'], diabetes['target'],
                                return_path=True, method='lar',
                                positive=True)
-    assert_true(len(w) == 1)
-    assert "broken" in str(w[0].message)
 
     method = 'lasso'
     alpha, active, coefs = \
