@@ -559,7 +559,7 @@ def check_sample_weight_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
     if (has_fit_parameter(estimator_orig, "sample_weight") and
-                    name not in ["KMeans", "MiniBatchKMeans"]):
+            name not in ["KMeans", "MiniBatchKMeans"]):
         estimator1 = clone(estimator_orig)
         estimator2 = clone(estimator_orig)
         set_random_state(estimator1, random_state=42)
@@ -580,8 +580,8 @@ def check_sample_weight_invariance(name, estimator_orig):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
                 assert_allclose(X_pred1, X_pred2, rtol=0.5,
-                                err_msg="For %s sample_weight=None is not equivalent to "
-                                "sample_weight=ones" % name)
+                                err_msg="For %s sample_weight=None is not equivalent"
+                                        " to sample_weight=ones" % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
