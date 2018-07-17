@@ -1555,7 +1555,6 @@ def test_adaptive_search_cv():
                     assert_almost_equal(exp_results[k], results[k],
                                         err_msg='Checking ' + k)
 
-
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid).fit(X, y)
 
@@ -1566,7 +1565,6 @@ def test_adaptive_search_cv():
                             {'min_samples_split': 10}])
         check_results(results, fit_grid([{'max_depth': [1, 2]},
                                          {'min_samples_split': [5, 10]}]))
-
 
     # Using regressor to make sure each score differs
     clf = DecisionTreeRegressor(random_state=0)
