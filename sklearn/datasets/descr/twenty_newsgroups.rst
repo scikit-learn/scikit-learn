@@ -87,7 +87,7 @@ list of the categories to load to the
   >>> newsgroups_train.target.shape
   (1073,)
   >>> newsgroups_train.target[:10]
-  array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
+  array([0, 1, 1, 1, 0, 1, 1, 0, 0, 0])
 
 Converting text to vectors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +114,7 @@ components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
   >>> vectors.nnz / float(vectors.shape[0])       # doctest: +ELLIPSIS
-  159.013...
+  159.01327...
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
 returns ready-to-use tfidf features instead of file names.
@@ -141,9 +141,11 @@ which is fast to train and achieves a decent F-score::
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
+  MultinomialNB(alpha=0.01, class_prior=None, fit_prior=True)
+
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
-  0.882...
+  0.88213...
 
 (The example :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
@@ -160,10 +162,11 @@ Let's take a look at what the most informative features are:
   ...         print("%s: %s" % (category, " ".join(feature_names[top10])))
   ...
   >>> show_top10(clf, vectorizer, newsgroups_train.target_names)
-  alt.atheism: sgi livesey atheists writes people caltech com god keith edu
-  comp.graphics: organization thanks files subject com image lines university edu graphics
-  sci.space: toronto moon gov com alaska access henry nasa edu space
-  talk.religion.misc: article writes kent people christian jesus sandvik edu com god
+  alt.atheism: edu it and in you that is of to the
+  comp.graphics: edu in graphics it is for and of to the
+  sci.space: edu it that is in and space to of the
+  talk.religion.misc: not it you in is that and to of the
+
 
 You can now see many things that these features have overfit to:
 
@@ -193,7 +196,7 @@ blocks, and quotation blocks respectively.
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')  # doctest: +ELLIPSIS
-  0.773...
+  0.77310...
 
 This classifier lost over a lot of its F-score, just because we removed
 metadata that has little to do with topic classification.
@@ -205,10 +208,12 @@ It loses even more if we also strip this metadata from the training data:
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
+  MultinomialNB(alpha=0.01, class_prior=None, fit_prior=True)
+
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
-  0.769...
+  0.76995...
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
