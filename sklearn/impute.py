@@ -142,7 +142,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         a new copy will always be made, even if `copy=False`:
 
         - If X is not an array of floating values;
-        - If X is sparse and `missing_values=0`;
         - If X is encoded as a CSR matrix.
 
     Attributes
@@ -237,10 +236,17 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                              "data".format(fill_value))
 
         if sparse.issparse(X):
-            self.statistics_ = self._sparse_fit(X,
-                                                self.strategy,
-                                                self.missing_values,
-                                                fill_value)
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
+                self.statistics_ = self._sparse_fit(X,
+                                                    self.strategy,
+                                                    self.missing_values,
+                                                    fill_value)
         else:
             self.statistics_ = self._dense_fit(X,
                                                self.strategy,
@@ -251,80 +257,41 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
-        # Count the zeros
-        if missing_values == 0:
-            n_zeros_axis = np.zeros(X.shape[1], dtype=int)
+        mask_data = _get_mask(X.data, missing_values)
+        n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
+
+        statistics = np.empty(X.shape[1])
+
+        if strategy == "constant":
+            # for constant strategy, self.statistcs_ is used to store
+            # fill_value in each column
+            statistics.fill(fill_value)
+
         else:
-            n_zeros_axis = X.shape[0] - np.diff(X.indptr)
+            for i in range(X.shape[1]):
+                column = X.data[X.indptr[i]:X.indptr[i+1]]
+                mask_column = mask_data[X.indptr[i]:X.indptr[i+1]]
+                column = column[~mask_column]
 
-        # Mean
-        if strategy == "mean":
-            if missing_values != 0:
-                n_non_missing = n_zeros_axis
+                # combine explicit and implicit zeros
+                mask_zeros = _get_mask(column, 0)
+                column = column[~mask_zeros]
+                n_explicit_zeros = mask_zeros.sum()
+                n_zeros = n_implicit_zeros[i] + n_explicit_zeros
 
-                # Mask the missing elements
-                mask_missing_values = _get_mask(X.data, missing_values)
-                mask_valids = np.logical_not(mask_missing_values)
+                if strategy == "mean":
+                    s = column.size + n_zeros
+                    statistics[i] = np.nan if s == 0 else column.sum() / s
 
-                # Sum only the valid elements
-                new_data = X.data.copy()
-                new_data[mask_missing_values] = 0
-                X = sparse.csc_matrix((new_data, X.indices, X.indptr),
-                                      copy=False)
-                sums = X.sum(axis=0)
+                elif strategy == "median":
+                    statistics[i] = _get_median(column,
+                                                n_zeros)
 
-                # Count the elements != 0
-                mask_non_zeros = sparse.csc_matrix(
-                    (mask_valids.astype(np.float64),
-                     X.indices,
-                     X.indptr), copy=False)
-                s = mask_non_zeros.sum(axis=0)
-                n_non_missing = np.add(n_non_missing, s)
-
-            else:
-                sums = X.sum(axis=0)
-                n_non_missing = np.diff(X.indptr)
-
-            # Ignore the error, columns with a np.nan statistics_
-            # are not an error at this point. These columns will
-            # be removed in transform
-            with np.errstate(all="ignore"):
-                return np.ravel(sums) / np.ravel(n_non_missing)
-
-        # Median + Most frequent + Constant
-        else:
-            # Remove the missing values, for each column
-            columns_all = np.hsplit(X.data, X.indptr[1:-1])
-            mask_missing_values = _get_mask(X.data, missing_values)
-            mask_valids = np.hsplit(np.logical_not(mask_missing_values),
-                                    X.indptr[1:-1])
-
-            # astype necessary for bug in numpy.hsplit before v1.9
-            columns = [col[mask.astype(bool, copy=False)]
-                       for col, mask in zip(columns_all, mask_valids)]
-
-            # Median
-            if strategy == "median":
-                median = np.empty(len(columns))
-                for i, column in enumerate(columns):
-                    median[i] = _get_median(column, n_zeros_axis[i])
-
-                return median
-
-            # Most frequent
-            elif strategy == "most_frequent":
-                most_frequent = np.empty(len(columns))
-
-                for i, column in enumerate(columns):
-                    most_frequent[i] = _most_frequent(column,
-                                                      0,
-                                                      n_zeros_axis[i])
-
-                return most_frequent
-
-            # Constant
-            elif strategy == "constant":
-                return np.full(X.shape[1], fill_value)
+                elif strategy == "most_frequent":
+                    statistics[i] = _most_frequent(column,
+                                                   0,
+                                                   n_zeros)
+        return statistics
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
@@ -374,6 +341,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Constant
         elif strategy == "constant":
+            # for constant strategy, self.statistcs_ is used to store
+            # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
     def transform(self, X):
@@ -412,17 +381,19 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X) and self.missing_values != 0:
-            mask = _get_mask(X.data, self.missing_values)
-            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                                np.diff(X.indptr))[mask]
+        if sparse.issparse(X):
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
+                mask = _get_mask(X.data, self.missing_values)
+                indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                    np.diff(X.indptr))[mask]
 
-            X.data[mask] = valid_statistics[indexes].astype(X.dtype,
-                                                            copy=False)
+                X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                                copy=False)
         else:
-            if sparse.issparse(X):
-                X = X.toarray()
-
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
