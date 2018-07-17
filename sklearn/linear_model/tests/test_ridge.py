@@ -172,7 +172,8 @@ def test_ridge_sample_weights():
         for (alpha, intercept, solver) in param_grid:
 
             # Ridge with explicit sample_weight
-            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver)
+            est = Ridge(alpha=alpha, fit_intercept=intercept,
+                        solver=solver, tol=1e-6)
             est.fit(X, y, sample_weight=sample_weight)
             coefs = est.coef_
             inter = est.intercept_
