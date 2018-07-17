@@ -11,7 +11,7 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    if platform.python_implementation() == 'PyPy':
+    if platform.python_implementation() != 'PyPy':
         config.add_extension('_hashing',
                              sources=['_hashing.pyx'],
                              include_dirs=[numpy.get_include()],
