@@ -462,10 +462,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                     "n_classes - 1) = min(%d, %d - 1) = %d components."
                     % (X.shape[1], len(self.classes_), max_components),
                     ChangedBehaviorWarning)
-                future_msg = ("In version 0.22, invalid values for "
-                              " the n_components argument will raise a "
+                future_msg = ("In version 0.22, setting n_components > min("
+                              "n_features, n_classes - 1) will raise a "
                               "ValueError. You should set n_components to None"
-                              " (default), or a value smaller than "
+                              " (default), or a value smaller or equal to "
                               "min(n_features, n_classes - 1).")
                 warnings.warn(future_msg, FutureWarning)
                 self._max_components = max_components
