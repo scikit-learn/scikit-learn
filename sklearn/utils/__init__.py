@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 
 import numbers
+import pydoc
 
 import numpy as np
 from scipy.sparse import issparse
@@ -590,3 +591,67 @@ def is_scalar_nan(x):
     # Redondant np.floating is needed because numbers can't match np.float32
     # in python 2.
     return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
+
+def safe_name_or_class(obj):
+    """Return a representation of the name or class, or raise AttributeError.
+
+    If the object has a non-None __name__, its safe_str() is returned.
+    Otherwise something similar is done with the object's __class__.
+    Otherwise AttributeError is raised.
+    """
+
+    name = getattr(obj, '__name__', None)
+    if name is not None:
+        return safe_str(name)
+
+    klass = getattr(obj, '__class__', None)
+    if klass is not None:
+        return '{} instance'.format(safe_str(klass))
+    else:
+        raise AttributeError("No __name__ or __class__ attribute.")
+
+def safe_version(transformers, no_transform):
+    """Return a function that applies the first working callable.
+
+    The returned function, when given a single parameter, returns the
+    value returned by the first callable that didn't raise an
+    Exception. Non-Exception exceptions are raised normally (this includes
+    KeyboardInterrupt).
+
+    If no callable succeeds, returns no_transform.
+
+    transformers -- sequence of 1-parameter callables.
+    no_transform -- returned if no transformer function succeeds.
+    """
+    def safe_func(obj):
+        for transformer in transformers:
+            try:
+                return transformer(obj)
+            except Exception:
+                pass
+        else:
+            return no_transform
+
+    safe_func.__doc__ = """
+        Return the value of the first function that doesn't crash on obj.
+
+        The callables tried are: {}.
+
+        If all functions crash, returns {!r}.
+
+        obj -- object that can be consumed by the callables above.
+        """.format(transformers, no_transform)
+
+    return safe_func
+
+safe_str = safe_version((str,), "<No string representation>")
+
+# The function nice_repr() should be used when we want a more user-friendly
+# version of repr() (with a maximum width, a limited total length, etc.), that
+# also doesn't crash:
+nice_repr = safe_version(
+    # The pydoc.text module is not hidden but is not in the official
+    # documentation, so it may have to be replaced by something else:
+    (pydoc.text.repr, repr, safe_name_or_class), "<No object representation>")
+
+

@@ -22,6 +22,7 @@ from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
+from sklearn.utils import safe_str, nice_repr
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
@@ -330,3 +331,24 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
                                            ([np.nan], False)])
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
+
+class CrashingStrAndRaise(object):
+    """Class whose __str__ and __repr__ methods crash."""
+    
+    def __str__(self):
+        raise Exception("No working __str__")
+
+    def __repr__(self):
+        raise Exception("No working __repr__")
+
+def test_safe_str():
+    assert safe_str(42) == "42"
+    # The following should be something like
+    # <class '__main__.CrashingStrAndRaise'>":
+    assert "class" in safe_str(CrashingStrAndRaise)
+
+def test_nice_repr():
+    assert nice_repr(42) == "42"
+    # The following should be something like
+    # <class '__main__.CrashingStrAndRaise'>":
+    assert "class" in nice_repr(CrashingStrAndRaise)
