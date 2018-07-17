@@ -71,7 +71,7 @@ attribute is the integer index of the category::
   >>> newsgroups_train.target.shape
   (11314,)
   >>> newsgroups_train.target[:10]
-  array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
+  array([ 7,  4,  4,  1, 14, 16, 13,  3,  2,  4])
 
 It is possible to load only a sub-selection of the categories by passing the
 list of the categories to load to the
@@ -113,7 +113,7 @@ The extracted TF-IDF vectors are very sparse, with an average of 159 non-zero
 components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
-  >>> vectors.nnz / float(vectors.shape[0])
+  >>> vectors.nnz / float(vectors.shape[0])       # doctest: +ELLIPSIS
   159.01327433628319
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
