@@ -1041,8 +1041,8 @@ def _shuffle(y, groups, random_state):
 
 
 def learning_curve(estimator, X, y, groups=None,
-                   train_sizes=np.linspace(0.1, 1.0, 5), cv='warn', scoring=None,
-                   exploit_incremental_learning=False, n_jobs=1,
+                   train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
+                   scoring=None, exploit_incremental_learning=False, n_jobs=1,
                    pre_dispatch="all", verbose=0, shuffle=False,
                    random_state=None):
     """Learning curve.
