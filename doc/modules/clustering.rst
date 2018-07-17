@@ -1159,8 +1159,7 @@ our clustering algorithm assignments of the same samples ``labels_pred``, the
 **Mutual Information** is a function that measures the **agreement** of the two
 assignments, ignoring permutations.  Two different normalized versions of this
 measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
-Mutual Information(AMI)**. NMI is often used in the literature while AMI was
-proposed more recently and is **normalized against chance**::
+Mutual Information(AMI)**.::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
@@ -1204,6 +1203,33 @@ Bad (e.g. independent labelings) have non-positive scores::
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
   -0.10526...
 
+Mutual Information  has a problem that it does not penalizes large cardinalities. It 
+increases with increase in number of clusters and its value is maximum when number
+of clusters is equal to number of samples. NMI fixes this problem by dividing MI
+with square root of entropies of both partitions (predicted as well as true partition). 
+Since entropy increases with increase in number of clusters. Hence with everything else 
+constant NMI decreases with increase in number of clusters::
+
+  >>> labels_true=[5, 0, 3, 3, 7, 9, 3, 5, 2, 4]
+  >>> labels_pred=[7, 6, 8, 8, 1, 6, 7, 7, 8, 1]
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  1.1752...
+  >>> metrics.normalized_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
+  0.7423...
+
+Value of NMI and MI does not take a constant value for random assignment of labels to sample data. 
+AMI is **corrected-for-chance** version of MI. Its value is close to zero for randowm assignment of labels
+to sample data and takes a value 1 when two partitions are identical.Please note in below example ``labels_true``
+and ``labels_pred`` are randomly generated ::
+  
+  >>> labels_true=[5, 0, 3, 3, 7, 9, 3, 5, 2, 4, 7, 6, 8, 8, 1, 6, 7, 7, 8, 1]
+  >>> labels_pred=[5, 9, 8, 9, 4, 3, 0, 3, 5, 0, 2, 3, 8, 1, 3, 3, 3, 7, 0, 1]
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  1.2706...
+  >>> metrics.normalized_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
+  0.6059...
+  >>> metrics.adjusted_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
+  -0.0537...
 
 Advantages
 ~~~~~~~~~~
