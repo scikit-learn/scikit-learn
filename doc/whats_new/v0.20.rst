@@ -192,10 +192,9 @@ Misc
 Datasets
 
 - Added :func:`datasets.fetch_openml` to fetch datasets from `OpenML <http://openml.org>`.
-
-OpenML is a free, open data sharing platform and will be used instead of mldata
-as it provides better service availability. :issue:`9908` by `Andreas Müller`_
-and :user:`Jan N. van Rijn <janvanrijn>`.
+  OpenML is a free, open data sharing platform and will be used instead of mldata
+  as it provides better service availability. :issue:`9908` by `Andreas Müller`_
+  and :user:`Jan N. van Rijn <janvanrijn>`.
 
 Enhancements
 ............
