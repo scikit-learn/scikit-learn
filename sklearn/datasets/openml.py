@@ -45,9 +45,9 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error):
 
     raise_if_error : bool
         Whether to raise an error if OpenML returns an acceptable error (e.g.,
-        date not found). If this argument is set to False, a None is returned in
-        case of acceptable errors. Note that all other errors (e.g., 404) will
-        still be raised as normal.
+        date not found). If this argument is set to False, a None is returned
+        in case of acceptable errors. Note that all other errors (e.g., 404)
+        will still be raised as normal.
 
     Returns
     -------
