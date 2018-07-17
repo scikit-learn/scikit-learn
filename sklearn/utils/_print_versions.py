@@ -18,7 +18,14 @@ from .._build_utils import get_blas_info
 
 
 def get_sys_info():
-    "Returns system information as a dict"
+    """System information
+
+    Return
+    ------
+    sys_info : dict
+        system and Python version information
+
+    """
 
     blob = []
 
@@ -61,14 +68,18 @@ def get_sys_info():
     except:
         pass
 
-    return blob
+    return dict(blob)
 
 
-def show_versions(as_json=False, with_blas=False):
-    sys_info = get_sys_info()
+def get_deps_info():
+    """Overview of the installed version of main dependencies
 
-    cblas_libs, blas_info = get_blas_info()
+    Returns
+    -------
+    deps_info: dict
+        version information on relevant Python libraries
 
+    """
     deps = [
         # (MODULE_NAME, f(mod) -> mod version)
         ("pip", lambda mod: mod.__version__),
@@ -80,17 +91,32 @@ def show_versions(as_json=False, with_blas=False):
         ("matplotlib", lambda mod: mod.__version__),
     ]
 
-    deps_blob = list()
-    for (modname, ver_f) in deps:
+    deps_blob = []
+
+    for modname, ver_func in deps:
         try:
             if modname in sys.modules:
                 mod = sys.modules[modname]
             else:
                 mod = importlib.import_module(modname)
-            ver = ver_f(mod)
+            ver = ver_func(mod)
             deps_blob.append((modname, ver))
         except ImportError:
             deps_blob.append((modname, None))
+
+    return dict(deps_blob)
+
+
+def show_versions(as_json=False, with_blas=False):
+    sys_info = get_sys_info()
+    deps_info = get_deps_info()
+
+    if with_blas:
+        try:
+            cblas_libs, blas_info = get_blas_info()
+            blas_info['cblas_libs'] = cblas_libs
+        except:
+            blas_info = {'error': "Could not retrieve BLAS information"}
 
     if (as_json):
         try:
@@ -98,11 +124,10 @@ def show_versions(as_json=False, with_blas=False):
         except ImportError:
             import simplejson as json
 
-        j = dict(system=dict(sys_info),
-                 dependencies=dict(deps_blob))
+        j = dict(system=sys_info,
+                 dependencies=deps_info)
 
         if with_blas:
-            blas_info['cblas_libs'] = cblas_libs
             j['blas'] = blas_info
 
         if as_json is True:
@@ -110,13 +135,11 @@ def show_versions(as_json=False, with_blas=False):
         else:
             with codecs.open(as_json, "wb", encoding='utf8') as f:
                 json.dump(j, f, indent=2)
-
     else:
-
         print("")
         print('System info')
         print('-----------')
-        for k, stat in sys_info:
+        for k, stat in sys_info.items():
             print("{k}: {stat}".format(k=k, stat=stat))
 
         if with_blas:
@@ -125,10 +148,9 @@ def show_versions(as_json=False, with_blas=False):
             print('---------')
             for k, stat in blas_info.items():
                 print("{k}: {stat}".format(k=k, stat=stat))
-            print('CBLAS libs: {libs}'.format(libs=cblas_libs))
 
         print("")
         print('Python libs info')
         print('----------------')
-        for k, stat in deps_blob:
+        for k, stat in deps_info.items():
             print("{k}: {stat}".format(k=k, stat=stat))
