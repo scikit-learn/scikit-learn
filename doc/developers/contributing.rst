@@ -678,6 +678,19 @@ mainly on whether and which ``scipy.sparse`` matrices must be accepted.
 
 For more information, refer to the :ref:`developers-utils` page.
 
+Exceptions and warnings
+-----------------------
+
+When there is a risk that the display of an exception or warning itself
+crashes, please use the safe `str()` and `repr()` versions `utils.safe_str()`
+and `utils.safe_repr()`: they never crash, and error messages are thus more
+informative.
+
+`utils.safe_repr()` provides in addition a friendlier representation of
+objects, which limits it to some reasonable width and total character length.
+This can prevent error messages from overflowing the terminal and becoming
+unusable.
+
 Random Numbers
 --------------
 
