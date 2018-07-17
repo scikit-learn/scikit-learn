@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
+from .utils import safe_repr
 from . import __version__
 
 
@@ -55,7 +56,7 @@ def clone(estimator, safe=True):
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
                             "as it does not implement a 'get_params' methods."
-                            % (repr(estimator), type(estimator)))
+                            % (safe_repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
     for name, param in six.iteritems(new_object_params):
