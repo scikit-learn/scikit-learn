@@ -730,11 +730,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         iid = self.iid
         if self.iid == 'warn':
             warn = False
-            for scorer in scores:
-                means_weighted = np.average(test_scores[scorer_name], axis=1,
-                                            weights=weights)
-                means_unweighted = np.average(test_scores[scorer_name], axis=1)
-                if not np.allclose(means_weighted, means_unweighted):
+            for scorer_name in scorers.keys():
+                scores = test_scores[scorer_name].reshape(n_candidates, n_splits)
+                means_weighted = np.average(scores, axis=1,
+                                            weights=test_sample_counts)
+                means_unweighted = np.average(scores, axis=1)
+                if not np.allclose(means_weighted, means_unweighted, rtol=1e-4, atol=1e-4):
                     warn = True
                     continue
 
