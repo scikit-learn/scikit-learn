@@ -583,7 +583,7 @@ class StratifiedKFold(_BaseKFold):
             if len(shape) > 2 or (len(shape) == 2 and shape[1] != 1):
                 raise ValueError("bad input shape {0}".format(shape))
             else:
-                _y = y.todense()
+                _y = y.toarray()
         else:
             _y = np.asarray(y)
         type_of_target_y = type_of_target(_y)
@@ -1547,7 +1547,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             if len(shape) > 2:
                 raise ValueError("bad input shape {0}".format(shape))
             else:
-                _y = y.todense()
+                _y = y.toarray()
         else:
             _y = y
         _y = np.asarray(_y)

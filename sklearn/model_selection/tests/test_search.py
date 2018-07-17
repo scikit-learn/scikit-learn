@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils.sparsefuncs import sparse_unique
 
 from scipy.stats import bernoulli, expon, uniform
 
@@ -83,7 +84,7 @@ class MockClassifier(object):
     def fit(self, X, y):
         if sp.issparse(y):
             assert_true(len(X) == y.shape[0])
-            self.n_classes = np.unique(y.data)
+            self.classes = sparse_unique(y)
         else:
             assert_true(len(X) == len(y))
             self.classes_ = np.unique(y)
