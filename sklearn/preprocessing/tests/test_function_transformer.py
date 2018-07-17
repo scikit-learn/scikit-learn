@@ -75,7 +75,8 @@ def test_delegate_to_func():
         ),
     )
 
-@ignore_warnings(FutureWarning)  # ignore warning for validate=False
+
+@ignore_warnings(FutureWarning)  # ignore warning for validate=False 0.22
 def test_np_log():
     X = np.arange(10).reshape((5, 2))
 
@@ -86,7 +87,7 @@ def test_np_log():
     )
 
 
-@ignore_warnings(FutureWarning)  # ignore warning for validate=False
+@ignore_warnings(FutureWarning)  # ignore warning for validate=False 0.22
 def test_kw_arg():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -97,7 +98,7 @@ def test_kw_arg():
                        np.around(X, decimals=3))
 
 
-@ignore_warnings(FutureWarning)  # ignore warning for validate=False
+@ignore_warnings(FutureWarning)  # ignore warning for validate=False 0.22
 def test_kw_arg_update():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -109,7 +110,7 @@ def test_kw_arg_update():
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
 
 
-@ignore_warnings(FutureWarning)  # ignore warning for validate=False
+@ignore_warnings(FutureWarning)  # ignore warning for validate=False 0.22
 def test_kw_arg_reset():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -121,7 +122,7 @@ def test_kw_arg_reset():
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
 
 
-@ignore_warnings(FutureWarning)  # ignore warning for validate=False
+@ignore_warnings(FutureWarning)  # ignore warning for validate=False 0.22
 def test_inverse_transform():
     X = np.array([1, 4, 9, 16]).reshape((2, 2))
 
@@ -136,7 +137,7 @@ def test_inverse_transform():
     )
 
 
-@ignore_warnings(FutureWarning)  # ignore warning for validate=False
+@ignore_warnings(FutureWarning)  # ignore warning for validate=False 0.22
 def test_check_inverse():
     X_dense = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
 
