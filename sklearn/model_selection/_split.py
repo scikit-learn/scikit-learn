@@ -50,14 +50,14 @@ __all__ = ['BaseCrossValidator',
 
 
 NSPLIT_WARNING = (
-    "You should specify a value for `n_splits` instead of relying on the "
-    "default value. Note that this default value of 3 is deprecated in the "
-    "current version and will change in version 0.22 from 3 to 5.")
+    "You should specify a value for 'n_splits' instead of relying on the "
+    "default value. Note that this default value of 3 is deprecated in "
+    "version 0.20 and will change from 3 to 5 in version 0.22.")
 
 CV_WARNING = (
-    "You should specify a value for `cv` instead of relying on the "
-    "default value. Note that this default value of 3 is deprecated in the "
-    "current version and will change in version 0.22 from 3 to 5.")
+    "You should specify a value for 'cv' instead of relying on the "
+    "default value. Note that this default value of 3 is deprecated in "
+    "version 0.20 and will change from 3 to 5 in version 0.22.")
 
 
 class BaseCrossValidator(with_metaclass(ABCMeta)):
