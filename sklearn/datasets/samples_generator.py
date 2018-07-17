@@ -15,6 +15,7 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils import safe_repr
 from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..externals import six
@@ -790,7 +791,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
             assert len(centers) == n_centers
         except TypeError:
             raise ValueError("Parameter `centers` must be array-like. "
-                             "Got {!r} instead".format(centers))
+                             "Got {!r} instead".format(safe_repr(centers)))
         except AssertionError:
             raise ValueError("Length of `n_samples` not consistent"
                              " with number of centers. Got n_samples = {} "
