@@ -763,7 +763,7 @@ class RandomForestClassifier(ForestClassifier):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             The default value of ``n_estimators`` will change from 10 in
             version 0.20 to 100 in version 0.22.
 
@@ -1041,7 +1041,7 @@ class RandomForestRegressor(ForestRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-       .. deprecated:: 0.20
+       .. versionchanged:: 0.20
             The default value of ``n_estimators`` will change from 10 in
             version 0.20 to 100 in version 0.22.
 
@@ -1281,7 +1281,7 @@ class ExtraTreesClassifier(ForestClassifier):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-       .. deprecated:: 0.20
+       .. versionchanged:: 0.20
             The default value of ``n_estimators`` will change from 10 in
             version 0.20 to 100 in version 0.22.
 
@@ -1530,7 +1530,7 @@ class ExtraTreesRegressor(ForestRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-       .. deprecated:: 0.20
+       .. versionchanged:: 0.20
             The default value of ``n_estimators`` will change from 10 in
             version 0.20 to 100 in version 0.22.
 
@@ -1749,7 +1749,7 @@ class RandomTreesEmbedding(BaseForest):
     n_estimators : integer, optional (default=10)
         Number of trees in the forest.
 
-       .. deprecated:: 0.20
+       .. versionchanged:: 0.20
             The default value of ``n_estimators`` will change from 10 in
             version 0.20 to 100 in version 0.22.
 
