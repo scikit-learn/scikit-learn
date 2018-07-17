@@ -2171,7 +2171,7 @@ def test_optimization_power_transformer(method, lmbda):
     # - check that X_inv_trans is roughly equal to X
 
     rng = np.random.RandomState(0)
-    n_samples = 1000
+    n_samples = 20000
     X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
 
     pt = PowerTransformer(method=method, standardize=False)
@@ -2204,7 +2204,7 @@ def test_power_transformer_nans(method):
     pt.fit(X)
     lmbda_nans = pt.lambdas_[0]
 
-    assert_almost_equal(lmbda_no_nans, lmbda_nans, decimal=7)
+    assert_almost_equal(lmbda_no_nans, lmbda_nans, decimal=5)
 
     X_trans = pt.transform(X)
     assert_array_equal(np.isnan(X_trans), np.isnan(X))
