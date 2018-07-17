@@ -14,7 +14,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
-from sklearn.externals.joblib import hash, Memory
+from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message

@@ -742,12 +742,12 @@ def test_check_memory():
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='1' instead.", check_memory, 1)
     dummy = WrongDummyMemory()
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory. Got memory='{}' "
+                        "sklearn.utils.Memory. Got memory='{}' "
                         "instead.".format(dummy), check_memory, dummy)
 
 

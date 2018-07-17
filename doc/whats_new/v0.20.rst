@@ -83,12 +83,6 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
-**Other backward incompatible change** The vendored version of the joblib
-module is now found at `sklearn.externals._joblib` (:issue:`11166`). The
-main API of joblib is still exposed in `sklearn.externals.joblib`, but
-code doing imports of subpackages of `sklearn.externals.joblib` will
-break.
-
 Changelog
 ---------
 
@@ -224,8 +218,9 @@ Misc
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 - An environment variable to use the site joblib instead of the vendored
-  one was added (:ref:`environment_variable`).
-  :issue:`11166` by `Gael Varoquaux`_
+  one was added (:ref:`environment_variable`). The main API of joblib is now
+  exposed in :mod:`sklearn.utils`.
+  :issue:`11166`by `Gael Varoquaux`_
 
 Enhancements
 ............
