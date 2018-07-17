@@ -22,7 +22,7 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
 
 
-__all__ = ['ColumnTransformer', 'make_column_transformer', 'select_types']
+__all__ = ['ColumnTransformer', 'make_column_transformer']
 
 
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
@@ -606,50 +606,6 @@ def _get_transformer_list(estimators):
 
     transformer_list = list(zip(names, transformers, columns))
     return transformer_list
-
-
-def select_types(dtypes):
-    """Generate a column selector callable (type-based) to be passed to
-    `make_column_transformer` or `ColumnTransformer` in place of the column
-    selections. The returned callable will return a boolean mask for column
-    selection when applied to a dataframe.
-
-    Parameters
-    ----------
-    dtypes : list of column dtypes to be selected from the dataset.
-
-    Returns
-    -------
-    callable
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> df = pd.DataFrame({
-    ...     'a': [1.5, 2.5],
-    ...     'b': ['dog', 'cat'],
-    ...     'c': ['big', 'small'],
-    ...     'd': [1, 2]
-    ... })
-    >>> df.dtypes
-    a    float64
-    b     object
-    c     object
-    d      int64
-    dtype: object
-    >>> type_selector = select_types([int, float])
-    >>> type_selector(df)
-    array([ True, False, False,  True])
-    """
-    def apply_dtype_mask(X, dtype):
-        if hasattr(X, 'dtypes'):
-            return X.dtypes == dtype
-
-    def get_dtype_masks(X):
-        masks = [apply_dtype_mask(X, t) for t in dtypes]
-        return masks
-
-    return lambda X: np.any(get_dtype_masks(X), axis=0)
 
 
 def make_column_transformer(*transformers, **kwargs):
