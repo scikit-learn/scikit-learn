@@ -1,5 +1,7 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
+
+import pytest
 from tempfile import mkdtemp
 import shutil
 

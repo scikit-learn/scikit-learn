@@ -1,5 +1,6 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
+import pytest
 import numpy as np
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal, ignore_warnings
