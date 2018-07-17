@@ -725,11 +725,11 @@ class TimeSeriesSplit(_BaseKFold):
     Examples
     --------
     >>> from sklearn.model_selection import TimeSeriesSplit
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> tscv = TimeSeriesSplit(n_splits=3)
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> tscv = TimeSeriesSplit(n_splits=5)
     >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-    TimeSeriesSplit(max_train_size=None, n_splits=3)
+    TimeSeriesSplit(max_train_size=None, n_splits=5)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -737,6 +737,8 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0] TEST: [1]
     TRAIN: [0 1] TEST: [2]
     TRAIN: [0 1 2] TEST: [3]
+    TRAIN: [0 1 2 3] TEST: [4]
+    TRAIN: [0 1 2 3 4] TEST: [5]
 
     Notes
     -----
@@ -1305,27 +1307,31 @@ class ShuffleSplit(BaseShuffleSplit):
     Examples
     --------
     >>> from sklearn.model_selection import ShuffleSplit
-    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> y = np.array([1, 2, 1, 2])
-    >>> rs = ShuffleSplit(n_splits=3, test_size=.25, random_state=0)
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
+    >>> y = np.array([1, 2, 1, 2, 1, 2])
+    >>> rs = ShuffleSplit(n_splits=5, test_size=.25, random_state=0)
     >>> rs.get_n_splits(X)
-    3
+    5
     >>> print(rs)
-    ShuffleSplit(n_splits=3, random_state=0, test_size=0.25, train_size=None)
+    ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
-    TRAIN: [3 1 0] TEST: [2]
-    TRAIN: [2 1 3] TEST: [0]
-    TRAIN: [0 2 1] TEST: [3]
-    >>> rs = ShuffleSplit(n_splits=3, train_size=0.5, test_size=.25,
+    TRAIN: [1 3 0 4] TEST: [5 2]
+    TRAIN: [4 0 2 5] TEST: [1 3]
+    TRAIN: [1 2 4 0] TEST: [3 5]
+    TRAIN: [3 4 1 0] TEST: [5 2]
+    TRAIN: [3 5 1 0] TEST: [2 4]
+    >>> rs = ShuffleSplit(n_splits=5, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
-    TRAIN: [3 1] TEST: [2]
-    TRAIN: [2 1] TEST: [0]
-    TRAIN: [0 2] TEST: [3]
+    TRAIN: [1 3 0] TEST: [5 2]
+    TRAIN: [4 0 2] TEST: [1 3]
+    TRAIN: [1 2 4] TEST: [3 5]
+    TRAIN: [3 4 1] TEST: [5 2]
+    TRAIN: [3 5 1] TEST: [2 4]
     """
 
     def _iter_indices(self, X, y=None, groups=None):
@@ -1537,20 +1543,22 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     Examples
     --------
     >>> from sklearn.model_selection import StratifiedShuffleSplit
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([0, 0, 1, 1])
-    >>> sss = StratifiedShuffleSplit(n_splits=3, test_size=0.5, random_state=0)
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 0, 1, 1, 1])
+    >>> sss = StratifiedShuffleSplit(n_splits=5, test_size=0.5, random_state=0)
     >>> sss.get_n_splits(X, y)
-    3
+    5
     >>> print(sss)       # doctest: +ELLIPSIS
-    StratifiedShuffleSplit(n_splits=3, random_state=0, ...)
+    StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [1 2] TEST: [3 0]
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [0 2] TEST: [3 1]
+    TRAIN: [5 2 3] TEST: [4 1 0]
+    TRAIN: [5 1 4] TEST: [0 2 3]
+    TRAIN: [5 0 2] TEST: [4 3 1]
+    TRAIN: [4 1 0] TEST: [2 3 5]
+    TRAIN: [0 5 1] TEST: [3 4 2]
     """
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
