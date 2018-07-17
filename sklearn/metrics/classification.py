@@ -2039,12 +2039,11 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     reducer : 'avg' | 'max'
         Aggregation method.
 
-    n_bins : int, positive, optional (default=10)
-        Number of bins if sliding_window is set to false.
-        Number of non-overlapping bins if sliding_window is set to true, i.e.
-        each bins will contain N / n_bins elements.
-        Larger n_bins can increase the accuracy of the calibration loss,
-        provided sufficient data in bins.
+    bin_size_ratio : float, optional (default=0.1)
+        Ratio of the size of bins over the size of input arrays.
+        Each bins will contain N * bin_size_ratio elements.
+        Smaller bin_size_ratio might increase the accuracy of the calibration
+        loss, provided sufficient data in bins.
 
     sliding_window : bool, optional (default=False)
         If true, compute the loss based on overlapping bins. Each neighboring
@@ -2117,7 +2116,8 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
             loss = deltas.sum()
             count = deltas.shape[0]
     else:
-        i_thres = np.searchsorted(y_prob, np.arange(0, 1, bin_size_ratio)).tolist()
+        i_thres = np.searchsorted(y_prob,
+                                  np.arange(0, 1, bin_size_ratio)).tolist()
         i_thres.append(y_true.shape[0])
         for i, i_start in enumerate(i_thres[:-1]):
             i_end = i_thres[i+1]

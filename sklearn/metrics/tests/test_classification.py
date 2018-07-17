@@ -1686,9 +1686,11 @@ def test_calibration_loss():
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max",sliding_window=True), 0.25)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max",
+                         sliding_window=True), 0.25)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg", sliding_window=True), 1./6)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg",
+                         sliding_window=True), 1./6)
 
     # edge case with one element per bin only
     ratio = 0.25
@@ -1696,9 +1698,11 @@ def test_calibration_loss():
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max", sliding_window=True), 0.75)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max",
+                         sliding_window=True), 0.75)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg", sliding_window=True), 0.5)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg",
+                         sliding_window=True), 0.5)
 
     # edge case with one bin only
     ratio = 1.
@@ -1706,6 +1710,8 @@ def test_calibration_loss():
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max", sliding_window=True), 0)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="max",
+                         sliding_window=True), 0)
     assert_almost_equal(
-        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg", sliding_window=True), 0)
+        calibration_loss(y_true, y_pred, bin_size_ratio=ratio, reducer="avg",
+                         sliding_window=True), 0)
