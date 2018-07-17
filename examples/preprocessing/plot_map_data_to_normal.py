@@ -47,7 +47,7 @@ print(__doc__)
 
 N_SAMPLES = 1000
 FONT_SIZE = 6
-BINS = 30#'auto'
+BINS = 30
 
 
 rng = np.random.RandomState(304)
@@ -134,5 +134,4 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
 
 
 plt.tight_layout()
-plt.savefig('lol.png')
-#plt.show()
+plt.show()
