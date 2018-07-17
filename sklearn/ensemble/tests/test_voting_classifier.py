@@ -371,10 +371,12 @@ def test_set_estimator_none():
     X1 = np.array([[1], [2]])
     y1 = np.array([1, 2])
     eclf1 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
-                             voting='soft', weights=[0, 0.5]).fit(X1, y1)
+                             voting='soft', weights=[0, 0.5],
+                             flatten_transform=False).fit(X1, y1)
 
     eclf2 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
-                             voting='soft', weights=[1, 0.5])
+                             voting='soft', weights=[1, 0.5],
+                             flatten_transform=False)
     eclf2.set_params(rf=None).fit(X1, y1)
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],

@@ -701,14 +701,17 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
 
       >>> from sklearn.metrics.cluster import adjusted_mutual_info_score
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
+      ... # doctest: +SKIP
       1.0
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
+      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
+      ... # doctest: +SKIP
       0.0
 
     References
@@ -820,14 +823,17 @@ def normalized_mutual_info_score(labels_true, labels_pred,
 
       >>> from sklearn.metrics.cluster import normalized_mutual_info_score
       >>> normalized_mutual_info_score([0, 0, 1, 1], [0, 0, 1, 1])
+      ... # doctest: +SKIP
       1.0
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
+      ... # doctest: +SKIP
       1.0
 
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
-      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])i
+      ... # doctest: +SKIP
       0.0
 
     """
