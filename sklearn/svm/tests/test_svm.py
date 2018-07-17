@@ -441,6 +441,7 @@ def test_sample_weights():
     clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
+
 @ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
@@ -448,7 +449,8 @@ def test_auto_weight():
     # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1.
-    # We add one to the targets as a non-regression test: class_weight="balanced"
+    # We add one to the targets as a non-regression test:
+    # class_weight="balanced"
     # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target + 1

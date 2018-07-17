@@ -60,7 +60,11 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype)
             # FIXME atol
-            coef, info = sp_linalg.cg(C, y_column, tol=tol, atol='legacy')
+            try:
+                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol='legacy')
+            except TypeError:
+                # old scipy
+                coef, info = sp_linalg.cg(C, y_column, tol=tol)
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -69,8 +73,14 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype)
             # FIXME atol
-            coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                          tol=tol, atol='legacy')
+            try:
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol, atol='legacy')
+            except TypeError:
+                # old scipy
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                              tol=tol)
+
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
 

@@ -69,6 +69,7 @@ def test_connect_regions():
         graph = img_to_graph(face, mask)
         assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
 
+
 @ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions_with_grid():
     try:

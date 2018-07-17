@@ -26,7 +26,8 @@ def test_delegate_to_func():
     kwargs_store = {}
     X = np.arange(10).reshape((5, 2))
     assert_array_equal(
-        FunctionTransformer(_make_func(args_store, kwargs_store), validate=False).transform(X),
+        FunctionTransformer(_make_func(args_store, kwargs_store),
+                            validate=False).transform(X),
         X, 'transform should have returned X unchanged',
     )
 
