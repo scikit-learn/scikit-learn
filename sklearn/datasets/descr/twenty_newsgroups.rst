@@ -114,7 +114,7 @@ components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
   >>> vectors.nnz / float(vectors.shape[0])       # doctest: +ELLIPSIS
-  159.01327433628319
+  159.013...
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
 returns ready-to-use tfidf features instead of file names.
@@ -192,8 +192,8 @@ blocks, and quotation blocks respectively.
   ...                                      categories=categories)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
-  0.77310350681274775
+  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')  # doctest: +ELLIPSIS
+  0.773...
 
 This classifier lost over a lot of its F-score, just because we removed
 metadata that has little to do with topic classification.
@@ -207,8 +207,8 @@ It loses even more if we also strip this metadata from the training data:
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.76995175184521725
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
+  0.769...
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
