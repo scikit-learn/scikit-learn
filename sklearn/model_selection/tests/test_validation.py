@@ -239,6 +239,8 @@ y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 P_sparse = coo_matrix(np.eye(5))
 
 
+@pytest.mark.filterwarnings('ignore: From version 0.22, errors during fit')
+# FIXME issue in error_score parameter
 def test_cross_val_score():
     clf = MockClassifier()
 
@@ -526,6 +528,7 @@ def test_cross_val_score_predict_groups():
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -950,6 +953,8 @@ def test_cross_val_predict_input_types():
     assert_array_equal(predictions.shape, (150,))
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# python3.7 deprecation warnings in pandas via matplotlib :-/
 def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1153,6 +1158,8 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(0.1, 1.0, 10))
 
 
+@pytest.mark.filterwarnings('ignore: From version 0.22, errors during fit')
+# FIXME this is an error in the error_score change!
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
@@ -1426,6 +1433,7 @@ def test_score_memmap():
                 sleep(1.)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
