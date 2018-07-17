@@ -99,7 +99,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=3):
+    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
