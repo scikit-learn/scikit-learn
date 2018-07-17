@@ -2477,6 +2477,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
+        self._fit(X, y=y, force_compute_transform=False)
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self._fit(X, y, force_compute_transform=True)
+
+    def _fit(self, X, y=None, force_compute_transform=False):
         """Estimate the optimal parameter lambda for each feature.
 
         The optimal lambda parameter for minimizing skewness is estimated on
@@ -2505,7 +2512,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 self.lambdas_.append(lmbda)
         self.lambdas_ = np.array(self.lambdas_)
 
-        if self.standardize:
+        if self.standardize or force_compute_transform:
             transform_function = {'box-cox': boxcox,
                                   'yeo-johnson': self._yeo_johnson_transform
                                   }[self.method]
@@ -2514,13 +2521,16 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 with np.errstate(invalid='ignore'):  # hide NaN warnings
                     col_trans = transform_function(col, lmbda)
                     transformed.append(col_trans)
-            transformed = np.array(transformed)
+            transformed = np.array(transformed).T
 
+        if self.standardize:
             self._scaler = StandardScaler()
-            self._scaler.fit(X=transformed.T)
+            if force_compute_transform:
+                transformed = self._scaler.fit_transform(transformed)
+            else:
+                self._scaler.fit(X=transformed)
 
-
-        return self
+        return transformed
 
     def transform(self, X):
         """Apply the power transform to each feature using the fitted lambdas.
