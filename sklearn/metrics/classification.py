@@ -2064,15 +2064,15 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     >>> from sklearn.metrics import calibration_loss
     >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    >>> calibration_loss(y_true, y_pred, n_bins=2)  # doctest: +ELLIPSIS
+    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5)  # doctest: +ELLIPSIS
     0.0
-    >>> calibration_loss(y_true, y_pred, n_bins=2, \
+    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, \
                          reducer="max")  # doctest: +ELLIPSIS
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    >>> calibration_loss(y_true, y_pred, n_bins=2)  # doctest: +ELLIPSIS
+    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5)  # doctest: +ELLIPSIS
     0.25
-    >>> calibration_loss(y_true, y_pred, n_bins=2, \
+    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, \
                          reducer="max")  # doctest: +ELLIPSIS
     0.25
     """
