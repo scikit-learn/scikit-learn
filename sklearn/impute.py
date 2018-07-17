@@ -30,14 +30,14 @@ from .externals import six
 zip = six.moves.zip
 map = six.moves.map
 
-ImputerTriplet = namedtuple('ImputerTriplet', ['feat_idx',
-                                               'neighbor_feat_idx',
-                                               'predictor'])
+MICETriplet = namedtuple('MICETriplet', ['feat_idx',
+                                         'neighbor_feat_idx',
+                                         'predictor'])
 
 __all__ = [
     'MissingIndicator',
     'SimpleImputer',
-    'ChainedImputer',
+    'MICEImputer',
 ]
 
 
@@ -433,12 +433,12 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         return X
 
 
-class ChainedImputer(BaseEstimator, TransformerMixin):
-    """Chained imputer transformer to impute missing values.
+class MICEImputer(BaseEstimator, TransformerMixin):
+    """MICE transformer to impute missing values.
 
-    Basic implementation of chained imputer from MICE (Multivariate
-    Imputations by Chained Equations) package from R. This version assumes all
-    of the features are Gaussian.
+    Basic implementation of MICE (Multivariate Imputations by Chained
+    Equations) package from R. This version assumes all of the features are
+    Gaussian.
 
     Read more in the :ref:`User Guide <mice>`.
 
@@ -463,11 +463,11 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
             A random order for each round.
 
     n_imputations : int, optional (default=100)
-        Number of chained imputation rounds to perform, the results of which
-        will be used in the final average.
+        Number of MICE rounds to perform, the results of which will be
+        used in the final average.
 
     n_burn_in : int, optional (default=10)
-        Number of initial imputation rounds to perform the results of which
+        Number of initial MICE rounds to perform the results of which
         will not be returned.
 
     predictor : estimator object, default=BayesianRidge()
@@ -869,8 +869,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         Xt = np.zeros((n_samples, n_features), dtype=X.dtype)
         self.imputation_sequence_ = []
         if self.verbose > 0:
-            print("[ChainedImputer] Completing matrix with shape %s"
-                  % (X.shape,))
+            print("[MICE] Completing matrix with shape %s" % (X.shape,))
         start_t = time()
         for i_rnd in range(n_rounds):
             if self.imputation_order == 'random':
@@ -883,15 +882,15 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                 X_filled, predictor = self._impute_one_feature(
                     X_filled, mask_missing_values, feat_idx, neighbor_feat_idx,
                     predictor=None, fit_mode=True)
-                predictor_triplet = ImputerTriplet(feat_idx,
-                                                   neighbor_feat_idx,
-                                                   predictor)
+                predictor_triplet = MICETriplet(feat_idx,
+                                                neighbor_feat_idx,
+                                                predictor)
                 self.imputation_sequence_.append(predictor_triplet)
 
             if i_rnd >= self.n_burn_in:
                 Xt += X_filled
             if self.verbose > 0:
-                print('[ChainedImputer] Ending imputation round '
+                print('[MICE] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
                       % (i_rnd + 1, n_rounds, time() - start_t))
 
@@ -933,8 +932,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
         i_rnd = 0
         Xt = np.zeros(X.shape, dtype=X.dtype)
         if self.verbose > 0:
-            print("[ChainedImputer] Completing matrix with shape %s"
-                  % (X.shape,))
+            print("[MICE] Completing matrix with shape %s" % (X.shape,))
         start_t = time()
         for it, predictor_triplet in enumerate(self.imputation_sequence_):
             X_filled, _ = self._impute_one_feature(
@@ -949,7 +947,7 @@ class ChainedImputer(BaseEstimator, TransformerMixin):
                 if i_rnd >= self.n_burn_in:
                     Xt += X_filled
                 if self.verbose > 1:
-                    print('[ChainedImputer] Ending imputation round '
+                    print('[MICE] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
                           % (i_rnd + 1, n_rounds, time() - start_t))
                 i_rnd += 1
