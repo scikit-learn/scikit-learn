@@ -133,7 +133,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         a new copy will always be made, even if `copy=False`:
 
         - If X is not an array of floating values;
-        - If X is sparse and `missing_values=0`;
         - If X is encoded as a CSR matrix.
 
     Attributes
