@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 from scipy import linalg
+import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
@@ -151,6 +152,5 @@ def test_deprecated_grid_scores(random_state=1):
                     "0.19 and will be removed in 0.21. Use "
                     "``grid_scores_`` instead")
 
-    assert_warns_message(DeprecationWarning, depr_message,
-                         lambda: graphical_lasso.grid_scores)
-    assert_equal(graphical_lasso.grid_scores, graphical_lasso.grid_scores_)
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        assert_equal(graphical_lasso.grid_scores, graphical_lasso.grid_scores_)
