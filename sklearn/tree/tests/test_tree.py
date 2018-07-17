@@ -1765,8 +1765,8 @@ def test_mae():
     Right Impurity = Total error / total weight
             = 1.2 / 1.6
             = 0.75
-            ------"""
-
+            ------
+    """
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
 
