@@ -88,6 +88,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_dtype_object
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
+    yield check_sample_weights_shape
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
@@ -552,6 +553,19 @@ def check_sample_weights_list(name, estimator_orig):
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_shape(name, estimator_orig):
+    # check if estimators raise an error if sample_weight
+    # shape mismatches the input
+    if has_fit_parameter(estimator_orig, "sample_weight"):
+        estimator = clone(estimator_orig)
+        X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                      [2, 1], [2, 2], [2, 3], [2, 4]])
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones(shape=2*len(y)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
