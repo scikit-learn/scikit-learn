@@ -2477,13 +2477,6 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        self._fit(X, y=y, force_compute_transform=False)
-        return self
-
-    def fit_transform(self, X, y=None):
-        return self._fit(X, y, force_compute_transform=True)
-
-    def _fit(self, X, y=None, force_compute_transform=False):
         """Estimate the optimal parameter lambda for each feature.
 
         The optimal lambda parameter for minimizing skewness is estimated on
@@ -2500,6 +2493,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         -------
         self : object
         """
+        self._fit(X, y=y, force_compute_transform=False)
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self._fit(X, y, force_compute_transform=True)
+
+    def _fit(self, X, y=None, force_compute_transform=False):
         X = self._check_input(X, check_positive=True, check_method=True)
 
         optim_function = {'box-cox': self._box_cox_optimize,
@@ -2512,11 +2512,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 self.lambdas_.append(lmbda)
         self.lambdas_ = np.array(self.lambdas_)
 
+        transformed = []
         if self.standardize or force_compute_transform:
             transform_function = {'box-cox': boxcox,
                                   'yeo-johnson': self._yeo_johnson_transform
                                   }[self.method]
-            transformed = []
             for col, lmbda in zip(X.T, self.lambdas_):
                 with np.errstate(invalid='ignore'):  # hide NaN warnings
                     col_trans = transform_function(col, lmbda)
@@ -2585,6 +2585,11 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             The transformed data.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_features)
+            The original data
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_shape=True)

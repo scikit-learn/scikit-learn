@@ -2208,3 +2208,15 @@ def test_power_transformer_nans(method):
 
     X_trans = pt.transform(X)
     assert_array_equal(np.isnan(X_trans), np.isnan(X))
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+def test_power_transformer_fit_transform(method, standardize):
+    # check that fit_transform() and fit().transform() return the same values
+    X = X_1col
+    if method == 'box-cox':
+        X = np.abs(X)
+
+    pt = PowerTransformer(method, standardize)
+    assert_array_almost_equal(pt.fit(X).transform(X), pt.fit_transform(X))
