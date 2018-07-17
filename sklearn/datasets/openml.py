@@ -13,9 +13,9 @@ except ImportError:
 
 
 import numpy as np
+import sklearn.externals.arff as arff
 
 from .base import get_data_home
-from sklearn.externals.arff import loads
 from ..externals.joblib import Memory
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
@@ -173,12 +173,12 @@ def _download_data_arff(file_id):
     response = urlopen(url)
     if sys.version_info[0] == 2:
         # Python2.7 numpy can't handle unicode?
-        arff = loads(response.read())
+        arff_file = arff.loads(response.read())
     else:
-        arff = loads(response.read().decode('utf-8'))
+        arff_file = arff.loads(response.read().decode('utf-8'))
 
     response.close()
-    return arff
+    return arff_file
 
 
 def _convert_numericals(data, name_feature):
