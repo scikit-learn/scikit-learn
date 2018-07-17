@@ -729,7 +729,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       dtype=np.int)
         iid = self.iid
         if self.iid == 'warn':
-            if len(np.unique(test_sample_counts)) > 1:
+            warn = False
+            for scorer in scores:
+                means_weighted = np.average(test_scores[scorer_name], axis=1,
+                                            weights=weights)
+                means_unweighted = np.average(test_scores[scorer_name], axis=1)
+                if not np.allclose(means_weighted, means_unweighted):
+                    warn = True
+                    continue
+
+            if warn:
                 warnings.warn("The default of the `iid` parameter will change "
                               "from True to False in version 0.22 and will be"
                               " removed in 0.24. This will change numeric"
