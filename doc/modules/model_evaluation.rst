@@ -1332,7 +1332,7 @@ better the predictions are calibrated.
 
 The aggregation method ``reducer`` can be either:
 
-- ``'sum'``: this computes :math:`\sum_k P_k \delta_k`.
+- ``'avg'``: this computes :math:`\sum_k P_k \delta_k`.
   When the ``sliding_window`` is set to ``False`` this is
   the expected calibration error (ECE) in [1].
   When the ``sliding_window`` is set to ``True`` this is
@@ -1360,12 +1360,12 @@ Here is a small example of usage of this function:::
     >>> from sklearn.metrics import calibration_loss
     >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="sum")
+    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="avg")
     0.0
     >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="max")
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="sum")
+    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="avg")
     0.25
     >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="max")
     0.25
