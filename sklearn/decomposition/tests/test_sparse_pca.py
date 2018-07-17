@@ -123,7 +123,7 @@ def test_fit_transform_tall(norm_comp):
                           random_state=rng, normalize_components=norm_comp)
     U1 = spca_lars.fit_transform(Y)
     spca_lasso = SparsePCA(n_components=3, method='cd',
-                          random_state=rng, normalize_components=norm_comp)
+                           random_state=rng, normalize_components=norm_comp)
     U2 = spca_lasso.fit(Y).transform(Y)
     assert_array_almost_equal(U1, U2)
 
@@ -138,7 +138,7 @@ def test_initialization(norm_comp):
     model.fit(rng.randn(5, 4))
     if norm_comp:
         assert_array_equal(model.components_,
-                V_init / np.linalg.norm(V_init, axis=1)[:, np.newaxis])
+                           V_init / np.linalg.norm(V_init, axis=1)[:, None])
     else:
         assert_array_equal(model.components_, V_init)
 
@@ -167,7 +167,8 @@ def test_mini_batch_fit_transform(norm_comp):
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     spca_lars = MiniBatchSparsePCA(n_components=3, random_state=0,
-            alpha=alpha, normalize_components=norm_comp).fit(Y)
+                                   alpha=alpha,
+                                   normalize_components=norm_comp).fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
@@ -178,14 +179,14 @@ def test_mini_batch_fit_transform(norm_comp):
             U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                     random_state=0,
                                     normalize_components=norm_comp)\
-            .fit(Y).transform(Y)
+                .fit(Y).transform(Y)
         finally:
             joblib_par.multiprocessing = _mp
     else:  # we can efficiently use parallelism
         U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                 random_state=0,
                                 normalize_components=norm_comp)\
-        .fit(Y).transform(Y)
+            .fit(Y).transform(Y)
     assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
@@ -198,7 +199,7 @@ def test_mini_batch_fit_transform(norm_comp):
 def test_scaling_fit_transform():
     alpha = 1
     rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)  # wide array
+    Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
                           random_state=rng, normalize_components=True)
     results_train = spca_lars.fit_transform(Y)
@@ -207,18 +208,18 @@ def test_scaling_fit_transform():
 
 
 def test_pca_vs_spca():
-    alpha = 0
-    ridge_alpha = 0
     rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)  # wide array
-    Z, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2, normalize_components=True)
+    Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
+    Z, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
+    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2,
+                     normalize_components=True)
     pca = PCA(n_components=2)
-    results_train_pca = pca.fit_transform(Y)
+    pca.fit(Y)
+    spca.fit(Y)
     results_test_pca = pca.transform(Z)
-    results_train_spca = spca.fit_transform(Y)
     results_test_spca = spca.transform(Z)
-    assert_allclose(np.abs(spca.components_.dot(pca.components_.T)), np.eye(2), atol=1e-5)
+    assert_allclose(np.abs(spca.components_.dot(pca.components_.T)),
+                    np.eye(2), atol=1e-5)
     results_test_pca *= np.sign(results_test_pca[0, :])
     results_test_spca *= np.sign(results_test_spca[0, :])
     assert_allclose(results_test_pca, results_test_spca)
