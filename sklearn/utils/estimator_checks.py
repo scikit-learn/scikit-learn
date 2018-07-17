@@ -556,41 +556,32 @@ def check_sample_weights_list(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weight_invariance(name, estimator_orig):
+    # check that the estimators yield same results for
+    # unit weights and no weights
     if (has_fit_parameter(estimator_orig, "sample_weight") and
                     name not in ["KMeans", "MiniBatchKMeans"]):
         estimator1 = clone(estimator_orig)
         estimator2 = clone(estimator_orig)
+        set_random_state(estimator1, random_state=42)
+        set_random_state(estimator2, random_state=42)
 
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
                       [3, 3], [3, 3], [3, 3], [3, 3],
                       [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
         y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('float'))
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
 
-        if has_fit_parameter(estimator_orig, "random_state"):
-            estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)), random_state=0)
-            estimator2.fit(X, y=y, sample_weight=None, random_state=0)
-        else:
-            estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
-            estimator2.fit(X, y=y, sample_weight=None)
+        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator2.fit(X, y=y, sample_weight=None)
 
-        if hasattr(estimator_orig, "predict"):
-            X_pred1 = estimator1.predict(X)
-            X_pred2 = estimator2.predict(X)
-            try:
-                assert_allclose(X_pred1, X_pred2, rtol=0.5)
-            except ValueError:
-                raise ValueError("For %s sample_weight=None is not equivalent to "
-                                 "sample_weight=ones" % name)
-        if hasattr(estimator_orig, "transform"):
-            X_trans1 = estimator1.transform(X)
-            X_trans2 = estimator2.transform(X)
-            try:
-                assert_allclose(X_trans1, X_trans2, rtol=0.5)
-            except ValueError:
-                raise ValueError("For %s sample_weight=None is not equivalent to "
-                                 "sample_weight=ones" % name)
+        for method in ["predict", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X)
+                X_pred2 = getattr(estimator2, method)(X)
+                assert_allclose(X_pred1, X_pred2, rtol=0.5,
+                                err_msg="For %s sample_weight=None is not equivalent to "
+                                "sample_weight=ones" % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
