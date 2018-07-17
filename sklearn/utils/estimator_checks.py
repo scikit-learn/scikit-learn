@@ -563,6 +563,8 @@ def check_sample_weights_invariance(name, estimator_orig):
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise) and
             name not in ["KMeans", "MiniBatchKMeans"]):
+        # We skip pairwise because the data is not pairwise
+        # KMeans and MiniBatchKMeans were unstable; hence skipped.
         estimator1 = clone(estimator_orig)
         estimator2 = clone(estimator_orig)
         set_random_state(estimator1, random_state=42)
@@ -583,8 +585,9 @@ def check_sample_weights_invariance(name, estimator_orig):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
                 assert_allclose(X_pred1, X_pred2, rtol=0.5,
-                    err_msg="For %s sample_weight=None is not equivalent"
-                            " to sample_weight=ones" % name)
+                                err_msg="For %s sample_weight=None is not"
+                                        " equivalent to sample_weight=ones"
+                                        % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
