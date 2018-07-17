@@ -441,7 +441,7 @@ def test_sample_weights():
     clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
-@ignore_warnings(UndefinedMetricWarning)
+@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
