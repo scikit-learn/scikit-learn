@@ -125,6 +125,13 @@ Andreas Müller also received a grant to improve scikit-learn from the `Alfred P
    :align: center
    :target: http://www.sydney.edu.au/
 
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015), Tom Duprès Delatour (?).
+
+.. image:: themes/scikit-learn/static/img/digicosme.jpeg
+   :width: 200pt
+   :align: center
+   :target: https://digicosme.lri.fr
+
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
 `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
