@@ -594,7 +594,7 @@ def is_scalar_nan(x):
 
 def safe_name_or_class(obj):
     """Return a representation of the name or class, or raise AttributeError.
-
+    
     If the object has a non-None __name__, its safe_str() is returned.
     Otherwise something similar is done with the object's __class__.
     Otherwise AttributeError is raised.
@@ -649,9 +649,23 @@ safe_str = safe_version((str,), "<No string representation>")
 # The function nice_repr() should be used when we want a more user-friendly
 # version of repr() (with a maximum width, a limited total length, etc.), that
 # also doesn't crash:
-nice_repr = safe_version(
+nice_repr_unbounded = safe_version(
     # The pydoc.text module is not hidden but is not in the official
     # documentation, so it may have to be replaced by something else:
     (pydoc.text.repr, repr, safe_name_or_class), "<No object representation>")
 
+MAX_TEXT_LENGTH = 80*100  # 100 standard lines
+def max_length_nice_repr(obj):
+    """Truncate nice_repr_unbounded(obj) to MAX_TEXT_LENGTH.
+
+    Application: prevent error messages from being too long and unusable.
+    """
+    text = nice_repr_unbounded(obj)
+    return (text if len(text) <= MAX_TEXT_LENGTH
+            else "{}...".format(text[:MAX_TEXT_LENGTH]))
+
+# We're taking precautions by wrapping max_length_nice_repr() with
+# safe_version(), but if we trust its code, we don't have to. This would
+# make the documentation of nice_repr() simpler to follow.
+nice_repr = safe_version((max_length_nice_repr,), "<No object representation>")
 
