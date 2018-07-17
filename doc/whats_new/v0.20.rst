@@ -22,7 +22,6 @@ Highlights
 We have tried to improve our support for common data-science use-cases
 including missing values, categorical variables, heterogeneous data, and
 features/targets with unusual distributions.
-
 Missing values in features, represented by NaNs, are now accepted in
 column-wise preprocessing such as scalers.  Each feature is fitted disregarding
 NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
@@ -733,6 +732,15 @@ Datasets
 
 API changes summary
 -------------------
+
+Classifiers and regressors
+
+- The default value of the ``n_estimators`` parameter of 
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`, 
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`, 
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20 
+  to 100 in 0.22. A FutureWarning is raised when the default value is used.
+  :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
 
 Linear, kernelized and related models
 
