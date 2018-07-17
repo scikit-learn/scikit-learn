@@ -20,6 +20,9 @@ from ..externals.joblib import Memory
 from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
+__all__ = ['fetch_openml']
+
+
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
 _DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
@@ -94,8 +97,8 @@ def _convert_arff_data(arff_data):
         X = np.array(arff_data, dtype=object)
     # elif: extendable for sparse arff in future ()
     else:
-        raise ValueError('Unexpected Data Type obtained from arff ' +
-                         '(This should never happen).')
+        # This should never happen
+        raise ValueError('Unexpected Data Type obtained from arff.')
     return X
 
 

@@ -24,12 +24,10 @@ except ImportError:
 def fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
                               expect_sparse):
-    # fetch with version
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
                                    cache=False)
     assert int(data_by_name_id.details['id']) == data_id
 
-    # fetch without version
     fetch_openml(name=data_name, cache=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
@@ -151,7 +149,8 @@ def test_fetch_openml_anneal(monkeypatch):
     data_id = 2
     data_name = 'anneal'
     data_version = 1
-    expected_observations = 898
+    # Not all original instances included for space reasons
+    expected_observations = 11
     expected_features = 38
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version,
@@ -180,7 +179,8 @@ def test_fetch_openml_australian(monkeypatch):
     data_id = 292
     data_name = 'Australian'
     data_version = 1
-    expected_observations = 690
+    # Not all original instances included for space reasons
+    expected_observations = 85
     expected_features = 14
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     assert_warns_message(
@@ -199,6 +199,7 @@ def test_fetch_openml_miceprotein(monkeypatch):
     data_id = 40966
     data_name = 'MiceProtein'
     data_version = 4
+    # Not all original instances included for space reasons
     expected_observations = 7
     expected_features = 77
     _monkey_patch_webbased_functions(monkeypatch, data_id)
@@ -231,12 +232,12 @@ def test_fetch_openml_inactive(monkeypatch):
 
 
 def test_fetch_nonexiting(monkeypatch):
-    # makes contact with openml server. not mocked
     # there is no active version of glass2
     data_id = 40675
     _monkey_patch_webbased_functions(monkeypatch, data_id)
+    # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
-                         fetch_openml, data_id=None, name='glass2', cache=False)
+                         fetch_openml, name='glass2', cache=False)
 
 
 def test_fetch_openml_raises_illegal_argument():
