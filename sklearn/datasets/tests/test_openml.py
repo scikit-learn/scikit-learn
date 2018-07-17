@@ -212,9 +212,9 @@ def test_fetch_openml_miceprotein(monkeypatch):
     expected_observations = 7
     expected_features = 77
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    data = fetch_dataset_from_openml(data_id, data_name, data_version,
-                                     expected_observations, expected_features,
-                                     np.float64, object, expect_sparse=False)
+    fetch_dataset_from_openml(data_id, data_name, data_version,
+                              expected_observations, expected_features,
+                              np.float64, object, expect_sparse=False)
 
 
 def test_fetch_openml_inactive(monkeypatch):
