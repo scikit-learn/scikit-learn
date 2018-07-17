@@ -190,6 +190,34 @@ def _convert_numericals(data, name_feature):
     return data
 
 
+def _determine_single_target_data_type(name_feature, target_column_name):
+    if not isinstance(target_column_name, str):
+        raise ValueError('target_column_name should be str, '
+                         'got: %s' % type(target_column_name))
+
+    if name_feature[target_column_name]['data_type'] == "numeric":
+        return np.float64
+    else:
+        return object
+
+
+def _determine_multi_target_data_type(name_feature, target_column_names):
+    if not isinstance(target_column_names, list):
+        raise ValueError('target_column_name should be list, '
+                         'got: %s' % type(target_column_names))
+    found_types = set()
+    for target_column_name in target_column_names:
+        if name_feature[target_column_name]['data_type'] == "numeric":
+            found_types.add(np.float64)
+        else:
+            found_types.add(object)
+    if len(found_types) != 1:
+        raise ValueError('Can only handle homogeneous multi-target datasets, '
+                         'i.e., all targets are either numeric or '
+                         'categorical.')
+    return list(found_types)[0]
+
+
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column_name='default-target', cache=True):
     """Fetch dataset from openml by name or dataset id.
@@ -219,11 +247,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    target_column_name : string or None, default 'default-target'
+    target_column_name : string, list or None, default 'default-target'
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
         is used. If ``None``, all columns are returned as data and the
-        target is ``None``.
+        target is ``None``. If list (of strings), all columns with these names
+        are returned as multi-target (Note: not all scikit-learn classifiers
+        can handle all types of multi-output combinations)
 
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
@@ -296,22 +326,36 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # and target at start or end, we could use a view instead.
     data_columns = []
     for feature in features:
-        if (feature['name'] != target_column_name and feature['is_ignore'] ==
-                'false' and feature['is_row_identifier'] == 'false'):
+        # determine whether `feature` is a target
+        if (isinstance(target_column_name, str) and
+                feature['name'] == target_column_name):
+            is_target = True
+        elif (isinstance(target_column_name, list) and
+                feature['name'] in target_column_name):
+            is_target = True
+        else:
+            is_target = False
+
+        if ((not is_target) and feature['is_ignore'] == 'false' and
+                feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
 
     arff_data = cached_download_data_arff(data_description['file_id'])['data']
     data = _convert_arff_data(arff_data)
     data = _convert_numericals(data, name_feature)
 
-    if target_column_name is not None:
+    if isinstance(target_column_name, str):
         # determine vector type
-        if name_feature[target_column_name]['data_type'] == "numeric":
-            dtype = np.float64
-        else:
-            dtype = object
+        dtype = _determine_single_target_data_type(name_feature,
+                                                   target_column_name)
         y = np.array(data[:, int(name_feature[target_column_name]['index'])],
                      dtype=dtype)
+    elif isinstance(target_column_name, list):
+        dtype = _determine_multi_target_data_type(name_feature,
+                                                  target_column_name)
+        indices = [int(name_feature[col_name]['index'])
+                   for col_name in target_column_name]
+        y = np.array(data[:, indices], dtype=dtype)
     else:
         y = None
 

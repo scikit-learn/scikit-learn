@@ -22,9 +22,10 @@ except ImportError:
 
 
 def fetch_dataset_from_openml(data_id, data_name, data_version,
+                              target_column_name,
                               expected_observations, expected_features,
                               exptected_data_dtype, exptected_target_dtype,
-                              expect_sparse):
+                              expect_sparse, compare_default_target):
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
                                    cache=False)
     assert int(data_by_name_id.details['id']) == data_id
@@ -34,12 +35,34 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     # will be the same
 
     # fetch with dataset id
-    data_by_id = fetch_openml(data_id=data_id, cache=False)
+    data_by_id = fetch_openml(data_id=data_id, cache=False,
+                                     target_column_name=target_column_name)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
-    assert data_by_id.target.shape == (expected_observations, )
+    if isinstance(target_column_name, str):
+        # single target, so target is vector
+        assert data_by_id.target.shape == (expected_observations, )
+    elif isinstance(target_column_name, list):
+        # multi target, so target is array
+        assert data_by_id.target.shape == (expected_observations,
+                                           len(target_column_name))
     assert data_by_id.data.dtype == exptected_data_dtype
     assert data_by_id.target.dtype == exptected_target_dtype
+
+    if compare_default_target:
+        # check whether the data by id and data by id target are equal
+        data_by_id_default = fetch_openml(data_id=data_id, cache=False)
+        if data_by_id.data.dtype == np.float64:
+            np.testing.assert_almost_equal(data_by_id.data,
+                                           data_by_id_default.data)
+        else:
+            assert np.array_equal(data_by_id.data, data_by_id_default.data)
+        if data_by_id.target.dtype == np.float64:
+            np.testing.assert_almost_equal(data_by_id.target,
+                                           data_by_id_default.target)
+        else:
+            assert np.array_equal(data_by_id.target, data_by_id_default.target)
+
     if expect_sparse:
         assert isinstance(data_by_id.data, scipy.sparse.csr_matrix)
     else:
@@ -138,13 +161,31 @@ def test_fetch_openml_iris(monkeypatch):
     data_id = 61
     data_name = 'iris'
     data_version = 1
+    target_column = 'class'
     expected_observations = 150
     expected_features = 4
 
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version,
+    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
-                              np.float64, object, expect_sparse=False)
+                              np.float64, object, expect_sparse=False,
+                              compare_default_target=True)
+
+
+def test_fetch_openml_iris_multitarget(monkeypatch):
+    # classification dataset with numeric only columns
+    data_id = 61
+    data_name = 'iris'
+    data_version = 1
+    target_column = ['sepallength', 'sepalwidth']
+    expected_observations = 150
+    expected_features = 3
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                              expected_observations, expected_features,
+                              object, np.float64, expect_sparse=False,
+                              compare_default_target=False)
 
 
 def test_fetch_openml_anneal(monkeypatch):
@@ -152,13 +193,31 @@ def test_fetch_openml_anneal(monkeypatch):
     data_id = 2
     data_name = 'anneal'
     data_version = 1
+    target_column = 'class'
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 38
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version,
+    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
-                              object, object, expect_sparse=False)
+                              object, object, expect_sparse=False,
+                              compare_default_target=True)
+
+
+def test_fetch_openml_anneal_multitarget(monkeypatch):
+    # classification dataset with numeric and categorical columns
+    data_id = 2
+    data_name = 'anneal'
+    data_version = 1
+    target_column = ['class', 'product-type', 'shape']
+    # Not all original instances included for space reasons
+    expected_observations = 11
+    expected_features = 36
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                              expected_observations, expected_features,
+                              object, object, expect_sparse=False,
+                              compare_default_target=False)
 
 
 def test_fetch_openml_cpu(monkeypatch):
@@ -166,12 +225,14 @@ def test_fetch_openml_cpu(monkeypatch):
     data_id = 561
     data_name = 'cpu'
     data_version = 1
+    target_column = 'class'
     expected_observations = 209
     expected_features = 7
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version,
+    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
-                              object, np.float64, expect_sparse=False)
+                              object, np.float64, expect_sparse=False,
+                              compare_default_target=True)
 
 
 def test_fetch_openml_australian(monkeypatch):
@@ -182,6 +243,7 @@ def test_fetch_openml_australian(monkeypatch):
     data_id = 292
     data_name = 'Australian'
     data_version = 1
+    target_column = 'Y'
     # Not all original instances included for space reasons
     expected_observations = 85
     expected_features = 14
@@ -192,11 +254,13 @@ def test_fetch_openml_australian(monkeypatch):
         fetch_dataset_from_openml,
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
+           'target_column_name': target_column,
            'expected_observations': expected_observations,
            'expected_features': expected_features,
            'expect_sparse': False,
            'exptected_data_dtype': np.float64,
-           'exptected_target_dtype': object}
+           'exptected_target_dtype': object,
+           'compare_default_target': True}
     )
 
 
@@ -208,13 +272,15 @@ def test_fetch_openml_miceprotein(monkeypatch):
     data_id = 40966
     data_name = 'MiceProtein'
     data_version = 4
+    target_column = 'class'
     # Not all original instances included for space reasons
     expected_observations = 7
     expected_features = 77
     _monkey_patch_webbased_functions(monkeypatch, data_id)
-    fetch_dataset_from_openml(data_id, data_name, data_version,
+    fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                               expected_observations, expected_features,
-                              np.float64, object, expect_sparse=False)
+                              np.float64, object, expect_sparse=False,
+                              compare_default_target=True)
 
 
 def test_fetch_openml_inactive(monkeypatch):
@@ -239,6 +305,18 @@ def test_fetch_nonexiting(monkeypatch):
     # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
                          fetch_openml, name='glass2', cache=False)
+
+
+def test_raises_illegal_multitarget(monkeypatch):
+    data_id = 61
+    targets = ['sepalwidth', 'class']
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    # Note that we only want to search by name (not data id)
+    assert_raise_message(ValueError,
+                         "Can only handle homogeneous multi-target datasets,",
+                         fetch_openml, data_id=data_id,
+                         target_column_name=targets, cache=False)
+
 
 
 def test_fetch_openml_raises_illegal_argument():
