@@ -503,6 +503,9 @@ def _get_column(X, key):
           can use any hashable object as key).
 
     """
+    if callable(key):
+        key = key(X)
+
     # check whether we have string column names or integers
     if _check_key_type(key, int):
         column_names = False
@@ -514,9 +517,6 @@ def _get_column(X, key):
         if hasattr(X, 'loc'):
             # pandas boolean masks don't work with iloc, so take loc path
             column_names = True
-    elif callable(key) and hasattr(X, 'loc'):
-        # column selector callable
-        column_names = True
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
@@ -525,10 +525,7 @@ def _get_column(X, key):
     if column_names:
         if hasattr(X, 'loc'):
             # pandas dataframes
-            if not callable(key):
-                return X.loc[:, key]
-            else:
-                return X.loc[:, key(X)]
+            return X.loc[:, key]
         else:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
@@ -549,6 +546,9 @@ def _get_column_indices(X, key):
 
     """
     n_columns = X.shape[1]
+
+    if callable(key):
+        key = key(X)
 
     if _check_key_type(key, int):
         if isinstance(key, int):
@@ -584,11 +584,6 @@ def _get_column_indices(X, key):
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         return list(np.arange(n_columns)[key])
-    elif callable(key):
-        if not hasattr(X, 'columns'):
-            raise ValueError("Using column selector callables is only "
-                             "supported for pandas DataFrames")
-        return list(np.arange(n_columns)[key(X)])
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "

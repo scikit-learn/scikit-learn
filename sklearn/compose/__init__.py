@@ -12,5 +12,5 @@ from ._target import TransformedTargetRegressor
 __all__ = [
     'ColumnTransformer',
     'make_column_transformer',
-    'TransformedTargetRegressor'
+    'TransformedTargetRegressor',
 ]
