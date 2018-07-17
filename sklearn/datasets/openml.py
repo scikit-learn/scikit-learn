@@ -202,7 +202,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     Parameters
     ----------
-    name : string
+    name : str
         String identifier of the dataset. Note that OpenML can have multiple
         datasets with the same name.
 
@@ -256,6 +256,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # check legal function arguments. data_id XOR (name, version) should be
     # provided
     if name is not None:
+        name = name.lower()
         if data_id is not None:
             raise ValueError(
                 "Dataset data_id={} and name={} passed, but you can only "
