@@ -15,7 +15,7 @@ from scipy import linalg
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..utils import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)

@@ -655,7 +655,6 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
-   impute.ChainedImputer
    impute.MissingIndicator
    impute.SamplingImputer
 
@@ -1476,6 +1475,22 @@ Low-level methods
    utils.testing.assert_raise_message
    utils.testing.all_estimators
 
+Utilities from joblib:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.Memory
+   utils.Parallel
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.cpu_count
+   utils.delayed
+   utils.parallel_backend
 
 Recently deprecated
 ===================

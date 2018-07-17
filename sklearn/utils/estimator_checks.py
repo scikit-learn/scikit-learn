@@ -14,7 +14,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 
 from sklearn.externals.six.moves import zip
-from sklearn.externals.joblib import hash, Memory
+from sklearn.utils._joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
@@ -77,9 +77,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer', 'MissingIndicator',
-             'SamplingImputer', 'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler',
-             'StandardScaler', 'PowerTransformer', 'QuantileTransformer']
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator', 'SamplingImputer',
+             'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
+             'PowerTransformer', 'QuantileTransformer']
 
 ALLOW_NON_NUMERIC = ['SimpleImputer', 'SamplingImputer']
 
@@ -93,6 +93,7 @@ def _yield_non_meta_checks(name, estimator):
 
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
+    yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
@@ -346,7 +347,13 @@ def set_checking_parameters(estimator):
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
         # especially gradient boosting with default 100
-        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        # FIXME: The default number of trees was changed and is set to 'warn'
+        # for some of the ensemble methods. We need to catch this case to avoid
+        # an error during the comparison. To be reverted in 0.22.
+        if estimator.n_estimators == 'warn':
+            estimator.set_params(n_estimators=5)
+        else:
+            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -557,6 +564,40 @@ def check_sample_weights_list(name, estimator_orig):
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_invariance(name, estimator_orig):
+    # check that the estimators yield same results for
+    # unit weights and no weights
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        # We skip pairwise because the data is not pairwise
+
+        estimator1 = clone(estimator_orig)
+        estimator2 = clone(estimator_orig)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
+
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+
+        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator2.fit(X, y=y, sample_weight=None)
+
+        for method in ["predict", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X)
+                X_pred2 = getattr(estimator2, method)(X)
+                assert_allclose(X_pred1, X_pred2, rtol=0.5,
+                                err_msg="For %s sample_weight=None is not"
+                                        " equivalent to sample_weight=ones"
+                                        % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))

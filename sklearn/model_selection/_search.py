@@ -29,7 +29,7 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
@@ -938,8 +938,8 @@ class GridSearchCV(BaseSearchCV):
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svc = svm.SVC(gamma="scale")
-    >>> clf = GridSearchCV(svc, parameters)
-    >>> clf.fit(iris.data, iris.target)
+    >>> clf = GridSearchCV(svc, parameters) # doctest: +SKIP
+    >>> clf.fit(iris.data, iris.target) # doctest: +SKIP
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
@@ -950,7 +950,7 @@ class GridSearchCV(BaseSearchCV):
            fit_params=None, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
-    >>> sorted(clf.cv_results_.keys())
+    >>> sorted(clf.cv_results_.keys()) # doctest: +SKIP
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'mean_train_score', 'param_C', 'param_kernel', 'params',...
