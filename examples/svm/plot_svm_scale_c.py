@@ -142,7 +142,7 @@ for clf, cs, X, y in clf_sets:
             ax.set_ylabel('CV Score')
             grid_cs = cs * float(scaler)  # scale the C's
             ax.semilogx(grid_cs, scores, label="fraction %.2f" %
-                                               train_size, color=colors[k], lw=lw)
+                        train_size, color=colors[k], lw=lw)
             ax.set_title('scaling=%s, penalty=%s, loss=%s' %
                          (name, clf.penalty, clf.loss))
 
