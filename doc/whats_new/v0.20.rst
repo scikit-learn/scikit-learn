@@ -150,11 +150,6 @@ Preprocessing
 - Added :class:`MissingIndicator` which generates a binary indicator for
   missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
-  
-- Added :class:`impute.ChainedImputer`, which is a strategy for imputing missing
-  values by modeling each feature with missing values as a function of
-  other features in a round-robin fashion. :issue:`8478` by
-  :user:`Sergey Feldman <sergeyf>`.
 
 - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
   :class:`linear_model.PassiveAggressiveClassifier`,
