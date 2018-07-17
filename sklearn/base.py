@@ -268,7 +268,7 @@ class BaseEstimator(object):
                 "{}. If you are sure your dataframe is correct, you may "
                 "instead pass 'df.values' to explicitely convert the "
                 "dataframe to a numpy array.".format(self._column_names,
-                list(X.columns))
+                                                     list(X.columns))
             )
 
     def __repr__(self):
