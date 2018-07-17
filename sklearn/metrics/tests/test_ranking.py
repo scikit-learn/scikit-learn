@@ -539,21 +539,6 @@ def test_precision_recall_curve():
     assert_equal(p.size, t.size + 1)
 
 
-def test_precision_recall_curve_pos_label():
-    y_true, _, probas_pred = make_prediction(binary=False)
-    pos_label = 2
-    p, r, thresholds = precision_recall_curve(y_true,
-                                              probas_pred[:, pos_label],
-                                              pos_label=pos_label)
-    p2, r2, thresholds2 = precision_recall_curve(y_true == pos_label,
-                                                 probas_pred[:, pos_label])
-    assert_array_almost_equal(p, p2)
-    assert_array_almost_equal(r, r2)
-    assert_array_almost_equal(thresholds, thresholds2)
-    assert_equal(p.size, r.size)
-    assert_equal(p.size, thresholds.size + 1)
-
-
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
@@ -694,6 +679,18 @@ def test_average_precision_constant_values():
     # The precision is then the fraction of positive whatever the recall
     # is, as there is only one threshold:
     assert_equal(average_precision_score(y_true, y_score), .25)
+
+
+def test_average_precision_score_pos_label_multilabel_indicator():
+    # Raise an error for multilabel-indicator y_true with
+    # pos_label other than 1
+    y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
+    y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
+    erorr_message = ("Parameter pos_label is fixed to 1 for multilabel"
+                     "-indicator y_true. Do not set pos_label or set "
+                     "pos_label to 1.")
+    assert_raise_message(ValueError, erorr_message, average_precision_score,
+                         y_true, y_pred, pos_label=0)
 
 
 def test_score_scale_invariance():
