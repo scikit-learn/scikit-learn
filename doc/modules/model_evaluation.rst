@@ -1369,6 +1369,12 @@ Here is a small example of usage of this function:::
     0.25
     >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, reducer="max")
     0.25
+    >>> from sklearn.metrics.scorer import make_scorer
+    >>> calibration_scorer = make_scorer(calibration_loss, greater_is_better=False)
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> grid = GridSearchCV(RandomForestClassifier(), param_grid={'max_depth': [3, 5, 7]},
+    ...             scoring=calibration_scorer)
 
 .. topic:: References:
 
