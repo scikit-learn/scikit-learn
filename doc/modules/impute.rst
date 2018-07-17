@@ -63,7 +63,7 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
     >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
     [[3.          2.        ]
-     [6.          2.        ]
+     [6.          3.        ]
      [7.          6.        ]]
 
 Note that this format is not meant to be used to implicitly store missing values

@@ -226,17 +226,18 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                              "numerical value when imputing numerical "
                              "data".format(fill_value))
 
-        if sparse.issparse(X) and self.missing_values == 0:
+        if sparse.issparse(X):
             # missing_values = 0 not allowed with sparse data as it would
             # force densification
-            raise ValueError("Imputation not possible when missing_values == 0"
-                             " and input is sparse. Provide a dense array "
-                             "instead.")
-        elif sparse.issparse(X):
-            self.statistics_ = self._sparse_fit(X,
-                                                self.strategy,
-                                                self.missing_values,
-                                                fill_value)
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
+                self.statistics_ = self._sparse_fit(X,
+                                                    self.strategy,
+                                                    self.missing_values,
+                                                    fill_value)
         else:
             self.statistics_ = self._dense_fit(X,
                                                self.strategy,
@@ -253,7 +254,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
-            return np.full(X.shape[1], fill_value)
+            # for constant strategy, self.statistcs_ is used to store
+            # fill_value in each column
+            statistics.fill(fill_value)
 
         else:
             for i in range(X.shape[1]):
@@ -329,6 +332,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Constant
         elif strategy == "constant":
+            # for constant strategy, self.statistcs_ is used to store
+            # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
     def transform(self, X):
@@ -367,21 +372,19 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X) and self.missing_values == 0:
-            raise ValueError("Imputation not possible when missing_values == 0"
-                             " and input is sparse. Provide a dense array "
-                             "instead.")
-        elif sparse.issparse(X):
-            mask = _get_mask(X.data, self.missing_values)
-            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                                np.diff(X.indptr))[mask]
+        if sparse.issparse(X):
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+            else:
+                mask = _get_mask(X.data, self.missing_values)
+                indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                    np.diff(X.indptr))[mask]
 
-            X.data[mask] = valid_statistics[indexes].astype(X.dtype,
-                                                            copy=False)
+                X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                                copy=False)
         else:
-            if sparse.issparse(X):
-                X = X.toarray()
-
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
