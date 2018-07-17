@@ -1,7 +1,7 @@
 """Test the split module"""
 from __future__ import division
 import warnings
-
+import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
@@ -202,6 +202,7 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')
 def test_2d_y():
     # smoke test for 2d y and multi-label
     n_samples = 30
@@ -1401,6 +1402,7 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
