@@ -18,7 +18,7 @@ from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
@@ -282,13 +282,16 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'` and `flatten_transform=True`:
-          array-like = (n_classifiers, n_samples * n_classes)
-          otherwise array-like = (n_classifiers, n_samples, n_classes)
-            Class probabilities calculated by each classifier.
-        If `voting='hard'`:
-          array-like = [n_samples, n_classifiers]
-            Class labels predicted by each classifier.
+        probabilities_or_labels
+            If `voting='soft'` and `flatten_transform=True`:
+                returns array-like of shape (n_classifiers, n_samples *
+                n_classes), being class probabilities calculated by each
+                classifier.
+            If `voting='soft' and `flatten_transform=False`:
+                array-like of shape (n_classifiers, n_samples, n_classes)
+            If `voting='hard'`:
+                array-like of shape (n_samples, n_classifiers), being
+                class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
 
@@ -316,7 +319,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        params : keyword arguments
+        **params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
             In addition, to setting the parameters of the ``VotingClassifier``,
             the individual classifiers of the ``VotingClassifier`` can also be
@@ -339,7 +342,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        deep: bool
+        deep : bool
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """

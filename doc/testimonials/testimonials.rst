@@ -120,7 +120,7 @@ Gilad Lotan, Chief Data Scientist
 
 
 `Hugging Face <https://huggingface.co>`_
-------------------------------------
+----------------------------------------
 
 .. raw:: html
 

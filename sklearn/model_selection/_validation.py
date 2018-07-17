@@ -25,7 +25,8 @@ from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..externals.joblib import Parallel, delayed, logger
+from ..utils import Parallel, delayed
+from ..utils._joblib import logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
@@ -79,10 +80,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all

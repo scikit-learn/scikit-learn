@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .utils import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
@@ -644,12 +644,12 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     --------
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA, TruncatedSVD
-    >>> union = FeatureUnion([("pca", PCA(n_components=2)),
+    >>> union = FeatureUnion([("pca", PCA(n_components=1)),
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    array([[ 1.5       ,  0.        ,  3.0...,  0.8...],
-           [-1.5       ,  0.        ,  5.7..., -0.4...]])
+    array([[ 1.5       ,  3.0...,  0.8...],
+           [-1.5       ,  5.7..., -0.4...]])
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list

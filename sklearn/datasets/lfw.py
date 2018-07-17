@@ -31,7 +31,7 @@ import numpy as np
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
-from ..externals.joblib import Memory
+from ..utils import Memory
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
@@ -287,9 +287,10 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False. If True, returns ``(dataset.data,
-    dataset.target)`` instead of a Bunch object. See below for more
-    information about the `dataset.data` and `dataset.target` object.
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
+        object. See below for more information about the `dataset.data` and
+        `dataset.target` object.
 
         .. versionadded:: 0.20
 
@@ -472,8 +473,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
         will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
-            ``subset``.
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on ``subset``
         Each row has 2 face images corresponding to same or different person
         from the dataset containing 5749 people. Changing the ``slice_``,
         ``resize`` or ``subset`` parameters will change the shape of the

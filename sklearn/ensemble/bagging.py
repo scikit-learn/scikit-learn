@@ -13,7 +13,7 @@ from warnings import warn
 
 from .base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
@@ -495,7 +495,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
@@ -871,7 +871,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         by `np.random`.
 
     verbose : int, optional (default=0)
-        Controls the verbosity of the building process.
+        Controls the verbosity when fitting and predicting.
 
     Attributes
     ----------
