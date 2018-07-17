@@ -512,15 +512,15 @@ def test_logistic_cv_multinomial_score(scoring):
     if scoring in ['f1', 'precision', 'recall']:
         for averaging in ['micro', 'macro', 'weighted']:
             scorer = get_scorer('{0}_{1}'.format(scoring, averaging))
-            np.testing.assert_array_almost_equal(
-                _log_reg_scoring_path(X, y, train, test, Cs=[1.], **params,
-                                      scoring=scorer)[2][0],
+            assert_array_almost_equal(
+                _log_reg_scoring_path(X, y, train, test, Cs=[1.],
+                                      scoring=scorer, **params)[2][0],
                 scorer(lr, X[test], y[test]))
     else:
         scorer = get_scorer(scoring)
-        np.testing.assert_array_almost_equal(
-            _log_reg_scoring_path(X, y, train, test, Cs=[1.], **params,
-                                  scoring=scorer)[2][0],
+        assert_array_almost_equal(
+            _log_reg_scoring_path(X, y, train, test, Cs=[1.],
+                                  scoring=scorer, **params)[2][0],
             scorer(lr, X[test], y[test]))
 
 
