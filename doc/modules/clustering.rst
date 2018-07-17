@@ -1158,8 +1158,8 @@ Given the knowledge of the ground truth class assignments ``labels_true`` and
 our clustering algorithm assignments of the same samples ``labels_pred``, the
 **Mutual Information** is a function that measures the **agreement** of the two
 assignments, ignoring permutations.  Two different normalized versions of this
-measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
-Mutual Information(AMI)**. NMI is often used in the literature while AMI was
+measure are available, **Normalized Mutual Information (NMI)** and **Adjusted
+Mutual Information (AMI)**. NMI is often used in the literature, while AMI was
 proposed more recently and is **normalized against chance**::
 
   >>> from sklearn import metrics
@@ -1212,16 +1212,10 @@ Advantages
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
-- **Bounded range [0, 1]**:  Values close to zero indicate two label
+- **Upper bound  of 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
-  indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  indicate significant agreement. Further, an AMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
-
-- **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assumes isotropic
-  blob shapes with results of spectral clustering algorithms which can
-  find cluster with "folded" shapes.
 
 
 Drawbacks
@@ -1274,7 +1268,7 @@ It also can be expressed in set cardinality formulation:
 
 The normalized mutual information is defined as
 
-.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\sqrt{H(U)H(V)}}
+.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\text{mean}(H(U), H(V))}
 
 This value of the mutual information and also the normalized variant is not
 adjusted for chance and will tend to increase as the number of different labels
@@ -1282,7 +1276,7 @@ adjusted for chance and will tend to increase as the number of different labels
 between the label assignments.
 
 The expected value for the mutual information can be calculated using the
-following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
+following equation [VEB2009]_. In this equation,
 :math:`a_i = |U_i|` (the number of elements in :math:`U_i`) and
 :math:`b_j = |V_j|` (the number of elements in :math:`V_j`).
 
@@ -1295,7 +1289,19 @@ following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
 Using the expected value, the adjusted mutual information can then be
 calculated using a similar form to that of the adjusted Rand index:
 
-.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\max(H(U), H(V)) - E[\text{MI}]}
+.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
+
+For normalized mutual information and adjusted mutual information, the normalizing
+value is typically some *generalized* mean of the entropies of each clustering.
+Various generalized means exist, and no firm rules exist for preferring one over the
+others.  The decision is largely a field-by-field basis; for instance, in community
+detection, the arithmetic mean is most common. Each
+normalizing method provides "qualitatively similar behaviours" [YAT2016]_. In our
+implementation, this is controlled by the ``average_method`` parameter.
+
+Vinh et al. (2010) named variants of NMI and AMI by their averaging method [VEB2010]_. Their
+'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
+more broadly common names.
 
 .. topic:: References
 
@@ -1304,22 +1310,29 @@ calculated using a similar form to that of the adjusted Rand index:
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+ * [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
    `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
    ISBN 9781605585161.
 
- * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+ * [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance, JMLR
-   http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+   
+ * [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+   community
+   detection algorithms on artificial networks". Scientific Reports 6: 30750.
+   `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
+   
+   
 
 .. _homogeneity_completeness:
 
@@ -1359,7 +1372,7 @@ Their harmonic mean called **V-measure** is computed by
   0.51...
 
 The V-measure is actually equivalent to the mutual information (NMI)
-discussed above normalized by the sum of the label entropies [B2011]_.
+discussed above, with the aggregation function being the arithmetic mean [B2011]_.
 
 Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
@@ -1534,7 +1547,7 @@ Advantages
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
-- **Bounded range [0, 1]**:  Values close to zero indicate two label
+- **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
   **purely** independent label assignments and a AMI of exactly 1 indicates

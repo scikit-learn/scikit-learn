@@ -18,7 +18,7 @@ from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
@@ -319,7 +319,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        params : keyword arguments
+        **params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
             In addition, to setting the parameters of the ``VotingClassifier``,
             the individual classifiers of the ``VotingClassifier`` can also be
@@ -342,7 +342,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        deep: bool
+        deep : bool
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """
