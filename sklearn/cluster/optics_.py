@@ -17,7 +17,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics.pairwise import pairwise_distances
+from ..metrics import pairwise_distances
 from ._optics_inner import quick_scan
 
 
@@ -59,7 +59,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        :ref:`sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -173,7 +173,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        :ref:`sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
