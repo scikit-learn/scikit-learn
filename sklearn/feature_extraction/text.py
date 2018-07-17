@@ -275,14 +275,13 @@ class VectorizerMixin(object):
                 for token in tokens:
                     if token not in stop_words:
                         inconsistent.add(token)
-            self._stop_words_inconsistent = inconsistent
-            self._stop_words_id = id(stop_words)
+            self._stop_words_id = id(self.stop_words)
 
-        if self._stop_words_inconsistent:
-            warnings.warn('Your stop_words may be inconsistent with your '
-                          'preprocessing. Tokenizing the stop words '
-                          'generated tokens %r not in stop_words.' %
-                          sorted(self._stop_words_inconsistent))
+            if inconsistent:
+                warnings.warn('Your stop_words may be inconsistent with your '
+                              'preprocessing. Tokenizing the stop words '
+                              'generated tokens %r not in stop_words.' %
+                              sorted(inconsistent))
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""

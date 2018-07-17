@@ -32,7 +32,7 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises,
+                                   SkipTest, assert_raises, assert_no_warnings,
                                    assert_allclose_dense_sparse)
 
 from collections import defaultdict, Mapping
@@ -1121,10 +1121,10 @@ def test_vectorizer_stop_words_inconsistent():
         assert_warns_message(UserWarning, message, vec.fit_transform,
                              ['hello world'])
 
-    # Test caching of inconsistency assessment
-    assert_warns_message(UserWarning, message, vec.fit_transform,
-                         ['hello world'])
+    # Only one warning per stop list
+    assert_no_warnings(vec.fit_transform, ['hello world'])
 
+    # Test caching of inconsistency assessment
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
     assert_warns_message(UserWarning, message, vec.fit_transform,
                          ['hello world'])
