@@ -19,7 +19,7 @@ from sklearn.base import BaseEstimator
 from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import StandardScaler, Normalizer
+from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
 
@@ -299,6 +299,41 @@ def test_column_transformer_sparse_stacking():
     assert not sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
+
+
+def test_column_transformer_sparse_threshold():
+    X_array = np.array([['a', 'b', 'c'], ['A', 'B', 'C']], dtype=object).T
+    # above data has sparsity of 6 / 18 = 0.333
+
+    # if all sparse, keep sparse (even if above threshold)
+    col_trans = ColumnTransformer([('trans1', OneHotEncoder(), [0]),
+                                   ('trans2', OneHotEncoder(), [1])],
+                                  sparse_threshold=0.2)
+    res = col_trans.fit_transform(X_array)
+    assert sparse.issparse(res)
+
+    # mixed -> sparsity of (3 + 9) / 18 = 0.666
+    col_trans = ColumnTransformer(
+        [('trans1', OneHotEncoder(sparse=True), [0]),
+         ('trans2', OneHotEncoder(sparse=False), [1])],
+        sparse_threshold=0.67)
+    res = col_trans.fit_transform(X_array)
+    assert sparse.issparse(res)
+
+    col_trans = ColumnTransformer(
+        [('trans1', OneHotEncoder(sparse=True), [0]),
+         ('trans2', OneHotEncoder(sparse=False), [1])],
+        sparse_threshold=0.66)
+    res = col_trans.fit_transform(X_array)
+    assert not sparse.issparse(res)
+
+    # if nothing is sparse -> no sparse
+    col_trans = ColumnTransformer(
+        [('trans1', OneHotEncoder(sparse=False), [0]),
+         ('trans2', OneHotEncoder(sparse=False), [1])],
+        sparse_threshold=0.33)
+    res = col_trans.fit_transform(X_array)
+    assert not sparse.issparse(res)
 
 
 def test_column_transformer_error_msg_1D():
