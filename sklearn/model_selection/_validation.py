@@ -143,7 +143,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         does not affect the refit step, which will always raise the error.
         Default is 'raise-deprecating' but from version 0.22 it will change
         to np.nan.
-    
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
