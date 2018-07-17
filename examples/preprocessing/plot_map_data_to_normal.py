@@ -47,7 +47,7 @@ print(__doc__)
 
 N_SAMPLES = 1000
 FONT_SIZE = 6
-BINS = 'auto'
+BINS = 30#'auto'
 
 
 rng = np.random.RandomState(304)
@@ -94,7 +94,7 @@ distributions = [
 colors = ['firebrick', 'darkorange', 'goldenrod',
           'seagreen', 'royalblue', 'darkorchid']
 
-fig, axes = plt.subplots(nrows=8, ncols=3, figsize=plt.figaspect(3))
+fig, axes = plt.subplots(nrows=8, ncols=3, figsize=plt.figaspect(2))
 axes = axes.flatten()
 axes_idxs = [(0, 3, 6, 9), (1, 4, 7, 10), (2, 5, 8, 11), (12, 15, 18, 21),
              (13, 16, 19, 22), (14, 17, 20, 23)]
@@ -125,13 +125,14 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
             ('Box-Cox', 'Yeo-Johnson', 'Quantile transform'),
             (lmbda_bc, lmbda_yj, None)):
         ax.hist(X_trans, color=color, bins=BINS)
-        title = '{} after {}'.format(name, meth_name)
+        title = 'After {}'.format(meth_name)
         if lmbda is not None:
-            title += ', $\lambda$ = {}'.format(lmbda)
+            title += '\n$\lambda$ = {}'.format(lmbda)
         ax.set_title(title, fontsize=FONT_SIZE)
         ax.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
         ax.set_xlim([-3.5, 3.5])
 
 
 plt.tight_layout()
-plt.show()
+plt.savefig('lol.png')
+#plt.show()
