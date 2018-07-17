@@ -88,7 +88,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_dtype_object
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
-    yield check_sample_weight_invariance
+    yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
@@ -556,10 +556,12 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_sample_weight_invariance(name, estimator_orig):
+def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
     if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise) and
             name not in ["KMeans", "MiniBatchKMeans"]):
         estimator1 = clone(estimator_orig)
         estimator2 = clone(estimator_orig)
