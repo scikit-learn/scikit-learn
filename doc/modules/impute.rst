@@ -13,7 +13,8 @@ array are numerical, and that all have and hold meaning. A basic strategy to use
 incomplete datasets is to discard entire rows and/or columns containing missing
 values. However, this comes at the price of losing data which may be valuable
 (even though incomplete). A better strategy is to impute the missing values,
-i.e., to infer them from the known part of the data.
+i.e., to infer them from the known part of the data. See the :ref:`glossary`
+entry on imputation.
 
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
 values. Missing values can be imputed with a provided constant value, or using

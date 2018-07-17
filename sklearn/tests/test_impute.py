@@ -1,8 +1,8 @@
+import pytest
 
 import numpy as np
 from scipy import sparse
 
-import pytest
 import io
 
 from sklearn.utils.testing import assert_allclose
@@ -65,10 +65,11 @@ def test_imputation_shape():
 
     for strategy in ['mean', 'median', 'most_frequent', "constant"]:
         imputer = SimpleImputer(strategy=strategy)
-        X_imputed = imputer.fit_transform(X)
-        assert_equal(X_imputed.shape, (10, 2))
         X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
         assert_equal(X_imputed.shape, (10, 2))
+        X_imputed = imputer.fit_transform(X)
+        assert_equal(X_imputed.shape, (10, 2))
+        
 
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
@@ -475,6 +476,9 @@ def test_imputation_copy():
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
+
+    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
+    # made, even if copy=False.
 
 
 @pytest.mark.parametrize(

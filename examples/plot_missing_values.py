@@ -1,7 +1,7 @@
 """
-======================================================
+====================================================
 Imputing missing values before building an estimator
-======================================================
+====================================================
 
 This example shows that imputing the missing values can give better
 results than discarding the samples containing any missing value.
@@ -17,10 +17,11 @@ which could dominate results (otherwise known as a 'long tail').
 In addition of using an imputing method, we can also keep an indication of the
 missing information using :func:`sklearn.impute.MissingIndicator` which might
 carry some information.
-
 """
 import numpy as np
+import matplotlib.pyplot as plt
 
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union

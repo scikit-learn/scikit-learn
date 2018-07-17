@@ -655,6 +655,7 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.MissingIndicator
 
 .. _kernel_approximation_ref:
 
