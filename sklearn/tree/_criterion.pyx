@@ -842,7 +842,7 @@ cdef class RegressionCriterion(Criterion):
         #           sum_left[x] +  sum_right[x] = sum_total[x]
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
-        # of computations, i.e. from pos to new_pos or from end to new_po.
+        # of computations, i.e. from pos to new_pos or from end to new_pos.
 
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):

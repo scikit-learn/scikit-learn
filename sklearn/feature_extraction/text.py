@@ -479,6 +479,19 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import HashingVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = HashingVectorizer(n_features=2**4)
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(X.shape)
+    (4, 16)
 
     See also
     --------
@@ -745,6 +758,25 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = CountVectorizer()
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(vectorizer.get_feature_names())
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    [[0 1 1 1 0 0 1 0 1]
+     [0 2 0 1 0 1 1 0 1]
+     [1 0 0 1 1 0 1 1 1]
+     [0 1 1 1 0 0 1 0 1]]
 
     See also
     --------
@@ -1376,6 +1408,22 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = TfidfVectorizer()
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(vectorizer.get_feature_names())
+    ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+    >>> print(X.shape)
+    (4, 9)
 
     See also
     --------

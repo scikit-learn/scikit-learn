@@ -733,6 +733,20 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
+    Examples
+    --------
+    >>> from sklearn.cluster import AgglomerativeClustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AgglomerativeClustering().fit(X)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
+                connectivity=None, linkage='ward', memory=None, n_clusters=2,
+                pooling_func='deprecated')
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
@@ -762,7 +776,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        if self.pooling_func != 'deprecated':
+        if (self.pooling_func != 'deprecated' and
+                not isinstance(self, AgglomerationTransform)):
             warnings.warn('Agglomerative "pooling_func" parameter is not used.'
                           ' It has been deprecated in version 0.20 and will be'
                           'removed in 0.22', DeprecationWarning)
