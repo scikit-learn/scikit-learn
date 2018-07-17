@@ -93,6 +93,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -298,6 +302,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -654,6 +662,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -939,6 +951,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
@@ -1084,6 +1100,10 @@ def learning_curve(estimator, X, y, groups=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1317,6 +1337,10 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or

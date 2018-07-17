@@ -785,6 +785,10 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs

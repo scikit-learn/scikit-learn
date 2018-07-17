@@ -1408,11 +1408,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    cv : integer or cross-validation generator
+    cv : integer or cross-validation generator, default: None
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
+
+        .. deprecated:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
