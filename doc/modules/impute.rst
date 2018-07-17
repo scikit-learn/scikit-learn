@@ -97,10 +97,10 @@ sparse and categorical data. It works the same way as the :class:`SimpleImputer`
     >>> import numpy as np
     >>> from sklearn.impute import SamplingImputer
     >>> X = np.array([[1, -1],
-                      [2, -2],
-                      [np.nan, np.nan],
-                      [np.nan, np.nan],
-                      [np.nan, np.nan]])
+    ...               [2, -2],
+    ...               [np.nan, np.nan],
+    ...               [np.nan, np.nan],
+    ...               [np.nan, np.nan]])
     >>> imp = SamplingImputer(missing_values=np.nan, random_state=0)
     >>> print(imp.fit_transform(X))           # doctest: +NORMALIZE_WHITESPACE
     [[ 1. -1.]
