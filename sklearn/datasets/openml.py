@@ -23,6 +23,7 @@ from ..utils import Bunch
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
 _DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
+_DATA_FILE = "https://openml.org/data/v1/download/{}"
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error):
@@ -73,10 +74,6 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error):
     return json_data
 
 
-def _openml_fileid_url(file_id):
-    return "https://openml.org/data/v1/download/{}/".format(file_id)
-
-
 def _convert_arff_data(arff_data):
     """
     converts the arff object into the appropriate matrix type (now: np.ndarray,
@@ -88,7 +85,10 @@ def _convert_arff_data(arff_data):
     arff_data : list or dict
         as obtained from liac-arff object
 
-    returns : np.ndarray (or later also: scipy.sparse.csr_matrix)
+    Returns
+    -------
+    X : np.ndarray
+        (or later also: scipy.sparse.csr_matrix)
     """
     if isinstance(arff_data, list):
         X = np.array(arff_data, dtype=object)
@@ -124,46 +124,31 @@ def _get_data_info_by_name(name, version):
         search criteria
 
     """
-    data_found = True
-    try:
-        if version == "active":
-            response = urlopen(_SEARCH_NAME.format(name) + "/status/active/")
-        else:
-            response = urlopen((_SEARCH_NAME +
-                                "/data_version/{}").format(name, version))
-    except HTTPError as error:
-        if error.code == 412:
-            data_found = False
-        else:
-            raise error
+    if version == "active":
+        # situation in which we return the oldest active version
+        url = _SEARCH_NAME.format(name) + "/status/active/"
+        error_msg = "No active dataset {} found.".format(name)
+        json_data = _get_json_content_from_openml_api(url, error_msg, True)
+        return json_data['data']['dataset'][0]
 
-    if not data_found and version != "active":
-        # might have been deactivated. will warn later
-        data_found = True
-        try:
-            url = (_SEARCH_NAME +
-                   "/data_version/{}/status/deactivated").format(name, version)
-            response = urlopen(url)
-        except HTTPError as error:
-            # 412 is an OpenML specific error code, indicating a generic error
-            # (e.g., data not found)
-            if error.code == 412:
-                data_found = False
-            else:
-                raise error
+    # an integer version has been provided
+    url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
+    json_data = _get_json_content_from_openml_api(url, None, False)
+    if json_data is None:
+        # we can do this in 1 fn call if OpenML does not require the
+        # specification of the dataset status (i.e., return datasets with a
+        # given name / version regardless of active, deactivated, etc. )
+        # TODO: feature request OpenML.
+        url += "/status/deactivated"
+        error_msg = "Dataset {} with version {} not found.".format(name,
+                                                                   version)
+        json_data = _get_json_content_from_openml_api(url, error_msg, True)
 
-    if not data_found:
-        # not in except for nicer traceback
-        if version == "active":
-            raise ValueError("No active dataset {} found.".format(name))
-        raise ValueError("Dataset {} with version {}"
-                         " not found.".format(name, version))
-
-    json_data = json.loads(response.read().decode("utf-8"))
     return json_data['data']['dataset'][0]
 
 
 def _get_data_description_by_id(data_id):
+    # OpenML API fn: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
@@ -171,14 +156,17 @@ def _get_data_description_by_id(data_id):
 
 
 def _get_data_features(data_id):
+    # OpenML API fn: https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
     return json_data['data_features']['feature']
 
 
-def _download_data(file_id):
-    url = _openml_fileid_url(file_id)
+def _download_data_arff(file_id):
+    # Accesses an ARFF file on the OpenML server. Documentation:
+    # https://www.openml.org/api_data_docs#!/data/get_download_id
+    url = _DATA_FILE.format(file_id)
     response = urlopen(url)
     if sys.version_info[0] == 2:
         # Python2.7 numpy can't handle unicode?
@@ -191,6 +179,7 @@ def _download_data(file_id):
 
 
 def _convert_numericals(data, name_feature):
+    # converts all numerical columns into floats
     for feature in name_feature.values():
         if feature['data_type'] == "numeric":
             idx = int(feature['index'])
@@ -256,7 +245,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     _get_data_info_by_name_ = mem(_get_data_info_by_name)
     _get_data_description_by_id_ = mem(_get_data_description_by_id)
     _get_data_features_ = mem(_get_data_features)
-    _download_data_ = mem(_download_data)
+    _download_data_ = mem(_download_data_arff)
 
     if not exists(data_home):
         os.makedirs(data_home)
