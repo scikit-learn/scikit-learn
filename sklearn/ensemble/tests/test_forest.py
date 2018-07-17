@@ -1231,21 +1231,19 @@ def test_min_impurity_decrease():
             assert_equal(tree.min_impurity_decrease, 0.1)
 
 
-def test_nestimators_future_warning():
-    # Test that n_estimators future warning is raised. Will be removed in 0.22
-
-    all_estimators = [RandomForestClassifier, RandomForestRegressor,
-                      ExtraTreesClassifier, ExtraTreesRegressor,
-                      RandomTreesEmbedding]
+@pytest.mark.parametrize('forest',
+                         [RandomForestClassifier, RandomForestRegressor,
+                          ExtraTreesClassifier, ExtraTreesRegressor,
+                          RandomTreesEmbedding])
+def test_nestimators_future_warning(forest):
+    # FIXME: to be removed 0.22
 
     # When n_estimators default value is used
     msg_future = "The default value of n_estimators will change from "
     "10 in version 0.20 to 100 in 0.22."
+    est = forest()
+    est = assert_warns_message(FutureWarning, msg_future, est.fit, X, y)
 
-    for Estimator in all_estimators:
-        est = Estimator()
-        est = assert_warns_message(FutureWarning, msg_future, est.fit, X, y)
-
-        # When n_estimators is a valid value not equal to the default
-        est = Estimator(n_estimators=100)
-        est = assert_no_warnings(est.fit, X, y)
+    # When n_estimators is a valid value not equal to the default
+    est = forest(n_estimators=100)
+    est = assert_no_warnings(est.fit, X, y)
