@@ -24,8 +24,8 @@ from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from ..utils.joblib import Parallel
-from ..utils.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,

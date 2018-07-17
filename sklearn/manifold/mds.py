@@ -12,8 +12,8 @@ import warnings
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
-from ..utils.joblib import Parallel
-from ..utils.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
 from ..isotonic import IsotonicRegression
 
 
