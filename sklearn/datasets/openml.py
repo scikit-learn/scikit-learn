@@ -159,7 +159,7 @@ def _get_data_description_by_id(data_id):
 
 
 def _get_data_features(data_id):
-    # OpenML API fn: https://www.openml.org/api_docs#!/data/get_data_features_id
+    # OpenML fn: https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
@@ -259,8 +259,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         if data_id is not None:
             raise ValueError(
                 "Dataset data_id={} and name={} passed, but you can only "
-                "specify a numeric data_id or a name, not both.".format(data_id,
-                                                                        name))
+                "specify a numeric data_id or a name, not "
+                "both.".format(data_id, name))
         data_info = _get_data_info_by_name_(name, version)
         data_id = data_info['did']
     elif data_id is not None:
