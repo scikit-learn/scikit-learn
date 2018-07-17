@@ -214,8 +214,7 @@ def test_ignore_warning():
 
     # Check that passing warning class as first positional argument
     warning_class = UserWarning
-    match = "'obj' should be a callable.+you should use 'category={}'".format(
-        warning_class)
+    match = "'obj' should be a callable.+you should use 'category=UserWarning'"
 
     with pytest.raises(ValueError, match=match):
         silence_warnings_func = ignore_warnings(warning_class)(

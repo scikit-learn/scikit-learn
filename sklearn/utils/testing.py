@@ -295,11 +295,13 @@ def ignore_warnings(obj=None, category=Warning):
     if isinstance(obj, type) and issubclass(obj, Warning):
         # Avoid common pitfall of passing category as the first positional
         # argument which result in the test not being run
+        warning_name = obj.__name__
         raise ValueError(
             "'obj' should be a callable where you want to ignore warnings. "
-            "You passed a warning class instead: 'obj={obj}'. If you want "
-            "to pass a warning class to ignore_warnings, you should use "
-            "'category={obj}'".format(obj=obj))
+            "You passed a warning class instead: 'obj={warning_name}'. "
+            "If you want to pass a warning class to ignore_warnings, "
+            "you should use 'category={warning_name}'".format(
+                warning_name=warning_name))
     elif callable(obj):
         return _IgnoreWarnings(category=category)(obj)
     else:
