@@ -23,6 +23,7 @@ except ImportError:
 
 def fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
+                              exptected_data_dtype, exptected_target_dtype,
                               expect_sparse):
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
                                    cache=False)
@@ -37,6 +38,8 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     assert data_by_id.target.shape == (expected_observations, )
+    assert data_by_id.data.dtype == exptected_data_dtype
+    assert data_by_id.target.dtype == exptected_target_dtype
     if expect_sparse:
         assert isinstance(data_by_id.data, scipy.sparse.csr_matrix)
     else:
@@ -141,7 +144,7 @@ def test_fetch_openml_iris(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
-                              expect_sparse=False)
+                              np.float64, object, expect_sparse=False)
 
 
 def test_fetch_openml_anneal(monkeypatch):
@@ -155,7 +158,7 @@ def test_fetch_openml_anneal(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
-                              expect_sparse=False)
+                              object, object, expect_sparse=False)
 
 
 def test_fetch_openml_cpu(monkeypatch):
@@ -168,7 +171,7 @@ def test_fetch_openml_cpu(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     fetch_dataset_from_openml(data_id, data_name, data_version,
                               expected_observations, expected_features,
-                              expect_sparse=False)
+                              object, np.float64, expect_sparse=False)
 
 
 def test_fetch_openml_australian(monkeypatch):
@@ -191,11 +194,17 @@ def test_fetch_openml_australian(monkeypatch):
            'data_version': data_version,
            'expected_observations': expected_observations,
            'expected_features': expected_features,
-           'expect_sparse': False}
+           'expect_sparse': False,
+           'exptected_data_dtype': np.float64,
+           'exptected_target_dtype': object}
     )
 
 
 def test_fetch_openml_miceprotein(monkeypatch):
+    # JvR: very important check, as this dataset defined several row ids
+    # and ignore attributes. Note that data_features json has 82 attributes,
+    # and row id (1), ignore attributes (3) have been removed (and target is
+    # stored in data.target)
     data_id = 40966
     data_name = 'MiceProtein'
     data_version = 4
@@ -205,18 +214,10 @@ def test_fetch_openml_miceprotein(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id)
     data = fetch_dataset_from_openml(data_id, data_name, data_version,
                                      expected_observations, expected_features,
-                                     expect_sparse=False)
-    # JvR: very important check, as this dataset defined several row ids
-    # and ignore attributes. Note that data_features json has 82 attributes,
-    # and row id (1), ignore attributes (3) have been removed (and target is
-    # stored in data.target)
-    assert (data.data.shape == (expected_observations, expected_features))
-    assert (data.target.shape == (expected_observations, ))
-    assert (data.data.dtype == np.float64)
+                                     np.float64, object, expect_sparse=False)
 
 
 def test_fetch_openml_inactive(monkeypatch):
-    # makes contact with openml server. not mocked
     # fetch inactive dataset by id
     data_id = 40675
     _monkey_patch_webbased_functions(monkeypatch, data_id)

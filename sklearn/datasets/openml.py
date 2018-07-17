@@ -302,7 +302,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data = _convert_numericals(data, name_feature)
 
     if target_column_name is not None:
-        y = data[:, int(name_feature[target_column_name]['index'])]
+        # determine vector type
+        if name_feature[target_column_name]['data_type'] == "numeric":
+            dtype = np.float64
+        else:
+            dtype = object
+        y = np.array(data[:, int(name_feature[target_column_name]['index'])],
+                     dtype=dtype)
     else:
         y = None
 

@@ -30,7 +30,7 @@ The dataset contains a total of 1080 examples belonging to 8 different classes::
   (1080, 77)
   >>> mice.target.shape
   (1080,)
-  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE
   array(['c-CS-m', 'c-CS-s', 'c-SC-m', 'c-SC-s', 't-CS-m', 't-CS-s', 't-SC-m', 't-SC-s'], dtype=object)
 
 You can get more information on the dataset by looking at the ``DESCR``
