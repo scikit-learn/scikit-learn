@@ -431,8 +431,9 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
-# FIXME Remove the test in 0.22
-@ignore_warnings(DeprecationWarning)
+# FIXME this tests the behaviour of reorder=True, which has been deprecated in
+# 0.20 and will be removed in 0.22. This test should be removed in 0.22.
+@ignore_warnings(category=DeprecationWarning)
 def test_auc_duplicate_values():
     # Test Area Under Curve (AUC) computation with duplicate values
 
