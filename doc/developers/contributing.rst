@@ -872,7 +872,7 @@ version in which the change happened and the version in which the old behavior
 will be removed. The docstring needs to be updated accordingly. We need a test
 which ensures that the warning is raised in relevant cases but not in other
 cases. The warning should be caught in all other tests
-(using e.g., ``@pytest.mark.filter_warnings``), and there should be no warning
+(using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
 
