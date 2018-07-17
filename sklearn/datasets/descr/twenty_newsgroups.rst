@@ -142,8 +142,8 @@ which is fast to train and achieves a decent F-score::
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.88213592402729568
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
+  0.882...
 
 (The example :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
