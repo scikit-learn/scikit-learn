@@ -14,7 +14,7 @@ build feature vectors from text documents.
 from __future__ import unicode_literals, division
 
 import array
-from collections import Mapping, defaultdict
+from collections import defaultdict
 import numbers
 from operator import itemgetter
 import re
@@ -32,6 +32,8 @@ from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
+from ..utils.fixes import _Mapping as Mapping  # noqa
+
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',

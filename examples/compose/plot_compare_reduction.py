@@ -104,7 +104,7 @@ plt.show()
 
 from tempfile import mkdtemp
 from shutil import rmtree
-from sklearn.externals.joblib import Memory
+from sklearn.utils import Memory
 
 # Create a temporary folder to store the transformers of the pipeline
 cachedir = mkdtemp()

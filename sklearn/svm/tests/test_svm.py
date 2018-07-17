@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import six
 
@@ -283,7 +283,7 @@ def test_oneclass_decision_function():
 
 def test_oneclass_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
-    clf = svm.OneClassSVM().fit(X_train)
+    clf = svm.OneClassSVM(gamma=1).fit(X_train)
     assert_array_equal(clf.score_samples([[2., 2.]]),
                        clf.decision_function([[2., 2.]]) + clf.offset_)
 
@@ -441,7 +441,7 @@ def test_sample_weights():
     clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
-
+@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression

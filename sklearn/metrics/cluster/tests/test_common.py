@@ -15,7 +15,7 @@ from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_allclose, ignore_warnings
 
 
 # Dictionaries of metrics
@@ -83,6 +83,8 @@ def test_symmetric_non_symmetric_union():
             sorted(SUPERVISED_METRICS))
 
 
+@ignore_warnings(category=FutureWarning)
+# 0.22 AMI and NMI changes
 @pytest.mark.parametrize(
     'metric_name, y1, y2',
     [(name, y1, y2) for name in SYMMETRIC_METRICS]
@@ -101,6 +103,8 @@ def test_non_symmetry(metric_name, y1, y2):
     assert metric(y1, y2) != pytest.approx(metric(y2, y1))
 
 
+@ignore_warnings(category=FutureWarning)
+# 0.22 AMI and NMI changes
 @pytest.mark.parametrize("metric_name", NORMALIZED_METRICS)
 def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
@@ -121,6 +125,8 @@ def test_normalized_output(metric_name):
 
 # All clustering metrics do not change score due to permutations of labels
 # that is when 0 and 1 exchanged.
+@ignore_warnings(category=FutureWarning)
+# 0.22 AMI and NMI changes
 @pytest.mark.parametrize(
     "metric_name",
     dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
@@ -142,6 +148,8 @@ def test_permute_labels(metric_name):
 
 
 # For all clustering metrics Input parameters can be both
+@ignore_warnings(category=FutureWarning)
+# 0.22 AMI and NMI changes
 @pytest.mark.parametrize(
     "metric_name",
     dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)

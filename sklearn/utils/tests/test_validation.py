@@ -413,8 +413,9 @@ def test_check_array_accept_sparse_type_exception():
            "Use X.toarray() to convert to a dense numpy array.")
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=False)
-    assert_raise_message(TypeError, msg,
-                         check_array, X_csr, accept_sparse=None)
+    with pytest.warns(DeprecationWarning):
+        assert_raise_message(TypeError, msg,
+                             check_array, X_csr, accept_sparse=None)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
            "boolean or list of strings. You provided 'accept_sparse={}'.")
@@ -742,12 +743,12 @@ def test_check_memory():
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory."
+                        "sklearn.utils.Memory."
                         " Got memory='1' instead.", check_memory, 1)
     dummy = WrongDummyMemory()
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
-                        "sklearn.externals.joblib.Memory. Got memory='{}' "
+                        "sklearn.utils.Memory. Got memory='{}' "
                         "instead.".format(dummy), check_memory, dummy)
 
 

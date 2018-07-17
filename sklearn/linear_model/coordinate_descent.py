@@ -18,7 +18,7 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
