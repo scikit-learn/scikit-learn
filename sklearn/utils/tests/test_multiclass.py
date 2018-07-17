@@ -65,6 +65,8 @@ EXAMPLES = {
         NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multiclass': [
+        csr_matrix(np.array([1, 0, 0, 0, 2, 0], dtype=np.int8)).transpose(),
+        csr_matrix(np.array([1, 0, 0, 0, 2, 0, 0, 0, 3])).transpose(),
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
         np.array([1, 0, 2]),
         np.array([1, 0, 2], dtype=np.int8),
@@ -78,6 +80,7 @@ EXAMPLES = {
         np.array([u'a', u'b', u'c']),
         np.array([u'a', u'b', u'c'], dtype=object),
         np.array(['a', 'b', 'c'], dtype=object),
+        csr_matrix(np.array([1, 0, 0, 0, 2, 0], dtype=np.uint8)).transpose(),
     ],
     'multiclass-multioutput': [
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
@@ -90,6 +93,10 @@ EXAMPLES = {
         np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
         np.array([[1, 0, 2]]),
         NotAnArray(np.array([[1, 0, 2]])),
+        csr_matrix(np.array([[1, 0, 0, 2, 0, 4], [0, 0, 3, 0, 0, 1]],
+                            dtype=np.int8)),
+        csr_matrix(np.array([[1, 0, 0, 2, 0, 4], [0, 0, 3, 0, 0, 1]],
+                            dtype=np.uint8)),
     ],
     'binary': [
         [0, 1],
@@ -112,6 +119,12 @@ EXAMPLES = {
         np.array(['abc', 'def']),
         [u'a', u'b'],
         np.array(['abc', 'def'], dtype=object),
+        csr_matrix(np.array([0, 1, 0, 0, 0, 0, 0, 0, 0],
+                            dtype=np.bool)).transpose(),
+        csr_matrix(np.array([0, 1, 0, 0, 0, 0, 0, 0, 0],
+                            dtype=np.int8)).transpose(),
+        csr_matrix(np.array([0, 1, 0, 0, 0, 0, 0, 0, 0],
+                            dtype=np.uint8)).transpose(),
     ],
     'continuous': [
         [1e-5],
@@ -267,6 +280,7 @@ def test_is_multilabel():
                           msg='is_multilabel(%r) should be %s'
                           % (example, dense_exp))
 
+
 def test_check_classification_targets():
     for y_type in EXAMPLES.keys():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
@@ -277,6 +291,7 @@ def test_check_classification_targets():
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
+
 
 # @ignore_warnings
 def test_type_of_target():
@@ -304,6 +319,7 @@ def test_type_of_target():
     y = SparseSeries([1, 0, 0, 1, 0])
     msg = "y cannot be class 'SparseSeries'."
     assert_raises_regex(ValueError, msg, type_of_target, y)
+
 
 def test_class_distribution():
     y = np.array([[1, 0, 0, 1],

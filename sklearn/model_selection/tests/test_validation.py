@@ -279,6 +279,16 @@ def test_cross_val_score():
     assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
 
 
+def test_cross_val_score_sparsetarget():
+    X_, y_ = make_multilabel_classification(n_samples=100,
+                                            return_indicator=True,
+                                            random_state=0)
+    y_sparse = csr_matrix(y_)
+    clf = MockClassifier(a=0)
+    scores = cross_val_score(clf, X_, y_sparse)
+    assert_array_equal(scores, clf.score(X_, y_sparse))
+
+
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()

@@ -18,6 +18,7 @@ from itertools import chain, combinations
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
+import scipy.sparse as sp
 
 import numpy as np
 
@@ -69,7 +70,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : {array-like, sparse matrix} of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,), optional
@@ -294,7 +295,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : {array-like, sparse matrix} of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,), optional
@@ -572,17 +573,29 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None):
         rng = self.random_state
-        y = np.asarray(y)
-        type_of_target_y = type_of_target(y)
+
+        # For compatibility with GridSearchCV (which accepts y to be a sparse
+        # matrix), if y is sparse we convert it to a dense matrix. An error is
+        # raised if y does not have the right shape, to avoid creating a large
+        # dense matrix (whose shape will raise an error in ``column_or_1d``).
+        if sp.issparse(y):
+            shape = y.shape
+            if len(shape) > 2 or (len(shape) == 2 and shape[1] != 1):
+                raise ValueError("bad input shape {0}".format(shape))
+            else:
+                _y = y.todense()
+        else:
+            _y = np.asarray(y)
+        type_of_target_y = type_of_target(_y)
         allowed_target_types = ('binary', 'multiclass')
         if type_of_target_y not in allowed_target_types:
             raise ValueError(
                 'Supported target types are: {}. Got {!r} instead.'.format(
                     allowed_target_types, type_of_target_y))
 
-        y = column_or_1d(y)
-        n_samples = y.shape[0]
-        unique_y, y_inversed = np.unique(y, return_inverse=True)
+        _y = column_or_1d(_y)
+        n_samples = _y.shape[0]
+        unique_y, y_inversed = np.unique(_y, return_inverse=True)
         y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
@@ -610,7 +623,7 @@ class StratifiedKFold(_BaseKFold):
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[y == cls]
+                cls_test_folds = test_folds[_y == cls]
                 # the test split can be too big because we used
                 # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
                 # stratifiable for all the classes
@@ -618,7 +631,7 @@ class StratifiedKFold(_BaseKFold):
                 # If this is the case, let's trim it:
                 test_split = test_split[test_split < len(cls_test_folds)]
                 cls_test_folds[test_split] = test_fold_indices
-                test_folds[y == cls] = cls_test_folds
+                test_folds[_y == cls] = cls_test_folds
 
         return test_folds
 
@@ -640,7 +653,7 @@ class StratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : {array-like, sparse matrix} of shape (n_samples,)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -661,7 +674,7 @@ class StratifiedKFold(_BaseKFold):
         split. You can make the results identical by setting ``random_state``
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
 
 
@@ -728,7 +741,7 @@ class TimeSeriesSplit(_BaseKFold):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : {array-like, sparse matrix} of shape (n_samples,)
             Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,), optional
@@ -999,7 +1012,7 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : {array-like, sparse matrix}  of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,), optional
@@ -1525,16 +1538,28 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
+
+        # For compatibility with GridSearchCV (which accepts y to be a sparse
+        # matrix), if y is sparse we convert it to a dense matrix.
+        if sp.issparse(y):
+            shape = y.shape
+            if len(shape) > 2:
+                raise ValueError("bad input shape {0}".format(shape))
+            else:
+                _y = y.todense()
+        else:
+            _y = y
+        _y = np.asarray(_y)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
 
-        if y.ndim == 2:
+        if _y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
-            y = np.array([' '.join(row.astype('str')) for row in y])
+            _y = np.array([' '.join(row.astype('str')) for row in _y])
 
-        classes, y_indices = np.unique(y, return_inverse=True)
+        classes, y_indices = np.unique(_y, return_inverse=True)
         n_classes = classes.shape[0]
 
         class_counts = np.bincount(y_indices)
@@ -1617,7 +1642,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         split. You can make the results identical by setting ``random_state``
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 

@@ -25,6 +25,30 @@ def _raise_error_wrong_axis(axis):
             "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
 
 
+def sparse_unique(arr):
+    """Unique elements in a sparse array.
+
+    Parameters
+    ----------
+    arr : CSR or CSC sparse matrix
+
+    Returns
+    -------
+    out: ndarray
+        Array containing the unique elements in the sparse matrix X.
+    """
+    if isinstance(arr, sp.csr_matrix) or isinstance(arr, sp.csc_matrix):
+        if np.asarray(arr.shape).prod() == arr.getnnz():
+            # Degenerate case (should not happen): arr is sparse (of CSR or CSC
+            # type) but contains only nonzero values. In this case, 0 is not
+            # among the unique values of arr.
+            return np.unique(arr.data)
+        else:
+            return np.insert(np.unique(arr.data), 0, 0)
+    else:
+        raise _raise_typeerror(arr)
+
+
 def inplace_csr_column_scale(X, scale):
     """Inplace column scaling of a CSR matrix.
 

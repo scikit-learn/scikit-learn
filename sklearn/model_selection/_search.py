@@ -444,9 +444,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
-            None for unsupervised learning.
+        y : array-like or sparse matrix, shape = [n_samples] or
+            [n_samples, n_output], optional. Target relative to X for
+            classification or regression; None for unsupervised learning.
 
         Returns
         -------
@@ -589,9 +589,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
-            None for unsupervised learning.
+        y : {array-like, sparse matrix} shape = [n_samples] or
+            [n_samples, n_output], optional. Target relative to X for
+            classification or regression; None for unsupervised learning.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into

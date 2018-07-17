@@ -19,11 +19,14 @@ import numpy as np
 from ..externals.six import string_types
 from ..utils.fixes import _Sequence as Sequence
 from .validation import check_array
+from ..utils.sparsefuncs import sparse_unique
 
 
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
         return np.unique(np.asarray(y))
+    elif issparse(y):
+        return sparse_unique(y)
     else:
         return set(y)
 
@@ -53,7 +56,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    *ys : array-likes
+    *ys : {array-likes, sparse matrices}
 
     Returns
     -------
@@ -98,7 +101,7 @@ def unique_labels(*ys):
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+    if len(set(isinstance(label, string_types) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
 
     return np.array(sorted(ys_labels))
@@ -185,7 +188,7 @@ def type_of_target(y):
 
     Parameters
     ----------
-    y : array-like
+    y : {array-like, sparse matrix}
 
     Returns
     -------
@@ -249,11 +252,12 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    try:
-        y = np.asarray(y)
-    except ValueError:
-        # Known to fail in numpy 1.3 for array of arrays
-        return 'unknown'
+    if not issparse(y):
+        try:
+            y = np.asarray(y)
+        except ValueError:
+            # Known to fail in numpy 1.3 for array of arrays
+            return 'unknown'
 
     # The old sequence of sequences format
     try:
@@ -267,9 +271,10 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], string_types)):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if not issparse(y):
+        if y.ndim > 2 or (y.dtype == object and len(y)
+                          and not isinstance(y.flat[0], string_types)):
+            return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'  # [[]]
@@ -280,11 +285,17 @@ def type_of_target(y):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # check float and contains non-integer float values
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
-        # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        return 'continuous' + suffix
+    if not issparse(y):
+        # No "continuous" with sparse data
+        if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+            # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+            return 'continuous' + suffix
 
-    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
+    if issparse(y):
+        _unique = sparse_unique(y).size
+    else:
+        _unique = np.unique(y).size
+    if (_unique > 2) or (y.ndim >= 2 and y.shape[1] > 1):
         return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]

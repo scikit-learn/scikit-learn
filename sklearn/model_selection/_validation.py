@@ -53,7 +53,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, optional, default: None
+    y : {array-like, sparse matrix} optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -268,7 +268,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, optional, default: None
+    y : {array-like, sparse matrix} optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -381,7 +381,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional, default: None
+    y : {array-like, sparse matrix} optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
 
