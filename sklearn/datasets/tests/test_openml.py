@@ -36,7 +36,7 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id=data_id, cache=False,
-                                     target_column_name=target_column_name)
+                              target_column_name=target_column_name)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     if isinstance(target_column_name, str):
