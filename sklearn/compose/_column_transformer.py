@@ -61,13 +61,15 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
-        column(s) : string or int, array-like of string or int, slice or \
-boolean mask array
+        column(s) : string or int, array-like of string or int, slice, \
+boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
+            A callable is passed the input data `X` and can return any of the
+            above.
 
     remainder : {'passthrough', 'drop'} or estimator, default 'passthrough'
         By default, all remaining columns that were not specified in
@@ -499,6 +501,7 @@ def _get_column(X, key):
     Supported key types (key):
     - scalar: output is 1D
     - lists, slices, boolean masks: output is 2D
+    - callable that returns any of the above
 
     Supported key data types:
 
