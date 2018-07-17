@@ -39,9 +39,8 @@ X = np.sort(200 * rng.rand(600, 1) - 100, axis=0)
 y = np.array([np.pi * np.sin(X).ravel(), np.pi * np.cos(X).ravel()]).T
 y += (0.5 - rng.rand(*y.shape))
 
-X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                    train_size=400,
-                                                    random_state=4)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=400, test_size=200, random_state=4)
 
 max_depth = 30
 regr_multirf = MultiOutputRegressor(RandomForestRegressor(max_depth=max_depth,
