@@ -138,10 +138,10 @@ validation iterator instead, for instance::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> n_samples = iris.data.shape[0]
-  >>> cv = ShuffleSplit(n_splits=3, test_size=0.3, random_state=0)
+  >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
-  array([0.97..., 0.97..., 1.        ])
+  array([0.977..., 0.955..., 0.977..., 0.888..., 0.977...])
 
 
 .. topic:: Data transformation with held out data
@@ -168,7 +168,7 @@ validation iterator instead, for instance::
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
-      array([0.97..., 0.93..., 0.95...])
+      array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
     See :ref:`combining_estimators`.
 
@@ -462,15 +462,16 @@ generator.
 Here is a usage example::
 
   >>> from sklearn.model_selection import ShuffleSplit
-  >>> X = np.arange(5)
-  >>> ss = ShuffleSplit(n_splits=3, test_size=0.25,
+  >>> X = np.arange(10)
+  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25,
   ...     random_state=0)
   >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
-  ...
-  [1 3 4] [2 0]
-  [1 4 3] [0 2]
-  [4 0 2] [1 3]
+  [9 1 6 7 3 0 5] [2 8 4]
+  [2 9 8 0 6 7 4] [3 5 1]
+  [4 5 1 0 6 9 7] [2 3 8]
+  [2 7 5 8 0 3 4] [6 1 9]
+  [4 1 0 6 8 9 3] [5 2 7]
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
@@ -498,7 +499,7 @@ two slightly unbalanced classes::
 
   >>> from sklearn.model_selection import StratifiedKFold
 
-  >>> X = np.ones(10)
+    >>> X = np.ones(10)
   >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
   >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):
