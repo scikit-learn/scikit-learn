@@ -135,7 +135,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators='warn',
+                 n_estimators=100,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -405,7 +405,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators='warn',
+                 n_estimators=100,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -643,7 +643,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators='warn',
+                 n_estimators=100,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -764,8 +764,8 @@ class RandomForestClassifier(ForestClassifier):
         The number of trees in the forest.
 
         .. versionchanged:: 0.20
-            The default value of ``n_estimators`` will change from 10 in
-            version 0.20 to 100 in version 0.22.
+           The default value of ``n_estimators`` will change from 10 in
+           version 0.20 to 100 in version 0.22.
 
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -1041,9 +1041,9 @@ class RandomForestRegressor(ForestRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-       .. versionchanged:: 0.20
-            The default value of ``n_estimators`` will change from 10 in
-            version 0.20 to 100 in version 0.22.
+        .. versionchanged:: 0.20
+           The default value of ``n_estimators`` will change from 10 in
+           version 0.20 to 100 in version 0.22.
 
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
@@ -1281,9 +1281,9 @@ class ExtraTreesClassifier(ForestClassifier):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-       .. versionchanged:: 0.20
-            The default value of ``n_estimators`` will change from 10 in
-            version 0.20 to 100 in version 0.22.
+        .. versionchanged:: 0.20
+           The default value of ``n_estimators`` will change from 10 in
+           version 0.20 to 100 in version 0.22.
 
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -1530,9 +1530,9 @@ class ExtraTreesRegressor(ForestRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-       .. versionchanged:: 0.20
-            The default value of ``n_estimators`` will change from 10 in
-            version 0.20 to 100 in version 0.22.
+        .. versionchanged:: 0.20
+           The default value of ``n_estimators`` will change from 10 in
+           version 0.20 to 100 in version 0.22.
 
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
@@ -1749,9 +1749,9 @@ class RandomTreesEmbedding(BaseForest):
     n_estimators : integer, optional (default=10)
         Number of trees in the forest.
 
-       .. versionchanged:: 0.20
-            The default value of ``n_estimators`` will change from 10 in
-            version 0.20 to 100 in version 0.22.
+        .. versionchanged:: 0.20
+           The default value of ``n_estimators`` will change from 10 in
+           version 0.20 to 100 in version 0.22.
 
     max_depth : integer, optional (default=5)
         The maximum depth of each tree. If None, then nodes are expanded until
