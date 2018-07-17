@@ -61,7 +61,7 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
     SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
-    >>> print(imp.transform(X_test))      # doctest: +NORMALIZE_WHITESPACE
+    >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
     [[3.          2.        ]
      [6.          2.        ]
      [7.          6.        ]]
