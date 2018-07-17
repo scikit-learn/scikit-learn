@@ -52,6 +52,7 @@ from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import check_random_state, Bunch
+from ..utils import safe_repr
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib
@@ -378,8 +379,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
     else:
-        raise ValueError("%r is not a valid subset: should be one of "
-                         "['train', 'test', 'all']" % subset)
+        raise ValueError("%s is not a valid subset: should be one of "
+                         "['train', 'test', 'all']" % safe_repr(subset))
 
     if return_X_y:
         return data, target
