@@ -113,7 +113,7 @@ def test_randomized_lasso():
     assert_raises(ValueError, clf.fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@ignore_warnings(category=DeprecationWarning)
 def test_randomized_lasso_precompute():
     # Check randomized lasso for different values of precompute
     n_resampling = 20
