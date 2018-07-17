@@ -430,6 +430,7 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
+@pytest.mark.filterwarnings("ignore: The 'reorder' parameter")  # 0.22
 def test_auc_duplicate_values():
     # Test Area Under Curve (AUC) computation with duplicate values
 
@@ -445,7 +446,7 @@ def test_auc_duplicate_values():
     y3 = [2.0, 1.0, 0.5, 0.0, 1.0]
 
     for y in (y1, y2, y3):
-        assert_array_almost_equal(auc(x, y), 3.0)
+        assert_array_almost_equal(auc(x, y, reorder=True), 3.0)
 
 
 def test_auc_errors():
