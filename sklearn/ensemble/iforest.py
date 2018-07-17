@@ -70,6 +70,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
         on the decision function. If 'auto', the decision function threshold is
         determined as in the original paper.
 
+        .. versionchanged:: 0.20
+           The default value of ``contamination`` will change from 0.1 in 0.20
+           to ``'auto'`` in 0.22.
+
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
 
