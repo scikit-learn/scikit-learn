@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -430,6 +431,8 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
+# FIXME Remove the test in 0.22
+@ignore_warnings(DeprecationWarning)
 def test_auc_duplicate_values():
     # Test Area Under Curve (AUC) computation with duplicate values
 
