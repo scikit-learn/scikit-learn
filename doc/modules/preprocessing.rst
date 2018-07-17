@@ -706,7 +706,7 @@ a transformer that applies a log transformation in a pipeline, do::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import FunctionTransformer
-    >>> transformer = FunctionTransformer(np.log1p)
+    >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
     array([[0.        , 0.69314718],
