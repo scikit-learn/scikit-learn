@@ -7,7 +7,6 @@ import io
 
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_false
@@ -66,10 +65,9 @@ def test_imputation_shape():
     for strategy in ['mean', 'median', 'most_frequent', "constant"]:
         imputer = SimpleImputer(strategy=strategy)
         X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
-        assert_equal(X_imputed.shape, (10, 2))
+        assert X_imputed.shape == (10, 2)
         X_imputed = imputer.fit_transform(X)
-        assert_equal(X_imputed.shape, (10, 2))
-        
+        assert X_imputed.shape == (10, 2)
 
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
