@@ -240,6 +240,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
+    >>> enc.get_feature_names()
+    array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
 
     See also
     --------
@@ -638,6 +640,38 @@ class OneHotEncoder(_BaseEncoder):
                 X_tr[mask, idx] = None
 
         return X_tr
+
+    def get_feature_names(self, input_features=None):
+        """Return feature names for output features.
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : array of string, length n_output_features
+
+        """
+        check_is_fitted(self, 'categories_')
+        cats = self.categories_
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(len(cats))]
+        elif(len(input_features) != len(self.categories_)):
+            raise ValueError(
+                "input_features should have length equal to number of "
+                "features ({}), got {}".format(len(self.categories_),
+                                               len(input_features)))
+
+        feature_names = []
+        for i in range(len(cats)):
+            names = [
+                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+            feature_names.extend(names)
+
+        return np.array(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):
