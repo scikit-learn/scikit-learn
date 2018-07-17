@@ -1270,9 +1270,7 @@ outcome has to be 1 or 0 (true or false), while the predicted probability of
 the actual outcome can be a value between 0 and 1.
 
 The brier score loss is also between 0 to 1 and the lower the score (the mean
-square difference is smaller), the more accurate the prediction is. It can be
-thought of as a measure of the "calibration" of a set of probabilistic
-predictions.
+square difference is smaller), the more accurate the prediction is.
 
 .. math::
 
