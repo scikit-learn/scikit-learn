@@ -17,6 +17,7 @@ from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
@@ -269,7 +270,6 @@ def test_classifier_matching():
         assert_array_almost_equal(intercept2, clf.intercept_, decimal=9)
 
 
-@ignore_warnings
 def test_regressor_matching():
     n_samples = 10
     n_features = 5
@@ -295,10 +295,10 @@ def test_regressor_matching():
                                dloss=squared_dloss,
                                fit_intercept=fit_intercept)
 
-    assert_array_almost_equal(weights1, clf.coef_, decimal=10)
-    assert_array_almost_equal(intercept1, clf.intercept_, decimal=10)
-    assert_array_almost_equal(weights2, clf.coef_, decimal=10)
-    assert_array_almost_equal(intercept2, clf.intercept_, decimal=10)
+    assert_allclose(weights1, clf.coef_)
+    assert_allclose(intercept1, clf.intercept_)
+    assert_allclose(weights2, clf.coef_)
+    assert_allclose(intercept2, clf.intercept_)
 
 
 @ignore_warnings
