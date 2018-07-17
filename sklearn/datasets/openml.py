@@ -5,11 +5,11 @@ from os.path import join, exists
 from warnings import warn
 
 try:
-    # Python 2
-    from urllib2 import urlopen
-except ImportError:
     # Python 3+
     from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 
 import numpy as np
@@ -202,7 +202,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     Parameters
     ----------
-    name : str
+    name : str or None
         String identifier of the dataset. Note that OpenML can have multiple
         datasets with the same name.
 
@@ -210,7 +210,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         Version of the dataset. Can only be provided if also ``name`` is given.
         If 'active' the oldest version that's still active is used.
 
-    data_id : int
+    data_id : int or None
         OpenML ID of the dataset. The most specific way of retrieving a
         dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
@@ -245,10 +245,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     else:
         def mem(func):
             return func
-    _get_data_info_by_name_ = mem(_get_data_info_by_name)
-    _get_data_description_by_id_ = mem(_get_data_description_by_id)
-    _get_data_features_ = mem(_get_data_features)
-    _download_data_ = mem(_download_data_arff)
+    cached_get_data_info_by_name = mem(_get_data_info_by_name)
+    cached_get_data_description_by_id = mem(_get_data_description_by_id)
+    cached_get_data_features = mem(_get_data_features)
+    cached_download_data_arff = mem(_download_data_arff)
 
     if not exists(data_home):
         os.makedirs(data_home)
@@ -256,13 +256,15 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # check legal function arguments. data_id XOR (name, version) should be
     # provided
     if name is not None:
+        # OpenML is case-insensitive, but the caching mechanism is not
+        # convert all data names (str) to lower case
         name = name.lower()
         if data_id is not None:
             raise ValueError(
                 "Dataset data_id={} and name={} passed, but you can only "
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name))
-        data_info = _get_data_info_by_name_(name, version)
+        data_info = cached_get_data_info_by_name(name, version)
         data_id = data_info['did']
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
@@ -276,7 +278,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
 
-    data_description = _get_data_description_by_id_(data_id)
+    data_description = cached_get_data_description_by_id(data_id)
     if data_description['status'] != "active":
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
@@ -286,7 +288,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                                                   None)
 
     # download actual data
-    features = _get_data_features_(data_id)
+    features = cached_get_data_features(data_id)
     name_feature = {feature['name']: feature for feature in features}
 
     # TODO: stacking the content of the structured array
@@ -298,7 +300,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 'false' and feature['is_row_identifier'] == 'false'):
             data_columns.append(feature['name'])
 
-    arff_data = _download_data_(data_description['file_id'])['data']
+    arff_data = cached_download_data_arff(data_description['file_id'])['data']
     data = _convert_arff_data(arff_data)
     data = _convert_numericals(data, name_feature)
 

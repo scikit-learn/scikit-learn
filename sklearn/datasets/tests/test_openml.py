@@ -14,11 +14,11 @@ from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
 try:
-    # Python 2
-    from urllib2 import urlopen
-except ImportError:
     # Python 3+
     from urllib.request import urlopen
+except ImportError:
+    # Python 2
+    from urllib2 import urlopen
 
 
 def fetch_dataset_from_openml(data_id, data_name, data_version,
