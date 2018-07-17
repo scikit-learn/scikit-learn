@@ -206,6 +206,12 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
+- Added control over the normalization in 
+  :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
+  parameter. In version 0.22, the default normalizer for each will become
+  the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
+  :user:`Arya McCarthy <aryamccarthy>`.
 - Added ``output_dict`` parameter in :func:`metrics.classification_report`
   to return classification statistics as dictionary.
   :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
@@ -791,6 +797,17 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- In :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score`, 
+  warn that ``average_method``
+  will have a new default value. In version 0.22, the default normalizer for each 
+  will become the *arithmetic* mean of the entropies of each clustering. Currently,
+  :func:`metrics.normalized_mutual_information_score` uses the default of
+  ``average_method='geometric'``, and :func:`metrics.adjusted_mutual_information_score`
+  uses the default of ``average_method='max'`` to match their behaviors in
+  version 0.19.
+  :issue:`11124` by :user:`Arya McCarthy <aryamccarthy>`.
 
 - The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
   and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
