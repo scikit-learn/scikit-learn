@@ -116,6 +116,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X)
+        self.mean_ = np.mean(X, axis=0)
+        X -= self.mean_
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -134,6 +136,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                                return_n_iter=True
                                                )
         self.components_ = Vt.T
+        components_norm = np.sqrt((self.components_ ** 2).sum(axis=1))[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
         self.error_ = E
         return self
 
@@ -178,11 +183,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                 ridge_alpha = self.ridge_alpha
         else:
             ridge_alpha = self.ridge_alpha
+        X -= self.mean_
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='cholesky')
-        s = np.sqrt((U ** 2).sum(axis=0))
-        s[s == 0] = 1
-        U /= s
         return U
 
 
