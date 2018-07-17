@@ -223,3 +223,11 @@ def test_pca_vs_spca():
     results_test_pca *= np.sign(results_test_pca[0, :])
     results_test_spca *= np.sign(results_test_spca[0, :])
     assert_allclose(results_test_pca, results_test_spca)
+
+
+@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
+def test_spca_deprecation_warning(spca):
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
+    with pytest.warns(DeprecationWarning, match="normalize_components"):
+        spca().fit(Y)
