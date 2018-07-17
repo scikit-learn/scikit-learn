@@ -561,14 +561,13 @@ def check_sample_weights_invariance(name, estimator_orig):
     # unit weights and no weights
     if (has_fit_parameter(estimator_orig, "sample_weight") and
             not (hasattr(estimator_orig, "_pairwise")
-                 and estimator_orig._pairwise) and
-            name not in ["KMeans", "MiniBatchKMeans"]):
+                 and estimator_orig._pairwise)):
         # We skip pairwise because the data is not pairwise
-        # KMeans and MiniBatchKMeans were unstable; hence skipped.
+
         estimator1 = clone(estimator_orig)
         estimator2 = clone(estimator_orig)
-        set_random_state(estimator1, random_state=42)
-        set_random_state(estimator2, random_state=42)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
 
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
