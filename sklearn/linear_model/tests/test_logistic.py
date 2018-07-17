@@ -1242,12 +1242,13 @@ def test_dtype_match():
             lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
             lr_64.fit(X_64, y_64)
             assert_equal(lr_64.coef_.dtype, X_64.dtype)
-            assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
+            tolerance = 5 if solver != 'saga' else 3
+            assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32),
+                                decimal=tolerance)
             # Do all asserts at once (it facilitate to interactive type check)
             assert_equal(lr_32_coef.dtype, X_32.dtype)
             assert_equal(lr_64_coef.dtype, X_64.dtype)
             assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
-            tolerance = 5 if solver != 'saga' else 3
             assert_almost_equal(lr_32_coef, lr_64_coef.astype(np.float32),
                                 decimal=tolerance)
 
