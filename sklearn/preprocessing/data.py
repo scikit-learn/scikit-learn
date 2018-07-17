@@ -635,6 +635,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
+        self._check_column_names(X, set_names=True)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -735,6 +736,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
+        self._check_column_names(X)
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
@@ -771,6 +773,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X_tr : array-like, shape [n_samples, n_features]
             Transformed array.
         """
+        self._check_column_names(X)
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy

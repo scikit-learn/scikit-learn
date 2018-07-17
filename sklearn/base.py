@@ -223,6 +223,54 @@ class BaseEstimator(object):
 
         return self
 
+    def _check_column_names(self, X, set_names=False):
+        """
+        Check that the columns of X are as expected when X is a pandas
+        dataframe, else silently exits.
+
+        This function is aimed to be called in fit() with set_names=True
+        (before check_array()), and then in subsequent methods like predict()
+        or transform() with set_names=False (defaut).
+
+        Parameters
+        ----------
+        X : {pandas dataframe, object}
+            The input to check. If X is not a pandas dataframe, the function
+            silently exits.
+        set_names: bool, optional (default=False)
+            If True, the column names of X are those that will be expected in
+            the subsequent calls to _check_column_names.
+
+        Raises
+        ------
+        RuntimeError
+            When _check_column_names has not been called with set_names to True
+            before.
+        ValueError
+            When the column names of X are not as expected.
+        """
+
+        if not hasattr(X, 'iloc'):  # X is not a dataframe, ignore
+            return
+
+        if set_names:
+            self._column_names = list(X.columns)
+        elif not hasattr(self, '_column_names'):
+            raise RuntimeError(
+                "You should first call _check_column_names() with "
+                "set_names=True (most likely in fit())."
+            )
+
+        if self._column_names != list(X.columns):
+            raise ValueError(
+                "This estimator was fitted with a pandas dataframe with "
+                "different columns: expected column names are {} but got "
+                "{}. If you are sure your dataframe is correct, you may "
+                "instead pass 'df.values' to explicitely convert the "
+                "dataframe to a numpy array.".format(self._column_names,
+                list(X.columns))
+            )
+
     def __repr__(self):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
