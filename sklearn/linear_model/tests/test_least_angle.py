@@ -428,6 +428,7 @@ def test_lars_cv():
     assert_false(hasattr(lars_cv, 'n_nonzero_coefs'))
 
 
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
         X = diabetes.data
