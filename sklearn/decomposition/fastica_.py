@@ -19,7 +19,7 @@ from ..exceptions import ConvergenceWarning
 from ..externals import six
 from ..externals.six import moves
 from ..externals.six import string_types
-from ..utils import check_array, as_float_array, check_random_state
+from ..utils import check_array, as_float_array, check_random_state, safe_repr
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
@@ -288,9 +288,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             return fun(x, **fun_args)
     else:
         exc = ValueError if isinstance(fun, six.string_types) else TypeError
-        raise exc("Unknown function %r;"
+        raise exc("Unknown function %s;"
                   " should be one of 'logcosh', 'exp', 'cube' or callable"
-                  % fun)
+                  % safe_repr(fun))
 
     n, p = X.shape
 
