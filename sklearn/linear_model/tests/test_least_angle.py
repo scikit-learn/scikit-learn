@@ -88,7 +88,8 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
-@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')  # numpy deprecation
+@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')
+# numpy deprecation
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
@@ -99,7 +100,8 @@ def test_lars_lstsq():
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
-@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')  # numpy deprecation
+@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')
+# numpy deprecation
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
