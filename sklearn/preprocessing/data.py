@@ -2493,14 +2493,17 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         -------
         self : object
         """
-        self._fit(X, y=y, force_compute_transform=False)
+        self._fit(X, y=y, force_transform=False)
         return self
 
     def fit_transform(self, X, y=None):
-        return self._fit(X, y, force_compute_transform=True)
+        return self._fit(X, y, force_transform=True)
 
-    def _fit(self, X, y=None, force_compute_transform=False):
+    def _fit(self, X, y=None, force_transform=False):
         X = self._check_input(X, check_positive=True, check_method=True)
+
+        if not self.copy and not force_transform:  # if call from fit()
+            X = X.copy()  # force copy so that fit does not change X inplace
 
         optim_function = {'box-cox': self._box_cox_optimize,
                           'yeo-johnson': self._yeo_johnson_optimize
@@ -2512,25 +2515,22 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 self.lambdas_.append(lmbda)
         self.lambdas_ = np.array(self.lambdas_)
 
-        transformed = []
-        if self.standardize or force_compute_transform:
+        if self.standardize or force_transform:
             transform_function = {'box-cox': boxcox,
                                   'yeo-johnson': self._yeo_johnson_transform
                                   }[self.method]
-            for col, lmbda in zip(X.T, self.lambdas_):
+            for i, lmbda in enumerate(self.lambdas_):
                 with np.errstate(invalid='ignore'):  # hide NaN warnings
-                    col_trans = transform_function(col, lmbda)
-                    transformed.append(col_trans)
-            transformed = np.array(transformed).T
+                    X[:, i] = transform_function(X[:, i], lmbda)
 
         if self.standardize:
-            self._scaler = StandardScaler()
-            if force_compute_transform:
-                transformed = self._scaler.fit_transform(transformed)
+            self._scaler = StandardScaler(copy=self.copy)
+            if force_transform:
+                X = self._scaler.fit_transform(X)
             else:
-                self._scaler.fit(X=transformed)
+                self._scaler.fit(X)
 
-        return transformed
+        return X
 
     def transform(self, X):
         """Apply the power transform to each feature using the fitted lambdas.

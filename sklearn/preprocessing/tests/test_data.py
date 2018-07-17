@@ -2220,3 +2220,61 @@ def test_power_transformer_fit_transform(method, standardize):
 
     pt = PowerTransformer(method, standardize)
     assert_array_almost_equal(pt.fit(X).transform(X), pt.fit_transform(X))
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+def test_power_transformer_copy_True(method, standardize):
+    # Check that neither fit, transform, fit_transform nor inverse_transform
+    # modify X inplace when copy=True
+    X = X_1col
+    if method == 'box-cox':
+        X = np.abs(X)
+
+    X_original = X.copy()
+    assert X is not X_original  # sanity checks
+    assert_array_almost_equal(X, X_original)
+
+    pt = PowerTransformer(method, standardize, copy=True)
+
+    pt.fit(X)
+    assert_array_almost_equal(X, X_original)
+    X_trans = pt.transform(X)
+    assert X_trans is not X
+
+    X_trans = pt.fit_transform(X)
+    assert_array_almost_equal(X, X_original)
+    assert X_trans is not X
+
+    X_inv_trans = pt.inverse_transform(X_trans)
+    assert X_trans is not X_inv_trans
+
+
+@pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
+@pytest.mark.parametrize('standardize', [True, False])
+def test_power_transformer_copy_False(method, standardize):
+    # check that when copy=False fit doesn't change X inplace but transform,
+    # fit_transform and inverse_transform do.
+    X = X_1col
+    if method == 'box-cox':
+        X = np.abs(X)
+
+    X_original = X.copy()
+    assert X is not X_original  # sanity checks
+    assert_array_almost_equal(X, X_original)
+
+    pt = PowerTransformer(method, standardize, copy=False)
+
+    pt.fit(X)
+    assert_array_almost_equal(X, X_original)  # fit didn't change X
+
+    X_trans = pt.transform(X)
+    assert X_trans is X
+
+    if method == 'box-cox':
+        X = np.abs(X)
+    X_trans = pt.fit_transform(X)
+    assert X_trans is X
+
+    X_inv_trans = pt.inverse_transform(X_trans)
+    assert X_trans is X_inv_trans
