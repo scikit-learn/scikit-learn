@@ -15,10 +15,6 @@ values. However, this comes at the price of losing data which may be valuable
 (even though incomplete). A better strategy is to impute the missing values,
 i.e., to infer them from the known part of the data.
 
-
-Univariate feature imputation
-=============================
-
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
 values. Missing values can be imputed with a provided constant value, or using
 the statistics (mean, median or most frequent) of each column in which the
@@ -74,38 +70,9 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
-.. _mice:
 
-Multivariate feature imputation
-===============================
-
-A more sophisticated approach is to use the :class:`MICEImputer` class, which
-implements the Multivariate Imputation by Chained Equations technique. MICE
-models each feature with missing values as a function of other features, and
-uses that estimate for imputation. It does so in a round-robin fashion: at
-each step, a feature column is designated as output `y` and the other feature
-columns are treated as inputs `X`. A regressor is fit on `(X, y)` for known `y`.
-Then, the regressor is used to predict the unknown values of `y`. This is
-repeated for each feature, and then is done for a number of imputation rounds.
-Here is an example snippet::
-
-    >>> import numpy as np
-    >>> from sklearn.impute import MICEImputer
-    >>> imp = MICEImputer(n_imputations=10, random_state=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
-    MICEImputer(imputation_order='ascending', initial_strategy='mean',
-          max_value=None, min_value=None, missing_values=nan, n_burn_in=10,
-          n_imputations=10, n_nearest_features=None, predictor=None,
-          random_state=0, verbose=False)
-    >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
-    >>> print(np.round(imp.transform(X_test)))
-    [[ 1.  2.]
-     [ 6.  4.]
-     [13.  6.]]
-
-Both :class:`SimpleImputer` and :class:`MICEImputer` can be used in a Pipeline
-as a way to build a composite estimator that supports imputation.
-See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+:class:`SimpleImputer` can be used in a Pipeline as a way to build a composite
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. _missing_indicator:
 
