@@ -34,7 +34,7 @@ X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
 X = np.r_[X_inliers, X_outliers]
 
 # fit the model
-clf = LocalOutlierFactor(n_neighbors=20)
+clf = LocalOutlierFactor(n_neighbors=20, contamination='auto')
 y_pred = clf.fit_predict(X)
 
 # plot the level sets of the decision function

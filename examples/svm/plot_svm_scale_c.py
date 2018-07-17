@@ -129,6 +129,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
                             cv=ShuffleSplit(train_size=train_size,
+                                            test_size=.3,
                                             n_splits=250, random_state=1))
         grid.fit(X, y)
         scores = grid.cv_results_['mean_test_score']
