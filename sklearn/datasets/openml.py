@@ -106,7 +106,7 @@ def _get_data_info_by_name(name, version):
     """
     Utilizes the openml dataset listing api to find a dataset by
     name/version
-    OpenML api fn:
+    OpenML api function:
     https://www.openml.org/api_docs#!/data/get_data_list_data_name_data_name
 
     Parameters
@@ -138,7 +138,7 @@ def _get_data_info_by_name(name, version):
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
     json_data = _get_json_content_from_openml_api(url, None, False)
     if json_data is None:
-        # we can do this in 1 fn call if OpenML does not require the
+        # we can do this in 1 function call if OpenML does not require the
         # specification of the dataset status (i.e., return datasets with a
         # given name / version regardless of active, deactivated, etc. )
         # TODO: feature request OpenML.
@@ -151,7 +151,7 @@ def _get_data_info_by_name(name, version):
 
 
 def _get_data_description_by_id(data_id):
-    # OpenML API fn: https://www.openml.org/api_docs#!/data/get_data_id
+    # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
@@ -159,7 +159,8 @@ def _get_data_description_by_id(data_id):
 
 
 def _get_data_features(data_id):
-    # OpenML fn: https://www.openml.org/api_docs#!/data/get_data_features_id
+    # OpenML function:
+    # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True)
@@ -283,7 +284,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if not exists(data_home):
         os.makedirs(data_home)
 
-    # check legal function arguments. data_id XOR (name, version) should be
+    # check valid function arguments. data_id XOR (name, version) should be
     # provided
     if name is not None:
         # OpenML is case-insensitive, but the caching mechanism is not

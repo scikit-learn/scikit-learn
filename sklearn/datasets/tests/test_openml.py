@@ -1,5 +1,6 @@
 """Test the openml loader.
 """
+import gzip
 import json
 import numpy as np
 import os
@@ -80,11 +81,6 @@ def fetch_dataset_from_openml(data_id, data_name, data_version,
             assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype,
                                  np.number)
 
-    if 'default_target_attribute' in data_by_id.details:
-        target = data_by_id.details['default_target_attribute']
-        if feature_name_type[target] == 'numeric':
-            assert np.issubdtype(np.array(list(data_by_id.data[:, idx])).dtype,
-                                 np.number)
     return data_by_id
 
 
@@ -100,20 +96,20 @@ def _monkey_patch_webbased_functions(context, data_id):
 
         path = os.path.join(testdir_path,
                             'mock_openml/%d/data_description.json' % data_id)
-        return urlopen('file://' + path)
+        return gzip.open(path + ".gz", 'rb')
 
     def _mock_urlopen_data_features(url):
         assert (url.startswith(url_prefix_data_features))
 
         path = os.path.join(testdir_path,
                             'mock_openml/%d/data_features.json' % data_id)
-        return urlopen('file://' + path)
+        return gzip.open(path + ".gz", 'rb')
 
     def _mock_urlopen_download_data(url):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(testdir_path, 'mock_openml/%d/data.arff' % data_id)
-        return urlopen('file://' + path)
+        return gzip.open(path + ".gz", 'rb')
 
     def _mock_urlopen_data_list(url):
         # url contains key value pairs of attributes, e.g.,
@@ -127,18 +123,18 @@ def _monkey_patch_webbased_functions(context, data_id):
             key_val_dict['data_version'] = None
         if 'status' not in key_val_dict:
             key_val_dict['status'] = "active"
-        mock_file = "%s_%s_%s.json" % (key_val_dict['data_name'],
-                                       key_val_dict['data_version'],
-                                       key_val_dict['status'])
+        mock_file = "%s_%s_%s.json.gz" % (key_val_dict['data_name'],
+                                          key_val_dict['data_version'],
+                                          key_val_dict['status'])
         json_file_path = os.path.join(testdir_path, 'mock_openml',
                                       str(data_id), mock_file)
         # load the file itself, to simulate a http error
-        json_data = json.loads(open(json_file_path, 'r').read())
+        json_data = json.loads(gzip.open(json_file_path, 'rb').read())
         if 'error' in json_data:
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
                             hdrs=None, fp=None)
-        return urlopen('file://' + json_file_path)
+        return gzip.open(json_file_path, 'rb')
 
     def _mock_urlopen(url):
         if url.startswith(url_prefix_data_list):
@@ -150,7 +146,6 @@ def _monkey_patch_webbased_functions(context, data_id):
         elif url.startswith(url_prefix_data_description):
             return _mock_urlopen_data_description(url)
         else:
-            # This should never happen
             raise ValueError('Unknown mocking URL pattern: %s' % url)
 
     context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
