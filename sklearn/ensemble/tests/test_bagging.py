@@ -496,6 +496,7 @@ def test_parallel_regression():
     assert_array_almost_equal(y1, y3)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_gridsearch():
     # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
