@@ -2,6 +2,7 @@
 
 import pytest
 import numpy as np
+
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal, ignore_warnings
 from sklearn.utils.testing import assert_equal, assert_true, assert_greater
@@ -279,6 +280,7 @@ def test_error():
                   X, y_class, sample_weight=np.asarray([-1]))
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_base_estimator():
     # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier

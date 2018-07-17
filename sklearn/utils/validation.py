@@ -24,7 +24,7 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..externals.joblib import Memory
+from ..utils._joblib import Memory
 
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -183,7 +183,7 @@ def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
     joblib.Memory-like means that ``memory`` can be converted into a
-    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    sklearn.utils.Memory instance (typically a str denoting the
     ``cachedir``) or has the same interface (has a ``cache`` method).
 
     Parameters
@@ -204,7 +204,7 @@ def check_memory(memory):
         memory = Memory(cachedir=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
-                         " interface as sklearn.externals.joblib.Memory."
+                         " interface as sklearn.utils.Memory."
                          " Got memory='{}' instead.".format(memory))
     return memory
 
