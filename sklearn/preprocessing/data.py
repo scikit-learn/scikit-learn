@@ -2524,7 +2524,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                     X[:, i] = transform_function(X[:, i], lmbda)
 
         if self.standardize:
-            self._scaler = StandardScaler(copy=self.copy)
+            self._scaler = StandardScaler(copy=False)
             if force_transform:
                 X = self._scaler.fit_transform(X)
             else:
