@@ -53,6 +53,9 @@ scikit-learn requires:
 - NumPy (>= 1.8.2)
 - SciPy (>= 0.13.3)
 
+**Scikit-learn 0.20 is the last version to support Python2.7.**
+Scikit-learn 0.21 and later will require Python 3.5 or newer.
+
 For running the examples Matplotlib >= 1.3.1 is required. A few examples
 require scikit-image >= 0.9.3 and a few examples require pandas >= 0.13.1.
 

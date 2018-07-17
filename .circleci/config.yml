@@ -108,4 +108,3 @@ workflows:
       - deploy:
           requires:
             - python3
-            - python2

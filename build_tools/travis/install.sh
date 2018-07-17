@@ -59,6 +59,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
     fi
 
+    if [[ -n "$JOBLIB_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
+    fi
+
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
 
