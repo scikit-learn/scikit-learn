@@ -386,7 +386,7 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
+    def __init__(self, estimator, step=1, cv='warn', scoring=None, verbose=0,
                  n_jobs=1):
         self.estimator = estimator
         self.step = step

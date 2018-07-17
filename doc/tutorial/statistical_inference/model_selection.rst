@@ -216,9 +216,9 @@ estimator during the construction and exposes an estimator API::
     >>> from sklearn.model_selection import GridSearchCV, cross_val_score
     >>> Cs = np.logspace(-6, -1, 10)
     >>> clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs),
-    ...                    n_jobs=-1)
+    ...                    n_jobs=-1, cv=3)
     >>> clf.fit(X_digits[:1000], y_digits[:1000])        # doctest: +ELLIPSIS
-    GridSearchCV(cv=None,...
+    GridSearchCV(cv=3,...
     >>> clf.best_score_                                  # doctest: +ELLIPSIS
     0.925...
     >>> clf.best_estimator_.C                            # doctest: +ELLIPSIS
@@ -264,12 +264,12 @@ scikit-learn exposes :ref:`cross_validation` estimators that set their
 parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
-    >>> lasso = linear_model.LassoCV()
+    >>> lasso = linear_model.LassoCV(cv=3)
     >>> diabetes = datasets.load_diabetes()
     >>> X_diabetes = diabetes.data
     >>> y_diabetes = diabetes.target
     >>> lasso.fit(X_diabetes, y_diabetes)
-    LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
+    LassoCV(alphas=None, copy_X=True, cv=3, eps=0.001, fit_intercept=True,
         max_iter=1000, n_alphas=100, n_jobs=1, normalize=False, positive=False,
         precompute='auto', random_state=None, selection='cyclic', tol=0.0001,
         verbose=False)

@@ -570,7 +570,7 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
 
-    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
+    def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(

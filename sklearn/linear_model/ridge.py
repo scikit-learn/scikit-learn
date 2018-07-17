@@ -1091,7 +1091,7 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
-                 cv=None, gcv_mode=None,
+                 cv='warn', gcv_mode=None,
                  store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
@@ -1343,7 +1343,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """
 
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
-                 normalize=False, scoring=None, cv=None, class_weight=None,
+                 normalize=False, scoring=None, cv='warn', class_weight=None,
                  store_cv_values=False):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,

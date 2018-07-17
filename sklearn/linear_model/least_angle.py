@@ -1075,7 +1075,7 @@ class LarsCV(Lars):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
+                 normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.max_iter = max_iter
@@ -1305,7 +1305,7 @@ class LassoLarsCV(LarsCV):
     method = 'lasso'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
+                 normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept

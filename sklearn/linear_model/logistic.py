@@ -1574,7 +1574,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     """
 
-    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
+    def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',

@@ -420,9 +420,9 @@ class KFold(_BaseKFold):
     RepeatedKFold: Repeats K-Fold n times.
     """
 
-    def __init__(self, n_splits=None, shuffle=False,
+    def __init__(self, n_splits='warn', shuffle=False,
                  random_state=None):
-        if n_splits is None:
+        if n_splits is 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
         super(KFold, self).__init__(n_splits, shuffle, random_state)
@@ -492,8 +492,8 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits=None):
-        if n_splits is None:
+    def __init__(self, n_splits='warn'):
+        if n_splits is 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
@@ -593,8 +593,8 @@ class StratifiedKFold(_BaseKFold):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
 
-    def __init__(self, n_splits=None, shuffle=False, random_state=None):
-        if n_splits is None:
+    def __init__(self, n_splits='warn', shuffle=False, random_state=None):
+        if n_splits is 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
@@ -747,8 +747,8 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=None, max_train_size=None):
-        if n_splits is None:
+    def __init__(self, n_splits='warn', max_train_size=None):
+        if n_splits is 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
         super(TimeSeriesSplit, self).__init__(n_splits,
@@ -1902,7 +1902,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=None, y=None, classifier=False):
+def check_cv(cv='warn', y=None, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -1939,7 +1939,7 @@ def check_cv(cv=None, y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
-    if cv is None:
+    if cv is 'warn':
         warnings.warn(CV_WARNING, FutureWarning)
         cv = 3
 
