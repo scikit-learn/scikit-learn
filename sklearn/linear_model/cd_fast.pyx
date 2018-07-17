@@ -18,11 +18,6 @@ import warnings
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
-ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
-                         int incY) nogil
-ctypedef void (*AXPY)(int N, floating alpha, floating *X, int incX,
-                      floating *Y, int incY) nogil
-ctypedef floating (*ASUM)(int N, floating *X, int incX) nogil
 
 np.import_array()
 
@@ -162,10 +157,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -355,9 +346,6 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef floating[:] XtA
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         n_tasks = y.strides[0] / sizeof(float)
@@ -559,10 +547,6 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     """
 
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot
@@ -713,10 +697,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
 
     """
     # fused types version of BLAS functions
-    cdef DOT dot
-    cdef AXPY axpy
-    cdef ASUM asum
-
     if floating is float:
         dtype = np.float32
         dot = sdot

@@ -32,7 +32,7 @@ from ..utils.validation import check_X_y
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..model_selection import check_cv
 from ..externals import six
 from ..metrics import get_scorer
@@ -684,7 +684,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             else:
                 w0[:, :coef.shape[1]] = coef
 
-
     if multi_class == 'multinomial':
         # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
         if solver in ['lbfgs', 'newton-cg']:
@@ -711,10 +710,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
+            iprint = [-1, 50, 1, 100, 101][
+                np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             w0, loss, info = optimize.fmin_l_bfgs_b(
                 func, w0, fprime=None,
                 args=(X, target, 1. / C, sample_weight),
-                iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
+                iprint=iprint, pgtol=tol, maxiter=max_iter)
             if info["warnflag"] == 1:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.", ConvergenceWarning)

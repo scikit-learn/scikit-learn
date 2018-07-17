@@ -380,6 +380,37 @@ last document::
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
 
+.. _stop_words:
+
+Using stop words
+................
+
+Stop words are words like "and", "the", "him", which are presumed to be
+uninformative in representing the content of a text, and which may be
+removed to avoid them being construed as signal for prediction.  Sometimes,
+however, similar words are useful for prediction, such as in classifying
+writing style or personality.
+
+There are several known issues in our provided 'english' stop word list. See
+[NQY18]_.
+
+Please take care in choosing a stop word list.
+Popular stop word lists may include words that are highly informative to
+some tasks, such as *computer*.
+
+You should also make sure that the stop word list has had the same
+preprocessing and tokenization applied as the one used in the vectorizer.
+The word *we've* is split into *we* and *ve* by CountVectorizer's default
+tokenizer, so if *we've* is in ``stop_words``, but *ve* is not, *ve* will
+be retained from *we've* in transformed text.  Our vectorizers will try to
+identify and warn about some kinds of inconsistencies.
+
+.. topic:: References
+
+    .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
+               `"Stop Word Lists in Free Open-source Software Packages"
+               <http://aclweb.org/anthology/W18-2502>`__.
+               In *Proc. Workshop for NLP Open Source Software*.
 
 .. _tfidf:
 

@@ -24,7 +24,7 @@ from scipy import linalg
 from scipy import sparse
 
 from ..externals import six
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
@@ -52,6 +52,29 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     This also returns the ``intercept_decay`` which is different
     for sparse datasets.
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples, n_features)
+        Training data
+
+    y : array_like, shape (n_samples, )
+        Target values.
+
+    sample_weight : numpy array of shape (n_samples,)
+        The weight of each sample
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    dataset
+        The ``Dataset`` abstraction
+    intercept_decay
+        The intercept decay
     """
 
     rng = check_random_state(random_state)
@@ -180,12 +203,12 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : array, shape (n_samples,)
             Returns predicted values.
         """
         return self._decision_function(X)
@@ -218,7 +241,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -248,12 +271,12 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape [n_samples]
             Predicted class label per sample.
         """
         scores = self.decision_function(X)
@@ -395,10 +418,10 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : array_like, shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
         sample_weight : numpy array of shape [n_samples]

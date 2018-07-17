@@ -19,7 +19,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta
-from collections import Iterable
 
 import numpy as np
 
@@ -40,6 +39,7 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
+from ..utils.fixes import _Iterable as Iterable
 from ..externals import six
 from ..base import is_regressor
 
