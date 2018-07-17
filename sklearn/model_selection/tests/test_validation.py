@@ -1468,10 +1468,6 @@ def test_fit_and_score():
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
-    # check if exception is raised, with default error_score argument
-    assert_raise_message(ValueError, "Failing classifier failed as required",
-                         _fit_and_score, *fit_and_score_args)
-
     # check if warning was raised, with default error_score argument
     warning_message = ("From version 0.22, errors during fit will result "
                        "in a cross validation score of NaN by default. Use "
