@@ -88,16 +88,18 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
+@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')  # numpy deprecation
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
     X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
+@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')  # numpy deprecation
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
@@ -473,6 +475,7 @@ def test_lars_path_readonly_data():
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_lars_path_positive_constraint():
     # this is the main test for the positive parameter on the lars_path method
     # the estimator classes just make use of this function
@@ -487,12 +490,10 @@ def test_lars_path_positive_constraint():
     # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
     #               diabetes['target'], method='lar', positive=True)
 
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(DeprecationWarning, match="broken"):
         linear_model.lars_path(diabetes['data'], diabetes['target'],
                                return_path=True, method='lar',
                                positive=True)
-    assert_true(len(w) == 1)
-    assert "broken" in str(w[0].message)
 
     method = 'lasso'
     alpha, active, coefs = \

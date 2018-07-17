@@ -439,13 +439,13 @@ def check_oob_score_raise_error(name):
 def test_oob_score_raise_error(name):
     check_oob_score_raise_error(name)
 
-
 def check_gridsearch(name):
     forest = FOREST_CLASSIFIERS[name]()
     clf = GridSearchCV(forest, {'n_estimators': (1, 2), 'max_depth': (1, 2)})
     clf.fit(iris.data, iris.target)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_gridsearch(name):
     # Check that base trees can be grid-searched.
