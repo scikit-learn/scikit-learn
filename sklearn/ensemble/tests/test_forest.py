@@ -21,7 +21,7 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, assert_no_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -202,6 +202,30 @@ def check_probability(name):
                                   np.ones(iris.data.shape[0]))
         assert_array_almost_equal(clf.predict_proba(iris.data),
                                   np.exp(clf.predict_log_proba(iris.data)))
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_no_warning_raised_with_deprecated_n_estimator(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
+                           max_depth=1)
+    assert_no_warnings(func=clf.fit, X=iris.data, y=iris.target)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_no_warning_raised_with_correct_n_estimator(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(n_estimators=100, random_state=1, max_features=1,
+                           max_depth=1)
+    assert_no_warnings(func=clf.fit, X=iris.data, y=iris.target)
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_raised_warning_with_n_estimator_as_none(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(n_estimators=None, random_state=1, max_features=1,
+                           max_depth=1)
+    assert_warns(FutureWarning, func=clf.fit, X=iris.data, y=iris.target)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)

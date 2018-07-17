@@ -761,6 +761,10 @@ Linear, kernelized and related models
   :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
 
+- In both :class:`ensemble.RandomForestClassifier` and `ensemble.ExtraTreesClassifier`,
+  the default `n_estimators` parameter value has been changed to 100. A deprecation warning
+  is now raised when `n_estimators=10`. :issue:`11128` by :user:`Olamilekan Wahab <olamyy>`
+
 Preprocessing
 
 - Deprecate ``n_values`` and ``categorical_features`` parameters and
