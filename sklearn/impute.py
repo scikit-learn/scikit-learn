@@ -989,7 +989,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
-    features : str, optional
+    features : {"missing-only", "all"}, optional
         Whether the imputer mask should represent all or a subset of
         features.
 
