@@ -667,5 +667,8 @@ def max_length_nice_repr(obj):
 # We're taking precautions by wrapping max_length_nice_repr() with
 # safe_version(), but if we trust its code, we don't have to. This would
 # make the documentation of nice_repr() simpler to follow.
-nice_repr = safe_version((max_length_nice_repr,), "<No object representation>")
-
+#
+# The name "safe_repr" comes from the sklearn convention of naming
+# safe_*() some functions that do a bit more than being "safe". Here,
+# the safe_repr() also tries to provide a nicer looking representation.
+safe_repr = safe_version((max_length_nice_repr,), "<No object representation>")

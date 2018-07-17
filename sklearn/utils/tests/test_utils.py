@@ -347,8 +347,8 @@ def test_safe_str():
     # <class '__main__.CrashingStrAndRaise'>":
     assert "class" in safe_str(CrashingStrAndRaise)
 
-def test_nice_repr():
-    assert nice_repr(42) == "42"
+def test_safe_repr():
+    assert safe_repr(42) == "42"
     # The following should be something like
     # <class '__main__.CrashingStrAndRaise'>":
-    assert "class" in nice_repr(CrashingStrAndRaise)
+    assert "class" in safe_repr(CrashingStrAndRaise)
