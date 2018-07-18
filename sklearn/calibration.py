@@ -75,7 +75,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 

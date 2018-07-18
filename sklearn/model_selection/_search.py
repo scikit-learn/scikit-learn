@@ -887,7 +887,7 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
@@ -1231,7 +1231,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 

@@ -1414,7 +1414,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 

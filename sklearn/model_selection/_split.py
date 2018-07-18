@@ -369,7 +369,7 @@ class KFold(_BaseKFold):
     n_splits : int, default=3
         Number of folds. Must be at least 2.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     shuffle : boolean, optional
@@ -457,7 +457,7 @@ class GroupKFold(_BaseKFold):
     n_splits : int, default=3
         Number of folds. Must be at least 2.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     Examples
@@ -553,7 +553,7 @@ class StratifiedKFold(_BaseKFold):
     n_splits : int, default=3
         Number of folds. Must be at least 2.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     shuffle : boolean, optional
@@ -716,7 +716,7 @@ class TimeSeriesSplit(_BaseKFold):
     n_splits : int, default=3
         Number of splits. Must be at least 1.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     max_train_size : int, optional
@@ -1923,7 +1923,7 @@ def check_cv(cv='warn', y=None, classifier=False):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. deprecated:: 0.20
+        .. versionchanged:: 0.20
             ``cv`` default value will change from 3-fold to 5-fold in v0.22.
 
     y : array-like, optional
