@@ -1,5 +1,7 @@
 import warnings
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import linalg
 
@@ -96,7 +98,9 @@ def test_lars_lstsq():
     X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
+    # Avoid FutureWarning about default value change when numpy >= 1.14
+    rcond = None if LooseVersion(np.__version__) >= '1.14' else -1
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
