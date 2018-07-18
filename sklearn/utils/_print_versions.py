@@ -5,19 +5,15 @@ adapted from :func:`pandas.show_versions`
 """
 # License: BSD 3 clause
 
-import os
 import platform
 import sys
-import struct
-import subprocess
-import codecs
 import locale
 import importlib
 
 from .._build_utils import get_blas_info
 
 
-def get_sys_info():
+def _get_sys_info():
     """System information
 
     Return
@@ -26,52 +22,19 @@ def get_sys_info():
         system and Python version information
 
     """
+    python, compiler = sys.version.split('\n')
 
-    blob = []
-
-    # get full commit hash
-    commit = None
-    if os.path.isdir(".git") and os.path.isdir("sklearn"):
-        try:
-            pipe = subprocess.Popen('git log --format="%H" -n 1'.split(" "),
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            so, serr = pipe.communicate()
-        except:
-            pass
-        else:
-            if pipe.returncode == 0:
-                commit = so
-                try:
-                    commit = so.decode('utf-8')
-                except ValueError:
-                    pass
-                commit = commit.strip().strip('"')
-
-    blob.append(('commit', commit))
-
-    try:
-        (sysname, nodename, release,
-         version, machine, processor) = platform.uname()
-        blob.extend([
-            ("python", '.'.join(map(str, sys.version_info))),
-            ("python-bits", struct.calcsize("P") * 8),
-            ("OS", "{sysname}".format(sysname=sysname)),
-            ("OS-release", "{release}".format(release=release)),
-            ("machine", "{machine}".format(machine=machine)),
-            ("processor", "{processor}".format(processor=processor)),
-            ("byteorder", "{byteorder}".format(byteorder=sys.byteorder)),
-            ("LC_ALL", "{lc}".format(lc=os.environ.get('LC_ALL', "None"))),
-            ("LANG", "{lang}".format(lang=os.environ.get('LANG', "None"))),
-            ("LOCALE", '.'.join(map(str, locale.getlocale()))),
-        ])
-    except:
-        pass
+    blob = [
+        ("python", python),
+        ('executable', sys.executable),
+        ("compiler", compiler),
+        ("machine", platform.platform()),
+    ]
 
     return dict(blob)
 
 
-def get_deps_info():
+def _get_deps_info():
     """Overview of the installed version of main dependencies
 
     Returns
@@ -84,6 +47,7 @@ def get_deps_info():
         # (MODULE_NAME, f(mod) -> mod version)
         ("pip", lambda mod: mod.__version__),
         ("setuptools", lambda mod: mod.__version__),
+        ("sklearn", lambda mod: mod.__version__),
         ("numpy", lambda mod: mod.version.version),
         ("scipy", lambda mod: mod.version.version),
         ("Cython", lambda mod: mod.__version__),
@@ -107,50 +71,53 @@ def get_deps_info():
     return dict(deps_blob)
 
 
-def show_versions(as_json=False, with_blas=False):
-    sys_info = get_sys_info()
-    deps_info = get_deps_info()
+def _get_blas_info():
+    """Information on system BLAS
 
-    if with_blas:
-        try:
-            cblas_libs, blas_info = get_blas_info()
-            blas_info['cblas_libs'] = cblas_libs
-        except:
-            blas_info = {'error': "Could not retrieve BLAS information"}
+    Uses the `scikit-learn` builtin method
+    :func:`sklearn._build_utils.get_blas_info` which may fail from time to time
 
-    if (as_json):
-        try:
-            import json
-        except ImportError:
-            import simplejson as json
+    Returns
+    -------
+    blas_info: dict
+        system BLAS information
 
-        j = dict(system=sys_info,
-                 dependencies=deps_info)
+    """
+    try:
+        cblas_libs, blas_dict = get_blas_info()
 
-        if with_blas:
-            j['blas'] = blas_info
+        macros = ['{key}={val}'.format(key=a, val=b)
+                  for (a, b) in blas_dict.get('define_macros')]
 
-        if as_json is True:
-            print(j)
-        else:
-            with codecs.open(as_json, "wb", encoding='utf8') as f:
-                json.dump(j, f, indent=2)
-    else:
-        print("")
-        print('System info')
-        print('-----------')
-        for k, stat in sys_info.items():
-            print("{k}: {stat}".format(k=k, stat=stat))
+        blas_blob = [
+            ('macros', ', '.join(macros)),
+            ('lib_dirs', ':'.join(blas_dict.get('library_dirs', ''))),
+            ('cblas_libs', ', '.join(cblas_libs)),
+        ]
+    except:
+        blas_blob = [('message', "Could not retrieve BLAS information")]
 
-        if with_blas:
-            print("")
-            print('BLAS info')
-            print('---------')
-            for k, stat in blas_info.items():
-                print("{k}: {stat}".format(k=k, stat=stat))
+    return dict(blas_blob)
 
-        print("")
-        print('Python libs info')
-        print('----------------')
-        for k, stat in deps_info.items():
-            print("{k}: {stat}".format(k=k, stat=stat))
+
+def show_versions():
+    "Print useful debugging information to the terminal"
+
+    sys_info = _get_sys_info()
+    deps_info = _get_deps_info()
+    blas_info = _get_blas_info()
+
+    print('\nSystem')
+    print('------')
+    for k, stat in sys_info.items():
+        print("{k:>10}: {stat}".format(k=k, stat=stat))
+
+    print('\nBLAS')
+    print('----')
+    for k, stat in blas_info.items():
+        print("{k:>10}: {stat}".format(k=k, stat=stat))
+
+    print('\nPython deps')
+    print('-----------')
+    for k, stat in deps_info.items():
+        print("{k:>10}: {stat}".format(k=k, stat=stat))
