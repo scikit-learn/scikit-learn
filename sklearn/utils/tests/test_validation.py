@@ -733,6 +733,7 @@ class WrongDummyMemory(object):
     pass
 
 
+@pytest.mark.filterwarnings("'cachedir' attribute has been deprecated")
 def test_check_memory():
     memory = check_memory("cache_directory")
     assert_equal(memory.cachedir, os.path.join('cache_directory', 'joblib'))
