@@ -7,7 +7,6 @@ adapted from :func:`pandas.show_versions`
 
 import platform
 import sys
-import locale
 import importlib
 
 from .._build_utils import get_blas_info
@@ -94,7 +93,7 @@ def _get_blas_info():
             ('lib_dirs', ':'.join(blas_dict.get('library_dirs', ''))),
             ('cblas_libs', ', '.join(cblas_libs)),
         ]
-    except:
+    except TypeError:
         blas_blob = [('message', "Could not retrieve BLAS information")]
 
     return dict(blas_blob)
