@@ -1223,7 +1223,8 @@ def check_pairwise_estimator_tag(name, estimator_orig):
             non_square_distance = distance_matrix[:, :-1]
             if getattr(modified_estimator, 'fit_predict', None) is not None:
                 modified_estimator.fit_predict(X=non_square_distance, y=y_)
-            elif getattr(modified_estimator, 'fit_transform', None) is not None:
+            elif (getattr(modified_estimator, 'fit_transform', None)
+                    is not None):
                 modified_estimator.fit_transform(X=non_square_distance, y=y_)
             elif getattr(modified_estimator, 'fit', None) is not None:
                 modified_estimator.fit(X=non_square_distance, y=y_)
