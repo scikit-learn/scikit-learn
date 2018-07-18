@@ -731,6 +731,7 @@ def test_vectorizer_inverse_transform(Vectorizer):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -768,6 +769,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
