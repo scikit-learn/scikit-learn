@@ -89,7 +89,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
 
-    behaviour: str, optional (default='old')
+    behaviour : str, optional (default='old')
         Accepted values are 'old' or 'new'. Behaviour of the decision_function.
         Default "behaviour" parameter will change to "new" in version 0.22.
         Passing behaviour="new" makes the decision_function change to match
