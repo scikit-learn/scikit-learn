@@ -70,6 +70,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
         on the decision function. If 'auto', the decision function threshold is
         determined as in the original paper.
 
+        .. versionchanged:: 0.20
+           The default value of ``contamination`` will change from 0.1 in 0.20
+           to ``'auto'`` in 0.22.
+
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
 
@@ -150,12 +154,6 @@ class IsolationForest(BaseBagging, OutlierMixin):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
-
-        if contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
-                          'in version 0.22 to "auto". This will change the '
-                          'predict method behavior.',
-                          DeprecationWarning)
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):
@@ -178,6 +176,15 @@ class IsolationForest(BaseBagging, OutlierMixin):
         -------
         self : object
         """
+        if self.contamination == "legacy":
+            warnings.warn('default contamination parameter 0.1 will change '
+                          'in version 0.22 to "auto". This will change the '
+                          'predict method behavior.',
+                          FutureWarning)
+            self._contamination = 0.1
+        else:
+            self._contamination = self.contamination
+
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
@@ -219,19 +226,16 @@ class IsolationForest(BaseBagging, OutlierMixin):
                                           max_depth=max_depth,
                                           sample_weight=sample_weight)
 
-        if self.contamination == "auto":
+        if self._contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
             # we take the opposite as we consider the opposite of their score.
             self.offset_ = -0.5
             # need to save (depreciated) threshold_ in this case:
             self._threshold_ = sp.stats.scoreatpercentile(
                 self.score_samples(X), 100. * 0.1)
-        elif self.contamination == "legacy":  # to be rm in 0.22
-            self.offset_ = sp.stats.scoreatpercentile(
-                self.score_samples(X), 100. * 0.1)
         else:
             self.offset_ = sp.stats.scoreatpercentile(
-                self.score_samples(X), 100. * self.contamination)
+                self.score_samples(X), 100. * self._contamination)
 
         return self
 

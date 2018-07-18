@@ -185,7 +185,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     (please refer the ``scoring`` parameter doc for more information)
 
     >>> scores = cross_validate(lasso, X, y,
-    ...                         scoring=('r2', 'neg_mean_squared_error'))
+    ...                         scoring=('r2', 'neg_mean_squared_error'),
+    ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])                         # doctest: +ELLIPSIS
