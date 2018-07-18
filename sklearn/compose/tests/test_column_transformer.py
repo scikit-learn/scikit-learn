@@ -441,6 +441,8 @@ def test_column_transformer_named_estimators():
     ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
                             ('trans2', StandardScaler(with_std=False), [1])])
     assert_false(hasattr(ct, 'transformers_'))
+    # raise correct error when not fitted
+    assert_raises(NotFittedError, getattr, ct, 'named_transformers_')
     ct.fit(X_array)
     assert_true(hasattr(ct, 'transformers_'))
     assert_true(isinstance(ct.named_transformers_['trans1'], StandardScaler))

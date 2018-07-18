@@ -270,6 +270,7 @@ boolean mask array or callable
         objects.
 
         """
+        check_is_fitted(self, 'transformers_')
         # Use Bunch object to improve autocomplete
         return Bunch(**dict([(name, trans) for name, trans, _
                              in self.transformers_]))
