@@ -287,6 +287,7 @@ def test_score_samples():
                        clf2.score_samples([[2., 2.]]))
 
 
+@pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:Default "behaviour"')
 def test_deprecation():
     X = [[0.0], [1.0]]
@@ -309,6 +310,7 @@ def test_deprecation():
                          getattr, clf, "threshold_")
 
 
+@pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:Default "behaviour"')
 def test_behaviour_param():
     X_train = [[1, 1], [1, 2], [2, 1]]
