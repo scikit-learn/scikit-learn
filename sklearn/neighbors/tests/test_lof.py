@@ -163,6 +163,8 @@ def test_contamination():
     assert_raises(ValueError, clf.fit, X)
 
 
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_novelty_errors():
     X = iris.data
 
@@ -180,6 +182,8 @@ def test_novelty_errors():
     assert_raises_regex(AttributeError, msg, getattr, clf, 'fit_predict')
 
 
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_novelty_training_scores():
     # check that the scores of the training samples are still accessible
     # when novelty=True through the negative_outlier_factor_ attribute
@@ -198,6 +202,8 @@ def test_novelty_training_scores():
     assert_array_almost_equal(scores_1, scores_2)
 
 
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_hasattr_prediction():
     # check availability of prediction methods depending on novelty value.
     X = [[1, 1], [1, 2], [2, 1]]
@@ -219,6 +225,8 @@ def test_hasattr_prediction():
     assert not hasattr(clf, 'score_samples')
 
 
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_novelty_true_common_tests():
     # the common tests are run for the default LOF (novelty=False).
     # here we run these common tests for LOF when novelty=True
