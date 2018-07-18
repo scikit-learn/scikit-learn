@@ -154,7 +154,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         else:
             print(" - plot coastlines from coverage")
             plt.contour(X, Y, land_reference,
-                        levels=[-9999], colors="k",
+                        levels=[-9998], colors="k",
                         linestyles="solid")
             plt.xticks([])
             plt.yticks([])

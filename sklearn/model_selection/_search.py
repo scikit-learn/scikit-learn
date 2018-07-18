@@ -13,7 +13,7 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, defaultdict, Sequence, Iterable
+from collections import namedtuple, defaultdict
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -29,11 +29,13 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
+from ..utils.fixes import _Mapping as Mapping, _Sequence as Sequence
+from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -790,32 +792,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    @property
-    def grid_scores_(self):
-        check_is_fitted(self, 'cv_results_')
-        if self.multimetric_:
-            raise AttributeError("grid_scores_ attribute is not available for"
-                                 " multi-metric evaluation.")
-        warnings.warn(
-            "The grid_scores_ attribute was deprecated in version 0.18"
-            " in favor of the more elaborate cv_results_ attribute."
-            " The grid_scores_ attribute will not be available from 0.20",
-            DeprecationWarning)
-
-        grid_scores = list()
-
-        for i, (params, mean, std) in enumerate(zip(
-                self.cv_results_['params'],
-                self.cv_results_['mean_test_score'],
-                self.cv_results_['std_test_score'])):
-            scores = np.array(list(self.cv_results_['split%d_test_score'
-                                                    % s][i]
-                                   for s in range(self.n_splits_)),
-                              dtype=np.float64)
-            grid_scores.append(_CVScoreTuple(params, mean, scores))
-
-        return grid_scores
-
 
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -898,7 +874,7 @@ class GridSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 
@@ -973,8 +949,8 @@ class GridSearchCV(BaseSearchCV):
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svc = svm.SVC(gamma="scale")
-    >>> clf = GridSearchCV(svc, parameters)
-    >>> clf.fit(iris.data, iris.target)
+    >>> clf = GridSearchCV(svc, parameters) # doctest: +SKIP
+    >>> clf.fit(iris.data, iris.target) # doctest: +SKIP
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
@@ -985,7 +961,7 @@ class GridSearchCV(BaseSearchCV):
            fit_params=None, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
-    >>> sorted(clf.cv_results_.keys())
+    >>> sorted(clf.cv_results_.keys()) # doctest: +SKIP
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'mean_train_score', 'param_C', 'param_kernel', 'params',...
@@ -1242,7 +1218,7 @@ class RandomizedSearchCV(BaseSearchCV):
         will change to False in version 0.21, to correspond to the standard
         definition of cross-validation.
 
-        ..versionchanged:: 0.20
+        .. versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
             version 0.22, and will be removed in 0.24.
 

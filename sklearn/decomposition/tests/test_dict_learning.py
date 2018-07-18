@@ -1,3 +1,4 @@
+from __future__ import division
 import pytest
 
 import numpy as np
@@ -57,6 +58,8 @@ def test_dict_learning_overcomplete():
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -169,6 +172,8 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(code, dictionary).shape, X.shape)
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -264,6 +269,15 @@ def test_dict_learning_online_initialization():
     assert_array_equal(dico.components_, V)
 
 
+def test_dict_learning_online_readonly_initialization():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)
+    V.setflags(write=False)
+    MiniBatchDictionaryLearning(n_components, n_iter=1, dict_init=V,
+                                random_state=0, shuffle=False).fit(X)
+
+
 def test_dict_learning_online_partial_fit():
     n_components = 12
     rng = np.random.RandomState(0)
@@ -296,6 +310,8 @@ def test_sparse_encode_shapes():
         assert_equal(code.shape, (n_samples, n_components))
 
 
+# positive lars deprecated 0.22
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("positive", [
     False,
     True,
@@ -366,3 +382,22 @@ def test_sparse_coder_estimator():
                        transform_alpha=0.001).transform(X)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_coder_parallel_mmap():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/5956
+    # Test that SparseCoder does not error by passing reading only
+    # arrays to child processes
+
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 64
+    init_dict = rng.rand(n_components, n_features)
+    # Ensure that `data` is >2M. Joblib memory maps arrays
+    # if they are larger than 1MB. The 4 accounts for float32
+    # data type
+    n_samples = int(2e6) // (4 * n_features)
+    data = np.random.rand(n_samples, n_features).astype(np.float32)
+
+    sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
+    sc.fit_transform(data)

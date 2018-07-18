@@ -367,7 +367,7 @@ def logsumexp(arr, axis=0):
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
     9.458...
-    >>> logsumexp(a)
+    >>> logsumexp(a)  # doctest: +SKIP
     9.458...
     """
     return scipy_logsumexp(arr, axis)
@@ -710,7 +710,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
         new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
         last_unnormalized_variance = last_variance * last_sample_count
 
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide='ignore', invalid='ignore'):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_unnormalized_variance + new_unnormalized_variance +

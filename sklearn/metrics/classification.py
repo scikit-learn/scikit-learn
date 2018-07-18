@@ -223,6 +223,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
            <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+           (Wikipedia and other references may use a different
+           convention for axes)
 
     Examples
     --------
@@ -1452,7 +1454,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
-    output_dict: bool (default = False)
+    output_dict : bool (default = False)
         If True, return output as dict
 
     Returns
@@ -1564,8 +1566,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1590,13 +1591,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1645,10 +1639,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1920,7 +1910,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
+    np.clip(losses, 0, None, out=losses)
     return np.average(losses, weights=sample_weight)
 
 

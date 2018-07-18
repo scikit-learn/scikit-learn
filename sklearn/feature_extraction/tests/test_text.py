@@ -4,6 +4,7 @@ import warnings
 import pytest
 from scipy import sparse
 
+from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -31,10 +32,10 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises,
+                                   SkipTest, assert_raises, assert_no_warnings,
                                    assert_allclose_dense_sparse)
-
-from collections import defaultdict, Mapping
+from sklearn.utils.fixes import _Mapping as Mapping
+from collections import defaultdict
 from functools import partial
 import pickle
 from io import StringIO
@@ -730,6 +731,7 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -766,6 +768,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -1059,20 +1062,27 @@ def test_tfidf_transformer_sparse():
 
 
 @pytest.mark.parametrize(
-    "vectorizer_dtype, output_dtype, expected_warning, msg_warning",
-    [(np.int32, np.float64, UserWarning, "'dtype' should be used."),
-     (np.int64, np.float64, UserWarning, "'dtype' should be used."),
-     (np.float32, np.float32, None, None),
-     (np.float64, np.float64, None, None)]
+    "vectorizer_dtype, output_dtype, warning_expected",
+    [(np.int32, np.float64, True),
+     (np.int64, np.float64, True),
+     (np.float32, np.float32, False),
+     (np.float64, np.float64, False)]
 )
 def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
-                               expected_warning, msg_warning):
+                               warning_expected):
     X = np.array(["numpy", "scipy", "sklearn"])
     vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
-    with pytest.warns(expected_warning, match=msg_warning) as record:
+
+    warning_msg_match = "'dtype' should be used."
+    warning_cls = UserWarning
+    expected_warning_cls = warning_cls if warning_expected else None
+    with pytest.warns(expected_warning_cls,
+                      match=warning_msg_match) as record:
             X_idf = vectorizer.fit_transform(X)
-    if expected_warning is None:
-        assert len(record) == 0
+    if expected_warning_cls is None:
+        relevant_warnings = [w for w in record
+                             if isinstance(w, warning_cls)]
+        assert len(relevant_warnings) == 0
     assert X_idf.dtype == output_dtype
 
 
@@ -1097,3 +1107,26 @@ def test_vectorizers_invalid_ngram_range(vec):
     if isinstance(vec, HashingVectorizer):
         assert_raise_message(
             ValueError, message, vec.transform, ["good news everyone"])
+
+
+def test_vectorizer_stop_words_inconsistent():
+    if PY2:
+        lstr = "[u'and', u'll', u've']"
+    else:
+        lstr = "['and', 'll', 've']"
+    message = ('Your stop_words may be inconsistent with your '
+               'preprocessing. Tokenizing the stop words generated '
+               'tokens %s not in stop_words.' % lstr)
+    for vec in [CountVectorizer(),
+                TfidfVectorizer(), HashingVectorizer()]:
+        vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
+        assert_warns_message(UserWarning, message, vec.fit_transform,
+                             ['hello world'])
+
+    # Only one warning per stop list
+    assert_no_warnings(vec.fit_transform, ['hello world'])
+
+    # Test caching of inconsistency assessment
+    vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
+    assert_warns_message(UserWarning, message, vec.fit_transform,
+                         ['hello world'])
