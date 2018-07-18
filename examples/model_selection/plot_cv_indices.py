@@ -13,12 +13,12 @@ for comparison.
 
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
-                                     GroupKFold)
+                                     GroupKFold, StratifiedShuffleSplit)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 np.random.seed(1337)
-cmap_data = plt.cm.tab10
+cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm
 
 ###############################################################################
@@ -39,13 +39,12 @@ cmap_cv = plt.cm.coolwarm
 n_points = 100
 X = np.random.randn(100, 10)
 
-percentiles_labels = [.1, .2, .3, .4]
+percentiles_labels = [.1, .3, .6]
 y = np.hstack([[ii] * int(100 * perc)
                for ii, perc in enumerate(percentiles_labels)])
 
 # Evenly spaced groups repeated once
-groups = np.hstack([[ii] * 10 for ii in range(5)])
-groups = np.hstack([groups, groups])
+groups = np.hstack([[ii] * 10 for ii in range(10)])
 
 
 def visualize_groups(labels, groups, name):
@@ -133,15 +132,14 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 #
 # Note how some use the group/label information while others do not.
 
-cvs = [KFold(n_splits=n_splits), GroupKFold(n_splits=n_splits),
-       ShuffleSplit(n_splits=n_splits), StratifiedKFold(n_splits=n_splits),
-       GroupShuffleSplit(n_splits=n_splits),
-       TimeSeriesSplit(n_splits=n_splits)]
+cvs = [KFold, GroupKFold, ShuffleSplit, StratifiedKFold,
+       GroupShuffleSplit, StratifiedShuffleSplit, TimeSeriesSplit]
 
 
 for cv in cvs:
+    this_cv = cv(n_splits=n_splits)
     fig, ax = plt.subplots(figsize=(6, 3))
-    plot_cv_indices(cv, X, y, groups, ax, n_splits)
+    plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
 
     ax.legend([Patch(color=cmap_cv(.8)), Patch(color=cmap_cv(.2))],
               ['Testing set', 'Training set'], loc=(1.02, .8))
