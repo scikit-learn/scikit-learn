@@ -20,9 +20,6 @@ from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
-ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
-                         int incY)
-
 cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
     float sdot "cblas_sdot"(int N, float *X, int incX, float *Y, int incY)
@@ -58,7 +55,6 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
-        DOT dot
 
     if floating is float:
         center_squared_norms = np.zeros(n_clusters, dtype=np.float32)
@@ -130,7 +126,6 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[floating, ndim=1] sample_weight,
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
-        DOT dot
 
     if floating is float:
         center_squared_norms = np.zeros(n_clusters, dtype=np.float32)

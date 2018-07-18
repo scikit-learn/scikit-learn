@@ -29,8 +29,8 @@ from ..utils import check_random_state
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils import Parallel
+from ..utils import delayed
 from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from . import _k_means
@@ -889,7 +889,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Notes
     ------
-    The k-means problem is solved using Lloyd's algorithm.
+    The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of
     samples and T is the number of iteration.
@@ -901,6 +901,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
+
+    If the algorithm stops before fully converging (because of ``tol`` of
+    ``max_iter``), ``labels_`` and ``means_`` will not be consistent, i.e. the
+    ``means_`` will not be the means of the points in each cluster.
+    Also, the estimator will reassign ``labels_`` after the last iteration to
+    make ``labels_`` consistent with ``predict`` on the training set.
 
     """
 

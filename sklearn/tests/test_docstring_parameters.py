@@ -25,25 +25,13 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 IGNORED_MODULES = (
-    'cross_decomposition',
-    'covariance',
     'cluster',
     'datasets',
-    'decomposition',
-    'feature_extraction',
-    'gaussian_process',
-    'linear_model',
-    'manifold',
-    'metrics',
-    'discriminant_analysis',
-    'ensemble',
     'feature_selection',
     'kernel_approximation',
     'model_selection',
     'multioutput',
-    'random_projection',
     'setup',
-    'svm',
     'utils',
     'neighbors',
     # Deprecated modules
@@ -72,6 +60,9 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
+# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
+# Python 3.7
+@ignore_warnings(category=DeprecationWarning)
 def test_docstring_parameters():
     # Test module docstring formatting
 

@@ -59,6 +59,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
     fi
 
+    if [[ -n "$JOBLIB_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
+    fi
+
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
 
@@ -89,6 +93,9 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
     pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+    echo "Installing joblib master"
+    pip install https://github.com/joblib/joblib/archive/master.zip
+    export SKLEARN_SITE_JOBLIB=1
     pip install pytest pytest-cov
 fi
 

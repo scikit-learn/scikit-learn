@@ -19,11 +19,11 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
+from ..utils.fixes import _Sequence as Sequence
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
-from ..externals.joblib import Parallel, delayed
-import collections
+from ..utils import Parallel, delayed
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -383,6 +383,9 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     alphas : list of positive floats
         The list of regularization parameters, decreasing order.
 
+    cov_init : 2D array (n_features, n_features), optional
+        The initial guess for the covariance.
+
     X_test : 2D array, shape (n_test_samples, n_features), optional
         Optional test matrix to measure generalisation error.
 
@@ -605,7 +608,7 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, collections.Sequence):
+        if isinstance(n_alphas, Sequence):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -681,7 +684,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, collections.Sequence):
+            if not isinstance(n_alphas, Sequence):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
                                      n_alphas + 2)
                 alphas = alphas[1:-1]
