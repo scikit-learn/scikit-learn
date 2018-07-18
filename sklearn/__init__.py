@@ -18,7 +18,6 @@ import warnings
 import logging
 
 from ._config import get_config, set_config, config_context
-from .utils._print_versions import show_versions
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
@@ -63,6 +62,8 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
+    from .utils._print_versions import show_versions
+
     __check_build  # avoid flakes unused variable error
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
