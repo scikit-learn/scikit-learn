@@ -699,7 +699,7 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
             counter = Counter(array)
             values, counts = zip(*counter.items())
             values = np.array(values)
-            counts = np.array(counts)
+            counts = np.array(counts, dtype=float)
         else:
             values = np.empty(0)
             counts = np.empty(0)
