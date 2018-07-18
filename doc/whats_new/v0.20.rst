@@ -73,6 +73,7 @@ random sampling procedures.
 - :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
 - :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
+- :class:`linear_model.LogisticRegressionCV` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -463,6 +464,11 @@ Classifiers and regressors
   ``score`` method always computes accuracy, not the metric given by
   the ``scoring`` parameter.
   :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
+
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the 'ovr'
+  strategy was always used to compute cross-validation scores in the
+  multiclass setting, even if 'multinomial' was set.
+  :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
