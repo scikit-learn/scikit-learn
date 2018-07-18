@@ -216,16 +216,16 @@ estimator during the construction and exposes an estimator API::
     >>> from sklearn.model_selection import GridSearchCV, cross_val_score
     >>> Cs = np.logspace(-6, -1, 10)
     >>> clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs),
-    ...                    n_jobs=-1, cv=3)
-    >>> clf.fit(X_digits[:1000], y_digits[:1000])        # doctest: +ELLIPSIS
-    GridSearchCV(cv=3,...
-    >>> clf.best_score_                                  # doctest: +ELLIPSIS
+    ...                    n_jobs=-1)
+    >>> clf.fit(X_digits[:1000], y_digits[:1000])        # doctest: +SKIP
+    GridSearchCV(cv=None,...
+    >>> clf.best_score_                                  # doctest: +SKIP
     0.925...
-    >>> clf.best_estimator_.C                            # doctest: +ELLIPSIS
+    >>> clf.best_estimator_.C                            # doctest: +SKIP
     0.0077...
 
     >>> # Prediction performance on test set is not as good as on train set
-    >>> clf.score(X_digits[1000:], y_digits[1000:])      # doctest: +ELLIPSIS
+    >>> clf.score(X_digits[1000:], y_digits[1000:])      # doctest: +SKIP
     0.943...
 
 
@@ -238,8 +238,7 @@ version 0.22.
 
     ::
 
-        >>> cross_val_score(clf, X_digits, y_digits)
-        ...                                               # doctest: +ELLIPSIS
+        >>> cross_val_score(clf, X_digits, y_digits) # doctest: +SKIP
         array([0.938..., 0.963..., 0.944...])
 
     Two cross-validation loops are performed in parallel: one by the
