@@ -202,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -1485,7 +1485,7 @@ functions or non-estimator constructors.
           sometimes parallelism happens in prediction (e.g. in random forests).
         * Some parallelism uses a multi-threading backend by default, some
           a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+          backend by using :func:`sklearn.utils.parallel_backend`.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good

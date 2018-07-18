@@ -15,7 +15,7 @@ from scipy import linalg
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..utils import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)
@@ -160,7 +160,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         new_code = ((np.sign(cov) *
                     np.maximum(np.abs(cov) - regularization, 0)).T)
         if positive:
-            new_code[new_code < 0] = 0
+            np.clip(new_code, 0, None, out=new_code)
 
     elif algorithm == 'omp':
         # TODO: Should verbose argument be passed to this?
@@ -373,17 +373,19 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     n_components = len(code)
     n_features = Y.shape[0]
     random_state = check_random_state(random_state)
-    # Residuals, computed 'in-place' for efficiency
-    R = -np.dot(dictionary, code)
-    R += Y
-    R = np.asfortranarray(R)
+    # Get BLAS functions
+    gemm, = linalg.get_blas_funcs(('gemm',), (dictionary, code, Y))
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
+    # Residuals, computed with BLAS for speed and efficiency
+    # R <- -1.0 * U * V^T + 1.0 * Y
+    # Outputs R as Fortran array for efficiency
+    R = gemm(-1.0, dictionary, code, 1.0, Y)
     for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
         dictionary[:, k] = np.dot(R, code[k, :].T)
         if positive:
-            dictionary[:, k][dictionary[:, k] < 0] = 0.0
+            np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
         # Scale k'th atom
         atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
         if atom_norm_square < 1e-20:
@@ -394,7 +396,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 print("Adding new random atom")
             dictionary[:, k] = random_state.randn(n_features)
             if positive:
-                dictionary[:, k][dictionary[:, k] < 0] = 0.0
+                np.clip(dictionary[:, k], 0, None, out=dictionary[:, k])
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
