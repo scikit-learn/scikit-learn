@@ -127,6 +127,14 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     labels_ : array, shape (n_samples,)
         The estimated labels.
 
+    See also
+    --------
+    OPTICS
+        An estimator interface for this clustering algorithm.
+    dbscan
+        A similar clustering for a specified neighborhood radius (eps).
+        Our implementation is optimized for runtime.
+
     References
     ----------
     Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
@@ -256,11 +264,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     --------
 
     DBSCAN
-        CPU optimized algorithm that clusters at specified neighborhood
-        radius (eps).
-    HDBSCAN
-        Related clustering algorithm that calculates the minimum spanning tree
-        across mutual reachability space.
+        A similar clustering for a specified neighborhood radius (eps).
+        Our implementation is optimized for runtime.
 
     References
     ----------
