@@ -942,10 +942,10 @@ class GridSearchCV(BaseSearchCV):
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svc = svm.SVC(gamma="scale")
-    >>> clf = GridSearchCV(svc, parameters, cv=3) # doctest: +SKIP
-    >>> clf.fit(iris.data, iris.target) # doctest: +SKIP
+    >>> clf = GridSearchCV(svc, parameters, cv=5)
+    >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=3, error_score=...,
+    GridSearchCV(cv=5, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
@@ -954,7 +954,7 @@ class GridSearchCV(BaseSearchCV):
            fit_params=None, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
-    >>> sorted(clf.cv_results_.keys()) # doctest: +SKIP
+    >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'mean_train_score', 'param_C', 'param_kernel', 'params',...

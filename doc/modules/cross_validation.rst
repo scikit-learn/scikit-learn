@@ -139,10 +139,8 @@ validation iterator instead, for instance::
   >>> from sklearn.model_selection import ShuffleSplit
   >>> n_samples = iris.data.shape[0]
   >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
-  ...                                                     # doctest: +SKIP
-  array([0.977..., 0.955..., 0.977..., 0.888..., 0.977...])
-
+  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
+  array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
 
 .. topic:: Data transformation with held out data
 
@@ -167,7 +165,7 @@ validation iterator instead, for instance::
       >>> from sklearn.pipeline import make_pipeline
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
-      ...                                                 # doctest: +SKIP
+      ...                                                 # doctest: +ELLIPSIS
       array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
     See :ref:`combining_estimators`.
@@ -230,9 +228,9 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 Here is an example of ``cross_validate`` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
-    ...                         scoring='precision_macro',
-    ...                         return_estimator=True)  # doctest: +SKIP
-    >>> sorted(scores.keys())                           # doctest: +SKIP
+    ...                         scoring='precision_macro', cv=5,
+    ...                         return_estimator=True)
+    >>> sorted(scores.keys())
     ['estimator', 'fit_time', 'score_time', 'test_score', 'train_score']
 
 

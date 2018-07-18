@@ -167,20 +167,20 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)       # doctest: +SKIP
-    >>> scores.mean()                             # doctest: +SKIP
-    0.97...
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)       # doctest: +SKIP
-    >>> scores.mean()                             # doctest: +SKIP
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()                               # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)       # doctest: +SKIP
-    >>> scores.mean() > 0.999                     # doctest: +SKIP
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean() > 0.999
     True
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_iris_001.png
@@ -373,9 +373,8 @@ learners::
 
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target)
-    ...                                           # doctest: +SKIP
-    >>> scores.mean()                             # doctest: +SKIP
+    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+    >>> scores.mean()
     0.9...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
