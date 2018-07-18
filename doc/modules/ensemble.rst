@@ -167,20 +167,20 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, X, y)       # doctest: +SKIP
+    >>> scores.mean()                             # doctest: +SKIP
     0.97...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, X, y)       # doctest: +SKIP
+    >>> scores.mean()                             # doctest: +SKIP
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean() > 0.999
+    >>> scores = cross_val_score(clf, X, y)       # doctest: +SKIP
+    >>> scores.mean() > 0.999                     # doctest: +SKIP
     True
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_iris_001.png
@@ -257,8 +257,8 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**.
 
@@ -374,7 +374,8 @@ learners::
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, iris.data, iris.target)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    ...                                           # doctest: +SKIP
+    >>> scores.mean()                             # doctest: +SKIP
     0.9...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The

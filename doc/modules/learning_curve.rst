@@ -82,11 +82,12 @@ The function :func:`validation_curve` can help in this case::
 
   >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
   ...                                               np.logspace(-7, 3, 3))
-  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  ...                        # doctest: +SKIP
+  >>> train_scores           # doctest: +SKIP
   array([[0.94..., 0.92..., 0.92...],
          [0.94..., 0.92..., 0.92...],
          [0.47..., 0.45..., 0.42...]])
-  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  >>> valid_scores           # doctest: +SKIP
   array([[0.90..., 0.92..., 0.94...],
          [0.90..., 0.92..., 0.94...],
          [0.44..., 0.39..., 0.45...]])
