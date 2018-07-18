@@ -20,8 +20,8 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-import scipy.optimize as sopt
 from scipy import linalg
+from scipy import optimize
 from scipy import sparse
 
 from ..externals import six
@@ -423,7 +423,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         an estimator with ``normalize=False``.
 
     positive : bool, optional, default False
-        When set to ``True``, forces the coefficients to be positive.
+        When set to ``True``, forces the coefficients to be positive. This
+        option is only supported for dense arrays.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -451,12 +452,12 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, positive=False,
-                 copy_X=True, n_jobs=1):
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+                 positive=False, n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.positive = positive
         self.copy_X = copy_X
+        self.positive = positive
         self.n_jobs = n_jobs
 
     def fit(self, X, y, sample_weight=None):
@@ -469,8 +470,7 @@ class LinearRegression(LinearModel, RegressorMixin):
             Training data. If positive parameter is True, X must not be sparse.
 
         y : numpy array of shape [n_samples, n_targets]
-            Target values. Will be cast to X's dtype if necessary. If positive
-            parameter is True, y must not be sparse.
+            Target values. Will be cast to X's dtype if necessary.
 
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
@@ -503,11 +503,11 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = sopt.nnls(X, y)
+                self.coef_, self._residues = optimize.nnls(X, y)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                        delayed(sopt.nnls)(X, y[:, j].ravel())
+                        delayed(optimize.nnls)(X, y[:, j].ravel())
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
