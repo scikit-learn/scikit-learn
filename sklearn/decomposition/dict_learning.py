@@ -378,6 +378,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
     # Residuals, computed with BLAS for speed and efficiency
     # R <- -1.0 * U * V^T + 1.0 * Y
+    # Outputs R as Fortran array for efficiency
     R = gemm(-1.0, dictionary, code, 1.0, Y)
     for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
