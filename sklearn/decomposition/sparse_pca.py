@@ -66,12 +66,19 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : boolean
-        False : Use a version of Sparse PCA without components normalization
-        and without data centring. This is likely a bug and eventhough it's
-        the default for backward compatibility, this should not be used
-        True : Use a version of Sparse PCA with components normalization
-        and data centring
+    normalize_components : boolean, optional (default=False)
+        - if False, Use a version of Sparse PCA without components
+          normalization and without data centering. This is likely a bug and
+          even though it's the default for backward compatibility,
+          this should not be used.
+        - if True, Use a version of Sparse PCA with components normalization
+          and data centering.
+
+        .. versionadded:: 0.20
+        .. deprecated:: 0.22
+                ``normalize_components`` was added and set to ``False`` for
+                backward compatibility. It would be set to ``True`` from 0.22
+                onwards.
 
     Attributes
     ----------
@@ -86,8 +93,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
-
-        Equal to `X.mean(axis=0)`.
+        Equal to ``X.mean(axis=0)``.
 
     See also
     --------
@@ -135,9 +141,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             self.mean_ = np.mean(X, axis=0)
             X = X - self.mean_
         else:
-            warnings.warn("normalize_components should be set to True. "
-                          "This parameter exists for backward compatibility "
-                          "and will be removed in 0.22.", DeprecationWarning)
+            warnings.warn("normalize_components=False is a "
+                          "backward-compatible setting that implements a "
+                          "non-standard definition of sparse PCA. This "
+                          "compatibility mode will be removed in 0.22.",
+                          DeprecationWarning)
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -277,11 +285,18 @@ class MiniBatchSparsePCA(SparsePCA):
         by `np.random`.
 
     normalize_components : boolean
-        False : Use a version of Sparse PCA without components normalization
-        and without data centring. This is likely a bug and eventhough it's
-        the default for backward compatibility, this should not be used
-        True : Use a version of Sparse PCA with components normalization
-        and data centring
+        - if False, Use a version of Sparse PCA without components
+          normalization and without data centering. This is likely a bug
+          and even though it's the default for backward compatibility,
+          this should not be used.
+        - if True, Use a version of Sparse PCA with components normalization
+          and data centering.
+
+        .. versionadded:: 0.20
+        .. deprecated:: 0.22
+                ``normalize_components`` was added and set to ``False`` for
+                backward compatibility. It would be set to ``True`` from 0.22
+                onwards.
 
     Attributes
     ----------
@@ -293,8 +308,7 @@ class MiniBatchSparsePCA(SparsePCA):
 
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
-
-        Equal to `X.mean(axis=0)`.
+        Equal to ``X.mean(axis=0)``.
 
     See also
     --------
@@ -339,9 +353,11 @@ class MiniBatchSparsePCA(SparsePCA):
             self.mean_ = np.mean(X, axis=0)
             X = X - self.mean_
         else:
-            warnings.warn("normalize_components should be set to True. "
-                          "This parameter exists for backward compatibility "
-                          "and will be removed in 0.22.", DeprecationWarning)
+            warnings.warn("normalize_components=False is a "
+                          "backward-compatible setting that implements a "
+                          "non-standard definition of sparse PCA. This "
+                          "compatibility mode will be removed in 0.22.",
+                          DeprecationWarning)
 
         if self.n_components is None:
             n_components = X.shape[1]

@@ -204,7 +204,7 @@ def test_scaling_fit_transform():
                           random_state=rng, normalize_components=True)
     results_train = spca_lars.fit_transform(Y)
     results_test = spca_lars.transform(Y[:10])
-    assert_array_equal(results_train[0], results_test[0])
+    assert_allclose(results_train[0], results_test[0])
 
 
 def test_pca_vs_spca():
