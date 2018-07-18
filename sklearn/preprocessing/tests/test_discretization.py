@@ -211,23 +211,18 @@ def test_inverse_transform(strategy, encode):
     X = np.random.RandomState(0).randn(100, 3)
     kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
     Xt = kbd.fit_transform(X)
-    if encode != 'ordinal':
-        Xt_tmp = kbd.ohe_encoder_.inverse_transform(Xt)
-    else:
-        Xt_tmp = Xt
-    assert_array_equal(Xt_tmp.max(axis=0) + 1, kbd.n_bins_)
-
     X2 = kbd.inverse_transform(Xt)
     X2t = kbd.fit_transform(X2)
-    if encode != 'ordinal':
-        Xt_tmp = kbd.ohe_encoder_.inverse_transform(X2t)
-    else:
-        Xt_tmp = X2t
-    assert_array_equal(Xt_tmp.max(axis=0) + 1, kbd.n_bins_)
     if encode == 'onehot':
-        Xt = Xt.todense()
-        X2t = X2t.todense()
-    assert_array_equal(Xt, X2t)
+        assert_array_equal(Xt.todense(), X2t.todense())
+    else:
+        assert_array_equal(Xt, X2t)
+    if 'onehot' in encode:
+        Xt = kbd._ohe_encoder.inverse_transform(Xt)
+        X2t = kbd._ohe_encoder.inverse_transform(X2t)
+
+    assert_array_equal(Xt.max(axis=0) + 1, kbd.n_bins_)
+    assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
