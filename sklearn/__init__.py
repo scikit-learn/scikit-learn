@@ -18,6 +18,7 @@ import warnings
 import logging
 
 from ._config import get_config, set_config, config_context
+from .utils._print_versions import show_versions
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
@@ -74,7 +75,8 @@ else:
                'preprocessing', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context']
+               'clone', 'get_config', 'set_config', 'config_context',
+               'show_versions']
 
 
 def setup_module(module):
