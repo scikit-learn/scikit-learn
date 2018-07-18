@@ -65,8 +65,7 @@ class MCA():
     Vivek Yadak, "Multiple Correspondance Analysis: Principal
         Component Analysis
         for Catergorical variables"
-        See https://vxy10.wordpress.com/2016/06/18/multiple-correspondance-analysis-principal-component-analysis-for-catergorical-variables/
-        http://vxy10.github.io/2016/06/10/intro-MCA/
+        See http://vxy10.github.io/2016/06/10/intro-MCA/
 
     Examples
     --------
@@ -76,7 +75,8 @@ class MCA():
     >>> from numpy import argmax
     >>> from sklearn.preprocessing import LabelEncoder
     >>> from sklearn.preprocessing import OneHotEncoder
-    >>> data = ['bitter', 'bitter', 'spicy', 'bitter', 'sweet', 'sweet', 'spicy', 'bitter', 'spicy', 'sweet']
+    >>> data = ['bitter', 'bitter', 'spicy', 'bitter',
+        'sweet', 'sweet', 'spicy', 'bitter', 'spicy', 'sweet']
     >>> values = array(data)
     >>> label_encoder = LabelEncoder()
     >>> integer_encoded = label_encoder.fit_transform(values)
