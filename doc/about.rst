@@ -125,9 +125,11 @@ Andreas Müller also received a grant to improve scikit-learn from the `Alfred P
    :align: center
    :target: http://www.sydney.edu.au/
 
-`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015), Tom Duprès Delatour (?).
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015),
+Tom Duprès Delatour (?), mathurin Massias (?) to work on scikit-learn. Also funded
+a scikit-learn coding sprint in 2015.
 
-.. image:: themes/scikit-learn/static/img/digicosme.jpeg
+.. image:: themes/scikit-learn/static/img/digicosme.png
    :width: 200pt
    :align: center
    :target: https://digicosme.lri.fr
