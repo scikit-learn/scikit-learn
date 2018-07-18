@@ -19,17 +19,21 @@ from numpy.linalg import svd
 import numpy as np
 
 import functools
+
+
 def Matrix_mult(*args):
     """An internal method to multiply matrices."""
     return functools.reduce(np.dot, args)
+
 
 class MCA():
     """ Multiple Correspondance Analysis
 
     Dimensionality reduction for categorical, one-hot encoded data.
 
-    Singular Value Decomposition is applied to the categorical data to get
-    linear rows or factors that describe the input data.
+    Singular Value Decomposition is applied to the categorical
+    data to get linear rows or factors that describe the input
+    data.
 
     Parameters
     ----------
@@ -37,26 +41,29 @@ class MCA():
         Number of dimensions to reduce the input data to
 
     correction: string {'auto', 'benzecri', 'greenacre'}
-        Since categorical data inputs are not uncorrelated, apply a correction
-        algorithm to improve the variances between output data dimensions
+        Since categorical data inputs are not uncorrelated, apply
+        a correction algorithm to improve the variances between
+        output data dimensions
 
     K: int
-        The number of true independent measures (pre-encoding columns) for Benzécri or Greenacre
-        corrections
+        The number of true independent measures (pre-encoding
+        columns) for Benzécri or Greenacre corrections
 
     J: int
-        The number of categorical variables for Greenacre correction
+        The number of categorical variables for Greenacre
+        correction
 
 
     Attributes
     ----------
-    explained_variance_ : The amount of variance explained by each of the
-        selected components.
+    explained_variance_ : The amount of variance explained by each
+    of the selected components.
 
     References
     ----------
 
-    Vivek Yadak, "Multiple Correspondance Analysis: Principal Component Analysis
+    Vivek Yadak, "Multiple Correspondance Analysis: Principal
+        Component Analysis
         for Catergorical variables"
         See https://vxy10.wordpress.com/2016/06/18/multiple-correspondance-analysis-principal-component-analysis-for-catergorical-variables/
         http://vxy10.github.io/2016/06/10/intro-MCA/
@@ -109,7 +116,6 @@ class MCA():
 
         return self._fit_full(X, self.n_components)
 
-
     def _fit_full(self, X, n_components):
         n_samples, n_features = X.shape
         # i_sup = X.tail(1)
@@ -121,8 +127,8 @@ class MCA():
         Z = X / N_all
 
         # Get 2 vectors corresponding to the sum of rows and colums.
-        Sum_r = np.sum(Z,axis=1)
-        Sum_c = np.sum(Z,axis=0)
+        Sum_r = np.sum(Z, axis=1)
+        Sum_c = np.sum(Z, axis=0)
 
         # Compute residual matrix by subtracting the expected indicator matrix
         # (outer product of rows and columns sums computed in step 2)
@@ -130,18 +136,16 @@ class MCA():
         Z_residual = Z - Z_expected
 
         # Scale residual by the square root of column and row sums.
-        D_r = np.diag(Sum_r)
-        D_c = np.diag(Sum_c)
         D_r_sqrt_mi = np.sqrt(np.diag(Sum_r**-1))
         D_c_sqrt_mi = np.sqrt(np.diag(Sum_c**-1))
 
-        MCA_mat = Matrix_mult(D_r_sqrt_mi,Z_residual,D_c_sqrt_mi)
-        P,S,Q = svd(MCA_mat) # most costly part, whole matrices set to false
+        MCA_mat = Matrix_mult(D_r_sqrt_mi, Z_residual, D_c_sqrt_mi)
+        P, S, Q = svd(MCA_mat)  # most costly part, whole matrices set to false
         S_d = diagsvd(S, n_samples, n_features)
-        sum_mca = np.sum((Matrix_mult(P,S_d,Q)-MCA_mat)**2)
 
-        F = Matrix_mult(D_r_sqrt_mi,P,S_d) ## Column Space, contains linear combinations of columns
-        G = Matrix_mult(D_c_sqrt_mi,Q.T,S_d.T) ## Row space, contains linear combinations of rows
+        G = Matrix_mult(D_c_sqrt_mi, Q.T, S_d.T)
+        # Row space, contains linear combinations of rows
+
         Lam = S**2
         Expl_var = Lam/np.sum(Lam)
         # Explained variance before correction
@@ -149,7 +153,8 @@ class MCA():
         # Benzecri correction
         if self.correction == 'auto' or self.correction == 'benzecri':
             K = self.K
-            E = np.array([(K/(K-1.)*(lm - 1./K))**2 if lm > 1./K else 0 for lm in S**2])
+            E_ = [(K/(K-1.)*(lm - 1./K))**2 if lm > 1./K else 0 for lm in S**2]
+            E = np.array(E_)
             Expl_var_bn = E/np.sum(E)
         elif self.correction == 'greenacre':
             K = self.K
@@ -165,20 +170,10 @@ class MCA():
         # explained variance after correction
 
         dim = self.n_components
-        d_c = np.linalg.norm(G, axis=1)**2 # Same as np.diag(G*G.T)
-        d_r = np.linalg.norm(F, axis=1)**2 # Same as np.diag(F*F.T)
-        # Cosine distance between factors and first 4 components
-        CosDist_c = np.apply_along_axis(lambda x: x/d_c, 0, G[:, :dim]**2)
-        # Cosine distance between factors and first dim components
-        CosDist_r = np.apply_along_axis(lambda x: x/d_r, 0, F[:, :dim]**2)
-        # Cosine distance between factors and first dim components
-        Cont_c = np.apply_along_axis(lambda x: x, 0, G[:, :dim]**2)
-        # Cosine distance between factors and first dim components
-        Cont_r = np.apply_along_axis(lambda x: x, 0, F[:, :dim]**2)
 
         X_pjn = []
-        for i in np.arange(0,6):
-            X_pjn.append(np.dot(X[i],G[:,:dim])/S[:dim]/10)
+        for i in np.arange(0, 6):
+            X_pjn.append(np.dot(X[i], G[:, :dim])/S[:dim]/10)
 
         X_pjn = np.asarray(X_pjn)
 
