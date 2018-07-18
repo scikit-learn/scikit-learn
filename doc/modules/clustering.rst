@@ -1166,42 +1166,42 @@ proposed more recently and is **normalized against chance**::
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.22504...
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.22504...
 
 All, :func:`mutual_info_score`, :func:`adjusted_mutual_info_score` and
 :func:`normalized_mutual_info_score` are symmetric: swapping the argument does
 not change the score. Thus they can be used as a **consensus measure**::
 
-  >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +SKIP
   0.22504...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   1.0
 
-  >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)
+  >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   1.0
 
 This is not true for ``mutual_info_score``, which is therefore harder to judge::
 
-  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.69...
 
 Bad (e.g. independent labelings) have non-positive scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   -0.10526...
 
 

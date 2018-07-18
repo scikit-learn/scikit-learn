@@ -29,7 +29,8 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-@ignore_warnings(category=DeprecationWarning)  # contamination changed to 'auto' 0.22
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_lof():
     # Toy sample (the last two samples are outliers):
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
@@ -48,7 +49,8 @@ def test_lof():
     assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
 
 
-@ignore_warnings(category=DeprecationWarning)  # contamination changed to 'auto' 0.22
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_lof_performance():
     # Generate train/test data
     rng = check_random_state(2)
@@ -70,7 +72,8 @@ def test_lof_performance():
     assert_greater(roc_auc_score(y_test, y_pred), .99)
 
 
-@ignore_warnings(category=DeprecationWarning)  # contamination changed to 'auto' 0.22
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_lof_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
@@ -90,7 +93,8 @@ def test_lof_values():
     assert_array_almost_equal(-clf2._score_samples([[1., 1.]]), [s_1])
 
 
-@ignore_warnings(category=DeprecationWarning)  # contamination changed to 'auto' 0.22
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_lof_precomputed(random_state=42):
     """Tests LOF with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -116,7 +120,8 @@ def test_lof_precomputed(random_state=42):
     assert_array_almost_equal(pred_X_Y, pred_D_Y)
 
 
-@ignore_warnings(category=DeprecationWarning)  # contamination changed to 'auto' 0.22
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_n_neighbors_attribute():
     X = iris.data
     clf = neighbors.LocalOutlierFactor(n_neighbors=500).fit(X)
@@ -129,7 +134,8 @@ def test_n_neighbors_attribute():
     assert_equal(clf.n_neighbors_, X.shape[0] - 1)
 
 
-@ignore_warnings(category=DeprecationWarning)  # contamination changed to 'auto' 0.22
+@ignore_warnings(category=DeprecationWarning)
+# contamination changed to 'auto' 0.22
 def test_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = neighbors.LocalOutlierFactor(n_neighbors=2,

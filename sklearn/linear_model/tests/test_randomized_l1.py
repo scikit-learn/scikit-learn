@@ -1,7 +1,6 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-import pytest
 from tempfile import mkdtemp
 import shutil
 
@@ -17,8 +16,8 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.linear_model.randomized_l1 import(lasso_stability_path,
-                                                RandomizedLasso,
-                                                RandomizedLogisticRegression)
+                                               RandomizedLasso,
+                                               RandomizedLogisticRegression)
 
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
