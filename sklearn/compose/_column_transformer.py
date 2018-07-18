@@ -383,7 +383,7 @@ boolean mask array or callable
         """
         # we use fit_transform to make sure to set _sparse (for which we need
         # the transformed data) to have consistent output type in predict
-        _ = self.fit_transform(X, y=y)
+        self.fit_transform(X, y=y)
         return self
 
     def fit_transform(self, X, y=None):
