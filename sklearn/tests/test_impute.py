@@ -94,6 +94,15 @@ def test_imputation_deletion_warning(strategy):
         imputer.fit_transform(X)
 
 
+def test_imputation_sampling_deletion_warning():
+    X = np.ones((3, 5))
+    X[:, 0] = np.nan
+
+    with pytest.warns(UserWarning, match="Deleting"):
+        imputer = SamplingImputer(verbose=True)
+        imputer.fit_transform(X)
+
+
 @pytest.mark.parametrize("strategy", ["mean", "median",
                                       "most_frequent", "constant"])
 def test_imputation_error_sparse_0(strategy):
@@ -103,6 +112,21 @@ def test_imputation_error_sparse_0(strategy):
     X = sparse.csc_matrix(X)
 
     imputer = SimpleImputer(strategy=strategy, missing_values=0)
+    with pytest.raises(ValueError, match="Provide a dense array"):
+        imputer.fit(X)
+
+    imputer.fit(X.toarray())
+    with pytest.raises(ValueError, match="Provide a dense array"):
+        imputer.transform(X)
+
+
+def test_imputation_sampling_error_sparse_0():
+    # check that error are raised when missing_values = 0 and input is sparse
+    X = np.ones((3, 5))
+    X[0] = 0
+    X = sparse.csc_matrix(X)
+
+    imputer = SamplingImputer(missing_values=0)
     with pytest.raises(ValueError, match="Provide a dense array"):
         imputer.fit(X)
 
