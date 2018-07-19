@@ -8,10 +8,10 @@ import warnings as _warnings
 if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
     with _warnings.catch_warnings():
         _warnings.simplefilter("ignore")
-    from joblib import __all__
-    from joblib import *  # noqa
-    from joblib import __version__
-    from joblib import logger
+        from joblib import __all__
+        from joblib import *  # noqa
+        from joblib import __version__
+        from joblib import logger
 else:
     from ..externals.joblib import __all__   # noqa
     from ..externals.joblib import *  # noqa
