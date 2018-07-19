@@ -430,6 +430,7 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
+@pytest.mark.filterwarnings("ignore: The 'reorder' parameter")  # 0.22
 def test_auc_duplicate_values():
     # Test Area Under Curve (AUC) computation with duplicate values
 
@@ -437,6 +438,8 @@ def test_auc_duplicate_values():
     # from numpy.argsort(x), which was reordering the tied 0's in this example
     # and resulting in an incorrect area computation. This test detects the
     # error.
+
+    # This will not work again in the future! so regression?
     x = [-2.0, 0.0, 0.0, 0.0, 1.0]
     y1 = [2.0, 0.0, 0.5, 1.0, 1.0]
     y2 = [2.0, 1.0, 0.0, 0.5, 1.0]

@@ -497,6 +497,10 @@ class GraphicalLassoCV(GraphicalLasso):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
@@ -566,7 +570,7 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
 
-    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
+    def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
                  verbose=False, assume_centered=False):
         super(GraphicalLassoCV, self).__init__(
@@ -899,6 +903,10 @@ class GraphLassoCV(GraphicalLassoCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below

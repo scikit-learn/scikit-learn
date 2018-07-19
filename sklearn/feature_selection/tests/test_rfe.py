@@ -229,6 +229,7 @@ def test_rfecv_verbose_output():
     assert_greater(len(verbose_output.readline()), 0)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")
@@ -320,6 +321,7 @@ def test_number_of_subsets_of_features():
                      formula2(n_features, n_features_to_select, step))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_cv_n_jobs():
     generator = check_random_state(0)
     iris = load_iris()

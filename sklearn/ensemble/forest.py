@@ -944,16 +944,17 @@ class RandomForestClassifier(ForestClassifier):
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
+    >>> clf = RandomForestClassifier(n_estimators=100, max_depth=2,
+    ...                              random_state=0)
     >>> clf.fit(X, y)
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf=1, min_samples_split=2,
-                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
+                min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=1,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [0.17287856 0.80608704 0.01884792 0.00218648]
+    [0.14205973 0.76664038 0.0282433  0.06305659]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1188,18 +1189,19 @@ class RandomForestRegressor(ForestRegressor):
     >>>
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
-    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
+    ...                              n_estimators=100)
     >>> regr.fit(X, y)
     RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
                min_samples_leaf=1, min_samples_split=2,
-               min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
+               min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=1,
                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
-    [0.17339552 0.81594114 0.         0.01066333]
+    [0.18146984 0.81473937 0.00145312 0.00233767]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-2.50699856]
+    [-8.32987858]
 
     Notes
     -----
