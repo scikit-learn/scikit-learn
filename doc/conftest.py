@@ -1,5 +1,6 @@
 from os.path import exists
 from os.path import join
+import warnings
 
 import numpy as np
 
@@ -75,6 +76,12 @@ def setup_impute():
         raise SkipTest("Skipping impute.rst, pandas not installed")
 
 
+def setup_unsupervised_learning():
+    # ignore deprecation warnings from scipy.misc.face
+    warnings.filterwarnings('ignore', 'The binary mode of fromstring',
+                            DeprecationWarning)
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
     is_index = fname.endswith('datasets/index.rst')
@@ -93,6 +100,8 @@ def pytest_runtest_setup(item):
         setup_compose()
     elif fname.endswith('modules/impute.rst'):
         setup_impute()
+    elif fname.endswith('statistical_inference/unsupervised_learning.rst'):
+        setup_unsupervised_learning()
 
 
 def pytest_runtest_teardown(item):

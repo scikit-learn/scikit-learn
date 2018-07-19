@@ -11,13 +11,17 @@ This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.
 Thanks to our many contributors!
 
+.. warning::
+
+    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
+    Scikit-learn 0.21 will require Python 3.5 or higher.
+
 Highlights
 ----------
 
 We have tried to improve our support for common data-science use-cases
 including missing values, categorical variables, heterogeneous data, and
 features/targets with unusual distributions.
-
 Missing values in features, represented by NaNs, are now accepted in
 column-wise preprocessing such as scalers.  Each feature is fitted disregarding
 NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
@@ -69,6 +73,7 @@ random sampling procedures.
 - :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
 - :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
+- :class:`linear_model.LogisticRegressionCV` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -77,12 +82,6 @@ Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
-
-**Other backward incompatible change** The vendored version of the joblib
-module is now found at `sklearn.externals._joblib` (:issue:`11166`). The
-main API of joblib is still exposed in `sklearn.externals.joblib`, but
-code doing imports of subpackages of `sklearn.externals.joblib` will
-break.
 
 Changelog
 ---------
@@ -149,10 +148,9 @@ Preprocessing
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Added :class:`impute.ChainedImputer`, which is a strategy for imputing missing
-  values by modeling each feature with missing values as a function of
-  other features in a round-robin fashion. :issue:`8478` by
-  :user:`Sergey Feldman <sergeyf>`.
+- Added :class:`MissingIndicator` which generates a binary indicator for
+  missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
   :class:`linear_model.PassiveAggressiveClassifier`,
@@ -197,6 +195,12 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
+- Added control over the normalization in 
+  :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
+  parameter. In version 0.22, the default normalizer for each will become
+  the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
+  :user:`Arya McCarthy <aryamccarthy>`.
 - Added ``output_dict`` parameter in :func:`metrics.classification_report`
   to return classification statistics as dictionary.
   :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
@@ -209,8 +213,9 @@ Misc
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 - An environment variable to use the site joblib instead of the vendored
-  one was added (:ref:`environment_variable`).
-  :issue:`11166` by `Gael Varoquaux`_
+  one was added (:ref:`environment_variable`). The main API of joblib is now
+  exposed in :mod:`sklearn.utils`.
+  :issue:`11166`by `Gael Varoquaux`_
 
 Enhancements
 ............
@@ -298,6 +303,11 @@ Preprocessing
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
+- :class:`preprocessing.OneHotEncoder` now supports the
+  :meth:`get_feature_names` method to obtain the transformed feature names.
+  :issue:`10181` by  :user:`Nirvan Anjirbag <Nirvan101>` and
+  `Joris Van den Bossche`_.
+
 - The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
   now ignores any unknown classes. A warning is raised stating the unknown classes
   classes found which are ignored.
@@ -383,11 +393,22 @@ Metrics
   faster. This avoids some reported freezes and MemoryErrors.
   :issue:`11135` by `Joel Nothman`_.
 
+- :func:`metrics.average_precision_score` now supports binary ``y_true``
+  other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label`` parameter.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Preprocessing and feature selection
+
+- Added select K best features functionality to
+  :class:`feature_selection.SelectFromModel`.
+  :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
+  :user:`Quazi Rahman <qmaruf>`.
 
 Decomposition, manifold learning and clustering
 
@@ -443,6 +464,11 @@ Classifiers and regressors
   ``score`` method always computes accuracy, not the metric given by
   the ``scoring`` parameter.
   :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
+
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the 'ovr'
+  strategy was always used to compute cross-validation scores in the
+  multiclass setting, even if 'multinomial' was set.
+  :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
@@ -522,6 +548,12 @@ Classifiers and regressors
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
+  
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
+  during the calculation of tree MAE impurity. Previous behaviour could 
+  cause suboptimal splits to be chosen since the impurity calculation 
+  considered all samples to be of equal weight importance.
+  :issue:`11464` by :user:`John Stott <JohnStott>`.  
 
 Decomposition, manifold learning and clustering
 
@@ -612,6 +644,10 @@ Metrics
   :func:`metrics.mutual_info_score`.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- Fixed a bug where :func:`metrics.average_precision_score` will sometimes return
+  ``nan`` when ``sample_weight`` contains 0.
+  :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 - Fixed a bug in :func:`metrics.fowlkes_mallows_score` to avoid integer
   overflow. Casted return value of `contingency_matrix` to `int64` and computed
   product of square roots rather than square root of product.
@@ -624,6 +660,9 @@ Neighbors
   handle empty neighbor set when using non uniform weights. Also raises a new
   warning when no neighbors are found for samples.  :issue:`9655` by
   :user:`Andreas Bjerre-Nielsen <abjer>`.
+
+- Fixed a bug in ``KDTree`` construction that results in faster construction
+  and querying times. :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
 Feature Extraction
 
@@ -698,6 +737,15 @@ Datasets
 API changes summary
 -------------------
 
+Classifiers and regressors
+
+- The default value of the ``n_estimators`` parameter of 
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`, 
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`, 
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20 
+  to 100 in 0.22. A FutureWarning is raised when the default value is used.
+  :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
@@ -756,6 +804,17 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- In :func:`metrics.normalized_mutual_information_score` and
+  :func:`metrics.adjusted_mutual_information_score`, 
+  warn that ``average_method``
+  will have a new default value. In version 0.22, the default normalizer for each 
+  will become the *arithmetic* mean of the entropies of each clustering. Currently,
+  :func:`metrics.normalized_mutual_information_score` uses the default of
+  ``average_method='geometric'``, and :func:`metrics.adjusted_mutual_information_score`
+  uses the default of ``average_method='max'`` to match their behaviors in
+  version 0.19.
+  :issue:`11124` by :user:`Arya McCarthy <aryamccarthy>`.
 
 - The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
   and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
@@ -860,9 +919,17 @@ These changes mostly affect library developers.
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
 
-- Allow :func:`~utils.estimator_checks.check_estimator` to check that there is no
+- Allow :func:`utils.estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
+
+- The set of checks in :func:`utils.estimator_checks.check_estimator` now includes a
+  ``check_set_params`` test which checks that ``set_params`` is equivalent to
+  passing parameters in ``__init__`` and warns if it encounters parameter
+  validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
+  
+- Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
+  Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
