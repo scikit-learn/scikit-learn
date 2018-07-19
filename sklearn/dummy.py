@@ -275,7 +275,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
             elif self.strategy == "prior":
-                out = np.ones((n_samples, 1)) * class_prior_[k]
+                out = np.full((n_samples, 1), class_prior_[k])
 
             elif self.strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
@@ -469,7 +469,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
 
-        y = np.ones((n_samples, self.n_outputs_)) * self.constant_
+        y = np.full((n_samples, self.n_outputs_), self.constant_)
         y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:

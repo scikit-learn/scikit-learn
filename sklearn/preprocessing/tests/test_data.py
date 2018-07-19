@@ -209,7 +209,7 @@ def test_standard_scaler_1d():
         assert_array_almost_equal(X_scaled_back, X)
 
     # Constant feature
-    X = np.ones(5).reshape(5, 1)
+    X = np.ones((5, 1))
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert_almost_equal(scaler.mean_, 1.)
@@ -254,12 +254,12 @@ def test_standard_scaler_numerical_stability():
     x_scaled = assert_warns_message(UserWarning, w, scale, x)
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
-    x = np.ones(10, dtype=np.float64) * 1e-100
+    x = np.full(10, 1e-100, dtype=np.float64)
     x_small_scaled = assert_no_warnings(scale, x)
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
-    x_big = np.ones(10, dtype=np.float64) * 1e100
+    x_big = np.full(10, 1e100, dtype=np.float64)
     w = "Dataset may contain too large values"
     x_big_scaled = assert_warns_message(UserWarning, w, scale, x_big)
     assert_array_almost_equal(x_big_scaled, np.zeros(10))
@@ -621,7 +621,7 @@ def test_min_max_scaler_1d():
         assert_array_almost_equal(X_scaled_back, X)
 
     # Constant feature
-    X = np.ones(5).reshape(5, 1)
+    X = np.ones((5, 1))
     scaler = MinMaxScaler()
     X_scaled = scaler.fit(X).transform(X)
     assert_greater_equal(X_scaled.min(), 0.)
@@ -1577,7 +1577,7 @@ def test_maxabs_scaler_1d():
         assert_array_almost_equal(X_scaled_back, X)
 
     # Constant feature
-    X = np.ones(5).reshape(5, 1)
+    X = np.ones((5, 1))
     scaler = MaxAbsScaler()
     X_scaled = scaler.fit(X).transform(X)
     assert_array_almost_equal(np.abs(X_scaled.max(axis=0)), 1.)

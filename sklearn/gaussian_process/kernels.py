@@ -1010,11 +1010,11 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = self.constant_value * np.ones((X.shape[0], Y.shape[0]))
+        K = np.full((X.shape[0], Y.shape[0]), self.constant_value)
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
-                return (K, self.constant_value
-                        * np.ones((X.shape[0], X.shape[0], 1)))
+                return (K, np.full((X.shape[0], X.shape[0], 1),
+                                   self.constant_value))
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
         else:
@@ -1037,7 +1037,7 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.constant_value * np.ones(X.shape[0])
+        return np.full(X.shape[0], self.constant_value)
 
     def __repr__(self):
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
@@ -1132,7 +1132,7 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.noise_level * np.ones(X.shape[0])
+        return np.full(X.shape[0], self.noise_level)
 
     def __repr__(self):
         return "{0}(noise_level={1:.3g})".format(self.__class__.__name__,
