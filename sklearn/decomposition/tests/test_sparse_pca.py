@@ -46,6 +46,7 @@ def generate_toy_data(n_components, n_samples, image_size, random_state=None):
 # test different aspects of the code in the same test
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_correct_shapes(norm_comp):
     rng = np.random.RandomState(0)
@@ -63,6 +64,7 @@ def test_correct_shapes(norm_comp):
     assert_equal(U.shape, (12, 13))
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_fit_transform(norm_comp):
     alpha = 1
@@ -86,6 +88,7 @@ def test_fit_transform(norm_comp):
                          Y, ridge_alpha=None)
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 @if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel(norm_comp):
@@ -104,6 +107,7 @@ def test_fit_transform_parallel(norm_comp):
     assert_array_almost_equal(U1, U2)
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_transform_nan(norm_comp):
     # Test that SparsePCA won't return NaN when there is 0 feature in all
@@ -115,6 +119,7 @@ def test_transform_nan(norm_comp):
     assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_fit_transform_tall(norm_comp):
     rng = np.random.RandomState(0)
@@ -128,6 +133,7 @@ def test_fit_transform_tall(norm_comp):
     assert_array_almost_equal(U1, U2)
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_initialization(norm_comp):
     rng = np.random.RandomState(0)
@@ -143,6 +149,7 @@ def test_initialization(norm_comp):
         assert_array_equal(model.components_, V_init)
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_mini_batch_correct_shapes(norm_comp):
     rng = np.random.RandomState(0)
@@ -160,6 +167,7 @@ def test_mini_batch_correct_shapes(norm_comp):
     assert_equal(U.shape, (12, 13))
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
 @pytest.mark.parametrize("norm_comp", [False, True])
 def test_mini_batch_fit_transform(norm_comp):
     raise SkipTest("skipping mini_batch_fit_transform.")
@@ -230,4 +238,4 @@ def test_spca_deprecation_warning(spca):
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
     with pytest.warns(DeprecationWarning, match="normalize_components"):
-        spca().fit(Y)
+        spca(normalize_components=False).fit(Y)
