@@ -624,6 +624,94 @@ def test_cross_val_score_fit_params():
     cross_val_score(clf, X, y, fit_params=fit_params)
 
 
+@pytest.mark.parametrize("partial_fit", [True, 4, 8])
+def test_cross_validate_fit_kwarg(partial_fit):
+    X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
+    classes = np.unique(y)
+
+    tol = -np.inf
+    clf_p_fit = SGDClassifier(random_state=0, tol=tol, max_iter=10)
+    clf_fit = SGDClassifier(random_state=0, tol=tol, max_iter=100)
+
+    cv = 2
+    # scores_partial_fit
+    scores_p_fit = cross_validate(clf_p_fit, X, y, partial_fit=partial_fit,
+                                  fit_params={'classes': classes},
+                                  return_estimator=True, cv=cv)
+    # score_fit
+    scores_fit = cross_validate(clf_fit, X, y, return_estimator=True, cv=cv)
+    assert_true(set(scores_p_fit.keys()) == set(scores_fit.keys()))
+
+    clfs_p_fit = scores_p_fit['estimator']
+    clfs_fit = scores_fit['estimator']
+    for clf_fit, clf_p_fit in zip(clfs_fit, clfs_p_fit):
+        assert_true(clf_p_fit.t_ * 10 < clf_fit.t_)
+        assert_true(clf_p_fit.t_ - 1 ==
+                    int(partial_fit * X.shape[0] * (cv - 1) / cv))
+
+
+@pytest.mark.parametrize("partial_fit", ['foo', 1.0, 1, True])
+def test_cross_validate_fit_kwarg_raises(partial_fit):
+    clf = SGDClassifier(random_state=0)
+    X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
+    classes = np.unique(y)
+
+    if isinstance(partial_fit, (bool, int)):
+        cross_validate(clf, X, y, partial_fit=partial_fit,
+                       fit_params={'classes': classes})
+    else:
+        with pytest.raises(ValueError, match='partial_fit must be'):
+            cross_validate(clf, X, y, partial_fit=partial_fit,
+                           fit_params={'classes': classes})
+
+
+def test_cross_validate_val_set():
+    n, d = 100, 2
+    X_train, y_train = make_classification(n_samples=n, n_classes=2,
+                                           n_features=d, random_state=0,
+                                           n_redundant=0, n_informative=d)
+    rng = np.random.RandomState(0)
+    X_test = rng.randn(n, d)
+    y_test = (np.sign(rng.randn(n)) + 1) / 2
+
+    clf = SGDClassifier(random_state=0)
+    r = cross_validate(clf, X_train, y_train, X_test=X_test, y_test=y_test)
+
+    assert_true(r['test_score'].mean() < 0.48 < 0.85 < r['train_score'].mean())
+
+
+def test_cross_validate_repeated_call():
+    n, d = 100, 80
+    cv = 3
+    X, y = make_classification(n_samples=n, n_features=d, n_classes=2,
+                               random_state=0, n_redundant=0,
+                               n_informative=2)
+    classes = np.unique(y)
+    one_epoch = X.shape[0] * (cv - 1) / cv
+
+    clf = SGDClassifier(random_state=0)
+    ret1 = cross_validate(clf, X, y, fit_params={'classes': classes},
+                          return_estimator=True, partial_fit=True, cv=cv)
+    iters1 = [(est.t_ - 1) / one_epoch for est in ret1['estimator']]
+    assert isinstance(ret1['estimator'], tuple)
+    assert all([isinstance(e, BaseEstimator) for e in ret1['estimator']])
+
+    ret2 = cross_validate(ret1['estimator'], X, y, return_estimator=True,
+                          partial_fit=True, cv=cv)
+
+    assert set(ret1.keys()) == set(ret2.keys())
+    for k, v1 in ret1.items():
+        v2 = ret2[k]
+        assert len(v1) == len(v2)
+        if k == 'train_score':
+            assert v1.mean() < 0.90 < 0.93 < v2.mean()
+        if k == 'test_score':
+            assert v1.mean() < 0.73 < 0.75 < v2.mean()
+
+    iters2 = [(est.t_ - 1) / one_epoch for est in ret2['estimator']]
+    assert sum(iters1) / cv == 1 and sum(iters2) / cv == 2
+
+
 def test_cross_val_score_score_func():
     clf = MockClassifier()
     _score_func_args = []

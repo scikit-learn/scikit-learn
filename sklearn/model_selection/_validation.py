@@ -41,15 +41,18 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score="warn",
-                   return_estimator=False):
+                   return_estimator=False, partial_fit=False, X_test=None,
+                   y_test=None):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
+    estimator : estimator object implementing 'fit', list of estimators
+        The object to use to fit the data. If a list, do not clone each
+        estimator and it must be the same length as the number of cross
+        validation splits.
 
     X : array-like
         The data to fit. Can be for example a list, or an array.
@@ -135,6 +138,21 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
+    partial_fit : boolean, integer, default False
+        If False (default), call ``fit``. If True, call
+        ``estimator.partial_fit`` once.  If an integer, call ``partial_fit``
+        times. ``estimator`` is assumed to be pickleable if ``partial_fit``
+        is not True.
+
+    X_test : array-like, optional
+        If present, treat this as the validation set and use
+        ``X`` and ``y`` for training as the training set.
+
+    y_test : array-like, optional
+        If present, treat this as the validation set and use
+        ``X`` and ``y`` for training as the training set.
+
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -208,18 +226,18 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
+    ests = _get_estimators(estimator, cv.get_n_splits(X, y, groups))
+    scorers, _ = _check_multimetric_scoring(ests[0], scoring=scoring)
 
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
         delayed(_fit_and_score)(
-            clone(estimator), X, y, scorers, train, test, verbose, None,
-            fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator)
-        for train, test in cv.split(X, y, groups))
+            est, X, y, scorers, train, test, verbose, None, fit_params,
+            return_train_score=return_train_score, return_times=True,
+            return_estimator=return_estimator, partial_fit=partial_fit,
+            X_test=X_test, y_test=y_test)
+        for est, (train, test) in zip(ests, cv.split(X, y, groups)))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
@@ -252,6 +270,21 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 # warn on key access
                 ret.add_warning(key, message, FutureWarning)
 
+    return ret
+
+
+def _get_estimators(estimator, n):
+    if isinstance(estimator, tuple):
+        estimator = list(estimator)
+    if isinstance(estimator, list):
+        ret = estimator
+        if len(ret) != n:
+            msg = ('the number of estimators ({n}) being fit is not equal to '
+                   'the number of splits for cross validation ({n_splits}).')
+            raise ValueError(msg.format(n=len(ret), n_splits=n))
+        return ret
+    else:
+        ret = [clone(estimator) for _ in range(n)]
     return ret
 
 
@@ -372,7 +405,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating'):
+                   error_score='raise-deprecating', partial_fit=False,
+                   X_test=None, y_test=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -434,6 +468,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
+    partial_fit : boolean, integer, default False
+        If False (default), call ``fit``. If True, call
+        ``estimator.partial_fit`` once.  If an integer, call ``partial_fit``
+        times. ``estimator`` is assumed to be pickleable if ``partial_fit``
+        is not True.
+
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
@@ -472,23 +512,29 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                       for k, v in fit_params.items()])
 
     train_scores = {}
-    if parameters is not None:
+    if parameters is not None and not partial_fit:
         estimator.set_params(**parameters)
 
     start_time = time.time()
 
-    X_train, y_train = _safe_split(estimator, X, y, train)
-    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    if X_test is None and y_test is None:
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+    else:
+        X_train, y_train = X, y
+    train_data = (X_train, y_train) if y_train is not None else (X_train, )
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
 
     try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
+        if not isinstance(partial_fit, (bool, int)):
+            raise ValueError('partial_fit must be a boolean or an integer')
+        if not partial_fit:
+            estimator.fit(*train_data, **fit_params)
         else:
-            estimator.fit(X_train, y_train, **fit_params)
-
+            for _ in range(int(partial_fit)):
+                estimator.partial_fit(*train_data, **fit_params)
     except Exception as e:
         # Note fit time as time until error
         fit_time = time.time() - start_time

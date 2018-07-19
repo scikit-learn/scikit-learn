@@ -171,6 +171,12 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+- Keyword arguments have been added to :func:`model_selection.cross_validate`
+  to control calling ``estimator.partial_fit`` before scoring and to control
+  the validation set. These are implemented with the keyword arguments
+  ``partial_fit``, ``X_test`` and ``y_test`` in :issue:`11266` by
+  :user:`Scott Sievert <stsievert>`.
+
 Decomposition, manifold learning and clustering
 
 - A new clustering algorithm: :class:`cluster.OPTICS`: an algoritm
