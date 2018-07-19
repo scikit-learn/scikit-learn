@@ -20,6 +20,7 @@ from matplotlib.patches import Patch
 np.random.seed(1337)
 cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm
+n_splits = 4
 
 ###############################################################################
 # Visualize our data
@@ -27,7 +28,7 @@ cmap_cv = plt.cm.coolwarm
 #
 # First, we must understand the structure of our data. It has 100 randomly
 # generated input datapoints, 3 labels split unevenly across datapoints,
-# and 10 "groups" split unevenly across datapoints.
+# and 10 "groups" split evenly across datapoints.
 #
 # As we'll see, some cross-validation objects do specific things with
 # labeled data, others behave differently with grouped data, and others
@@ -65,7 +66,7 @@ visualize_groups(y, groups, 'no groups')
 # --------------------------------------------------------
 #
 # We'll define a function that lets us visualize the behavior of each
-# cross-validation object. We'll perform 5 splits of the data. On each
+# cross-validation object. We'll perform 4 splits of the data. On each
 # split, we'll visualize the indices chosen for the training set
 # (in blue) and the test set (in red).
 
@@ -105,7 +106,6 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
 # Let's see how it looks for the `KFold` cross-validation object:
 
 fig, ax = plt.subplots()
-n_splits = 4
 cv = KFold(n_splits)
 plot_cv_indices(cv, X, y, groups, ax, n_splits)
 
