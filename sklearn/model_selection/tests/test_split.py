@@ -473,16 +473,18 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
 
     for cv in (kf, skf):
         for data in zip((X, X2), (y, y2)):
-            # Test if the two splits are different
-            # numpy's assert_equal properly compares nested lists
-            try:
-                np.testing.assert_array_equal(list(cv.split(*data)),
-                                              list(cv.split(*data)))
-            except AssertionError:
-                pass
-            else:
-                raise AssertionError("The splits for data, %s, are same even "
-                                     "when random state is not set" % data)
+            # Test if the two splits are different cv
+            for (_, test_a), (_, test_b) in zip(cv.split(*data),
+                                                cv.split(*data)):
+                # cv.split(...) returns an array of tuples, each tuple
+                # consisting of an array with train indices and test indices
+                try:
+                    np.testing.assert_array_equal(test_a, test_b)
+                except AssertionError:
+                    pass
+                else:
+                    raise AssertionError("The splits for data, are same even "
+                                         "when random state is not set")
 
 
 def test_shuffle_stratifiedkfold():
@@ -1004,7 +1006,12 @@ def test_repeated_stratified_kfold_determinstic_split():
 
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
-    assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
+    with warnings.catch_warnings():
+        # JvR: Currently, a future warning is raised if test_size is not
+        # given. As that is the point of this test, ignore the future warning
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
+
     assert_raises(ValueError, train_test_split, range(3), test_size=0.6,
                   train_size=0.6)
     assert_raises(ValueError, train_test_split, range(3),
@@ -1403,7 +1410,7 @@ def test_nested_cv():
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
-                          cv=inner_cv)
+                          cv=inner_cv, error_score='raise', iid=False)
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
 

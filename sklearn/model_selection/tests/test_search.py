@@ -7,6 +7,7 @@ import pickle
 import sys
 from types import GeneratorType
 import re
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -177,6 +178,7 @@ def test_parameter_grid():
     assert_grid_iter_equals_getitem(has_empty)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
@@ -220,14 +222,19 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_with_fit_params():
-    check_hyperparameter_searcher_with_fit_params(GridSearchCV)
+    check_hyperparameter_searcher_with_fit_params(GridSearchCV,
+                                                  error_score='raise')
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_random_search_with_fit_params():
-    check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1)
+    check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1,
+                                                  error_score='raise')
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_fit_params_deprecation():
     # NOTE: Remove this test in v0.21
 
@@ -241,6 +248,7 @@ def test_grid_search_fit_params_deprecation():
     assert_warns(DeprecationWarning, grid_search.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_fit_params_two_places():
     # NOTE: Remove this test in v0.21
 
@@ -264,10 +272,16 @@ def test_grid_search_fit_params_two_places():
 
     # Verify that `fit` prefers its own kwargs by giving valid
     # kwargs in the constructor and invalid in the method call
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                               fit_params={'spam': np.ones(10)})
-    assert_raise_message(AssertionError, "Fit parameter spam has length 1",
-                         grid_search.fit, X, y, spam=np.ones(1))
+    with warnings.catch_warnings():
+        # JvR: As passing fit params to the constructor is deprecated, this
+        # unit test raises a warning (unit test can be removed after version
+        # 0.22)
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                                   fit_params={'spam': np.ones(10)},
+                                   error_score='raise')
+        assert_raise_message(AssertionError, "Fit parameter spam has length 1",
+                             grid_search.fit, X, y, spam=np.ones(1))
 
 
 @ignore_warnings
@@ -296,6 +310,7 @@ def test_grid_search_no_score():
                          [[1]])
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_score_method():
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
                                random_state=0)
@@ -305,7 +320,8 @@ def test_grid_search_score_method():
     search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
     search_accuracy = GridSearchCV(clf, grid, scoring='accuracy').fit(X, y)
     search_no_score_method_auc = GridSearchCV(LinearSVCNoScore(), grid,
-                                              scoring='roc_auc').fit(X, y)
+                                              scoring='roc_auc'
+                                              ).fit(X, y)
     search_auc = GridSearchCV(clf, grid, scoring='roc_auc').fit(X, y)
 
     # Check warning only occurs in situation where behavior changed:
@@ -324,6 +340,7 @@ def test_grid_search_score_method():
     assert_almost_equal(score_auc, score_no_score_auc)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_groups():
     # Check if ValueError (when groups is None) propagates to GridSearchCV
     # And also check if groups is correctly passed to the cv object
@@ -388,6 +405,7 @@ def test_return_train_score_warn():
             assert_no_warnings(result['warn'].get, key)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_classes__property():
     # Test that classes_ property matches best_estimator_.classes_
     X = np.arange(100).reshape(10, 10)
@@ -415,6 +433,7 @@ def test_classes__property():
     assert_false(hasattr(grid_search, 'classes_'))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
     clf = MockClassifier()
@@ -427,6 +446,7 @@ def test_trivial_cv_results_attr():
     assert_true(hasattr(grid_search, "cv_results_"))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
@@ -452,10 +472,12 @@ def test_no_refit():
                              "parameter refit must be set to a scorer key",
                              GridSearchCV(clf, {}, refit=refit,
                                           scoring={'acc': 'accuracy',
-                                                   'prec': 'precision'}).fit,
+                                                   'prec': 'precision'}
+                                          ).fit,
                              X, y)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_error():
     # Test that grid search will capture errors on data with different length
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
@@ -465,11 +487,12 @@ def test_grid_search_error():
     assert_raises(ValueError, cv.fit, X_[:180], y_)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_one_grid_point():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
 
-    clf = SVC()
+    clf = SVC(gamma='auto')
     cv = GridSearchCV(clf, param_dict)
     cv.fit(X_, y_)
 
@@ -479,6 +502,7 @@ def test_grid_search_one_grid_point():
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
@@ -491,9 +515,10 @@ def test_grid_search_when_param_grid_includes_range():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
-    clf = SVC()
+    clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -508,7 +533,7 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
-    clf = SVC()
+    clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -520,6 +545,7 @@ def test_grid_search_bad_param_grid():
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_sparse():
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
@@ -541,6 +567,7 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
@@ -576,6 +603,7 @@ def test_grid_search_sparse_scoring():
     assert_array_equal(y_pred, y_pred3)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_precomputed_kernel():
     # Test that grid search works when the input features are given in the
     # form of a precomputed kernel matrix
@@ -604,6 +632,7 @@ def test_grid_search_precomputed_kernel():
     assert_raises(ValueError, cv.fit, K_train.tolist(), y_train)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_precomputed_kernel_error_nonsquare():
     # Test that grid search returns an error with a non-square precomputed
     # training kernel matrix
@@ -641,6 +670,7 @@ def test_refit():
     clf.fit(X, y)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_gridsearch_nd():
     # Pass X as list in GridSearchCV
     X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
@@ -653,6 +683,7 @@ def test_gridsearch_nd():
     assert_true(hasattr(grid_search, "cv_results_"))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_X_as_list():
     # Pass X as list in GridSearchCV
     X = np.arange(100).reshape(10, 10)
@@ -665,6 +696,7 @@ def test_X_as_list():
     assert_true(hasattr(grid_search, "cv_results_"))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_y_as_list():
     # Pass y as list in GridSearchCV
     X = np.arange(100).reshape(10, 10)
@@ -708,6 +740,7 @@ def test_pandas_input():
         assert_true(hasattr(grid_search, "cv_results_"))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
@@ -734,6 +767,7 @@ def test_unsupervised_grid_search():
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_gridsearch_no_predict():
     # test grid-search with an estimator without predict.
     # slight duplication of a test from KDE
@@ -822,7 +856,7 @@ def test_grid_search_cv_results():
 
     for iid in (False, True):
         search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid,
-                              param_grid=params)
+                              param_grid=params, return_train_score=True)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -873,7 +907,8 @@ def test_random_search_cv_results():
     for iid in (False, True):
         search = RandomizedSearchCV(SVC(gamma='scale'), n_iter=n_search_iter,
                                     cv=n_splits, iid=iid,
-                                    param_distributions=params)
+                                    param_distributions=params,
+                                    return_train_score=True)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -901,11 +936,12 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]},
-                               cv=cv)
-    random_search = RandomizedSearchCV(SVC(), n_iter=2,
+    grid_search = GridSearchCV(SVC(gamma='auto'), param_grid={'C': [1, 10]},
+                               cv=cv, return_train_score=True)
+    random_search = RandomizedSearchCV(SVC(gamma='auto'), n_iter=2,
                                        param_distributions={'C': [1, 10]},
-                                       cv=cv)
+                                       cv=cv, iid=True,
+                                       return_train_score=True)
     for search in (grid_search, random_search):
         search.fit(X, y)
         assert_true(search.iid or search.iid is None)
@@ -936,7 +972,7 @@ def test_search_iid_param():
         assert_almost_equal(test_mean, expected_test_mean)
         assert_almost_equal(test_std, expected_test_std)
         assert_array_almost_equal(test_cv_scores,
-                                  cross_val_score(SVC(C=1), X,
+                                  cross_val_score(SVC(C=1, gamma='auto'), X,
                                                   y, cv=cv))
 
         # For the train scores, we do not take a weighted mean irrespective of
@@ -945,12 +981,13 @@ def test_search_iid_param():
         assert_almost_equal(train_std, 0)
 
     # once with iid=False
-    grid_search = GridSearchCV(SVC(),
+    grid_search = GridSearchCV(SVC(gamma='auto'),
                                param_grid={'C': [1, 10]},
-                               cv=cv, iid=False)
-    random_search = RandomizedSearchCV(SVC(), n_iter=2,
+                               cv=cv, iid=False, return_train_score=True)
+    random_search = RandomizedSearchCV(SVC(gamma='auto'), n_iter=2,
                                        param_distributions={'C': [1, 10]},
-                                       cv=cv, iid=False)
+                                       cv=cv, iid=False,
+                                       return_train_score=True)
 
     for search in (grid_search, random_search):
         search.fit(X, y)
@@ -1083,6 +1120,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
         assert_equal(getattr(search_multi, key), getattr(search_acc, key))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_search_cv_results_rank_tie_breaking():
     X, y = make_blobs(n_samples=50, random_state=42)
 
@@ -1090,9 +1128,11 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {'C': [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid=param_grid)
+    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid=param_grid,
+                               return_train_score=True)
     random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=3,
-                                       param_distributions=param_grid)
+                                       param_distributions=param_grid,
+                                       return_train_score=True)
 
     for search in (grid_search, random_search):
         search.fit(X, y)
@@ -1112,6 +1152,7 @@ def test_search_cv_results_rank_tie_breaking():
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_search_cv_results_none_param():
     X, y = [[1], [2], [3], [4], [5]], [0, 0, 0, 0, 1]
     estimators = (DecisionTreeRegressor(), DecisionTreeClassifier())
@@ -1119,7 +1160,8 @@ def test_search_cv_results_none_param():
     cv = KFold(random_state=0)
 
     for est in estimators:
-        grid_search = GridSearchCV(est, est_parameters, cv=cv).fit(X, y)
+        grid_search = GridSearchCV(est, est_parameters, cv=cv,
+                                   ).fit(X, y)
         assert_array_equal(grid_search.cv_results_['param_random_state'],
                            [0, None])
 
@@ -1152,6 +1194,7 @@ def test_search_cv_timing():
         assert_greater_equal(search.refit_time_, 0)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_correct_score_results():
     # test that correct scores are used
     n_splits = 3
@@ -1215,6 +1258,7 @@ def test_fit_grid_point():
                          {'score': scorer}, verbose=True)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_pickle():
     # Test that a fit search can be pickled
     clf = MockClassifier()
@@ -1232,6 +1276,7 @@ def test_pickle():
                               random_search_pickled.predict(X))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 
@@ -1277,6 +1322,7 @@ def test_grid_search_with_multioutput_data():
                                               % i][cand_i])
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
@@ -1286,6 +1332,7 @@ def test_predict_proba_disabled():
     assert_false(hasattr(gs, "predict_proba"))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_allows_nans():
     # Test GridSearchCV with SimpleImputer
     X = np.arange(20, dtype=np.float64).reshape(5, -1)
@@ -1314,6 +1361,7 @@ class FailingClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_failing_classifier():
     # GridSearchCV with on_error != 'raise'
     # Ensures that a warning is raised and score reset where appropriate.
@@ -1361,6 +1409,7 @@ def test_grid_search_failing_classifier():
     assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
 
@@ -1412,6 +1461,7 @@ def test_parameters_sampler_replacement():
     assert_equal(len(samples), 7)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
@@ -1442,6 +1492,7 @@ def test_stochastic_gradient_loss_param():
     assert_false(hasattr(clf, "predict_proba"))
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_search_train_scores_set_to_false():
     X = np.arange(6).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
@@ -1452,6 +1503,7 @@ def test_search_train_scores_set_to_false():
     gs.fit(X, y)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_cv_splits_consistency():
     # Check if a one time iterable is accepted as a cv parameter.
     n_samples = 100
@@ -1461,12 +1513,13 @@ def test_grid_search_cv_splits_consistency():
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.2, 0.3]},
                       cv=OneTimeSplitter(n_splits=n_splits,
-                                         n_samples=n_samples))
+                                         n_samples=n_samples),
+                      return_train_score=True)
     gs.fit(X, y)
 
     gs2 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
-                       cv=KFold(n_splits=n_splits))
+                       cv=KFold(n_splits=n_splits), return_train_score=True)
     gs2.fit(X, y)
 
     # Give generator as a cv parameter
@@ -1476,13 +1529,14 @@ def test_grid_search_cv_splits_consistency():
     gs3 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,
-                                random_state=0).split(X, y))
+                                random_state=0).split(X, y),
+                       return_train_score=True)
     gs3.fit(X, y)
 
     gs4 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,
-                                random_state=0))
+                                random_state=0), return_train_score=True)
     gs4.fit(X, y)
 
     def _pop_time_keys(cv_results):
@@ -1510,7 +1564,8 @@ def test_grid_search_cv_splits_consistency():
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
-                      cv=KFold(n_splits=n_splits, shuffle=True))
+                      cv=KFold(n_splits=n_splits, shuffle=True),
+                      return_train_score=True)
     gs.fit(X, y)
 
     # As the first two param settings (C=0.1) and the next two param
@@ -1530,6 +1585,7 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[3])
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)

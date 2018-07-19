@@ -172,7 +172,8 @@ def test_ridge_sample_weights():
         for (alpha, intercept, solver) in param_grid:
 
             # Ridge with explicit sample_weight
-            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver)
+            est = Ridge(alpha=alpha, fit_intercept=intercept,
+                        solver=solver, tol=1e-6)
             est.fit(X, y, sample_weight=sample_weight)
             coefs = est.coef_
             inter = est.intercept_
@@ -488,6 +489,7 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
@@ -639,6 +641,7 @@ def test_ridge_classifier_cv_store_cv_values():
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_ridgecv_sample_weight():
     rng = np.random.RandomState(0)
     alphas = (0.1, 1.0, 10.0)

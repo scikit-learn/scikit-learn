@@ -1,5 +1,3 @@
-from __future__ import division
-
 import pytest
 
 import numpy as np
@@ -14,9 +12,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_false
 
 from sklearn.impute import MissingIndicator
-from sklearn.impute import SimpleImputer, ChainedImputer
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import BayesianRidge, ARDRegression
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -73,10 +69,6 @@ def test_imputation_shape():
         X_imputed = imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
 
-        chained_imputer = ChainedImputer(initial_strategy=strategy)
-        X_imputed = chained_imputer.fit_transform(X)
-        assert X_imputed.shape == (10, 2)
-
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
 def test_imputation_error_invalid_strategy(strategy):
@@ -96,6 +88,23 @@ def test_imputation_deletion_warning(strategy):
     with pytest.warns(UserWarning, match="Deleting"):
         imputer = SimpleImputer(strategy=strategy, verbose=True)
         imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median",
+                                      "most_frequent", "constant"])
+def test_imputation_error_sparse_0(strategy):
+    # check that error are raised when missing_values = 0 and input is sparse
+    X = np.ones((3, 5))
+    X[0] = 0
+    X = sparse.csc_matrix(X)
+
+    imputer = SimpleImputer(strategy=strategy, missing_values=0)
+    with pytest.raises(ValueError, match="Provide a dense array"):
+        imputer.fit(X)
+
+    imputer.fit(X.toarray())
+    with pytest.raises(ValueError, match="Provide a dense array"):
+        imputer.transform(X)
 
 
 def safe_median(arr, *args, **kwargs):
@@ -124,10 +133,8 @@ def test_imputation_mean_median():
     values[4::2] = - values[4::2]
 
     tests = [("mean", np.nan, lambda z, v, p: safe_mean(np.hstack((z, v)))),
-             ("mean", 0, lambda z, v, p: np.mean(v)),
              ("median", np.nan,
-              lambda z, v, p: safe_median(np.hstack((z, v)))),
-             ("median", 0, lambda z, v, p: np.median(v))]
+              lambda z, v, p: safe_median(np.hstack((z, v))))]
 
     for strategy, test_missing_values, true_value_fun in tests:
         X = np.empty(shape)
@@ -316,7 +323,7 @@ def test_imputation_most_frequent_pandas(dtype):
 @pytest.mark.parametrize("X_data, missing_value", [(1, 0), (1., np.nan)])
 def test_imputation_constant_error_invalid_type(X_data, missing_value):
     # Verify that exceptions are raised on invalid fill_value type
-    X = np.full((3, 5), X_data)
+    X = np.full((3, 5), X_data, dtype=float)
     X[0, 0] = missing_value
 
     with pytest.raises(ValueError, match="imputing numerical"):
@@ -426,16 +433,21 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
-    pipeline = Pipeline([('imputer', SimpleImputer(missing_values=0)),
-                         ('tree', tree.DecisionTreeRegressor(random_state=0))])
+    X = sparse_random_matrix(100, 100, density=0.10)
+    missing_values = X.data[0]
+
+    pipeline = Pipeline([('imputer',
+                          SimpleImputer(missing_values=missing_values)),
+                         ('tree',
+                          tree.DecisionTreeRegressor(random_state=0))])
 
     parameters = {
         'imputer__strategy': ["mean", "median", "most_frequent"]
     }
 
-    X = sparse_random_matrix(100, 100, density=0.10)
     Y = sparse_random_matrix(100, 1, density=0.10).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
@@ -485,227 +497,6 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
-
-
-def test_chained_imputer_rank_one():
-    rng = np.random.RandomState(0)
-    d = 100
-    A = rng.rand(d, 1)
-    B = rng.rand(1, d)
-    X = np.dot(A, B)
-    nan_mask = rng.rand(d, d) < 0.5
-    X_missing = X.copy()
-    X_missing[nan_mask] = np.nan
-
-    imputer = ChainedImputer(n_imputations=5,
-                             n_burn_in=5,
-                             verbose=True,
-                             random_state=rng)
-    X_filled = imputer.fit_transform(X_missing)
-    assert_allclose(X_filled, X, atol=0.001)
-
-
-@pytest.mark.parametrize(
-    "imputation_order",
-    ['random', 'roman', 'ascending', 'descending', 'arabic']
-)
-def test_chained_imputer_imputation_order(imputation_order):
-    rng = np.random.RandomState(0)
-    n = 100
-    d = 10
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
-    X[:, 0] = 1  # this column should not be discarded by ChainedImputer
-
-    imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
-                             n_nearest_features=5,
-                             min_value=0,
-                             max_value=1,
-                             verbose=False,
-                             imputation_order=imputation_order,
-                             random_state=rng)
-    imputer.fit_transform(X)
-    ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
-    if imputation_order == 'roman':
-        assert np.all(ordered_idx[:d-1] == np.arange(1, d))
-    elif imputation_order == 'arabic':
-        assert np.all(ordered_idx[:d-1] == np.arange(d-1, 0, -1))
-    elif imputation_order == 'random':
-        ordered_idx_round_1 = ordered_idx[:d-1]
-        ordered_idx_round_2 = ordered_idx[d-1:]
-        assert ordered_idx_round_1 != ordered_idx_round_2
-    elif 'ending' in imputation_order:
-        assert len(ordered_idx) == 2 * (d - 1)
-
-
-@pytest.mark.parametrize(
-    "predictor",
-    [DummyRegressor(), BayesianRidge(), ARDRegression()]
-)
-def test_chained_imputer_predictors(predictor):
-    rng = np.random.RandomState(0)
-
-    n = 100
-    d = 10
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
-
-    imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
-                             predictor=predictor,
-                             random_state=rng)
-    imputer.fit_transform(X)
-
-    # check that types are correct for predictors
-    hashes = []
-    for triplet in imputer.imputation_sequence_:
-        assert triplet.predictor
-        hashes.append(id(triplet.predictor))
-
-    # check that each predictor is unique
-    assert len(set(hashes)) == len(hashes)
-
-
-def test_chained_imputer_clip():
-    rng = np.random.RandomState(0)
-    n = 100
-    d = 10
-    X = sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng).toarray()
-
-    imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
-                             min_value=0.1,
-                             max_value=0.2,
-                             random_state=rng)
-
-    Xt = imputer.fit_transform(X)
-    assert_allclose(np.min(Xt[X == 0]), 0.1)
-    assert_allclose(np.max(Xt[X == 0]), 0.2)
-    assert_allclose(Xt[X != 0], X[X != 0])
-
-
-@pytest.mark.parametrize(
-    "strategy",
-    ["mean", "median", "most_frequent"]
-)
-def test_chained_imputer_missing_at_transform(strategy):
-    rng = np.random.RandomState(0)
-    n = 100
-    d = 10
-    X_train = rng.randint(low=0, high=3, size=(n, d))
-    X_test = rng.randint(low=0, high=3, size=(n, d))
-
-    X_train[:, 0] = 1  # definitely no missing values in 0th column
-    X_test[0, 0] = 0  # definitely missing value in 0th column
-
-    imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
-                             initial_strategy=strategy,
-                             random_state=rng).fit(X_train)
-    initial_imputer = SimpleImputer(missing_values=0,
-                                    strategy=strategy).fit(X_train)
-
-    # if there were no missing values at time of fit, then imputer will
-    # only use the initial imputer for that feature at transform
-    assert np.all(imputer.transform(X_test)[:, 0] ==
-                  initial_imputer.transform(X_test)[:, 0])
-
-
-def test_chained_imputer_transform_stochasticity():
-    rng = np.random.RandomState(0)
-    n = 100
-    d = 10
-    X = sparse_random_matrix(n, d, density=0.10,
-                             random_state=rng).toarray()
-
-    imputer = ChainedImputer(missing_values=0,
-                             n_imputations=1,
-                             n_burn_in=1,
-                             random_state=rng)
-    imputer.fit(X)
-
-    X_fitted_1 = imputer.transform(X)
-    X_fitted_2 = imputer.transform(X)
-
-    # sufficient to assert that the means are not the same
-    assert np.mean(X_fitted_1) != pytest.approx(np.mean(X_fitted_2))
-
-
-def test_chained_imputer_no_missing():
-    rng = np.random.RandomState(0)
-    X = rng.rand(100, 100)
-    X[:, 0] = np.nan
-    m1 = ChainedImputer(n_imputations=10, random_state=rng)
-    m2 = ChainedImputer(n_imputations=10, random_state=rng)
-    pred1 = m1.fit(X).transform(X)
-    pred2 = m2.fit_transform(X)
-    # should exclude the first column entirely
-    assert_allclose(X[:, 1:], pred1)
-    # fit and fit_transform should both be identical
-    assert_allclose(pred1, pred2)
-
-
-@pytest.mark.parametrize(
-    "rank",
-    [3, 5]
-)
-def test_chained_imputer_transform_recovery(rank):
-    rng = np.random.RandomState(0)
-    n = 100
-    d = 100
-    A = rng.rand(n, rank)
-    B = rng.rand(rank, d)
-    X_filled = np.dot(A, B)
-    # half is randomly missing
-    nan_mask = rng.rand(n, d) < 0.5
-    X_missing = X_filled.copy()
-    X_missing[nan_mask] = np.nan
-
-    # split up data in half
-    n = n // 2
-    X_train = X_missing[:n]
-    X_test_filled = X_filled[n:]
-    X_test = X_missing[n:]
-
-    imputer = ChainedImputer(n_imputations=10,
-                             n_burn_in=10,
-                             verbose=True,
-                             random_state=rng).fit(X_train)
-    X_test_est = imputer.transform(X_test)
-    assert_allclose(X_test_filled, X_test_est, rtol=1e-5, atol=0.1)
-
-
-def test_chained_imputer_additive_matrix():
-    rng = np.random.RandomState(0)
-    n = 100
-    d = 10
-    A = rng.randn(n, d)
-    B = rng.randn(n, d)
-    X_filled = np.zeros(A.shape)
-    for i in range(d):
-        for j in range(d):
-            X_filled[:, (i+j) % d] += (A[:, i] + B[:, j]) / 2
-    # a quarter is randomly missing
-    nan_mask = rng.rand(n, d) < 0.25
-    X_missing = X_filled.copy()
-    X_missing[nan_mask] = np.nan
-
-    # split up data
-    n = n // 2
-    X_train = X_missing[:n]
-    X_test_filled = X_filled[n:]
-    X_test = X_missing[n:]
-
-    imputer = ChainedImputer(n_imputations=25,
-                             n_burn_in=10,
-                             verbose=True,
-                             random_state=rng).fit(X_train)
-    X_test_est = imputer.transform(X_test)
-    assert_allclose(X_test_filled, X_test_est, atol=0.01)
 
 
 @pytest.mark.parametrize(
@@ -824,7 +615,7 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
 
 
 @pytest.mark.parametrize("imputer_constructor",
-                         [SimpleImputer, ChainedImputer])
+                         [SimpleImputer])
 @pytest.mark.parametrize(
     "imputer_missing_values, missing_value, err_msg",
     [("NaN", np.nan, "Input contains NaN"),
