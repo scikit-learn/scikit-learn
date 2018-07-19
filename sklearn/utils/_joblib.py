@@ -2,9 +2,12 @@
 # site one
 from __future__ import absolute_import
 import os as _os
+import warnings as _warnings
 
 # An environment variable to use the site joblib
 if _os.environ.get('SKLEARN_SITE_JOBLIB', False):
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("ignore")
     from joblib import __all__
     from joblib import *  # noqa
     from joblib import __version__
