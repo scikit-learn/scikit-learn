@@ -26,14 +26,14 @@ cmap_cv = plt.cm.coolwarm
 # ------------------
 #
 # First, we must understand the structure of our data. It has 100 randomly
-# generated input datapoints, 5 labels split unevenly across datapoints,
-# and five "groups" split unevenly across datapoints.
+# generated input datapoints, 3 labels split unevenly across datapoints,
+# and 10 "groups" split unevenly across datapoints.
 #
 # As we'll see, some cross-validation objects do specific things with
 # labeled data, others behave differently with grouped data, and others
 # do not use this information.
 #
-# To begin, create an visualize our data
+# To begin, we'll visualize our data.
 
 # Generate the label/group data
 n_points = 100
