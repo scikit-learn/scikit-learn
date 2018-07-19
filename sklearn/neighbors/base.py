@@ -706,9 +706,15 @@ class RadiusNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = _get_n_jobs(self.n_jobs)
+
+            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+                # Deal with change of API in joblib
+                delayed_query = delayed(self._tree.query_radius,
+                                        check_pickle=False)
+            else:
+                delayed_query = delayed(self._tree.query_radius)
             results = Parallel(n_jobs, backend='threading')(
-                delayed(self._tree.query_radius, check_pickle=False)(
-                    X[s], radius, return_distance)
+                delayed_query(X[s], radius, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
