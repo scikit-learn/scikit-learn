@@ -146,7 +146,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # self.scores_ will not be calculated when calling _fit through fit
 
         X = check_array(X, "csc", force_all_finite=False)
-
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
