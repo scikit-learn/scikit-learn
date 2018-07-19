@@ -60,7 +60,7 @@ def configuration(parent_package='', top_path=None):
                      'sklearn/utils/seq_dataset.pxd.tp']
 
     for pyxfiles in pyx_templates:
-        outfile = pyxfiles[:-3]
+        outfile = pyxfiles.replace('.tp', '')
         # if .pyx.tp is not updated, no need to output .pyx
         if (os.path.exists(outfile) and
                 os.stat(pyxfiles).st_mtime < os.stat(outfile).st_mtime):

@@ -38,7 +38,7 @@ def configuration(parent_package='', top_path=None):
 
     # generate sag_fast from template
     sag_cython_file = 'sklearn/linear_model/sag_fast.pyx.tp'
-    sag_file = sag_cython_file[:-3]
+    sag_file = sag_cython_file.replace('.tp', '')
 
     if not (os.path.exists(sag_file) and
             os.stat(sag_cython_file).st_mtime < os.stat(sag_file).st_mtime):
