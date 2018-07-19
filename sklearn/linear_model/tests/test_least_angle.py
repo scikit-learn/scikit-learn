@@ -436,6 +436,7 @@ def test_lars_cv():
 
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter(action='ignore', category=FutureWarning)
         X = diabetes.data
         y = diabetes.target
         rng = np.random.RandomState(42)

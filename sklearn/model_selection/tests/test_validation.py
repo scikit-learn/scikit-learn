@@ -398,12 +398,14 @@ def test_cross_validate_return_train_score_warn():
 
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
-
+    msg_nsplit = ("The default value of n_splits=3 is deprecated in "
+                  "version 0.20 and will be changed to n_splits=5 "
+                  "in version 0.22")
     result = {}
     for val in [False, True, 'warn']:
-        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
-                                         return_train_score=val)
-
+        result[val] = assert_warns_message(FutureWarning, msg_nsplit,
+                                           cross_validate, estimator, X, y,
+                                           return_train_score=val)
     msg = (
         'You are accessing a training score ({!r}), '
         'which will not be available by default '
@@ -1204,7 +1206,8 @@ def test_validation_curve():
             MockEstimatorWithParameter(), X, y, param_name="param",
             param_range=param_range, cv=2
         )
-    if len(w) > 0:
+    # Expected single FutureWarning for deprecation of n_splits=3
+    if len(w) != 0:
         raise RuntimeError("Unexpected warning: %r" % w[0].message)
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)

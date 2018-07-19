@@ -337,6 +337,11 @@ Preprocessing
   
 Model evaluation and meta-estimators
 
+- The default of ``n_splits`` parameter of :class:`model_selection.KFold` is
+  deprecated in version 0.20 and will be changed from ``n_splits=3`` to
+  ``n_splits=5`` in version 0.22.
+  :issue:`11129` by :user:`Mohammad Shahebaz <shaz13>`
+
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 

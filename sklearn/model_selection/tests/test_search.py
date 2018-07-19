@@ -378,14 +378,17 @@ def test_return_train_score_warn():
     estimators = [GridSearchCV(LinearSVC(random_state=0), grid, iid=False),
                   RandomizedSearchCV(LinearSVC(random_state=0), grid,
                                      n_iter=2, iid=False)]
-
+    msg_nsplit = ("The default value of n_splits=3 is deprecated in "
+                  "version 0.20 and will be changed to n_splits=5 "
+                  "in version 0.22")
     result = {}
     for estimator in estimators:
         for val in [True, False, 'warn']:
             estimator.set_params(return_train_score=val)
             fit_func = ignore_warnings(estimator.fit,
                                        category=ConvergenceWarning)
-            result[val] = assert_no_warnings(fit_func, X, y).cv_results_
+            result[val] = assert_warns_message(FutureWarning, msg_nsplit,
+                                               fit_func, X, y).cv_results_
 
     train_keys = ['split0_train_score', 'split1_train_score',
                   'split2_train_score', 'mean_train_score', 'std_train_score']
@@ -1602,7 +1605,6 @@ def test_deprecated_grid_search_iid():
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=3)
     # no warning with equally sized test sets
     assert_no_warnings(grid.fit, X, y)
-
     grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=5)
     # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)

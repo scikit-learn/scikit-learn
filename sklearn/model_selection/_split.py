@@ -367,6 +367,10 @@ class KFold(_BaseKFold):
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` == True.
 
+    .. versionchanged:: 0.20
+        The default value ``n_splits=3`` is deprecated in version 0.20 and will
+        be changed to ``n_splits=5``in version 0.22.
+
     Examples
     --------
     >>> from sklearn.model_selection import KFold
@@ -1859,7 +1863,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=3, y=None, classifier=False):
+def check_cv(cv=None, y=None, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -1894,6 +1898,9 @@ def check_cv(cv=3, y=None, classifier=False):
         splits via the ``split`` method.
     """
     if cv is None:
+        warnings.warn("The default value of n_splits=3 is deprecated"
+                      " in version 0.20 and will be changed to "
+                      "n_splits=5 in version 0.22", FutureWarning)
         cv = 3
 
     if isinstance(cv, numbers.Integral):
