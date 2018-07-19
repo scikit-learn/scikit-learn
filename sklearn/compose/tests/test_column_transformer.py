@@ -858,34 +858,6 @@ def test_column_transformer_verbose(est, pattern, method, capsys):
     assert re.match(pattern, capsys.readouterr()[0])
 
 
-@pytest.mark.parametrize('method', ['fit', 'fit_transform', 'transform'])
-def test_column_transformer_raises_expected_2D_array(method):
-    X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
-
-    class TransRaiseExpected2D(BaseEstimator):
-        def __init__(self, error_method):
-            self.error_method = error_method
-            self.__setattr__(error_method, self._raise_error)
-
-        def _raise_error(self, X, y=None):
-            raise ValueError("Expected 2D array, got 1D array instead")
-
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X, y=None):
-            return X
-
-    ct = ColumnTransformer([('trans1', TransRaiseExpected2D(method), 0)])
-
-    # fit needs to be called first to test transform
-    if method == 'transform':
-        ct.fit(X_array)
-
-    assert_raise_message(ValueError, _ERR_MSG_1DCOLUMN,
-                         getattr(ct, method), X_array)
-
-
 def test_column_transformer_callable_specifier():
     # assert that function gets the full array / dataframe
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
