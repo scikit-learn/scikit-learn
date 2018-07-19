@@ -467,17 +467,7 @@ boolean mask array or callable
 
         """
         check_is_fitted(self, 'transformers_')
-
-        try:
-            Xs = Parallel(n_jobs=self.n_jobs)(
-                delayed(_transform_one)(trans, X_sel, None, weight)
-                for _, trans, X_sel, weight in self._iter(
-                    X=X, fitted=True, replace_strings=True))
-        except ValueError as e:
-            if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
-            else:
-                raise
+        Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
         if not Xs:
