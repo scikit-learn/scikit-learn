@@ -367,7 +367,7 @@ def logsumexp(arr, axis=0):
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
     9.458...
-    >>> logsumexp(a)
+    >>> logsumexp(a)  # doctest: +SKIP
     9.458...
     """
     return scipy_logsumexp(arr, axis)

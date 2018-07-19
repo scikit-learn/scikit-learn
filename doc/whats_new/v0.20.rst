@@ -22,7 +22,6 @@ Highlights
 We have tried to improve our support for common data-science use-cases
 including missing values, categorical variables, heterogeneous data, and
 features/targets with unusual distributions.
-
 Missing values in features, represented by NaNs, are now accepted in
 column-wise preprocessing such as scalers.  Each feature is fitted disregarding
 NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
@@ -74,6 +73,7 @@ random sampling procedures.
 - :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
 - :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
+- :class:`linear_model.LogisticRegressionCV` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -476,6 +476,11 @@ Classifiers and regressors
   the ``scoring`` parameter.
   :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the 'ovr'
+  strategy was always used to compute cross-validation scores in the
+  multiclass setting, even if 'multinomial' was set.
+  :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
@@ -667,6 +672,9 @@ Neighbors
   warning when no neighbors are found for samples.  :issue:`9655` by
   :user:`Andreas Bjerre-Nielsen <abjer>`.
 
+- Fixed a bug in ``KDTree`` construction that results in faster construction
+  and querying times. :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
+
 Feature Extraction
 
 - Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which would
@@ -739,6 +747,15 @@ Datasets
 
 API changes summary
 -------------------
+
+Classifiers and regressors
+
+- The default value of the ``n_estimators`` parameter of 
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`, 
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`, 
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20 
+  to 100 in 0.22. A FutureWarning is raised when the default value is used.
+  :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
 
 Linear, kernelized and related models
 

@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 from __future__ import division
+import pytest
 import numpy as np
 from scipy import sparse
 from sklearn.model_selection import LeaveOneOut
@@ -24,7 +25,7 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100

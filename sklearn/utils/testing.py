@@ -275,6 +275,8 @@ def ignore_warnings(obj=None, category=Warning):
 
     Parameters
     ----------
+    obj : callable or None
+        callable where you want to ignore the warnings.
     category : warning class, defaults to Warning.
         The category to filter. If Warning, all categories will be muted.
 
@@ -290,7 +292,17 @@ def ignore_warnings(obj=None, category=Warning):
     >>> ignore_warnings(nasty_warn)()
     42
     """
-    if callable(obj):
+    if isinstance(obj, type) and issubclass(obj, Warning):
+        # Avoid common pitfall of passing category as the first positional
+        # argument which result in the test not being run
+        warning_name = obj.__name__
+        raise ValueError(
+            "'obj' should be a callable where you want to ignore warnings. "
+            "You passed a warning class instead: 'obj={warning_name}'. "
+            "If you want to pass a warning class to ignore_warnings, "
+            "you should use 'category={warning_name}'".format(
+                warning_name=warning_name))
+    elif callable(obj):
         return _IgnoreWarnings(category=category)(obj)
     else:
         return _IgnoreWarnings(category=category)

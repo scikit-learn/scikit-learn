@@ -437,7 +437,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         if (self.priors_ < 0).any():
             raise ValueError("priors must be non-negative")
-        if self.priors_.sum() != 1:
+        if not np.isclose(self.priors_.sum(), 1.0):
             warnings.warn("The priors do not sum to 1. Renormalizing",
                           UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()

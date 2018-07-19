@@ -413,8 +413,9 @@ def test_check_array_accept_sparse_type_exception():
            "Use X.toarray() to convert to a dense numpy array.")
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=False)
-    assert_raise_message(TypeError, msg,
-                         check_array, X_csr, accept_sparse=None)
+    with pytest.warns(DeprecationWarning):
+        assert_raise_message(TypeError, msg,
+                             check_array, X_csr, accept_sparse=None)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
            "boolean or list of strings. You provided 'accept_sparse={}'.")

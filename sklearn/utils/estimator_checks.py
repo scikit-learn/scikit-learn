@@ -77,7 +77,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'ChainedImputer', 'MissingIndicator',
+ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
 
@@ -342,7 +342,13 @@ def set_checking_parameters(estimator):
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
         # especially gradient boosting with default 100
-        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        # FIXME: The default number of trees was changed and is set to 'warn'
+        # for some of the ensemble methods. We need to catch this case to avoid
+        # an error during the comparison. To be reverted in 0.22.
+        if estimator.n_estimators == 'warn':
+            estimator.set_params(n_estimators=5)
+        else:
+            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -583,7 +589,7 @@ def check_sample_weights_invariance(name, estimator_orig):
             if hasattr(estimator_orig, method):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
-                assert_allclose(X_pred1, X_pred2, rtol=0.5,
+                assert_allclose(X_pred1, X_pred2,
                                 err_msg="For %s sample_weight=None is not"
                                         " equivalent to sample_weight=ones"
                                         % name)
