@@ -323,7 +323,7 @@ def test_imputation_most_frequent_pandas(dtype):
 @pytest.mark.parametrize("X_data, missing_value", [(1, 0), (1., np.nan)])
 def test_imputation_constant_error_invalid_type(X_data, missing_value):
     # Verify that exceptions are raised on invalid fill_value type
-    X = np.full((3, 5), X_data)
+    X = np.full((3, 5), X_data, dtype=float)
     X[0, 0] = missing_value
 
     with pytest.raises(ValueError, match="imputing numerical"):
@@ -434,6 +434,7 @@ def test_imputation_constant_pandas(dtype):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)

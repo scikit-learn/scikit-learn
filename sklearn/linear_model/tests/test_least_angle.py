@@ -1,5 +1,7 @@
 import warnings
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import linalg
 
@@ -88,18 +90,22 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
-@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')  # numpy deprecation
+@pytest.mark.filterwarnings('ignore: `rcond` parameter will change')
+# numpy deprecation
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
     X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
+    # Avoid FutureWarning about default value change when numpy >= 1.14
+    rcond = None if LooseVersion(np.__version__) >= '1.14' else -1
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
-@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')  # numpy deprecation
+@pytest.mark.filterwarnings('ignore:`rcond` parameter will change')
+# numpy deprecation
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
@@ -176,6 +182,7 @@ def test_no_path_all_precomputed():
     assert_true(alpha_ == alphas_[-1])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 @pytest.mark.parametrize(
         'classifier',
         [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
@@ -412,6 +419,7 @@ def test_multitarget():
             assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
@@ -428,6 +436,7 @@ def test_lars_cv():
     assert_false(hasattr(lars_cv, 'n_nonzero_coefs'))
 
 
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
         X = diabetes.data
@@ -518,6 +527,7 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here

@@ -16,6 +16,7 @@ from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
+from sklearn.utils.fixes import PY3_OR_LATER
 
 from numpy.testing import assert_equal
 
@@ -115,6 +116,7 @@ def test_graphical_lasso_iris_singular():
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_graphical_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
@@ -137,6 +139,9 @@ def test_graphical_lasso_cv(random_state=1):
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.skipif(not PY3_OR_LATER,
+                    reason='On Python 2 DeprecationWarning is not issued for some unkown reason.')
 def test_deprecated_grid_scores(random_state=1):
     dim = 5
     n_samples = 6

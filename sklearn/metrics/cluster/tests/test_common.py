@@ -83,8 +83,8 @@ def test_symmetric_non_symmetric_union():
             sorted(SUPERVISED_METRICS))
 
 
-@ignore_warnings(category=FutureWarning)
 # 0.22 AMI and NMI changes
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
     'metric_name, y1, y2',
     [(name, y1, y2) for name in SYMMETRIC_METRICS]
@@ -103,8 +103,8 @@ def test_non_symmetry(metric_name, y1, y2):
     assert metric(y1, y2) != pytest.approx(metric(y2, y1))
 
 
-@ignore_warnings(category=FutureWarning)
 # 0.22 AMI and NMI changes
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize("metric_name", NORMALIZED_METRICS)
 def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
@@ -123,15 +123,15 @@ def test_normalized_output(metric_name):
     assert not (score < 0).any()
 
 
-# All clustering metrics do not change score due to permutations of labels
-# that is when 0 and 1 exchanged.
-@ignore_warnings(category=FutureWarning)
 # 0.22 AMI and NMI changes
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
     "metric_name",
     dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 def test_permute_labels(metric_name):
+    # All clustering metrics do not change score due to permutations of labels
+    # that is when 0 and 1 exchanged.
     y_label = np.array([0, 0, 0, 1, 1, 0, 1])
     y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
     if metric_name in SUPERVISED_METRICS:
@@ -147,13 +147,13 @@ def test_permute_labels(metric_name):
         assert_allclose(score_1, metric(X, 1 - y_pred))
 
 
-# For all clustering metrics Input parameters can be both
-@ignore_warnings(category=FutureWarning)
 # 0.22 AMI and NMI changes
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
     "metric_name",
     dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
+# For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negetive or string
 def test_format_invariance(metric_name):
     y_true = [0, 0, 0, 0, 1, 1, 1, 1]

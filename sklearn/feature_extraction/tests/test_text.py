@@ -4,6 +4,7 @@ import warnings
 import pytest
 from scipy import sparse
 
+from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -31,7 +32,7 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises,
+                                   SkipTest, assert_raises, assert_no_warnings,
                                    assert_allclose_dense_sparse)
 from sklearn.utils.fixes import _Mapping as Mapping
 from collections import defaultdict
@@ -731,6 +732,7 @@ def test_vectorizer_inverse_transform(Vectorizer):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -768,6 +770,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -1106,3 +1109,26 @@ def test_vectorizers_invalid_ngram_range(vec):
     if isinstance(vec, HashingVectorizer):
         assert_raise_message(
             ValueError, message, vec.transform, ["good news everyone"])
+
+
+def test_vectorizer_stop_words_inconsistent():
+    if PY2:
+        lstr = "[u'and', u'll', u've']"
+    else:
+        lstr = "['and', 'll', 've']"
+    message = ('Your stop_words may be inconsistent with your '
+               'preprocessing. Tokenizing the stop words generated '
+               'tokens %s not in stop_words.' % lstr)
+    for vec in [CountVectorizer(),
+                TfidfVectorizer(), HashingVectorizer()]:
+        vec.set_params(stop_words=["you've", "you", "you'll", 'AND'])
+        assert_warns_message(UserWarning, message, vec.fit_transform,
+                             ['hello world'])
+
+    # Only one warning per stop list
+    assert_no_warnings(vec.fit_transform, ['hello world'])
+
+    # Test caching of inconsistency assessment
+    vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
+    assert_warns_message(UserWarning, message, vec.fit_transform,
+                         ['hello world'])

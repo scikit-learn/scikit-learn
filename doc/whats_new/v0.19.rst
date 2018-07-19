@@ -7,7 +7,7 @@
 Version 0.19.2
 ==============
 
-**October, 2018**
+**July, 2018**
 
 This release is exclusively in order to support Python 3.7.
 
