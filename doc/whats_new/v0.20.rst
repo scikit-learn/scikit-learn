@@ -870,6 +870,15 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
+- Novelty detection with :class:`neighbors.LocalOutlierFactor`:
+  Add a ``novelty`` parameter to :class:`neighbors.LocalOutlierFactor`. When
+  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then 
+  be used for novelty detection, i.e. predict on new unseen data. Available
+  prediction methods are ``predict``, ``decision_function`` and
+  ``score_samples``. By default, ``novelty`` is set to ``False``, and only
+  the ``fit_predict`` method is avaiable.
+  By :user:`Albert Thomas <albertcthomas>`.
+
 Covariance
 
 - The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and
