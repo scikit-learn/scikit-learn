@@ -312,6 +312,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
@@ -382,7 +386,7 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
+    def __init__(self, estimator, step=1, cv='warn', scoring=None, verbose=0,
                  n_jobs=1):
         self.estimator = estimator
         self.step = step

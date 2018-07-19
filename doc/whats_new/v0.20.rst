@@ -22,7 +22,6 @@ Highlights
 We have tried to improve our support for common data-science use-cases
 including missing values, categorical variables, heterogeneous data, and
 features/targets with unusual distributions.
-
 Missing values in features, represented by NaNs, are now accepted in
 column-wise preprocessing such as scalers.  Each feature is fitted disregarding
 NaNs, and data containing NaNs can be transformed. The new :mod:`impute`
@@ -74,6 +73,7 @@ random sampling procedures.
 - :class:`linear_model.PassiveAggressiveRegressor` (bug fix)
 - :class:`linear_model.Perceptron` (bug fix)
 - :class:`ensemble.gradient_boosting.GradientBoostingClassifier` (bug fix affecting feature importances)
+- :class:`linear_model.LogisticRegressionCV` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
   :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
   :issue:`7823`.
@@ -151,11 +151,6 @@ Preprocessing
 - Added :class:`MissingIndicator` which generates a binary indicator for
   missing values. :issue:`8075` by :user:`Maniteja Nandana <maniteja123>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
-  
-- Added :class:`impute.ChainedImputer`, which is a strategy for imputing missing
-  values by modeling each feature with missing values as a function of
-  other features in a round-robin fashion. :issue:`8478` by
-  :user:`Sergey Feldman <sergeyf>`.
 
 - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
   :class:`linear_model.PassiveAggressiveClassifier`,
@@ -200,7 +195,7 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
-- Added control over the normalization in 
+- Added control over the normalization in
   :func:`metrics.normalized_mutual_information_score` and
   :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
   parameter. In version 0.22, the default normalizer for each will become
@@ -339,7 +334,7 @@ Preprocessing
 - :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale`
   can be fitted using sparse matrices.
   :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -476,6 +471,11 @@ Classifiers and regressors
   the ``scoring`` parameter.
   :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the 'ovr'
+  strategy was always used to compute cross-validation scores in the
+  multiclass setting, even if 'multinomial' was set.
+  :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
@@ -554,12 +554,12 @@ Classifiers and regressors
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
-  
-- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
-  during the calculation of tree MAE impurity. Previous behaviour could 
-  cause suboptimal splits to be chosen since the impurity calculation 
+
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used
+  during the calculation of tree MAE impurity. Previous behaviour could
+  cause suboptimal splits to be chosen since the impurity calculation
   considered all samples to be of equal weight importance.
-  :issue:`11464` by :user:`John Stott <JohnStott>`.  
+  :issue:`11464` by :user:`John Stott <JohnStott>`.
 
 Decomposition, manifold learning and clustering
 
@@ -667,6 +667,9 @@ Neighbors
   warning when no neighbors are found for samples.  :issue:`9655` by
   :user:`Andreas Bjerre-Nielsen <abjer>`.
 
+- Fixed a bug in ``KDTree`` construction that results in faster construction
+  and querying times. :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
+
 Feature Extraction
 
 - Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which would
@@ -740,6 +743,15 @@ Datasets
 API changes summary
 -------------------
 
+Classifiers and regressors
+
+- The default value of the ``n_estimators`` parameter of
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20
+  to 100 in 0.22. A FutureWarning is raised when the default value is used.
+  :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
+
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
@@ -800,9 +812,9 @@ Metrics
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - In :func:`metrics.normalized_mutual_information_score` and
-  :func:`metrics.adjusted_mutual_information_score`, 
+  :func:`metrics.adjusted_mutual_information_score`,
   warn that ``average_method``
-  will have a new default value. In version 0.22, the default normalizer for each 
+  will have a new default value. In version 0.22, the default normalizer for each
   will become the *arithmetic* mean of the entropies of each clustering. Currently,
   :func:`metrics.normalized_mutual_information_score` uses the default of
   ``average_method='geometric'``, and :func:`metrics.adjusted_mutual_information_score`
@@ -864,6 +876,15 @@ Outlier Detection models
   ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
+- Novelty detection with :class:`neighbors.LocalOutlierFactor`:
+  Add a ``novelty`` parameter to :class:`neighbors.LocalOutlierFactor`. When
+  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then 
+  be used for novelty detection, i.e. predict on new unseen data. Available
+  prediction methods are ``predict``, ``decision_function`` and
+  ``score_samples``. By default, ``novelty`` is set to ``False``, and only
+  the ``fit_predict`` method is avaiable.
+  By :user:`Albert Thomas <albertcthomas>`.
+
 Covariance
 
 - The :func:`covariance.graph_lasso`, :class:`covariance.GraphLasso` and
@@ -904,6 +925,13 @@ Preprocessing
   will be from ``True`` to ``False`` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+Model selection
+
+- The default number of cross-validation folds ``cv`` and the default number of
+  splits ``n_splits`` in the :class:`model_selection.KFold`-like splitters will change
+  from 3 to 5 in 0.22 as 3-fold has a lot of variance.
+  :issue:`11557` by :user:`Alexandre Boucaud <aboucaud>`.
+
 Changes to estimator checks
 ---------------------------
 
@@ -921,7 +949,7 @@ These changes mostly affect library developers.
   ``check_set_params`` test which checks that ``set_params`` is equivalent to
   passing parameters in ``__init__`` and warns if it encounters parameter
   validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
-  
+
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
   Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 

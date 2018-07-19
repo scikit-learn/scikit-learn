@@ -35,6 +35,7 @@ def test_invalid_input():
         assert_raises(ValueError, model.transform, data)
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_input_estimator_unchanged():
     # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
@@ -238,6 +239,7 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)
