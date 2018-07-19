@@ -60,19 +60,21 @@ of the chosen cross-validation strategy.
 This example shows an example usage of the ``split`` method.
 
     >>> from sklearn.model_selection import KFold, cross_val_score
-    >>> X = ["a", "a", "b", "c", "c", "c"]
-    >>> k_fold = KFold(n_splits=3)
+    >>> X = ["a", "a", "a", "b", "b", "c", "c", "c", "c", "c"]
+    >>> k_fold = KFold(n_splits=5)
     >>> for train_indices, test_indices in k_fold.split(X):
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
-    Train: [2 3 4 5] | test: [0 1]
-    Train: [0 1 4 5] | test: [2 3]
-    Train: [0 1 2 3] | test: [4 5]
+    Train: [2 3 4 5 6 7 8 9] | test: [0 1]
+    Train: [0 1 4 5 6 7 8 9] | test: [2 3]
+    Train: [0 1 2 3 6 7 8 9] | test: [4 5]
+    Train: [0 1 2 3 4 5 8 9] | test: [6 7]
+    Train: [0 1 2 3 4 5 6 7] | test: [8 9]
 
 The cross-validation can then be performed easily::
 
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
-    [0.934..., 0.956..., 0.939...]
+    [0.963..., 0.922..., 0.963..., 0.963..., 0.930...]
 
 The cross-validation score can be directly calculated using the
 :func:`cross_val_score` helper. Given an estimator, the cross-validation object
@@ -86,7 +88,7 @@ Refer the :ref:`metrics module <metrics>` to learn more on the available scoring
 methods.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold, n_jobs=-1)
-    array([0.93489149, 0.95659432, 0.93989983])
+    array([0.96388889, 0.92222222, 0.9637883 , 0.9637883 , 0.93036212])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
@@ -96,7 +98,7 @@ scoring method.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold,
     ...                 scoring='precision_macro')
-    array([0.93969761, 0.95911415, 0.94041254])
+    array([0.96578289, 0.92708922, 0.96681476, 0.96362897, 0.93192644])
 
    **Cross-validation generators**
 
@@ -229,7 +231,8 @@ estimator during the construction and exposes an estimator API::
 
 By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However,
 if it detects that a classifier is passed, rather than a regressor, it uses
-a stratified 3-fold.
+a stratified 3-fold. The default will change to a 5-fold cross-validation in
+version 0.22.
 
 .. topic:: Nested cross-validation
 
@@ -260,12 +263,12 @@ scikit-learn exposes :ref:`cross_validation` estimators that set their
 parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
-    >>> lasso = linear_model.LassoCV()
+    >>> lasso = linear_model.LassoCV(cv=3)
     >>> diabetes = datasets.load_diabetes()
     >>> X_diabetes = diabetes.data
     >>> y_diabetes = diabetes.target
     >>> lasso.fit(X_diabetes, y_diabetes)
-    LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
+    LassoCV(alphas=None, copy_X=True, cv=3, eps=0.001, fit_intercept=True,
         max_iter=1000, n_alphas=100, n_jobs=1, normalize=False, positive=False,
         precompute='auto', random_state=None, selection='cyclic', tol=0.0001,
         verbose=False)
