@@ -151,7 +151,7 @@ def test_mini_batch_fit_transform():
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
-        import sklearn.externals.joblib.parallel as joblib_par
+        import sklearn.utils._joblib.parallel as joblib_par
         _mp = joblib_par.multiprocessing
         joblib_par.multiprocessing = None
         try:

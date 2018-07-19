@@ -1910,7 +1910,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
+    np.clip(losses, 0, None, out=losses)
     return np.average(losses, weights=sample_weight)
 
 

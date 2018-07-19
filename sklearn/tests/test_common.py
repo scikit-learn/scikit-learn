@@ -110,6 +110,8 @@ def test_no_attributes_set_in_init(name, Estimator):
         check_no_attributes_set_in_init(name, estimator)
 
 
+@ignore_warnings(category=DeprecationWarning)
+# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
