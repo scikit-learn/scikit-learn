@@ -409,7 +409,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-        X = check_array(X, "csr", force_all_finite=False) 
+        X = check_array(X, "csr", force_all_finite=False)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
