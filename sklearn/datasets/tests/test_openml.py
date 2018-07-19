@@ -305,6 +305,42 @@ def test_raises_illegal_multitarget(monkeypatch):
                          target_column_name=targets, cache=False)
 
 
+def test_warn_ignore_attribute(monkeypatch):
+    data_id = 40966
+    expected_row_id_msg = "target_column_name={} has flag is_row_identifier."
+    expected_ignore_msg = "target_column_name={} has flag is_ignore."
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    # single column test
+    assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
+                         fetch_openml, data_id=data_id,
+                         target_column_name='MouseID',
+                         cache=False)
+    assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
+                         fetch_openml, data_id=data_id,
+                         target_column_name='Genotype',
+                         cache=False)
+    # multi column test
+    assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
+                         fetch_openml, data_id=data_id,
+                         target_column_name=['MouseID', 'class'],
+                         cache=False)
+    assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
+                         fetch_openml, data_id=data_id,
+                         target_column_name=['Genotype', 'class'],
+                         cache=False)
+
+def test_illegal_column(monkeypatch):
+    data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id)
+    assert_raise_message(KeyError, "Could not find target_column_name=",
+                         fetch_openml, data_id=data_id,
+                         target_column_name='undefined', cache=False)
+
+    assert_raise_message(KeyError, "Could not find target_column_name=",
+                         fetch_openml, data_id=data_id,
+                         target_column_name=['undefined', 'class'], cache=False)
+
+
 def test_fetch_openml_raises_illegal_argument():
     assert_raise_message(ValueError, "Dataset data_id=",
                          fetch_openml, data_id=-1, name="name")

@@ -195,6 +195,15 @@ def _determine_single_target_data_type(name_feature, target_column_name):
     if not isinstance(target_column_name, str):
         raise ValueError('target_column_name should be str, '
                          'got: %s' % type(target_column_name))
+    if target_column_name not in name_feature:
+        raise KeyError('Could not find target_column_name={}')
+    # note: we compare to a string, not boolean
+    if name_feature[target_column_name]['is_ignore'] == 'true':
+        warn('target_column_name={} has flag is_ignore.'.format(
+            target_column_name))
+    if name_feature[target_column_name]['is_row_identifier'] == 'true':
+        warn('target_column_name={} has flag is_row_identifier.'.format(
+            target_column_name))
 
     if name_feature[target_column_name]['data_type'] == "numeric":
         return np.float64
@@ -208,10 +217,20 @@ def _determine_multi_target_data_type(name_feature, target_column_names):
                          'got: %s' % type(target_column_names))
     found_types = set()
     for target_column_name in target_column_names:
+        if target_column_name not in name_feature:
+            raise KeyError('Could not find target_column_name={}')
         if name_feature[target_column_name]['data_type'] == "numeric":
             found_types.add(np.float64)
         else:
             found_types.add(object)
+
+        # note: we compare to a string, not boolean
+        if name_feature[target_column_name]['is_ignore'] == 'true':
+            warn('target_column_name={} has flag is_ignore.'.format(
+                target_column_name))
+        if name_feature[target_column_name]['is_row_identifier'] == 'true':
+            warn('target_column_name={} has flag is_row_identifier.'.format(
+                target_column_name))
     if len(found_types) != 1:
         raise ValueError('Can only handle homogeneous multi-target datasets, '
                          'i.e., all targets are either numeric or '
