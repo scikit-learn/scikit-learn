@@ -81,19 +81,16 @@ def _get_blas_info():
         system BLAS information
 
     """
-    try:
-        cblas_libs, blas_dict = get_blas_info()
+    cblas_libs, blas_dict = get_blas_info()
 
-        macros = ['{key}={val}'.format(key=a, val=b)
-                  for (a, b) in blas_dict.get('define_macros')]
+    macros = ['{key}={val}'.format(key=a, val=b)
+                for (a, b) in blas_dict.get('define_macros')]
 
-        blas_blob = [
-            ('macros', ', '.join(macros)),
-            ('lib_dirs', ':'.join(blas_dict.get('library_dirs', ''))),
-            ('cblas_libs', ', '.join(cblas_libs)),
-        ]
-    except TypeError:
-        blas_blob = [('message', "Could not retrieve BLAS information")]
+    blas_blob = [
+        ('macros', ', '.join(macros)),
+        ('lib_dirs', ':'.join(blas_dict.get('library_dirs', ''))),
+        ('cblas_libs', ', '.join(cblas_libs)),
+    ]
 
     return dict(blas_blob)
 
