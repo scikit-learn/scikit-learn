@@ -879,7 +879,9 @@ def test_ridge_classifier_no_support_multilabel():
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
 
 
-def test_dtype_match():
+@pytest.mark.parametrize(
+    "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"])
+def test_dtype_match(solver):
     rng = np.random.RandomState(0)
     alpha = 1.0
 
@@ -889,25 +891,22 @@ def test_dtype_match():
     X_32 = X_64.astype(np.float32)
     y_32 = y_64.astype(np.float32)
 
-    solvers = ["svd", "sparse_cg", "cholesky", "lsqr"]
-    for solver in solvers:
+    # Check type consistency 32bits
+    ridge_32 = Ridge(alpha=alpha, solver=solver)
+    ridge_32.fit(X_32, y_32)
+    coef_32 = ridge_32.coef_
 
-        # Check type consistency 32bits
-        ridge_32 = Ridge(alpha=alpha, solver=solver)
-        ridge_32.fit(X_32, y_32)
-        coef_32 = ridge_32.coef_
+    # Check type consistency 64 bits
+    ridge_64 = Ridge(alpha=alpha, solver=solver)
+    ridge_64.fit(X_64, y_64)
+    coef_64 = ridge_64.coef_
 
-        # Check type consistency 64 bits
-        ridge_64 = Ridge(alpha=alpha, solver=solver)
-        ridge_64.fit(X_64, y_64)
-        coef_64 = ridge_64.coef_
-
-        # Do the actual checks at once for easier debug
-        assert coef_32.dtype == X_32.dtype
-        assert coef_64.dtype == X_64.dtype
-        assert ridge_32.predict(X_32).dtype == X_32.dtype
-        assert ridge_64.predict(X_64).dtype == X_64.dtype
-        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+    # Do the actual checks at once for easier debug
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
+    assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
 
 
 def test_dtype_match_cholesky():

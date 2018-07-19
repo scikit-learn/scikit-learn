@@ -206,7 +206,8 @@ def _solve_svd(X, y, alpha):
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False, return_intercept=False):
+                     return_n_iter=False, return_intercept=False,
+                     check_input=True):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -309,6 +310,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
+    check_input : boolean, default True
+        If False, the input arrays X and y will not be checked.
+
+        .. versionadded:: 0.21
+
     Returns
     -------
     coef : array, shape = [n_features] or [n_targets, n_features]
@@ -335,15 +341,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     _dtype = [np.float64, np.float32]
 
-    # SAG needs X and y columns to be C-contiguous and np.float64
-    if solver in ['sag', 'saga']:
-        X = check_array(X, accept_sparse=['csr'],
-                        dtype=np.float64, order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
-    else:
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=_dtype)
-        y = check_array(y, dtype=X.dtype, ensure_2d=False)
+    if check_input:
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=_dtype,
+                        order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -422,11 +423,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         # precompute max_squared_sum for all targets
         max_squared_sum = row_norms(X, squared=True).max()
 
-        coef = np.empty((y.shape[1], n_features))
+        coef = np.empty((y.shape[1], n_features), dtype=X.dtype)
         n_iter = np.empty(y.shape[1], dtype=np.int32)
-        intercept = np.zeros((y.shape[1], ))
+        intercept = np.zeros((y.shape[1], ), dtype=X.dtype)
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
-            init = {'coef': np.zeros((n_features + int(return_intercept), 1))}
+            init = {'coef': np.zeros((n_features + int(return_intercept), 1),
+                                     dtype=X.dtype)}
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i, 0,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
@@ -479,12 +481,8 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
     def fit(self, X, y, sample_weight=None):
 
-        if self.solver in ('sag', 'saga'):
-            _dtype = np.float64
-        else:
-            # all other solvers work at both float precision levels
-            _dtype = [np.float64, np.float32]
-
+        # all other solvers work at both float precision levels
+        _dtype = [np.float64, np.float32]
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=_dtype,
                          multi_output=True, y_numeric=True)
 
@@ -502,14 +500,14 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=True)
+                return_intercept=True, check_input=False)
             self.intercept_ += y_offset
         else:
             self.coef_, self.n_iter_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=False)
+                return_intercept=False, check_input=False)
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
@@ -1013,10 +1011,13 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
+        X, y = check_X_y(X, y,
+                         accept_sparse=['csr', 'csc', 'coo'],
+                         dtype=[np.float64, np.float32],
                          multi_output=True, y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        dtype=X.dtype)
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
