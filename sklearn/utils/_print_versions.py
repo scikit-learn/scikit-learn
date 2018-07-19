@@ -84,7 +84,7 @@ def _get_blas_info():
     cblas_libs, blas_dict = get_blas_info()
 
     macros = ['{key}={val}'.format(key=a, val=b)
-                for (a, b) in blas_dict.get('define_macros')]
+              for (a, b) in blas_dict.get('define_macros')]
 
     blas_blob = [
         ('macros', ', '.join(macros)),
