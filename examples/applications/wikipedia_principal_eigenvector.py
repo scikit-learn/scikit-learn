@@ -204,7 +204,8 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     print("Normalizing the graph")
     for i in incoming_counts.nonzero()[0]:
         X.data[X.indptr[i]:X.indptr[i + 1]] *= 1.0 / incoming_counts[i]
-    dangle = np.asarray(np.where(X.sum(axis=1) == 0, 1.0 / n, 0)).ravel()
+    dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0),
+                                 1.0 / n, 0)).ravel()
 
     scores = np.ones(n, dtype=np.float32) / n  # initial guess
     for i in range(max_iter):
