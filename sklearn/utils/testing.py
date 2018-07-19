@@ -632,9 +632,9 @@ def all_estimators(include_meta_estimators=False,
         'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
-        Whether to include "special" label estimator or test processors.
 
     include_dont_test : boolean, default=False
+        Whether to include "special" label estimator or test processors.
 
     Returns
     -------
