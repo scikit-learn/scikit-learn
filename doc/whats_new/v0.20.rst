@@ -195,7 +195,7 @@ Metrics
   :func:`metrics.roc_auc_score`. :issue:`3273` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
-- Added control over the normalization in 
+- Added control over the normalization in
   :func:`metrics.normalized_mutual_information_score` and
   :func:`metrics.adjusted_mutual_information_score` via the ``average_method``
   parameter. In version 0.22, the default normalizer for each will become
@@ -334,7 +334,7 @@ Preprocessing
 - :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale`
   can be fitted using sparse matrices.
   :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
-  
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -548,12 +548,12 @@ Classifiers and regressors
   per-tree basis. The previous behavior over-weighted the Gini importance of
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
-  
-- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used 
-  during the calculation of tree MAE impurity. Previous behaviour could 
-  cause suboptimal splits to be chosen since the impurity calculation 
+
+- Fixed a bug in :class:`tree.MAE` to ensure sample weights are being used
+  during the calculation of tree MAE impurity. Previous behaviour could
+  cause suboptimal splits to be chosen since the impurity calculation
   considered all samples to be of equal weight importance.
-  :issue:`11464` by :user:`John Stott <JohnStott>`.  
+  :issue:`11464` by :user:`John Stott <JohnStott>`.
 
 Decomposition, manifold learning and clustering
 
@@ -739,10 +739,10 @@ API changes summary
 
 Classifiers and regressors
 
-- The default value of the ``n_estimators`` parameter of 
-  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`, 
-  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`, 
-  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20 
+- The default value of the ``n_estimators`` parameter of
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
+  and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20
   to 100 in 0.22. A FutureWarning is raised when the default value is used.
   :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
 
@@ -806,9 +806,9 @@ Metrics
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - In :func:`metrics.normalized_mutual_information_score` and
-  :func:`metrics.adjusted_mutual_information_score`, 
+  :func:`metrics.adjusted_mutual_information_score`,
   warn that ``average_method``
-  will have a new default value. In version 0.22, the default normalizer for each 
+  will have a new default value. In version 0.22, the default normalizer for each
   will become the *arithmetic* mean of the entropies of each clustering. Currently,
   :func:`metrics.normalized_mutual_information_score` uses the default of
   ``average_method='geometric'``, and :func:`metrics.adjusted_mutual_information_score`
@@ -910,6 +910,13 @@ Preprocessing
   will be from ``True`` to ``False`` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+Model selection
+
+- The default number of cross-validation folds ``cv`` and the default number of
+  splits ``n_splits`` in the :class:`model_selection.KFold`-like splitters will change
+  from 3 to 5 in 0.22 as 3-fold has a lot of variance.
+  :issue:`11557` by :user:`Alexandre Boucaud <aboucaud>`.
+
 Changes to estimator checks
 ---------------------------
 
@@ -927,7 +934,7 @@ These changes mostly affect library developers.
   ``check_set_params`` test which checks that ``set_params`` is equivalent to
   passing parameters in ``__init__`` and warns if it encounters parameter
   validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
-  
+
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
   Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
