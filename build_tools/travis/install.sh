@@ -65,7 +65,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
     fi
 
-	make_conda $TO_INSTALL
+    if [[ -n "$JOBLIB_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
+    fi
+	  make_conda $TO_INSTALL
 
     # for python 3.4, conda does not have recent pytest packages
     if [[ "$PYTHON_VERSION" == "3.4" ]]; then

@@ -42,10 +42,16 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     validate : bool, optional default=True
         Indicate that the input X array should be checked before calling
-        func. If validate is false, there will be no input validation.
-        If it is true, then X will be converted to a 2-dimensional NumPy
-        array or sparse matrix. If this conversion is not possible or X
-        contains NaN or infinity, an exception is raised.
+        ``func``. The possibilities are:
+
+        - If False, there is no input validation.
+        - If True, then X will be converted to a 2-dimensional NumPy array or
+          sparse matrix. If the conversion is not possible an exception is
+          raised.
+
+        .. deprecated:: 0.20
+           ``validate=True`` as default will be replaced by
+           ``validate=False`` in 0.22.
 
     accept_sparse : boolean, optional
         Indicate that func accepts a sparse matrix as input. If validate is
@@ -72,7 +78,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Dictionary of additional keyword arguments to pass to inverse_func.
 
     """
-    def __init__(self, func=None, inverse_func=None, validate=True,
+    def __init__(self, func=None, inverse_func=None, validate=None,
                  accept_sparse=False, pass_y='deprecated', check_inverse=True,
                  kw_args=None, inv_kw_args=None):
         self.func = func
@@ -83,6 +89,19 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
+
+    def _check_input(self, X):
+        # FIXME: Future warning to be removed in 0.22
+        if self.validate is None:
+            self._validate = True
+            warnings.warn("The default validate=True will be replaced by "
+                          "validate=False in 0.22.", FutureWarning)
+        else:
+            self._validate = self.validate
+
+        if self._validate:
+            return check_array(X, accept_sparse=self.accept_sparse)
+        return X
 
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
@@ -111,8 +130,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        if self.validate:
-            X = check_array(X, self.accept_sparse)
+        X = self._check_input(X)
         if (self.check_inverse and not (self.func is None or
                                         self.inverse_func is None)):
             self._check_inverse_transform(X)
@@ -165,8 +183,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                                kw_args=self.inv_kw_args)
 
     def _transform(self, X, y=None, func=None, kw_args=None):
-        if self.validate:
-            X = check_array(X, self.accept_sparse)
+        X = self._check_input(X)
 
         if func is None:
             func = _identity

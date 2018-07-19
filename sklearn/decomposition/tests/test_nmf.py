@@ -278,7 +278,7 @@ def test_beta_divergence():
     # initialization
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0.
+    np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
     W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
 
@@ -298,7 +298,7 @@ def test_special_sparse_dot():
     n_components = 3
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0.
+    np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
 
     W = np.abs(rng.randn(n_samples, n_components))
@@ -377,7 +377,7 @@ def test_nmf_negative_beta_loss():
 
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0
+    np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
 
     def _assert_nmf_no_nan(X, beta_loss):

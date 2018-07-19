@@ -23,7 +23,7 @@ from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
