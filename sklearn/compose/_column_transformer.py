@@ -15,7 +15,8 @@ from ..base import clone, TransformerMixin
 from ..utils import Parallel, delayed
 from ..externals import six
 from ..pipeline import (
-    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
+    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators,
+    _inverse_transform_one)
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
@@ -356,6 +357,50 @@ boolean mask array or callable
             else:
                 raise
 
+    def _calculate_inverse_indices(self, X):
+        """
+        Private function to calcuate indicies for inverse_transform
+        """
+        # checks for overlap
+        all_indexes = set()
+        input_indices = []
+        for name, trans, cols in self.transformers:
+            col_indices = _get_column_indices(X, cols)
+            if not all_indexes.isdisjoint(set(col_indices)):
+                self._invertible = (False,
+                                    "Transformers have overlaping columns")
+                return
+            if trans == 'drop':
+                self._invertible = (False,
+                                    "{} drops columns".format(name))
+                return
+            input_indices.append(col_indices)
+
+        # check remainder
+        remainder_indices = self._remainder[2]
+        if remainder_indices is not None and self._remainder[1] == 'drop':
+            self._invertible = (False, "remainder drops columns")
+            return
+
+        if remainder_indices is not None:
+            input_indices.append(remainder_indices)
+
+        self._input_indices = input_indices
+        self._X_shape = X.shape
+        self._X_is_sparse = sparse.issparse(X)
+        self._invertible = (True, "")
+        self._output_indices = []
+        cur_index = 0
+
+        Xs = self._fit_transform(X[0:1], None, _transform_one, fitted=True)
+        for X_transform in Xs:
+            X_features = X_transform.shape[-1]
+            self._output_indices.append(
+                list(range(cur_index, cur_index + X_features)))
+            cur_index += X_features
+
+        assert len(self._output_indices) == len(self._input_indices)
+
     def fit(self, X, y=None):
         """Fit all transformers using X.
 
@@ -379,6 +424,7 @@ boolean mask array or callable
 
         transformers = self._fit_transform(X, y, _fit_one_transformer)
         self._update_fitted_transformers(transformers)
+        self._calculate_inverse_indices(X)
 
         return self
 
@@ -415,6 +461,7 @@ boolean mask array or callable
         Xs, transformers = zip(*result)
 
         self._update_fitted_transformers(transformers)
+        self._calculate_inverse_indices(X)
         self._validate_output(Xs)
 
         return _hstack(list(Xs))
@@ -446,6 +493,58 @@ boolean mask array or callable
             return np.zeros((X.shape[0], 0))
 
         return _hstack(list(Xs))
+
+    def inverse_transform(self, X):
+        """Apply inverse transform
+
+        All estimators in ``transformers`` must support ``inverse_transform``.
+
+        Parameters
+        ----------
+        X: array-like, shape = [n_samples, n_transformed_features]
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        Xt : array-like, shape = [n_samples, n_features]
+
+        """
+        check_is_fitted(self, 'transformers_')
+
+        if not self._invertible[0]:
+            raise ValueError("Unable to invert: ".format(
+                self._invertible[1]))
+
+        X_subs = (_get_column(X, key) for key in self._output_indices)
+        inv_transformers = []
+        get_weight = (self.transformer_weights or {}).get
+
+        for (name, trans, column), sub in zip(self.transformers_, X_subs):
+            if trans == 'passthrough':
+                trans = FunctionTransformer(
+                    validate=False, accept_sparse=True, check_inverse=False)
+
+            inv_transformers.append((name, trans, sub, get_weight(name)))
+
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_inverse_transform_one)(
+                trans, X_sel, weight)
+            for _, trans, X_sel, weight in inv_transformers)
+
+        inverse_Xs = np.zeros(self._X_shape)
+        for indices, inverse_X in zip(self._input_indices, Xs):
+            if sparse.issparse(inverse_X):
+                inverse_Xs[:, indices] = inverse_X.toarray()
+            else:
+                if inverse_X.ndim == 1:
+                    inverse_Xs[:, indices] = inverse_X[:, np.newaxis]
+                else:
+                    inverse_Xs[:, indices] = inverse_X
+
+        if self._X_is_sparse:
+            return sparse.csr_matrix(inverse_Xs)
+        return inverse_Xs
 
 
 def _check_key_type(key, superclass):

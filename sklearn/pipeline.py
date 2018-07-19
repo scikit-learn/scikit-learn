@@ -597,6 +597,12 @@ def _transform_one(transformer, X, y, weight, **fit_params):
     return res * weight
 
 
+def _inverse_transform_one(transformer, X, weight, **fit_params):
+    weight = weight or 1
+    res = transformer.inverse_transform(X / weight)
+    return res
+
+
 def _fit_transform_one(transformer, X, y, weight, **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
