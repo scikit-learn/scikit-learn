@@ -661,6 +661,9 @@ Neighbors
   warning when no neighbors are found for samples.  :issue:`9655` by
   :user:`Andreas Bjerre-Nielsen <abjer>`.
 
+- Fixed a bug in ``KDTree`` construction that results in faster construction
+  and querying times. :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
+
 Feature Extraction
 
 - Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which would
