@@ -14,14 +14,6 @@ from sklearn.utils.testing import (assert_warns_message,
 from sklearn.externals.six.moves.urllib.error import HTTPError
 
 
-try:
-    # Python 3+
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib2 import urlopen
-
-
 def fetch_dataset_from_openml(data_id, data_name, data_version,
                               target_column_name,
                               expected_observations, expected_features,
@@ -311,7 +303,6 @@ def test_raises_illegal_multitarget(monkeypatch):
                          "Can only handle homogeneous multi-target datasets,",
                          fetch_openml, data_id=data_id,
                          target_column_name=targets, cache=False)
-
 
 
 def test_fetch_openml_raises_illegal_argument():
