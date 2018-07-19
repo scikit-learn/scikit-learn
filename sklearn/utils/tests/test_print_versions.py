@@ -9,7 +9,6 @@ def test_get_sys_info():
 
     assert 'python' in sys_info
     assert 'executable' in sys_info
-    assert 'compiler' in sys_info
     assert 'machine' in sys_info
 
 

@@ -21,12 +21,11 @@ def _get_sys_info():
         system and Python version information
 
     """
-    python, compiler = sys.version.split('\n')
+    python = sys.version.replace('\n', ' ')
 
     blob = [
         ("python", python),
         ('executable', sys.executable),
-        ("compiler", compiler),
         ("machine", platform.platform()),
     ]
 
