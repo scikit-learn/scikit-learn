@@ -654,6 +654,13 @@ Metrics
   :issue:`9515` by :user:`Alan Liddell <aliddell>` and
   :user:`Manh Dao <manhdao>`.
 
+Ensemble
+
+- Fix allowing to obtain deterministic with :class:`BaseBagging` estimator,
+  when comparing results generated at fit time with the one using the object
+  attributes when ``random_state`` is set. :issue:`9723` by :user:`Guillaume
+  Lemaitre <glemaitre>`.
+
 Neighbors
 
 - Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
@@ -827,6 +834,15 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Ensemble
+
+- Classes derived from :class:`ensemble.BaseBagging`. The attribute
+  ``estimators_samples_`` will return a list of arrays containing the indices
+  selected for each bootstrap instead of a list of arrays containing the mask
+  of the samples selected for each bootstrap. Indices allows to repeat samples
+  while mask does not allow this functionality. :issue:`9524` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Imputer
 
