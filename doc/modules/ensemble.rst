@@ -965,7 +965,7 @@ The following example shows how to fit the majority rule classifier::
    >>> X, y = iris.data[:, 1:3], iris.target
 
    >>> clf1 = LogisticRegression(random_state=1)
-   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
@@ -974,7 +974,7 @@ The following example shows how to fit the majority rule classifier::
    ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
    Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
-   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.94 (+/- 0.04) [Random Forest]
    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
    Accuracy: 0.95 (+/- 0.05) [Ensemble]
 
