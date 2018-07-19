@@ -198,24 +198,24 @@ class OneHotEncoder(_BaseEncoder):
         in the training set. Only available when n_values is ``'auto'``.
 
         .. deprecated:: 0.20
-            The `active_features_` attribute was deprecated in version
+            The ``active_features_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and then potentially masked by `active_features_` afterwards)
+        (and then potentially masked by ``active_features_`` afterwards)
 
         .. deprecated:: 0.20
-            The `feature_indices_` attribute was deprecated in version
+            The ``feature_indices_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
         .. deprecated:: 0.20
-            The `n_values_` attribute was deprecated in version
+            The ``n_values_`` attribute was deprecated in version
             0.20 and will be removed in 0.22.
 
     Examples
@@ -240,6 +240,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
+    >>> enc.get_feature_names()
+    array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
 
     See also
     --------
@@ -269,21 +271,21 @@ class OneHotEncoder(_BaseEncoder):
     # Deprecated attributes
 
     @property
-    @deprecated("The 'active_features_' attribute was deprecated in version "
+    @deprecated("The ``active_features_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
     def active_features_(self):
         check_is_fitted(self, 'categories_')
         return self._active_features_
 
     @property
-    @deprecated("The 'feature_indices_' attribute was deprecated in version "
+    @deprecated("The ``feature_indices_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
         return self._feature_indices_
 
     @property
-    @deprecated("The 'n_values_' attribute was deprecated in version "
+    @deprecated("The ``n_values_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
     def n_values_(self):
         check_is_fitted(self, 'categories_')
@@ -638,6 +640,38 @@ class OneHotEncoder(_BaseEncoder):
                 X_tr[mask, idx] = None
 
         return X_tr
+
+    def get_feature_names(self, input_features=None):
+        """Return feature names for output features.
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : array of string, length n_output_features
+
+        """
+        check_is_fitted(self, 'categories_')
+        cats = self.categories_
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(len(cats))]
+        elif(len(input_features) != len(self.categories_)):
+            raise ValueError(
+                "input_features should have length equal to number of "
+                "features ({}), got {}".format(len(self.categories_),
+                                               len(input_features)))
+
+        feature_names = []
+        for i in range(len(cats)):
+            names = [
+                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+            feature_names.extend(names)
+
+        return np.array(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):

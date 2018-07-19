@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from ..externals.joblib import Parallel, delayed
+from ..utils import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from .base import make_dataset
@@ -352,6 +352,42 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
+
+    Parameters
+    ----------
+    est : Estimator object
+        The estimator to fit
+
+    i : int
+        Index of the positive class
+
+    X : numpy array or sparse matrix of shape [n_samples,n_features]
+        Training data
+
+    y : numpy array of shape [n_samples, ]
+        Target values
+
+    alpha : float
+        The regularization parameter
+
+    C : float
+        Maximum step size for passive aggressive
+
+    learning_rate : string
+        The learning rate. Accepted values are 'constant', 'optimal',
+        'invscaling', 'pa1' and 'pa2'.
+
+    max_iter : int
+        The maximum number of iterations (epochs)
+
+    pos_weight : float
+        The weight of the positive class
+
+    neg_weight : float
+        The weight of the negative class
+
+    sample_weight : numpy array of shape [n_samples, ]
+        The weight of each sample
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
@@ -815,15 +851,15 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -885,12 +921,12 @@ class SGDClassifier(BaseSGDClassifier):
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SGDClassifier()
+    >>> clf = linear_model.SGDClassifier(max_iter=1000)
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=None,
+           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
            n_iter=None, n_iter_no_change=5, n_jobs=1, penalty='l2',
            power_t=0.5, random_state=None, shuffle=True, tol=None,
            validation_fraction=0.1, verbose=0, warm_start=False)
@@ -1424,15 +1460,15 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default=5
-        Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -1488,12 +1524,12 @@ class SGDRegressor(BaseSGDRegressor):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor()
+    >>> clf = linear_model.SGDRegressor(max_iter=1000)
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='invscaling', loss='squared_loss', max_iter=None,
+           learning_rate='invscaling', loss='squared_loss', max_iter=1000,
            n_iter=None, n_iter_no_change=5, penalty='l2', power_t=0.25,
            random_state=None, shuffle=True, tol=None, validation_fraction=0.1,
            verbose=0, warm_start=False)

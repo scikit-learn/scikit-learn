@@ -44,7 +44,7 @@ some contain ``feature_names`` and ``target_names``. See the dataset
 descriptions below for details.  
 
 **The dataset generation functions.** They can be used to generate controlled 
-synthetic datasets, described in the :ref:`generated_datasets` section.
+synthetic datasets, described in the :ref:`sample_generators` section.
 
 These functions return a tuple ``(X, y)`` consisting of a ``n_samples`` *
 ``n_features`` numpy array ``X`` and an array of length ``n_samples``
@@ -154,7 +154,7 @@ They can be loaded using the following functions:
 
 .. include:: ./kddcup99.rst
 
-.. _generated_datasets:
+.. _sample_generators:
 
 Generated datasets
 ==================
