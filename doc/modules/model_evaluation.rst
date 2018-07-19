@@ -99,8 +99,9 @@ Usage examples:
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
     >>> clf = svm.SVC(gamma='scale', random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='recall_macro')    # doctest: +SKIP
-    array([0.980..., 0.960..., 0.979...])
+    >>> cross_val_score(clf, X, y, scoring='recall_macro',
+    ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -151,7 +152,7 @@ the :func:`fbeta_score` function::
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
-    ...                     scoring=ftwo_scorer)        # doctest: +SKIP
+    ...                     scoring=ftwo_scorer, cv=5)
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -252,12 +253,13 @@ permitted and will require a wrapper to return a single metric::
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y,
-    ...                             scoring=scoring)  # doctest: +SKIP
+    ...                             scoring=scoring, cv=5)
     >>> # Getting the test set true positive scores
-    >>> print(cv_results['test_tp'])                  # doctest: +SKIP
-    [16 14  9]
+    >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
+    [10  9  8  7  8]
     >>> # Getting the test set false negative scores
-    >>> print(cv_results['test_fn'])                  # doctest: +SKIP
+    >>> print(cv_results['test_fn'])  # doctest: +NORMALIZE_WHITESPACE
+    [0 1 2 3 2]
 
 .. _classification_metrics:
 
