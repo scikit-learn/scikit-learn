@@ -672,6 +672,25 @@ class SamplingImputer(BaseEstimator, TransformerMixin):
     probas_ : array of shape (n_features,)
         The probabilities associated with all the values in uniques_.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import SamplingImputer
+    >>> imputer = SamplingImputer(random_state=0)
+    >>> X = [[7, 2, 3], [4, np.nan, 6], [10, 5, 9]]
+    >>> print(imputer.fit_transform(X)) # doctest: +NORMALIZE_WHITESPACE
+    [[ 7.  2.  3.]
+     [ 4.  2.  6.]
+     [10.  5.  9.]]
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> print(imputer.transform([[np.nan, 2, 3],
+    ...                          [4, np.nan, 6],
+    ...                          [10, np.nan, 9]]))
+    ... # doctest: +NORMALIZE_WHITESPACE
+    [[ 4.  2.  3.]
+     [ 4.  2.  6.]
+     [10.  5.  9.]]
+
     Notes
     -----
     Columns which only contained missing values at `fit` are discarded upon
